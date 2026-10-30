@@ -238,6 +238,7 @@ export const buildSouthEntity = <T extends SouthSettings, I extends SouthItemSet
       createdAt: testData.constants.dates.DATE_1,
       updatedAt: testData.constants.dates.DATE_2,
       name: `item${index}`,
+      description: null,
       enabled: true,
       settings: element,
       scanMode: testData.scanMode.list[0],

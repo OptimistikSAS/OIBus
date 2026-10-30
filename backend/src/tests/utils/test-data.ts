@@ -568,6 +568,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdByWorkflowId: null,
         disabledReason: null,
         name: 'item1',
+        description: null,
         enabled: true,
         settings: {} as SouthItemSettings,
         scanMode: scanModes[0],
@@ -594,6 +595,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdByWorkflowId: null,
         disabledReason: null,
         name: 'item2',
+        description: null,
         enabled: true,
         settings: {} as SouthItemSettings,
         scanMode: scanModes[1],
@@ -646,6 +648,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdByWorkflowId: null,
         disabledReason: null,
         name: 'item3',
+        description: 'Temperature of the reactor inlet',
         enabled: true,
         settings: {} as SouthItemSettings,
         scanMode: scanModes[0],
@@ -672,6 +675,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdByWorkflowId: null,
         disabledReason: null,
         name: 'item4',
+        description: null,
         enabled: true,
         settings: {} as SouthItemSettings,
         scanMode: scanModes[0],
@@ -731,6 +735,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdByWorkflowId: null,
         disabledReason: null,
         name: 'opcua ha',
+        description: null,
         enabled: true,
         settings: {
           mode: 'ha'
@@ -759,6 +764,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdByWorkflowId: null,
         disabledReason: null,
         name: 'opcua sub',
+        description: null,
         enabled: true,
         settings: {
           mode: 'da'
@@ -799,6 +805,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdByWorkflowId: null,
         disabledReason: null,
         name: 'opcua da',
+        description: null,
         enabled: true,
         settings: {
           mode: 'da'
@@ -827,6 +834,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdByWorkflowId: null,
         disabledReason: null,
         name: 'opcua ha 2',
+        description: null,
         enabled: true,
         settings: {
           mode: 'ha'
@@ -869,6 +877,7 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
     {
       id: 'newSouthItemFromConnectorId',
       name: 'my new item from south connector',
+      description: null,
       enabled: true,
       settings: {
         regex: '*',
@@ -903,6 +912,7 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
 const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
   id: 'newSouthItemId',
   name: 'New South Item',
+  description: null,
   scanModeId: 'scanModeId1',
   scanModeName: null,
   enabled: true,
@@ -1229,6 +1239,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       {
         id: 'historyQueryItem1',
         name: 'item1',
+        description: null,
         enabled: true,
         settings: {
           query: 'SELECT * FROM table1',
@@ -1244,6 +1255,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       {
         id: 'historyQueryItem2',
         name: 'item2',
+        description: null,
         enabled: true,
         settings: {
           query: 'SELECT * FROM table2',
@@ -1337,6 +1349,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       {
         id: 'historyQueryItem3',
         name: 'item3',
+        description: 'Flow of the reactor outlet',
         enabled: true,
         settings: {
           query: 'SELECT * FROM table3',
@@ -1422,6 +1435,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
     {
       id: 'temp_',
       name: 'item4',
+      description: null,
       enabled: true,
       settings: {
         query: 'SELECT * FROM table4',
@@ -1455,6 +1469,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
 const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
   id: 'newHistoryQueryItemId',
   name: 'New History query Item',
+  description: null,
   enabled: true,
   settings: {
     query: 'SELECT * FROM newTable',

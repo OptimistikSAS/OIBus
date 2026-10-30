@@ -17,6 +17,7 @@ describe('configuration-workflow.utils', () => {
   const localCommand: ConfigurationWorkflowCommandDTO = {
     id: null,
     name: 'workflow',
+    description: null,
     discoveryScope: {},
     identityKeyFields: ['nodeId'],
     eligibilityFilter: [],

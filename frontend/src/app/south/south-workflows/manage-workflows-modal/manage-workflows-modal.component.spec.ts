@@ -88,7 +88,7 @@ describe('ManageWorkflowsModalComponent', () => {
     router = createMock(Router);
     groups = fakeSouthItemGroups([buildSouthItemGroup('group1', 'Group 1')]);
     const workflows = [
-      buildWorkflow('workflow1', 'Alpha'),
+      buildWorkflow('workflow1', 'Alpha', { description: 'Discovers the nodes of the reactor' }),
       buildWorkflow('workflow2', 'Beta', { scanMode: scanModes[0], pushToOIAnalytics: true })
     ];
     commands = workflows.map(workflow => toConfigurationWorkflowCommand(workflow));
@@ -136,6 +136,18 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.row(0).getByRole('img')).not.toBeInTheDocument();
       await expect.element(tester.row(0).getByCss('.workflow-not-scheduled')).toHaveTextContent('-');
       await expect.element(tester.row(1).getByRole('img', { name: 'Yes' })).toBeInTheDocument();
+    });
+
+    test('should display the full name and the description of a workflow in a tooltip', async () => {
+      const tooltip = page.getByRole('tooltip');
+
+      await tester.row(0).getByText('Alpha', { exact: true }).hover();
+      await expect.element(tooltip).toMatchTextContent(/Alpha\s*Discovers the nodes of the reactor/);
+      await expect.element(tooltip.getByText('Alpha', { exact: true })).toHaveClass('fw-bold');
+
+      // a workflow without description: its name only
+      await tester.row(1).getByText('Beta', { exact: true }).hover();
+      await expect.element(tooltip).toMatchTextContent(/^\s*Beta\s*$/);
     });
 
     test('should show a spinner while loading', async () => {

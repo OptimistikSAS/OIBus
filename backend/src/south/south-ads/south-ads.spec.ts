@@ -23,6 +23,7 @@ const buildItem = (
 ): SouthConnectorItemEntity<SouthADSItemSettings> => ({
   id,
   name,
+  description: null,
   enabled: true,
   settings: { address: name },
   scanMode: testData.scanMode.list[0],

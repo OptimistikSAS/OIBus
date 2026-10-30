@@ -770,6 +770,7 @@ describe('History Query service', () => {
       },
       {
         name: 'item5',
+        description: 'item5 description',
         enabled: 'true',
         settings_regex: '*',
         settings_preserveFiles: 'true',
@@ -793,6 +794,7 @@ describe('History Query service', () => {
         {
           id: '',
           name: csvData[3].name,
+          description: 'item5 description',
           enabled: true,
           settings: {
             ignoreModifiedDate: false, // converted from 'false'
@@ -894,6 +896,7 @@ describe('History Query service', () => {
         {
           id: '',
           name: csvData[0].name,
+          description: null,
           enabled: String(csvData[0].enabled).toLowerCase() === 'true',
           settings: {
             query: 'query',

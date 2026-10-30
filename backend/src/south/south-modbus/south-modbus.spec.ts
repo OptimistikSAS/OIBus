@@ -67,6 +67,7 @@ const buildItem = (
 ): SouthConnectorItemEntity<SouthModbusItemSettings> => ({
   id,
   name,
+  description: null,
   enabled: true,
   settings,
   scanMode: testData.scanMode.list[0],

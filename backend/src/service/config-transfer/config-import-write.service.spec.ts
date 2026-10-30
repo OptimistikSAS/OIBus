@@ -561,6 +561,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     const item = (id: string, name: string): SouthConnectorFolderScannerItemCommandDTO => ({
       id,
       name,
+      description: null,
       enabled: false,
       settings: { regex: '.*', minAge: 1000, preserveFiles: true, ignoreModifiedDate: false, maxFiles: 100, maxSize: 0, recursive: false },
       scanModeId: envelope.config.scanModes.find(scanMode => scanMode.oIBusInternalId !== 'subscription')!.oIBusInternalId,
@@ -591,6 +592,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       {
         id: 'localWorkflow',
         name: 'local',
+        description: null,
         discoveryScope: { folder: 'input' },
         identityKeyFields: ['name'],
         eligibilityFilter: [{ field: 'name', operator: 'contains', value: 'csv' }],
@@ -602,6 +604,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       {
         id: 'remoteWorkflow',
         name: 'remote',
+        description: null,
         discoveryScope: {},
         identityKeyFields: ['ignored for a remote workflow'],
         eligibilityFilter: [],
@@ -616,6 +619,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     configurationWorkflowRepository.create(
       {
         name: 'pre-existing',
+        description: null,
         southId: otherSouth.id,
         discoveryScope: {},
         identityKeyFields: [],

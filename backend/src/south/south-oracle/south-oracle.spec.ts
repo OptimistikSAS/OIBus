@@ -61,6 +61,7 @@ const buildItem = (
 ): SouthConnectorItemEntity<SouthOracleItemSettings> => ({
   id,
   name: id.replace('id', 'item'),
+  description: null,
   enabled: true,
   settings,
   scanMode,

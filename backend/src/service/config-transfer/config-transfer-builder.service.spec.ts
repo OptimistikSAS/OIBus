@@ -101,6 +101,7 @@ describe('Config Transfer Builder Service', () => {
     const baseWorkflow: ConfigurationWorkflowEntity = {
       id: 'workflow1',
       name: 'local workflow',
+      description: 'Creates an item for each variable',
       southId: south.id,
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
@@ -116,7 +117,15 @@ describe('Config Transfer Builder Service', () => {
     };
     configurationWorkflowRepository.findAll.mock.mockImplementation(() => [
       baseWorkflow,
-      { ...baseWorkflow, id: 'workflow2', name: 'remote workflow', itemFieldMapping: null, pushToOIAnalytics: true, scanMode: null },
+      {
+        ...baseWorkflow,
+        id: 'workflow2',
+        name: 'remote workflow',
+        description: null,
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        scanMode: null
+      },
       { ...baseWorkflow, id: 'workflow3', southId: 'another south' }
     ]);
 
@@ -126,6 +135,7 @@ describe('Config Transfer Builder Service', () => {
       {
         id: 'workflow1',
         name: 'local workflow',
+        description: 'Creates an item for each variable',
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],
         eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
@@ -137,6 +147,7 @@ describe('Config Transfer Builder Service', () => {
       {
         id: 'workflow2',
         name: 'remote workflow',
+        description: null,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],
         eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],

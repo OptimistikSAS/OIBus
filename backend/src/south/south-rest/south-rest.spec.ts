@@ -51,6 +51,7 @@ const createConfiguration = (): SouthConnectorEntity<SouthRestSettings, SouthRes
 const createItem = (overrides?: Partial<SouthRestItemSettings>): SouthConnectorItemEntity<SouthRestItemSettings> => ({
   id: 'item-1',
   name: 'Test Item',
+  description: null,
   enabled: true,
   scanMode: testData.scanMode.list[0],
   group: null,

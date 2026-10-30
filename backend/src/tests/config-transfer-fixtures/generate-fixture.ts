@@ -49,6 +49,7 @@ function seedMissingEntities(database: Database): void {
   const local = workflowRepository.create(
     {
       name: 'Local discovery',
+      description: 'Creates an item for each variable',
       southId: firstSouth.id,
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
@@ -67,6 +68,7 @@ function seedMissingEntities(database: Database): void {
   workflowRepository.create(
     {
       name: 'Remote discovery',
+      description: null,
       southId: secondSouth.id,
       discoveryScope: { query: 'SELECT tag_name, unit FROM tags' },
       identityKeyFields: [],

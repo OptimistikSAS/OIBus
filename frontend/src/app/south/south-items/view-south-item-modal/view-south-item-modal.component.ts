@@ -76,12 +76,14 @@ export class ViewSouthItemModalComponent {
     if (!item || !manifest) {
       return null;
     }
-    return summarizeSouthItem(toSouthItemSummaryValues(item), manifest, {
+    const summary = summarizeSouthItem(toSouthItemSummaryValues(item), manifest, {
       translateService: this.translateService,
       scanModes: this.scanModes,
       certificates: this.certificates,
       applyEnablingConditions: true
     });
+    // the description is shown at the top of the modal, as the one of a connector on its page
+    return { ...summary, general: summary.general.filter(setting => setting.labelKey !== 'south.items.description') };
   });
 
   /**

@@ -31,6 +31,7 @@ interface SftpCallbacks {
 const buildItem = (id: string, settings: Partial<SouthSFTPItemSettings>): SouthConnectorItemEntity<SouthSFTPItemSettings> => ({
   id,
   name: id.replace('id', 'item'),
+  description: null,
   enabled: true,
   settings: {
     remoteFolder: 'input',

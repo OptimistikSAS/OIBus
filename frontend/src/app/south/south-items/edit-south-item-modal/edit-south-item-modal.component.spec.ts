@@ -64,6 +64,7 @@ class EditSouthItemModalComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByRole('heading', { level: 4 });
   readonly name = this.root.getByLabelText('Name', { exact: true });
+  readonly description = this.root.getByLabelText('Description', { exact: true });
   readonly groupToggle = this.root.getByRole('button', { name: 'Group', exact: true });
   readonly scanMode = this.root.getByLabelText('Schedule');
   readonly enabled = this.root.getByLabelText('Enabled');
@@ -318,6 +319,45 @@ describe('EditSouthItemModalComponent', () => {
     expect(savedCommand()).toEqual(expect.objectContaining({ id: savedItem1.id, name: 'renamed', scanModeId: scanModes[0].id }));
   });
 
+  test('should load and save the description of an edited item', async () => {
+    const tester = await open('edit', { item: { ...savedItem1, description: 'Reactor inlet' } });
+
+    await expect.element(tester.description).toHaveValue('Reactor inlet');
+    await tester.description.fill('  Temperature of the reactor inlet  ');
+    await tester.saveButton.click();
+
+    expect(savedCommand()).toEqual(expect.objectContaining({ id: savedItem1.id, description: 'Temperature of the reactor inlet' }));
+  });
+
+  test('should save a blank description as none', async () => {
+    const tester = await open('edit', { item: { ...savedItem1, description: 'Reactor inlet' } });
+
+    await tester.description.fill('   ');
+    await tester.saveButton.click();
+
+    expect(savedCommand()).toEqual(expect.objectContaining({ description: null }));
+  });
+
+  test('should create an item without description', async () => {
+    const tester = await open('create');
+
+    await expect.element(tester.description).toHaveValue('');
+    await tester.name.fill('new item');
+    await tester.scanMode.selectOptions(scanModes[0].name);
+    await tester.save();
+
+    expect(savedCommand()).toEqual(expect.objectContaining({ name: 'new item', description: null }));
+  });
+
+  test('should keep the description of a copied item', async () => {
+    const tester = await open('copy', { item: { ...savedItem1, description: 'Reactor inlet' } });
+
+    await expect.element(tester.description).toHaveValue('Reactor inlet');
+    await tester.saveButton.click();
+
+    expect(savedCommand()).toEqual(expect.objectContaining({ id: '', name: `${savedItem1.name}-copy`, description: 'Reactor inlet' }));
+  });
+
   test('should not save an invalid item, and show the step to fix', async () => {
     const tester = await open('create');
 
@@ -411,9 +451,10 @@ describe('EditSouthItemModalComponent', () => {
 
       const values = tester.summary.getByRole('definition');
       await expect.element(values.nth(0)).toHaveTextContent(savedItem1.name);
-      await expect.element(values.nth(1)).toHaveTextContent('Disabled');
-      await expect.element(values.nth(2)).toHaveTextContent('GroupA');
-      await expect.element(values.nth(3)).toHaveTextContent(scanModes[0].name);
+      await expect.element(tester.reviewed('Description')).toBeInTheDocument();
+      await expect.element(values.nth(2)).toHaveTextContent('Disabled');
+      await expect.element(values.nth(3)).toHaveTextContent('GroupA');
+      await expect.element(values.nth(4)).toHaveTextContent(scanModes[0].name);
       // the history settings that apply: the group's ones, since the item is synced with it
       await expect.element(tester.reviewed('Sync with group')).toHaveTextContent('Yes');
       await expect.element(tester.reviewed('Max read interval')).toHaveTextContent('60 s');

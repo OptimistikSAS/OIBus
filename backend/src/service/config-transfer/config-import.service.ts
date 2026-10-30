@@ -740,6 +740,7 @@ export default class ConfigImportService {
       this.configurationWorkflowRepository!.create(
         {
           name: workflow.name,
+          description: workflow.description ?? null,
           southId: south.oIBusInternalId,
           discoveryScope: workflow.discoveryScope,
           // Same as `ConfigurationWorkflowService`: a remote workflow never diffs against a previous run
@@ -844,6 +845,7 @@ export default class ConfigImportService {
     const items: Array<SouthConnectorItemEntity<SouthItemSettings>> = command.items.map(item => ({
       id: item.id!,
       name: item.name,
+      description: item.description ?? null,
       enabled: item.enabled,
       scanMode: item.scanModeId ? ({ id: item.scanModeId } as ScanMode) : null,
       settings: item.settings,
@@ -1005,6 +1007,7 @@ export default class ConfigImportService {
     const items: Array<HistoryQueryItemEntity<SouthItemSettings>> = command.items.map(item => ({
       id: item.id!,
       name: item.name,
+      description: item.description ?? null,
       enabled: item.enabled,
       settings: item.settings,
       createdBy: importedBy,

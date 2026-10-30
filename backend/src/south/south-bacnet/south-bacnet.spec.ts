@@ -158,6 +158,7 @@ function buildItem(overrides: {
   return {
     id: overrides.id,
     name: overrides.name,
+    description: null,
     enabled: true,
     settings: overrides.settings,
     scanMode: overrides.scanMode ?? pollScanMode,

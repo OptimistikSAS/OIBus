@@ -1,0 +1,9 @@
+<span [ngbTooltip]="nameDetails" placement="top-start" container="body" tooltipClass="oib-name-tooltip">{{ name() }}</span>
+<ng-template #nameDetails>
+  <div class="text-start">
+    <div class="fw-bold">{{ name() }}</div>
+    @if (description()?.trim()) {
+      <div class="oib-multiline-text">{{ description() }}</div>
+    }
+  </div>
+</ng-template>

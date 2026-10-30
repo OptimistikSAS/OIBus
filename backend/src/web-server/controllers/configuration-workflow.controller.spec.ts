@@ -33,6 +33,7 @@ const SOUTH_ID = testData.south.list[0].id;
 const workflowEntity: ConfigurationWorkflowEntity = {
   id: 'workflowId1',
   name: 'Reactor discovery',
+  description: null,
   southId: SOUTH_ID,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
@@ -50,6 +51,7 @@ const workflowEntity: ConfigurationWorkflowEntity = {
 const command: ConfigurationWorkflowCommandDTO = {
   id: null,
   name: 'Reactor discovery',
+  description: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [],

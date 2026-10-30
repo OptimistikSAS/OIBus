@@ -227,7 +227,13 @@ describe('EditHistoryQueryComponent', () => {
           southType: savedQuery.southType,
           northType: savedQuery.northType,
           caching: expect.objectContaining({ trigger: expect.objectContaining({ scanModeId: 'scanModeId1' }) }),
-          items: savedQuery.items.map(item => ({ id: item.id, name: item.name, enabled: item.enabled, settings: item.settings })),
+          items: savedQuery.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            enabled: item.enabled,
+            settings: item.settings
+          })),
           northTransformers: savedQuery.northTransformers.map(transformer => ({
             id: transformer.id,
             transformerId: transformer.transformer.id,
@@ -377,7 +383,7 @@ describe('EditHistoryQueryComponent', () => {
           expect.anything(),
           testData.south.manifest,
           null,
-          { id: '', name: 'measures_tags', enabled: discovered.enabled, settings: discovered.settings }
+          { id: '', name: 'measures_tags', description: discovered.description, enabled: discovered.enabled, settings: discovered.settings }
         )
       );
       await tester.expectItemNames('item1', 'item2', 'completed');
@@ -556,7 +562,7 @@ describe('EditHistoryQueryComponent', () => {
       expect(importModal.prepare).toHaveBeenCalledWith(
         testData.south.manifest,
         expect.any(Array),
-        ['scanMode'],
+        ['description', 'scanMode'],
         true,
         expect.any(Function)
       );

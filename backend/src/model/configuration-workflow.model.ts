@@ -42,6 +42,7 @@ export {
 export interface ConfigurationWorkflowEntity extends BaseEntity {
   /** Unique per south connector — how a person picks this workflow out of a list. */
   name: string;
+  description: string | null;
   southId: string;
 
   /**
@@ -83,6 +84,7 @@ export interface ConfigurationWorkflowEntity extends BaseEntity {
 
 export interface ConfigurationWorkflowCommand {
   name: string;
+  description: string | null;
   southId: string;
   discoveryScope: Record<string, unknown>;
   identityKeyFields: Array<string>;

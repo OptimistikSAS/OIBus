@@ -202,7 +202,13 @@ describe('HistoryQueryDetailComponent', () => {
       { name: '{{path}}' }
     );
     expect(historyQueryService.importItems).toHaveBeenCalledWith(historyQuery.id, [
-      { id: '', name: 'Reactor/Temperature', enabled: discovered.enabled, settings: discovered.settings }
+      {
+        id: '',
+        name: 'Reactor/Temperature',
+        description: discovered.description,
+        enabled: discovered.enabled,
+        settings: discovered.settings
+      }
     ]);
     expect(notificationService.success).toHaveBeenCalledWith('south.add-discovered-items.added', { count: '1' });
   });
@@ -225,7 +231,7 @@ describe('HistoryQueryDetailComponent', () => {
         { type: testData.south.manifest.id, settings: historyQuery.southSettings },
         testData.south.manifest,
         null,
-        { id: '', name: 'measures_tags', enabled: discovered.enabled, settings: discovered.settings }
+        { id: '', name: 'measures_tags', description: discovered.description, enabled: discovered.enabled, settings: discovered.settings }
       )
     );
     expect(historyQueryService.importItems).not.toHaveBeenCalled();
@@ -512,7 +518,7 @@ describe('HistoryQueryDetailComponent', () => {
     expect(importModal.prepare).toHaveBeenCalledWith(
       testData.south.manifest,
       ['name', 'enabled', 'settings_objectArray', 'settings_objectSettings', 'settings_objectValue'],
-      ['scanMode'],
+      ['description', 'scanMode'],
       true,
       expect.any(Function)
     );

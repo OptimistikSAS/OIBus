@@ -256,6 +256,7 @@ export default class SouthService {
       return {
         id: workflow.id,
         name: workflow.name,
+        description: workflow.description ?? null,
         discoveryScope: workflow.discoveryScope,
         identityKeyFields: resolveIdentityKeyFields(workflow),
         eligibilityFilter: workflow.eligibilityFilter,
@@ -498,6 +499,7 @@ export default class SouthService {
       id: 'test',
       enabled: false,
       name: itemName,
+      description: null,
       group: null,
       syncWithGroup: false,
       scanMode: {
@@ -947,6 +949,7 @@ export default class SouthService {
       const item: SouthConnectorItemDTO = {
         id: '',
         name: data.name,
+        description: data.description || null,
         enabled: stringToBoolean(data.enabled),
         scanMode,
         settings: {} as SouthItemSettings,
@@ -1340,6 +1343,7 @@ export const copySouthItemCommandToSouthItemEntity = async (
   )! as OIBusObjectAttribute;
   southItemEntity.id = retrieveSecretsFromSouth ? '' : command.id || ''; // reset id if it is a copy from another connector
   southItemEntity.name = command.name;
+  southItemEntity.description = command.description ?? null;
   southItemEntity.enabled = command.enabled;
   southItemEntity.settings = await encryptionService.encryptConnectorSecrets(
     command.settings,

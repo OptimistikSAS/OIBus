@@ -961,6 +961,7 @@ describe('DataStreamEngine', () => {
     const buildWorkflow = (overrides: Partial<ConfigurationWorkflowEntity> = {}): ConfigurationWorkflowEntity => ({
       id: 'workflowId1',
       name: 'Reactor discovery',
+      description: null,
       southId: testData.south.list[0].id,
       discoveryScope: {},
       identityKeyFields: [],

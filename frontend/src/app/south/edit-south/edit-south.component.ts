@@ -306,6 +306,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   ({
                     id: item.id,
                     name: item.name,
+                    description: item.description,
                     enabled: item.enabled,
                     settings: item.settings,
                     scanModeId: item.scanMode?.id || null,
@@ -611,6 +612,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled', 'scanMode'];
     const optionalHeaders: Array<string> = [
+      'description',
       'group',
       'maxReadInterval',
       'readDelay',
@@ -638,6 +640,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
               ({
                 id: item.id,
                 name: item.name,
+                description: item.description,
                 enabled: item.enabled,
                 settings: item.settings,
                 scanModeId: item.scanMode?.id || null,

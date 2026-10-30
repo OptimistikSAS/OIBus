@@ -364,6 +364,11 @@
         <input formControlName="name" id="workflow-name" class="form-control" />
         <val-errors controlName="name" />
       </div>
+      <!-- Description -->
+      <div class="form-group">
+        <label class="form-label" for="workflow-description" translate="south.workflows.description"></label>
+        <textarea formControlName="description" id="workflow-description" class="form-control" rows="2"></textarea>
+      </div>
       <!-- Scan mode -->
       <div class="form-group">
         <label class="form-label" for="workflow-scan-mode" translate="south.workflows.scan-mode"></label>
@@ -393,6 +398,10 @@
       <dl class="row mb-3" id="review-summary">
         <dt class="col-sm-3" translate="south.workflows.name"></dt>
         <dd class="col-sm-9">{{ form.controls.name.value }}</dd>
+        @if (form.controls.description.value.trim()) {
+          <dt class="col-sm-3" translate="south.workflows.description"></dt>
+          <dd class="col-sm-9 oib-multiline-text" id="review-description">{{ form.controls.description.value }}</dd>
+        }
         <dt class="col-sm-3" translate="south.workflows.discovery-scope"></dt>
         <dd class="col-sm-9">
           @if (isSqlFamily()) {

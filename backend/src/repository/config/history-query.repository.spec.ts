@@ -36,6 +36,7 @@ const newHistory = (name: string, items: Array<HistoryItem> = [], fixture = test
 const newItem = (name: string, overrides: Partial<HistoryItem> = {}): HistoryItem => ({
   id: '',
   name,
+  description: null,
   enabled: true,
   settings: {} as SouthItemSettings,
   createdBy: '',
@@ -523,6 +524,7 @@ describe('HistoryQueryRepository', () => {
     const stripped = stripAuditFields(result);
     assert.ok(stripped);
     assert.strictEqual(stripped.id, testData.historyQueries.list[1].items[0].id);
+    assert.strictEqual(stripped.description, 'Flow of the reactor outlet');
     assert.strictEqual(repository.findItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[1].items[0].id), null);
   });
 
@@ -537,9 +539,10 @@ describe('HistoryQueryRepository', () => {
       ['history_query_item', item.id, 'CREATE', null, created, 'creatorUser']
     ]);
 
-    const updatedItem = { ...item, name: 'saveItem renamed item', updatedBy: 'updaterUser' };
+    const updatedItem = { ...item, name: 'saveItem renamed item', description: 'saveItem description', updatedBy: 'updaterUser' };
     const updateCalls = auditsDuring(() => repository.saveItem(historyId, updatedItem));
     const afterUpdate = repository.findItemById(historyId, item.id)!;
+    assert.strictEqual(afterUpdate.description, 'saveItem description');
     assert.deepStrictEqual(updateCalls.filter(isAudit('history_query_item', 'UPDATE', item.id)), [
       ['history_query_item', item.id, 'UPDATE', created, afterUpdate, 'updaterUser']
     ]);

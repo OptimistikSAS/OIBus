@@ -42,6 +42,7 @@ export const toSouthConnectorItemDTO = (
   return {
     id: entity.id,
     name: entity.name,
+    description: entity.description,
     enabled: entity.enabled,
     scanMode: entity.scanMode ? toScanModeDTO(entity.scanMode, getUserInfo) : null,
     settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest),

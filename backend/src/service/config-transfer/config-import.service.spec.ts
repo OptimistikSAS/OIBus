@@ -130,6 +130,7 @@ describe('Config Import Service', () => {
   const localWorkflow = (): ConfigurationWorkflowCommandDTO => ({
     id: 'workflow1',
     name: 'workflow',
+    description: null,
     discoveryScope: { rootNodeId: 'ns=1;s=Root' },
     identityKeyFields: ['nodeId'],
     eligibilityFilter: [],

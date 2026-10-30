@@ -74,7 +74,7 @@
         <tbody>
           @for (workflow of displayed; track workflow.id) {
             <tr>
-              <td>{{ workflow.name }}</td>
+              <td><oib-described-name [name]="workflow.name" [description]="workflow.description" /></td>
               <td class="text-muted">
                 @let scope = getScope(workflow);
                 <span [translate]="scope.key" [translateParams]="scope.params"></span>

@@ -19,6 +19,7 @@ export const toHistoryQueryItemDTO = (
   return {
     id: historyQueryItem.id,
     name: historyQueryItem.name,
+    description: historyQueryItem.description,
     enabled: historyQueryItem.enabled,
     settings: encryptionService.filterSecrets<SouthItemSettings>(historyQueryItem.settings, itemSettingsManifest),
     createdBy: getUserInfo(historyQueryItem.createdBy),

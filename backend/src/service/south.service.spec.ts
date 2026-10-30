@@ -120,6 +120,7 @@ const leaveGroupCommand: SouthConnectorItemCommandDTO = {
 const buildItemEntity = (overrides: Partial<SouthConnectorItemEntity<SouthItemSettings>>): SouthConnectorItemEntity<SouthItemSettings> => ({
   id: 'item1',
   name: 'Test Item',
+  description: null,
   enabled: true,
   scanMode: testData.scanMode.list[0],
   settings: {} as SouthItemSettings,
@@ -159,6 +160,7 @@ const folderScannerRow = (name: string, overrides: Record<string, unknown> = {})
 const buildImportedItem = (name: string, settings: Record<string, unknown>, overrides: Record<string, unknown> = {}) => ({
   id: '',
   name,
+  description: null,
   enabled: true,
   scanMode: toScanModeDTO(testData.scanMode.list[0], getUserInfo),
   settings,
@@ -177,6 +179,7 @@ const existingItemsOf = (southIndex: number) => testData.south.list[southIndex].
 const localWorkflowCommand: ConfigurationWorkflowCommandDTO = {
   id: null,
   name: 'local',
+  description: 'Creates an item for each variable',
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [],
@@ -354,6 +357,7 @@ describe('South Service', () => {
       {
         id: null,
         name: 'local',
+        description: 'Creates an item for each variable',
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],
         eligibilityFilter: [],
@@ -1542,7 +1546,7 @@ describe('South Service', () => {
       folderScannerRow('item2bis', { scanMode: 'bad scan mode' }),
       folderScannerRow('item3', { settings_badItem: 100 }),
       folderScannerRow('item4', { settings_ignoreModifiedDate: 12 }),
-      folderScannerRow('item5', { settings_regex: '' })
+      folderScannerRow('item5', { description: 'item5 description', settings_regex: '' })
     ];
     utilsExports.parseCsvImport.mock.mockImplementation(() => csvData);
     validator.validateSettings.mock.mockImplementation(
@@ -1556,7 +1560,13 @@ describe('South Service', () => {
 
     const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', existingItemsOf(0));
     assert.deepStrictEqual(result, {
-      items: [buildImportedItem('item5', { ignoreModifiedDate: false, minAge: 100, preserveFiles: true, regex: undefined })],
+      items: [
+        buildImportedItem(
+          'item5',
+          { ignoreModifiedDate: false, minAge: 100, preserveFiles: true, regex: undefined },
+          { description: 'item5 description' }
+        )
+      ],
       errors: [
         { error: 'Item name "item1" already used', item: folderScannerRow('item1') },
         {

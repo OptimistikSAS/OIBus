@@ -1102,6 +1102,7 @@ export default class OIAnalyticsCommandService {
         id: item.id,
         enabled: item.enabled,
         name: item.name,
+        description: item.description ?? null,
         settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey),
         scanModeId: item.scanModeId,
         scanModeName: item.scanModeName,
@@ -1188,6 +1189,7 @@ export default class OIAnalyticsCommandService {
         id: item.id,
         enabled: item.enabled,
         name: item.name,
+        description: item.description ?? null,
         settings: item.settings,
         scanModeId: item.scanMode?.id || null,
         scanModeName: null,
@@ -1287,6 +1289,7 @@ export default class OIAnalyticsCommandService {
         id: item.id,
         enabled: item.enabled,
         name: item.name,
+        description: item.description ?? null,
         settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey)
       }))
     )) as typeof command.items;

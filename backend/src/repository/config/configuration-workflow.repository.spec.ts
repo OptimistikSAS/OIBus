@@ -29,6 +29,7 @@ describe('Configuration Workflow Repository', () => {
 
     const localCommand: ConfigurationWorkflowCommand = {
       name: 'Local (self-scoped) workflow',
+      description: 'Creates an item for each variable',
       southId: testData.south.list[0].id,
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
@@ -48,6 +49,7 @@ describe('Configuration Workflow Repository', () => {
       const created = repository.create(localCommand, 'userTest');
 
       assert.strictEqual(created.southId, testData.south.list[0].id);
+      assert.strictEqual(created.description, 'Creates an item for each variable');
       assert.deepStrictEqual(created.discoveryScope, { rootNodeId: 'ns=1;s=Root' });
       assert.deepStrictEqual(created.identityKeyFields, ['nodeId']);
       assert.deepStrictEqual(created.eligibilityFilter, [{ field: 'type', operator: 'equals', value: 'Variable' }]);
@@ -68,6 +70,7 @@ describe('Configuration Workflow Repository', () => {
     it('should create a remote (push-to-OIAnalytics) workflow, with no scan mode (manual-only)', () => {
       const command: ConfigurationWorkflowCommand = {
         name: 'Metadata query workflow',
+        description: null,
         southId: testData.south.list[0].id,
         discoveryScope: { query: 'SELECT tag_name, unit, min, max FROM metadata_table' },
         identityKeyFields: ['tagName'],
@@ -130,6 +133,7 @@ describe('Configuration Workflow Repository', () => {
         created.id,
         {
           name: 'Updated workflow name',
+          description: 'Updated description',
           discoveryScope: { rootNodeId: 'ns=1;s=Updated' },
           identityKeyFields: ['nodeId', 'parentPath'],
           eligibilityFilter: [],
@@ -142,6 +146,7 @@ describe('Configuration Workflow Repository', () => {
       );
 
       const updated = repository.findById(created.id);
+      assert.strictEqual(updated!.description, 'Updated description');
       assert.deepStrictEqual(updated!.discoveryScope, { rootNodeId: 'ns=1;s=Updated' });
       assert.deepStrictEqual(updated!.identityKeyFields, ['nodeId', 'parentPath']);
       assert.deepStrictEqual(updated!.eligibilityFilter, []);

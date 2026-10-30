@@ -304,11 +304,13 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   readonly form: FormGroup<{
     name: FormControl<string>;
+    description: FormControl<string>;
     scanModeId: FormControl<string | null>;
     pushToOIAnalytics: FormControl<boolean>;
     enabled: FormControl<boolean>;
   }> = this.fb.group({
     name: ['', [Validators.required, this.checkUniqueness()]],
+    description: [''],
     scanModeId: this.fb.control<string | null>(null),
     pushToOIAnalytics: this.fb.control<boolean>(false),
     enabled: this.fb.control<boolean>(true)
@@ -567,6 +569,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     // choice is hidden from the template for these.
     this.form.reset({
       name: this.workflow?.name ?? defaultName,
+      description: this.workflow?.description ?? '',
       scanModeId: this.workflow?.scanModeId ?? null,
       pushToOIAnalytics: this.isSqlFamily() ? true : (this.workflow?.pushToOIAnalytics ?? false),
       enabled: this.workflow?.enabled ?? true
@@ -813,6 +816,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       id: null,
       // the name comes last: a preview does not need one
       name: this.form.controls.name.value || 'preview',
+      description: null,
       discoveryScope: this.currentDiscoveryScope(),
       identityKeyFields: [],
       eligibilityFilter: this.eligibilityFilter(),
@@ -948,6 +952,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       // workflow) - a new one or a copy has none yet, the caller decides what to give it.
       id: this.mode() === 'edit' ? (this.workflow?.id ?? null) : null,
       name: formValue.name,
+      description: formValue.description.trim() || null,
       discoveryScope,
       identityKeyFields: pushToOIAnalytics ? [] : this.identityKeyFields(),
       eligibilityFilter: this.eligibilityFilter(),

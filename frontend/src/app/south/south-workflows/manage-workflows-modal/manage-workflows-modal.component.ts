@@ -14,6 +14,7 @@ import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-
 
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
+import { DescribedNameComponent } from '../../../shared/described-name/described-name.component';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { ModalService } from '../../../shared/modal.service';
 import { NotificationService } from '../../../shared/notification.service';
@@ -45,7 +46,7 @@ export type ExploreAndSyncResult = Extract<ExploreWizardResult, { kind: 'items' 
   templateUrl: './manage-workflows-modal.component.html',
   styleUrl: './manage-workflows-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule]
+  imports: [TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule, DescribedNameComponent]
 })
 export default class ManageWorkflowsModalComponent {
   private modal = inject(NgbActiveModal);

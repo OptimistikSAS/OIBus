@@ -241,6 +241,7 @@ export class SouthDetailComponent {
           return this.southConnectorService.createItem(this.southConnector()!.id, {
             id: command.id,
             name: command.name,
+            description: command.description,
             enabled: command.enabled,
             settings: command.settings,
             scanModeId: command.scanModeId,
@@ -295,6 +296,7 @@ export class SouthDetailComponent {
           return this.southConnectorService.createItem(this.southConnector()!.id, {
             id: command.id || null,
             name: command.name,
+            description: command.description,
             enabled: command.enabled,
             settings: command.settings,
             scanModeId: command.scanModeId,
@@ -356,6 +358,7 @@ export class SouthDetailComponent {
             id: command.id,
             enabled: command.enabled,
             name: command.name,
+            description: command.description,
             settings: command.settings,
             scanModeId: command.scanModeId,
             scanModeName: command.scanModeName,
@@ -440,6 +443,7 @@ export class SouthDetailComponent {
     const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled', 'scanMode'];
     const optionalHeaders: Array<string> = [
+      'description',
       'group',
       'maxReadInterval',
       'readDelay',
@@ -469,6 +473,7 @@ export class SouthDetailComponent {
                 ({
                   id: item.id,
                   name: item.name,
+                  description: item.description,
                   enabled: item.enabled,
                   settings: item.settings,
                   scanModeId: item.scanMode?.id || null,
@@ -815,6 +820,7 @@ export class SouthDetailComponent {
         id: item.id,
         enabled: item.enabled,
         name: item.name,
+        description: item.description,
         settings: item.settings,
         scanModeId: item.scanMode?.id || null,
         scanModeName: null,

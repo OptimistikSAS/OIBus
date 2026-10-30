@@ -59,6 +59,7 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
 
 export interface HistoryQueryItemEntity<T extends SouthItemSettings> extends BaseEntity {
   name: string;
+  description: string | null;
   enabled: boolean;
   settings: T;
 }

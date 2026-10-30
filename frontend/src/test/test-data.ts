@@ -216,6 +216,7 @@ const southList: Array<SouthConnectorDTO> = [
       {
         id: 'southItemId1',
         name: 'item1',
+        description: null,
         enabled: true,
         scanMode: {
           id: 'scanModeId1',
@@ -265,6 +266,7 @@ const southList: Array<SouthConnectorDTO> = [
       {
         id: 'southItemId2',
         name: 'item2',
+        description: null,
         enabled: true,
         scanMode: {
           id: 'scanModeId2',
@@ -346,6 +348,7 @@ const southList: Array<SouthConnectorDTO> = [
       {
         id: 'southItemId3',
         name: 'item3',
+        description: null,
         enabled: true,
         scanMode: {
           id: 'scanModeId1',
@@ -395,6 +398,7 @@ const southList: Array<SouthConnectorDTO> = [
       {
         id: 'southItemId4',
         name: 'item4',
+        description: null,
         enabled: true,
         scanMode: {
           id: 'scanModeId1',
@@ -484,6 +488,7 @@ const southList: Array<SouthConnectorDTO> = [
       {
         id: 'southItemId5',
         name: 'opcua ha',
+        description: null,
         enabled: true,
         scanMode: {
           id: 'scanModeId1',
@@ -533,6 +538,7 @@ const southList: Array<SouthConnectorDTO> = [
       {
         id: 'southItemId6',
         name: 'opcua sub',
+        description: null,
         enabled: true,
         scanMode: {
           id: 'subscription',
@@ -582,6 +588,7 @@ const southList: Array<SouthConnectorDTO> = [
       {
         id: 'southItemId7',
         name: 'opcua da',
+        description: null,
         enabled: true,
         scanMode: {
           id: 'scanModeId2',
@@ -631,6 +638,7 @@ const southList: Array<SouthConnectorDTO> = [
       {
         id: 'southItemId8',
         name: 'opcua ha 2',
+        description: null,
         enabled: true,
         scanMode: {
           id: 'scanModeId1',
@@ -761,6 +769,7 @@ const southCommand: SouthConnectorCommandDTO = {
     {
       id: 'newSouthItemFromConnectorId',
       name: 'my new item from south connector',
+      description: null,
       enabled: true,
       settings: {
         regex: '*',
@@ -796,6 +805,7 @@ const southCommand: SouthConnectorCommandDTO = {
 const southItemCommand: SouthConnectorItemCommandDTO = {
   id: 'newSouthItemId',
   name: 'New South Item',
+  description: null,
   scanModeId: 'scanModeId1',
   scanModeName: null,
   enabled: true,
@@ -1346,6 +1356,7 @@ const historyQueryList: Array<HistoryQueryDTO> = [
       {
         id: 'historyQueryItem1',
         name: 'item1',
+        description: null,
         enabled: true,
         settings: {
           query: 'SELECT * FROM table1',
@@ -1367,6 +1378,7 @@ const historyQueryList: Array<HistoryQueryDTO> = [
       {
         id: 'historyQueryItem2',
         name: 'item2',
+        description: null,
         enabled: true,
         settings: {
           query: 'SELECT * FROM table2',
@@ -1566,6 +1578,7 @@ const historyQueryList: Array<HistoryQueryDTO> = [
       {
         id: 'historyQueryItem3',
         name: 'item3',
+        description: null,
         enabled: true,
         settings: {
           query: 'SELECT * FROM table3',
@@ -1697,6 +1710,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
     {
       id: 'temp_',
       name: 'item4',
+      description: null,
       enabled: true,
       settings: {
         query: 'SELECT * FROM table4',
@@ -1731,6 +1745,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
 const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
   id: 'newHistoryQueryItemId',
   name: 'New History query Item',
+  description: null,
   enabled: true,
   settings: {
     query: 'SELECT * FROM newTable',
@@ -2487,6 +2502,7 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
         {
           id: 'newSouthItemFromConnectorId',
           name: 'my new item from south connector',
+          description: null,
           enabled: true,
           settings: {
             regex: '*',
@@ -2667,6 +2683,7 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
         {
           id: 'newSouthItemFromConnectorId',
           name: 'my new item from south connector',
+          description: null,
           enabled: true,
           settings: {
             regex: '*',

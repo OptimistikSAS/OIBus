@@ -83,7 +83,7 @@ AND timestamp <= @EndTime
 A history query embeds a full South connector and a full North connector. The North side (settings,
 caching, transformers) is configured exactly like a live North connector. The South side's connection
 settings are configured the same way too, but items are simplified: a history query item only has a
-**name**, an **enabled** flag, and its type-specific settings — there is no per-item scan mode, group, or
+**name**, an optional **description**, an **enabled** flag, and its type-specific settings — there is no per-item scan mode, group, or
 throttling override. Every item shares the single **Time Range** settings above instead.
 
 Items are edited in the same three-step modal as South items — **Settings** (with the test panel), **Name** and

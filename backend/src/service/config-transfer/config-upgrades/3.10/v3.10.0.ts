@@ -1409,7 +1409,8 @@ export const upgrade: ConfigUpgrade = {
     'send the OIAnalytics setpoints as record lists, replacing the setpoint transformers by record-list ones; ' +
     'replace the file transformer by file-to-file ones sending the files as they are; ' +
     'move the filename prefix and suffix of the File Writer and SFTP norths to the filename of their transformers; ' +
-    'add the connection and write timeouts of the OPC UA norths, and the connection timeout and subscription settings of the OPC UA souths',
+    'add the connection and write timeouts of the OPC UA norths, and the connection timeout and subscription settings of the OPC UA souths; ' +
+    'add the description of the south and history query items',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1439,6 +1440,7 @@ export const upgrade: ConfigUpgrade = {
       for (const item of asObjects(settings.items)) {
         setMissing(item, 'cachingStrategy', defaultCachingStrategy);
         for (const key of [
+          'description',
           'thresholdType',
           'threshold',
           'rangeLow',
@@ -1454,6 +1456,7 @@ export const upgrade: ConfigUpgrade = {
         setMissing(group.historySettings as JsonObject, 'cachingStrategy', defaultCachingStrategy);
       }
     });
+    forEachHistoryQueryItem(config, null, item => setMissing(item, 'description', null));
 
     for (const southType of RAW_RESAMPLING_SOUTH_TYPES) {
       const updateResampling = (item: JsonObject): void => {

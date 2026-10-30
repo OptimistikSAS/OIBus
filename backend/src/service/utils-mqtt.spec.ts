@@ -28,6 +28,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
+    description: null,
     enabled: true,
     settings: { topic: 'my/first/topic' },
     scanMode,
@@ -49,6 +50,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id2',
     name: 'item2',
+    description: null,
     enabled: true,
     settings: { topic: 'my/+/+/topic/with/wildcard/#' },
     scanMode,
@@ -70,6 +72,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id3',
     name: 'item3',
+    description: null,
     enabled: true,
     settings: { topic: 'my/wrong/topic////' },
     scanMode,
@@ -91,6 +94,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id4',
     name: 'item4',
+    description: null,
     enabled: true,
     settings: { topic: 'json/topic' },
     scanMode,
@@ -112,6 +116,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id5',
     name: 'item5',
+    description: null,
     enabled: true,
     settings: { topic: 'json/topic' },
     scanMode,
@@ -133,6 +138,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id6',
     name: 'item6',
+    description: null,
     enabled: true,
     settings: { topic: 'json/topic' },
     scanMode,
@@ -154,6 +160,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id7',
     name: 'item7',
+    description: null,
     enabled: false,
     settings: { topic: 'disabled/topic' },
     scanMode,
@@ -175,6 +182,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id8',
     name: 'item8',
+    description: null,
     enabled: true,
     settings: { topic: 'my/second/topic' },
     scanMode,
@@ -196,6 +204,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id9',
     name: 'item9',
+    description: null,
     enabled: true,
     settings: { topic: 'my/second/topic' },
     scanMode,
@@ -217,6 +226,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id10',
     name: 'item10',
+    description: null,
     enabled: true,
     settings: { topic: 'simple/+' },
     scanMode,
@@ -240,6 +250,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
 const bareHashItem: SouthConnectorItemEntity<SouthMQTTItemSettings> = {
   id: 'id11',
   name: 'item11',
+  description: null,
   enabled: true,
   settings: { topic: '#' },
   scanMode,

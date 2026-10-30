@@ -371,6 +371,7 @@ describe('SouthConnectorController', () => {
       workflow: {
         id: 'workflowId1',
         name: 'workflow',
+        description: null,
         discoveryScope: {},
         identityKeyFields: [],
         eligibilityFilter: [],

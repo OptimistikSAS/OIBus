@@ -21,6 +21,7 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { createPageFromArray } from '@oibus/shared/common/types';
 
 import { AuditInfoComponent } from '../audit-info/audit-info.component';
+import { DescribedNameComponent } from '../described-name/described-name.component';
 import { PaginationComponent } from '../pagination/pagination.component';
 import {
   builtInSortValue,
@@ -69,6 +70,7 @@ const PAGE_SIZE = 20;
     NgbDropdownMenu,
     NgbDropdownItem,
     AuditInfoComponent,
+    DescribedNameComponent,
     PaginationComponent
   ]
 })

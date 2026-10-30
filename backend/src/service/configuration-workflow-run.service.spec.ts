@@ -31,6 +31,7 @@ const WORKFLOW_ID = 'workflowId1';
 const baseWorkflow: ConfigurationWorkflowEntity = {
   id: WORKFLOW_ID,
   name: 'Reactor discovery',
+  description: null,
   southId: SOUTH_ID,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
@@ -48,6 +49,7 @@ const baseWorkflow: ConfigurationWorkflowEntity = {
 const runningItem: SouthConnectorItemEntity<never> = {
   id: 'existingItemId',
   name: 'Temperature',
+  description: 'Reactor temperature',
   enabled: true,
   scanMode: null,
   settings: { nodeId: 'ns=1;s=Temperature' } as never,
@@ -248,8 +250,10 @@ describe('Configuration Workflow Run Service', () => {
     const createCall = southService.createItem.mock.calls[0];
     assert.strictEqual(createCall.arguments[0], SOUTH_ID);
     assert.strictEqual(createCall.arguments[2], 'userTest');
-    const command = createCall.arguments[1] as { name: string; settings: { nodeId: string } };
+    const command = createCall.arguments[1] as { name: string; description: string | null; settings: { nodeId: string } };
     assert.strictEqual(command.name, 'Temperature');
+    // the mapping leaves the description out
+    assert.strictEqual(command.description, null);
     assert.strictEqual(command.settings.nodeId, 'ns=1;s=Temperature');
 
     assert.deepStrictEqual(southConnectorRepository.claimItemForWorkflow.mock.calls[0].arguments, [
@@ -261,6 +265,20 @@ describe('Configuration Workflow Run Service', () => {
 
     const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as { createdCount: number };
     assert.strictEqual(counts.createdCount, 1);
+  });
+
+  it('should map the description of the items', async () => {
+    south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
+    configurationWorkflowService.findById.mock.mockImplementation(() => ({
+      ...baseWorkflow,
+      itemFieldMapping: { ...baseWorkflow.itemFieldMapping, description: '{{name}} of the reactor' }
+    }));
+    await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
+
+    assert.strictEqual(
+      (southService.createItem.mock.calls[0].arguments[1] as { description: string }).description,
+      'Temperature of the reactor'
+    );
   });
 
   it('should coerce a mapped boolean/number constant to the type the south connector manifest (folder-scanner) actually declares', async () => {
@@ -327,6 +345,7 @@ describe('Configuration Workflow Run Service', () => {
     // an updated item keeps its own values for what the mapping leaves out, rather than the manifest defaults
     const existingItem = southConnectorRepository.findItemById.mock.calls[0].result as SouthConnectorItemEntity<SouthItemSettings>;
     assert.deepStrictEqual((updateCall.arguments[2] as { settings: SouthItemSettings }).settings, existingItem.settings);
+    assert.strictEqual((updateCall.arguments[2] as { description: string | null }).description, existingItem.description);
     assert.strictEqual(southConnectorRepository.claimItemForWorkflow.mock.calls.length, 0);
 
     const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as { updatedCount: number; createdCount: number };
@@ -699,6 +718,7 @@ describe('Configuration Workflow Run Service', () => {
     const command: ConfigurationWorkflowCommandDTO = {
       id: null,
       name: 'Unsaved discovery',
+      description: null,
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],

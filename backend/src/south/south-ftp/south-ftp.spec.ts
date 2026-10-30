@@ -24,6 +24,7 @@ const nodeRequire = createRequire(import.meta.url);
 const buildItem = (id: string, settings: Partial<SouthFTPItemSettings>): SouthConnectorItemEntity<SouthFTPItemSettings> => ({
   id,
   name: id.replace('id', 'item'),
+  description: null,
   enabled: true,
   settings: {
     remoteFolder: 'input',

@@ -12,6 +12,7 @@ import {
 } from '../../../../tests/utils/migration-test-utils';
 import {
   addHttpsSettings,
+  addItemAndWorkflowDescriptions,
   addOIAnalyticsReferenceProcess,
   addOPCUATimeoutsAndSubscriptionSettings,
   addRegistrationPermissions,
@@ -4272,5 +4273,52 @@ describe('Entity migration v3.10.0: addOPCUATimeoutsAndSubscriptionSettings', ()
     });
     assert.deepStrictEqual(await settingsOf('north_connectors', 'settings', 'mqtt'), { host: 'h' });
     assert.deepStrictEqual(await settingsOf('history_queries', 'north_settings', 'hq-mqtt'), { host: 'h' });
+  });
+});
+
+describe('Entity migration v3.10.0: addItemAndWorkflowDescriptions', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addItemAndWorkflowDescriptions, db)
+  });
+  const TABLES = ['south_items', 'history_items', 'configuration_workflows'];
+  let db: Knex;
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+    await db('south_connectors').insert({ id: 'south1', name: 'South', type: 'mqtt', enabled: true, settings: '{}' });
+    await db('south_items').insert({
+      id: 'item1',
+      name: 'Item',
+      enabled: true,
+      connector_id: 'south1',
+      scan_mode_id: 'sm1',
+      settings: '{}'
+    });
+  });
+
+  afterEach(() => harness.afterEach());
+
+  it('should add a description column, null for the existing rows', async () => {
+    await addItemAndWorkflowDescriptions(db);
+
+    for (const table of TABLES) {
+      assert.ok((await columnNames(db, table)).includes('description'), `${table}.description added`);
+    }
+    assert.strictEqual((await db('south_items').where('id', 'item1').first('description')).description, null);
+  });
+
+  it('should drop the description columns on down', async () => {
+    await addItemAndWorkflowDescriptions(db);
+    await down(db);
+
+    for (const table of ['south_items', 'history_items']) {
+      assert.ok(!(await columnNames(db, table)).includes('description'), `${table}.description removed`);
+    }
+    assert.strictEqual((await db('south_items').select('id')).length, 1);
   });
 });

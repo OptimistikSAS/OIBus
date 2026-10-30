@@ -21,6 +21,7 @@ type HTTPRequestFn = (url: ReqURL, options?: ReqOptions) => Promise<ReqResponse>
 const buildItem = (id: string, settings: SouthPIItemSettings): SouthConnectorItemEntity<SouthPIItemSettings> => ({
   id,
   name: id.replace('id', 'item'),
+  description: null,
   enabled: true,
   settings,
   scanMode: testData.scanMode.list[0],

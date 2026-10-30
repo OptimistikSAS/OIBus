@@ -25,6 +25,8 @@ export const THRESHOLD_TYPES: Array<{ value: SouthCachingThresholdType; labelKey
 /** A south item as summed up: its history settings and caching strategy are its group's while it is synced with it */
 export interface SouthItemSummaryValues {
   name: string;
+  /** Null when the item has no description */
+  description: string | null;
   enabled: boolean;
   /** Null when the item has no group */
   groupName: string | null;
@@ -61,6 +63,7 @@ export function toSouthItemSummaryValues(item: SouthConnectorItemDTO): SouthItem
   const history = synced ? item.group!.historySettings : item;
   return {
     name: item.name,
+    description: item.description,
     enabled: item.enabled,
     groupName: item.group?.standardSettings.name ?? null,
     scanModeName: (item.group ? item.group.standardSettings.scanMode : item.scanMode)?.name ?? null,
@@ -104,6 +107,7 @@ export function summarizeSouthItem(
 
   const general: Array<SettingSummary> = [
     text('south.items.name', item.name, 'name'),
+    text('south.items.description', item.description, 'description'),
     text('south.items.status', translate(item.enabled ? 'common.enabled' : 'common.disabled')),
     text('south.items.group', item.groupName ?? translate('south.items.group-none'))
   ];

@@ -43,7 +43,7 @@ const PAGE_SIZE = 50;
  * Using LEFT JOINs to resolve scan modes and groups in one round-trip.
  */
 const ITEM_JOIN_SELECT =
-  `SELECT si.id, si.name, si.enabled, si.scan_mode_id, si.settings, si.sync_with_group, ` +
+  `SELECT si.id, si.name, si.description, si.enabled, si.scan_mode_id, si.settings, si.sync_with_group, ` +
   `si.max_read_interval, si.read_delay, si.start_time_offset, si.end_time_offset, si.recovery_strategy, ` +
   `si.caching_strategy, si.threshold_type, si.threshold, si.range_low, si.range_high, si.max_caching_interval, ` +
   `si.created_by_workflow_id, si.disabled_reason, ` +
@@ -267,10 +267,10 @@ export default class SouthConnectorRepository {
         }
 
         const insert = this.database.prepare(
-          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, caching_strategy, threshold_type, threshold, range_low, range_high, max_caching_interval, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
+          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, description, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, caching_strategy, threshold_type, threshold, range_low, range_high, max_caching_interval, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
         );
         const update = this.database.prepare(
-          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, caching_strategy = ?, threshold_type = ?, threshold = ?, range_low = ?, range_high = ?, max_caching_interval = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, description = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, caching_strategy = ?, threshold_type = ?, threshold = ?, range_low = ?, range_high = ?, max_caching_interval = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
         );
         const insertGroup = this.database.prepare(`INSERT INTO ${GROUP_ITEMS_TABLE} (group_id, item_id) VALUES (?, ?);`);
         const deleteGroups = this.database.prepare(`DELETE FROM ${GROUP_ITEMS_TABLE} WHERE item_id = ?;`);
@@ -281,6 +281,7 @@ export default class SouthConnectorRepository {
               {
                 id: string;
                 name: string;
+                description: string | null;
                 enabled: number;
                 scan_mode_id: string | null;
                 settings: string;
@@ -298,7 +299,7 @@ export default class SouthConnectorRepository {
                 max_caching_interval: number | null;
               }
             >(
-              `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, caching_strategy, threshold_type, threshold, range_low, range_high, max_caching_interval FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`
+              `SELECT id, name, description, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, caching_strategy, threshold_type, threshold, range_low, range_high, max_caching_interval FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`
             )
             .all(south.id)
             .map(row => [row.id, row])
@@ -312,6 +313,7 @@ export default class SouthConnectorRepository {
             insert.run(
               item.id,
               item.name,
+              item.description ?? null,
               +item.enabled,
               south.id,
               item.scanMode?.id ?? null,
@@ -344,6 +346,7 @@ export default class SouthConnectorRepository {
             const hasChanged =
               !existing ||
               existing.name !== item.name ||
+              existing.description !== (item.description ?? null) ||
               existing.enabled !== +item.enabled ||
               existing.scan_mode_id !== (item.scanMode?.id ?? null) ||
               existing.settings !== JSON.stringify(item.settings) ||
@@ -362,6 +365,7 @@ export default class SouthConnectorRepository {
             if (hasChanged) {
               update.run(
                 item.name,
+                item.description ?? null,
                 +item.enabled,
                 item.scanMode?.id ?? null,
                 JSON.stringify(item.settings),
@@ -602,13 +606,14 @@ export default class SouthConnectorRepository {
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
-        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, caching_strategy, threshold_type, threshold, range_low, range_high, max_caching_interval, created_by, updated_by, created_at, updated_at) ` +
-        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, description, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, caching_strategy, threshold_type, threshold, range_low, range_high, max_caching_interval, created_by, updated_by, created_at, updated_at) ` +
+        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
       this.database
         .prepare(insertQuery)
         .run(
           southItem.id,
           southItem.name,
+          southItem.description ?? null,
           +southItem.enabled,
           southConnectorId,
           southItem.scanMode?.id ?? null,
@@ -629,11 +634,12 @@ export default class SouthConnectorRepository {
           southItem.updatedBy
         );
     } else {
-      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, caching_strategy = ?, threshold_type = ?, threshold = ?, range_low = ?, range_high = ?, max_caching_interval = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
+      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, description = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, caching_strategy = ?, threshold_type = ?, threshold = ?, range_low = ?, range_high = ?, max_caching_interval = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(
           southItem.name,
+          southItem.description ?? null,
           +southItem.enabled,
           southItem.scanMode?.id ?? null,
           JSON.stringify(southItem.settings),
@@ -939,6 +945,7 @@ export function toItemEntityFromJoinedRow(row: Record<string, string | number | 
   return {
     id: row.id as string,
     name: row.name as string,
+    description: (row.description as string | null) ?? null,
     enabled: Boolean(row.enabled),
     scanMode,
     settings: JSON.parse(row.settings as string) as SouthItemSettings,

@@ -52,6 +52,7 @@ const buildOpcuaItem = (
 ): SouthConnectorItemEntity<SouthOPCUAItemSettings> => ({
   id: 'southItemId5',
   name: 'opcua sub',
+  description: null,
   enabled: true,
   settings: { mode: 'da' } as SouthOPCUAItemSettings,
   scanMode: testData.scanMode.list[0],

@@ -308,6 +308,12 @@ export interface HistoryQueryNorthTypedDTO<T extends OIBusNorthType, S> {
 
 export interface HistoryQueryItemTypedDTO<IS> extends BaseEntity {
   name: string;
+  /**
+   * An optional free-text description of the item.
+   *
+   * @example "Temperature of the reactor inlet"
+   */
+  description: string | null;
   enabled: boolean;
   settings: IS;
 }
@@ -533,6 +539,12 @@ export interface HistoryQueryNorthCommandTypedDTO<T extends OIBusNorthType, S> {
 export interface HistoryQueryItemCommandTypedDTO<IS> {
   id: string | null;
   name: string;
+  /**
+   * An optional free-text description of the item.
+   *
+   * @example "Temperature of the reactor inlet"
+   */
+  description: string | null;
   enabled: boolean;
   settings: IS;
 }

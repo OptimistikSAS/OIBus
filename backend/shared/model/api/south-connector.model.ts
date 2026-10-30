@@ -146,6 +146,13 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
   name: string;
 
   /**
+   * An optional free-text description of the item.
+   *
+   * @example "Temperature of the reactor inlet"
+   */
+  description: string | null;
+
+  /**
    * Whether this item is enabled and should be collected.
    *
    * @example true
@@ -654,6 +661,13 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
    * @example "Temperature Logs"
    */
   name: string;
+
+  /**
+   * An optional free-text description of the item.
+   *
+   * @example "Temperature of the reactor inlet"
+   */
+  description: string | null;
 
   /**
    * Item-specific settings for data collection.

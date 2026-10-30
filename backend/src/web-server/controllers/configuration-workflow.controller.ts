@@ -18,6 +18,7 @@ export function toConfigurationWorkflowDTO(entity: ConfigurationWorkflowEntity, 
   return {
     id: entity.id,
     name: entity.name,
+    description: entity.description,
     southId: entity.southId,
     discoveryScope: entity.discoveryScope,
     identityKeyFields: entity.identityKeyFields,

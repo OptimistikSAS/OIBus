@@ -43,6 +43,7 @@ import SouthItemTestComponent from '../../../south/south-items/south-item-test/s
 
 type ItemForm = FormGroup<{
   name: FormControl<string>;
+  description: FormControl<string>;
   enabled: FormControl<boolean>;
   settings: FormGroup;
 }>;
@@ -144,6 +145,7 @@ export class EditHistoryQueryItemModalComponent {
       id: this.item?.id ?? `temp_${Date.now()}`,
       enabled: formValue.enabled!,
       name: formValue.name!,
+      description: formValue.description?.trim() || null,
       settings: extractFormValue(formValue.settings)
     };
   });
@@ -263,7 +265,7 @@ export class EditHistoryQueryItemModalComponent {
     }
     switch (step) {
       case 'general':
-        return [form.controls.name, form.controls.enabled];
+        return [form.controls.name, form.controls.description, form.controls.enabled];
       case 'settings':
         return [form.controls.settings];
       case 'review':
@@ -297,6 +299,7 @@ export class EditHistoryQueryItemModalComponent {
   private buildForm() {
     const form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
+      description: [''],
       enabled: [true, Validators.required],
       settings: this.fb.group({})
     });
@@ -309,9 +312,14 @@ export class EditHistoryQueryItemModalComponent {
 
     // if we have an item, we initialize the values
     if (this.item) {
-      form.patchValue(this.item);
+      form.patchValue({ ...this.item, description: this.item.description ?? '' });
     } else if (this.prefill) {
-      form.patchValue({ name: this.prefill.name, enabled: this.prefill.enabled, settings: this.prefill.settings });
+      form.patchValue({
+        name: this.prefill.name,
+        description: this.prefill.description ?? '',
+        enabled: this.prefill.enabled,
+        settings: this.prefill.settings
+      });
     } else {
       // An item added after another one starts enabled or not like it, but with neither its name nor its connector
       // settings, which tell the items apart
@@ -335,6 +343,7 @@ export class EditHistoryQueryItemModalComponent {
     return {
       general: [
         { kind: 'text', labelKey: 'south.items.name', text: item.name || null, invalid: form.controls.name.invalid },
+        { kind: 'text', labelKey: 'south.items.description', text: item.description, invalid: false },
         {
           kind: 'text',
           labelKey: 'south.items.status',
