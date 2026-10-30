@@ -1245,6 +1245,18 @@ val-errors > div {
   text-align: left;
 }
 
+// the tooltip of a name in a list (an item, a synchronisation): its full name, then its description
+.oib-name-tooltip .tooltip-inner {
+  max-width: 400px;
+  text-align: left;
+}
+
+// a text written on several lines (e.g. a description), shown as written
+.oib-multiline-text {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 .schedule-tooltip .tooltip-inner {
   max-width: 300px;
   text-align: left;

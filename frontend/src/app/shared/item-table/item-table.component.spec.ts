@@ -13,6 +13,7 @@ import { ITEM_TABLE_TEMPLATES } from './item-table-templates';
 
 interface TestItem {
   name: string;
+  description?: string | null;
   enabled: boolean;
   group: string;
   createdAt?: string;
@@ -73,7 +74,7 @@ const buildItem = (name: string, enabled: boolean, group: string, createdAt = '2
 class HostComponent {
   readonly items = signal<Array<TestItem>>([
     buildItem('item b', true, 'B'),
-    buildItem('item a', false, 'A'),
+    { ...buildItem('item a', false, 'A'), description: 'The first item' },
     buildItem('item c', true, 'A')
   ]);
   readonly showDates = signal(true);
@@ -136,6 +137,18 @@ describe('ItemTableComponent', () => {
     await tester.row('item c').getByRole('button', { name: 'Edit item c' }).click();
 
     expect(tester.host.edit).toHaveBeenCalledWith(tester.host.items()[2]);
+  });
+
+  test('should display the full name and the description of an item in a tooltip', async () => {
+    const tooltip = page.getByRole('tooltip');
+
+    // an item without description: its name only
+    await tester.row('item b').getByText('item b', { exact: true }).hover();
+    await expect.element(tooltip).toMatchTextContent(/^\s*item b\s*$/);
+
+    await tester.row('item a').getByText('item a', { exact: true }).hover();
+    await expect.element(tooltip).toMatchTextContent(/item a\s*The first item/);
+    await expect.element(tooltip.getByText('item a', { exact: true })).toHaveClass('fw-bold');
   });
 
   test('should hide the dates', async () => {

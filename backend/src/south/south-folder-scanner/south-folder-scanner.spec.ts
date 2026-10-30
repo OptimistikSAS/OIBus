@@ -43,6 +43,7 @@ const buildConfiguration = (
     {
       id: 'id1',
       name: 'item1',
+      description: null,
       enabled: true,
       settings: {
         regex: '.*\\.csv',

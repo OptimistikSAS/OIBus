@@ -9,6 +9,7 @@ export function toConfigurationWorkflowCommand(workflow: ConfigurationWorkflowDT
   return {
     id: workflow.id,
     name: workflow.name,
+    description: workflow.description,
     discoveryScope: workflow.discoveryScope,
     identityKeyFields: workflow.identityKeyFields,
     eligibilityFilter: workflow.eligibilityFilter,

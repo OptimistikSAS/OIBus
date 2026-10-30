@@ -73,6 +73,7 @@ function toItemCommand(item: FolderScannerItem, groupId: string | null = item.gr
   return {
     id: item.id,
     name: item.name,
+    description: item.description,
     enabled: item.enabled,
     settings: item.settings,
     scanModeId: item.scanMode?.id || null,
@@ -410,6 +411,7 @@ describe('EditSouthComponent', () => {
           {
             id: 'workflow1',
             name: 'Alpha',
+            description: null,
             discoveryScope: {},
             identityKeyFields: ['nodeId'],
             eligibilityFilter: [],
@@ -1097,6 +1099,7 @@ function buildWorkflowCommandFor(id: string): ConfigurationWorkflowCommandDTO {
   return {
     id,
     name: 'New workflow',
+    description: null,
     discoveryScope: {},
     identityKeyFields: ['nodeId'],
     eligibilityFilter: [],

@@ -198,15 +198,15 @@ export default class HistoryQueryRepository {
           );
 
         const insert = this.database.prepare(
-          `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
+          `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, description, enabled, history_id, settings, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
         );
         const update = this.database.prepare(
-          `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+          `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
         );
         const existingItemsById = new Map(
           this.database
-            .prepare<[string], { id: string; name: string; enabled: number; settings: string }>(
-              `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`
+            .prepare<[string], { id: string; name: string; description: string | null; enabled: number; settings: string }>(
+              `SELECT id, name, description, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`
             )
             .all(history.id)
             .map(row => [row.id, row])
@@ -227,7 +227,16 @@ export default class HistoryQueryRepository {
               }
             }
             item.id = preservedId;
-            insert.run(item.id, item.name, +item.enabled, history.id, JSON.stringify(item.settings), item.createdBy, item.updatedBy);
+            insert.run(
+              item.id,
+              item.name,
+              item.description ?? null,
+              +item.enabled,
+              history.id,
+              JSON.stringify(item.settings),
+              item.createdBy,
+              item.updatedBy
+            );
             const created = this.findItemById(history.id, item.id);
             this.auditService.record(
               'history_query_item',
@@ -241,10 +250,11 @@ export default class HistoryQueryRepository {
             const hasChanged =
               !existing ||
               existing.name !== item.name ||
+              existing.description !== (item.description ?? null) ||
               existing.enabled !== +item.enabled ||
               existing.settings !== JSON.stringify(item.settings);
             if (hasChanged) {
-              update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
+              update.run(item.name, item.description ?? null, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
               const after = this.findItemById(history.id, item.id);
               this.auditService.record(
                 'history_query_item',
@@ -507,7 +517,7 @@ export default class HistoryQueryRepository {
       whereClause += ` AND enabled = ?`;
     }
 
-    const query = `SELECT id, name, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} ${whereClause} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
+    const query = `SELECT id, name, description, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} ${whereClause} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
       .all(...queryParams)
@@ -537,7 +547,7 @@ export default class HistoryQueryRepository {
       whereClause += ` AND enabled = ?`;
     }
 
-    const query = `SELECT id, name, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} ${whereClause};`;
+    const query = `SELECT id, name, description, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} ${whereClause};`;
 
     return this.database
       .prepare(query)
@@ -546,7 +556,7 @@ export default class HistoryQueryRepository {
   }
 
   findAllItemsForHistory(historyId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> {
-    const query = `SELECT id, name, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
+    const query = `SELECT id, name, description, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
     return this.database
       .prepare(query)
       .all(historyId)
@@ -554,7 +564,7 @@ export default class HistoryQueryRepository {
   }
 
   findItemById(historyId: string, itemId: string): HistoryQueryItemEntity<SouthItemSettings> | null {
-    const query = `SELECT id, name, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
+    const query = `SELECT id, name, description, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
     const result = this.database.prepare(query).get(itemId, historyId);
     if (!result) return null;
     return this.toHistoryQueryItemEntity(result as Record<string, string>);
@@ -567,14 +577,25 @@ export default class HistoryQueryRepository {
     if (!item.id) {
       item.id = generateRandomId(6);
       const insertQuery =
-        `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings, created_by, updated_by, created_at, updated_at) ` +
-        `VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+        `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, description, enabled, history_id, settings, created_by, updated_by, created_at, updated_at) ` +
+        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
       this.database
         .prepare(insertQuery)
-        .run(item.id, item.name, +item.enabled, historyId, JSON.stringify(item.settings), item.createdBy, item.updatedBy);
+        .run(
+          item.id,
+          item.name,
+          item.description ?? null,
+          +item.enabled,
+          historyId,
+          JSON.stringify(item.settings),
+          item.createdBy,
+          item.updatedBy
+        );
     } else {
-      const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
-      this.database.prepare(query).run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
+      const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
+      this.database
+        .prepare(query)
+        .run(item.name, item.description ?? null, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
     }
 
     const after = this.findItemById(historyId, item.id);
@@ -740,6 +761,7 @@ export default class HistoryQueryRepository {
     return {
       id: result.id,
       name: result.name,
+      description: result.description ?? null,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings) as SouthItemSettings,
       createdBy: result.created_by,

@@ -50,6 +50,7 @@ export default class ConfigurationWorkflowService {
 
     const workflowCommand: ConfigurationWorkflowCommand = {
       name: command.name,
+      description: command.description ?? null,
       southId,
       discoveryScope: command.discoveryScope,
       identityKeyFields: resolveIdentityKeyFields(command),
@@ -74,6 +75,7 @@ export default class ConfigurationWorkflowService {
       workflowId,
       {
         name: command.name,
+        description: command.description ?? null,
         discoveryScope: command.discoveryScope,
         identityKeyFields: resolveIdentityKeyFields(command),
         eligibilityFilter: command.eligibilityFilter,

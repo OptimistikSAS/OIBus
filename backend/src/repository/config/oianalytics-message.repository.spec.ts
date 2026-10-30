@@ -126,6 +126,7 @@ describe('OIAnalyticsMessageRepository', () => {
     const workflow = workflowRepository.create(
       {
         name: 'Message repository test workflow',
+        description: null,
         southId: testData.south.list[0].id,
         discoveryScope: { query: 'SELECT tag_name FROM metadata_table' },
         identityKeyFields: ['tagName'],

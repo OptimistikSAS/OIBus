@@ -32,6 +32,7 @@ const buildItem = (
 ): SouthConnectorItemEntity<SouthODBCItemSettings> => ({
   id,
   name: id.replace('id', 'item'),
+  description: null,
   enabled: true,
   settings: { query, trackingInstant: itemTrackingInstant },
   scanMode,

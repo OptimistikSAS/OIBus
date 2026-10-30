@@ -710,7 +710,7 @@ export const itemToFlattenedCSV = (
   itemSettingsSchema: OIBusObjectAttribute,
   isHistoryQuery = false
 ): string => {
-  const columns: Set<string> = new Set<string>(['name', 'enabled']);
+  const columns: Set<string> = new Set<string>(['name', 'description', 'enabled']);
   if (!isHistoryQuery) {
     columns.add('scanMode');
     columns.add('group');

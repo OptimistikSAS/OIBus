@@ -140,6 +140,8 @@ class EditWorkflowModalComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByRole('heading', { level: 4 });
   readonly name = this.root.getByCss('#workflow-name');
+  readonly description = this.root.getByCss('#workflow-description');
+  readonly reviewDescription = this.root.getByCss('#review-description');
   readonly scanMode = this.root.getByCss('#workflow-scan-mode');
   readonly localMode = this.root.getByLabelText('Create/update items locally');
   readonly remoteMode = this.root.getByLabelText('Push to OIAnalytics');
@@ -460,6 +462,7 @@ describe('EditWorkflowModalComponent', () => {
       expect(activeModal.close).toHaveBeenCalledWith({
         id: null,
         name: 'New workflow',
+        description: null,
         discoveryScope: { nodeIds: ['ns=1;s=Root'] },
         identityKeyFields: ['nodeId'],
         eligibilityFilter: [],
@@ -468,6 +471,44 @@ describe('EditWorkflowModalComponent', () => {
         scanModeId: scanModes[0].id,
         enabled: true
       });
+    });
+
+    // the items of a saved workflow are mapped to a schedule
+    const describedWorkflow: ConfigurationWorkflowCommandDTO = {
+      ...existingWorkflow,
+      description: 'The variables of the reactor',
+      itemFieldMapping: { ...existingWorkflow.itemFieldMapping, scanModeId: scanModes[0].id }
+    };
+
+    test('should load, review and save the description of an edited workflow', async () => {
+      const tester = create({ mode: 'edit', workflow: describedWorkflow });
+
+      await expect.element(tester.description).toHaveValue('The variables of the reactor');
+      await tester.description.fill('  The variables of the reactor and the boiler  ');
+      await tester.goToStep('review');
+      await expect.element(tester.reviewDescription).toHaveTextContent('The variables of the reactor and the boiler');
+      await tester.save();
+
+      expect(savedCommand()).toEqual(
+        expect.objectContaining({ id: existingWorkflow.id, description: 'The variables of the reactor and the boiler' })
+      );
+    });
+
+    test('should save a blank description as none, and not review it', async () => {
+      const tester = create({ mode: 'edit', workflow: describedWorkflow });
+
+      await tester.description.fill('   ');
+      await tester.goToStep('review');
+      await expect.element(tester.reviewDescription).not.toBeInTheDocument();
+      await tester.save();
+
+      expect(savedCommand()).toEqual(expect.objectContaining({ description: null }));
+    });
+
+    test('should keep the description of a duplicated workflow', async () => {
+      const tester = create({ mode: 'copy', workflow: describedWorkflow });
+
+      await expect.element(tester.description).toHaveValue('The variables of the reactor');
     });
 
     test('should not save without a name', async () => {
@@ -848,6 +889,7 @@ describe('EditWorkflowModalComponent', () => {
       // Top-level manifest fields (scanMode renamed to the command's own scanModeId path), settings.* fields, historian fields
       for (const path of [
         'name',
+        'description',
         'enabled',
         'scanModeId',
         'settings.objectValue',
@@ -867,8 +909,20 @@ describe('EditWorkflowModalComponent', () => {
       const tester = create({ workflowManifest: noHistoryManifest });
 
       await expect.element(tester.mappingField('name')).toBeInTheDocument();
+      // the description of an item is not a history setting
+      await expect.element(tester.mappingField('description')).toBeInTheDocument();
       await expect.element(tester.mappingField('maxReadInterval')).not.toBeInTheDocument();
       await expect.element(tester.mappingField('groupId')).not.toBeInTheDocument();
+    });
+
+    test('should map the description of the items to a {{ }} expression', async () => {
+      const tester = create({ mode: 'edit' });
+      await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+
+      await tester.mappingField('description').fill('{{description}}');
+      await tester.save();
+
+      expect(savedCommand().itemFieldMapping).toEqual(expect.objectContaining({ description: '{{description}}' }));
     });
 
     test('should render a select (not a text box) for boolean, scan-mode, and string-select fields', async () => {

@@ -141,6 +141,7 @@ export class AddItemsStepComponent {
     const scanMode = group ? null : (this.scanModes().find(candidate => candidate.id === command.scanModeId) ?? null);
     return {
       ...command,
+      description: command.description ?? null,
       groupId: group?.id ?? null,
       groupName: group?.standardSettings.name ?? null,
       syncWithGroup,

@@ -136,6 +136,7 @@ class EditSouthItemModalComponent {
   /** The item settings controls are added when the modal is prepared, from the connector manifest. */
   readonly form: FormGroup<{
     name: FormControl<string>;
+    description: FormControl<string>;
     groupId: FormControl<string | null>;
     scanModeId: FormControl<string | null>;
     enabled: FormControl<boolean>;
@@ -154,6 +155,7 @@ class EditSouthItemModalComponent {
     settings: FormGroup;
   }> = this.fb.group({
     name: ['', [Validators.required, this.checkUniqueness()]],
+    description: [''],
     groupId: [null as string | null],
     enabled: [true, Validators.required],
     scanModeId: [null as string | null, Validators.required],
@@ -450,6 +452,7 @@ class EditSouthItemModalComponent {
       id: this.item?.id || '',
       enabled: formValue.enabled!,
       name: formValue.name!,
+      description: formValue.description?.trim() || null,
       scanModeId: scanModeAttribute.acceptableType === 'SUBSCRIPTION' ? 'subscription' : formValue.scanModeId!,
       scanModeName:
         !formValue.scanModeId || scanModeAttribute.acceptableType === 'SUBSCRIPTION'
@@ -573,6 +576,7 @@ class EditSouthItemModalComponent {
 
       this.form.patchValue({
         name: this.item?.name ?? '',
+        description: this.item?.description ?? '',
         groupId: this.previousGroupId,
         scanModeId: this.getScanModeId(source),
         enabled: source.enabled,
@@ -609,6 +613,7 @@ class EditSouthItemModalComponent {
     return summarizeSouthItem(
       {
         name: item.name,
+        description: item.description,
         enabled: item.enabled,
         groupName: item.groupName,
         scanModeName: this.scanModeName(),

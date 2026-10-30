@@ -27,6 +27,7 @@ const buildItem = (
 ): SouthConnectorItemEntity<SouthMQTTItemSettings> => ({
   id,
   name: id.replace('id', 'item'),
+  description: null,
   enabled: true,
   settings: { topic },
   scanMode: {

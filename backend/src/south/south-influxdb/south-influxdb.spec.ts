@@ -52,6 +52,7 @@ const failYield =
 const baseItem: SouthConnectorItemEntity<SouthInfluxDBItemSettings> = {
   id: 'id1',
   name: 'item1',
+  description: null,
   enabled: true,
   settings: {
     query: "SELECT * FROM measurement WHERE time > '@StartTime' AND time <= '@EndTime'",

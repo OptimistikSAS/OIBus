@@ -97,12 +97,12 @@ The item modal walks through four steps, shown in a steps bar at its top. The se
 be tested before the item is named and scheduled, and the North connectors its data is sent to come once its group is
 chosen:
 
-| Step                | Content                                                                                                                                                                      |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Settings**        | The connector's own item settings (see each connector's page), with the [test panel](#testing-an-item) right below them, to try the settings as they are edited.             |
-| **Name & schedule** | Name, **Status** (enabled or disabled), group and schedule, then the **History settings** (history-capable connectors) and the **Caching** settings (IoT-family connectors). |
-| **North**           | The North connectors the data of the item is sent to, and the transformer it goes through — see [Where the Data of an Item Is Sent](#where-the-data-of-an-item-is-sent).     |
-| **Review & save**   | A read-only summary of the whole item: general, history and caching settings, its connector settings, then the transformers to attach to North connectors.                   |
+| Step                | Content                                                                                                                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Settings**        | The connector's own item settings (see each connector's page), with the [test panel](#testing-an-item) right below them, to try the settings as they are edited.                          |
+| **Name & schedule** | Name, description, **Status** (enabled or disabled), group and schedule, then the **History settings** (history-capable connectors) and the **Caching** settings (IoT-family connectors). |
+| **North**           | The North connectors the data of the item is sent to, and the transformer it goes through — see [Where the Data of an Item Is Sent](#where-the-data-of-an-item-is-sent).                  |
+| **Review & save**   | A read-only summary of the whole item: general, history and caching settings, its connector settings, then the transformers to attach to North connectors.                                |
 
 **Next** only moves on once the current step is valid. A new item is saved from the last step; an item being edited
 or copied can be saved from any step. When a save fails on an invalid field, the modal opens the first step that has
@@ -117,20 +117,21 @@ together with the connector, hence the **OK** button instead of **Save**.
 
 ### Item Fields {#item-fields}
 
-| Setting               | Step            | Description                                                                                                                                 | Example Value           |
-| --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| **Name**              | Name & schedule | Unique reference used by North connectors and transformers to identify this data point.                                                     | `Temperature_Sensor1`   |
-| **Group**             | Name & schedule | The group this item belongs to. Leave on **None** for a standalone item with its own schedule.                                              | `Group A`               |
-| **Schedule**          | Name & schedule | Scan mode that determines when OIBus collects data. Only shown when the item has no group (the group's schedule is shown otherwise).        | `Every 1 min`           |
-| **Status**            | Name & schedule | Whether the item is active.                                                                                                                 | Enabled/Disabled        |
-| **Sync with group**   | Name & schedule | _(History-capable connectors, grouped items)_ When enabled, the history settings below are inherited from the group.                        | Enabled/Disabled        |
-| **Max read interval** | Name & schedule | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                       | `3600`                  |
-| **Read delay**        | Name & schedule | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                       | `200`                   |
-| **Start time offset** | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.           | `-60000`                |
-| **End time offset**   | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                           | `0`                     |
-| **Recovery strategy** | Name & schedule | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first.    | `From oldest to newest` |
-| **Caching strategy**  | Name & schedule | _(IoT-family connectors only)_ Filters which collected values are actually cached and forwarded. See [Caching Strategy](#caching-strategy). | `On change`             |
-| **Specific settings** | Settings        | Varies by connector type — see each connector's documentation.                                                                              | —                       |
+| Setting               | Step            | Description                                                                                                                                 | Example Value               |
+| --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **Name**              | Name & schedule | Unique reference used by North connectors and transformers to identify this data point.                                                     | `Temperature_Sensor1`       |
+| **Description**       | Name & schedule | Optional free text about the item. Shown under its name when hovering the name in the items list, and at the top of the item view.          | `Reactor inlet temperature` |
+| **Group**             | Name & schedule | The group this item belongs to. Leave on **None** for a standalone item with its own schedule.                                              | `Group A`                   |
+| **Schedule**          | Name & schedule | Scan mode that determines when OIBus collects data. Only shown when the item has no group (the group's schedule is shown otherwise).        | `Every 1 min`               |
+| **Status**            | Name & schedule | Whether the item is active.                                                                                                                 | Enabled/Disabled            |
+| **Sync with group**   | Name & schedule | _(History-capable connectors, grouped items)_ When enabled, the history settings below are inherited from the group.                        | Enabled/Disabled            |
+| **Max read interval** | Name & schedule | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                       | `3600`                      |
+| **Read delay**        | Name & schedule | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                       | `200`                       |
+| **Start time offset** | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.           | `-60000`                    |
+| **End time offset**   | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                           | `0`                         |
+| **Recovery strategy** | Name & schedule | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first.    | `From oldest to newest`     |
+| **Caching strategy**  | Name & schedule | _(IoT-family connectors only)_ Filters which collected values are actually cached and forwarded. See [Caching Strategy](#caching-strategy). | `On change`                 |
+| **Specific settings** | Settings        | Varies by connector type — see each connector's documentation.                                                                              | —                           |
 
 > For guidance on sizing **Max read interval**, **Read delay**, **Start time offset**, and **End time offset**
 > — with worked examples for large backlogs and sources that don't commit all items at once — see
@@ -181,7 +182,7 @@ item can't be saved, none of them is attached. On the connector's create/edit pa
 
 ### Import/Export Items {#importexport-items}
 
-- **Export**: Download all items as a CSV. Columns include `name`, `enabled`, `scanMode`, `group`,
+- **Export**: Download all items as a CSV. Columns include `name`, `description`, `enabled`, `scanMode`, `group`,
   `syncWithGroup`, `maxReadInterval`, `readDelay`, `startTimeOffset`, `endTimeOffset`, `recoveryStrategy`, and
   connector-specific `settings_*` columns.
 - **Import**: Upload a CSV to create or update items in bulk. Export an existing list to get a valid
@@ -237,7 +238,7 @@ stands for itself, any other node (a folder, a device, a table) for everything u
 **Add as items** moves on to the **Add as items** step of the Explore modal, to review the items before they are
 created. It has the **Item field mapping** of an [items synchronisation](#items-synchronisation), filled in from the
 connector's [discovery defaults](#discovery-defaults), in the sections of the item modal: **Name & schedule** (name,
-enabled, group, schedule and, when the connector supports history, the history settings) and the settings of the
+description, enabled, group, schedule and, when the connector supports history, the history settings) and the settings of the
 connector. As in the item modal, picking a group replaces the schedule with the one of the group and shows
 **Sync with group** (on by default), and the history settings are hidden while the item is synced with its group. The
 items are enabled, and the history settings start with the values of the item modal (max read interval 3600 s, read delay 200 ms, oldest
@@ -459,13 +460,13 @@ A synchronisation is created and edited in a wizard. For a tree-based connector 
 [Explore step](#selecting-nodes), where its nodes are checked, then goes through four steps; a SQL connector has a
 **Source** step first, for its query. The steps bar at its top shows where you are, and a click on a step opens it.
 
-| Step                | What it sets                                                                |
-| ------------------- | --------------------------------------------------------------------------- |
-| **Source**          | SQL connectors only: the metadata query to discover from.                   |
-| **Filter**          | Which discovered records to act on, with a preview of the matching records. |
-| **Items**           | The mode, and for local mode how a record becomes an item.                  |
-| **Name & schedule** | The name, when to run, and whether scheduled runs are enabled.              |
-| **Review**          | A summary, what to fix before saving, and a preview of what a run would do. |
+| Step                | What it sets                                                                   |
+| ------------------- | ------------------------------------------------------------------------------ |
+| **Source**          | SQL connectors only: the metadata query to discover from.                      |
+| **Filter**          | Which discovered records to act on, with a preview of the matching records.    |
+| **Items**           | The mode, and for local mode how a record becomes an item.                     |
+| **Name & schedule** | The name and description, when to run, and whether scheduled runs are enabled. |
+| **Review**          | A summary, what to fix before saving, and a preview of what a run would do.    |
 
 **Next** leaves the Source step once it has a query. A new synchronisation is saved from the Review step; one being
 edited can be saved from any step.
@@ -535,7 +536,7 @@ Each field of the connector's items can be mapped to:
   [Mapping Expressions](#mapping-expressions).
 
 The [identity key fields](#identity-key-fields) come first, then the mapping, in the sections of the item modal (the
-same form as [Add as items](#adding-explored-nodes-as-items)): **Name & schedule** — name, enabled, group, schedule and,
+same form as [Add as items](#adding-explored-nodes-as-items)): **Name & schedule** — name, description, enabled, group, schedule and,
 when the connector supports history, the history settings — then the settings of the connector. Above the mapping, the
 fields of the discovered records are listed: click one to put `{{field}}` where you are typing. Under it, **Example
 item names** shows the names the first matching records would give.
@@ -592,6 +593,8 @@ can then be changed.
 #### Name & Schedule {#schedule}
 
 - **Name** — unique among the connector's synchronisations.
+- **Description** — optional free text about the synchronisation, shown under its name when hovering the name in the
+  list of synchronisations.
 - **Schedule** — the scan mode driving scheduled runs (the subscription is not one of them: it is the schedule of items
   only). Leave it on **Manual only** to run the synchronisation only with **Run now**.
 - **Enabled** — whether scheduled runs fire. It only shows once a schedule is picked: with **Manual only**, nothing

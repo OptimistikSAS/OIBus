@@ -60,6 +60,7 @@ export function buildWorkflow(id: string, name: string, overrides: Partial<Confi
   return {
     id,
     name,
+    description: null,
     southId: testData.south.list[0].id,
     discoveryScope: {},
     identityKeyFields: ['nodeId'],
@@ -84,6 +85,7 @@ export function buildWorkflowCommand(
   return {
     id,
     name,
+    description: null,
     discoveryScope: {},
     identityKeyFields: ['nodeId'],
     eligibilityFilter: [],

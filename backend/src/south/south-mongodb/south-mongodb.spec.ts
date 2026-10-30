@@ -57,6 +57,7 @@ class ObjectId {
 const buildItem = (id: string, settings: SouthMongoDBItemSettings): SouthConnectorItemEntity<SouthMongoDBItemSettings> => ({
   id,
   name: id.replace('id', 'item'),
+  description: null,
   enabled: true,
   settings,
   scanMode: testData.scanMode.list[0],

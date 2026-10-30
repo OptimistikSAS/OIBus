@@ -116,7 +116,7 @@
           <td class="text-center">
             <span [translate]="label(item.enabled ? 'enabled-label' : 'disabled-label')"></span>
           </td>
-          <td>{{ item.name }}</td>
+          <td><oib-described-name [name]="item.name" [description]="item.description" /></td>
           @if (cellsTemplate(); as cells) {
             <ng-container *ngTemplateOutlet="cells; context: { $implicit: item }" />
           }
