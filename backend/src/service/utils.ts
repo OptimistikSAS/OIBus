@@ -719,6 +719,7 @@ export const itemToFlattenedCSV = (
     columns.add('startTimeOffset');
     columns.add('endTimeOffset');
     columns.add('recoveryStrategy');
+    columns.add('emptyIntervalStrategy');
     columns.add('syncWithGroup');
   }
 
@@ -748,12 +749,14 @@ export const itemToFlattenedCSV = (
           flattenedItem.startTimeOffset = group.historySettings.startTimeOffset;
           flattenedItem.endTimeOffset = group.historySettings.endTimeOffset;
           flattenedItem.recoveryStrategy = group.historySettings.recoveryStrategy;
+          flattenedItem.emptyIntervalStrategy = group.historySettings.emptyIntervalStrategy;
         } else {
           flattenedItem.maxReadInterval = southItem.maxReadInterval;
           flattenedItem.readDelay = southItem.readDelay;
           flattenedItem.startTimeOffset = southItem.startTimeOffset;
           flattenedItem.endTimeOffset = southItem.endTimeOffset;
           flattenedItem.recoveryStrategy = southItem.recoveryStrategy;
+          flattenedItem.emptyIntervalStrategy = southItem.emptyIntervalStrategy;
         }
       }
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {

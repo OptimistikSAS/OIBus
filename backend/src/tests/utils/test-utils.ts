@@ -249,6 +249,7 @@ export const buildSouthEntity = <T extends SouthSettings, I extends SouthItemSet
       startTimeOffset: 0,
       endTimeOffset: null,
       recoveryStrategy: null,
+      emptyIntervalStrategy: null,
       cachingStrategy: null,
       thresholdType: null,
       threshold: null,

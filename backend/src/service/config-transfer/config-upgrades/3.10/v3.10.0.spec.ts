@@ -165,6 +165,32 @@ describe('3.10.0 config upgrade', () => {
     assert.strictEqual(historyItems[0].description, null);
   });
 
+  it('adds the empty interval strategy of the history items and groups, keeping the existing ones', () => {
+    const config: JsonObject = {
+      southConnectors: [
+        {
+          type: 'influxdb',
+          settings: {
+            items: [{ name: 'item1' }, { name: 'item2', emptyIntervalStrategy: 'advance' }],
+            groups: [{ historySettings: {} }]
+          }
+        },
+        { type: 'mqtt', settings: { items: [{ name: 'item3' }], groups: [{ historySettings: {} }] } }
+      ]
+    };
+
+    upgrade.apply(config);
+
+    const [influxdb, mqtt] = (config.southConnectors as Array<JsonObject>).map(south => south.settings as JsonObject);
+    assert.deepStrictEqual(
+      (influxdb.items as Array<JsonObject>).map(item => item.emptyIntervalStrategy),
+      ['keep', 'advance']
+    );
+    assert.strictEqual(((influxdb.groups as Array<JsonObject>)[0].historySettings as JsonObject).emptyIntervalStrategy, 'keep');
+    assert.strictEqual((mqtt.items as Array<JsonObject>)[0].emptyIntervalStrategy, null);
+    assert.strictEqual(((mqtt.groups as Array<JsonObject>)[0].historySettings as JsonObject).emptyIntervalStrategy, null);
+  });
+
   it('leaves the other resamplings untouched', () => {
     assert.strictEqual(toNoneResamplingItemSettings('opcua', { mode: 'ha', haMode: { aggregate: 'count', resampling: '1min' } }), null);
     assert.strictEqual(toNoneResamplingItemSettings('opcua', { mode: 'da', haMode: null }), null);

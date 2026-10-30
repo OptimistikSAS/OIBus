@@ -46,7 +46,7 @@ A group bundles items that share the same collection schedule. Each group has:
 
 Items assigned to a group inherit its scan mode. For history-capable connectors, items also inherit
 the group's throttling settings by default (Max read interval, Read delay, Start time offset, End time offset,
-Recovery strategy), but each item can override them individually by disabling **Sync with group**.
+Recovery strategy, When no data is found), but each item can override them individually by disabling **Sync with group**.
 
 Items that are **not assigned to any group** define their own scan mode directly on the item.
 
@@ -117,21 +117,22 @@ together with the connector, hence the **OK** button instead of **Save**.
 
 ### Item Fields {#item-fields}
 
-| Setting               | Step            | Description                                                                                                                                 | Example Value               |
-| --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| **Name**              | Name & schedule | Unique reference used by North connectors and transformers to identify this data point.                                                     | `Temperature_Sensor1`       |
-| **Description**       | Name & schedule | Optional free text about the item. Shown under its name when hovering the name in the items list, and at the top of the item view.          | `Reactor inlet temperature` |
-| **Group**             | Name & schedule | The group this item belongs to. Leave on **None** for a standalone item with its own schedule.                                              | `Group A`                   |
-| **Schedule**          | Name & schedule | Scan mode that determines when OIBus collects data. Only shown when the item has no group (the group's schedule is shown otherwise).        | `Every 1 min`               |
-| **Status**            | Name & schedule | Whether the item is active.                                                                                                                 | Enabled/Disabled            |
-| **Sync with group**   | Name & schedule | _(History-capable connectors, grouped items)_ When enabled, the history settings below are inherited from the group.                        | Enabled/Disabled            |
-| **Max read interval** | Name & schedule | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                       | `3600`                      |
-| **Read delay**        | Name & schedule | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                       | `200`                       |
-| **Start time offset** | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.           | `-60000`                    |
-| **End time offset**   | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                           | `0`                         |
-| **Recovery strategy** | Name & schedule | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first.    | `From oldest to newest`     |
-| **Caching strategy**  | Name & schedule | _(IoT-family connectors only)_ Filters which collected values are actually cached and forwarded. See [Caching Strategy](#caching-strategy). | `On change`                 |
-| **Specific settings** | Settings        | Varies by connector type — see each connector's documentation.                                                                              | —                           |
+| Setting                   | Step            | Description                                                                                                                                                                                                                                  | Example Value               |
+| ------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **Name**                  | Name & schedule | Unique reference used by North connectors and transformers to identify this data point.                                                                                                                                                      | `Temperature_Sensor1`       |
+| **Description**           | Name & schedule | Optional free text about the item. Shown under its name when hovering the name in the items list, and at the top of the item view.                                                                                                           | `Reactor inlet temperature` |
+| **Group**                 | Name & schedule | The group this item belongs to. Leave on **None** for a standalone item with its own schedule.                                                                                                                                               | `Group A`                   |
+| **Schedule**              | Name & schedule | Scan mode that determines when OIBus collects data. Only shown when the item has no group (the group's schedule is shown otherwise).                                                                                                         | `Every 1 min`               |
+| **Status**                | Name & schedule | Whether the item is active.                                                                                                                                                                                                                  | Enabled/Disabled            |
+| **Sync with group**       | Name & schedule | _(History-capable connectors, grouped items)_ When enabled, the history settings below are inherited from the group.                                                                                                                         | Enabled/Disabled            |
+| **Max read interval**     | Name & schedule | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                                                                                                                        | `3600`                      |
+| **Read delay**            | Name & schedule | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                                                                                                                        | `200`                       |
+| **Start time offset**     | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.                                                                                                            | `-60000`                    |
+| **End time offset**       | Name & schedule | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                                                                                                                            | `0`                         |
+| **Recovery strategy**     | Name & schedule | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first.                                                                                                     | `From oldest to newest`     |
+| **When no data is found** | Name & schedule | _(History-capable connectors)_ Whether a sub-interval without new data keeps the tracked instant (default) or advances it to its end. See [When no data is found](../advanced/history-query-timing.md#when-no-data-is-found-sparse-sources). | `Keep the tracked instant`  |
+| **Caching strategy**      | Name & schedule | _(IoT-family connectors only)_ Filters which collected values are actually cached and forwarded. See [Caching Strategy](#caching-strategy).                                                                                                  | `On change`                 |
+| **Specific settings**     | Settings        | Varies by connector type — see each connector's documentation.                                                                                                                                                                               | —                           |
 
 > For guidance on sizing **Max read interval**, **Read delay**, **Start time offset**, and **End time offset**
 > — with worked examples for large backlogs and sources that don't commit all items at once — see
@@ -183,7 +184,7 @@ item can't be saved, none of them is attached. On the connector's create/edit pa
 ### Import/Export Items {#importexport-items}
 
 - **Export**: Download all items as a CSV. Columns include `name`, `description`, `enabled`, `scanMode`, `group`,
-  `syncWithGroup`, `maxReadInterval`, `readDelay`, `startTimeOffset`, `endTimeOffset`, `recoveryStrategy`, and
+  `syncWithGroup`, `maxReadInterval`, `readDelay`, `startTimeOffset`, `endTimeOffset`, `recoveryStrategy`, `emptyIntervalStrategy`, and
   connector-specific `settings_*` columns.
 - **Import**: Upload a CSV to create or update items in bulk. Export an existing list to get a valid
   template with the correct column names.
@@ -242,7 +243,7 @@ description, enabled, group, schedule and, when the connector supports history, 
 connector. As in the item modal, picking a group replaces the schedule with the one of the group and shows
 **Sync with group** (on by default), and the history settings are hidden while the item is synced with its group. The
 items are enabled, and the history settings start with the values of the item modal (max read interval 3600 s, read delay 200 ms, oldest
-recovery strategy, offsets 0). Each field is a constant or an expression of the discovered record: the fields of the records of the connector are listed
+recovery strategy, tracked instant kept when no data is found, offsets 0). Each field is a constant or an expression of the discovered record: the fields of the records of the connector are listed
 above the mapping (the same list is in the Items step of a synchronisation), and clicking one puts `{{field}}` where you
 were typing — or copies it when you were not typing in a field that takes an expression. Under it, the
 points under the selected nodes are discovered with this mapping and listed; they are discovered again a moment after
@@ -334,7 +335,8 @@ unset falls back to an absolute threshold of `0` (i.e. any change is cached).
 ## Max Instant Tracking {#max-instant-tracking}
 
 History-capable South connectors track the last successfully retrieved timestamp (the _max instant_) so
-that each run only fetches new data. Whether that instant is tracked per item or shared across a group
+that each run only fetches new data. With **When no data is found** set to **Advance the tracked instant**, a queried
+interval without new data also moves it, to the end of that interval. Whether that instant is tracked per item or shared across a group
 depends on how the group is actually queried:
 
 - If the connector can batch grouped items into a single query (i.e. it is _not_ one of the SQL/REST-style
@@ -544,7 +546,8 @@ item names** shows the names the first matching records would give.
 As in the item modal, the **Group** dropdown defaults to **None** and lets you create, edit or delete groups. Picking a
 group replaces the schedule with the one of the group and shows **Sync with group** (on by default); the history
 settings are hidden while the item is synced with its group. A new mapping starts with the items enabled and the history settings of the item
-modal (max read interval 3600 s, read delay 200 ms, oldest recovery strategy, offsets 0) and with the connector's
+modal (max read interval 3600 s, read delay 200 ms, oldest recovery strategy, tracked instant kept when no data is found,
+offsets 0) and with the connector's
 [discovery defaults](#discovery-defaults), when it has some.
 
 A **Required** badge guides the mapping:
@@ -554,8 +557,8 @@ A **Required** badge guides the mapping:
   item is enabled or not on purpose (it starts mapped to yes in a new mapping). Note that for a synchronisation, a mapped
   **Enabled** is applied to the items it updates too, whereas an unmapped one leaves them as they are.
 
-The group, the schedule and every history setting (max read interval, read delay, time offsets, recovery strategy, sync with
-group) take a constant only, since they can't vary from one record to the next: the other fields also take a `{{field}}`
+The group, the schedule and every history setting (max read interval, read delay, time offsets, recovery strategy, when no data is
+found, sync with group) take a constant only, since they can't vary from one record to the next: the other fields also take a `{{field}}`
 expression.
 
 ##### Identity Key Fields {#identity-key-fields}

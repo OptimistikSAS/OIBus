@@ -173,6 +173,7 @@ function buildItem(overrides: {
     startTimeOffset: null,
     endTimeOffset: null,
     recoveryStrategy: null,
+    emptyIntervalStrategy: null,
     cachingStrategy: 'allValues',
     thresholdType: null,
     threshold: null,

@@ -11,6 +11,7 @@ import { OIBusConnectionTestResult } from '../../shared/model/domain/engine.mode
 import {
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings,
+  SouthHistoryEmptyIntervalStrategy,
   SouthHistoryRecoveryStrategy
 } from '../../shared/model/domain/south-connector.model';
 
@@ -626,6 +627,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    *    catch-up reads don't try to fetch hours of data in one round-trip.
    *  - `numberOfIntervalsDone` lets the planner skip intervals that are
    *    entirely older than `trackedInstant` (already fetched).
+   *  - With the 'advance' empty interval strategy, an interval returning no new data
+   *    moves `trackedInstant` to its end, so a source without new data does not make
+   *    the window grow from its last data point on every run.
    *
    * `historyIsRunning` is set for the duration so concurrent triggers and the
    * metrics layer can detect whether a historical pass is in flight.
@@ -715,13 +719,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     const startTimeOffset = settingsSource.startTimeOffset ?? 0;
     const endTimeOffset = settingsSource.endTimeOffset ?? 0;
     const recoveryStrategy = settingsSource.recoveryStrategy ?? 'oldest';
+    const emptyIntervalStrategy = settingsSource.emptyIntervalStrategy ?? 'keep';
 
     const queryWindow = this.computeQueryWindow(southCache.trackedInstant, endTime, startTimeOffset, endTimeOffset);
     if (!queryWindow) return;
     const { effectiveStartTime, effectiveEndTime } = queryWindow;
     const intervals = generateIntervals(effectiveStartTime, effectiveEndTime, maxReadInterval, recoveryStrategy);
     this.logIntervals(intervals);
-    await this.queryIntervals(intervals, items, southCache, readDelay, recoveryStrategy, itemContext);
+    await this.queryIntervals(intervals, items, southCache, readDelay, recoveryStrategy, emptyIntervalStrategy, itemContext);
   }
 
   private async queryIntervals(
@@ -730,6 +735,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     southCache: SouthCacheEntry,
     readDelay: number,
     strategy: SouthHistoryRecoveryStrategy,
+    emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy,
     itemContext: { itemName: string; currentItemNumber: number; numberOfItems: number } | null
   ) {
     // For 'newest' strategy, track the max trackedInstant seen across all intervals. Intervals are
@@ -742,6 +748,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // Without this, a later interval whose max is lower than an earlier interval's (but still above
     // the pre-run value) would pass the check and regress the saved trackedInstant backwards.
     let currentTrackedInstant = southCache.trackedInstant;
+    // The value saved when the tracked instant is advanced over an interval without new data: the last value found.
+    let currentValue = southCache.value;
+    // For 'newest' strategy: how far the intervals have been queried, where the 'advance' empty interval strategy moves
+    // the tracked instant when no new data was found.
+    let queriedUntil: Instant | null = null;
 
     for (let index = 0; index < intervals.length; index++) {
       const queryTime = DateTime.now().toUTC().toISO()!;
@@ -778,9 +789,26 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
           );
           this.saveTrackedValue(southCache, queryTime, lastValue.value, lastValue.trackedInstant);
           currentTrackedInstant = lastValue.trackedInstant;
+          currentValue = lastValue.value;
+        } else if (emptyIntervalStrategy === 'advance' && !this.stopping) {
+          // The interval was fully queried without new data (a query interrupted by a stop may have returned early,
+          // so it does not count): the next run can start after it.
+          const intervalEnd = this.queriedIntervalEnd(interval, queryTime);
+          if (!currentTrackedInstant || intervalEnd > currentTrackedInstant) {
+            this.logger.debug(workUnitLogCtx(items), `No new data in interval, advancing trackedInstant to ${intervalEnd}`);
+            this.saveTrackedValue(southCache, queryTime, currentValue, intervalEnd);
+            currentTrackedInstant = intervalEnd;
+          }
         }
-      } else if (lastValue && (!latestValue || lastValue.trackedInstant > latestValue.trackedInstant)) {
-        latestValue = lastValue;
+      } else {
+        // An interval without data returns a null trackedInstant, which must neither hide the data of another interval nor be saved
+        if (lastValue?.trackedInstant && (!latestValue || lastValue.trackedInstant > latestValue.trackedInstant)) {
+          latestValue = lastValue;
+        }
+        const intervalEnd = this.queriedIntervalEnd(interval, queryTime);
+        if (!queriedUntil || intervalEnd > queriedUntil) {
+          queriedUntil = intervalEnd;
+        }
       }
 
       if (this.stopping) {
@@ -795,14 +823,30 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
     // For 'newest' strategy: only advance trackedInstant once all intervals have been queried.
     // This prevents a mid-run restart from skipping the not-yet-queried older intervals.
-    // Only save if data was actually found — otherwise leave the cache untouched.
-    if (strategy === 'newest' && !this.stopping && latestValue) {
+    // Only save if data was actually found — otherwise leave the cache untouched, unless the 'advance' empty interval
+    // strategy moves the tracked instant to the end of the queried window.
+    if (strategy !== 'newest' || this.stopping) return;
+    const foundNewData = latestValue && (!southCache.trackedInstant || latestValue.trackedInstant > southCache.trackedInstant);
+    if (emptyIntervalStrategy === 'advance' && !foundNewData) {
+      if (queriedUntil && (!southCache.trackedInstant || queriedUntil > southCache.trackedInstant)) {
+        this.logger.debug(workUnitLogCtx(items), `No new data in intervals, advancing trackedInstant to ${queriedUntil}`);
+        this.saveTrackedValue(southCache, DateTime.now().toUTC().toISO()!, southCache.value, queriedUntil);
+      }
+    } else if (latestValue) {
       this.logger.debug(
         workUnitLogCtx(items),
         `Saving last value ${this.truncateForLog(latestValue.value)}, trackedInstant ${latestValue.trackedInstant}`
       );
       this.saveTrackedValue(southCache, DateTime.now().toUTC().toISO()!, latestValue.value, latestValue.trackedInstant);
     }
+  }
+
+  /**
+   * The instant up to which an interval queried at `queryTime` was read: its end, or `queryTime` when the end is in the
+   * future (positive end time offset), since data with a timestamp after the query may still arrive.
+   */
+  private queriedIntervalEnd(interval: Interval, queryTime: Instant): Instant {
+    return interval.end < queryTime ? interval.end : queryTime;
   }
 
   /**

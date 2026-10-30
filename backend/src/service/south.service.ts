@@ -27,6 +27,7 @@ import {
   SouthConnectorItemQueryResult,
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestingSettings,
+  SouthHistoryEmptyIntervalStrategy,
   SouthHistoryRecoveryStrategy,
   SouthItemLastValue
 } from '../../shared/model/domain/south-connector.model';
@@ -523,6 +524,7 @@ export default class SouthService {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      emptyIntervalStrategy: null,
       cachingStrategy: null,
       thresholdType: null,
       threshold: null,
@@ -959,7 +961,8 @@ export default class SouthService {
         readDelay: Number(data.readDelay || '0'),
         startTimeOffset: Number(data.startTimeOffset || '0'),
         endTimeOffset: Number(data.endTimeOffset || '0'),
-        recoveryStrategy: (data.recoveryStrategy ? data.recoveryStrategy : 'oldest') as SouthHistoryRecoveryStrategy
+        recoveryStrategy: (data.recoveryStrategy ? data.recoveryStrategy : 'oldest') as SouthHistoryRecoveryStrategy,
+        emptyIntervalStrategy: (data.emptyIntervalStrategy ? data.emptyIntervalStrategy : 'keep') as SouthHistoryEmptyIntervalStrategy
       } as SouthConnectorItemDTO;
 
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
@@ -1054,6 +1057,7 @@ export default class SouthService {
           maxReadInterval: itemWithGroup.maxReadInterval,
           readDelay: itemWithGroup.readDelay,
           recoveryStrategy: itemWithGroup.recoveryStrategy,
+          emptyIntervalStrategy: itemWithGroup.emptyIntervalStrategy,
           cachingStrategy: itemWithGroup.cachingStrategy
         };
         group = this.southItemGroupRepository.create(groupEntity, user);
@@ -1131,6 +1135,7 @@ export default class SouthService {
       maxReadInterval: command.historySettings.maxReadInterval,
       readDelay: command.historySettings.readDelay,
       recoveryStrategy: command.historySettings.recoveryStrategy ?? null,
+      emptyIntervalStrategy: command.historySettings.emptyIntervalStrategy ?? null,
       cachingStrategy: command.historySettings.cachingStrategy ?? null
     };
     return this.southItemGroupRepository.create(groupEntity, user);
@@ -1160,6 +1165,7 @@ export default class SouthService {
     const maxReadInterval = command.historySettings.maxReadInterval != null ? command.historySettings.maxReadInterval : null;
     const readDelay = command.historySettings.readDelay != null ? command.historySettings.readDelay : 0;
     const recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
+    const emptyIntervalStrategy = command.historySettings.emptyIntervalStrategy ?? null;
     const cachingStrategy = command.historySettings.cachingStrategy ?? null;
     assertCachingStrategyValidForType(southConnector.type, cachingStrategy);
     const groupEntity: Omit<SouthItemGroupCommand, 'southId'> = {
@@ -1170,6 +1176,7 @@ export default class SouthService {
       maxReadInterval,
       readDelay,
       recoveryStrategy,
+      emptyIntervalStrategy,
       cachingStrategy
     };
     this.southItemGroupRepository.update(groupId, groupEntity, user);
@@ -1323,6 +1330,7 @@ const copyGroupCommandToGroupEntity = (
   groupEntity.maxReadInterval = command.historySettings.maxReadInterval;
   groupEntity.readDelay = command.historySettings.readDelay;
   groupEntity.recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
+  groupEntity.emptyIntervalStrategy = command.historySettings.emptyIntervalStrategy ?? null;
   groupEntity.cachingStrategy = command.historySettings.cachingStrategy ?? null;
   groupEntity.scanMode = checkScanMode(scanModes, command.standardSettings.scanModeId, null)!;
 };
@@ -1356,6 +1364,7 @@ export const copySouthItemCommandToSouthItemEntity = async (
   southItemEntity.startTimeOffset = command.startTimeOffset != null ? command.startTimeOffset : null;
   southItemEntity.endTimeOffset = command.endTimeOffset != null ? command.endTimeOffset : null;
   southItemEntity.recoveryStrategy = command.recoveryStrategy ?? null;
+  southItemEntity.emptyIntervalStrategy = command.emptyIntervalStrategy ?? null;
   southItemEntity.cachingStrategy = command.cachingStrategy ?? null;
   southItemEntity.thresholdType = command.thresholdType ?? null;
   southItemEntity.threshold = command.threshold ?? null;
@@ -1419,6 +1428,7 @@ export const toSouthConnectorDTO = (
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
         recoveryStrategy: group.recoveryStrategy,
+        emptyIntervalStrategy: group.emptyIntervalStrategy,
         cachingStrategy: group.cachingStrategy
       }
     })),

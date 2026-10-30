@@ -1738,7 +1738,8 @@ describe('OIAnalytics Command Service', () => {
           readDelay: itemWithoutScanMode.readDelay,
           startTimeOffset: itemWithoutScanMode.startTimeOffset,
           endTimeOffset: itemWithoutScanMode.endTimeOffset,
-          recoveryStrategy: itemWithoutScanMode.recoveryStrategy
+          recoveryStrategy: itemWithoutScanMode.recoveryStrategy,
+          emptyIntervalStrategy: itemWithoutScanMode.emptyIntervalStrategy
         }
       ]);
     });
@@ -1749,7 +1750,15 @@ describe('OIAnalytics Command Service', () => {
       // checkImportItems only knows the group name of an item, and an item of a group may have no scan mode of its own
       southService.checkImportItems.mock.mockImplementationOnce(async () => ({
         items: [
-          { ...itemWithScanMode, maxReadInterval: 3600, readDelay: 200, startTimeOffset: 10, endTimeOffset: 5, recoveryStrategy: 'oldest' },
+          {
+            ...itemWithScanMode,
+            maxReadInterval: 3600,
+            readDelay: 200,
+            startTimeOffset: 10,
+            endTimeOffset: 5,
+            recoveryStrategy: 'oldest',
+            emptyIntervalStrategy: 'advance'
+          },
           {
             ...itemInGroup,
             scanMode: null,
@@ -1780,7 +1789,8 @@ describe('OIAnalytics Command Service', () => {
             readDelay: 200,
             startTimeOffset: 10,
             endTimeOffset: 5,
-            recoveryStrategy: 'oldest'
+            recoveryStrategy: 'oldest',
+            emptyIntervalStrategy: 'advance'
           },
           {
             id: itemInGroup.id,
@@ -1797,7 +1807,8 @@ describe('OIAnalytics Command Service', () => {
             readDelay: itemInGroup.readDelay,
             startTimeOffset: itemInGroup.startTimeOffset,
             endTimeOffset: itemInGroup.endTimeOffset,
-            recoveryStrategy: itemInGroup.recoveryStrategy
+            recoveryStrategy: itemInGroup.recoveryStrategy,
+            emptyIntervalStrategy: itemInGroup.emptyIntervalStrategy
           }
         ],
         'oianalytics',

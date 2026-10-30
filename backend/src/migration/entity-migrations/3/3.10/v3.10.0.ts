@@ -24,6 +24,7 @@ import {
   FILE_TRANSFORMER_REPLACEMENTS,
   FILE_WRITER_REMOVED_DATA_TYPES,
   FILENAME_FUNCTION_NAMES,
+  HISTORY_SOUTH_TYPES,
   IOT_FAMILY_SOUTH_TYPES,
   keepsResolvedTransformer,
   OIANALYTICS_TRANSFORMER_FUNCTION_NAMES,
@@ -105,7 +106,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   replaceFileTransformer,
   moveFilenamePrefixAndSuffixToTransformers,
   addOPCUATimeoutsAndSubscriptionSettings,
-  addItemAndWorkflowDescriptions
+  addItemAndWorkflowDescriptions,
+  addEmptyIntervalStrategies
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -126,6 +128,8 @@ export async function up(knex: Knex): Promise<void> {
  * is enabled.
  */
 export async function down(knex: Knex): Promise<void> {
+  await dropColumns(knex, SOUTH_ITEM_GROUPS_TABLE, ['empty_interval_strategy']);
+  await dropColumns(knex, SOUTH_ITEMS_TABLE, ['empty_interval_strategy']);
   await dropColumns(knex, SOUTH_ITEMS_TABLE, ['description']);
   await dropColumns(knex, HISTORY_ITEMS_TABLE, ['description']);
   await dropColumns(knex, NORTH_TRANSFORMERS_ITEMS_TABLE, ['excluded']);
@@ -1605,6 +1609,24 @@ export async function addItemAndWorkflowDescriptions(knex: Knex): Promise<void> 
       t.text('description').nullable();
     });
   }
+}
+
+/**
+ * The history items and groups gain an `empty_interval_strategy`, telling whether the tracked instant moves when a queried
+ * interval returns no data. Set to 'keep' (the previous behaviour) for the south connectors supporting history queries,
+ * null for the others.
+ */
+export async function addEmptyIntervalStrategies(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(SOUTH_ITEM_GROUPS_TABLE, t => {
+    t.string('empty_interval_strategy').nullable();
+  });
+  await knex.schema.alterTable(SOUTH_ITEMS_TABLE, t => {
+    t.string('empty_interval_strategy').nullable();
+  });
+
+  const historyConnectorIds = knex(SOUTH_CONNECTORS_TABLE).select('id').whereIn('type', HISTORY_SOUTH_TYPES);
+  await knex(SOUTH_ITEM_GROUPS_TABLE).whereIn('south_id', historyConnectorIds).update({ empty_interval_strategy: 'keep' });
+  await knex(SOUTH_ITEMS_TABLE).whereIn('connector_id', historyConnectorIds).update({ empty_interval_strategy: 'keep' });
 }
 
 /** The id of a standard transformer, created when missing (the startup seeding runs after the migrations). */

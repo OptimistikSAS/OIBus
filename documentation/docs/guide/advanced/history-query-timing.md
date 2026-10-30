@@ -5,7 +5,7 @@ sidebar_position: 1
 # Advanced tuning of History Connectors
 
 This page explains in detail how to use the `Max read interval`, `Read delay`, `Start time offset`, `End time offset` —
-plus `Recovery strategy` — fields. These are found only on connectors that access data sources with historical storage:
+plus `Recovery strategy` and `When no data is found` — fields. These are found only on connectors that access data sources with historical storage:
 SQL connectors, OPC UA in HA mode, OPC Classic in HDA mode, OSIsoft PI, OIAnalytics, REST, InfluxDB — see the full list
 in [History Queries](../history-queries.md#compatible-south-connectors). These settings are introduced in
 [Common Settings](../south-connectors/common-settings.md).
@@ -32,7 +32,8 @@ Every time a history-capable item or group runs, OIBus goes through the same fou
    sub-interval that returns data more recent than previous results. In case of a crash, data will be queried from the
    last tracked instant retrieved. With `From newest to oldest`, the tracked instant only moves once _every_ sub-interval
    has completed. In case of a crash, data will be queried again for the full interval since the tracked instant has not
-   advanced yet.
+   advanced yet. A sub-interval without new data leaves the tracked instant where it is, unless `When no data is found`
+   is set to `Advance the tracked instant` (see [below](#when-no-data-is-found-sparse-sources)).
 
 :::info Tracked Instant
 The tracked instant denotes the most recent timestamp retrieved from the last successful query.
@@ -273,6 +274,29 @@ Pick `From newest to oldest` when a dashboard or downstream consumer needs curre
 backfill is still catching up on history. Keep `From oldest to newest` (the default) when incremental, crash-safe progress matters more
 than how quickly "now" appears — which is the right choice for most unattended setups.
 
+## When no data is found: sparse sources {#when-no-data-is-found-sparse-sources}
+
+By default (`Keep the tracked instant`), the tracked instant only moves when a query returns data. Nothing is ever
+skipped, but a source that has had no new data for a long time is queried again from its last data point on every run:
+the effective window keeps growing with time, and so does the number of sub-intervals. For example, an item whose last
+value is 25 days old, with a `Max read interval` of 2 hours, issues about 300 queries on every run, 12 more each day.
+On a connector running its items one at a time (SQL connectors), this catch-up delays every other item, and the faster
+scan modes log that the previous run was still running.
+
+With `Advance the tracked instant`, a sub-interval that is fully queried without returning new data moves the tracked
+instant to its end, so the next run only covers what is new:
+
+- With `From oldest to newest`, the tracked instant moves after each empty sub-interval, like it does after a
+  sub-interval with data.
+- With `From newest to oldest`, the tracked instant moves to the end of the window once every sub-interval has
+  completed without new data. When data is found, its most recent timestamp is kept, as with the default.
+- A sub-interval interrupted by the connector stopping does not move the tracked instant, and it never moves past the
+  time of the query (a positive `End time offset` may push the end of the window into the future).
+
+Data arriving later with a timestamp older than the tracked instant is then only read if it falls within a negative
+`Start time offset`. Keep the default when late data may arrive further back than that; pick
+`Advance the tracked instant` for sparse sources whose data, when it comes, is timestamped close to its arrival.
+
 ## Putting it together: a real-life example {#putting-it-together-a-real-life-example}
 
 A South MSSQL connector polls 200 tags from a historian table. The database batches inserts and typically commits within
@@ -325,3 +349,4 @@ catch-up — accepting that a mid-catch-up restart would re-run the whole backlo
 | Must avoid duplicate reads, can wait until the next run for already-available values | Negative `End time offset`                          |
 | Dashboards must show current values fast during a long backfill                      | `Recovery strategy` → `newest`                      |
 | Backfill must be crash-safe with minimal repeated work                               | `Recovery strategy` → `oldest` (default)            |
+| A source without new data for a long time is queried with more and more sub-queries  | `When no data is found` → `advance`                 |

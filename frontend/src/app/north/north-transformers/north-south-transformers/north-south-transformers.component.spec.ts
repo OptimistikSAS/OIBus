@@ -25,6 +25,7 @@ const group: SouthItemGroupDTO = {
     maxReadInterval: null,
     readDelay: null,
     recoveryStrategy: null,
+    emptyIntervalStrategy: null,
     cachingStrategy: null
   },
   createdBy: { id: '', friendlyName: '' },

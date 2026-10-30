@@ -17,7 +17,11 @@ import { Observable } from 'rxjs';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { IOT_FAMILY_SOUTH_TYPES, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthCachingStrategy, SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
+import {
+  SouthCachingStrategy,
+  SouthHistoryEmptyIntervalStrategy,
+  SouthHistoryRecoveryStrategy
+} from '@oibus/shared/domain/south-connector.model';
 
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
@@ -52,6 +56,11 @@ export class EditSouthItemGroupModalComponent {
     { value: 'newest', labelKey: 'south.groups.recovery-strategy-newest' }
   ];
 
+  readonly emptyIntervalStrategies: Array<{ value: SouthHistoryEmptyIntervalStrategy; labelKey: string }> = [
+    { value: 'keep', labelKey: 'south.groups.empty-interval-strategy-keep' },
+    { value: 'advance', labelKey: 'south.groups.empty-interval-strategy-advance' }
+  ];
+
   readonly cachingStrategies: Array<{ value: SouthCachingStrategy; labelKey: string }> = [
     { value: 'allValues', labelKey: 'south.groups.caching-strategy-all-values' },
     { value: 'onChange', labelKey: 'south.groups.caching-strategy-on-change' },
@@ -66,6 +75,7 @@ export class EditSouthItemGroupModalComponent {
     maxReadInterval: FormControl<number>;
     readDelay: FormControl<number>;
     recoveryStrategy: FormControl<SouthHistoryRecoveryStrategy>;
+    emptyIntervalStrategy: FormControl<SouthHistoryEmptyIntervalStrategy>;
     cachingStrategy: FormControl<SouthCachingStrategy>;
   }> = this.fb.group({
     name: ['', [Validators.required, this.checkUniqueness()]],
@@ -75,6 +85,7 @@ export class EditSouthItemGroupModalComponent {
     maxReadInterval: [3600, [Validators.min(0)]],
     readDelay: [200, [Validators.required, Validators.min(0)]],
     recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest'),
+    emptyIntervalStrategy: this.fb.control<SouthHistoryEmptyIntervalStrategy>('keep'),
     cachingStrategy: this.fb.control<SouthCachingStrategy>('allValues')
   });
 
@@ -156,6 +167,7 @@ export class EditSouthItemGroupModalComponent {
         maxReadInterval: this.group.historySettings.maxReadInterval ?? 3600,
         readDelay: this.group.historySettings.readDelay ?? 200,
         recoveryStrategy: this.group.historySettings.recoveryStrategy ?? 'oldest',
+        emptyIntervalStrategy: this.group.historySettings.emptyIntervalStrategy ?? 'keep',
         cachingStrategy: this.group.historySettings.cachingStrategy ?? 'allValues'
       });
     }
@@ -190,6 +202,7 @@ export class EditSouthItemGroupModalComponent {
         maxReadInterval: formValue.maxReadInterval! ?? null,
         readDelay: formValue.readDelay! ?? null,
         recoveryStrategy: formValue.recoveryStrategy! ?? null,
+        emptyIntervalStrategy: formValue.emptyIntervalStrategy! ?? null,
         cachingStrategy: formValue.cachingStrategy! ?? null
       }
     };

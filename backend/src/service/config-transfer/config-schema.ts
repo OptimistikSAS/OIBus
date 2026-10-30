@@ -112,6 +112,7 @@ const southItemEntry = Joi.object({
   startTimeOffset: nullableNumber,
   endTimeOffset: nullableNumber,
   recoveryStrategy: Joi.string().valid('oldest', 'newest').allow(null).required(),
+  emptyIntervalStrategy: Joi.string().valid('keep', 'advance').allow(null).required(),
   cachingStrategy: Joi.string().valid('allValues', 'onChange', 'threshold').allow(null).required(),
   thresholdType: Joi.string().valid('absolute', 'percentage').allow(null).required(),
   threshold: nullableNumber,
@@ -134,6 +135,7 @@ const southGroupEntry = Joi.object({
     maxReadInterval: nullableNumber,
     readDelay: nullableNumber,
     recoveryStrategy: Joi.string().valid('oldest', 'newest').allow(null).required(),
+    emptyIntervalStrategy: Joi.string().valid('keep', 'advance').allow(null).required(),
     cachingStrategy: Joi.string().valid('allValues', 'onChange', 'threshold').allow(null).required()
   }).required()
 });

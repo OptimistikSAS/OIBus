@@ -69,6 +69,7 @@ export const SCHEDULE_ITEM_PATH_ORDER = [
   'maxReadInterval',
   'readDelay',
   'recoveryStrategy',
+  'emptyIntervalStrategy',
   'startTimeOffset',
   'endTimeOffset'
 ];
@@ -84,6 +85,7 @@ export const HISTORY_ITEM_DEFAULTS: Record<string, string> = {
   maxReadInterval: '3600',
   readDelay: '200',
   recoveryStrategy: 'oldest',
+  emptyIntervalStrategy: 'keep',
   startTimeOffset: '0',
   endTimeOffset: '0'
 };
@@ -97,13 +99,14 @@ export const SCHEDULE_ITEM_PATHS = new Set([
   'readDelay',
   'startTimeOffset',
   'endTimeOffset',
-  'recoveryStrategy'
+  'recoveryStrategy',
+  'emptyIntervalStrategy'
 ]);
 
 /** `{{field}}` expressions of a mapping template. */
 const TEMPLATE_PLACEHOLDER = /\{\{\s*([^}\s]+)\s*\}\}/g;
 
-// maxReadInterval/readDelay/the offsets/recoveryStrategy only apply to an item that owns its own
+// maxReadInterval/readDelay/the offsets/the strategies only apply to an item that owns its own
 // schedule/history settings - once synced with a group, those come from the group instead, so mapping
 // them here would be pointless. An item can be *in* a group without being *synced* to it, though (its
 // own settings still apply then) - so this hinges on syncWithGroup itself, not merely on groupId being
@@ -118,6 +121,7 @@ const CONSTANT_ONLY_ITEM_PATHS = new Set([
   'startTimeOffset',
   'endTimeOffset',
   'recoveryStrategy',
+  'emptyIntervalStrategy',
   'syncWithGroup'
 ]);
 
@@ -160,6 +164,13 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
     translationKey: 'south.items.recovery-strategy',
     attributeType: 'string-select',
     selectableValues: ['oldest', 'newest'],
+    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
+  },
+  {
+    path: 'emptyIntervalStrategy',
+    translationKey: 'south.items.empty-interval-strategy',
+    attributeType: 'string-select',
+    selectableValues: ['keep', 'advance'],
     enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
   }
 ];
