@@ -16,16 +16,21 @@ Connect to and query PostgreSQL databases with OIBus.
 
 ## Specific Settings {#specific-settings}
 
-| Setting            | Description                                                             | Example Value    |
-| ------------------ | ----------------------------------------------------------------------- | ---------------- |
-| Host               | IP address or hostname of the PostgreSQL server.                        | `192.168.1.10`   |
-| Port               | Server port number. Default: `5432`.                                    | `5432`           |
-| SSL                | Enable encrypted connection. Recommended for production.                | Enabled/Disabled |
-| Database           | Name of the database to connect to.                                     | `production`     |
-| Connection timeout | Maximum time in milliseconds to establish connection. Default: `10000`. | `10000`          |
-| Request timeout    | Maximum execution time in milliseconds for individual SQL queries.      | `15000`          |
-| Username           | Authentication username.                                                | `db_user`        |
-| Password           | Authentication password.                                                | `••••••••`       |
+| Setting                 | Description                                                                                             | Example Value    |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- | ---------------- |
+| Host                    | IP address or hostname of the PostgreSQL server.                                                        | `192.168.1.10`   |
+| Port                    | Server port number. Default: `5432`.                                                                    | `5432`           |
+| SSL                     | Enable encrypted connection. Recommended for production.                                                | Enabled/Disabled |
+| Database                | Name of the database to connect to.                                                                     | `production`     |
+| Connection timeout      | Maximum time in milliseconds to establish connection. Default: `10000`.                                 | `10000`          |
+| Username                | Authentication username.                                                                                | `db_user`        |
+| Password                | Authentication password.                                                                                | `••••••••`       |
+| Idle connection timeout | Time in milliseconds an unused connection of the pool stays open before being closed. Default: `30000`. | `30000`          |
+| Max parallel queries    | Maximum number of items or groups queried at the same time, from `1` (sequential) to `8`. Default: `1`. | `2`              |
+
+:::note Parallel queries
+OIBus keeps a pool of up to this number of connections to the database, opened when the queries need them and closed after the idle connection timeout: each one adds to the load of the source. Keep the value below the connections available to this role (`max_connections`, connection limit of the role).
+:::
 
 :::tip Security Best Practices
 
@@ -58,6 +63,12 @@ An [items synchronisation](./common-settings.md#items-synchronisation) on this c
 pushes its rows to OIAnalytics; it never creates items.
 
 <ItemSettings />
+
+:::note PostgreSQL item request timeout
+Each PostgreSQL item has its own **Request timeout** field (milliseconds), setting the maximum execution time for that
+item's query. **Connection timeout** only bounds how long OIBus waits to establish a connection, and the queries run
+outside an item (connection test, explore, discovery) time out after 15 seconds.
+:::
 
 :::note PostgreSQL datetime field types
 The following **Type** values are available for the tracking instant's datetime field:

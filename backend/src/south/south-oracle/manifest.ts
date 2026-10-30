@@ -35,72 +35,208 @@ const manifest: SouthConnectorManifest = {
       visible: true,
       wrapInBox: false
     },
-    enablingConditions: [
-      {
-        referralPathFromRoot: 'thickMode',
-        targetPathFromRoot: 'oracleClient',
-        values: [true]
-      }
-    ],
+    enablingConditions: [],
     validators: [],
     attributes: [
       {
-        type: 'boolean',
-        key: 'thickMode',
-        translationKey: 'configuration.oibus.manifest.south.oracle.thick-mode',
-        defaultValue: false,
+        type: 'object',
+        key: 'connectionSettings',
+        translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: true
+        },
+        enablingConditions: [
+          {
+            referralPathFromRoot: 'thickMode',
+            targetPathFromRoot: 'oracleClient',
+            values: [true]
+          }
+        ],
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
           }
         ],
-        displayProperties: {
-          row: 0,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'oracleClient',
-        translationKey: 'configuration.oibus.manifest.south.oracle.oracle-client',
-        defaultValue: null,
-        validators: [
+        attributes: [
           {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 8,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'host',
-        translationKey: 'configuration.oibus.manifest.south.oracle.host',
-        defaultValue: null,
-        validators: [
+            type: 'boolean',
+            key: 'thickMode',
+            translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.thick-mode',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
           {
-            type: 'REQUIRED',
-            arguments: []
+            type: 'string',
+            key: 'oracleClient',
+            translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.oracle-client',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 8,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'host',
+            translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.host',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'port',
+            translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.port',
+            defaultValue: 1521,
+            unit: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['65535']
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'connectionTimeout',
+            translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.connection-timeout',
+            unit: 'ms',
+            defaultValue: 15000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['0']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['30000']
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'database',
+            translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.database',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 2,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'username',
+            translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.username',
+            defaultValue: null,
+            validators: [],
+            displayProperties: {
+              row: 2,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'secret',
+            key: 'password',
+            translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.password',
+            validators: [],
+            displayProperties: {
+              row: 2,
+              columns: 3,
+              displayInViewMode: false
+            }
+          },
+          {
+            type: 'number',
+            key: 'idleTimeout',
+            translationKey: 'configuration.oibus.manifest.south.oracle.connection-settings.idle-timeout',
+            unit: 'ms',
+            defaultValue: 30000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1000']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['3600000']
+              }
+            ],
+            displayProperties: {
+              row: 3,
+              columns: 3,
+              displayInViewMode: false
+            }
           }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 6,
-          displayInViewMode: true
-        }
+        ]
       },
       {
         type: 'number',
-        key: 'port',
-        translationKey: 'configuration.oibus.manifest.south.oracle.port',
-        defaultValue: 1521,
+        key: 'maxParallelRun',
+        translationKey: 'configuration.oibus.manifest.south.oracle.max-parallel-run',
         unit: null,
+        defaultValue: 1,
         validators: [
           {
             type: 'REQUIRED',
@@ -112,79 +248,13 @@ const manifest: SouthConnectorManifest = {
           },
           {
             type: 'MAXIMUM',
-            arguments: ['65535']
+            arguments: ['8']
           }
         ],
         displayProperties: {
           row: 1,
           columns: 3,
           displayInViewMode: true
-        }
-      },
-      {
-        type: 'number',
-        key: 'connectionTimeout',
-        translationKey: 'configuration.oibus.manifest.south.oracle.connection-timeout',
-        unit: 'ms',
-        defaultValue: 15000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['0']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['30000']
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'database',
-        translationKey: 'configuration.oibus.manifest.south.oracle.database',
-        defaultValue: null,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 2,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'username',
-        translationKey: 'configuration.oibus.manifest.south.oracle.username',
-        defaultValue: null,
-        validators: [],
-        displayProperties: {
-          row: 2,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'secret',
-        key: 'password',
-        translationKey: 'configuration.oibus.manifest.south.oracle.password',
-        validators: [],
-        displayProperties: {
-          row: 2,
-          columns: 3,
-          displayInViewMode: false
         }
       }
     ]

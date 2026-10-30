@@ -335,16 +335,19 @@ const southList: Array<SouthConnectorDTO> = [
     description: 'my MSSQL south connector',
     enabled: false,
     settings: {
-      host: 'host',
-      port: 1433,
-      connectionTimeout: 1000,
-      database: 'database',
-      username: 'oibus',
-      password: '',
-      domain: 'domain',
-      encryption: true,
-      trustServerCertificate: true,
-      requestTimeout: 5000
+      connectionSettings: {
+        host: 'host',
+        port: 1433,
+        connectionTimeout: 1000,
+        database: 'database',
+        username: 'oibus',
+        password: '',
+        domain: 'domain',
+        encryption: true,
+        trustServerCertificate: true,
+        idleTimeout: 30000
+      },
+      maxParallelRun: 1
     },
     items: [
       {
@@ -372,7 +375,7 @@ const southList: Array<SouthConnectorDTO> = [
           createdAt: '',
           updatedAt: ''
         },
-        settings: { query: 'SELECT * FROM logs', trackingInstant: null },
+        settings: { query: 'SELECT * FROM logs', requestTimeout: 5000, trackingInstant: null },
         createdBy: {
           id: '',
           friendlyName: ''
@@ -423,7 +426,7 @@ const southList: Array<SouthConnectorDTO> = [
           createdAt: '',
           updatedAt: ''
         },
-        settings: { query: 'SELECT * FROM logs', trackingInstant: null },
+        settings: { query: 'SELECT * FROM logs', requestTimeout: 5000, trackingInstant: null },
         createdBy: {
           id: '',
           friendlyName: ''
@@ -1299,16 +1302,19 @@ const historyQueryList: Array<HistoryQueryDTO> = [
     status: 'RUNNING',
     southType: 'mssql',
     southSettings: {
-      host: 'host',
-      port: 1433,
-      connectionTimeout: 1000,
-      database: 'database',
-      username: 'oibus',
-      password: '',
-      domain: 'domain',
-      encryption: true,
-      trustServerCertificate: true,
-      requestTimeout: 5000
+      connectionSettings: {
+        host: 'host',
+        port: 1433,
+        connectionTimeout: 1000,
+        database: 'database',
+        username: 'oibus',
+        password: '',
+        domain: 'domain',
+        encryption: true,
+        trustServerCertificate: true,
+        idleTimeout: 30000
+      },
+      maxParallelRun: 1
     },
     queryTimeRange: {
       startTime: '2020-03-15T00:00:00.000Z',
@@ -1370,6 +1376,7 @@ const historyQueryList: Array<HistoryQueryDTO> = [
         enabled: true,
         settings: {
           query: 'SELECT * FROM table1',
+          requestTimeout: 5000,
           trackingInstant: {
             trackInstant: false
           }
@@ -1392,6 +1399,7 @@ const historyQueryList: Array<HistoryQueryDTO> = [
         enabled: true,
         settings: {
           query: 'SELECT * FROM table2',
+          requestTimeout: 5000,
           trackingInstant: {
             trackInstant: false
           }
@@ -1520,16 +1528,19 @@ const historyQueryList: Array<HistoryQueryDTO> = [
     status: 'PENDING',
     southType: 'mssql',
     southSettings: {
-      host: 'host',
-      port: 1433,
-      connectionTimeout: 1000,
-      database: 'database',
-      username: 'oibus',
-      password: '',
-      domain: 'domain',
-      encryption: true,
-      trustServerCertificate: true,
-      requestTimeout: 5000
+      connectionSettings: {
+        host: 'host',
+        port: 1433,
+        connectionTimeout: 1000,
+        database: 'database',
+        username: 'oibus',
+        password: '',
+        domain: 'domain',
+        encryption: true,
+        trustServerCertificate: true,
+        idleTimeout: 30000
+      },
+      maxParallelRun: 1
     },
     queryTimeRange: {
       startTime: '2020-03-15T00:00:00.000Z',
@@ -1592,6 +1603,7 @@ const historyQueryList: Array<HistoryQueryDTO> = [
         enabled: true,
         settings: {
           query: 'SELECT * FROM table3',
+          requestTimeout: 5000,
           trackingInstant: {
             trackInstant: false
           }
@@ -1677,16 +1689,19 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   southType: 'mssql',
   northType: 'file-writer',
   southSettings: {
-    host: 'host',
-    port: 1433,
-    connectionTimeout: 1000,
-    database: 'database',
-    username: 'oibus',
-    password: 'pass',
-    domain: 'domain',
-    encryption: true,
-    trustServerCertificate: true,
-    requestTimeout: 5000
+    connectionSettings: {
+      host: 'host',
+      port: 1433,
+      connectionTimeout: 1000,
+      database: 'database',
+      username: 'oibus',
+      password: 'pass',
+      domain: 'domain',
+      encryption: true,
+      trustServerCertificate: true,
+      idleTimeout: 30000
+    },
+    maxParallelRun: 1
   },
   northSettings: {
     outputFolder: 'output-folder',
@@ -1724,6 +1739,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
       enabled: true,
       settings: {
         query: 'SELECT * FROM table4',
+        requestTimeout: 5000,
         trackingInstant: {
           trackInstant: false
         }
@@ -1759,6 +1775,7 @@ const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
   enabled: true,
   settings: {
     query: 'SELECT * FROM newTable',
+    requestTimeout: 5000,
     trackingInstant: {
       trackInstant: false
     }

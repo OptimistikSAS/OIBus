@@ -480,6 +480,62 @@ export function toOPCUANorthSettings(settings: Record<string, unknown>): Record<
   };
 }
 
+/** The database souths whose work-units can now query in parallel, gaining a `maxParallelRun` setting */
+export const MAX_PARALLEL_RUN_SOUTH_TYPES = ['influxdb', 'mssql', 'mysql', 'odbc', 'oracle', 'postgresql'];
+
+/** The settings of the database souths moved into their `connectionSettings` group */
+const CONNECTION_SETTINGS_KEYS: Record<string, Array<string>> = {
+  influxdb: ['version', 'host', 'port', 'protocol', 'database', 'username', 'password', 'url', 'token', 'organisation', 'bucket'],
+  mssql: ['host', 'port', 'connectionTimeout', 'database', 'encryption', 'trustServerCertificate', 'username', 'password', 'domain'],
+  mysql: ['host', 'port', 'connectionTimeout', 'database', 'username', 'password'],
+  oracle: ['thickMode', 'oracleClient', 'host', 'port', 'connectionTimeout', 'database', 'username', 'password'],
+  postgresql: ['host', 'port', 'sslMode', 'database', 'connectionTimeout', 'username', 'password']
+};
+
+/** The default time an unused connection of the pool of the SQL souths stays open, in ms */
+const POOL_IDLE_TIMEOUT = 30_000;
+
+/** The database souths whose request timeout moves from the connector to the items */
+export const ITEM_REQUEST_TIMEOUT_SOUTH_TYPES = ['mssql', 'postgresql'];
+
+/** The request timeout of the connectors missing one, in ms */
+const DEFAULT_REQUEST_TIMEOUT = 15_000;
+
+/** The item settings gain the request timeout of their connector settings (see `ITEM_REQUEST_TIMEOUT_SOUTH_TYPES`) */
+export function withItemRequestTimeout(
+  itemSettings: Record<string, unknown>,
+  connectorSettings: Record<string, unknown>
+): Record<string, unknown> {
+  return { ...itemSettings, requestTimeout: itemSettings.requestTimeout ?? connectorSettings.requestTimeout ?? DEFAULT_REQUEST_TIMEOUT };
+}
+
+/**
+ * The database South settings gain a `maxParallelRun`, 1 keeping the queries sequential as until now. Their connection
+ * settings move into a `connectionSettings` group, with the idle timeout of the connection pool of the SQL souths.
+ */
+export function toDatabaseSouthSettings(southType: string, settings: Record<string, unknown>): Record<string, unknown> {
+  const keys = CONNECTION_SETTINGS_KEYS[southType];
+  if (!keys) {
+    return { ...settings, maxParallelRun: settings.maxParallelRun ?? 1 };
+  }
+  const rest = { ...settings };
+  if (ITEM_REQUEST_TIMEOUT_SOUTH_TYPES.includes(southType)) {
+    // Moved to the items (see withItemRequestTimeout)
+    delete rest.requestTimeout;
+  }
+  const connectionSettings: Record<string, unknown> = { ...((rest.connectionSettings as Record<string, unknown> | undefined) ?? {}) };
+  for (const key of keys) {
+    if (key in rest) {
+      connectionSettings[key] = rest[key];
+      delete rest[key];
+    }
+  }
+  if (southType !== 'influxdb') {
+    connectionSettings.idleTimeout ??= POOL_IDLE_TIMEOUT;
+  }
+  return { ...rest, connectionSettings, maxParallelRun: rest.maxParallelRun ?? 1 };
+}
+
 /**
  * The setpoints sent by OIAnalytics are records (`{ reference, value }`): the setpoint transformers are replaced by the
  * record-list ones.
@@ -1412,6 +1468,30 @@ function addOPCUATimeoutsAndSubscriptionSettings(config: JsonObject): void {
   });
 }
 
+/**
+ * The database South settings gain a `maxParallelRun` and a `connectionSettings` group (see `toDatabaseSouthSettings`), for
+ * the connectors and the history queries. The request timeout of the MSSQL and PostgreSQL ones moves to their items.
+ */
+function addDatabaseConnectionSettings(config: JsonObject): void {
+  for (const southType of ITEM_REQUEST_TIMEOUT_SOUTH_TYPES) {
+    forEachSouthItem(config, southType, (item, south) => {
+      item.settings = withItemRequestTimeout(item.settings as JsonObject, (south.settings as JsonObject).settings as JsonObject);
+    });
+    forEachHistoryQueryItem(config, southType, (item, settings) => {
+      item.settings = withItemRequestTimeout(item.settings as JsonObject, settings.southSettings as JsonObject);
+    });
+  }
+  for (const southType of MAX_PARALLEL_RUN_SOUTH_TYPES) {
+    forEachSouth(config, southType, south => {
+      const settings = south.settings as JsonObject;
+      if (settings.settings) settings.settings = toDatabaseSouthSettings(southType, settings.settings as JsonObject);
+    });
+    forEachHistoryQuery(config, southType, settings => {
+      if (settings.southSettings) settings.southSettings = toDatabaseSouthSettings(southType, settings.southSettings as JsonObject);
+    });
+  }
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
@@ -1430,7 +1510,10 @@ export const upgrade: ConfigUpgrade = {
     'move the filename prefix and suffix of the File Writer and SFTP norths to the filename of their transformers; ' +
     'add the connection and write timeouts of the OPC UA norths, and the connection timeout and subscription settings of the OPC UA souths; ' +
     'add the description of the south and history query items; ' +
-    'add the empty interval strategy of the history items and groups, keeping the tracked instant when no data is found',
+    'add the empty interval strategy of the history items and groups, keeping the tracked instant when no data is found; ' +
+    'add the max parallel runs of the InfluxDB, MSSQL, MySQL, ODBC, Oracle and PostgreSQL souths, keeping their queries sequential, ' +
+    'and group the connection settings of the InfluxDB, MSSQL, MySQL, Oracle and PostgreSQL souths, with the idle timeout of their connection pool; ' +
+    'move the request timeout of the MSSQL and PostgreSQL souths to their items',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1532,6 +1615,7 @@ export const upgrade: ConfigUpgrade = {
     replaceFileTransformer(config);
     moveFilenamePrefixAndSuffixToTransformers(config);
     addOPCUATimeoutsAndSubscriptionSettings(config);
+    addDatabaseConnectionSettings(config);
 
     return config;
   }

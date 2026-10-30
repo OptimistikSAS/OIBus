@@ -335,17 +335,28 @@ describe('SouthConnectorRepository', () => {
       'south_connector',
       newSouthConnector.id,
       'UPDATE',
-      { ...beforeConnector, settings: { ...beforeConnector!.settings, password: '' } },
-      { ...updatedConnector, settings: { ...updatedConnector.settings, password: '' } },
+      {
+        ...beforeConnector,
+        settings: {
+          ...beforeConnector!.settings,
+          connectionSettings: { ...(beforeConnector!.settings as { connectionSettings: object }).connectionSettings, password: '' }
+        }
+      },
+      {
+        ...updatedConnector,
+        settings: {
+          ...updatedConnector.settings,
+          connectionSettings: { ...(updatedConnector.settings as { connectionSettings: object }).connectionSettings, password: '' }
+        }
+      },
       newSouthConnector.updatedBy
     ]);
     // The connector's secret settings field must never be persisted in the audit trail, before or after
-    assert.strictEqual((connectorCalls[0][3] as { settings: { password: string } }).settings.password, '');
-    assert.strictEqual((connectorCalls[0][4] as { settings: { password: string } }).settings.password, '');
-    assert.notStrictEqual(
-      (connectorCalls[0][4] as { settings: { password: string } }).settings.password,
-      (updatedConnector.settings as { password: string }).password
-    );
+    const passwordOf = (connector: unknown) =>
+      (connector as { settings: { connectionSettings: { password: string } } }).settings.connectionSettings.password;
+    assert.strictEqual(passwordOf(connectorCalls[0][3]), '');
+    assert.strictEqual(passwordOf(connectorCalls[0][4]), '');
+    assert.notStrictEqual(passwordOf(connectorCalls[0][4]), passwordOf(updatedConnector));
 
     const itemCreateCalls = recorded().filter(isAudit('south_item', 'CREATE'));
     assert.strictEqual(itemCreateCalls.length, 1);

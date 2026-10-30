@@ -16,16 +16,21 @@ Connectez-vous à des bases de données PostgreSQL et interrogez-les avec OIBus.
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Paramètre          | Description                                                                     | Exemple de valeur |
-| ------------------ | ------------------------------------------------------------------------------- | ----------------- |
-| Hôte               | Adresse IP ou nom d'hôte du serveur PostgreSQL.                                 | `192.168.1.10`    |
-| Port               | Numéro de port du serveur. Par défaut : `5432`.                                 | `5432`            |
-| SSL                | Active la connexion chiffrée. Recommandé en production.                         | Activé/Désactivé  |
-| Base de données    | Nom de la base de données à laquelle se connecter.                              | `production`      |
-| Délai de connexion | Temps maximal en millisecondes pour établir la connexion. Par défaut : `10000`. | `10000`           |
-| Délai de requête   | Temps d'exécution maximal en millisecondes pour chaque requête SQL.             | `15000`           |
-| Nom d'utilisateur  | Nom d'utilisateur d'authentification.                                           | `db_user`         |
-| Mot de passe       | Mot de passe d'authentification.                                                | `••••••••`        |
+| Paramètre                         | Description                                                                                                                     | Exemple de valeur |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Hôte                              | Adresse IP ou nom d'hôte du serveur PostgreSQL.                                                                                 | `192.168.1.10`    |
+| Port                              | Numéro de port du serveur. Par défaut : `5432`.                                                                                 | `5432`            |
+| SSL                               | Active la connexion chiffrée. Recommandé en production.                                                                         | Activé/Désactivé  |
+| Base de données                   | Nom de la base de données à laquelle se connecter.                                                                              | `production`      |
+| Délai de connexion                | Temps maximal en millisecondes pour établir la connexion. Par défaut : `10000`.                                                 | `10000`           |
+| Nom d'utilisateur                 | Nom d'utilisateur d'authentification.                                                                                           | `db_user`         |
+| Mot de passe                      | Mot de passe d'authentification.                                                                                                | `••••••••`        |
+| Délai d'inactivité des connexions | Temps en millisecondes pendant lequel une connexion inutilisée du pool reste ouverte avant d'être fermée. Par défaut : `30000`. | `30000`           |
+| Requêtes parallèles max           | Nombre maximal d'éléments ou de groupes interrogés en même temps, de `1` (séquentiel) à `8`. Par défaut : `1`.                  | `2`               |
+
+:::note Requêtes parallèles
+OIBus garde un pool d'au plus ce nombre de connexions à la base de données, ouvertes quand les requêtes en ont besoin et fermées après le délai d'inactivité : chacune augmente la charge de la source. Gardez une valeur inférieure aux connexions disponibles pour ce rôle (`max_connections`, limite de connexions du rôle).
+:::
 
 :::tip Bonnes pratiques de sécurité
 
@@ -58,6 +63,12 @@ Une [synchronisation des points](./common-settings.md#items-synchronisation) sur
 métadonnées et envoie ses lignes à OIAnalytics ; elle ne crée jamais d'éléments.
 
 <ItemSettings />
+
+:::note Délai de requête d'un élément PostgreSQL
+Chaque élément PostgreSQL possède son propre champ **Délai de requête** (en millisecondes), qui définit le temps d'exécution
+maximal de sa requête. Le **Délai de connexion** ne borne que l'attente de l'établissement d'une connexion, et les
+requêtes exécutées hors d'un élément (test de connexion, exploration, découverte) expirent après 15 secondes.
+:::
 
 :::note Types de champ date/heure PostgreSQL
 Les valeurs de **Type** suivantes sont disponibles pour le champ date/heure de l'instant suivi :

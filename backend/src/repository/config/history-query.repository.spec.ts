@@ -144,11 +144,24 @@ describe('HistoryQueryRepository', () => {
       newHistoryId,
       'CREATE',
       null,
-      { ...createdHistoryQuery, southSettings: { ...createdHistoryQuery.southSettings, password: '<changed>' } },
+      {
+        ...createdHistoryQuery,
+        southSettings: {
+          ...createdHistoryQuery.southSettings,
+          connectionSettings: {
+            ...(createdHistoryQuery.southSettings as { connectionSettings: object }).connectionSettings,
+            password: '<changed>'
+          }
+        }
+      },
       newHistoryQuery.updatedBy
     ]);
     // The south settings' secret field must never be persisted in the audit trail, only the fact that it is set
-    assert.strictEqual((historyCreateCalls[0][4] as { southSettings: { password: string } }).southSettings.password, '<changed>');
+    assert.strictEqual(
+      (historyCreateCalls[0][4] as { southSettings: { connectionSettings: { password: string } } }).southSettings.connectionSettings
+        .password,
+      '<changed>'
+    );
 
     const newHistoryWithoutTransformer = newHistory('new history query without transformer');
     repository.saveHistory(newHistoryWithoutTransformer, true);
@@ -319,15 +332,21 @@ describe('HistoryQueryRepository', () => {
       'DELETE',
       {
         ...beforeHistory,
-        southSettings: { ...beforeHistory.southSettings, password: '' },
+        southSettings: {
+          ...beforeHistory.southSettings,
+          connectionSettings: { ...(beforeHistory.southSettings as { connectionSettings: object }).connectionSettings, password: '' }
+        },
         northSettings: { ...beforeHistory.northSettings, password: '' }
       },
       null,
       'deleteUser'
     ]);
     // The south/north settings' secret fields must never be persisted in the audit trail
-    const redactedBefore = historyDeleteCall[3] as { southSettings: { password: string }; northSettings: { password: string } };
-    assert.strictEqual(redactedBefore.southSettings.password, '');
+    const redactedBefore = historyDeleteCall[3] as {
+      southSettings: { connectionSettings: { password: string } };
+      northSettings: { password: string };
+    };
+    assert.strictEqual(redactedBefore.southSettings.connectionSettings.password, '');
     assert.strictEqual(redactedBefore.northSettings.password, '');
   });
 

@@ -39,28 +39,164 @@ const manifest: SouthConnectorManifest = {
     validators: [],
     attributes: [
       {
-        type: 'string',
-        key: 'host',
-        translationKey: 'configuration.oibus.manifest.south.mysql.host',
-        defaultValue: null,
+        type: 'object',
+        key: 'connectionSettings',
+        translationKey: 'configuration.oibus.manifest.south.mysql.connection-settings.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: true
+        },
+        enablingConditions: [],
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
           }
         ],
-        displayProperties: {
-          row: 0,
-          columns: 6,
-          displayInViewMode: true
-        }
+        attributes: [
+          {
+            type: 'string',
+            key: 'host',
+            translationKey: 'configuration.oibus.manifest.south.mysql.connection-settings.host',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'port',
+            translationKey: 'configuration.oibus.manifest.south.mysql.connection-settings.port',
+            defaultValue: 3306,
+            unit: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['65535']
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'connectionTimeout',
+            translationKey: 'configuration.oibus.manifest.south.mysql.connection-settings.connection-timeout',
+            unit: 'ms',
+            defaultValue: 5000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['100']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['30000']
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'database',
+            translationKey: 'configuration.oibus.manifest.south.mysql.connection-settings.database',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'username',
+            translationKey: 'configuration.oibus.manifest.south.mysql.connection-settings.username',
+            defaultValue: null,
+            validators: [],
+            displayProperties: {
+              row: 1,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'secret',
+            key: 'password',
+            translationKey: 'configuration.oibus.manifest.south.mysql.connection-settings.password',
+            validators: [],
+            displayProperties: {
+              row: 1,
+              columns: 3,
+              displayInViewMode: false
+            }
+          },
+          {
+            type: 'number',
+            key: 'idleTimeout',
+            translationKey: 'configuration.oibus.manifest.south.mysql.connection-settings.idle-timeout',
+            unit: 'ms',
+            defaultValue: 30000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1000']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['3600000']
+              }
+            ],
+            displayProperties: {
+              row: 2,
+              columns: 3,
+              displayInViewMode: false
+            }
+          }
+        ]
       },
       {
         type: 'number',
-        key: 'port',
-        translationKey: 'configuration.oibus.manifest.south.mysql.port',
-        defaultValue: 3306,
+        key: 'maxParallelRun',
+        translationKey: 'configuration.oibus.manifest.south.mysql.max-parallel-run',
         unit: null,
+        defaultValue: 1,
         validators: [
           {
             type: 'REQUIRED',
@@ -72,79 +208,13 @@ const manifest: SouthConnectorManifest = {
           },
           {
             type: 'MAXIMUM',
-            arguments: ['65535']
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'number',
-        key: 'connectionTimeout',
-        translationKey: 'configuration.oibus.manifest.south.mysql.connection-timeout',
-        unit: 'ms',
-        defaultValue: 5000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['30000']
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'database',
-        translationKey: 'configuration.oibus.manifest.south.mysql.database',
-        defaultValue: null,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
+            arguments: ['8']
           }
         ],
         displayProperties: {
           row: 1,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'username',
-        translationKey: 'configuration.oibus.manifest.south.mysql.username',
-        defaultValue: null,
-        validators: [],
-        displayProperties: {
-          row: 1,
           columns: 3,
           displayInViewMode: true
-        }
-      },
-      {
-        type: 'secret',
-        key: 'password',
-        translationKey: 'configuration.oibus.manifest.south.mysql.password',
-        validators: [],
-        displayProperties: {
-          row: 1,
-          columns: 3,
-          displayInViewMode: false
         }
       }
     ]

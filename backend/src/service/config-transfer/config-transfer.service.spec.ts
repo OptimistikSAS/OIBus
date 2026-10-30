@@ -111,7 +111,7 @@ describe('Config Transfer Service', () => {
     // testData.south includes a south connector ('South 2', type 'mssql') whose settings carry a
     // real value ('pass') in a field the mssql manifest marks as `type: 'secret'`.
     const mssqlSouth = testData.south.list.find(south => south.type === 'mssql')!;
-    assert.strictEqual((mssqlSouth.settings as { password: string }).password, 'pass');
+    assert.strictEqual((mssqlSouth.settings as { connectionSettings: { password: string } }).connectionSettings.password, 'pass');
 
     const envelope = service.exportConfiguration();
     const serialized = JSON.stringify(envelope);

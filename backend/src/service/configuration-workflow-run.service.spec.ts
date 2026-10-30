@@ -897,12 +897,14 @@ describe('Configuration Workflow Run Service', () => {
             'dbo.production',
             {
               query: 'SELECT * FROM [dbo].[production] WHERE [produced_at] > @StartTime AND [produced_at] <= @EndTime',
+              // the default request timeout of the manifest
+              requestTimeout: 15000,
               // the time zone of a date-time-2 column gets its default
               trackingInstant: { trackInstant: true, fieldName: 'produced_at', dateTimeInput: { type: 'date-time-2', timezone: 'UTC' } }
             }
           ],
           // the time column and its date format don't apply to an untracked table: left out rather than empty
-          ['dbo.settings', { query: 'SELECT * FROM [dbo].[settings]', trackingInstant: { trackInstant: false } }]
+          ['dbo.settings', { query: 'SELECT * FROM [dbo].[settings]', requestTimeout: 15000, trackingInstant: { trackInstant: false } }]
         ]
       );
     });

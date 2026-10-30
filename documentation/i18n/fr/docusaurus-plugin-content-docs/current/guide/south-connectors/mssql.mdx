@@ -19,18 +19,23 @@ Ce connecteur est couramment utilisé pour extraire des données de process et d
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Paramètre                                | Description                                                                      | Exemple de valeur |
-| ---------------------------------------- | -------------------------------------------------------------------------------- | ----------------- |
-| Hôte                                     | Adresse IP ou nom d'hôte de l'instance SQL Server.                               | `192.168.1.10`    |
-| Port                                     | Numéro de port SQL Server. Par défaut : `1433`.                                  | `1433`            |
-| Délai de connexion                       | Temps maximal en millisecondes pour établir la connexion. Par défaut : `5000`.   | `5000`            |
-| Base de données                          | Nom de la base de données à laquelle se connecter.                               | `production`      |
-| Utiliser le chiffrement                  | Activer le chiffrement des données entre OIBus et la base de données.            | Activé/Désactivé  |
-| Faire confiance au certificat du serveur | Accepter les certificats auto-signés ou expirés. À utiliser avec prudence.       | Activé/Désactivé  |
-| Nom d'utilisateur                        | Nom d'utilisateur d'authentification.                                            | `sa`              |
-| Mot de passe                             | Mot de passe d'authentification.                                                 | `••••••••`        |
-| Domaine                                  | Domaine Active Directory pour l'authentification de domaine (optionnel).         | `CORP`            |
-| Délai de requête                         | Temps d'exécution maximal en millisecondes pour chaque requête SQL individuelle. | `15000`           |
+| Paramètre                                | Description                                                                                                                     | Exemple de valeur |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Hôte                                     | Adresse IP ou nom d'hôte de l'instance SQL Server.                                                                              | `192.168.1.10`    |
+| Port                                     | Numéro de port SQL Server. Par défaut : `1433`.                                                                                 | `1433`            |
+| Délai de connexion                       | Temps maximal en millisecondes pour établir la connexion. Par défaut : `5000`.                                                  | `5000`            |
+| Base de données                          | Nom de la base de données à laquelle se connecter.                                                                              | `production`      |
+| Utiliser le chiffrement                  | Activer le chiffrement des données entre OIBus et la base de données.                                                           | Activé/Désactivé  |
+| Faire confiance au certificat du serveur | Accepter les certificats auto-signés ou expirés. À utiliser avec prudence.                                                      | Activé/Désactivé  |
+| Nom d'utilisateur                        | Nom d'utilisateur d'authentification.                                                                                           | `sa`              |
+| Mot de passe                             | Mot de passe d'authentification.                                                                                                | `••••••••`        |
+| Domaine                                  | Domaine Active Directory pour l'authentification de domaine (optionnel).                                                        | `CORP`            |
+| Délai d'inactivité des connexions        | Temps en millisecondes pendant lequel une connexion inutilisée du pool reste ouverte avant d'être fermée. Par défaut : `30000`. | `30000`           |
+| Requêtes parallèles max                  | Nombre maximal d'éléments ou de groupes interrogés en même temps, de `1` (séquentiel) à `8`. Par défaut : `1`.                  | `2`               |
+
+:::note Requêtes parallèles
+OIBus garde un pool d'au plus ce nombre de connexions à la base de données, ouvertes quand les requêtes en ont besoin et fermées après le délai d'inactivité : chacune augmente la charge de la source. Gardez une valeur inférieure au nombre de connexions que le login SQL Server peut utiliser.
+:::
 
 ### Bonnes pratiques de sécurité {#security-best-practices}
 
@@ -66,6 +71,12 @@ Une [synchronisation des points](./common-settings.md#items-synchronisation) sur
 métadonnées et envoie ses lignes à OIAnalytics ; elle ne crée jamais d'éléments.
 
 <ItemSettings />
+
+:::note Délai de requête d'un élément MSSQL
+Chaque élément MSSQL possède son propre champ **Délai de requête** (en millisecondes), qui définit le temps d'exécution
+maximal de sa requête. Le **Délai de connexion** ne borne que l'attente de l'établissement d'une connexion, et les
+requêtes exécutées hors d'un élément (test de connexion, exploration, découverte) expirent après 15 secondes.
+:::
 
 :::note Types de champ date/heure MSSQL
 Les valeurs de **Type** suivantes sont disponibles pour le champ date/heure de l'instant suivi dans Microsoft SQL Server :

@@ -33,9 +33,14 @@ version correspondant à votre serveur avant de configurer les autres paramètre
 
 ### Commun {#common}
 
-| Paramètre   | Description                                           |
-| ----------- | ----------------------------------------------------- |
-| **Version** | Version de l'API InfluxDB à utiliser : `1`, `2`, `3`. |
+| Paramètre                   | Description                                                                                                    |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Version**                 | Version de l'API InfluxDB à utiliser : `1`, `2`, `3`.                                                          |
+| **Requêtes parallèles max** | Nombre maximal d'éléments ou de groupes interrogés en même temps, de `1` (séquentiel) à `8`. Par défaut : `1`. |
+
+:::note Requêtes parallèles
+Chaque requête exécutée en parallèle envoie sa propre requête à l'instance InfluxDB : elle augmente sa charge et peut atteindre ses limites de requêtes simultanées ou de débit. En v3, les requêtes partagent une seule connexion à l'instance.
+:::
 
 ### InfluxDB v1 {#influxdb-v1}
 

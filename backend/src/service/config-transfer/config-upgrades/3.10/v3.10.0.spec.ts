@@ -621,6 +621,74 @@ describe('3.10.0 config upgrade', () => {
     });
   });
 
+  describe('connection settings of the database souths', () => {
+    const buildConfig = (): JsonObject => ({
+      southConnectors: [
+        { type: 'mysql', settings: { name: 'MySQL', settings: { host: 'h', port: 3306 } } },
+        {
+          type: 'mssql',
+          settings: { name: 'MSSQL', settings: { host: 'h', requestTimeout: 5000 }, items: [{ name: 'item', settings: { query: 'q' } }] }
+        },
+        { type: 'odbc', settings: { name: 'ODBC', settings: { remoteAgent: false, maxParallelRun: 4 } } },
+        { type: 'oledb', settings: { name: 'OLEDB', settings: { agentUrl: 'u' } } }
+      ],
+      historyQueries: [
+        { settings: { southType: 'influxdb', northType: 'console', southSettings: { version: '2', bucket: 'b' }, northSettings: {} } },
+        { settings: { southType: 'mqtt', northType: 'console', southSettings: { host: 'h' }, northSettings: {} } },
+        {
+          settings: {
+            southType: 'postgresql',
+            northType: 'console',
+            southSettings: { host: 'h' },
+            northSettings: {},
+            items: [{ name: 'item', settings: { query: 'q' } }]
+          }
+        }
+      ]
+    });
+
+    it('moves the request timeout of the MSSQL and PostgreSQL souths to their items, the default one when missing', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const [, mssql] = config.southConnectors as Array<JsonObject>;
+      assert.deepStrictEqual(((mssql.settings as JsonObject).items as Array<JsonObject>)[0].settings, { query: 'q', requestTimeout: 5000 });
+      assert.deepStrictEqual((mssql.settings as JsonObject).settings, {
+        connectionSettings: { host: 'h', idleTimeout: 30_000 },
+        maxParallelRun: 1
+      });
+      const postgresql = (config.historyQueries as Array<JsonObject>)[2].settings as JsonObject;
+      assert.deepStrictEqual((postgresql.items as Array<JsonObject>)[0].settings, { query: 'q', requestTimeout: 15_000 });
+    });
+
+    it('groups the connection settings and keeps the queries of the database souths and history queries sequential', () => {
+      const config = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(
+        (config.southConnectors as Array<JsonObject>).map(south => (south.settings as JsonObject).settings),
+        [
+          { connectionSettings: { host: 'h', port: 3306, idleTimeout: 30_000 }, maxParallelRun: 1 },
+          { connectionSettings: { host: 'h', idleTimeout: 30_000 }, maxParallelRun: 1 },
+          { remoteAgent: false, maxParallelRun: 4 },
+          { agentUrl: 'u' }
+        ]
+      );
+      assert.deepStrictEqual(
+        (config.historyQueries as Array<JsonObject>).map(historyQuery => (historyQuery.settings as JsonObject).southSettings),
+        [
+          { connectionSettings: { version: '2', bucket: 'b' }, maxParallelRun: 1 },
+          { host: 'h' },
+          { connectionSettings: { host: 'h', idleTimeout: 30_000 }, maxParallelRun: 1 }
+        ]
+      );
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
   describe('OIAnalytics setpoints', () => {
     const standard = (id: string, functionName: string, inputType: string, outputType: string) => ({
       oIBusInternalId: id,

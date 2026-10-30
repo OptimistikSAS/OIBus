@@ -7,6 +7,7 @@
   "files": [
     "src/index.ts",
     "src/@types/nodes7.d.ts",
+    "src/@types/database-drivers.d.ts",
     "src/service/logger/declarations.d.ts",
     "src/service/logger/oianalytics-transport.ts",
     "src/service/logger/sqlite-transport.ts",

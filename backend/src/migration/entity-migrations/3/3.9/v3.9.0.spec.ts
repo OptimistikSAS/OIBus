@@ -613,16 +613,19 @@ describe('Entity migration v3.9.0', () => {
       const south = buildSouthEntity<SouthMSSQLSettings, SouthItemSettings>(
         'mssql',
         {
-          host: 'host',
-          port: 1433,
-          connectionTimeout: 1000,
-          database: 'database',
-          username: 'oibus',
-          password: 'pass',
-          domain: 'domain',
-          encryption: true,
-          trustServerCertificate: true,
-          requestTimeout: 5000
+          connectionSettings: {
+            host: 'host',
+            port: 1433,
+            connectionTimeout: 1000,
+            database: 'database',
+            username: 'oibus',
+            password: 'pass',
+            domain: 'domain',
+            encryption: true,
+            trustServerCertificate: true,
+            idleTimeout: 30000
+          },
+          maxParallelRun: 1
         },
         []
       );

@@ -1239,23 +1239,23 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthInfluxDBSettingsVersion": {
+    "SouthInfluxDBSettingsConnectionSettingsVersion": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["1"]},{"dataType":"enum","enums":["2"]},{"dataType":"enum","enums":["3"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthInfluxDBSettingsProtocol": {
+    "SouthInfluxDBSettingsConnectionSettingsProtocol": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["http"]},{"dataType":"enum","enums":["https"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthInfluxDBSettings": {
+    "SouthInfluxDBSettingsConnectionSettings": {
         "dataType": "refObject",
         "properties": {
-            "version": {"ref":"SouthInfluxDBSettingsVersion","required":true},
+            "version": {"ref":"SouthInfluxDBSettingsConnectionSettingsVersion","required":true},
             "host": {"dataType":"string"},
             "port": {"dataType":"double"},
-            "protocol": {"ref":"SouthInfluxDBSettingsProtocol"},
+            "protocol": {"ref":"SouthInfluxDBSettingsConnectionSettingsProtocol"},
             "database": {"dataType":"string"},
             "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
@@ -1263,6 +1263,15 @@ const models: TsoaRoute.Models = {
             "token": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "organisation": {"dataType":"string"},
             "bucket": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthInfluxDBSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "connectionSettings": {"ref":"SouthInfluxDBSettingsConnectionSettings","required":true},
+            "maxParallelRun": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -1786,7 +1795,7 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMSSQLSettings": {
+    "SouthMSSQLSettingsConnectionSettings": {
         "dataType": "refObject",
         "properties": {
             "host": {"dataType":"string","required":true},
@@ -1799,6 +1808,16 @@ const models: TsoaRoute.Models = {
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "domain": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "requestTimeout": {"dataType":"double","required":true},
+            "idleTimeout": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthMSSQLSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "connectionSettings": {"ref":"SouthMSSQLSettingsConnectionSettings","required":true},
+            "maxParallelRun": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -1920,7 +1939,7 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMySQLSettings": {
+    "SouthMySQLSettingsConnectionSettings": {
         "dataType": "refObject",
         "properties": {
             "host": {"dataType":"string","required":true},
@@ -1929,6 +1948,16 @@ const models: TsoaRoute.Models = {
             "database": {"dataType":"string","required":true},
             "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "idleTimeout": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthMySQLSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "connectionSettings": {"ref":"SouthMySQLSettingsConnectionSettings","required":true},
+            "maxParallelRun": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -2059,6 +2088,7 @@ const models: TsoaRoute.Models = {
             "requestTimeout": {"dataType":"double"},
             "connectionString": {"dataType":"string","required":true},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "maxParallelRun": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -2738,7 +2768,7 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOracleSettings": {
+    "SouthOracleSettingsConnectionSettings": {
         "dataType": "refObject",
         "properties": {
             "thickMode": {"dataType":"boolean","required":true},
@@ -2749,6 +2779,16 @@ const models: TsoaRoute.Models = {
             "database": {"dataType":"string","required":true},
             "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "idleTimeout": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthOracleSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "connectionSettings": {"ref":"SouthOracleSettingsConnectionSettings","required":true},
+            "maxParallelRun": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -2974,7 +3014,7 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthPostgreSQLSettings": {
+    "SouthPostgreSQLSettingsConnectionSettings": {
         "dataType": "refObject",
         "properties": {
             "host": {"dataType":"string","required":true},
@@ -2985,6 +3025,16 @@ const models: TsoaRoute.Models = {
             "requestTimeout": {"dataType":"double","required":true},
             "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "idleTimeout": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthPostgreSQLSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "connectionSettings": {"ref":"SouthPostgreSQLSettingsConnectionSettings","required":true},
+            "maxParallelRun": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },

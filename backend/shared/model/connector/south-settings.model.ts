@@ -46,11 +46,11 @@ export type SouthBACnetItemSettingsPropertyIdentifier = (typeof SOUTH_B_A_CNET_I
 export const SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS = ['none', 'password'] as const;
 export type SouthFTPSettingsAuthentication = (typeof SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
-export const SOUTH_INFLUX_D_B_SETTINGS_VERSIONS = ['1', '2', '3'] as const;
-export type SouthInfluxDBSettingsVersion = (typeof SOUTH_INFLUX_D_B_SETTINGS_VERSIONS)[number];
+export const SOUTH_INFLUX_D_B_SETTINGS_CONNECTION_SETTINGS_VERSIONS = ['1', '2', '3'] as const;
+export type SouthInfluxDBSettingsConnectionSettingsVersion = (typeof SOUTH_INFLUX_D_B_SETTINGS_CONNECTION_SETTINGS_VERSIONS)[number];
 
-export const SOUTH_INFLUX_D_B_SETTINGS_PROTOCOLS = ['http', 'https'] as const;
-export type SouthInfluxDBSettingsProtocol = (typeof SOUTH_INFLUX_D_B_SETTINGS_PROTOCOLS)[number];
+export const SOUTH_INFLUX_D_B_SETTINGS_CONNECTION_SETTINGS_PROTOCOLS = ['http', 'https'] as const;
+export type SouthInfluxDBSettingsConnectionSettingsProtocol = (typeof SOUTH_INFLUX_D_B_SETTINGS_CONNECTION_SETTINGS_PROTOCOLS)[number];
 
 export const SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['modbus', 'jbus'] as const;
 export type SouthModbusSettingsAddressOffset = (typeof SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS)[number];
@@ -291,6 +291,20 @@ export interface SouthBACnetSettingsBbmd {
   foreignDeviceTtl?: number;
 }
 
+export interface SouthInfluxDBSettingsConnectionSettings {
+  version: SouthInfluxDBSettingsConnectionSettingsVersion;
+  host?: string;
+  port?: number;
+  protocol?: SouthInfluxDBSettingsConnectionSettingsProtocol;
+  database?: string;
+  username?: string | null;
+  password?: string | null;
+  url?: string;
+  token?: string | null;
+  organisation?: string;
+  bucket?: string;
+}
+
 export interface SouthMQTTSettingsAuthentication {
   type: SouthMQTTSettingsAuthenticationType;
   username?: string;
@@ -298,6 +312,29 @@ export interface SouthMQTTSettingsAuthentication {
   certFilePath?: string;
   keyFilePath?: string;
   caFilePath?: string;
+}
+
+export interface SouthMSSQLSettingsConnectionSettings {
+  host: string;
+  port: number;
+  connectionTimeout: number;
+  database: string;
+  encryption: boolean;
+  trustServerCertificate: boolean;
+  username: string | null;
+  password: string | null;
+  domain: string | null;
+  idleTimeout: number;
+}
+
+export interface SouthMySQLSettingsConnectionSettings {
+  host: string;
+  port: number;
+  connectionTimeout: number;
+  database: string;
+  username: string | null;
+  password: string | null;
+  idleTimeout: number;
 }
 
 export interface SouthOIAnalyticsSettingsSpecificSettings {
@@ -330,6 +367,29 @@ export interface SouthOPCUASettingsSubscription {
   maxKeepAliveCount: number;
   numberOfMessageBeforeFlush: number;
   delayBetweenFlush: number;
+}
+
+export interface SouthOracleSettingsConnectionSettings {
+  thickMode: boolean;
+  oracleClient?: string;
+  host: string;
+  port: number;
+  connectionTimeout: number;
+  database: string;
+  username: string | null;
+  password: string | null;
+  idleTimeout: number;
+}
+
+export interface SouthPostgreSQLSettingsConnectionSettings {
+  host: string;
+  port: number;
+  sslMode: boolean;
+  database: string;
+  connectionTimeout: number;
+  username: string | null;
+  password: string | null;
+  idleTimeout: number;
 }
 
 export interface SouthRestSettingsAuthentication {
@@ -406,17 +466,8 @@ export interface SouthFTPSettings {
 }
 
 export interface SouthInfluxDBSettings {
-  version: SouthInfluxDBSettingsVersion;
-  host?: string;
-  port?: number;
-  protocol?: SouthInfluxDBSettingsProtocol;
-  database?: string;
-  username?: string | null;
-  password?: string | null;
-  url?: string;
-  token?: string | null;
-  organisation?: string;
-  bucket?: string;
+  connectionSettings: SouthInfluxDBSettingsConnectionSettings;
+  maxParallelRun: number;
 }
 
 export interface SouthModbusSettings {
@@ -454,25 +505,13 @@ export interface SouthMQTTSettings {
 }
 
 export interface SouthMSSQLSettings {
-  host: string;
-  port: number;
-  connectionTimeout: number;
-  database: string;
-  encryption: boolean;
-  trustServerCertificate: boolean;
-  username: string | null;
-  password: string | null;
-  domain: string | null;
-  requestTimeout: number;
+  connectionSettings: SouthMSSQLSettingsConnectionSettings;
+  maxParallelRun: number;
 }
 
 export interface SouthMySQLSettings {
-  host: string;
-  port: number;
-  connectionTimeout: number;
-  database: string;
-  username: string | null;
-  password: string | null;
+  connectionSettings: SouthMySQLSettingsConnectionSettings;
+  maxParallelRun: number;
 }
 
 export interface SouthODBCSettings {
@@ -483,6 +522,7 @@ export interface SouthODBCSettings {
   requestTimeout?: number;
   connectionString: string;
   password: string | null;
+  maxParallelRun: number;
 }
 
 export interface SouthOIAnalyticsSettings {
@@ -522,14 +562,8 @@ export interface SouthOPCUASettings {
 }
 
 export interface SouthOracleSettings {
-  thickMode: boolean;
-  oracleClient?: string;
-  host: string;
-  port: number;
-  connectionTimeout: number;
-  database: string;
-  username: string | null;
-  password: string | null;
+  connectionSettings: SouthOracleSettingsConnectionSettings;
+  maxParallelRun: number;
 }
 
 export interface SouthPISettings {
@@ -538,14 +572,8 @@ export interface SouthPISettings {
 }
 
 export interface SouthPostgreSQLSettings {
-  host: string;
-  port: number;
-  sslMode: boolean;
-  database: string;
-  connectionTimeout: number;
-  requestTimeout: number;
-  username: string | null;
-  password: string | null;
+  connectionSettings: SouthPostgreSQLSettingsConnectionSettings;
+  maxParallelRun: number;
 }
 
 export interface SouthRestSettings {
@@ -837,6 +865,7 @@ export interface SouthMQTTItemSettings {
 
 export interface SouthMSSQLItemSettings {
   query: string;
+  requestTimeout: number;
   trackingInstant: SouthMSSQLItemSettingsTrackingInstant | null;
 }
 
@@ -888,6 +917,7 @@ export interface SouthPIItemSettings {
 
 export interface SouthPostgreSQLItemSettings {
   query: string;
+  requestTimeout: number;
   trackingInstant: SouthPostgreSQLItemSettingsTrackingInstant | null;
 }
 

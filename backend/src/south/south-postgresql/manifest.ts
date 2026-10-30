@@ -39,28 +39,181 @@ const manifest: SouthConnectorManifest = {
     validators: [],
     attributes: [
       {
-        type: 'string',
-        key: 'host',
-        translationKey: 'configuration.oibus.manifest.south.postgresql.host',
-        defaultValue: null,
+        type: 'object',
+        key: 'connectionSettings',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: true
+        },
+        enablingConditions: [],
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
           }
         ],
-        displayProperties: {
-          row: 0,
-          columns: 6,
-          displayInViewMode: true
-        }
+        attributes: [
+          {
+            type: 'string',
+            key: 'host',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.host',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'port',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.port',
+            defaultValue: 5432,
+            unit: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['65535']
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'boolean',
+            key: 'sslMode',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.ssl-mode',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'database',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.database',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'connectionTimeout',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.connection-timeout',
+            unit: 'ms',
+            defaultValue: 10000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['100']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['30000']
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'username',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.username',
+            defaultValue: null,
+            validators: [],
+            displayProperties: {
+              row: 2,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'secret',
+            key: 'password',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.password',
+            validators: [],
+            displayProperties: {
+              row: 2,
+              columns: 6,
+              displayInViewMode: false
+            }
+          },
+          {
+            type: 'number',
+            key: 'idleTimeout',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.idle-timeout',
+            unit: 'ms',
+            defaultValue: 30000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1000']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['3600000']
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 3,
+              displayInViewMode: false
+            }
+          }
+        ]
       },
       {
         type: 'number',
-        key: 'port',
-        translationKey: 'configuration.oibus.manifest.south.postgresql.port',
-        defaultValue: 5432,
+        key: 'maxParallelRun',
+        translationKey: 'configuration.oibus.manifest.south.postgresql.max-parallel-run',
         unit: null,
+        defaultValue: 1,
         validators: [
           {
             type: 'REQUIRED',
@@ -72,122 +225,13 @@ const manifest: SouthConnectorManifest = {
           },
           {
             type: 'MAXIMUM',
-            arguments: ['65535']
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'boolean',
-        key: 'sslMode',
-        translationKey: 'configuration.oibus.manifest.south.postgresql.ssl-mode',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'database',
-        translationKey: 'configuration.oibus.manifest.south.postgresql.database',
-        defaultValue: null,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'number',
-        key: 'connectionTimeout',
-        translationKey: 'configuration.oibus.manifest.south.postgresql.connection-timeout',
-        unit: 'ms',
-        defaultValue: 10000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['30000']
+            arguments: ['8']
           }
         ],
         displayProperties: {
           row: 1,
           columns: 3,
           displayInViewMode: true
-        }
-      },
-      {
-        type: 'number',
-        key: 'requestTimeout',
-        translationKey: 'configuration.oibus.manifest.south.postgresql.request-timeout',
-        unit: 'ms',
-        defaultValue: 15000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['3600000']
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 3,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'string',
-        key: 'username',
-        translationKey: 'configuration.oibus.manifest.south.postgresql.username',
-        defaultValue: null,
-        validators: [],
-        displayProperties: {
-          row: 2,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'secret',
-        key: 'password',
-        translationKey: 'configuration.oibus.manifest.south.postgresql.password',
-        validators: [],
-        displayProperties: {
-          row: 2,
-          columns: 6,
-          displayInViewMode: false
         }
       }
     ]
@@ -289,6 +333,32 @@ const manifest: SouthConnectorManifest = {
                 row: 0,
                 columns: 12,
                 displayInViewMode: true
+              }
+            },
+            {
+              type: 'number',
+              key: 'requestTimeout',
+              translationKey: 'configuration.oibus.manifest.south.items.postgresql.request-timeout',
+              unit: 'ms',
+              defaultValue: 15000,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                },
+                {
+                  type: 'MINIMUM',
+                  arguments: ['100']
+                },
+                {
+                  type: 'MAXIMUM',
+                  arguments: ['3600000']
+                }
+              ],
+              displayProperties: {
+                row: 1,
+                columns: 4,
+                displayInViewMode: false
               }
             },
             {

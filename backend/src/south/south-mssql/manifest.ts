@@ -39,28 +39,210 @@ const manifest: SouthConnectorManifest = {
     validators: [],
     attributes: [
       {
-        type: 'string',
-        key: 'host',
-        translationKey: 'configuration.oibus.manifest.south.mssql.host',
-        defaultValue: null,
+        type: 'object',
+        key: 'connectionSettings',
+        translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.title',
+        displayProperties: {
+          visible: true,
+          wrapInBox: true
+        },
+        enablingConditions: [],
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
           }
         ],
-        displayProperties: {
-          row: 0,
-          columns: 6,
-          displayInViewMode: true
-        }
+        attributes: [
+          {
+            type: 'string',
+            key: 'host',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.host',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'port',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.port',
+            defaultValue: 1433,
+            unit: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['65535']
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'number',
+            key: 'connectionTimeout',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.connection-timeout',
+            unit: 'ms',
+            defaultValue: 5000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['100']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['30000']
+              }
+            ],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string',
+            key: 'database',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.database',
+            defaultValue: null,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'boolean',
+            key: 'encryption',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.encryption',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'boolean',
+            key: 'trustServerCertificate',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.trust-server-certificate',
+            defaultValue: false,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 1,
+              columns: 3,
+              displayInViewMode: false
+            }
+          },
+          {
+            type: 'string',
+            key: 'username',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.username',
+            defaultValue: null,
+            validators: [],
+            displayProperties: {
+              row: 2,
+              columns: 4,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'secret',
+            key: 'password',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.password',
+            validators: [],
+            displayProperties: {
+              row: 2,
+              columns: 4,
+              displayInViewMode: false
+            }
+          },
+          {
+            type: 'string',
+            key: 'domain',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.domain',
+            defaultValue: null,
+            validators: [],
+            displayProperties: {
+              row: 2,
+              columns: 4,
+              displayInViewMode: false
+            }
+          },
+          {
+            type: 'number',
+            key: 'idleTimeout',
+            translationKey: 'configuration.oibus.manifest.south.mssql.connection-settings.idle-timeout',
+            unit: 'ms',
+            defaultValue: 30000,
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              },
+              {
+                type: 'MINIMUM',
+                arguments: ['1000']
+              },
+              {
+                type: 'MAXIMUM',
+                arguments: ['3600000']
+              }
+            ],
+            displayProperties: {
+              row: 3,
+              columns: 4,
+              displayInViewMode: false
+            }
+          }
+        ]
       },
       {
         type: 'number',
-        key: 'port',
-        translationKey: 'configuration.oibus.manifest.south.mssql.port',
-        defaultValue: 1433,
+        key: 'maxParallelRun',
+        translationKey: 'configuration.oibus.manifest.south.mssql.max-parallel-run',
         unit: null,
+        defaultValue: 1,
         validators: [
           {
             type: 'REQUIRED',
@@ -72,151 +254,13 @@ const manifest: SouthConnectorManifest = {
           },
           {
             type: 'MAXIMUM',
-            arguments: ['65535']
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'number',
-        key: 'connectionTimeout',
-        translationKey: 'configuration.oibus.manifest.south.mssql.connection-timeout',
-        unit: 'ms',
-        defaultValue: 5000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['30000']
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'database',
-        translationKey: 'configuration.oibus.manifest.south.mssql.database',
-        defaultValue: null,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
+            arguments: ['8']
           }
         ],
         displayProperties: {
           row: 1,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'boolean',
-        key: 'encryption',
-        translationKey: 'configuration.oibus.manifest.south.mssql.encryption',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'boolean',
-        key: 'trustServerCertificate',
-        translationKey: 'configuration.oibus.manifest.south.mssql.trust-server-certificate',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 3,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'string',
-        key: 'username',
-        translationKey: 'configuration.oibus.manifest.south.mssql.username',
-        defaultValue: null,
-        validators: [],
-        displayProperties: {
-          row: 2,
           columns: 4,
           displayInViewMode: true
-        }
-      },
-      {
-        type: 'secret',
-        key: 'password',
-        translationKey: 'configuration.oibus.manifest.south.mssql.password',
-        validators: [],
-        displayProperties: {
-          row: 2,
-          columns: 4,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'string',
-        key: 'domain',
-        translationKey: 'configuration.oibus.manifest.south.mssql.domain',
-        defaultValue: null,
-        validators: [],
-        displayProperties: {
-          row: 2,
-          columns: 4,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'number',
-        key: 'requestTimeout',
-        translationKey: 'configuration.oibus.manifest.south.mssql.request-timeout',
-        unit: 'ms',
-        defaultValue: 15000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['3600000']
-          }
-        ],
-        displayProperties: {
-          row: 3,
-          columns: 4,
-          displayInViewMode: false
         }
       }
     ]
@@ -318,6 +362,32 @@ const manifest: SouthConnectorManifest = {
                 row: 0,
                 columns: 12,
                 displayInViewMode: true
+              }
+            },
+            {
+              type: 'number',
+              key: 'requestTimeout',
+              translationKey: 'configuration.oibus.manifest.south.items.mssql.request-timeout',
+              unit: 'ms',
+              defaultValue: 15000,
+              validators: [
+                {
+                  type: 'REQUIRED',
+                  arguments: []
+                },
+                {
+                  type: 'MINIMUM',
+                  arguments: ['100']
+                },
+                {
+                  type: 'MAXIMUM',
+                  arguments: ['3600000']
+                }
+              ],
+              displayProperties: {
+                row: 1,
+                columns: 4,
+                displayInViewMode: false
               }
             },
             {
