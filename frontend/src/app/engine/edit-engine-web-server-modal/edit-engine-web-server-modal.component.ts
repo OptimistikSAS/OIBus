@@ -54,7 +54,8 @@ export class EditEngineWebServerModalComponent {
     certificateSource: ['store' as WebServerCertificateSource],
     certificateId: [null as string | null, Validators.required],
     certificatePath: [null as string | null, Validators.required],
-    privateKeyPath: [null as string | null, Validators.required]
+    privateKeyPath: [null as string | null, Validators.required],
+    enableContentEndpoint: [false as boolean]
   });
 
   /** Signals of the controls showing the https fields, for the template (the form is also patched by `initialize()`) */
@@ -78,7 +79,8 @@ export class EditEngineWebServerModalComponent {
       certificateSource: https.certificateSource,
       certificateId: https.certificateId,
       certificatePath: https.certificatePath,
-      privateKeyPath: https.privateKeyPath
+      privateKeyPath: https.privateKeyPath,
+      enableContentEndpoint: settings.webServer.enableContentEndpoint
     });
   }
 
@@ -109,8 +111,16 @@ export class EditEngineWebServerModalComponent {
     if (!this.form.valid) {
       return;
     }
-    const { port, authTokenDuration, httpsEnabled, certificateSource, certificateId, certificatePath, privateKeyPath } =
-      this.form.getRawValue();
+    const {
+      port,
+      authTokenDuration,
+      httpsEnabled,
+      certificateSource,
+      certificateId,
+      certificatePath,
+      privateKeyPath,
+      enableContentEndpoint
+    } = this.form.getRawValue();
     this.engineService
       .updateEngineWebServer({
         port: port!,
@@ -121,7 +131,8 @@ export class EditEngineWebServerModalComponent {
           certificateId: certificateId || null,
           certificatePath: certificatePath || null,
           privateKeyPath: privateKeyPath || null
-        }
+        },
+        enableContentEndpoint
       })
       .subscribe(result => {
         if (result.needsRedirect && result.newPort && result.newProtocol) {

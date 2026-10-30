@@ -2261,6 +2261,9 @@
       "no-certificate": "Aucun certificat dans le magasin : créez-en ou importez-en un dans la section certificats de cette page.",
       "certificate-path": "Fichier du certificat",
       "private-key-path": "Fichier de la clé privée",
+      "content-endpoint": "Points d'accès de contenu",
+      "content-endpoint-enabled": "Activer les points d'accès de contenu",
+      "content-endpoint-hint": "Permet à des systèmes externes d'envoyer des fichiers et du contenu JSON aux Norths via l'API OIBus (/api/content). Désactivés, ces appels sont rejetés et l'API OIBus n'est pas proposée comme source des transformateurs.",
       "file-hint": "Fichiers PEM (le certificat peut être suivi de sa chaîne de certification, la clé privée ne doit pas être chiffrée). Un chemin relatif est résolu depuis le dossier de données d'OIBus."
     },
     "proxy-settings": {

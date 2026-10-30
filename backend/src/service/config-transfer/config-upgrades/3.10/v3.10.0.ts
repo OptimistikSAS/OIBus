@@ -1492,6 +1492,17 @@ function addDatabaseConnectionSettings(config: JsonObject): void {
   }
 }
 
+/** Whether a North transformer applies to the OIBus API */
+function usesOIBusApi(config: JsonObject): boolean {
+  let used = false;
+  forEachNorth(config, null, north => {
+    used ||= asObjects((north.settings as JsonObject).transformers).some(
+      link => (link.source as JsonObject | undefined)?.type === 'oibus-api'
+    );
+  });
+  return used;
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
@@ -1513,7 +1524,8 @@ export const upgrade: ConfigUpgrade = {
     'add the empty interval strategy of the history items and groups, keeping the tracked instant when no data is found; ' +
     'add the max parallel runs of the InfluxDB, MSSQL, MySQL, ODBC, Oracle and PostgreSQL souths, keeping their queries sequential, ' +
     'and group the connection settings of the InfluxDB, MSSQL, MySQL, Oracle and PostgreSQL souths, with the idle timeout of their connection pool; ' +
-    'move the request timeout of the MSSQL and PostgreSQL souths to their items',
+    'move the request timeout of the MSSQL and PostgreSQL souths to their items; ' +
+    'add the setting enabling the content endpoints of the web server, enabled when a North transformer applies to the OIBus API',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1534,6 +1546,8 @@ export const upgrade: ConfigUpgrade = {
     if (engineSettings) {
       setMissing(engineSettings, 'auditRetentionDuration', 90);
       if (engineSettings.logger) setMissing(engineSettings.logger as JsonObject, 'auditRetentionDuration', 90);
+      // Enabled when the OIBus API was used, before replaceIsoAndIgnoreTransformers adds a transformer applying to it to every North
+      if (engineSettings.webServer) setMissing(engineSettings.webServer as JsonObject, 'enableContentEndpoint', usesOIBusApi(config));
     }
 
     forEachSouth(config, null, south => {

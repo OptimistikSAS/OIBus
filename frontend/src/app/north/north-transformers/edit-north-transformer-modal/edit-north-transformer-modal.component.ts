@@ -208,6 +208,9 @@ export class EditNorthTransformerModalComponent {
   readonly presetSource = signal(false);
   /** The transformers of the North, to tell which items the configured one would send */
   readonly existingTransformers = signal<Array<TransformerDTOWithOptions>>([]);
+  /** Whether the OIBus API and the OIAnalytics setpoints can be chosen as the source of a new transformer */
+  readonly oibusApiAvailable = signal(true);
+  readonly setpointsAvailable = signal(true);
   /** The selected south, with its groups and items */
   readonly southConnector = signal<SouthConnectorDTO | null>(null);
   /** Shown when specific items are chosen without any */

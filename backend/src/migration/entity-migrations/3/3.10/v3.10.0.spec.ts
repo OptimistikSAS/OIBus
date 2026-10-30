@@ -11,6 +11,7 @@ import {
   createMigrationSchemaHarness
 } from '../../../../tests/utils/migration-test-utils';
 import {
+  addContentEndpointSetting,
   addDatabaseConnectionSettings,
   addEmptyIntervalStrategies,
   addHttpsSettings,
@@ -2355,6 +2356,79 @@ describe('Entity migration v3.10.0: addHttpsSettings', () => {
     for (const column of HTTPS_COLUMNS) {
       assert.ok(!cols.includes(column), `engines.${column} removed`);
     }
+  });
+});
+
+describe('Entity migration v3.10.0: addContentEndpointSetting', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addContentEndpointSetting, db)
+  });
+  let db: Knex;
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('engines').insert({
+      id: 'test-engine-id',
+      name: 'Test Engine',
+      port: 2223,
+      auth_token_duration: '7d',
+      log_console_level: 'silent',
+      log_file_level: 'silent',
+      log_file_max_file_size: 50,
+      log_file_number_of_files: 5,
+      log_database_level: 'silent',
+      log_database_max_number_of_logs: 100000,
+      log_loki_level: 'silent',
+      log_loki_interval: 60,
+      log_oia_level: 'silent',
+      log_oia_interval: 10,
+      proxy_enabled: 0,
+      proxy_port: 9000,
+      oibus_version: '3.9.0',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z'
+    });
+    await db('scan_modes').insert({ id: 'sm1', name: 'sm1', description: '', cron: '* * * * * *' });
+    await db('north_connectors').insert({ ...caching, id: 'north1', name: 'North 1', type: 'console', enabled: true, settings: '{}' });
+    await db('transformers').insert({ id: 'iso', type: 'standard', function_name: 'iso', input_type: 'any', output_type: 'any' });
+  });
+  afterEach(() => harness.afterEach());
+
+  const enabled = async () => (await db('engines').where('id', 'test-engine-id').first()).enable_content_endpoint;
+
+  it('should keep the content endpoint disabled when no North transformer applies to the OIBus API', async () => {
+    await db('north_transformers').insert({ id: 'nt1', north_id: 'north1', transformer_id: 'iso', options: '{}', source_type: 'south' });
+
+    await addContentEndpointSetting(db);
+
+    assert.ok((await columnNames(db, 'engines')).includes('enable_content_endpoint'));
+    assert.strictEqual(await enabled(), 0);
+  });
+
+  it('should enable the content endpoint when a North transformer applies to the OIBus API', async () => {
+    await db('north_transformers').insert({
+      id: 'nt1',
+      north_id: 'north1',
+      transformer_id: 'iso',
+      options: '{}',
+      source_type: 'oibus-api',
+      source_api_data_source_id: 'my-source'
+    });
+
+    await addContentEndpointSetting(db);
+
+    assert.strictEqual(await enabled(), 1);
+  });
+
+  it('should drop the column on down', async () => {
+    await runStepsFrom(addContentEndpointSetting, db);
+    await down(db);
+
+    assert.ok(!(await columnNames(db, 'engines')).includes('enable_content_endpoint'));
   });
 });
 

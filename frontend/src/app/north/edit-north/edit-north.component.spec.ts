@@ -9,6 +9,7 @@ import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { NorthConnectorManifest, NorthType } from '@oibus/shared/connector/north-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { buildEngineSettings } from '../../../test/builders';
 import { EmptyRouteComponent } from '../../../test/empty-route.component';
 import testData from '../../../test/test-data';
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
@@ -92,6 +93,11 @@ describe('EditNorthComponent', () => {
   function configure(route: { params?: Record<string, string>; queryParams?: Record<string, string> }) {
     const engineService = createMock(EngineService);
     engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
+    const engineSettings = buildEngineSettings();
+    engineService.getEngineSettings.mockReturnValue(
+      of({ ...engineSettings, webServer: { ...engineSettings.webServer, enableContentEndpoint: true } })
+    );
+    engineService.getRegistrationSettings.mockReturnValue(of(testData.oIAnalytics.registration.completed));
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),

@@ -112,7 +112,8 @@ export function buildEngineSettings(overrides: Partial<EngineSettingsDTO> = {}):
     webServer: {
       port: 2223,
       authTokenDuration: '7d',
-      https: { enabled: false, certificateSource: 'store', certificateId: null, certificatePath: null, privateKeyPath: null }
+      https: { enabled: false, certificateSource: 'store', certificateId: null, certificatePath: null, privateKeyPath: null },
+      enableContentEndpoint: false
     },
     proxyServer: {
       enabled: true,

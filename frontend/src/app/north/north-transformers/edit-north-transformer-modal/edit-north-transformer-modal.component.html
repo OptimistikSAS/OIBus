@@ -54,12 +54,16 @@
                     }}
                   </option>
                 }
-                <option [ngValue]="{ dataSourceType: 'oibus-api', south: null }">
-                  {{ 'enums.oibus-data-source-type.oibus-api' | translate }}
-                </option>
-                <option [ngValue]="{ dataSourceType: 'oianalytics-setpoint', south: null }">
-                  {{ 'enums.oibus-data-source-type.oianalytics-setpoint' | translate }}
-                </option>
+                @if (oibusApiAvailable()) {
+                  <option [ngValue]="{ dataSourceType: 'oibus-api', south: null }">
+                    {{ 'enums.oibus-data-source-type.oibus-api' | translate }}
+                  </option>
+                }
+                @if (setpointsAvailable()) {
+                  <option [ngValue]="{ dataSourceType: 'oianalytics-setpoint', south: null }">
+                    {{ 'enums.oibus-data-source-type.oianalytics-setpoint' | translate }}
+                  </option>
+                }
               </select>
             </div>
           }

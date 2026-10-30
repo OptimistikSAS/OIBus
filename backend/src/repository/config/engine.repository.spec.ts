@@ -25,7 +25,7 @@ const toSettingsCommand = (command: EngineSettingsCommandDTO) =>
       forwardProxyPassword: command.proxyServer.forward?.password ?? null,
       lokiPassword: command.logger.loki.password ?? null
     },
-    testData.engine.settings.webServer.https
+    testData.engine.settings.webServer
   );
 const toLoggerCommand = (command: EngineLoggerCommandDTO) =>
   toEngineLoggerCommand(command, { lokiPassword: command.loki.password ?? null });
@@ -95,7 +95,8 @@ describe('EngineRepository with populated database', () => {
         webServer: {
           port: command.webServer.port,
           authTokenDuration: command.webServer.authTokenDuration,
-          https: testData.engine.settings.webServer.https
+          https: testData.engine.settings.webServer.https,
+          enableContentEndpoint: testData.engine.settings.webServer.enableContentEndpoint
         },
         proxyServer: {
           enabled: command.proxyServer.enabled,
@@ -181,12 +182,13 @@ describe('EngineRepository with populated database', () => {
     it('should update web server port only', () => {
       const before = repository.get();
       repository.updateWebServer(
-        toEngineWebServerCommand(testData.engine.webServerCommand, testData.engine.settings.webServer.https),
+        toEngineWebServerCommand(testData.engine.webServerCommand, testData.engine.settings.webServer),
         testData.users.list[0].id
       );
       const after = repository.get();
       assert.strictEqual(after!.webServer.port, testData.engine.webServerCommand.port);
       assert.deepStrictEqual(after!.webServer.https, testData.engine.webServerCommand.https);
+      assert.strictEqual(after!.webServer.enableContentEndpoint, testData.engine.webServerCommand.enableContentEndpoint);
 
       assert.deepStrictEqual(recorded(), [
         [

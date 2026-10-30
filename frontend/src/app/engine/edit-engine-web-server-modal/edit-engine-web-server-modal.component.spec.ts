@@ -38,11 +38,14 @@ class EditEngineWebServerModalTester {
   readonly certificate = this.root.getByLabelText('Certificate', { exact: true });
   readonly certificatePath = this.root.getByLabelText('Certificate file');
   readonly privateKeyPath = this.root.getByLabelText('Private key file');
+  readonly enableContentEndpoint = this.root.getByLabelText('Enable the content endpoints');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
 
-  initialize(https: EngineSettingsDTO['webServer']['https'] = HTTP) {
-    this.fixture.componentInstance.initialize(buildEngineSettings({ webServer: { port: 2223, authTokenDuration: '1d', https } }));
+  initialize(https: EngineSettingsDTO['webServer']['https'] = HTTP, enableContentEndpoint = false) {
+    this.fixture.componentInstance.initialize(
+      buildEngineSettings({ webServer: { port: 2223, authTokenDuration: '1d', https, enableContentEndpoint } })
+    );
   }
 }
 
@@ -120,9 +123,31 @@ describe('EditEngineWebServerModalComponent', () => {
     await tester.authTokenDuration.selectOptions('30 days');
     await tester.saveButton.click();
 
-    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({ port: 2223, authTokenDuration: '30d', https: HTTP });
+    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({
+      port: 2223,
+      authTokenDuration: '30d',
+      https: HTTP,
+      enableContentEndpoint: false
+    });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();
+  });
+
+  test('should initialize and save the content endpoint setting', async () => {
+    engineService.updateEngineWebServer.mockReturnValue(of({ needsRedirect: false, newPort: null, newProtocol: null }));
+    const tester = new EditEngineWebServerModalTester();
+    tester.initialize(HTTP, true);
+
+    await expect.element(tester.enableContentEndpoint).toBeChecked();
+    await tester.enableContentEndpoint.click();
+    await tester.saveButton.click();
+
+    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({
+      port: 2223,
+      authTokenDuration: '1d',
+      https: HTTP,
+      enableContentEndpoint: false
+    });
   });
 
   test('should close and open the redirect modal when the port changed', async () => {
@@ -136,7 +161,12 @@ describe('EditEngineWebServerModalComponent', () => {
     await tester.port.fill('3333');
     await tester.saveButton.click();
 
-    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({ port: 3333, authTokenDuration: '1d', https: HTTP });
+    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({
+      port: 3333,
+      authTokenDuration: '1d',
+      https: HTTP,
+      enableContentEndpoint: false
+    });
     expect(activeModal.close).toHaveBeenCalled();
     expect(openSpy).toHaveBeenCalledWith(PortRedirectModalComponent, { backdrop: 'static', keyboard: false });
     expect(redirectComponent.initialize).toHaveBeenCalledWith(3333, 'http');
@@ -163,7 +193,8 @@ describe('EditEngineWebServerModalComponent', () => {
     expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({
       port: 2223,
       authTokenDuration: '1d',
-      https: { ...HTTP, enabled: true, certificateId: testData.certificates.list[0].id }
+      https: { ...HTTP, enabled: true, certificateId: testData.certificates.list[0].id },
+      enableContentEndpoint: false
     });
     expect(redirectComponent.initialize).toHaveBeenCalledWith(2223, 'https');
   });
@@ -195,7 +226,8 @@ describe('EditEngineWebServerModalComponent', () => {
         certificateId: null,
         certificatePath: '/etc/oibus/oibus.crt',
         privateKeyPath: '/etc/oibus/oibus.key'
-      }
+      },
+      enableContentEndpoint: false
     });
   });
 
@@ -221,7 +253,8 @@ describe('EditEngineWebServerModalComponent', () => {
     expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({
       port: 2223,
       authTokenDuration: '1d',
-      https: { ...https, enabled: false }
+      https: { ...https, enabled: false },
+      enableContentEndpoint: false
     });
   });
 

@@ -118,6 +118,10 @@
                 <dd translate="engine.web-server-settings.https-disabled"></dd>
               }
             </div>
+            <div class="oib-summary-entry">
+              <dt translate="engine.web-server-settings.content-endpoint"></dt>
+              <dd [translate]="settings.webServer.enableContentEndpoint ? 'common.enabled' : 'common.disabled'"></dd>
+            </div>
           </dl>
         </section>
         <section class="oib-panel">

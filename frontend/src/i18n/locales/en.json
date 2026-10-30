@@ -691,6 +691,9 @@
       "no-certificate": "No certificate in the store: create or import one in the certificates section of this page.",
       "certificate-path": "Certificate file",
       "private-key-path": "Private key file",
+      "content-endpoint": "Content endpoints",
+      "content-endpoint-enabled": "Enable the content endpoints",
+      "content-endpoint-hint": "Lets external systems push files and JSON content to the Norths through the OIBus API (/api/content). When disabled, these calls are rejected and the OIBus API is not offered as a transformer source.",
       "file-hint": "PEM files (the certificate may be followed by its CA chain, the private key must not be encrypted). A relative path is resolved from the OIBus data folder."
     },
     "proxy-settings": {
