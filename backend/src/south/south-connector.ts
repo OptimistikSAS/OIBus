@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 
@@ -145,12 +146,15 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   private historyRunningCount = 0;
   historyIsRunning = false;
 
-  // Interval of the historyQuery() call currently in flight, set by queryIntervals() around that
-  // call so addContent (invoked synchronously from within a connector's historyQuery()) can tag
-  // the resulting content with the window it was queried from. Consumed e.g. by the
-  // @QueryStartTime/@QueryEndTime filename placeholders in CSV transformers. Null outside a
-  // history query (direct query, subscriptions), where content isn't bound to a time window.
-  private currentHistoryQueryInterval: Interval | null = null;
+  // Interval of the historyQuery() call in progress, set by queryIntervals() around that call so addContent (invoked
+  // from within a connector's historyQuery()) can tag the resulting content with the window it was queried from.
+  // Consumed e.g. by the @QueryStartTime/@QueryEndTime filename variables of the file transformers. Held per async
+  // context rather than in a field, so that runs in parallel (see getMaxParallelRun) each tag their content with their
+  // own interval. Empty outside a history query (direct query, subscriptions), where content isn't bound to a window.
+  private readonly historyQueryInterval = new AsyncLocalStorage<Interval>();
+  // Start of the most recently started run that has ended, so that the duration of a run ending after a run started
+  // later (runs in parallel) does not replace the duration of that later run.
+  private lastEndedRunStart: DateTime | null = null;
 
   protected constructor(
     protected connector: SouthConnectorEntity<T, I>,
@@ -556,9 +560,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       }
     }
 
-    this.metricsEvent.emit('run-end', {
-      lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
-    });
+    // With runs in parallel, the last run duration is the one of the most recently started run that has ended, as
+    // the last run start is the one of the most recently started run
+    if (!this.lastEndedRunStart || runStart >= this.lastEndedRunStart) {
+      this.lastEndedRunStart = runStart;
+      this.metricsEvent.emit('run-end', {
+        lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
+      });
+    }
   }
 
   /**
@@ -765,15 +774,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         numberOfIntervals: intervals.length,
         ...(itemContext ?? {})
       });
-      this.currentHistoryQueryInterval = interval;
-      let lastValue: { trackedInstant: Instant; value: unknown } | null;
-      try {
+      const lastValue: { trackedInstant: Instant; value: unknown } | null = await this.historyQueryInterval.run(interval, () =>
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error
-        lastValue = await this.historyQuery(items, interval.start, interval.end);
-      } finally {
-        this.currentHistoryQueryInterval = null;
-      }
+        this.historyQuery(items, interval.start, interval.end)
+      );
       this.logger.debug(
         workUnitLogCtx(items),
         `Retrieved tracked instant "${lastValue?.trackedInstant ?? null}" for interval [${interval.start}, ${interval.end}]`
@@ -940,13 +945,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   ): Promise<void> {
     if (data.content.length > 0) {
       this.logger.debug(`Add ${data.content.length} records to cache from South "${this.connector.name}"`);
+      const historyQueryInterval = this.historyQueryInterval.getStore();
       await this.engineAddContentCallback(
         this.connector.id,
         data,
         queryTime,
         items,
-        this.currentHistoryQueryInterval?.start ?? null,
-        this.currentHistoryQueryInterval?.end ?? null
+        historyQueryInterval?.start ?? null,
+        historyQueryInterval?.end ?? null
       );
       this.metricsEvent.emit('add-values', {
         numberOfValuesRetrieved: data.content.length,
@@ -965,13 +971,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     } else {
       this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
     }
+    const historyQueryInterval = this.historyQueryInterval.getStore();
     await this.engineAddContentCallback(
       this.connector.id,
       data,
       queryTime,
       items,
-      this.currentHistoryQueryInterval?.start ?? null,
-      this.currentHistoryQueryInterval?.end ?? null
+      historyQueryInterval?.start ?? null,
+      historyQueryInterval?.end ?? null
     );
     if (data.content !== undefined) {
       // A payload held in memory is not a list of records: count it as one retrieved item (not its byte length) and
