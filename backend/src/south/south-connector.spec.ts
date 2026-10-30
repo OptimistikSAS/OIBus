@@ -688,6 +688,60 @@ describe('SouthConnector', () => {
       });
     });
 
+    it('should tag the content of history runs in parallel with the interval of their own run', async () => {
+      utilsExports.generateIntervals = mock.fn((start: unknown, end: unknown) => [{ start: start as string, end: end as string }]);
+      const resolvers = new Map<string, () => void>();
+      south.historyQuery = mock.fn(async (items: Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>) => {
+        // The content is added after an await (e.g. the query result), once the other run has started its own interval
+        await new Promise<void>(resolve => resolvers.set(items[0].id, resolve));
+        await south.addContent({ type: 'record-list', content: [{ col: items[0].id }] }, testData.constants.dates.DATE_1, items);
+        return { trackedInstant: null, value: null };
+      });
+      const items = testData.south.list[1].items as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
+      const interval1 = { start: '2020-01-01T00:00:00.000Z', end: '2020-01-02T00:00:00.000Z' };
+      const interval2 = { start: '2020-02-01T00:00:00.000Z', end: '2020-02-02T00:00:00.000Z' };
+
+      const run1 = south.historyQueryHandler([items[0]], interval1.start, interval1.end);
+      const run2 = south.historyQueryHandler([items[1]], interval2.start, interval2.end);
+      await flushPromises();
+      resolvers.get(items[1].id)!();
+      await run2;
+      resolvers.get(items[0].id)!();
+      await run1;
+      // Content added after the history query ended is not bound to a window anymore
+      await south.addContent({ type: 'record-list', content: [{ col: 'after' }] }, testData.constants.dates.DATE_1, items);
+
+      assert.deepStrictEqual(
+        addContentCallback.mock.calls.map(c => c.arguments),
+        [
+          [
+            south.connectorConfiguration.id,
+            { type: 'record-list', content: [{ col: items[1].id }] },
+            testData.constants.dates.DATE_1,
+            [items[1]],
+            interval2.start,
+            interval2.end
+          ],
+          [
+            south.connectorConfiguration.id,
+            { type: 'record-list', content: [{ col: items[0].id }] },
+            testData.constants.dates.DATE_1,
+            [items[0]],
+            interval1.start,
+            interval1.end
+          ],
+          [
+            south.connectorConfiguration.id,
+            { type: 'record-list', content: [{ col: 'after' }] },
+            testData.constants.dates.DATE_1,
+            items,
+            null,
+            null
+          ]
+        ]
+      );
+    });
+
     it('should use independent cache entries per item for single-item connectors', async () => {
       const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
       utilsExports.generateIntervals = mock.fn(() => [interval]);
@@ -1078,6 +1132,44 @@ describe('SouthConnector', () => {
       await flushPromises();
     });
 
+    it('should report the duration of the most recently started run when runs overlap', async () => {
+      south.historyQueryHandler = mock.fn(async () => undefined);
+      const resolvers: Array<() => void> = [];
+      south.directQueryHandler = mock.fn(() => new Promise<void>(resolve => resolvers.push(resolve)));
+      const runStartListener = mock.fn();
+      const runEndListener = mock.fn();
+      south.metricsEvent.on('run-start', runStartListener);
+      south.metricsEvent.on('run-end', runEndListener);
+      const task = { kind: 'items' as const, scanModeId: testData.scanMode.list[0].id, items: opcuaItems };
+
+      const run1 = south['runTask'](task);
+      mock.timers.tick(1000);
+      const run2 = south['runTask'](task);
+      mock.timers.tick(500);
+      resolvers[1]();
+      await run2;
+      mock.timers.tick(1000);
+      // The first run ends after the second one: its duration must not replace the one of the second run
+      resolvers[0]();
+      await run1;
+      mock.timers.tick(1000);
+      const run3 = south['runTask'](task);
+      mock.timers.tick(200);
+      resolvers[2]();
+      await run3;
+
+      assert.deepStrictEqual(
+        runStartListener.mock.calls.map(c => c.arguments[0]),
+        [0, 1000, 3500].map(offset => ({
+          lastRunStart: DateTime.fromISO(testData.constants.dates.FAKE_NOW).plus(offset).toUTC().toISO()
+        }))
+      );
+      assert.deepStrictEqual(
+        runEndListener.mock.calls.map(c => c.arguments[0]),
+        [{ lastRunDuration: 500 }, { lastRunDuration: 200 }]
+      );
+    });
+
     it('should not dispatch queued tasks while stopping', () => {
       const runTaskMock = mock.fn(async () => undefined);
       south['runTask'] = runTaskMock;
@@ -1163,10 +1255,10 @@ describe('SouthConnector', () => {
 
     it('should forward the current history query interval bounds when adding values', async () => {
       const interval = { start: '2020-01-01T00:00:00.000Z', end: '2020-01-02T00:00:00.000Z' };
-      south['currentHistoryQueryInterval'] = interval;
-
       const values = [{}] as Array<OIBusPointRecord>;
-      await south.addContent({ type: 'record-list', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items);
+      await south['historyQueryInterval'].run(interval, () =>
+        south.addContent({ type: 'record-list', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items)
+      );
 
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
@@ -1180,10 +1272,10 @@ describe('SouthConnector', () => {
 
     it('should forward the current history query interval bounds when adding records', async () => {
       const interval = { start: '2020-01-01T00:00:00.000Z', end: '2020-01-02T00:00:00.000Z' };
-      south['currentHistoryQueryInterval'] = interval;
-
       const records = [{ col: 1 }] as Array<OIBusRecord>;
-      await south.addContent({ type: 'record-list', content: records }, testData.constants.dates.DATE_1, testData.south.list[2].items);
+      await south['historyQueryInterval'].run(interval, () =>
+        south.addContent({ type: 'record-list', content: records }, testData.constants.dates.DATE_1, testData.south.list[2].items)
+      );
 
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
@@ -1239,9 +1331,9 @@ describe('SouthConnector', () => {
 
     it('should forward the current history query interval bounds when adding a file', async () => {
       const interval = { start: '2020-01-01T00:00:00.000Z', end: '2020-01-02T00:00:00.000Z' };
-      south['currentHistoryQueryInterval'] = interval;
-
-      await south.addContent({ type: 'file', filePath: 'file.csv' }, testData.constants.dates.DATE_1, testData.south.list[2].items);
+      await south['historyQueryInterval'].run(interval, () =>
+        south.addContent({ type: 'file', filePath: 'file.csv' }, testData.constants.dates.DATE_1, testData.south.list[2].items)
+      );
 
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
         testData.south.list[2].id,
