@@ -7,7 +7,7 @@
         class="btn btn-primary"
         id="create-south-button"
         [attr.aria-label]="'south.tooltips.add' | translate"
-        (click)="createSouth()"
+        [routerLink]="['/south', 'create']"
       >
         <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
         <span translate="common.create"></span>

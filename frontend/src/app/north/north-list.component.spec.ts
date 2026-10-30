@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -8,6 +8,7 @@ import { page } from 'vitest/browser';
 import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
 
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import { EmptyRouteComponent } from '../../test/empty-route.component';
 import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { NorthConnectorService } from '../services/north-connector.service';
@@ -15,7 +16,6 @@ import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-
 import { ConfirmationService } from '../shared/confirmation.service';
 import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { NotificationService } from '../shared/notification.service';
-import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector-type-modal/choose-north-connector-type-modal.component';
 import { NorthListComponent } from './north-list.component';
 
 class NorthListComponentTester {
@@ -48,7 +48,7 @@ describe('NorthListComponent', () => {
   let northConnectorService: MockObject<NorthConnectorService>;
   let notificationService: MockObject<NotificationService>;
   let confirmationService: MockObject<ConfirmationService>;
-  let modalService: MockModalService<AuditHistoryModalComponent | ChooseNorthConnectorTypeModalComponent>;
+  let modalService: MockModalService<AuditHistoryModalComponent>;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
@@ -62,7 +62,7 @@ describe('NorthListComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'north/create', component: EmptyRouteComponent }]),
         provideModalTesting(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: NotificationService, useValue: notificationService },
@@ -156,15 +156,12 @@ describe('NorthListComponent', () => {
     expect(northConnectorService.delete).not.toHaveBeenCalled();
   });
 
-  test('should open the creation modal', async () => {
-    const fakeModalComponent = createMock(ChooseNorthConnectorTypeModalComponent);
-    modalService.mockClosedModal(fakeModalComponent);
-    const openSpy = vi.spyOn(modalService, 'open');
+  test('should navigate to the creation page', async () => {
     const tester = new NorthListComponentTester();
 
     await tester.createButton.click();
 
-    expect(openSpy).toHaveBeenCalledWith(ChooseNorthConnectorTypeModalComponent, { size: 'xl', backdrop: 'static' });
+    await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/north/create'));
   });
 
   test('should open the audit history modal with the north connector entity type and id', async () => {

@@ -12,7 +12,7 @@ import {
   SouthConnectorLightDTO,
   SouthItemGroupCommandDTO
 } from '@oibus/shared/api/south-connector.model';
-import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflow, buildWorkflowCommand } from '../../../test/builders';
@@ -120,6 +120,16 @@ class EditSouthComponentTester {
 
   async goTo(step: SouthConnectorStep) {
     await this.step(step).click();
+  }
+
+  /** The button of a mode of the connector step: "Duplicate existing" or "New settings" */
+  connectorMode(name: 'Duplicate existing' | 'New settings') {
+    return this.root.getByRole('button', { name, exact: true });
+  }
+
+  /** The card of an existing connector or of a type of the connector step, by the name it starts with */
+  connectorCard(name: string) {
+    return this.root.getByRole('button', { name: new RegExp(`^${name}`) });
   }
 
   readonly items = this.root.getByCss('section.oib-south-items');
@@ -320,6 +330,99 @@ describe('EditSouthComponent', () => {
 
       await expect.element(tester.reviewChanges).toHaveTextContent('Changes since the connector was saved: 2');
       await expect.element(tester.itemChanges).toHaveTextContent('Items added: 0 · changed: 0 · removed: 1');
+    });
+  });
+
+  describe('connector step', () => {
+    const southTypes: Array<SouthType> = [
+      { id: 'folder-scanner', category: 'file', modes: { subscription: false, lastPoint: false, lastFile: true, history: false } },
+      { id: 'mssql', category: 'database', modes: { subscription: false, lastPoint: false, lastFile: false, history: true } }
+    ];
+
+    /** Opens a new connector whose type the url does not give: the page opens on the connector step */
+    async function createChoosingTester(): Promise<EditSouthComponentTester> {
+      southConnectorService.getSouthTypes.mockReturnValue(of(southTypes));
+      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({}) });
+      modalService = TestBed.inject(MockModalService);
+      TestBed.createComponent(DefaultValidationErrorsComponent);
+      const tester = new EditSouthComponentTester();
+      await expect.element(tester.step('connector')).toHaveAttribute('aria-current', 'step');
+      return tester;
+    }
+
+    test('should start a new connector with the type chosen in the first step', async () => {
+      const tester = await createChoosingTester();
+      await expect.element(tester.title).toHaveTextContent('Create a south connector');
+      await expect.element(tester.connectorMode('New settings')).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.root.getByRole('group', { name: 'Database' })).toBeInTheDocument();
+      await expect.element(tester.name).not.toBeInTheDocument();
+
+      // a type is required
+      await tester.nextButton.click();
+      await expect.element(tester.root.getByText('This field is required')).toBeVisible();
+      await expect.element(tester.step('connector')).toHaveClass('modal-step-invalid');
+      expect(southConnectorService.getSouthManifest).not.toHaveBeenCalled();
+
+      await tester.connectorCard('Folder scanner').click();
+      await tester.nextButton.click();
+
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.title).toHaveTextContent('Create Folder scanner south connector');
+      expect(southConnectorService.getSouthManifest).toHaveBeenCalledWith('folder-scanner');
+      expect(southConnectorService.findById).not.toHaveBeenCalled();
+    });
+
+    test('should duplicate the existing connector chosen in the first step', async () => {
+      const tester = await createChoosingTester();
+
+      await tester.connectorMode('Duplicate existing').click();
+      await tester.connectorCard('South 1').click();
+      await tester.goTo('general');
+      await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
+      expect(southConnectorService.findById).toHaveBeenCalledWith('southId1');
+      await tester.name.fill('South copy');
+
+      const command = await lastSavedCommand(tester);
+
+      expect(southConnectorService.create).toHaveBeenCalledWith(command, 'southId1');
+      expect(command.items.map(item => item.name)).toEqual(['item b', 'item a', 'item c']);
+    });
+
+    test('should start the connector over, once confirmed, when another one is chosen', async () => {
+      const tester = await createChoosingTester();
+      await tester.connectorMode('Duplicate existing').click();
+      await tester.connectorCard('South 1').click();
+      await tester.nextButton.click();
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+
+      // back to the same connector: it is kept
+      await tester.goTo('connector');
+      await tester.nextButton.click();
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      expect(confirmationService.confirm).not.toHaveBeenCalled();
+      expect(southConnectorService.findById).toHaveBeenCalledTimes(1);
+
+      // a type starts it over, without the items of the duplicated connector
+      await tester.goTo('connector');
+      await tester.connectorMode('New settings').click();
+      await tester.connectorCard('Microsoft SQL Server™').click();
+      await tester.nextButton.click();
+      expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'south.steps.confirm-connector-change' });
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      expect(southConnectorService.getSouthManifest).toHaveBeenLastCalledWith('mssql');
+      await tester.goTo('items');
+      await expect.element(tester.noItems).toBeVisible();
+    });
+
+    test('should ask for confirmation before leaving once a connector is chosen', async () => {
+      const tester = await createChoosingTester();
+      expect(tester.fixture.componentInstance.canDeactivate()).toBe(true);
+      const confirmation = of(false);
+      unsavedChangesService.confirmUnsavedChanges.mockReturnValue(confirmation);
+
+      await tester.connectorCard('Folder scanner').click();
+
+      expect(tester.fixture.componentInstance.canDeactivate()).toBe(confirmation);
     });
   });
 

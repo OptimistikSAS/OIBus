@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { NgbDropdownItem, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { combineLatest, firstValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
@@ -19,7 +19,7 @@ import {
   SouthItemGroupCommandDTO
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
-import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { OIBusSouthType, SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
 
 import { CertificateService } from '../../services/certificate.service';
 import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
@@ -27,6 +27,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { ConfirmationService } from '../../shared/confirmation.service';
+import { ConnectorChoiceComponent, createConnectorChoiceForm } from '../../shared/connector-choice/connector-choice.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExploreButtonComponent } from '../../shared/explore-button/explore-button.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
@@ -75,7 +76,20 @@ function sortValue(item: SouthConnectorItemCommandDTO, column: string): string |
 
 /** The steps of the south connector page, in order: the general settings come last, once the connector is set up and tested */
 export const SOUTH_CONNECTOR_STEPS = ['settings', 'items', 'general', 'review'] as const;
-export type SouthConnectorStep = (typeof SOUTH_CONNECTOR_STEPS)[number];
+/** A new connector starts with the existing connector it duplicates, or with its type */
+export type SouthConnectorStep = (typeof SOUTH_CONNECTOR_STEPS)[number] | 'connector';
+
+/** What a new connector is created from: an existing connector, whose settings it duplicates, or a type */
+interface SouthConnectorChoice {
+  duplicateId: string | null;
+  type: string | null;
+}
+
+/** Whether the page opens on a new connector whose type is to choose: not given by the url, nor by a duplicated connector */
+function choosesConnector(route: ActivatedRoute): boolean {
+  const { paramMap, queryParamMap } = route.snapshot;
+  return !paramMap.get('southId') && !['duplicate', 'type'].some(key => queryParamMap.get(key));
+}
 
 /** The connector as summed up in the Review step */
 interface SouthConnectorSummary {
@@ -118,7 +132,8 @@ type SouthConnectorForm = FormGroup<{
     ModalStepsComponent,
     OIBusSettingsSummaryComponent,
     ExploreButtonComponent,
-    ItemsMenuComponent
+    ItemsMenuComponent,
+    ConnectorChoiceComponent
   ],
   templateUrl: './edit-south.component.html',
   styleUrl: './edit-south.component.scss',
@@ -151,6 +166,16 @@ export class EditSouthComponent implements CanComponentDeactivate {
   readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
 
   readonly mode = signal<'create' | 'edit'>('create');
+  readonly choosesConnector = choosesConnector(this.route);
+  /** The existing connector or the type of a new connector, chosen in the first step */
+  readonly connectorForm = createConnectorChoiceForm(this.fb, false);
+  readonly southTypes = signal<Array<SouthType>>([]);
+  /** The connector choice given to the page, which loads it */
+  private readonly connectorChoice = new Subject<SouthConnectorChoice>();
+  /** The connector choice the form was built with, to rebuild it only when another one is chosen */
+  private appliedChoice: SouthConnectorChoice | null = null;
+  /** The step to open once the chosen connector is loaded */
+  private stepAfterConnector: SouthConnectorStep = SOUTH_CONNECTOR_STEPS[0];
   readonly southConnector = signal<SouthConnectorDTO | null>(null);
   readonly southType = signal<OIBusSouthType | null>(null);
   readonly southTypeHelpUrl = computed(() => this.docsUrlService.resolve('guide/south-connectors/' + this.southType()));
@@ -160,12 +185,16 @@ export class EditSouthComponent implements CanComponentDeactivate {
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
   readonly manifest = signal<SouthConnectorManifest | null>(null);
-  private existingSouthConnectors: Array<SouthConnectorLightDTO> = [];
+  readonly existingSouthConnectors = signal<Array<SouthConnectorLightDTO>>([]);
   readonly form = signal<SouthConnectorForm | null>(null);
   /** The last change of the form (value, status, touched...) */
   private readonly formEvent = signal<unknown>(null);
 
-  readonly steps = new WizardSteps<SouthConnectorStep>(SOUTH_CONNECTOR_STEPS, step => this.stepControls(step), this.formEvent);
+  readonly steps = new WizardSteps<SouthConnectorStep>(
+    this.choosesConnector ? ['connector', ...SOUTH_CONNECTOR_STEPS] : SOUTH_CONNECTOR_STEPS,
+    step => this.stepControls(step),
+    this.formEvent
+  );
   /** A new connector is saved from the last step, an edited one from any step */
   readonly canSave = computed(() => this.mode() === 'edit' || this.steps.isLast());
 
@@ -258,32 +287,28 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.scanModeService.list(),
       this.certificateService.list(),
       this.southConnectorService.list(),
+      this.choosesConnector ? this.southConnectorService.getSouthTypes() : of([]),
       this.route.paramMap,
       this.route.queryParamMap
     ])
       .pipe(
-        switchMap(([scanModes, certificates, southConnectors, params, queryParams]) => {
+        switchMap(([scanModes, certificates, southConnectors, southTypes, params, queryParams]) => {
           this.scanModes.set(scanModes);
           this.certificates.set(certificates);
-          this.existingSouthConnectors = southConnectors;
+          this.existingSouthConnectors.set(southConnectors);
+          this.southTypes.set(southTypes);
 
           const paramSouthId = params.get('southId');
-          const duplicateSouthId = queryParams.get('duplicate');
-          this.southType.set((queryParams.get('type') as OIBusSouthType) || null);
-
           if (paramSouthId) {
             this.mode.set('edit');
             return this.southConnectorService.findById(paramSouthId).pipe(this.state.pendingUntilFinalization());
-          } else {
-            this.mode.set('create');
-            if (duplicateSouthId) {
-              this.duplicateId = duplicateSouthId;
-              return this.southConnectorService.findById(duplicateSouthId).pipe(this.state.pendingUntilFinalization());
-            } else {
-              // otherwise, we are creating one
-              return of(null);
-            }
           }
+          this.mode.set('create');
+          // the connector is chosen in the first step, unless the url gives it
+          const choice$: Observable<SouthConnectorChoice> = this.choosesConnector
+            ? this.connectorChoice
+            : of({ duplicateId: queryParams.get('duplicate'), type: queryParams.get('type') });
+          return choice$.pipe(switchMap(choice => this.loadConnector(choice)));
         }),
         switchMap(southConnector => {
           this.southConnector.set(southConnector);
@@ -356,6 +381,10 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   workflows.map((workflow, index) => this.toInMemoryWorkflow(workflow, isDuplicate ? index : null, groupIdMap))
                 )
               );
+          } else {
+            // another choice of connector starts it over
+            this.inMemoryItems.set([]);
+            this.inMemoryGroups.set([]);
           }
           return combineLatest([this.southConnectorService.getSouthManifest(this.southType()!), workflows$]);
         }),
@@ -368,11 +397,74 @@ export class EditSouthComponent implements CanComponentDeactivate {
         this.inMemoryWorkflows.set(workflows);
         this.manifest.set(manifest);
         this.buildForm();
+        if (this.steps.current() === 'connector') {
+          this.steps.current.set(this.stepAfterConnector);
+        }
       });
+
+    // the errors of the connector step are flagged like those of the connector form
+    this.connectorForm.events.pipe(takeUntilDestroyed()).subscribe(event => this.formEvent.set(event));
+  }
+
+  /** The chosen connector: the settings, items, groups and workflows of a duplicated one are copied */
+  private loadConnector(choice: SouthConnectorChoice): Observable<SouthConnectorDTO | null> {
+    this.duplicateId = choice.duplicateId ?? '';
+    if (choice.duplicateId) {
+      return this.southConnectorService.findById(choice.duplicateId).pipe(this.state.pendingUntilFinalization());
+    }
+    this.southType.set((choice.type as OIBusSouthType) || null);
+    return of(null);
+  }
+
+  /** Opens the next step: the first one, the connector, loads the chosen connector before */
+  nextStep() {
+    if (this.steps.current() === 'connector') {
+      this.applyConnector(SOUTH_CONNECTOR_STEPS[0]);
+    } else {
+      this.steps.next();
+    }
+  }
+
+  /** Opens a step of the steps bar: leaving the connector step loads the chosen connector, as Next does */
+  goTo(step: SouthConnectorStep) {
+    if (this.steps.current() === 'connector' && step !== 'connector') {
+      this.applyConnector(step);
+    } else {
+      this.steps.current.set(step);
+    }
+  }
+
+  /**
+   * Loads the chosen connector, then opens the given step. The connector is built again when another one is chosen, which the
+   * user confirms once it has been built: its settings and items start over.
+   */
+  private applyConnector(step: SouthConnectorStep) {
+    if (this.connectorForm.invalid) {
+      // shows the errors, without leaving the step
+      this.steps.next();
+      return;
+    }
+    const { id, type } = this.connectorForm.value;
+    const choice: SouthConnectorChoice = { duplicateId: id || null, type: type || null };
+    if (this.form() && choice.duplicateId === this.appliedChoice?.duplicateId && choice.type === this.appliedChoice?.type) {
+      this.steps.current.set(step);
+      return;
+    }
+    const apply = () => {
+      this.appliedChoice = choice;
+      this.stepAfterConnector = step;
+      this.form.set(null);
+      this.connectorChoice.next(choice);
+    };
+    if (this.form()) {
+      this.confirmationService.confirm({ messageKey: 'south.steps.confirm-connector-change' }).subscribe(apply);
+    } else {
+      apply();
+    }
   }
 
   canDeactivate(): Observable<boolean> | boolean {
-    if (this.form()?.dirty) {
+    if (this.form()?.dirty || this.connectorForm.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
     return true;
@@ -414,12 +506,15 @@ export class EditSouthComponent implements CanComponentDeactivate {
     if (this.canSave()) {
       this.submit('save');
     } else {
-      this.steps.next();
+      this.nextStep();
     }
   }
 
   /** The controls edited in each step */
   private stepControls(step: SouthConnectorStep): Array<AbstractControl> {
+    if (step === 'connector') {
+      return [this.connectorForm];
+    }
     const form = this.form();
     if (!form) {
       return [];
@@ -833,7 +928,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       }
 
       const southConnector = this.southConnector();
-      const isDuplicate = this.existingSouthConnectors.some(south => {
+      const isDuplicate = this.existingSouthConnectors().some(south => {
         if (southConnector && south.id === southConnector.id) {
           return false;
         }

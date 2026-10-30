@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
-import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { NorthConnectorManifest, NorthType } from '@oibus/shared/connector/north-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { EmptyRouteComponent } from '../../../test/empty-route.component';
@@ -70,6 +70,16 @@ class EditNorthComponentTester {
 
   async goTo(step: NorthConnectorStep) {
     await this.step(step).click();
+  }
+
+  /** The button of a mode of the connector step: "Duplicate existing" or "New settings" */
+  connectorMode(name: 'Duplicate existing' | 'New settings') {
+    return this.root.getByRole('button', { name, exact: true });
+  }
+
+  /** The card of an existing connector or of a type of the connector step, by the name it starts with */
+  connectorCard(name: string) {
+    return this.root.getByRole('button', { name: new RegExp(`^${name}`) });
   }
 }
 
@@ -421,6 +431,100 @@ describe('EditNorthComponent', () => {
         'northId1'
       );
       expect(northConnectorService.create.mock.lastCall![0].transformers).toHaveLength(3);
+    });
+  });
+
+  describe('connector step', () => {
+    const northTypes: Array<NorthType> = [
+      { id: 'console', category: 'debug', types: ['file'] },
+      { id: 'file-writer', category: 'file', types: ['file'] }
+    ];
+
+    beforeEach(() => {
+      northConnectorService.getNorthTypes.mockReturnValue(of(northTypes));
+      configure({});
+    });
+
+    test('should start a new connector with the type chosen in the first step', async () => {
+      const tester = new EditNorthComponentTester();
+      await expect.element(tester.step('connector')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.title).toHaveTextContent('Create a north connector');
+      await expect.element(tester.connectorMode('New settings')).toHaveAttribute('aria-pressed', 'true');
+      await expect.element(tester.root.getByRole('group', { name: 'Debug' })).toBeInTheDocument();
+      await expect.element(tester.name).not.toBeInTheDocument();
+
+      // a type is required
+      await tester.nextButton.click();
+      await expect.element(tester.root.getByText('This field is required')).toBeVisible();
+      await expect.element(tester.step('connector')).toHaveClass('modal-step-invalid');
+      expect(northConnectorService.getNorthManifest).not.toHaveBeenCalled();
+
+      await tester.connectorCard('File writer').click();
+      await tester.nextButton.click();
+
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.title).toHaveTextContent('Create File writer north connector');
+      expect(northConnectorService.getNorthManifest).toHaveBeenCalledWith('file-writer');
+      expect(northConnectorService.findById).not.toHaveBeenCalled();
+    });
+
+    test('should duplicate the existing connector chosen in the first step', async () => {
+      const tester = new EditNorthComponentTester();
+
+      await tester.connectorMode('Duplicate existing').click();
+      await tester.connectorCard('North 1').click();
+      await tester.goTo('general');
+      await expect.element(tester.name).toHaveValue('North 1');
+      expect(northConnectorService.findById).toHaveBeenCalledWith('northId1');
+      await tester.name.fill('North 1 copy');
+      await tester.goTo('review');
+      await tester.saveButton.click();
+
+      expect(northConnectorService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'North 1 copy', type: 'file-writer' }),
+        'northId1'
+      );
+      expect(northConnectorService.create.mock.lastCall![0].transformers).toHaveLength(3);
+    });
+
+    test('should start the connector over, once confirmed, when another one is chosen', async () => {
+      const tester = new EditNorthComponentTester();
+      await tester.connectorMode('Duplicate existing').click();
+      await tester.connectorCard('North 1').click();
+      await tester.nextButton.click();
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+
+      // back to the same connector: it is kept
+      await tester.goTo('connector');
+      await tester.goTo('caching');
+      await expect.element(tester.step('caching')).toHaveAttribute('aria-current', 'step');
+      expect(confirmationService.confirm).not.toHaveBeenCalled();
+      expect(northConnectorService.findById).toHaveBeenCalledTimes(1);
+
+      // a type starts it over, without the transformers of the duplicated connector
+      await tester.goTo('connector');
+      await tester.connectorMode('New settings').click();
+      await tester.connectorCard('Console').click();
+      await tester.nextButton.click();
+      expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'north.steps.confirm-connector-change' });
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+      expect(northConnectorService.getNorthManifest).toHaveBeenLastCalledWith('console');
+      await tester.goTo('general');
+      await expect.element(tester.name).toHaveValue('');
+      await tester.goTo('transformers');
+      await expect.element(tester.deleteTransformerButtons).toHaveLength(0);
+    });
+
+    test('should ask for confirmation before leaving once a connector is chosen', async () => {
+      const tester = new EditNorthComponentTester();
+      await expect.element(tester.step('connector')).toHaveAttribute('aria-current', 'step');
+      expect(tester.fixture.componentInstance.canDeactivate()).toBe(true);
+      const confirmation = of(false);
+      unsavedChangesConfirmationService.confirmUnsavedChanges.mockReturnValue(confirmation);
+
+      await tester.connectorCard('Console').click();
+
+      expect(tester.fixture.componentInstance.canDeactivate()).toBe(confirmation);
     });
   });
 });

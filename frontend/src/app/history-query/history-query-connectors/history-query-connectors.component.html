@@ -1,87 +1,21 @@
 <p class="text-muted" translate="history-query.modal.create-details"></p>
 <div class="row g-4">
-  <div class="col-md-6" id="south-connector">
-    <ng-container [ngTemplateOutlet]="sideTemplate" [ngTemplateOutletContext]="{ $implicit: south() }" />
-  </div>
-  <div class="col-md-6" id="north-connector">
-    <ng-container [ngTemplateOutlet]="sideTemplate" [ngTemplateOutletContext]="{ $implicit: north() }" />
-  </div>
+  <oib-connector-choice
+    class="col-md-6"
+    id="south-connector"
+    side="south"
+    titleKey="common.connector-choice.south"
+    [form]="createForm.controls.south"
+    [existing]="connectors()?.southList ?? []"
+    [types]="connectors()?.southTypes ?? []"
+  />
+  <oib-connector-choice
+    class="col-md-6"
+    id="north-connector"
+    side="north"
+    titleKey="common.connector-choice.north"
+    [form]="createForm.controls.north"
+    [existing]="connectors()?.northList ?? []"
+    [types]="connectors()?.northTypes ?? []"
+  />
 </div>
-
-<!-- A side of the history query: an existing connector to duplicate, or a type to start from new settings -->
-<ng-template #sideTemplate let-sideContext>
-  @let connectors = asSide(sideContext);
-  @let side = connectors.side;
-  @let duplicates = fromExisting(side);
-  @let chosenId = chosen(side);
-  @let sideControls = controls(side);
-  <div class="oib-section-title">
-    <h5 [translate]="'history-query.connectors.' + side"></h5>
-  </div>
-  <div class="d-flex gap-2 mb-3" role="group" [attr.aria-label]="'history-query.connectors.' + side | translate">
-    @if (connectors.existing.length > 0) {
-      <button
-        type="button"
-        class="btn btn-sm rounded-pill connector-mode"
-        [class.active]="duplicates"
-        [attr.aria-pressed]="duplicates"
-        (click)="setFromExisting(side, true)"
-        translate="history-query.connectors.duplicate-existing"
-      ></button>
-    }
-    <button
-      type="button"
-      class="btn btn-sm rounded-pill connector-mode"
-      [class.active]="!duplicates"
-      [attr.aria-pressed]="!duplicates"
-      (click)="setFromExisting(side, false)"
-      translate="history-query.connectors.new-settings"
-    ></button>
-  </div>
-  @if (duplicates) {
-    <div class="connector-choices" role="group" [attr.aria-label]="'history-query.connectors.duplicate-existing' | translate">
-      @for (connector of connectors.existing; track connector.id) {
-        <button
-          type="button"
-          class="connector-choice"
-          [class.selected]="chosenId === connector.id"
-          [attr.aria-pressed]="chosenId === connector.id"
-          (click)="choose(side, connector.id)"
-        >
-          <span class="connector-choice-header">
-            <span class="connector-choice-name">{{ connector.name }}</span>
-            <span class="connector-type-badge">{{ 'enums.oibus-' + side + '-type.' + connector.type | translate }}</span>
-          </span>
-        </button>
-      }
-    </div>
-    <val-errors [control]="sideControls.id" />
-  } @else {
-    @for (group of connectors.categories; track group.category) {
-      <div class="connector-category">
-        <span class="connector-category-icon"><img [src]="'/' + group.category + '.svg'" alt="" /></span>
-        <span [translate]="'enums.oibus-' + side + '-category.' + group.category"></span>
-      </div>
-      <div class="connector-choices" role="group" [attr.aria-label]="'enums.oibus-' + side + '-category.' + group.category | translate">
-        @for (type of group.types; track type.id) {
-          <button
-            type="button"
-            class="connector-choice"
-            [class.selected]="chosenId === type.id"
-            [attr.aria-pressed]="chosenId === type.id"
-            (click)="choose(side, type.id)"
-          >
-            <span class="connector-choice-header">
-              <span class="connector-choice-name">{{ 'enums.oibus-' + side + '-type.' + type.id | translate }}</span>
-              @if (type.beta) {
-                <span class="badge bg-secondary" translate="common.beta"></span>
-              }
-            </span>
-            <span class="connector-choice-description">{{ 'enums.oibus-' + side + '-type-description.' + type.id | translate }}</span>
-          </button>
-        }
-      </div>
-    }
-    <val-errors [control]="sideControls.type" />
-  }
-</ng-template>

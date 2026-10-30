@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -8,6 +8,7 @@ import { page } from 'vitest/browser';
 import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
 
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import { EmptyRouteComponent } from '../../test/empty-route.component';
 import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { SouthConnectorService } from '../services/south-connector.service';
@@ -15,7 +16,6 @@ import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-
 import { ConfirmationService } from '../shared/confirmation.service';
 import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { NotificationService } from '../shared/notification.service';
-import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
 import { SouthListComponent } from './south-list.component';
 
 // South 1 (folder-scanner, enabled), South 2 (mssql, disabled), South 3 (opcua, enabled)
@@ -58,7 +58,7 @@ describe('SouthListComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
   let notificationService: MockObject<NotificationService>;
   let confirmationService: MockObject<ConfirmationService>;
-  let modalService: MockModalService<AuditHistoryModalComponent | ChooseSouthConnectorTypeModalComponent>;
+  let modalService: MockModalService<AuditHistoryModalComponent>;
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
@@ -74,7 +74,7 @@ describe('SouthListComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'south/create', component: EmptyRouteComponent }]),
         provideModalTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ConfirmationService, useValue: confirmationService },
@@ -151,14 +151,12 @@ describe('SouthListComponent', () => {
     expect(southConnectorService.delete).not.toHaveBeenCalled();
   });
 
-  test('should open the creation modal', async () => {
+  test('should navigate to the creation page', async () => {
     const tester = new SouthListComponentTester();
-    modalService.mockClosedModal(createMock(ChooseSouthConnectorTypeModalComponent));
-    const open = vi.spyOn(modalService, 'open');
 
     await tester.createButton.click();
 
-    expect(open).toHaveBeenCalledWith(ChooseSouthConnectorTypeModalComponent, { size: 'xl', backdrop: 'static' });
+    await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/south/create'));
   });
 
   test('should open the audit history modal with the south connector entity type and id', async () => {

@@ -3,6 +3,12 @@
     "yes": "Yes",
     "no": "No",
     "beta": "Beta",
+    "connector-choice": {
+      "south": "South connector",
+      "north": "North connector",
+      "duplicate-existing": "Duplicate existing",
+      "new-settings": "New settings"
+    },
     "ok": "OK",
     "save": "Save",
     "back": "Back",
@@ -2573,9 +2579,8 @@
   },
   "south": {
     "list": "South list",
-    "type-title": "South type",
-    "type-error": "You must select a South type",
     "create-title": "Create {{ type }} south connector",
+    "create-new-title": "Create a south connector",
     "edit-title": "Edit {{ name }}",
     "confirm-deletion": "Are you sure you want to delete the south connector {{ name }}?",
     "updated": "South connector {{ name }} successfully updated",
@@ -3177,6 +3182,7 @@
     "steps": {
       "steps": "Connector steps",
       "step": {
+        "connector": "Connector",
         "general": "General",
         "settings": "Settings",
         "items": "Items",
@@ -3187,15 +3193,15 @@
       "review-no-changes": "No change since the connector was saved",
       "groups": "Groups",
       "workflows": "Items synchronisations",
-      "item-changes": "Items added: {{added}} · changed: {{changed}} · removed: {{removed}}"
+      "item-changes": "Items added: {{added}} · changed: {{changed}} · removed: {{removed}}",
+      "confirm-connector-change": "Changing the connector starts it over: its settings and items will be those of the new choice. Continue?"
     }
   },
   "north": {
     "list": "North list",
     "search-by-name": "Name",
-    "choose-north-type-title": "Choose the type of north",
-    "type-error": "You must select a North type",
     "create-title": "Create {{ type }} north connector",
+    "create-new-title": "Create a north connector",
     "edit-title": "Edit {{ name }}",
     "confirm-deletion": "Are you sure you want to delete the north connector {{ name }}?",
     "updated": "North connector {{ name }} successfully updated",
@@ -3372,6 +3378,7 @@
     "steps": {
       "steps": "Connector steps",
       "step": {
+        "connector": "Connector",
         "general": "General",
         "settings": "Settings",
         "caching": "Cache",
@@ -3381,7 +3388,8 @@
       "review-errors": "Fix these steps before saving:",
       "review-changes": "Changes since the connector was saved: {{count}}",
       "review-no-changes": "No change since the connector was saved",
-      "transformer-changes": "Transformers added: {{added}} · changed: {{changed}} · removed: {{removed}}"
+      "transformer-changes": "Transformers added: {{added}} · changed: {{changed}} · removed: {{removed}}",
+      "confirm-connector-change": "Changing the connector starts it over: its settings and transformers will be those of the new choice. Continue?"
     }
   },
   "audit": {
@@ -3668,12 +3676,6 @@
       "item-changes": "Items added: {{added}} · changed: {{changed}} · removed: {{removed}}",
       "transformer-changes": "Transformers added: {{added}} · changed: {{changed}} · removed: {{removed}}",
       "confirm-connectors-change": "Changing the connectors starts the history query over: its settings, items and transformers will be those of the new connectors. Continue?"
-    },
-    "connectors": {
-      "south": "South connector",
-      "north": "North connector",
-      "duplicate-existing": "Duplicate existing",
-      "new-settings": "New settings"
     }
   },
   "explore-cache": {
