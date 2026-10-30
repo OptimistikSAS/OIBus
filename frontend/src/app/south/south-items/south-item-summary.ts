@@ -1,7 +1,12 @@
 import { SouthConnectorItemDTO } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute, OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { IOT_FAMILY_SOUTH_TYPES, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthCachingStrategy, SouthCachingThresholdType, SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
+import {
+  SouthCachingStrategy,
+  SouthCachingThresholdType,
+  SouthHistoryEmptyIntervalStrategy,
+  SouthHistoryRecoveryStrategy
+} from '@oibus/shared/domain/south-connector.model';
 
 import { SettingsSummaryContext, SettingSummary, summarizeSettings } from '../../shared/form/oibus-settings-summary/settings-summary';
 import { ItemSummary } from './item-modal-steps';
@@ -9,6 +14,11 @@ import { ItemSummary } from './item-modal-steps';
 export const RECOVERY_STRATEGIES: Array<{ value: SouthHistoryRecoveryStrategy; labelKey: string }> = [
   { value: 'newest', labelKey: 'south.items.recovery-strategy-newest' },
   { value: 'oldest', labelKey: 'south.items.recovery-strategy-oldest' }
+];
+
+export const EMPTY_INTERVAL_STRATEGIES: Array<{ value: SouthHistoryEmptyIntervalStrategy; labelKey: string }> = [
+  { value: 'keep', labelKey: 'south.items.empty-interval-strategy-keep' },
+  { value: 'advance', labelKey: 'south.items.empty-interval-strategy-advance' }
 ];
 
 export const CACHING_STRATEGIES: Array<{ value: SouthCachingStrategy; labelKey: string }> = [
@@ -35,6 +45,7 @@ export interface SouthItemSummaryValues {
   maxReadInterval: number | null;
   readDelay: number | null;
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+  emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy | null;
   startTimeOffset: number | null;
   endTimeOffset: number | null;
   cachingStrategy: SouthCachingStrategy | null;
@@ -71,6 +82,7 @@ export function toSouthItemSummaryValues(item: SouthConnectorItemDTO): SouthItem
     maxReadInterval: history.maxReadInterval,
     readDelay: history.readDelay,
     recoveryStrategy: history.recoveryStrategy,
+    emptyIntervalStrategy: history.emptyIntervalStrategy,
     startTimeOffset: history.startTimeOffset,
     endTimeOffset: history.endTimeOffset,
     cachingStrategy: history.cachingStrategy,
@@ -123,6 +135,7 @@ export function summarizeSouthItem(
       text('south.items.max-read-interval', item.maxReadInterval, 'maxReadInterval', 'common.unit.s'),
       text('south.items.read-delay', item.readDelay, 'readDelay', 'common.unit.ms'),
       text('south.items.recovery-strategy', optionLabel(RECOVERY_STRATEGIES, item.recoveryStrategy)),
+      text('south.items.empty-interval-strategy', optionLabel(EMPTY_INTERVAL_STRATEGIES, item.emptyIntervalStrategy)),
       text('south.items.start-time-offset', item.startTimeOffset, 'startTimeOffset', 'common.unit.ms'),
       text('south.items.end-time-offset', item.endTimeOffset, 'endTimeOffset', 'common.unit.ms')
     );

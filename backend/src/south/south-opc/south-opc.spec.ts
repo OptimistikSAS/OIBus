@@ -33,6 +33,7 @@ const buildItem = (
   startTimeOffset: 0,
   endTimeOffset: null,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: 'allValues',
   thresholdType: null,
   threshold: null,

@@ -53,6 +53,7 @@ const newItem = (name: string, overrides: Partial<SouthItem> = {}): SouthItem =>
   startTimeOffset: null,
   endTimeOffset: null,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   thresholdType: null,
   threshold: null,
@@ -76,6 +77,7 @@ const newGroup = (id: string, name: string, overrides: Partial<SouthItemGroupEnt
   maxReadInterval: null,
   readDelay: 0,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   createdBy: '',
   updatedBy: '',
@@ -90,7 +92,8 @@ const HISTORY_GROUP_SETTINGS: Partial<SouthItemGroupCommand> = {
   endTimeOffset: 50,
   maxReadInterval: 3600,
   readDelay: 200,
-  recoveryStrategy: 'oldest'
+  recoveryStrategy: 'oldest',
+  emptyIntervalStrategy: 'advance'
 };
 
 /** Matches the audit records on `entityType`, with `action` and on `entityId` when given. */
@@ -145,6 +148,7 @@ describe('SouthConnectorRepository', () => {
         maxReadInterval: null,
         readDelay: 0,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         cachingStrategy: null,
         ...overrides
       },
@@ -947,6 +951,7 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: 500,
       endTimeOffset: null,
       recoveryStrategy: null,
+      emptyIntervalStrategy: null,
       cachingStrategy: null,
       maxReadInterval: 3600,
       readDelay: 200
@@ -1019,6 +1024,7 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedItem.maxReadInterval, 3600);
     assert.strictEqual(savedItem.readDelay, 200);
     assert.strictEqual(savedItem.recoveryStrategy, 'oldest');
+    assert.strictEqual(savedItem.emptyIntervalStrategy, 'advance');
     assert.strictEqual(savedItem.cachingStrategy, 'onChange');
   });
 
@@ -1033,6 +1039,7 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: 10,
       endTimeOffset: 20,
       recoveryStrategy: 'newest',
+      emptyIntervalStrategy: 'advance',
       cachingStrategy: 'threshold',
       thresholdType: 'absolute',
       threshold: 5
@@ -1049,6 +1056,7 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedItem.startTimeOffset, 10);
     assert.strictEqual(savedItem.endTimeOffset, 20);
     assert.strictEqual(savedItem.recoveryStrategy, 'newest');
+    assert.strictEqual(savedItem.emptyIntervalStrategy, 'advance');
     assert.strictEqual(savedItem.cachingStrategy, 'threshold');
   });
 
@@ -1141,6 +1149,16 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedGroup.recoveryStrategy, 'newest');
   });
 
+  it('should persist a non-null empty interval strategy when updating an existing group', () => {
+    const group = createGroup('Group With Empty Interval Strategy', { emptyIntervalStrategy: 'advance' });
+    assert.strictEqual(group.emptyIntervalStrategy, 'advance');
+
+    repository.saveSouth({ ...clone(testData.south.list[0]), items: [], groups: [group] }, false);
+
+    const savedGroup = groupRepository.findById(group.id)!;
+    assert.strictEqual(savedGroup.emptyIntervalStrategy, 'advance');
+  });
+
   it('should throw when an existing group is saved without a scan mode (NOT NULL constraint)', () => {
     const group = createGroup('Group Missing Scan Mode');
 
@@ -1167,6 +1185,7 @@ describe('toItemEntityFromJoinedRow / toSouthItemGroupLight helpers', () => {
     start_time_offset: null,
     end_time_offset: null,
     recovery_strategy: null,
+    empty_interval_strategy: null,
     created_by: '',
     updated_by: '',
     created_at: '',
@@ -1179,6 +1198,7 @@ describe('toItemEntityFromJoinedRow / toSouthItemGroupLight helpers', () => {
     g_max_read_interval: null,
     g_read_delay: groupReadDelay,
     g_recovery_strategy: null,
+    g_empty_interval_strategy: null,
     g_created_by: '',
     g_updated_by: '',
     g_created_at: '',
@@ -1206,6 +1226,7 @@ describe('toItemEntityFromJoinedRow / toSouthItemGroupLight helpers', () => {
       max_read_interval: 3600,
       read_delay: 200,
       recovery_strategy: 'oldest',
+      empty_interval_strategy: 'keep',
       created_by: '',
       updated_by: '',
       created_at: '',

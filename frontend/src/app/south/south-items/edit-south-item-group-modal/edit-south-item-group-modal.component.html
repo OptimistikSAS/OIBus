@@ -88,12 +88,20 @@
       </div>
     }
 
-    <!-- Recovery Strategy (only for historian connectors) -->
+    <!-- Recovery and empty interval strategies (only for historian connectors) -->
     @if (hasHistorianCapabilities()) {
       <div class="form-group">
         <label class="form-label" for="group-recovery-strategy" translate="south.groups.recovery-strategy"></label>
         <select class="form-select" id="group-recovery-strategy" formControlName="recoveryStrategy">
           @for (strategy of recoveryStrategies; track strategy.value) {
+            <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+          }
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="group-empty-interval-strategy" translate="south.groups.empty-interval-strategy"></label>
+        <select class="form-select" id="group-empty-interval-strategy" formControlName="emptyIntervalStrategy">
+          @for (strategy of emptyIntervalStrategies; track strategy.value) {
             <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
           }
         </select>

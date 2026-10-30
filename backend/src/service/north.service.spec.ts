@@ -79,6 +79,7 @@ const groupEntity = (): SouthItemGroupEntity => ({
   maxReadInterval: null,
   readDelay: 0,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   createdBy: '',
   updatedBy: '',

@@ -574,6 +574,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      emptyIntervalStrategy: null,
       cachingStrategy: null,
       thresholdType: null,
       threshold: null,

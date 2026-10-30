@@ -45,6 +45,7 @@ const buildItem = (id: string, settings: Partial<SouthFTPItemSettings>): SouthCo
   startTimeOffset: null,
   endTimeOffset: null,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   thresholdType: null,
   threshold: null,

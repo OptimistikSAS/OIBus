@@ -32,6 +32,7 @@ const buildItem = (id: string, settings: SouthPIItemSettings): SouthConnectorIte
   startTimeOffset: 0,
   endTimeOffset: null,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   thresholdType: null,
   threshold: null,

@@ -144,6 +144,7 @@ describe('ViewSouthItemModalComponent', () => {
         maxReadInterval: 60,
         readDelay: 10,
         recoveryStrategy: 'newest',
+        emptyIntervalStrategy: 'advance',
         cachingStrategy: null
       }
     });

@@ -9,6 +9,15 @@ import { Instant } from '../common/types';
 export type SouthHistoryRecoveryStrategy = 'oldest' | 'newest';
 
 /**
+ * What a history query does with the tracked instant when a queried interval returns no new data.
+ * - 'keep': the tracked instant only moves when data is found (default behaviour). Nothing is ever skipped, but a
+ *   source without new data is queried again from its last data point on every run.
+ * - 'advance': the tracked instant moves to the end of the queried interval, so the next run only covers what is new.
+ *   Data arriving later with an older timestamp is only read back if it falls within the start time offset.
+ */
+export type SouthHistoryEmptyIntervalStrategy = 'keep' | 'advance';
+
+/**
  * Per-item caching strategy for IoT-family south connectors.
  * - 'allValues': every value read/received is cached (default behaviour).
  * - 'onChange': a value is only cached when it differs from the last cached value.

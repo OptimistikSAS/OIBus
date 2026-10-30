@@ -185,6 +185,17 @@
                 </select>
               </div>
             </div>
+            <!-- Empty Interval Strategy -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label class="form-label" for="empty-interval-strategy" translate="south.items.empty-interval-strategy"></label>
+                <select class="form-select" id="empty-interval-strategy" formControlName="emptyIntervalStrategy">
+                  @for (strategy of emptyIntervalStrategies; track strategy.value) {
+                    <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+                  }
+                </select>
+              </div>
+            </div>
             <!-- Start Time Offset -->
             <div class="col-md-4">
               <div class="form-group">

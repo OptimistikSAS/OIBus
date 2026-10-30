@@ -254,6 +254,7 @@ export class SouthDetailComponent {
             startTimeOffset: command.startTimeOffset,
             endTimeOffset: command.endTimeOffset,
             recoveryStrategy: command.recoveryStrategy,
+            emptyIntervalStrategy: command.emptyIntervalStrategy,
             cachingStrategy: command.cachingStrategy,
             thresholdType: command.thresholdType,
             threshold: command.threshold,
@@ -309,6 +310,7 @@ export class SouthDetailComponent {
             startTimeOffset: command.startTimeOffset,
             endTimeOffset: command.endTimeOffset,
             recoveryStrategy: command.recoveryStrategy,
+            emptyIntervalStrategy: command.emptyIntervalStrategy,
             cachingStrategy: command.cachingStrategy,
             thresholdType: command.thresholdType,
             threshold: command.threshold,
@@ -370,6 +372,7 @@ export class SouthDetailComponent {
             startTimeOffset: command.startTimeOffset,
             endTimeOffset: command.endTimeOffset,
             recoveryStrategy: command.recoveryStrategy,
+            emptyIntervalStrategy: command.emptyIntervalStrategy,
             cachingStrategy: command.cachingStrategy,
             thresholdType: command.thresholdType,
             threshold: command.threshold,
@@ -450,6 +453,7 @@ export class SouthDetailComponent {
       'startTimeOffset',
       'endTimeOffset',
       'recoveryStrategy',
+      'emptyIntervalStrategy',
       'syncWithGroup'
     ];
     const settingsAttribute = this.manifest()!.items.rootAttribute.attributes.find(
@@ -486,6 +490,7 @@ export class SouthDetailComponent {
                   startTimeOffset: item.startTimeOffset,
                   endTimeOffset: item.endTimeOffset,
                   recoveryStrategy: item.recoveryStrategy,
+                  emptyIntervalStrategy: item.emptyIntervalStrategy,
                   cachingStrategy: item.cachingStrategy,
                   thresholdType: item.thresholdType,
                   threshold: item.threshold,
@@ -832,6 +837,7 @@ export class SouthDetailComponent {
         startTimeOffset: item.startTimeOffset,
         endTimeOffset: item.endTimeOffset,
         recoveryStrategy: item.recoveryStrategy,
+        emptyIntervalStrategy: item.emptyIntervalStrategy,
         cachingStrategy: item.cachingStrategy,
         thresholdType: item.thresholdType,
         threshold: item.threshold,
@@ -851,6 +857,7 @@ export class SouthDetailComponent {
           startTimeOffset: group.historySettings.startTimeOffset,
           endTimeOffset: group.historySettings.endTimeOffset,
           recoveryStrategy: group.historySettings.recoveryStrategy,
+          emptyIntervalStrategy: group.historySettings.emptyIntervalStrategy,
           cachingStrategy: group.historySettings.cachingStrategy
         }
       })),

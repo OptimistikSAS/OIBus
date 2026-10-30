@@ -74,6 +74,7 @@ const buildGroup = (overrides: Partial<SouthItemGroupEntity> = {}): SouthItemGro
   maxReadInterval: null,
   readDelay: 0,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   items: [],
   createdBy: '',
@@ -95,6 +96,7 @@ const buildGroupCommand = (
     endTimeOffset: null,
     maxReadInterval: null,
     recoveryStrategy: null,
+    emptyIntervalStrategy: null,
     cachingStrategy: null,
     readDelay: 0,
     ...historySettings
@@ -128,6 +130,7 @@ const buildItemEntity = (overrides: Partial<SouthConnectorItemEntity<SouthItemSe
   syncWithGroup: false,
   maxReadInterval: null,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   thresholdType: null,
   threshold: null,
@@ -170,6 +173,7 @@ const buildImportedItem = (name: string, settings: Record<string, unknown>, over
   endTimeOffset: 0,
   readDelay: 0,
   recoveryStrategy: 'oldest',
+  emptyIntervalStrategy: 'keep',
   syncWithGroup: false,
   ...overrides
 });
@@ -384,6 +388,7 @@ describe('South Service', () => {
           maxReadInterval: null,
           readDelay: null,
           recoveryStrategy: null,
+          emptyIntervalStrategy: null,
           cachingStrategy: null
         }
       }
@@ -404,6 +409,7 @@ describe('South Service', () => {
         maxReadInterval: null,
         readDelay: null,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         cachingStrategy: null
       }
     ]);
@@ -539,7 +545,8 @@ describe('South Service', () => {
         endTimeOffset: 10,
         maxReadInterval: 3600,
         readDelay: 200,
-        recoveryStrategy: 'oldest'
+        recoveryStrategy: 'oldest',
+        emptyIntervalStrategy: 'keep'
       }),
       id: 'existingGroupId'
     };
@@ -558,6 +565,7 @@ describe('South Service', () => {
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: 'oldest',
+      emptyIntervalStrategy: 'keep',
       cachingStrategy: null,
       scanMode: testData.scanMode.list[0]
     });
@@ -1069,6 +1077,7 @@ describe('South Service', () => {
         maxReadInterval: null,
         readDelay: null,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         cachingStrategy: null,
         createdBy: '',
         updatedBy: '',
@@ -1728,7 +1737,8 @@ describe('South Service', () => {
       endTimeOffset: 20,
       maxReadInterval: 3600,
       readDelay: 200,
-      recoveryStrategy: 'oldest'
+      recoveryStrategy: 'oldest',
+      emptyIntervalStrategy: 'keep'
     });
     southItemGroupRepository.findByNameAndSouthId.mock.mockImplementation(() => null);
     southItemGroupRepository.create.mock.mockImplementation(() => newGroup);
@@ -1743,6 +1753,7 @@ describe('South Service', () => {
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: 'oldest',
+      emptyIntervalStrategy: 'keep',
       cachingStrategy: null
     };
     const secondItemWithGroupName: SouthConnectorItemCommandDTO = {
@@ -1755,6 +1766,7 @@ describe('South Service', () => {
       maxReadInterval: 999,
       readDelay: 999,
       recoveryStrategy: 'newest',
+      emptyIntervalStrategy: 'advance',
       cachingStrategy: null
     };
 
@@ -1770,6 +1782,7 @@ describe('South Service', () => {
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: 'oldest',
+      emptyIntervalStrategy: 'keep',
       cachingStrategy: null
     });
   });
@@ -1903,6 +1916,7 @@ describe('South Service', () => {
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
         recoveryStrategy: group.recoveryStrategy,
+        emptyIntervalStrategy: group.emptyIntervalStrategy,
         cachingStrategy: group.cachingStrategy
       },
       createdBy: getUserInfo(group.createdBy),

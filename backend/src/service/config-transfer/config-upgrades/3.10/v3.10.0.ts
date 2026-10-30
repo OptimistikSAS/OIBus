@@ -56,6 +56,25 @@ export function usesRemoteAgent(southType: string, southSettings: { remoteAgent?
 // is meaningful, defaulted to 'allValues'.
 export const IOT_FAMILY_SOUTH_TYPES = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt'];
 
+/** South types supporting history queries, whose items and groups gain an empty interval strategy. */
+export const HISTORY_SOUTH_TYPES = [
+  'bacnet',
+  'influxdb',
+  'mongodb',
+  'mssql',
+  'mysql',
+  'odbc',
+  'oianalytics',
+  'oledb',
+  'opc',
+  'opcua',
+  'oracle',
+  'osisoft-pi',
+  'postgresql',
+  'rest',
+  'sqlite'
+];
+
 // Standard transformers producing 'oianalytics' content, which gain the `referenceProcess` option.
 export const OIANALYTICS_TRANSFORMER_FUNCTION_NAMES = ['time-values-to-oianalytics', 'json-to-oianalytics'];
 
@@ -1410,7 +1429,8 @@ export const upgrade: ConfigUpgrade = {
     'replace the file transformer by file-to-file ones sending the files as they are; ' +
     'move the filename prefix and suffix of the File Writer and SFTP norths to the filename of their transformers; ' +
     'add the connection and write timeouts of the OPC UA norths, and the connection timeout and subscription settings of the OPC UA souths; ' +
-    'add the description of the south and history query items',
+    'add the description of the south and history query items; ' +
+    'add the empty interval strategy of the history items and groups, keeping the tracked instant when no data is found',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1437,8 +1457,10 @@ export const upgrade: ConfigUpgrade = {
       const settings = south.settings as JsonObject;
       setMissing(settings, 'configurationWorkflows', []);
       const defaultCachingStrategy = IOT_FAMILY_SOUTH_TYPES.includes(south.type as string) ? 'allValues' : null;
+      const defaultEmptyIntervalStrategy = HISTORY_SOUTH_TYPES.includes(south.type as string) ? 'keep' : null;
       for (const item of asObjects(settings.items)) {
         setMissing(item, 'cachingStrategy', defaultCachingStrategy);
+        setMissing(item, 'emptyIntervalStrategy', defaultEmptyIntervalStrategy);
         for (const key of [
           'description',
           'thresholdType',
@@ -1454,6 +1476,7 @@ export const upgrade: ConfigUpgrade = {
       }
       for (const group of asObjects(settings.groups)) {
         setMissing(group.historySettings as JsonObject, 'cachingStrategy', defaultCachingStrategy);
+        setMissing(group.historySettings as JsonObject, 'emptyIntervalStrategy', defaultEmptyIntervalStrategy);
       }
     });
     forEachHistoryQueryItem(config, null, item => setMissing(item, 'description', null));

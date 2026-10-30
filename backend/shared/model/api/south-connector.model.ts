@@ -52,6 +52,7 @@ import {
   SouthCachingStrategy,
   SouthCachingThresholdType,
   SouthConnectorExploreEntry,
+  SouthHistoryEmptyIntervalStrategy,
   SouthHistoryRecoveryStrategy,
   SouthItemLastValue
 } from '../domain/south-connector.model';
@@ -230,6 +231,16 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 
   /**
+   * What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it
+   * to the end of the interval.
+   * Only applicable for connectors with historian capabilities.
+   * When null, defaults to 'keep'.
+   *
+   * @example "keep"
+   */
+  emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy | null;
+
+  /**
    * Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,
    * S7, MQTT).
    * When null and item is in a group, inherits from group settings.
@@ -373,6 +384,16 @@ export interface SouthItemGroupDTO extends BaseEntity {
     recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 
     /**
+     * What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it
+     * to the end of the interval.
+     * Only applicable for connectors with historian capabilities.
+     * When null, defaults to 'keep'.
+     *
+     * @example "keep"
+     */
+    emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy | null;
+
+    /**
      * Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for
      * IoT-family connectors (OPC UA, Modbus, ADS, OPC classic, S7, MQTT).
      *
@@ -447,6 +468,15 @@ export interface SouthItemGroupCommandDTO {
      * @example "oldest"
      */
     recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+
+    /**
+     * What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it
+     * to the end of the interval.
+     * When null, defaults to 'keep'.
+     *
+     * @example "keep"
+     */
+    emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy | null;
 
     /**
      * Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for
@@ -761,6 +791,16 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
    * @example "oldest"
    */
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+
+  /**
+   * What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it
+   * to the end of the interval.
+   * Only applicable for connectors with historian capabilities.
+   * When null, defaults to 'keep'.
+   *
+   * @example "keep"
+   */
+  emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy | null;
 
   /**
    * Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,

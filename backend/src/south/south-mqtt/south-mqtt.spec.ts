@@ -54,6 +54,7 @@ const buildItem = (
   startTimeOffset: null,
   endTimeOffset: null,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: 'allValues',
   thresholdType: null,
   threshold: null,

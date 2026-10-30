@@ -82,8 +82,9 @@ describe('ManageGroupsModalComponent', () => {
     await expect.element(alpha.getByRole('cell').nth(4)).toHaveTextContent('3600s');
     await expect.element(alpha.getByRole('cell').nth(5)).toHaveTextContent('200ms');
     await expect.element(alpha.getByRole('cell').nth(6)).toHaveTextContent('From oldest to newest');
-    await expect.element(alpha.getByRole('cell').nth(7)).toHaveTextContent('5');
-    await expect.element(tester.row(1).getByRole('cell').nth(7)).toHaveTextContent('1');
+    await expect.element(alpha.getByRole('cell').nth(7)).toHaveTextContent('Keep the tracked instant');
+    await expect.element(alpha.getByRole('cell').nth(8)).toHaveTextContent('5');
+    await expect.element(tester.row(1).getByRole('cell').nth(8)).toHaveTextContent('1');
   });
 
   test('should show a message when there is no group', async () => {
@@ -212,17 +213,17 @@ describe('ManageGroupsModalComponent', () => {
     expect(downloadService.downloadFile).toHaveBeenCalledWith({ blob: expect.any(Blob), name: expect.stringMatching(/^groups_.*\.csv$/) });
     const content = await downloadService.downloadFile.mock.lastCall![0].blob.text();
     expect(content.split('\r\n')).toEqual([
-      'name,scanMode,startTimeOffset,endTimeOffset,maxReadInterval,readDelay,recoveryStrategy',
-      `Alpha,${scanModes[1].name},0,0,3600,200,oldest`,
-      `Beta,${scanModes[0].name},0,0,3600,200,oldest`
+      'name,scanMode,startTimeOffset,endTimeOffset,maxReadInterval,readDelay,recoveryStrategy,emptyIntervalStrategy',
+      `Alpha,${scanModes[1].name},0,0,3600,200,oldest,keep`,
+      `Beta,${scanModes[0].name},0,0,3600,200,oldest,keep`
     ]);
   });
 
   test('should import the valid groups of a CSV file and report the created count', async () => {
     prepare();
     const csvContent = [
-      'name,scanMode,startTimeOffset,endTimeOffset,maxReadInterval,readDelay,recoveryStrategy',
-      `Gamma,${scanModes[0].name},-1000,0,3600,200,newest`
+      'name,scanMode,startTimeOffset,endTimeOffset,maxReadInterval,readDelay,recoveryStrategy,emptyIntervalStrategy',
+      `Gamma,${scanModes[0].name},-1000,0,3600,200,newest,advance`
     ].join('\n');
 
     await tester.importInput.upload(new File([csvContent], 'groups.csv', { type: 'text/csv' }));
@@ -239,6 +240,7 @@ describe('ManageGroupsModalComponent', () => {
           maxReadInterval: 3600,
           readDelay: 200,
           recoveryStrategy: 'newest',
+          emptyIntervalStrategy: 'advance',
           cachingStrategy: null
         }
       }

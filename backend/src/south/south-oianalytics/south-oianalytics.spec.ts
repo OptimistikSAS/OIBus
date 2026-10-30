@@ -66,6 +66,7 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
       startTimeOffset: 0,
       endTimeOffset: null,
       recoveryStrategy: null,
+      emptyIntervalStrategy: null,
       cachingStrategy: null,
       thresholdType: null,
       threshold: null,

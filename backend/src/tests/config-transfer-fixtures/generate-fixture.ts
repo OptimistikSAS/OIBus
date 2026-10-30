@@ -39,6 +39,7 @@ function seedMissingEntities(database: Database): void {
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: 'oldest',
+      emptyIntervalStrategy: 'keep',
       cachingStrategy: 'allValues'
     },
     'fixture',

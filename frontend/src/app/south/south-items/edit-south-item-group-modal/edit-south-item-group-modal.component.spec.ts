@@ -33,6 +33,7 @@ class EditSouthItemGroupModalComponentTester {
   readonly startTimeOffset = this.root.getByLabelText('Default start time offset');
   readonly endTimeOffset = this.root.getByLabelText('Default end time offset');
   readonly recoveryStrategy = this.root.getByLabelText('Recovery strategy');
+  readonly emptyIntervalStrategy = this.root.getByLabelText('When no data is found');
   readonly cachingStrategy = this.root.getByLabelText('Caching strategy');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly okButton = this.root.getByRole('button', { name: 'OK' });
@@ -57,6 +58,7 @@ describe('EditSouthItemGroupModalComponent', () => {
         maxReadInterval: null,
         readDelay: null,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         cachingStrategy: null
       }
     });
@@ -98,6 +100,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     await expect.element(tester.startTimeOffset).toHaveValue(0);
     await expect.element(tester.endTimeOffset).toHaveValue(0);
     await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From oldest to newest');
+    await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Keep the tracked instant');
   });
 
   test('should populate the form with the edited group', async () => {
@@ -108,6 +111,7 @@ describe('EditSouthItemGroupModalComponent', () => {
         maxReadInterval: 60,
         readDelay: 10,
         recoveryStrategy: 'newest',
+        emptyIntervalStrategy: 'advance',
         cachingStrategy: null
       }
     });
@@ -118,6 +122,8 @@ describe('EditSouthItemGroupModalComponent', () => {
     await expect.element(tester.readDelay).toHaveValue(10);
     await expect.element(tester.startTimeOffset).toHaveValue(-100);
     await expect.element(tester.endTimeOffset).toHaveValue(100);
+    await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From newest to oldest');
+    await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Advance the tracked instant');
   });
 
   test('should close with a create command', async () => {
@@ -126,6 +132,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     await tester.name.fill('GroupC');
     await tester.scanMode.selectOptions(scanModes[0].name);
     await tester.maxReadInterval.fill('60');
+    await tester.emptyIntervalStrategy.selectOptions('Advance the tracked instant');
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith({
@@ -139,6 +146,7 @@ describe('EditSouthItemGroupModalComponent', () => {
           maxReadInterval: 60,
           readDelay: 200,
           recoveryStrategy: 'oldest',
+          emptyIntervalStrategy: 'advance',
           cachingStrategy: 'allValues'
         }
       }
@@ -162,6 +170,7 @@ describe('EditSouthItemGroupModalComponent', () => {
           maxReadInterval: 3600,
           readDelay: 200,
           recoveryStrategy: 'oldest',
+          emptyIntervalStrategy: 'keep',
           cachingStrategy: 'allValues'
         }
       }
@@ -204,6 +213,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     await expect.element(tester.name).toBeInTheDocument();
     await expect.element(tester.maxReadInterval).not.toBeInTheDocument();
     await expect.element(tester.recoveryStrategy).not.toBeInTheDocument();
+    await expect.element(tester.emptyIntervalStrategy).not.toBeInTheDocument();
   });
 
   test('should only offer the caching strategy to IoT connectors, threshold included', async () => {

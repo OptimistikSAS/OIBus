@@ -11,6 +11,7 @@ import {
   createMigrationSchemaHarness
 } from '../../../../tests/utils/migration-test-utils';
 import {
+  addEmptyIntervalStrategies,
   addHttpsSettings,
   addItemAndWorkflowDescriptions,
   addOIAnalyticsReferenceProcess,
@@ -4313,12 +4314,64 @@ describe('Entity migration v3.10.0: addItemAndWorkflowDescriptions', () => {
   });
 
   it('should drop the description columns on down', async () => {
-    await addItemAndWorkflowDescriptions(db);
+    await runStepsFrom(addItemAndWorkflowDescriptions, db);
     await down(db);
 
     for (const table of ['south_items', 'history_items']) {
       assert.ok(!(await columnNames(db, table)).includes('description'), `${table}.description removed`);
     }
     assert.strictEqual((await db('south_items').select('id')).length, 1);
+  });
+});
+
+describe('Entity migration v3.10.0: addEmptyIntervalStrategies', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addEmptyIntervalStrategies, db)
+  });
+  let db: Knex;
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+    await db('south_connectors').insert([
+      { id: 'mysql1', name: 'MySQL', type: 'mysql', enabled: true, settings: '{}' },
+      { id: 'mqtt1', name: 'MQTT', type: 'mqtt', enabled: true, settings: '{}' }
+    ]);
+    await db('south_item_groups').insert([
+      { id: 'group1', created_at: NOW, updated_at: NOW, name: 'Group 1', south_id: 'mysql1', scan_mode_id: 'sm1' },
+      { id: 'group2', created_at: NOW, updated_at: NOW, name: 'Group 2', south_id: 'mqtt1', scan_mode_id: 'sm1' }
+    ]);
+    await db('south_items').insert([
+      { id: 'item1', name: 'Item 1', enabled: true, connector_id: 'mysql1', scan_mode_id: 'sm1', settings: '{}' },
+      { id: 'item2', name: 'Item 2', enabled: true, connector_id: 'mqtt1', scan_mode_id: 'sm1', settings: '{}' }
+    ]);
+  });
+
+  afterEach(() => harness.afterEach());
+
+  it('should keep the tracked instant of the history items and groups, and leave the others null', async () => {
+    await addEmptyIntervalStrategies(db);
+
+    assert.deepStrictEqual(await db('south_item_groups').select('id', 'empty_interval_strategy').orderBy('id'), [
+      { id: 'group1', empty_interval_strategy: 'keep' },
+      { id: 'group2', empty_interval_strategy: null }
+    ]);
+    assert.deepStrictEqual(await db('south_items').select('id', 'empty_interval_strategy').orderBy('id'), [
+      { id: 'item1', empty_interval_strategy: 'keep' },
+      { id: 'item2', empty_interval_strategy: null }
+    ]);
+  });
+
+  it('should drop the empty interval strategy columns on down', async () => {
+    await runStepsFrom(addEmptyIntervalStrategies, db);
+    await down(db);
+
+    assert.ok(!(await columnNames(db, 'south_items')).includes('empty_interval_strategy'));
+    assert.ok(!(await columnNames(db, 'south_item_groups')).includes('empty_interval_strategy'));
+    assert.strictEqual((await db('south_items').select('id')).length, 2);
   });
 });

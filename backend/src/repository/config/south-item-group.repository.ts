@@ -1,6 +1,10 @@
 import { Database } from 'better-sqlite3';
 
-import { SouthCachingStrategy, SouthHistoryRecoveryStrategy } from '../../../shared/model/domain/south-connector.model';
+import {
+  SouthCachingStrategy,
+  SouthHistoryEmptyIntervalStrategy,
+  SouthHistoryRecoveryStrategy
+} from '../../../shared/model/domain/south-connector.model';
 
 import { ScanMode } from '../../model/scan-mode.model';
 import { SouthItemGroupCommand, SouthItemGroupEntity } from '../../model/south-connector.model';
@@ -25,7 +29,7 @@ export default class SouthItemGroupRepository {
   findById(id: string): SouthItemGroupEntity | null {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, g.caching_strategy, ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, g.empty_interval_strategy, g.caching_strategy, ` +
       `${scanModeAliasedColumns('s', 'sm_')} ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.id = ?;`;
     const result = this.database.prepare<[string], Record<string, string | number> | undefined>(query).get(id);
@@ -35,7 +39,7 @@ export default class SouthItemGroupRepository {
   findBySouthId(southId: string): Array<SouthItemGroupEntity> {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, g.caching_strategy, ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, g.empty_interval_strategy, g.caching_strategy, ` +
       `${scanModeAliasedColumns('s', 'sm_')} ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN scan_modes s ON g.scan_mode_id = s.id WHERE g.south_id = ? ORDER BY g.name;`;
     return this.database
@@ -47,7 +51,7 @@ export default class SouthItemGroupRepository {
   findByNameAndSouthId(name: string, southId: string): SouthItemGroupEntity | null {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, g.caching_strategy, ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, g.empty_interval_strategy, g.caching_strategy, ` +
       `${scanModeAliasedColumns('s', 'sm_')} ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.name = ? AND g.south_id = ?;`;
     const result = this.database.prepare(query).get(name, southId) as Record<string, string | number> | undefined;
@@ -55,7 +59,7 @@ export default class SouthItemGroupRepository {
   }
 
   create(command: SouthItemGroupCommand, createdBy: string, id = generateRandomId(6)): SouthItemGroupEntity {
-    const insertQuery = `INSERT INTO ${SOUTH_ITEM_GROUPS_TABLE} (id, name, south_id, scan_mode_id, start_time_offset, end_time_offset, max_read_interval, read_delay, recovery_strategy, caching_strategy, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+    const insertQuery = `INSERT INTO ${SOUTH_ITEM_GROUPS_TABLE} (id, name, south_id, scan_mode_id, start_time_offset, end_time_offset, max_read_interval, read_delay, recovery_strategy, empty_interval_strategy, caching_strategy, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(insertQuery)
       .run(
@@ -68,6 +72,7 @@ export default class SouthItemGroupRepository {
         command.maxReadInterval ?? null,
         command.readDelay,
         command.recoveryStrategy ?? null,
+        command.emptyIntervalStrategy ?? null,
         command.cachingStrategy ?? null,
         createdBy,
         createdBy
@@ -83,7 +88,7 @@ export default class SouthItemGroupRepository {
   update(id: string, command: Omit<SouthItemGroupCommand, 'southId'>, updatedBy: string): void {
     const before = this.findById(id);
     const query = `UPDATE ${SOUTH_ITEM_GROUPS_TABLE}
-      SET name = ?, scan_mode_id = ?, start_time_offset = ?, end_time_offset = ?, max_read_interval = ?, read_delay = ?, recovery_strategy = ?, caching_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+      SET name = ?, scan_mode_id = ?, start_time_offset = ?, end_time_offset = ?, max_read_interval = ?, read_delay = ?, recovery_strategy = ?, empty_interval_strategy = ?, caching_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
       WHERE id = ?;`;
     // Also update scan_mode_id on the member items themselves: it is unused for scheduling while an item
     // is synced with its group (south-connector.ts prefers item.group.scanMode), but it stays in the DB as
@@ -102,6 +107,7 @@ export default class SouthItemGroupRepository {
           command.maxReadInterval ?? null,
           command.readDelay,
           command.recoveryStrategy ?? null,
+          command.emptyIntervalStrategy ?? null,
           command.cachingStrategy ?? null,
           updatedBy,
           id
@@ -152,6 +158,7 @@ export const toSouthItemGroup = (
       result.max_read_interval !== null && result.max_read_interval !== undefined ? (result.max_read_interval as number) : null,
     readDelay: (result.read_delay as number) || 0,
     recoveryStrategy: (result.recovery_strategy as SouthHistoryRecoveryStrategy) || null,
+    emptyIntervalStrategy: (result.empty_interval_strategy as SouthHistoryEmptyIntervalStrategy) || null,
     cachingStrategy: (result.caching_strategy as SouthCachingStrategy) || null,
     createdBy: result.created_by as string,
     updatedBy: result.updated_by as string,

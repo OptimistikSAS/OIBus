@@ -54,8 +54,8 @@ type ItemFieldKind = 'boolean' | 'number' | 'other';
 
 // Historian item fields exist on every south item but aren't part of the manifest's own item
 // attribute tree (see buildItemMappableFields's frontend counterpart) - their types are hardcoded
-// here to match. groupId/recoveryStrategy are left out on purpose: both are already string-shaped
-// (an id, and an enum value respectively), so 'other' (the default) is correct for them.
+// here to match. groupId/recoveryStrategy/emptyIntervalStrategy are left out on purpose: they are already
+// string-shaped (an id, and enum values), so 'other' (the default) is correct for them.
 const HISTORIAN_ITEM_FIELD_KINDS: Record<string, ItemFieldKind> = {
   syncWithGroup: 'boolean',
   maxReadInterval: 'number',
@@ -471,7 +471,8 @@ function buildItemCommandBase(existingItem: SouthConnectorItemEntity<SouthItemSe
       readDelay: existingItem.readDelay,
       startTimeOffset: existingItem.startTimeOffset,
       endTimeOffset: existingItem.endTimeOffset,
-      recoveryStrategy: existingItem.recoveryStrategy
+      recoveryStrategy: existingItem.recoveryStrategy,
+      emptyIntervalStrategy: existingItem.emptyIntervalStrategy
     };
   }
   return {
@@ -489,7 +490,8 @@ function buildItemCommandBase(existingItem: SouthConnectorItemEntity<SouthItemSe
     readDelay: null,
     startTimeOffset: null,
     endTimeOffset: null,
-    recoveryStrategy: null
+    recoveryStrategy: null,
+    emptyIntervalStrategy: null
   };
 }
 

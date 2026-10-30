@@ -26,6 +26,9 @@ import {
 /** How many discovered records give an example item name */
 const EXAMPLE_ITEM_COUNT = 3;
 
+/** The 'string-select' fields added by hand, whose translation keys are flat strings rather than manifest namespaces */
+const FLAT_STRING_SELECT_PATHS = ['recoveryStrategy', 'emptyIntervalStrategy', 'resamplingMethod'];
+
 /**
  * How the discovered records are mapped to items - a constant or a `{{field}}` expression per item field - in the sections
  * of the item modal: Name & schedule, with the history settings that come and go with the group, then the settings of the
@@ -181,7 +184,7 @@ export class ItemFieldMappingFormComponent {
    *  other field type (including the two hardcoded string-select fields, whose keys are already flat strings) uses
    *  its translationKey directly. */
   fieldLabelKey(field: MappableField): string {
-    if (field.attributeType === 'string-select' && field.path !== 'recoveryStrategy' && field.path !== 'resamplingMethod') {
+    if (field.attributeType === 'string-select' && !FLAT_STRING_SELECT_PATHS.includes(field.path)) {
       return `${field.translationKey}.title`;
     }
     return field.translationKey;
@@ -207,10 +210,13 @@ export class ItemFieldMappingFormComponent {
   }
 
   /** Translated option label for a 'string-select' field's value - mirrors the manifest form's own `translationKey.value`
-   *  convention, except for the hardcoded historian recoveryStrategy field, whose keys already exist under a different shape. */
+   *  convention, except for the hardcoded historian strategy fields, whose keys already exist under a different shape. */
   stringSelectOptionLabel(field: MappableField, value: string): string {
     if (field.path === 'recoveryStrategy') {
       return `south.items.recovery-strategy-${value}`;
+    }
+    if (field.path === 'emptyIntervalStrategy') {
+      return `south.items.empty-interval-strategy-${value}`;
     }
     if (field.path === 'resamplingMethod') {
       return `south.workflows.resampling-values.${value}`;

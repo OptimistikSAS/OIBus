@@ -66,6 +66,7 @@ const baseItem: SouthConnectorItemEntity<SouthInfluxDBItemSettings> = {
   startTimeOffset: 0,
   endTimeOffset: null,
   recoveryStrategy: 'oldest',
+  emptyIntervalStrategy: 'keep',
   cachingStrategy: null,
   thresholdType: null,
   threshold: null,

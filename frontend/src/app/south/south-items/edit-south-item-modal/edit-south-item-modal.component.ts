@@ -27,7 +27,12 @@ import {
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { IOT_FAMILY_SOUTH_TYPES, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthCachingStrategy, SouthCachingThresholdType, SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
+import {
+  SouthCachingStrategy,
+  SouthCachingThresholdType,
+  SouthHistoryEmptyIntervalStrategy,
+  SouthHistoryRecoveryStrategy
+} from '@oibus/shared/domain/south-connector.model';
 
 import { addAttributeToForm, createMqttValidator, extractFormValue } from '../../../shared/form/dynamic-form.builder';
 import { EnabledSelectorComponent } from '../../../shared/form/enabled-selector/enabled-selector.component';
@@ -46,6 +51,7 @@ import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-g
 import { SouthItemNorthsComponent } from '../south-item-norths/south-item-norths.component';
 import {
   CACHING_STRATEGIES,
+  EMPTY_INTERVAL_STRATEGIES,
   getItemSettingsAttribute,
   getScanModeAttribute,
   RECOVERY_STRATEGIES,
@@ -130,6 +136,7 @@ class EditSouthItemModalComponent {
   private tableIndex: number | null = null;
 
   readonly recoveryStrategies = RECOVERY_STRATEGIES;
+  readonly emptyIntervalStrategies = EMPTY_INTERVAL_STRATEGIES;
   readonly cachingStrategies = CACHING_STRATEGIES;
   readonly thresholdTypes = THRESHOLD_TYPES;
 
@@ -146,6 +153,7 @@ class EditSouthItemModalComponent {
     startTimeOffset: FormControl<number | null>;
     endTimeOffset: FormControl<number | null>;
     recoveryStrategy: FormControl<SouthHistoryRecoveryStrategy | null>;
+    emptyIntervalStrategy: FormControl<SouthHistoryEmptyIntervalStrategy | null>;
     cachingStrategy: FormControl<SouthCachingStrategy | null>;
     thresholdType: FormControl<SouthCachingThresholdType | null>;
     threshold: FormControl<number | null>;
@@ -165,6 +173,7 @@ class EditSouthItemModalComponent {
     startTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
     endTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
     recoveryStrategy: ['oldest' as SouthHistoryRecoveryStrategy | null],
+    emptyIntervalStrategy: ['keep' as SouthHistoryEmptyIntervalStrategy | null],
     cachingStrategy: ['allValues' as SouthCachingStrategy | null],
     thresholdType: [null as SouthCachingThresholdType | null],
     threshold: [null as number | null],
@@ -438,6 +447,7 @@ class EditSouthItemModalComponent {
       startTimeOffset: this.form.controls.startTimeOffset.value,
       endTimeOffset: this.form.controls.endTimeOffset.value,
       recoveryStrategy: this.form.controls.recoveryStrategy.value,
+      emptyIntervalStrategy: this.form.controls.emptyIntervalStrategy.value,
       syncWithGroup: this.form.controls.syncWithGroup.value
     };
     // Caching strategy params (thresholdType/threshold/rangeLow/rangeHigh/maxCachingInterval) are always
@@ -467,6 +477,7 @@ class EditSouthItemModalComponent {
       startTimeOffset: syncWithGroup ? null : (rawHistorianValues.startTimeOffset ?? null),
       endTimeOffset: syncWithGroup ? null : (rawHistorianValues.endTimeOffset ?? null),
       recoveryStrategy: syncWithGroup ? null : (rawHistorianValues.recoveryStrategy ?? null),
+      emptyIntervalStrategy: syncWithGroup ? null : (rawHistorianValues.emptyIntervalStrategy ?? null),
       // cachingStrategy follows the same inherit-from-group-when-synced rule as the other historian fields.
       cachingStrategy: syncWithGroup ? null : (this.form.controls.cachingStrategy.value ?? null),
       // Deliberate deviation: unlike the historian fields above, the caching-strategy params are never
@@ -586,6 +597,7 @@ class EditSouthItemModalComponent {
         startTimeOffset: source.startTimeOffset ?? 0,
         endTimeOffset: source.endTimeOffset ?? 0,
         recoveryStrategy: source.recoveryStrategy ?? 'oldest',
+        emptyIntervalStrategy: source.emptyIntervalStrategy ?? 'keep',
         cachingStrategy: source.cachingStrategy ?? 'allValues',
         thresholdType: source.thresholdType ?? null,
         threshold: source.threshold ?? null,
@@ -621,6 +633,7 @@ class EditSouthItemModalComponent {
         maxReadInterval: controls.maxReadInterval.value,
         readDelay: controls.readDelay.value,
         recoveryStrategy: controls.recoveryStrategy.value,
+        emptyIntervalStrategy: controls.emptyIntervalStrategy.value,
         startTimeOffset: controls.startTimeOffset.value,
         endTimeOffset: controls.endTimeOffset.value,
         cachingStrategy: controls.cachingStrategy.value,
@@ -663,6 +676,7 @@ class EditSouthItemModalComponent {
       this.form.controls.startTimeOffset.enable();
       this.form.controls.endTimeOffset.enable();
       this.form.controls.recoveryStrategy.enable();
+      this.form.controls.emptyIntervalStrategy.enable();
       this.form.controls.cachingStrategy.enable();
     } else {
       const selectedGroup = this.groups().find(g => g.id === groupId)!;
@@ -760,6 +774,7 @@ class EditSouthItemModalComponent {
       this.form.controls.startTimeOffset.enable();
       this.form.controls.endTimeOffset.enable();
       this.form.controls.recoveryStrategy.enable();
+      this.form.controls.emptyIntervalStrategy.enable();
       this.form.controls.cachingStrategy.enable();
       return;
     }
@@ -776,6 +791,7 @@ class EditSouthItemModalComponent {
       this.form.controls.startTimeOffset.disable();
       this.form.controls.endTimeOffset.disable();
       this.form.controls.recoveryStrategy.disable();
+      this.form.controls.emptyIntervalStrategy.disable();
       this.form.controls.cachingStrategy.disable();
       this.form.patchValue(
         {
@@ -784,6 +800,7 @@ class EditSouthItemModalComponent {
           startTimeOffset: groupValues.startTimeOffset,
           endTimeOffset: groupValues.endTimeOffset,
           recoveryStrategy: groupValues.recoveryStrategy,
+          emptyIntervalStrategy: groupValues.emptyIntervalStrategy,
           cachingStrategy: groupValues.cachingStrategy
         },
         { emitEvent: false }
@@ -795,6 +812,7 @@ class EditSouthItemModalComponent {
       this.form.controls.startTimeOffset.enable();
       this.form.controls.endTimeOffset.enable();
       this.form.controls.recoveryStrategy.enable();
+      this.form.controls.emptyIntervalStrategy.enable();
       this.form.controls.cachingStrategy.enable();
       // Don't patch values here - keep user's values
     }
@@ -806,6 +824,7 @@ class EditSouthItemModalComponent {
     startTimeOffset: number | null;
     endTimeOffset: number | null;
     recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+    emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy | null;
     cachingStrategy: SouthCachingStrategy | null;
   } {
     const groupId = this.form.controls.groupId.value;
@@ -816,6 +835,7 @@ class EditSouthItemModalComponent {
       startTimeOffset: group?.historySettings.startTimeOffset ?? 0,
       endTimeOffset: group?.historySettings.endTimeOffset ?? 0,
       recoveryStrategy: group?.historySettings.recoveryStrategy ?? 'oldest',
+      emptyIntervalStrategy: group?.historySettings.emptyIntervalStrategy ?? 'keep',
       // No group source for the caching-strategy params: only cachingStrategy itself is group-fallback.
       cachingStrategy: group?.historySettings.cachingStrategy ?? 'allValues'
     };

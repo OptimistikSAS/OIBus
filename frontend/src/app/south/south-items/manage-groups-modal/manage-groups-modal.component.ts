@@ -11,7 +11,7 @@ import { concatMap, from, toArray } from 'rxjs';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
+import { SouthHistoryEmptyIntervalStrategy, SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
 
 import { DownloadService } from '../../../services/download.service';
 import { ModalService } from '../../../shared/modal.service';
@@ -188,7 +188,8 @@ export default class ManageGroupsModalComponent {
       endTimeOffset: group.historySettings.endTimeOffset,
       maxReadInterval: group.historySettings.maxReadInterval,
       readDelay: group.historySettings.readDelay,
-      recoveryStrategy: group.historySettings.recoveryStrategy
+      recoveryStrategy: group.historySettings.recoveryStrategy,
+      emptyIntervalStrategy: group.historySettings.emptyIntervalStrategy
     }));
     const content = csv.unparse(rows, { header: true, delimiter: ',' });
     const blob = new Blob([content], { type: 'text/csv' });
@@ -237,6 +238,8 @@ export default class ManageGroupsModalComponent {
 
       seenNames.add(name.toLowerCase());
       const recoveryStrategy: SouthHistoryRecoveryStrategy = (row['recoveryStrategy'] || '').trim() === 'newest' ? 'newest' : 'oldest';
+      const emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy =
+        (row['emptyIntervalStrategy'] || '').trim() === 'advance' ? 'advance' : 'keep';
       commands.push({
         id: null,
         standardSettings: { name, scanModeId: scanMode.id },
@@ -246,6 +249,7 @@ export default class ManageGroupsModalComponent {
           maxReadInterval: Number(row['maxReadInterval']) || 3600,
           readDelay: Number(row['readDelay']) || 200,
           recoveryStrategy,
+          emptyIntervalStrategy,
           cachingStrategy: null
         }
       });
