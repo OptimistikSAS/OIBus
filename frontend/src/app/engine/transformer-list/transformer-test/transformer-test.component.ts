@@ -56,19 +56,25 @@ export class TransformerTestComponent implements OnChanges {
   readonly availableDisplayModes = computed((): Array<ContentDisplayMode> => {
     const r = this.response();
     if (!r) return [];
+    // The first mode is the default one: the table (CSV, or JSON array), then the JSON, then the raw output
     const modes: Array<ContentDisplayMode> = [];
+    let isJson = false;
+    let isJsonArray = false;
     if (r.metadata.contentType === 'json') {
-      modes.push('json');
       try {
-        if (Array.isArray(JSON.parse(r.output))) modes.push('table');
+        isJson = true;
+        isJsonArray = Array.isArray(JSON.parse(r.output));
       } catch {
-        // output is not valid JSON; table mode not available
+        isJson = false; // output is not valid JSON
       }
     }
-    modes.push('raw');
-    if (r.metadata.contentFile.endsWith('.csv') && r.output) {
+    if (isJsonArray || (r.metadata.contentFile.endsWith('.csv') && r.output)) {
       modes.push('table');
     }
+    if (isJson) {
+      modes.push('json');
+    }
+    modes.push('raw');
     return modes;
   });
 

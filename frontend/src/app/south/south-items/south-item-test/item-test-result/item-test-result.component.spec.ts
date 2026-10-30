@@ -195,13 +195,71 @@ describe('ItemTestResultComponent', () => {
     await expect.poll(() => tester.editorContent()).toBe(JSON.stringify(pointRecords(1).content, null, 2));
   });
 
-  test('should pretty-print raw content which is JSON', async () => {
+  test('should display a JSON object in the JSON view by default, formatted', async () => {
     const tester = new ItemTestResultComponentTester();
 
     tester.component.displayResult({ type: 'file', content: '{"a":1}' });
 
-    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['raw']);
+    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['json', 'raw']);
+    expect(tester.currentDisplayMode).toHaveBeenLastCalledWith('json');
     await expect.poll(() => tester.editorContent()).toBe('{\n  "a": 1\n}');
+  });
+
+  test('should display a JSON array of objects in a table by default', async () => {
+    const tester = new ItemTestResultComponentTester();
+
+    tester.component.displayResult({
+      type: 'file',
+      filename: 'file.json',
+      content: '[{"name":"foo","value":1},{"name":"bar","extra":{"a":1}}]'
+    });
+
+    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['table', 'json', 'raw']);
+    expect(tester.currentDisplayMode).toHaveBeenLastCalledWith('table');
+    await expect.element(tester.tableHeaders).toHaveLength(3);
+    await expect.element(tester.tableRows).toHaveLength(2);
+    await expect.element(tester.tableRows.nth(0)).toHaveTextContent('foo1');
+    await expect.element(tester.tableRows.nth(1)).toHaveTextContent('bar{"a":1}');
+  });
+
+  test('should display a JSON array of values in the JSON view, without table', async () => {
+    const tester = new ItemTestResultComponentTester();
+
+    tester.component.displayResult({ type: 'file', content: '[1,2]' });
+
+    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['json', 'raw']);
+    await expect.element(tester.table).not.toBeInTheDocument();
+  });
+
+  test('should display JSON as it is in the raw view', async () => {
+    const tester = new ItemTestResultComponentTester();
+    tester.component.displayResult({ type: 'file', content: '{"a":1}' });
+
+    tester.switchTo('raw');
+
+    await expect.poll(() => tester.editorContent()).toBe('{"a":1}');
+  });
+
+  test('should display the filename of a file, or the name in its path', async () => {
+    const tester = new ItemTestResultComponentTester();
+    const filename = tester.root.getByCss('#result-filename');
+
+    tester.component.displayResult({ type: 'file', filename: 'sub/output.csv', content: 'a\n1' });
+    await expect.element(filename).toHaveTextContent('sub/output.csv');
+
+    tester.component.displayResult({ type: 'file', filePath: '/data/in/other.json', content: '{}' });
+    await expect.element(filename).toHaveTextContent('other.json');
+
+    tester.component.displayResult(pointRecords(1));
+    await expect.element(filename).not.toBeInTheDocument();
+  });
+
+  test('should not offer the JSON view for a CSV file', () => {
+    const tester = new ItemTestResultComponentTester();
+
+    tester.component.displayResult({ type: 'file', filename: 'file.csv', content: '1' });
+
+    expect(tester.availableDisplayModes).toHaveBeenCalledWith(['table', 'raw']);
   });
 
   test('should display raw content which is not JSON as is', async () => {
@@ -236,12 +294,12 @@ describe('ItemTestResultComponent', () => {
     tester.component.displayResult(pointRecords(1));
     await expect.element(tester.table).toBeVisible();
 
-    const transformed: OIBusContent = { type: 'file', content: '[]' };
+    const transformed: OIBusContent = { type: 'file', filePath: 'file.txt', content: 'text' };
     tester.component.displayResult(transformed);
 
     // Transformed file-content result has no table mode -> must switch to 'raw', not stay stuck on 'table'.
     expect(tester.currentDisplayMode).toHaveBeenLastCalledWith('raw');
     await expect.element(tester.table).not.toBeInTheDocument();
-    await expect.poll(() => tester.editorContent()).toBe('[]');
+    await expect.poll(() => tester.editorContent()).toBe('text');
   });
 });

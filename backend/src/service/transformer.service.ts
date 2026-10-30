@@ -103,7 +103,7 @@ export const toTransformedContent = (output: string, contentType: string | undef
   if (contentType === 'file') {
     return { type: 'file', filePath: contentFile || 'output', content: output };
   }
-  return { type: 'file', content: output };
+  return contentFile ? { type: 'file', filename: contentFile, content: output } : { type: 'file', content: output };
 };
 
 export default class TransformerService {
@@ -228,7 +228,13 @@ export default class TransformerService {
    * can render it (records → table, file/CSV → table, otherwise raw text). Shared by the
    * south/history item test (#4773) and the transformer test-with-input feature (#4774).
    */
-  async runTransformer(transformerId: string, options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent> {
+  async runTransformer(
+    transformerId: string,
+    options: Record<string, unknown>,
+    content: OIBusContent,
+    // The origin of the content, which the transformers use in their filename variables (@ItemName, @ConnectorName, …)
+    source: CacheMetadataSource = { source: 'test' }
+  ): Promise<OIBusContent> {
     const transformer = this.findById(transformerId);
     const transformerToRun: NorthTransformerWithOptions = {
       id: 'test',
@@ -237,9 +243,7 @@ export default class TransformerService {
       // `source` drives north-side routing only; it is unused when the transformer is run directly.
       source: { type: 'oianalytics-setpoint' }
     };
-    const results = await runTransformerOnContent(createTransformer(transformerToRun, null, this.engine.logger), content, {
-      source: 'test'
-    });
+    const results = await runTransformerOnContent(createTransformer(transformerToRun, null, this.engine.logger), content, source);
     const output = Buffer.concat(results.map(result => result.output)).toString('utf-8');
     const metadata = results[0]?.metadata;
     return toTransformedContent(output, metadata?.contentType, metadata?.contentFile);
