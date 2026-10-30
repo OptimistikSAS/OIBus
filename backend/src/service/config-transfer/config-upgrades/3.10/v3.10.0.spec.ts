@@ -246,18 +246,41 @@ describe('3.10.0 config upgrade', () => {
       trackingInstant: {
         trackInstant: true,
         fieldName: 'timestamp',
-        dateTimeInput: { type: 'iso-string', timezone: null, format: null, locale: null }
+        // the settings of the string date times are left out for the other types, as the form does
+        dateTimeInput: { type: 'iso-string' }
       }
     });
+    assert.deepStrictEqual(
+      toNewSqlItemSettings({ ...oldSettings, dateTimeFields: [{ ...oldSettings.dateTimeFields[1], useAsReference: true }] }),
+      {
+        query: 'SELECT *',
+        trackingInstant: {
+          trackInstant: true,
+          fieldName: 'other',
+          dateTimeInput: { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd', locale: 'en-US' }
+        }
+      }
+    );
     const options = buildRecordListToCsvOptions(oldSettings);
     assert.strictEqual(options.filename, 'sql.csv');
     assert.strictEqual(options.delimiter, 'SEMI_COLON');
     assert.strictEqual(options.compression, true);
     assert.deepStrictEqual(
-      (options.fields as Array<JsonObject>).map(field => [field.fieldName, (field.datetimeSettings as JsonObject).inputTimezone]),
+      (options.fields as Array<JsonObject>).map(field => [field.fieldName, field.datetimeSettings]),
       [
-        ['timestamp', null],
-        ['other', 'Europe/Paris']
+        ['timestamp', { inputType: 'iso-string', outputType: 'string', outputTimezone: 'Europe/Paris', outputFormat: 'yyyy-MM-dd' }],
+        [
+          'other',
+          {
+            inputType: 'string',
+            inputTimezone: 'Europe/Paris',
+            inputFormat: 'yyyy-MM-dd',
+            inputLocale: 'en-US',
+            outputType: 'string',
+            outputTimezone: 'Europe/Paris',
+            outputFormat: 'yyyy-MM-dd'
+          }
+        ]
       ]
     );
     assert.deepStrictEqual(toNewSqlItemSettings({ query: 'SELECT *' }), { query: 'SELECT *', trackingInstant: { trackInstant: false } });
