@@ -76,6 +76,7 @@ class EditSouthItemModalComponentTester {
   readonly startTimeOffset = this.root.getByLabelText('Start time offset');
   readonly endTimeOffset = this.root.getByLabelText('End time offset');
   readonly recoveryStrategy = this.root.getByLabelText('Recovery strategy');
+  readonly emptyIntervalStrategy = this.root.getByLabelText('When no data is found');
   readonly cachingStrategy = this.root.getByLabelText('Caching strategy');
   readonly thresholdType = this.root.getByLabelText('Threshold type');
   readonly threshold = this.root.getByLabelText('Threshold', { exact: true });
@@ -160,6 +161,7 @@ describe('EditSouthItemModalComponent', () => {
         maxReadInterval: 60,
         readDelay: 10,
         recoveryStrategy: 'newest',
+        emptyIntervalStrategy: 'advance',
         cachingStrategy: null
       }
     });
@@ -260,7 +262,8 @@ describe('EditSouthItemModalComponent', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
-      recoveryStrategy: null
+      recoveryStrategy: null,
+      emptyIntervalStrategy: null
     };
     const tester = await open(mode, { item: itemWithNullHistorianFields });
 
@@ -270,6 +273,7 @@ describe('EditSouthItemModalComponent', () => {
     await expect.element(tester.startTimeOffset).toHaveValue(0);
     await expect.element(tester.endTimeOffset).toHaveValue(0);
     await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From oldest to newest');
+    await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Keep the tracked instant');
   });
 
   test('should only offer polling schedules to a polling connector', async () => {
@@ -303,6 +307,7 @@ describe('EditSouthItemModalComponent', () => {
         startTimeOffset: 0,
         endTimeOffset: 0,
         recoveryStrategy: 'oldest',
+        emptyIntervalStrategy: 'keep',
         cachingStrategy: 'allValues',
         thresholdType: null,
         threshold: null
@@ -459,6 +464,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.reviewed('Sync with group')).toHaveTextContent('Yes');
       await expect.element(tester.reviewed('Max read interval')).toHaveTextContent('60 s');
       await expect.element(tester.reviewed('Recovery strategy')).toHaveTextContent('From newest to oldest');
+      await expect.element(tester.reviewed('When no data is found')).toHaveTextContent('Advance the tracked instant');
       // the connector specific settings
       await expect.element(tester.root.getByCss('#settings-summary')).toBeInTheDocument();
     });
@@ -550,6 +556,8 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.startTimeOffset).toHaveValue(500);
       await expect.element(tester.endTimeOffset).toHaveValue(600);
       await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From newest to oldest');
+      await expect.element(tester.emptyIntervalStrategy).toBeDisabled();
+      await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Advance the tracked instant');
 
       await tester.save();
       // synced with the group: the historian fields are inherited from it
@@ -564,6 +572,7 @@ describe('EditSouthItemModalComponent', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           recoveryStrategy: null,
+          emptyIntervalStrategy: null,
           cachingStrategy: null
         })
       );
@@ -576,6 +585,7 @@ describe('EditSouthItemModalComponent', () => {
         maxReadInterval: null,
         readDelay: null,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         cachingStrategy: null
       };
       const tester = await open('create');
@@ -587,6 +597,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.startTimeOffset).toHaveValue(0);
       await expect.element(tester.endTimeOffset).toHaveValue(0);
       await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From oldest to newest');
+      await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Keep the tracked instant');
     });
 
     test('should keep the item own historian values when it is not synced with its group', async () => {
@@ -597,10 +608,17 @@ describe('EditSouthItemModalComponent', () => {
       await tester.syncWithGroup.click();
       await expect.element(tester.maxReadInterval).toBeEnabled();
       await tester.maxReadInterval.fill('120');
+      await tester.emptyIntervalStrategy.selectOptions('Keep the tracked instant');
       await tester.save();
 
       expect(savedCommand()).toEqual(
-        expect.objectContaining({ groupId: 'group1', syncWithGroup: false, maxReadInterval: 120, readDelay: 10 })
+        expect.objectContaining({
+          groupId: 'group1',
+          syncWithGroup: false,
+          maxReadInterval: 120,
+          readDelay: 10,
+          emptyIntervalStrategy: 'keep'
+        })
       );
     });
 
@@ -985,6 +1003,7 @@ describe('EditSouthItemModalComponent', () => {
         startTimeOffset: 10,
         endTimeOffset: 20,
         recoveryStrategy: 'newest',
+        emptyIntervalStrategy: 'advance',
         cachingStrategy: 'onChange',
         maxCachingInterval: 1000
       };
@@ -1001,6 +1020,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.startTimeOffset).toHaveValue(10);
       await expect.element(tester.endTimeOffset).toHaveValue(20);
       await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From newest to oldest');
+      await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Advance the tracked instant');
       await expect.element(tester.cachingStrategy).toHaveDisplayValue('On change');
       await expect.element(tester.maxCachingInterval).toHaveValue(1000);
       // nothing typed yet: no confirmation before dismissing
@@ -1037,7 +1057,8 @@ describe('EditSouthItemModalComponent', () => {
         scanModeId: scanModes[0].id,
         maxReadInterval: null,
         readDelay: null,
-        recoveryStrategy: null
+        recoveryStrategy: null,
+        emptyIntervalStrategy: null
       };
       const tester = await open('create', { previousItem });
 

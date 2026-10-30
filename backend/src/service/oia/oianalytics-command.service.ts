@@ -1092,6 +1092,7 @@ export default class OIAnalyticsCommandService {
         maxReadInterval: item.maxReadInterval,
         readDelay: item.readDelay,
         recoveryStrategy: item.recoveryStrategy,
+        emptyIntervalStrategy: item.emptyIntervalStrategy ?? null,
         startTimeOffset: item.startTimeOffset,
         endTimeOffset: item.endTimeOffset,
         cachingStrategy: item.cachingStrategy,
@@ -1180,7 +1181,8 @@ export default class OIAnalyticsCommandService {
         readDelay: item.readDelay,
         startTimeOffset: item.startTimeOffset,
         endTimeOffset: item.endTimeOffset,
-        recoveryStrategy: item.recoveryStrategy
+        recoveryStrategy: item.recoveryStrategy,
+        emptyIntervalStrategy: item.emptyIntervalStrategy
       })) as Array<SouthConnectorItemCommandDTO>,
       'oianalytics',
       command.commandContent.deleteItemsNotPresent

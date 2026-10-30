@@ -70,6 +70,7 @@ const southSource = (group?: SouthItemGroupEntity, items: SourceOriginSouth['ite
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: null,
+      emptyIntervalStrategy: null,
       cachingStrategy: null,
       items: [],
       createdBy: '',
@@ -129,6 +130,7 @@ describe('NorthConnectorRepository', () => {
         maxReadInterval: null,
         readDelay: 0,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         cachingStrategy: null
       },
       'userTest'

@@ -72,6 +72,7 @@ const baseGroup: SouthItemGroupEntity = {
   maxReadInterval: null,
   readDelay: 0,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   items: [],
   createdBy: '',
@@ -1092,7 +1093,8 @@ describe('Service utils', () => {
         readDelay: 1,
         startTimeOffset: 1,
         endTimeOffset: 1,
-        recoveryStrategy: 'newest'
+        recoveryStrategy: 'newest',
+        emptyIntervalStrategy: 'advance'
       } as unknown as SouthConnectorItemDTO;
 
       utils.itemToFlattenedCSV([item], ',', emptySchema);
@@ -1118,7 +1120,8 @@ describe('Service utils', () => {
         readDelay: 43,
         startTimeOffset: 44,
         endTimeOffset: 45,
-        recoveryStrategy: 'newest'
+        recoveryStrategy: 'newest',
+        emptyIntervalStrategy: 'advance'
       } as unknown as SouthConnectorItemDTO;
 
       utils.itemToFlattenedCSV([item], ',', emptySchema);
@@ -1166,6 +1169,7 @@ describe('Service utils', () => {
         maxReadInterval: null,
         readDelay: null,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         group: {
           id: 'g1',
           standardSettings: { name: 'Group A', scanMode: { id: 'sm2', name: 'Group Scan Mode', cron: '' } },
@@ -1174,7 +1178,8 @@ describe('Service utils', () => {
             readDelay: 500,
             startTimeOffset: 10,
             endTimeOffset: null,
-            recoveryStrategy: 'oldest'
+            recoveryStrategy: 'oldest',
+            emptyIntervalStrategy: 'keep'
           }
         }
       } as unknown as SouthConnectorItemDTO;

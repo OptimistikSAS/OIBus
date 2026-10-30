@@ -319,6 +319,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
                     startTimeOffset: item.startTimeOffset,
                     endTimeOffset: item.endTimeOffset,
                     recoveryStrategy: item.recoveryStrategy,
+                    emptyIntervalStrategy: item.emptyIntervalStrategy,
                     cachingStrategy: item.cachingStrategy,
                     thresholdType: item.thresholdType,
                     threshold: item.threshold,
@@ -341,6 +342,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   maxReadInterval: group.historySettings.maxReadInterval,
                   readDelay: group.historySettings.readDelay,
                   recoveryStrategy: group.historySettings.recoveryStrategy,
+                  emptyIntervalStrategy: group.historySettings.emptyIntervalStrategy,
                   cachingStrategy: group.historySettings.cachingStrategy
                 }
               }))
@@ -619,6 +621,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       'startTimeOffset',
       'endTimeOffset',
       'recoveryStrategy',
+      'emptyIntervalStrategy',
       'syncWithGroup'
     ];
     const settingsAttribute = this.manifest()!.items.rootAttribute.attributes.find(
@@ -653,6 +656,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 startTimeOffset: item.startTimeOffset,
                 endTimeOffset: item.endTimeOffset,
                 recoveryStrategy: item.recoveryStrategy,
+                emptyIntervalStrategy: item.emptyIntervalStrategy,
                 cachingStrategy: item.cachingStrategy,
                 thresholdType: item.thresholdType,
                 threshold: item.threshold,
@@ -737,7 +741,10 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 readDelay: applyHistorySettings ? (item.readDelay ?? group.historySettings.readDelay) : item.readDelay,
                 recoveryStrategy: applyHistorySettings
                   ? (item.recoveryStrategy ?? group.historySettings.recoveryStrategy)
-                  : item.recoveryStrategy
+                  : item.recoveryStrategy,
+                emptyIntervalStrategy: applyHistorySettings
+                  ? (item.emptyIntervalStrategy ?? group.historySettings.emptyIntervalStrategy)
+                  : item.emptyIntervalStrategy
               };
             })
           );

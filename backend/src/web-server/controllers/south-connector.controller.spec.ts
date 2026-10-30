@@ -999,6 +999,7 @@ describe('SouthConnectorController', () => {
         maxReadInterval: null,
         readDelay: 0,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         cachingStrategy: null,
         items: []
       }
@@ -1029,6 +1030,7 @@ describe('SouthConnectorController', () => {
       maxReadInterval: null,
       readDelay: 0,
       recoveryStrategy: null,
+      emptyIntervalStrategy: null,
       cachingStrategy: null,
       items: []
     };
@@ -1055,6 +1057,7 @@ describe('SouthConnectorController', () => {
         maxReadInterval: null,
         readDelay: 0,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         cachingStrategy: null
       }
     };
@@ -1072,6 +1075,7 @@ describe('SouthConnectorController', () => {
       maxReadInterval: null,
       readDelay: 0,
       recoveryStrategy: null,
+      emptyIntervalStrategy: null,
       cachingStrategy: null,
       items: []
     };
@@ -1099,6 +1103,7 @@ describe('SouthConnectorController', () => {
         maxReadInterval: null,
         readDelay: 0,
         recoveryStrategy: null,
+        emptyIntervalStrategy: null,
         cachingStrategy: null
       }
     };

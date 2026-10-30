@@ -376,6 +376,7 @@ export default class ConfigTransferBuilderService {
             startTimeOffset: item.startTimeOffset,
             endTimeOffset: item.endTimeOffset,
             recoveryStrategy: item.recoveryStrategy,
+            emptyIntervalStrategy: item.emptyIntervalStrategy,
             cachingStrategy: item.cachingStrategy,
             thresholdType: item.thresholdType,
             threshold: item.threshold,
@@ -399,6 +400,7 @@ export default class ConfigTransferBuilderService {
               maxReadInterval: group.maxReadInterval,
               readDelay: group.readDelay,
               recoveryStrategy: group.recoveryStrategy,
+              emptyIntervalStrategy: group.emptyIntervalStrategy,
               cachingStrategy: group.cachingStrategy
             }
           })),

@@ -61,6 +61,7 @@ const createItem = (overrides?: Partial<SouthRestItemSettings>): SouthConnectorI
   startTimeOffset: 10,
   endTimeOffset: null,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   thresholdType: null,
   threshold: null,

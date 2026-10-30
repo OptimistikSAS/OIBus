@@ -62,6 +62,7 @@ const buildConfiguration = (
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: 'oldest',
+      emptyIntervalStrategy: 'keep',
       cachingStrategy: null,
       thresholdType: null,
       threshold: null,

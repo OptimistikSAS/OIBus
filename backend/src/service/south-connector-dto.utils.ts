@@ -25,6 +25,7 @@ export const toSouthItemGroupDTO = (entity: SouthItemGroupEntityLight, getUserIn
       maxReadInterval: entity.maxReadInterval,
       readDelay: entity.readDelay,
       recoveryStrategy: entity.recoveryStrategy,
+      emptyIntervalStrategy: entity.emptyIntervalStrategy,
       cachingStrategy: entity.cachingStrategy
     }
   };
@@ -57,6 +58,7 @@ export const toSouthConnectorItemDTO = (
     startTimeOffset: entity.startTimeOffset,
     endTimeOffset: entity.endTimeOffset,
     recoveryStrategy: entity.recoveryStrategy,
+    emptyIntervalStrategy: entity.emptyIntervalStrategy,
     cachingStrategy: entity.cachingStrategy,
     thresholdType: entity.thresholdType,
     threshold: entity.threshold,

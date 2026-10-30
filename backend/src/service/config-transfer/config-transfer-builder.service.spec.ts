@@ -302,6 +302,7 @@ describe('Config Transfer Builder Service', () => {
       maxReadInterval: 3,
       readDelay: 4,
       recoveryStrategy: 'oldest',
+      emptyIntervalStrategy: 'keep',
       cachingStrategy: 'onChange',
       items: [],
       createdBy: '',
@@ -345,6 +346,7 @@ describe('Config Transfer Builder Service', () => {
         maxReadInterval: 3,
         readDelay: 4,
         recoveryStrategy: 'oldest',
+        emptyIntervalStrategy: 'keep',
         cachingStrategy: 'onChange'
       }
     });

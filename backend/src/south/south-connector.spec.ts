@@ -15,6 +15,7 @@ import type {
   SouthOPCUAItemSettings,
   SouthOPCUASettings
 } from '../../shared/model/connector/south-settings.model';
+import type { SouthHistoryEmptyIntervalStrategy, SouthHistoryRecoveryStrategy } from '../../shared/model/domain/south-connector.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
@@ -39,6 +40,7 @@ const buildGroup = (overrides: Partial<SouthItemGroupEntityLight> = {}): SouthIt
   maxReadInterval: null,
   readDelay: null,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   createdBy: '',
   updatedBy: '',
@@ -63,6 +65,7 @@ const buildOpcuaItem = (
   startTimeOffset: null,
   endTimeOffset: null,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   thresholdType: null,
   threshold: null,
@@ -768,6 +771,144 @@ describe('SouthConnector', () => {
 
       const saveCalls = southCacheRepository.saveItemLastValue.mock.calls;
       assert.strictEqual(saveCalls.length, 0);
+    });
+
+    describe('with an empty interval strategy', () => {
+      const newValue = { id: 'new' };
+      const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
+      const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2020-12-02T02:02:02.222Z' };
+      const historyItems = (
+        recoveryStrategy: SouthHistoryRecoveryStrategy,
+        emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy | null
+      ): Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>> =>
+        [{ ...testData.south.list[1].items[0], recoveryStrategy, emptyIntervalStrategy }] as Array<
+          SouthConnectorItemEntity<SouthMSSQLItemSettings>
+        >;
+      const savedCache = () =>
+        southCacheRepository.saveItemLastValue.mock.calls.map(call => {
+          const { trackedInstant, value } = call.arguments[1] as { trackedInstant: Instant; value: unknown };
+          return { trackedInstant, value };
+        });
+
+      beforeEach(() => {
+        utilsExports.generateIntervals = mock.fn(() => [interval1, interval2]);
+        southCacheRepository.getItemLastValue.mock.mockImplementation(() => ({
+          itemId: testData.south.list[1].items[0].id,
+          groupId: null,
+          queryTime: '2020-02-02T02:02:02.222Z',
+          value: 'previous value',
+          trackedInstant: '2020-02-02T02:02:02.222Z'
+        }));
+      });
+
+      it('should keep the tracked instant when no data is found by default', async () => {
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: null, value: null }));
+
+        await south.historyQueryHandler(historyItems('oldest', null), '2020-02-02T02:02:02.222Z', interval2.end);
+
+        assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
+      });
+
+      it('should advance the tracked instant to the end of each interval without data (oldest strategy)', async () => {
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: null, value: null }));
+
+        await south.historyQueryHandler(historyItems('oldest', 'advance'), '2020-02-02T02:02:02.222Z', interval2.end);
+
+        assert.deepStrictEqual(savedCache(), [
+          { trackedInstant: interval1.end, value: 'previous value' },
+          { trackedInstant: interval2.end, value: 'previous value' }
+        ]);
+      });
+
+      it('should advance the tracked instant over an interval returning only already retrieved data (oldest strategy)', async () => {
+        let callCount = 0;
+        south.historyQuery = mock.fn(async () => {
+          callCount += 1;
+          return callCount === 1
+            ? { trackedInstant: '2020-05-01T00:00:00.000Z', value: newValue }
+            : { trackedInstant: '2020-01-01T00:00:00.000Z', value: { id: 'old' } };
+        });
+
+        await south.historyQueryHandler(historyItems('oldest', 'advance'), '2020-02-02T02:02:02.222Z', interval2.end);
+
+        assert.deepStrictEqual(savedCache(), [
+          { trackedInstant: '2020-05-01T00:00:00.000Z', value: newValue },
+          { trackedInstant: interval2.end, value: newValue }
+        ]);
+      });
+
+      it('should not advance the tracked instant past the query time', async () => {
+        // A positive end time offset pushes the interval end after now, where data may still come
+        const futureInterval = { start: '2020-02-02T02:02:02.222Z', end: '2021-01-03T00:00:00.000Z' };
+        utilsExports.generateIntervals = mock.fn(() => [futureInterval]);
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: null, value: null }));
+
+        await south.historyQueryHandler(historyItems('oldest', 'advance'), '2020-02-02T02:02:02.222Z', futureInterval.end);
+
+        assert.deepStrictEqual(savedCache(), [{ trackedInstant: testData.constants.dates.FAKE_NOW, value: 'previous value' }]);
+      });
+
+      it('should not advance the tracked instant over an interval interrupted by a stop (oldest strategy)', async () => {
+        south.historyQuery = mock.fn(async () => {
+          south['stopping'] = true;
+          return { trackedInstant: null, value: null };
+        });
+
+        await south.historyQueryHandler(historyItems('oldest', 'advance'), '2020-02-02T02:02:02.222Z', interval2.end);
+
+        assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
+      });
+
+      it('should advance the tracked instant to the end of the window once all intervals are done (newest strategy)', async () => {
+        utilsExports.generateIntervals = mock.fn(() => [interval2, interval1]);
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: null, value: null }));
+
+        await south.historyQueryHandler(historyItems('newest', 'advance'), '2020-02-02T02:02:02.222Z', interval2.end);
+
+        assert.deepStrictEqual(savedCache(), [{ trackedInstant: interval2.end, value: 'previous value' }]);
+      });
+
+      it('should save the newest data found instead of advancing (newest strategy)', async () => {
+        utilsExports.generateIntervals = mock.fn(() => [interval2, interval1]);
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: '2020-05-01T00:00:00.000Z', value: newValue }));
+
+        await south.historyQueryHandler(historyItems('newest', 'advance'), '2020-02-02T02:02:02.222Z', interval2.end);
+
+        assert.deepStrictEqual(savedCache(), [{ trackedInstant: '2020-05-01T00:00:00.000Z', value: newValue }]);
+      });
+
+      it('should save the data of an older interval when the newest one is empty (newest strategy)', async () => {
+        utilsExports.generateIntervals = mock.fn(() => [interval2, interval1]);
+        let callCount = 0;
+        south.historyQuery = mock.fn(async () => {
+          callCount += 1;
+          return callCount === 1 ? { trackedInstant: null, value: null } : { trackedInstant: '2020-05-01T00:00:00.000Z', value: newValue };
+        });
+
+        await south.historyQueryHandler(historyItems('newest', null), '2020-02-02T02:02:02.222Z', interval2.end);
+
+        assert.deepStrictEqual(savedCache(), [{ trackedInstant: '2020-05-01T00:00:00.000Z', value: newValue }]);
+      });
+
+      it('should keep the tracked instant when no data is found (newest strategy)', async () => {
+        utilsExports.generateIntervals = mock.fn(() => [interval2, interval1]);
+        south.historyQuery = mock.fn(async () => ({ trackedInstant: null, value: null }));
+
+        await south.historyQueryHandler(historyItems('newest', null), '2020-02-02T02:02:02.222Z', interval2.end);
+
+        assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
+      });
+
+      it('should not advance the tracked instant when stopped mid newest run', async () => {
+        south.historyQuery = mock.fn(async () => {
+          south['stopping'] = true;
+          return { trackedInstant: null, value: null };
+        });
+
+        await south.historyQueryHandler(historyItems('newest', 'advance'), '2020-02-02T02:02:02.222Z', interval2.end);
+
+        assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
+      });
     });
   });
 

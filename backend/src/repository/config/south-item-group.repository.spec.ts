@@ -23,6 +23,7 @@ const groupUpdate = (name: string, overrides: Partial<GroupUpdate> = {}): GroupU
   maxReadInterval: null,
   readDelay: 0,
   recoveryStrategy: null,
+  emptyIntervalStrategy: null,
   cachingStrategy: null,
   ...overrides
 });
@@ -156,6 +157,7 @@ describe('South Item Group Repository', () => {
           maxReadInterval: created.maxReadInterval,
           readDelay: created.readDelay,
           recoveryStrategy: created.recoveryStrategy,
+          emptyIntervalStrategy: created.emptyIntervalStrategy,
           cachingStrategy: 'threshold'
         },
         'userTest'
@@ -330,7 +332,8 @@ describe('South Item Group Repository', () => {
           end_time_offset: 0,
           max_read_interval: 3600,
           read_delay: 200,
-          recovery_strategy: 'oldest'
+          recovery_strategy: 'oldest',
+          empty_interval_strategy: 'keep'
         }),
         []
       );

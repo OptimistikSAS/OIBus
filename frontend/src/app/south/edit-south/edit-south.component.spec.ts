@@ -86,6 +86,7 @@ function toItemCommand(item: FolderScannerItem, groupId: string | null = item.gr
     startTimeOffset: item.startTimeOffset,
     endTimeOffset: item.endTimeOffset,
     recoveryStrategy: item.recoveryStrategy,
+    emptyIntervalStrategy: item.emptyIntervalStrategy,
     cachingStrategy: item.cachingStrategy,
     thresholdType: item.thresholdType,
     threshold: item.threshold,
@@ -1029,7 +1030,8 @@ describe('EditSouthComponent', () => {
         scanModeName: scanModes[1].name,
         maxReadInterval: 3600,
         readDelay: 200,
-        recoveryStrategy: 'oldest'
+        recoveryStrategy: 'oldest',
+        emptyIntervalStrategy: 'keep'
       });
       expect(command.configurationWorkflows[0].itemFieldMapping).toEqual({ name: '{{name}}' });
     });
@@ -1043,7 +1045,8 @@ describe('EditSouthComponent', () => {
         readDelay: 50,
         startTimeOffset: 10,
         endTimeOffset: 20,
-        recoveryStrategy: 'newest'
+        recoveryStrategy: 'newest',
+        emptyIntervalStrategy: 'advance'
       });
       southConnectorService.findById.mockReturnValue(of({ ...southConnector, items: [ownItem] }));
       const tester = await createTester('edit', 'items');

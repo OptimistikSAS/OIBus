@@ -29,6 +29,7 @@ export function buildSouthItemGroup(
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: 'oldest',
+      emptyIntervalStrategy: 'keep',
       cachingStrategy: null
     },
     ...overrides
@@ -50,6 +51,7 @@ export function buildSouthItemGroupCommand(
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: 'oldest',
+      emptyIntervalStrategy: 'keep',
       cachingStrategy: null
     },
     ...overrides

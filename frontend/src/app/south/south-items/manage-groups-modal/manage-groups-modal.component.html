@@ -97,6 +97,7 @@
               <th translate="south.groups.max-read-interval"></th>
               <th translate="south.groups.read-delay"></th>
               <th translate="south.groups.recovery-strategy"></th>
+              <th translate="south.groups.empty-interval-strategy"></th>
             }
             <th>
               <button type="button" class="sort-button" (click)="toggleColumnSort('itemCount')">
@@ -120,6 +121,11 @@
                 <td>
                   @if (group.historySettings.recoveryStrategy) {
                     {{ 'south.groups.recovery-strategy-' + group.historySettings.recoveryStrategy | translate }}
+                  }
+                </td>
+                <td>
+                  @if (group.historySettings.emptyIntervalStrategy) {
+                    {{ 'south.groups.empty-interval-strategy-' + group.historySettings.emptyIntervalStrategy | translate }}
                   }
                 </td>
               }

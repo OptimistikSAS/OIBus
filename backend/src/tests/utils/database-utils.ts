@@ -556,7 +556,8 @@ const createSouthConnectorItem = async (
       read_delay: item.readDelay,
       start_time_offset: item.startTimeOffset,
       end_time_offset: item.endTimeOffset,
-      recovery_strategy: item.recoveryStrategy
+      recovery_strategy: item.recoveryStrategy,
+      empty_interval_strategy: item.emptyIntervalStrategy
     })
     .into('south_items');
 };

@@ -128,6 +128,7 @@ const historyDefaults = {
   maxReadInterval: '3600',
   readDelay: '200',
   recoveryStrategy: 'oldest',
+  emptyIntervalStrategy: 'keep',
   startTimeOffset: '0',
   endTimeOffset: '0'
 };
@@ -898,7 +899,8 @@ describe('EditWorkflowModalComponent', () => {
         'readDelay',
         'startTimeOffset',
         'endTimeOffset',
-        'recoveryStrategy'
+        'recoveryStrategy',
+        'emptyIntervalStrategy'
       ]) {
         await expect.element(tester.mappingField(path)).toBeInTheDocument();
       }
@@ -934,6 +936,9 @@ describe('EditWorkflowModalComponent', () => {
       await expect
         .element(tester.mappingField('recoveryStrategy').getByRole('option', { name: 'From oldest to newest' }))
         .toBeInTheDocument();
+      await expect
+        .element(tester.mappingField('emptyIntervalStrategy').getByRole('option', { name: 'Advance the tracked instant' }))
+        .toBeInTheDocument();
       await expect.element(tester.mappingField('name')).toHaveRole('textbox');
     });
 
@@ -942,6 +947,7 @@ describe('EditWorkflowModalComponent', () => {
 
       await expect.element(tester.mappingRow('settings.mode').getByCss('label')).toHaveTextContent('Mode');
       await expect.element(tester.mappingRow('recoveryStrategy').getByCss('label')).toHaveTextContent('Recovery strategy');
+      await expect.element(tester.mappingRow('emptyIntervalStrategy').getByCss('label')).toHaveTextContent('When no data is found');
     });
 
     test('should switch a select-type field into variable mode and expose an expression input when the sentinel is chosen', async () => {
@@ -1376,6 +1382,7 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingField('maxReadInterval')).toHaveValue('3600');
       await expect.element(tester.mappingField('readDelay')).toHaveValue('200');
       await expect.element(tester.mappingField('recoveryStrategy')).toHaveDisplayValue('From oldest to newest');
+      await expect.element(tester.mappingField('emptyIntervalStrategy')).toHaveDisplayValue('Keep the tracked instant');
       await expect.element(tester.mappingField('startTimeOffset')).toHaveValue('0');
       await expect.element(tester.mappingField('endTimeOffset')).toHaveValue('0');
     });
@@ -1428,7 +1435,14 @@ describe('EditWorkflowModalComponent', () => {
     test('should show the item-owned historian fields and hide syncWithGroup while the item is not mapped into a group', async () => {
       const tester = create();
 
-      for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy']) {
+      for (const path of [
+        'maxReadInterval',
+        'readDelay',
+        'startTimeOffset',
+        'endTimeOffset',
+        'recoveryStrategy',
+        'emptyIntervalStrategy'
+      ]) {
         await expect.element(tester.mappingField(path)).toBeInTheDocument();
       }
       await expect.element(tester.mappingField('syncWithGroup')).not.toBeInTheDocument();
@@ -1440,7 +1454,15 @@ describe('EditWorkflowModalComponent', () => {
       await tester.selectGroup('Group 1');
 
       await expect.element(tester.mappingField('syncWithGroup')).toHaveDisplayValue('Yes');
-      for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy', 'scanModeId']) {
+      for (const path of [
+        'maxReadInterval',
+        'readDelay',
+        'startTimeOffset',
+        'endTimeOffset',
+        'recoveryStrategy',
+        'emptyIntervalStrategy',
+        'scanModeId'
+      ]) {
         await expect.element(tester.mappingField(path)).not.toBeInTheDocument();
       }
       await expect.element(tester.root.getByCss('#group-scan-mode')).toMatchTextContent('(from the group)');
@@ -1452,7 +1474,14 @@ describe('EditWorkflowModalComponent', () => {
 
       await tester.mappingField('syncWithGroup').selectOptions('No');
 
-      for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy']) {
+      for (const path of [
+        'maxReadInterval',
+        'readDelay',
+        'startTimeOffset',
+        'endTimeOffset',
+        'recoveryStrategy',
+        'emptyIntervalStrategy'
+      ]) {
         await expect.element(tester.mappingField(path)).toBeInTheDocument();
       }
       // the schedule is still the one of the group

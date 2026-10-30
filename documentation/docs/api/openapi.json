@@ -2212,6 +2212,14 @@
 				],
 				"description": "Recovery strategy used when a south connector reconnects after a long disconnection.\n- 'oldest': fill the gap from oldest to newest (default behaviour).\n- 'newest': fill the gap from newest to oldest so that recent data arrives first."
 			},
+			"SouthHistoryEmptyIntervalStrategy": {
+				"type": "string",
+				"enum": [
+					"keep",
+					"advance"
+				],
+				"description": "What a history query does with the tracked instant when a queried interval returns no new data.\n- 'keep': the tracked instant only moves when data is found (default behaviour). Nothing is ever skipped, but a\n  source without new data is queried again from its last data point on every run.\n- 'advance': the tracked instant moves to the end of the queried interval, so the next run only covers what is new.\n  Data arriving later with an older timestamp is only read back if it falls within the start time offset."
+			},
 			"SouthCachingStrategy": {
 				"type": "string",
 				"enum": [
@@ -2277,6 +2285,16 @@
 								"description": "Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for\nIoT-family connectors (OPC UA, Modbus, ADS, OPC classic, S7, MQTT).",
 								"example": "onChange"
 							},
+							"emptyIntervalStrategy": {
+								"allOf": [
+									{
+										"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+									}
+								],
+								"nullable": true,
+								"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+								"example": "keep"
+							},
 							"recoveryStrategy": {
 								"allOf": [
 									{
@@ -2318,6 +2336,7 @@
 						},
 						"required": [
 							"cachingStrategy",
+							"emptyIntervalStrategy",
 							"recoveryStrategy",
 							"readDelay",
 							"maxReadInterval",
@@ -2454,6 +2473,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -2521,6 +2550,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -2732,6 +2762,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -2799,6 +2839,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -3077,6 +3118,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -3144,6 +3195,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -3366,6 +3418,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -3433,6 +3495,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -3674,6 +3737,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -3741,6 +3814,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -3881,6 +3955,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -3948,6 +4032,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -4193,6 +4278,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -4260,6 +4355,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -4417,6 +4513,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -4484,6 +4590,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -4704,6 +4811,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -4771,6 +4888,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -4948,6 +5066,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -5015,6 +5143,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -5286,6 +5415,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -5353,6 +5492,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -5544,6 +5684,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -5611,6 +5761,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -5908,6 +6059,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -5975,6 +6136,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -6118,6 +6280,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -6185,6 +6357,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -6400,6 +6573,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -6467,6 +6650,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -6674,6 +6858,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -6741,6 +6935,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -7023,6 +7218,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -7090,6 +7295,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -7260,6 +7466,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -7327,6 +7543,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -7610,6 +7827,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -7677,6 +7904,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -7829,6 +8057,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -7896,6 +8134,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -8173,6 +8412,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -8240,6 +8489,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -8394,6 +8644,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -8461,6 +8721,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -8699,6 +8960,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -8766,6 +9037,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -8972,6 +9244,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -9039,6 +9321,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -9316,6 +9599,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -9383,6 +9676,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -9535,6 +9829,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -9602,6 +9906,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -9866,6 +10171,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -9933,6 +10248,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -10085,6 +10401,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -10152,6 +10478,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -10429,6 +10756,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -10496,6 +10833,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -10748,6 +11086,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -10815,6 +11163,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -11098,6 +11447,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -11165,6 +11524,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -11324,6 +11684,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -11391,6 +11761,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -11619,6 +11990,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -11686,6 +12067,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -11819,6 +12201,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -11886,6 +12278,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -12165,6 +12558,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -12232,6 +12635,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -12393,6 +12797,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -12460,6 +12874,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -12966,6 +13381,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -13033,6 +13458,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -13287,6 +13713,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -13354,6 +13790,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -13569,6 +14006,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -13636,6 +14083,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -13806,6 +14254,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -13873,6 +14331,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -14118,6 +14577,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -14185,6 +14654,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -14349,6 +14819,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -14416,6 +14896,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -14693,6 +15174,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -14760,6 +15251,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -14888,6 +15380,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -14955,6 +15457,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -15268,6 +15771,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -15340,6 +15853,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -15446,6 +15960,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -15518,6 +16042,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -15568,6 +16093,16 @@
 								"description": "Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for\nIoT-family connectors (OPC UA, Modbus, ADS, OPC classic, S7, MQTT).",
 								"example": "onChange"
 							},
+							"emptyIntervalStrategy": {
+								"allOf": [
+									{
+										"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+									}
+								],
+								"nullable": true,
+								"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nWhen null, defaults to 'keep'.",
+								"example": "keep"
+							},
 							"recoveryStrategy": {
 								"allOf": [
 									{
@@ -15609,6 +16144,7 @@
 						},
 						"required": [
 							"cachingStrategy",
+							"emptyIntervalStrategy",
 							"recoveryStrategy",
 							"readDelay",
 							"maxReadInterval",
@@ -16336,6 +16872,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -16408,6 +16954,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -16514,6 +17061,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -16586,6 +17143,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -16692,6 +17250,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -16764,6 +17332,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -16870,6 +17439,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -16942,6 +17521,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -17048,6 +17628,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -17120,6 +17710,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -17226,6 +17817,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -17298,6 +17899,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -17404,6 +18006,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -17476,6 +18088,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -17582,6 +18195,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -17654,6 +18277,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -17760,6 +18384,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -17832,6 +18466,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -17938,6 +18573,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -18010,6 +18655,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -18116,6 +18762,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -18188,6 +18844,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -18294,6 +18951,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -18366,6 +19033,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -18472,6 +19140,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -18544,6 +19222,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -18650,6 +19329,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -18722,6 +19411,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -18828,6 +19518,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -18900,6 +19600,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -19006,6 +19707,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -19078,6 +19789,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -19184,6 +19896,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -19256,6 +19978,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -19362,6 +20085,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -19434,6 +20167,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -19540,6 +20274,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -19612,6 +20356,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -19718,6 +20463,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -19790,6 +20545,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -19896,6 +20652,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -19968,6 +20734,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -20074,6 +20841,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -20146,6 +20923,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -23454,6 +24232,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -23526,6 +24314,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -23697,6 +24486,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -23769,6 +24568,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -23940,6 +24740,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -24012,6 +24822,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -24183,6 +24994,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -24255,6 +25076,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -24426,6 +25248,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -24498,6 +25330,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -24669,6 +25502,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -24741,6 +25584,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -24912,6 +25756,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -24984,6 +25838,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -25155,6 +26010,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -25227,6 +26092,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -25398,6 +26264,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -25470,6 +26346,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -25641,6 +26518,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -25713,6 +26600,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -25884,6 +26772,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -25956,6 +26854,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -26127,6 +27026,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -26199,6 +27108,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -26370,6 +27280,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -26442,6 +27362,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -26613,6 +27534,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -26685,6 +27616,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -26856,6 +27788,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -26928,6 +27870,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -27099,6 +28042,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -27171,6 +28124,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -27342,6 +28296,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -27414,6 +28378,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -27585,6 +28550,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -27657,6 +28632,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -27828,6 +28804,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -27900,6 +28886,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -28071,6 +29058,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -28143,6 +29140,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -28314,6 +29312,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -28386,6 +29394,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
@@ -28557,6 +29566,16 @@
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
 					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
 					"cachingStrategy": {
 						"allOf": [
 							{
@@ -28629,6 +29648,7 @@
 					"startTimeOffset",
 					"endTimeOffset",
 					"recoveryStrategy",
+					"emptyIntervalStrategy",
 					"cachingStrategy",
 					"thresholdType",
 					"threshold",
