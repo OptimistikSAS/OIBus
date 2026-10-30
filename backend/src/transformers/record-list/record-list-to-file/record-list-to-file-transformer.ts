@@ -36,7 +36,7 @@ export default class RecordListToFileTransformer extends OIBusTransformer {
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     const rows = toRows(data);
-    const { output, contentFile } = writeFile(rows, this.options.output ? this.options : DEFAULT_SETTINGS, source, null);
+    const { output, contentFile } = writeFile(rows, this.options.output ? this.options : DEFAULT_SETTINGS, source, null, this.logger);
     const metadata: CacheMetadata = {
       contentFile,
       contentSize: 0, // It will be set outside the transformer, once the file is written

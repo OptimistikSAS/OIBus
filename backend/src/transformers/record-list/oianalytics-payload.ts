@@ -35,11 +35,12 @@ export function toOIAnalyticsPayload(
       skippedRows++;
       continue;
     }
-    values.push({
-      pointId,
-      timestamp: truncateInstant(timestamp, timestampOptions.precision),
-      value: applyFieldProcess(value, valueOptions.valueProcess)
-    });
+    const processedValue = applyFieldProcess(value, valueOptions.valueProcess, logger);
+    if (processedValue === null) {
+      skippedRows++;
+      continue;
+    }
+    values.push({ pointId, timestamp: truncateInstant(timestamp, timestampOptions.precision), value: processedValue });
   }
   if (skippedRows > 0) {
     logger.warn(
@@ -47,7 +48,7 @@ export function toOIAnalyticsPayload(
     );
   }
   return {
-    content: toCompactTimeValues(values, undefined, createStringFieldProcess(reference.referenceProcess)),
+    content: toCompactTimeValues(values, undefined, createStringFieldProcess(reference.referenceProcess, logger)),
     numberOfElement: values.length
   };
 }

@@ -6,6 +6,7 @@ import { OIBusAttribute, OIBusObjectAttribute } from '../../../shared/model/conn
 import { TransformerRecordListToFileSettings } from '../../../shared/model/connector/transformer-settings.model';
 
 import { CacheMetadataSource } from '../../model/engine.model';
+import type { ILogger } from '../../model/logger.model';
 import {
   applyFilenameVariables,
   convertDateTime,
@@ -308,10 +309,11 @@ export function writeFile(
   rows: Array<Row>,
   settings: FileOutputSettings,
   source: CacheMetadataSource,
-  sourceFilename: string | null
+  sourceFilename: string | null,
+  logger?: ILogger
 ): { output: Buffer; contentFile: string } {
   const { output: format } = settings;
-  const writtenRows = rows.map(row => writeRow(row, settings));
+  const writtenRows = rows.map(row => writeRow(row, settings, logger));
   let text: string;
   if (format.fileType === 'csv') {
     const quoteChar = convertQuoteChar(format.quoteChar ?? 'NONE');
@@ -349,7 +351,7 @@ export function writeFile(
 }
 
 /** A written row: the other fields of the row unless only the configured ones are kept, then the configured fields */
-function writeRow(row: Row, settings: FileOutputSettings): Record<string, unknown> {
+function writeRow(row: Row, settings: FileOutputSettings, logger?: ILogger): Record<string, unknown> {
   const fields = settings.fields ?? [];
   const writtenRow: Record<string, unknown> = {};
   if (settings.keepOtherFields) {
@@ -359,7 +361,7 @@ function writeRow(row: Row, settings: FileOutputSettings): Record<string, unknow
     }
   }
   for (const field of fields) {
-    writtenRow[field.name || field.field] = writeField(row[field.field], field, settings.output);
+    writtenRow[field.name || field.field] = writeField(row[field.field], field, settings.output, logger);
   }
   return writtenRow;
 }
@@ -368,7 +370,12 @@ function writeRow(row: Row, settings: FileOutputSettings): Record<string, unknow
  * A field cast to its data type, then processed by its expression. A missing field is the null value of a CSV file,
  * null in a JSON file; in a CSV file, a boolean is written as text and an object or an array as its JSON text.
  */
-function writeField(value: Row[string] | undefined, field: FileOutputField, format: FileOutputSettings['output']): unknown {
+function writeField(
+  value: Row[string] | undefined,
+  field: FileOutputField,
+  format: FileOutputSettings['output'],
+  logger?: ILogger
+): unknown {
   const csvFile = format.fileType === 'csv';
   let typedValue: unknown;
   if (value === undefined || value === null) {
@@ -410,7 +417,9 @@ function writeField(value: Row[string] | undefined, field: FileOutputField, form
         typedValue = String(raw);
     }
   }
-  return applyFieldProcess(typedValue, field.fieldProcess);
+  // A missing field is written as is: the expression applies to the values of the field only
+  if (value === undefined || value === null) return typedValue;
+  return applyFieldProcess(typedValue, field.fieldProcess, logger);
 }
 
 function parseJson(value: unknown): unknown {
