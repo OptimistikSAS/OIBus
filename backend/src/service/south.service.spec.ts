@@ -838,15 +838,59 @@ describe('South Service', () => {
       testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      { history: undefined, transformer: { transformerId: 'transformer-id', options: { foo: 'bar' } } }
+      {
+        history: { startTime: '2020-01-01T00:00:00.000Z', endTime: '2020-01-02T00:00:00.000Z' },
+        transformer: { transformerId: 'transformer-id', options: { foo: 'bar' } }
+      }
     );
 
     assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
-    assert.deepStrictEqual(transformerService.runTransformer.mock.calls[0].arguments, ['transformer-id', { foo: 'bar' }, rawContent]);
+    // the tested item is the source of the content, whose name the transformers can use
+    const [transformerId, options, content, source] = transformerService.runTransformer.mock.calls[0].arguments;
+    assert.deepStrictEqual([transformerId, options, content], ['transformer-id', { foo: 'bar' }, rawContent]);
+    assert.strictEqual(source?.source, 'south');
+    assert.deepStrictEqual(
+      {
+        ...source,
+        queryTime: undefined,
+        items: (source as { items: Array<{ name: string }> }).items.map(item => item.name)
+      },
+      {
+        source: 'south',
+        queryTime: undefined,
+        queryStartTime: '2020-01-01T00:00:00.000Z',
+        queryEndTime: '2020-01-02T00:00:00.000Z',
+        southId: testData.south.list[0].id,
+        southName: testData.south.list[0].name,
+        items: [testData.south.itemCommand.name]
+      }
+    );
     assert.deepStrictEqual(result.raw, rawContent);
     assert.deepStrictEqual(result.transformed, transformedContent);
     assert.strictEqual(result.connectionDuration, 12);
     assert.strictEqual(result.queryDuration, 34);
+  });
+
+  it('should name the source connector of the transformer after the given connector name, for a history query', async () => {
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({
+      result: { type: 'file', content: 'raw' } as OIBusContent,
+      connectionDuration: 0,
+      queryDuration: 0
+    }));
+    transformerService.runTransformer.mock.mockImplementationOnce(async () => ({ type: 'file', content: 'out' }) as OIBusContent);
+
+    await service.testItem(
+      'history',
+      testData.south.command.type,
+      testData.south.itemCommand.name,
+      testData.south.command.settings,
+      testData.south.itemCommand.settings,
+      { history: undefined, transformer: { transformerId: 'transformer-id', options: {} } },
+      'History query name'
+    );
+
+    const source = transformerService.runTransformer.mock.calls[0].arguments[3];
+    assert.strictEqual(source?.source === 'south' && source.southName, 'History query name');
   });
 
   it('should return the raw result with transformed null when no transformer is provided', async () => {

@@ -101,7 +101,7 @@ item, which falls back to the next level.
 Once a source is selected, the list is automatically filtered to show only compatible transformers, and the obvious
 one is preselected: **File (as is, renamed or converted)**, sending them as they are, for files sent to a North
 connector accepting files, otherwise the only standard transformer producing the North connector's own format (e.g.
-OIAnalytics values, MQTT payloads), otherwise the passthrough of the data (**File**: records in a JSON file). The available choices depend on the type of South connector chosen:
+OIAnalytics values, MQTT payloads), otherwise the passthrough of the data (**File**: records in a CSV file). The available choices depend on the type of South connector chosen:
 
 | South connector type                                                                                                                                 | Compatible standard transformers                                                                             |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -169,7 +169,7 @@ records work without changing them, while for query rows you name the columns of
 #### File {#file-from-records}
 
 Writes the records in a **CSV** or **JSON** file, for the North connectors expecting files (Azure Blob, Amazon S3,
-SFTP, REST, File Writer...). With its default settings, the records are written as they are in a JSON file: this is the
+SFTP, REST, File Writer...). With its default settings, the records are written in a CSV file: this is the
 transformer preselected for the record lists sent to a North connector expecting files.
 
 Every field of a record is written automatically — there's no need to declare a field just to have it appear in the
@@ -186,7 +186,7 @@ The **Written file** group:
 
 | Setting                 | Description                                                                                          |
 | ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| **File type**           | `CSV` or `JSON` (default)                                                                            |
+| **File type**           | `CSV` (default) or `JSON`                                                                            |
 | **Encoding**            | Output character encoding (`UTF_8`, `UTF_8_BOM`, `LATIN_1`, `UTF_16_LE`)                             |
 | **Compress file**       | Gzip-compress the output file, adding `.gz` to its name                                              |
 | **First row as header** | Whether to write a header row with the column names (CSV)                                            |
@@ -198,11 +198,11 @@ The **Written file** group:
 
 Then:
 
-| Setting                   | Description                                                                                                                                                                                                                                                     |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename**              | Output filename (default `@CurrentDate.json`); supports `@CurrentDate` (current UTC timestamp), `@ConnectorName`, `@ItemName`, and, for content coming from a South history query, `@QueryStartTime`/`@QueryEndTime` (the queried time window, empty otherwise) |
-| **Keep the other fields** | Write the fields that are not configured in **Fields** unchanged (enabled by default)                                                                                                                                                                           |
-| **Fields**                | A list of per-field overrides (rename, cast, reformat, or process) — see below                                                                                                                                                                                  |
+| Setting                   | Description                                                                                                                                                                                                                                                                                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename**              | Output filename (default `@ConnectorName-@ItemName-@QueryStartTime-@CurrentDate.csv`); supports `@CurrentDate` (current UTC timestamp), `@ConnectorName`, `@ItemName`, and, for content coming from a South history query, `@QueryStartTime`/`@QueryEndTime` (the queried time window, empty otherwise) |
+| **Keep the other fields** | Write the fields that are not configured in **Fields** unchanged (enabled by default)                                                                                                                                                                                                                   |
+| **Fields**                | A list of per-field overrides (rename, cast, reformat, or process) — see below                                                                                                                                                                                                                          |
 
 Each entry in **Fields** targets one field, by its name in the records:
 
@@ -211,7 +211,7 @@ Each entry in **Fields** targets one field, by its name in the records:
 | **Field**             | Name of the field to configure, matching a key in the records                                                                                     |
 | **Written name**      | Column (CSV) or property (JSON) name in the output. Leave empty to keep the field name.                                                           |
 | **Data Type**         | How to cast the value: `string`, `number`, `boolean`, `datetime`, `array`, or `object` (an array or object is written as JSON text in a CSV file) |
-| **Field Process**     | Optional JavaScript expression applied after casting (e.g. `value.toUpperCase()`)                                                                 |
+| **Field Process**     | Optional JavaScript expression applied after casting (e.g. `value.toUpperCase()`), see [Field and value processes](#field-processes)              |
 | **Datetime Settings** | Shown only when Data Type is `datetime` — input/output type, timezone, format and locale (see below)                                              |
 
 When **Data Type** is `datetime`, **Datetime Settings** describes how to parse the raw value and how to render
@@ -223,6 +223,19 @@ it:
 | **Input timezone / format / locale**  | Used to parse the raw value when its input type is `string`                        |
 | **Timestamp output type**             | How to render the value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)    |
 | **Output timezone / format / locale** | Used to render the value when its output type is `string`                          |
+
+##### Field and value processes {#field-processes}
+
+The **Field Process** of the file transformers, and the **Reference process** and **Value process** of the OIAnalytics
+payload, are JavaScript expressions where `value` is the field value. They are only applied to a value that can be
+processed:
+
+- a missing value (`null`) is left as it is: it is not processed. In a CSV file, it is written with the **Null value**;
+  in an OIAnalytics payload, the record is skipped;
+- a value whose type does not have the method called in the expression (e.g. `value.toUpperCase()` on a number, or
+  `value.toFixed(2)` on a text) is skipped with a warning in the logs, once per expression. The field is written as
+  `null` in a file, the record is skipped in an OIAnalytics payload, and a reference is kept as it is. Cast the field
+  to the right **Data Type** to process it, or convert it in the expression (e.g. `Number(value).toFixed(2)`).
 
 ##### Example — Point records in a CSV file {#example}
 
@@ -808,6 +821,13 @@ standard or custom — end-to-end against real, freshly-collected data from the 
    output**, so you can validate a transformer against the item's actual data before it ever reaches the
    North's cache.
 
+The transformer is run with the tested item as its source: the `@ConnectorName` (the South connector, or the history
+query) and `@ItemName` variables of its **Filename** are replaced as they will be at runtime, and the item has to be
+selected to run the test.
+
+The transformed output is shown with the name of its file, and can be displayed as a **Table** (a CSV file, or a JSON
+array of objects), as **JSON**, or as **Raw** content. The first view available in this order is displayed by default.
+
 Only the transformers of that North applied to the tested item are listed: those of the item's South connector,
 scoped to all its items or to a selection containing it. For file-based connectors (Folder Scanner, FTP, SFTP), the raw
 result lists the matching files; when a transformer is selected, it runs on the content of the most recent matching
@@ -1211,5 +1231,5 @@ connector at it and exercise a custom transformer against every case.
 
 :::info Testing custom transformers
 Use the **Test** button in the transformer editor to run your code against a sample payload before deploying it.
-The test result shows the transformed output, the output filename, and the execution time.
+The test result shows the transformed output, with the same table, JSON and raw views, the output filename, and the execution time.
 :::

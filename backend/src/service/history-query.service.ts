@@ -362,9 +362,11 @@ export default class HistoryQueryService {
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemTestResult> {
     let southSettingsFrom: SouthSettings | null = null;
+    let historyName: string | undefined;
     if (historyId !== 'create') {
       const historyQuery = this.findById(historyId);
       southSettingsFrom = historyQuery.southSettings;
+      historyName = historyQuery.name;
     } else if (retrieveSecretsFromSouth) {
       const south = this.southService.findById(retrieveSecretsFromSouth);
       southSettingsFrom = south.settings;
@@ -384,7 +386,8 @@ export default class HistoryQueryService {
         southManifest.settings
       ),
       itemSettings,
-      testingSettings
+      testingSettings,
+      historyName
     );
   }
 

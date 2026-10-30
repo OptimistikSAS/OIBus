@@ -4,7 +4,7 @@ import { buildFilenameAttribute, buildFileOutputAttribute, fileFieldsAttributes 
 
 /**
  * Writes the records in a CSV or JSON file, for the North connectors expecting files. With its default options, the
- * records are sent as they are, in a JSON file.
+ * records are written in a CSV file; a JSON file sends them as they are.
  */
 const manifest: TransformerManifest = {
   id: 'record-list-to-file',
@@ -14,7 +14,11 @@ const manifest: TransformerManifest = {
     type: 'object',
     key: 'options',
     translationKey: 'configuration.oibus.manifest.transformers.options',
-    attributes: [buildFileOutputAttribute('json'), buildFilenameAttribute('@CurrentDate.json'), ...fileFieldsAttributes],
+    attributes: [
+      buildFileOutputAttribute('csv'),
+      buildFilenameAttribute('@ConnectorName-@ItemName-@QueryStartTime-@CurrentDate.csv'),
+      ...fileFieldsAttributes
+    ],
     enablingConditions: [],
     validators: [],
     displayProperties: {

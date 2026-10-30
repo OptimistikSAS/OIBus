@@ -15,6 +15,11 @@
   }
 
   @if (!isLoading() && !message() && result()) {
+    @if (fileName(); as fileName) {
+      <div id="result-filename" class="small text-body-secondary px-2 py-1 break-anywhere">
+        <span class="fa-solid fa-file me-1" aria-hidden="true"></span>{{ fileName }}
+      </div>
+    }
     @if (displayMode() === 'table') {
       @let page = genericTableView();
       @if (page.totalElements) {

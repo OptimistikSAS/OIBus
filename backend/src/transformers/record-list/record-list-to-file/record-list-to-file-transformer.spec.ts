@@ -44,7 +44,7 @@ describe('RecordListToFileTransformer', () => {
     });
   });
 
-  it('should send the records as they are in a JSON file by default', async () => {
+  it('should send the records as they are in a JSON file when configured so', async () => {
     const transformer = new RecordListToFileTransformer(logger, testData.transformers.list[0], {
       output: { fileType: 'json', encoding: 'UTF_8', compression: false },
       filename: 'records.json',
@@ -56,9 +56,9 @@ describe('RecordListToFileTransformer', () => {
     const result = await transformer.transformInMemory(records, { source: 'test' }, null);
 
     assert.deepStrictEqual(JSON.parse(result.output.toString()), records);
-    // the records are sent as they are by default
+    // the manifest defaults to a CSV file, named after the connector, the item, the query start and the current date
     const [output, filename] = manifest.settings.attributes;
-    assert.ok(output.type === 'object' && output.attributes[0].type === 'string-select' && output.attributes[0].defaultValue === 'json');
-    assert.ok(filename.type === 'string' && filename.defaultValue === '@CurrentDate.json');
+    assert.ok(output.type === 'object' && output.attributes[0].type === 'string-select' && output.attributes[0].defaultValue === 'csv');
+    assert.ok(filename.type === 'string' && filename.defaultValue === '@ConnectorName-@ItemName-@QueryStartTime-@CurrentDate.csv');
   });
 });

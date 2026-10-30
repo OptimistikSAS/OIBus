@@ -121,16 +121,17 @@ describe('TransformerTestComponent', () => {
     await expect.element(tester.root.getByText(/output\.json/)).toBeInTheDocument();
     await expect.element(tester.root.getByText(/2\.0 kB/)).toBeInTheDocument();
     await expect.element(tester.root.getByText(/Number of elements:\s*2/)).toBeInTheDocument();
-    await expect.element(tester.viewDropdown).toHaveTextContent('JSON view');
-    // the JSON output is pretty printed
-    await expect.element(tester.outputEditor).toMatchTextContent(/\[\s*\{\s*"a": 1/);
-
-    await tester.viewDropdown.click();
-    await tester.viewMode('Table view').click();
+    // a JSON array is shown as a table by default
+    await expect.element(tester.viewDropdown).toHaveTextContent('Table view');
     await expect.element(tester.tableHeaders).toHaveLength(2);
     await expect.element(tester.tableRows).toHaveLength(2);
     await expect.element(tester.tableRows.nth(0)).toHaveTextContent('1{"c":2}');
     await expect.element(tester.delimiter).not.toBeInTheDocument();
+
+    await tester.viewDropdown.click();
+    await tester.viewMode('JSON view').click();
+    // the JSON output is pretty printed
+    await expect.element(tester.outputEditor).toMatchTextContent(/\[\s*\{\s*"a": 1/);
 
     await tester.viewDropdown.click();
     await tester.viewMode('Raw view').click();
@@ -142,9 +143,7 @@ describe('TransformerTestComponent', () => {
     const tester = new TransformerTestComponentTester();
     await tester.runButton.click();
 
-    await tester.viewDropdown.click();
-    await tester.viewMode('Table view').click();
-
+    await expect.element(tester.viewDropdown).toHaveTextContent('Table view');
     await expect.element(tester.tableHeaders).toHaveTextContent('value');
     await expect.element(tester.tableRows).toHaveLength(3);
   });
@@ -167,10 +166,7 @@ describe('TransformerTestComponent', () => {
     transformerService.test.mockReturnValue(of(buildResponse(['name;value', ...rows].join('\n'), 'output.csv', 'file')));
     const tester = new TransformerTestComponentTester();
     await tester.runButton.click();
-    await expect.element(tester.viewDropdown).toHaveTextContent('Raw view');
-
-    await tester.viewDropdown.click();
-    await tester.viewMode('Table view').click();
+    await expect.element(tester.viewDropdown).toHaveTextContent('Table view');
 
     // comma delimiter by default
     await expect.element(tester.tableHeaders).toHaveLength(1);

@@ -265,9 +265,12 @@ describe('NorthTransformerTestComponent', () => {
     const tester = new NorthTransformerTestComponentTester({ kind: 'south', id: 'southId1', southType: 'folder-scanner' });
 
     await tester.fromItemButton.click();
-    await tester.runButton.click();
 
+    await expect.element(tester.itemSearch).toHaveAttribute('aria-required', 'true');
+    await expect.element(tester.runButton).toBeDisabled();
     expect(southConnectorService.testItem).not.toHaveBeenCalled();
+
+    await tester.selectItem('item1');
     await expect.element(tester.runButton).toBeEnabled();
   });
 

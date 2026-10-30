@@ -7,6 +7,7 @@
       class="btn btn-sm"
       [class.btn-primary]="!isTestRunning()"
       [class.btn-outline-danger]="isTestRunning()"
+      [disabled]="!isTestRunning() && !canRunTest()"
       (click)="isTestRunning() ? cancelTest() : runTest()"
     >
       @if (isTestRunning()) {
@@ -77,6 +78,8 @@
               [resultFormatter]="itemName"
               [editable]="false"
               [placeholder]="'north.transformers.test.search-item' | translate"
+              required
+              aria-required="true"
             />
           </div>
         }
@@ -139,7 +142,7 @@
           type="button"
           id="run-test-again"
           class="btn btn-sm btn-outline-secondary"
-          [disabled]="isTestRunning()"
+          [disabled]="isTestRunning() || !canRunTest()"
           (click)="runTest()"
           translate="south.test-item.run-again"
         ></button>

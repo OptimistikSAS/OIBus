@@ -1,6 +1,7 @@
 import { isDeepStrictEqual } from 'node:util';
 
 import { Database } from 'better-sqlite3';
+import { DateTime } from 'luxon';
 
 import {
   SouthConnectorCommandDTO,
@@ -483,7 +484,9 @@ export default class SouthService {
     itemName: string,
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
-    testingSettings: SouthConnectorItemTestingSettings
+    testingSettings: SouthConnectorItemTestingSettings,
+    // The name of the connector the item is tested for, when it is not a south connector (the history query)
+    connectorName?: string
   ): Promise<SouthConnectorItemTestResult> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (southId !== 'create' && southId !== 'history') {
@@ -583,7 +586,17 @@ export default class SouthService {
         ? await this.transformerService.runTransformer(
             testingSettings.transformer.transformerId,
             testingSettings.transformer.options,
-            queryResult.result
+            queryResult.result,
+            // The tested item is the source of the content, as for the content a south connector sends to its norths
+            {
+              source: 'south',
+              queryTime: DateTime.now().toUTC().toISO()!,
+              queryStartTime: testingSettings.history?.startTime ?? null,
+              queryEndTime: testingSettings.history?.endTime ?? null,
+              southId,
+              southName: southConnector?.name ?? connectorName ?? '',
+              items: [testItemToRun]
+            }
           )
         : null,
       connectionDuration: queryResult.connectionDuration,

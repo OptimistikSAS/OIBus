@@ -516,7 +516,7 @@ describe('Transformer Service', () => {
     });
 
     it('returns a file held in memory for every other output type', () => {
-      assert.deepStrictEqual(toTransformedContent('payload', 'mqtt', 'f'), { type: 'file', content: 'payload' });
+      assert.deepStrictEqual(toTransformedContent('payload', 'mqtt', 'f'), { type: 'file', filename: 'f', content: 'payload' });
       assert.deepStrictEqual(toTransformedContent('payload', undefined, undefined), { type: 'file', content: 'payload' });
     });
   });
