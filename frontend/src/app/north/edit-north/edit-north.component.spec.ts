@@ -515,6 +515,24 @@ describe('EditNorthComponent', () => {
       await expect.element(tester.deleteTransformerButtons).toHaveLength(0);
     });
 
+    test('should not ask for confirmation to leave once the connector is saved', async () => {
+      const tester = new EditNorthComponentTester();
+      await tester.connectorCard('File writer').click();
+      await tester.nextButton.click();
+      await tester.outputFolder.fill('/out');
+      await tester.goTo('caching');
+      await tester.scanMode.selectOptions('scanMode1');
+      await tester.goTo('general');
+      await tester.name.fill('New north');
+      await tester.goTo('review');
+
+      await tester.saveButton.click();
+
+      expect(northConnectorService.create).toHaveBeenCalled();
+      expect(tester.fixture.componentInstance.canDeactivate()).toBe(true);
+      expect(unsavedChangesConfirmationService.confirmUnsavedChanges).not.toHaveBeenCalled();
+    });
+
     test('should ask for confirmation before leaving once a connector is chosen', async () => {
       const tester = new EditNorthComponentTester();
       await expect.element(tester.step('connector')).toHaveAttribute('aria-current', 'step');
