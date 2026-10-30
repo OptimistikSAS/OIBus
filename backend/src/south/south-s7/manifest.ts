@@ -3,7 +3,6 @@ import { SouthConnectorManifest } from '../../../shared/model/connector/south-ma
 const manifest: SouthConnectorManifest = {
   id: 's7',
   category: 'iot',
-  beta: true,
   modes: {
     subscription: false,
     lastPoint: true,

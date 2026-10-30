@@ -15,13 +15,13 @@ import sftpManifest from '../north/north-sftp/manifest';
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
   oianalyticsManifest,
-  azureManifest,
-  azureDataExplorerManifest,
-  amazonManifest,
+  restManifest,
   fileWriterManifest,
   sftpManifest,
-  restManifest,
+  azureManifest,
+  amazonManifest,
   opcuaManifest,
   modbusManifest,
-  mqttManifest
+  mqttManifest,
+  azureDataExplorerManifest
 ];
