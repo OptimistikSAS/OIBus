@@ -586,6 +586,29 @@ describe('EditNorthTransformerModalComponent', () => {
     await expect.element(tester.group).toHaveDisplayValue('Group 1');
   });
 
+  test('should test the first item the transformer applies to in the options step, none when it applies to none', async () => {
+    const tester = new EditNorthTransformerModalComponentTester();
+    const testItem = tester.testPanel.getByLabelText('Item', { exact: true });
+    const prepare = (preset: Partial<TransformerSourcePreset>) =>
+      tester.component.prepareForCreation(
+        testData.south.listLight,
+        testData.scanMode.list,
+        testData.certificates.list,
+        [recordListToMqtt, anyToMqtt],
+        ['mqtt'],
+        { dataSourceType: 'south', south: testData.south.listLight[0], ...preset }
+      );
+
+    prepare({ items: [toItemLight(items[1])] });
+    await tester.nextButton.click();
+    await expect.element(testItem).toHaveValue('item2');
+
+    // no item of the south is in the group
+    prepare({ group: { id: 'groupId1', name: 'Group 1' } });
+    await tester.optionsStep.click();
+    await expect.element(testItem).toHaveValue('');
+  });
+
   test('should preselect the OIBus API source', async () => {
     const tester = new EditNorthTransformerModalComponentTester();
     tester.component.prepareForCreation(

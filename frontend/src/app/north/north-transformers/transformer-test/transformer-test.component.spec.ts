@@ -261,11 +261,37 @@ describe('NorthTransformerTestComponent', () => {
     await expect.element(tester.outdated).toBeInTheDocument();
   });
 
+  test('should select the first item of the source when the transformer applies to all of them', async () => {
+    const tester = new NorthTransformerTestComponentTester({ kind: 'south', id: 'southId1', southType: 'folder-scanner' });
+
+    await expect.element(tester.itemSearch).toHaveValue('item1');
+    await expect.element(tester.runButton).toBeEnabled();
+  });
+
+  test('should select the first item the transformer applies to, and keep the selected one while it still does', async () => {
+    const [item1, item2] = testData.south.list[0].items;
+    const tester = new NorthTransformerTestComponentTester({ kind: 'south', id: 'southId1', southType: 'folder-scanner' });
+    tester.fixture.componentRef.setInput('scopeItemIds', [item2.id]);
+
+    await expect.element(tester.itemSearch).toHaveValue('item2');
+
+    // still applying to the selected item
+    tester.fixture.componentRef.setInput('scopeItemIds', [item1.id, item2.id]);
+    await expect.element(tester.itemSearch).toHaveValue('item2');
+
+    // no longer applying to it
+    tester.fixture.componentRef.setInput('scopeItemIds', [item1.id]);
+    await expect.element(tester.itemSearch).toHaveValue('item1');
+  });
+
   test('should not run an item test without selected item', async () => {
     const tester = new NorthTransformerTestComponentTester({ kind: 'south', id: 'southId1', southType: 'folder-scanner' });
+    // the transformer applies to no item of the source
+    tester.fixture.componentRef.setInput('scopeItemIds', []);
 
     await tester.fromItemButton.click();
 
+    await expect.element(tester.itemSearch).toHaveValue('');
     await expect.element(tester.itemSearch).toHaveAttribute('aria-required', 'true');
     await expect.element(tester.runButton).toBeDisabled();
     expect(southConnectorService.testItem).not.toHaveBeenCalled();
@@ -304,7 +330,9 @@ describe('NorthTransformerTestComponent', () => {
     const tester = new NorthTransformerTestComponentTester({ kind: 'history', id: 'historyId1', southType: 'mssql' });
 
     await tester.fromItemButton.click();
+    await expect.element(tester.itemSearch).toHaveValue(historyQuery.items[0].name);
     // the search lists the items of the history query when it opens
+    await tester.itemSearch.clear();
     await tester.itemSearch.click();
     await expect.element(tester.suggestions).toHaveLength(historyQuery.items.length);
     await tester.selectItem(historyQuery.items[0].name);
