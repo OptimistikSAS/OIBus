@@ -44,7 +44,6 @@ const manifest: SouthConnectorManifest = {
       }
     }
   },
-  beta: true,
   settings: {
     type: 'object',
     key: 'settings',
