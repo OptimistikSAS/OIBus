@@ -149,7 +149,8 @@ const engineWebServerSchema: Joi.ObjectSchema = Joi.object({
   authTokenDuration: Joi.string()
     .required()
     .valid(...AUTH_TOKEN_DURATIONS),
-  https: engineWebServerHttpsSchema.optional()
+  https: engineWebServerHttpsSchema.optional(),
+  enableContentEndpoint: Joi.boolean().optional()
 });
 
 const engineProxySchema: Joi.ObjectSchema = Joi.object({

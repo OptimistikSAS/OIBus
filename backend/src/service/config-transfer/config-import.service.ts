@@ -588,7 +588,7 @@ export default class ConfigImportService {
       toEngineSettingsCommand(
         { ...imported, auditRetentionDuration: logger.auditRetentionDuration },
         { proxyPassword, forwardProxyPassword, lokiPassword },
-        local.webServer.https
+        local.webServer
       ),
       importedBy
     );

@@ -170,7 +170,8 @@ export default class ConfigTransferBuilderService {
         webServer: {
           port: engine.webServer.port,
           authTokenDuration: engine.webServer.authTokenDuration,
-          https: { ...engine.webServer.https }
+          https: { ...engine.webServer.https },
+          enableContentEndpoint: engine.webServer.enableContentEndpoint
         },
         proxyServer: {
           enabled: engine.proxyServer.enabled,

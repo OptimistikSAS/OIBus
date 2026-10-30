@@ -4,7 +4,6 @@ import {
   EngineSettingsCommandDTO,
   EngineWebServerCommandDTO
 } from '../../shared/model/api/engine.model';
-import { WebServerHttpsSettings } from '../../shared/model/domain/engine.model';
 
 import { EngineLoggerCommand, EngineProxyCommand, EngineSettingsCommand, EngineWebServerCommand } from '../model/engine.model';
 
@@ -23,13 +22,10 @@ export interface EngineSecrets {
 }
 
 /**
- * The HTTPS settings are optional in the API command (callers predating HTTPS support, like OIAnalytics, don't send them):
- * the current ones are then kept.
+ * The HTTPS and content endpoint settings are optional in the API command (callers predating them, like OIAnalytics, don't
+ * send them): the current ones are then kept.
  */
-export const toEngineWebServerCommand = (
-  command: EngineWebServerCommandDTO,
-  currentHttps: WebServerHttpsSettings
-): EngineWebServerCommand => ({
+export const toEngineWebServerCommand = (command: EngineWebServerCommandDTO, current: EngineWebServerCommand): EngineWebServerCommand => ({
   port: command.port,
   authTokenDuration: command.authTokenDuration,
   https: command.https
@@ -40,7 +36,8 @@ export const toEngineWebServerCommand = (
         certificatePath: command.https.certificatePath || null,
         privateKeyPath: command.https.privateKeyPath || null
       }
-    : currentHttps
+    : current.https,
+  enableContentEndpoint: command.enableContentEndpoint ?? current.enableContentEndpoint
 });
 
 export const toEngineProxyCommand = (
@@ -83,13 +80,13 @@ export const toEngineLoggerCommand = (
 export const toEngineSettingsCommand = (
   command: EngineSettingsCommandDTO,
   secrets: EngineSecrets,
-  currentHttps: WebServerHttpsSettings
+  currentWebServer: EngineWebServerCommand
 ): EngineSettingsCommand => {
   const { auditRetentionDuration: _, ...logger } = toEngineLoggerCommand(command.logger, secrets);
   return {
     auditRetentionDuration: command.auditRetentionDuration,
     general: { name: command.general.name },
-    webServer: toEngineWebServerCommand(command.webServer, currentHttps),
+    webServer: toEngineWebServerCommand(command.webServer, currentWebServer),
     proxyServer: toEngineProxyCommand(command.proxyServer, secrets),
     logger
   };

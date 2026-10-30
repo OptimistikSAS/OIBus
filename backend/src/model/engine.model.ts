@@ -17,6 +17,7 @@ export interface EngineSettings extends BaseEntity {
     port: number;
     authTokenDuration: AuthTokenDuration;
     https: WebServerHttpsSettings;
+    enableContentEndpoint: boolean;
   };
   proxyServer: {
     enabled: boolean;

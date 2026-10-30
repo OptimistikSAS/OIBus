@@ -242,6 +242,15 @@ describe('Engine web server validator', () => {
     });
   });
 
+  it('should accept the content endpoint setting, and reject a non-boolean one', async () => {
+    await assert.doesNotReject(
+      validator.validate(engineWebServerSchema, { port: 2223, authTokenDuration: '7d', enableContentEndpoint: true })
+    );
+    await assert.rejects(validator.validate(engineWebServerSchema, { port: 2223, authTokenDuration: '7d', enableContentEndpoint: 'yes' }), {
+      message: '"enableContentEndpoint" must be a boolean'
+    });
+  });
+
   const https = { enabled: true, certificateSource: 'store', certificateId: null, certificatePath: null, privateKeyPath: null };
 
   it('should accept disabled https without certificate', async () => {

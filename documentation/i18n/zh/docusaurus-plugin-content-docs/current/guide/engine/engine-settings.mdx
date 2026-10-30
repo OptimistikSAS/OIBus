@@ -36,6 +36,15 @@ sidebar_position: 1
 界面仍可访问以修正设置。使用中的证书存储证书被重新生成或重新导入后，仅在 Web 服务器重启时才会生效。
 :::
 
+### 内容端点 {#content-endpoints}
+
+勾选 **启用内容端点**，允许外部系统通过 OIBus API（`/api/content`）向 North 连接器推送文件和 JSON 内容。内容端点默认禁用：
+此时其调用会被拒绝（HTTP 403），OIBus API 也不会作为 North 连接器[转换器](./transformers.mdx)的来源提供。
+
+:::note
+从 3.10 之前的版本升级时，如果某个 North 连接器有用于 OIBus API 的转换器，则会启用内容端点。
+:::
+
 ## 代理服务器 {#proxy-server}
 
 OIBus 可以充当**代理服务器**，将 HTTP(S) 请求转发到目标主机。当两个 OIBus 实例部署在不同网络中时，此功能特别有用：

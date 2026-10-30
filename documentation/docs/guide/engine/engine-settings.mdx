@@ -42,6 +42,17 @@ missing), OIBus serves HTTP and logs an error, so that the web interface remains
 certificate of the store regenerated or re-imported while in use is only applied once the web server restarts.
 :::
 
+### Content Endpoints {#content-endpoints}
+
+Enable **Enable the content endpoints** to let external systems push files and JSON content to the North connectors
+through the OIBus API (`/api/content`). They are disabled by default: their calls are then rejected (HTTP 403), and the
+OIBus API is not offered as a source in the [transformers](./transformers.mdx) of the North connectors.
+
+:::note
+When upgrading from a version before 3.10, the content endpoints are enabled if a North connector had a transformer for
+the OIBus API.
+:::
+
 ## Proxy Server {#proxy-server}
 
 OIBus can act as a **proxy server**, enabling it to forward HTTP(S) requests to a target host. This feature is especially useful when two OIBus instances are deployed in separate networks:

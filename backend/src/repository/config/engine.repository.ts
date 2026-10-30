@@ -68,7 +68,8 @@ const DEFAULT_ENGINE_SETTINGS: Omit<
       certificateId: null,
       certificatePath: null,
       privateKeyPath: null
-    }
+    },
+    enableContentEndpoint: false
   },
   proxyServer: {
     enabled: false,
@@ -139,7 +140,7 @@ export default class EngineRepository {
   get(): EngineSettings | null {
     const query =
       'SELECT id, name, port, auth_token_duration, https_enabled, https_certificate_source, https_certificate_id, https_certificate_path, ' +
-      'https_private_key_path, audit_retention_duration, oibus_version, oibus_launcher_version, proxy_enabled, proxy_port, ' +
+      'https_private_key_path, enable_content_endpoint, audit_retention_duration, oibus_version, oibus_launcher_version, proxy_enabled, proxy_port, ' +
       'forward_proxy_enabled, forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, ' +
       'log_database_level, log_database_max_number_of_logs, ' +
@@ -160,7 +161,8 @@ export default class EngineRepository {
     const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, auth_token_duration = ?, https_enabled = ?, https_certificate_source = ?, ` +
-      'https_certificate_id = ?, https_certificate_path = ?, https_private_key_path = ?, audit_retention_duration = ?, proxy_enabled = ?, proxy_port = ?, ' +
+      'https_certificate_id = ?, https_certificate_path = ?, https_private_key_path = ?, enable_content_endpoint = ?, audit_retention_duration = ?, ' +
+      'proxy_enabled = ?, proxy_port = ?, ' +
       'forward_proxy_enabled = ?, forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, proxy_username = ?, proxy_password = ?, ' +
       'log_console_level = ?, ' +
       'log_file_level = ?, ' +
@@ -193,6 +195,7 @@ export default class EngineRepository {
         command.webServer.https.certificateId,
         command.webServer.https.certificatePath,
         command.webServer.https.privateKeyPath,
+        +command.webServer.enableContentEndpoint,
         command.auditRetentionDuration,
         +command.proxyServer.enabled,
         command.proxyServer.port,
@@ -237,7 +240,7 @@ export default class EngineRepository {
     const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET port = ?, auth_token_duration = ?, https_enabled = ?, https_certificate_source = ?, https_certificate_id = ?, ` +
-      `https_certificate_path = ?, https_private_key_path = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+      `https_certificate_path = ?, https_private_key_path = ?, enable_content_endpoint = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
     this.database
       .prepare(query)
@@ -249,6 +252,7 @@ export default class EngineRepository {
         command.https.certificateId,
         command.https.certificatePath,
         command.https.privateKeyPath,
+        +command.enableContentEndpoint,
         updatedBy
       );
     this.recordSectionChanges(before, this.get(), updatedBy, ['engine_web_server']);
@@ -343,14 +347,14 @@ export default class EngineRepository {
 
     const query =
       `INSERT INTO ${ENGINES_TABLE} (id, name, oibus_version, oibus_launcher_version, port, auth_token_duration, https_enabled, https_certificate_source, ` +
-      'https_certificate_id, https_certificate_path, https_private_key_path, audit_retention_duration, proxy_enabled, proxy_port,' +
+      'https_certificate_id, https_certificate_path, https_private_key_path, enable_content_endpoint, audit_retention_duration, proxy_enabled, proxy_port,' +
       'forward_proxy_enabled, forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
       'log_database_max_number_of_logs, log_loki_level, log_loki_interval, log_loki_address, ' +
       'log_loki_username, log_loki_password, log_oia_level, log_oia_interval, ' +
       'log_syslog_level, log_syslog_host, log_syslog_port, log_syslog_protocol, ' +
       `created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
@@ -365,6 +369,7 @@ export default class EngineRepository {
         command.webServer.https.certificateId,
         command.webServer.https.certificatePath,
         command.webServer.https.privateKeyPath,
+        +command.webServer.enableContentEndpoint,
         command.auditRetentionDuration,
         +command.proxyServer.enabled,
         command.proxyServer.port,
@@ -440,7 +445,8 @@ export default class EngineRepository {
           certificateId: (result.https_certificate_id as string) || null,
           certificatePath: (result.https_certificate_path as string) || null,
           privateKeyPath: (result.https_private_key_path as string) || null
-        }
+        },
+        enableContentEndpoint: Boolean(result.enable_content_endpoint)
       },
       proxyServer: {
         enabled: Boolean(result.proxy_enabled),

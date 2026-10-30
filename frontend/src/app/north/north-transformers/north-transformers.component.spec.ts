@@ -10,8 +10,10 @@ import { ItemLightDTO, SouthConnectorItemDTO } from '@oibus/shared/api/south-con
 import { StandardTransformerDTO, TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { buildEngineSettings } from '../../../test/builders';
 import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { EngineService } from '../../services/engine.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
@@ -111,12 +113,18 @@ describe('NorthTransformersComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
+  let engineService: MockObject<EngineService>;
   let modalService: MockModalService<EditNorthTransformerModalComponent | AuditHistoryModalComponent>;
   let northConnector: NorthConnectorDTO;
   let newTransformer: TransformerDTOWithOptions;
 
   function createFakeEditModal() {
-    return createMock(EditNorthTransformerModalComponent, { directSave: signal(true), existingTransformers: signal([]) });
+    return createMock(EditNorthTransformerModalComponent, {
+      directSave: signal(true),
+      existingTransformers: signal([]),
+      oibusApiAvailable: signal(true),
+      setpointsAvailable: signal(true)
+    });
   }
 
   beforeEach(() => {
@@ -129,6 +137,10 @@ describe('NorthTransformersComponent', () => {
     northConnectorService.addOrEditTransformer.mockImplementation((_northId, transformer) => of(transformer));
     northConnectorService.removeTransformer.mockReturnValue(of(undefined));
     confirmationService.confirm.mockReturnValue(of(undefined));
+    engineService = createMock(EngineService);
+    const settings = buildEngineSettings();
+    engineService.getEngineSettings.mockReturnValue(of({ ...settings, webServer: { ...settings.webServer, enableContentEndpoint: true } }));
+    engineService.getRegistrationSettings.mockReturnValue(of(testData.oIAnalytics.registration.completed));
 
     northConnector = structuredClone(testData.north.list[0]);
     newTransformer = {
@@ -145,7 +157,8 @@ describe('NorthTransformersComponent', () => {
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: ConfirmationService, useValue: confirmationService },
-        { provide: NotificationService, useValue: notificationService }
+        { provide: NotificationService, useValue: notificationService },
+        { provide: EngineService, useValue: engineService }
       ]
     });
     modalService = TestBed.inject(MockModalService);
@@ -170,6 +183,47 @@ describe('NorthTransformersComponent', () => {
     await expect.element(tester.row('OIAnalytics setpoints')).toMatchTextContent('Dropped');
     await expect.element(tester.row('OIAnalytics setpoints').getByRole('button', { name: 'Other…' })).toBeVisible();
     await expect.element(tester.row('South 2').getByRole('button', { name: 'View transformer audit history' })).toBeVisible();
+  });
+
+  test('should not list the OIBus API when the content endpoints are disabled', async () => {
+    engineService.getEngineSettings.mockReturnValue(of(buildEngineSettings()));
+    const fakeModal = createFakeEditModal();
+    modalService.mockDismissedModal(fakeModal);
+    const tester = new NorthTransformersComponentTester(northConnector, true);
+
+    await expect.element(tester.rows).toHaveLength(4);
+    await expect.element(tester.row('OIBus API')).not.toBeInTheDocument();
+    await expect.element(tester.row('OIAnalytics setpoints')).toBeInTheDocument();
+
+    await tester.addButton.click();
+    expect(fakeModal.oibusApiAvailable()).toBe(false);
+    expect(fakeModal.setpointsAvailable()).toBe(true);
+  });
+
+  test('should not list the OIAnalytics setpoints when OIBus is not registered', async () => {
+    engineService.getRegistrationSettings.mockReturnValue(of({ ...testData.oIAnalytics.registration.completed, status: 'NOT_REGISTERED' }));
+    const tester = new NorthTransformersComponentTester(northConnector, true);
+
+    await expect.element(tester.rows).toHaveLength(4);
+    await expect.element(tester.row('OIAnalytics setpoints')).not.toBeInTheDocument();
+    await expect.element(tester.row('OIBus API')).toBeInTheDocument();
+  });
+
+  test('should not list the OIAnalytics setpoints when OIAnalytics is not allowed to send setpoints', async () => {
+    const registration = testData.oIAnalytics.registration.completed;
+    engineService.getRegistrationSettings.mockReturnValue(
+      of({ ...registration, commandPermissions: { ...registration.commandPermissions, setpoint: false } })
+    );
+    const fakeModal = createFakeEditModal();
+    modalService.mockDismissedModal(fakeModal);
+    const tester = new NorthTransformersComponentTester(northConnector, true);
+
+    await expect.element(tester.rows).toHaveLength(4);
+    await expect.element(tester.row('OIAnalytics setpoints')).not.toBeInTheDocument();
+
+    await tester.addButton.click();
+    expect(fakeModal.oibusApiAvailable()).toBe(true);
+    expect(fakeModal.setpointsAvailable()).toBe(false);
   });
 
   test('should filter the sources', async () => {

@@ -11,7 +11,8 @@ import { CustomExpressRequest } from '../express';
 @Tags('Content')
 /**
  * Content endpoints
- * @description Endpoints used to add content into north connectors caches
+ * @description Endpoints used to add content into north connectors caches. They are rejected (403) unless the content endpoints
+ * are enabled in the web server settings of the engine.
  */
 export class ContentController extends Controller {
   /**

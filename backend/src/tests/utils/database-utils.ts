@@ -311,6 +311,7 @@ const createEngineSettings = async (database: knex.Knex, engineSettings: EngineS
       https_certificate_id: engineSettings.webServer.https.certificateId,
       https_certificate_path: engineSettings.webServer.https.certificatePath,
       https_private_key_path: engineSettings.webServer.https.privateKeyPath,
+      enable_content_endpoint: +engineSettings.webServer.enableContentEndpoint,
       log_console_level: engineSettings.logger.console.level,
       log_file_level: engineSettings.logger.file.level,
       log_file_max_file_size: engineSettings.logger.file.maxFileSize,

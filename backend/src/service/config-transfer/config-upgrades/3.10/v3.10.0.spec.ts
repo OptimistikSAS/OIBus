@@ -148,6 +148,23 @@ describe('3.10.0 config upgrade', () => {
     );
   });
 
+  it('enables the content endpoints when a North transformer applies to the OIBus API, keeping an existing setting', () => {
+    const engine = (webServer: JsonObject) => ({ settings: { webServer } });
+    const north = (source: JsonObject) => ({ type: 'console', settings: { transformers: [{ transformerId: 't1', source, options: {} }] } });
+    const used: JsonObject = { engine: engine({ port: 2223 }), northConnectors: [north({ type: 'oibus-api', dataSourceId: 'ds' })] };
+    const unused: JsonObject = { engine: engine({ port: 2223 }), northConnectors: [north({ type: 'south', southId: 's1', items: [] })] };
+    const kept: JsonObject = {
+      engine: engine({ port: 2223, enableContentEndpoint: false }),
+      northConnectors: [north({ type: 'oibus-api', dataSourceId: 'ds' })]
+    };
+
+    const enabled = (config: JsonObject) =>
+      (((upgrade.apply(config).engine as JsonObject).settings as JsonObject).webServer as JsonObject).enableContentEndpoint;
+    assert.strictEqual(enabled(used), true);
+    assert.strictEqual(enabled(unused), false);
+    assert.strictEqual(enabled(kept), false);
+  });
+
   it('adds an empty description to the south and history query items, keeping the existing ones', () => {
     const config: JsonObject = {
       southConnectors: [{ type: 'mqtt', settings: { items: [{ name: 'item1' }, { name: 'item2', description: 'Kept' }] } }],

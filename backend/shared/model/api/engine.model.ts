@@ -67,6 +67,12 @@ export interface EngineSettingsDTO extends BaseEntity {
      * HTTPS settings.
      */
     https: WebServerHttpsSettings;
+
+    /**
+     * Whether the content endpoints (`/api/content`) accept data pushed by external systems to the North connectors.
+     * @example false
+     */
+    enableContentEndpoint: boolean;
   };
 
   /**
@@ -490,7 +496,8 @@ export interface EngineNameCommandDTO {
 
 /**
  * Engine web server command Data Transfer Object.
- * Used as the request body for updating only the web server port, authentication token duration and HTTPS settings.
+ * Used as the request body for updating only the web server port, authentication token duration, HTTPS and content endpoint
+ * settings.
  */
 export interface EngineWebServerCommandDTO {
   /**
@@ -509,6 +516,13 @@ export interface EngineWebServerCommandDTO {
    * HTTPS settings. When omitted (callers predating HTTPS support), the current ones are kept.
    */
   https?: WebServerHttpsSettings;
+
+  /**
+   * Whether the content endpoints (`/api/content`) accept data pushed by external systems to the North connectors. When
+   * omitted (callers predating this setting), the current value is kept.
+   * @example false
+   */
+  enableContentEndpoint?: boolean;
 }
 
 /**

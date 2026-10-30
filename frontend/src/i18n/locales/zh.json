@@ -2261,6 +2261,9 @@
       "no-certificate": "证书存储中没有证书：请在本页的证书部分创建或导入一个证书。",
       "certificate-path": "证书文件",
       "private-key-path": "私钥文件",
+      "content-endpoint": "内容端点",
+      "content-endpoint-enabled": "启用内容端点",
+      "content-endpoint-hint": "允许外部系统通过 OIBus API（/api/content）向 North 推送文件和 JSON 内容。禁用后，这些调用将被拒绝，OIBus API 也不会作为转换器来源提供。",
       "file-hint": "PEM 文件（证书后可附带其 CA 链，私钥不能加密）。相对路径从 OIBus 数据文件夹解析。"
     },
     "proxy-settings": {

@@ -178,7 +178,7 @@ export default class OIBusService {
         forwardProxyPassword: encryptedOrCurrent(command.proxyServer.forward?.password, oldEngineSettings.proxyServer.forward.password),
         lokiPassword: encryptedOrCurrent(command.logger.loki.password, oldEngineSettings.logger.loki.password)
       },
-      oldEngineSettings.webServer.https
+      oldEngineSettings.webServer
     );
     await this.assertWebServerCanStart(oldEngineSettings.webServer, engineCommand.webServer);
 
@@ -214,7 +214,7 @@ export default class OIBusService {
     if (command.port === oldEngineSettings.proxyServer.port) {
       throw new Error('Web server port and proxy port can not be the same');
     }
-    const webServerCommand = toEngineWebServerCommand(command, oldEngineSettings.webServer.https);
+    const webServerCommand = toEngineWebServerCommand(command, oldEngineSettings.webServer);
     await this.assertWebServerCanStart(oldEngineSettings.webServer, webServerCommand);
     this.engineRepository.updateWebServer(webServerCommand, updatedBy);
     const result = this.restartWebServerIfChanged(oldEngineSettings.webServer, this.getEngineSettings().webServer);
@@ -479,7 +479,8 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
     webServer: {
       port: engineSettings.webServer.port,
       authTokenDuration: engineSettings.webServer.authTokenDuration,
-      https: { ...engineSettings.webServer.https }
+      https: { ...engineSettings.webServer.https },
+      enableContentEndpoint: engineSettings.webServer.enableContentEndpoint
     },
     proxyServer: {
       enabled: engineSettings.proxyServer.enabled,

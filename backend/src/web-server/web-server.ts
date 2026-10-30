@@ -227,6 +227,15 @@ export default class WebServer {
 
     this.app.use(apiRateLimiter);
 
+    // Content endpoints, through which external systems push data to the Norths: rejected when disabled, before
+    // authenticating the request and storing its upload
+    this.app.use('/api/content', (req, res, next) => {
+      if (!this.oIBusService.getEngineSettings().webServer.enableContentEndpoint) {
+        return res.status(403).json({ error: 'Forbidden', message: 'The content endpoints are disabled in the web server settings' });
+      }
+      return next();
+    });
+
     // Authentication middleware for API routes. Ignore public path routes
     this.app.use((req, res, next) => {
       if (isApiRoute(req.path) && !PUBLIC_PATHS.includes(req.path)) {

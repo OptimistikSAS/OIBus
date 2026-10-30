@@ -1531,7 +1531,8 @@ const engineSettings: EngineSettings = {
       certificateId: null,
       certificatePath: null,
       privateKeyPath: null
-    }
+    },
+    enableContentEndpoint: true
   },
   proxyServer: {
     enabled: true,
@@ -1593,7 +1594,8 @@ const engineWebServerCommand: EngineWebServerCommandDTO = {
     certificateId: null,
     certificatePath: 'oibus.crt',
     privateKeyPath: 'oibus.key'
-  }
+  },
+  enableContentEndpoint: false
 };
 const engineProxyCommand: EngineProxyCommandDTO = {
   enabled: true,

@@ -11,6 +11,7 @@ import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { buildEngineSettings } from '../../../test/builders';
 import { EmptyRouteComponent } from '../../../test/empty-route.component';
 import testData from '../../../test/test-data';
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
@@ -101,6 +102,11 @@ describe('NorthDetailComponent', () => {
     const confirmationService = createMock(ConfirmationService);
     confirmationService.confirm.mockReturnValue(of(undefined));
     const engineService = createMock(EngineService, { info$: of(testData.engine.oIBusInfo) });
+    const engineSettings = buildEngineSettings();
+    engineService.getEngineSettings.mockReturnValue(
+      of({ ...engineSettings, webServer: { ...engineSettings.webServer, enableContentEndpoint: true } })
+    );
+    engineService.getRegistrationSettings.mockReturnValue(of(testData.oIAnalytics.registration.completed));
 
     northConnector = structuredClone(testData.north.list[0]);
     northConnectorService.findById.mockReturnValue(of(northConnector));
