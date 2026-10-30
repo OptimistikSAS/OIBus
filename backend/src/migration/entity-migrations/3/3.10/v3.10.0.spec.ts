@@ -634,13 +634,9 @@ describe('Entity migration v3.10.0', () => {
             fieldProcess: null,
             datetimeSettings: {
               inputType: 'unix-epoch-ms',
-              inputTimezone: null,
-              inputFormat: null,
-              inputLocale: null,
               outputType: 'string',
               outputTimezone: 'Europe/Paris',
-              outputFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-              outputLocale: null
+              outputFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
             }
           },
           {
@@ -655,8 +651,7 @@ describe('Entity migration v3.10.0', () => {
               inputLocale: 'en-US',
               outputType: 'string',
               outputTimezone: 'Europe/Paris',
-              outputFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-              outputLocale: null
+              outputFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
             }
           }
         ]
@@ -751,7 +746,7 @@ describe('Entity migration v3.10.0', () => {
       assert.strictEqual(rows[0].transformer_id, recordListToCsv.id);
     });
 
-    it('should fall back to null for a reference field missing timezone/format/locale, and to the documented defaults when serialization is entirely absent (item4)', async () => {
+    it('should leave out the timezone/format/locale of a reference field that is not a string, and fall back to the documented defaults when serialization is entirely absent (item4)', async () => {
       await moveSqlSerializationToTransformers(db);
 
       const item4 = await db('south_items').where('id', 'item4').first();
@@ -760,7 +755,7 @@ describe('Entity migration v3.10.0', () => {
         trackingInstant: {
           trackInstant: true,
           fieldName: 'ts',
-          dateTimeInput: { type: 'unix-epoch-ms', timezone: null, format: null, locale: null }
+          dateTimeInput: { type: 'unix-epoch-ms' }
         }
       });
 
@@ -793,13 +788,9 @@ describe('Entity migration v3.10.0', () => {
             fieldProcess: null,
             datetimeSettings: {
               inputType: 'unix-epoch-ms',
-              inputTimezone: null,
-              inputFormat: null,
-              inputLocale: null,
               outputType: 'string',
               outputTimezone: 'UTC',
-              outputFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-              outputLocale: null
+              outputFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
             }
           }
         ]
@@ -894,13 +885,9 @@ describe('Entity migration v3.10.0', () => {
         fieldProcess: null,
         datetimeSettings: {
           inputType: 'iso-string',
-          inputTimezone: null,
-          inputFormat: null,
-          inputLocale: null,
           outputType: 'string',
           outputTimezone: 'UTC',
-          outputFormat: 'yyyy-MM-dd HH:mm',
-          outputLocale: null
+          outputFormat: 'yyyy-MM-dd HH:mm'
         }
       };
       const transformerFieldsOf = async (itemId: string): Promise<Array<{ fieldName: string }>> => {

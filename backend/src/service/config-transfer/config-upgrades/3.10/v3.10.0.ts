@@ -119,13 +119,25 @@ export function toNewSqlItemSettings(oldSettings: OldSqlItemSettings): Record<st
           fieldName: referenceField.fieldName,
           dateTimeInput: {
             type: referenceField.type,
-            timezone: referenceField.timezone ?? null,
-            format: referenceField.format ?? null,
-            locale: referenceField.locale ?? null
+            ...toStringDateTimeSettings(referenceField, ['timezone', 'format', 'locale'])
           }
         }
       : { trackInstant: false }
   };
+}
+
+/**
+ * The timezone, format and locale of an old date time field under the given keys: kept only for the string type, the
+ * only one using them, and only when set. The forms leave them out otherwise, and the API rejects them as null.
+ */
+function toStringDateTimeSettings(field: OldDateTimeField, keys: [string, string, string]): Record<string, string> {
+  const settings: Record<string, string> = {};
+  if (field.type !== 'string') return settings;
+  const values = [field.timezone, field.format, field.locale];
+  keys.forEach((key, index) => {
+    if (values[index] != null) settings[key] = values[index];
+  });
+  return settings;
 }
 
 /**
@@ -140,7 +152,7 @@ export function buildRecordListToCsvOptions(oldSettings: OldSqlItemSettings, via
   const serialization = oldSettings.serialization;
   const dateTimeFields = (oldSettings.dateTimeFields ?? [])
     .filter(field => !viaRemoteAgent || field.useAsReference)
-    .map(field => (viaRemoteAgent ? { ...field, type: 'iso-string', timezone: null, format: null, locale: null } : field));
+    .map(field => (viaRemoteAgent ? { ...field, type: 'iso-string' } : field));
   return {
     filename: serialization?.filename ?? '@CurrentDate.csv',
     encoding: 'UTF_8',
@@ -159,13 +171,11 @@ export function buildRecordListToCsvOptions(oldSettings: OldSqlItemSettings, via
       fieldProcess: null,
       datetimeSettings: {
         inputType: field.type,
-        inputTimezone: field.timezone ?? null,
-        inputFormat: field.format ?? null,
-        inputLocale: field.locale ?? null,
+        ...toStringDateTimeSettings(field, ['inputTimezone', 'inputFormat', 'inputLocale']),
         outputType: 'string',
+        // No output locale, as the old CSV export: the default one of the formatting
         outputTimezone: serialization?.outputTimezone ?? 'UTC',
-        outputFormat: serialization?.outputTimestampFormat ?? 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputLocale: null
+        outputFormat: serialization?.outputTimestampFormat ?? 'yyyy-MM-dd HH:mm:ss.SSS'
       }
     }))
   };
