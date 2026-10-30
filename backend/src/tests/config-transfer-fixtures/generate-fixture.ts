@@ -54,6 +54,12 @@ function seedMissingEntities(database: Database): void {
       southId: firstSouth.id,
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
+      fieldProcesses: [
+        {
+          field: 'name',
+          operations: [{ type: 'lowercase' }, { type: 'add-to-string', prefix: 'plant1.', suffix: '' }]
+        }
+      ],
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
       pushToOIAnalytics: false,
@@ -73,6 +79,7 @@ function seedMissingEntities(database: Database): void {
       southId: secondSouth.id,
       discoveryScope: { query: 'SELECT tag_name, unit FROM tags' },
       identityKeyFields: [],
+      fieldProcesses: [],
       eligibilityFilter: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true,

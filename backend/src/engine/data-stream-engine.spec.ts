@@ -965,6 +965,7 @@ describe('DataStreamEngine', () => {
       southId: testData.south.list[0].id,
       discoveryScope: {},
       identityKeyFields: [],
+      fieldProcesses: [],
       eligibilityFilter: [],
       itemFieldMapping: { name: '{{name}}' },
       pushToOIAnalytics: false,

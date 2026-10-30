@@ -261,6 +261,7 @@ export default class SouthService {
         description: workflow.description ?? null,
         discoveryScope: workflow.discoveryScope,
         identityKeyFields: resolveIdentityKeyFields(workflow),
+        fieldProcesses: workflow.fieldProcesses,
         eligibilityFilter: workflow.eligibilityFilter,
         itemFieldMapping: workflow.itemFieldMapping,
         pushToOIAnalytics: workflow.pushToOIAnalytics,

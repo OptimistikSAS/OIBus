@@ -53,6 +53,7 @@ const result = (overrides: Partial<WorkflowPreviewResultDTO> = {}): WorkflowPrev
   eligibleCount: 0,
   entries: [],
   records: [],
+  samples: {},
   ...overrides
 });
 

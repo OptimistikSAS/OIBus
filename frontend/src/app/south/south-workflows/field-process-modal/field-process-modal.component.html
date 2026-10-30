@@ -1,0 +1,315 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'south.workflows.field-process.title'" [translateParams]="{ field: field() }"></h4>
+</div>
+<div class="modal-body">
+  <form [formGroup]="form" (ngSubmit)="save()" id="field-process-form">
+    <div class="form-text mb-2" translate="south.workflows.field-process.hint"></div>
+
+    <!-- The operations, applied in order -->
+    <div formArrayName="operations" id="field-operations">
+      @for (operation of operations.controls; track operation; let index = $index) {
+        <div class="border rounded p-2 mb-2 field-operation" [formGroupName]="index">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-secondary">{{ index + 1 }}</span>
+            <span class="fw-semibold flex-grow-1 operation-type">{{
+              'south.workflows.field-process.operation.' + operation.controls.type.value | translate
+            }}</span>
+            <button
+              type="button"
+              class="btn btn-link p-0 move-operation-up"
+              [disabled]="index === 0"
+              [attr.aria-label]="'south.workflows.field-process.move-up' | translate"
+              (click)="moveOperation(index, -1)"
+            >
+              <span class="fa-solid fa-arrow-up" aria-hidden="true"></span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-link p-0 move-operation-down"
+              [disabled]="index === operations.length - 1"
+              [attr.aria-label]="'south.workflows.field-process.move-down' | translate"
+              (click)="moveOperation(index, 1)"
+            >
+              <span class="fa-solid fa-arrow-down" aria-hidden="true"></span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-link p-0 remove-operation"
+              [attr.aria-label]="'common.delete' | translate"
+              (click)="removeOperation(index)"
+            >
+              <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          @switch (operation.controls.type.value) {
+            @case ('substring') {
+              <div class="row g-2 mt-1">
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'start-' + index" translate="south.workflows.field-process.start"></label>
+                  <input type="number" step="1" class="form-control form-control-sm" [id]="'start-' + index" formControlName="start" />
+                  <val-errors controlName="start" />
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'end-' + index" translate="south.workflows.field-process.end"></label>
+                  <input type="number" step="1" class="form-control form-control-sm" [id]="'end-' + index" formControlName="end" />
+                </div>
+              </div>
+              <div class="form-text" translate="south.workflows.field-process.substring-hint"></div>
+            }
+            @case ('add-to-string') {
+              <div class="row g-2 mt-1">
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'prefix-' + index" translate="south.workflows.field-process.prefix"></label>
+                  <input class="form-control form-control-sm" [id]="'prefix-' + index" formControlName="prefix" />
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'suffix-' + index" translate="south.workflows.field-process.suffix"></label>
+                  <input class="form-control form-control-sm" [id]="'suffix-' + index" formControlName="suffix" />
+                </div>
+              </div>
+            }
+            @case ('replace') {
+              <div class="row g-2 mt-1">
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'search-' + index" translate="south.workflows.field-process.search"></label>
+                  <input class="form-control form-control-sm" [id]="'search-' + index" formControlName="search" />
+                  <val-errors controlName="search" />
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'replacement-' + index" translate="south.workflows.field-process.replacement"></label>
+                  <input class="form-control form-control-sm" [id]="'replacement-' + index" formControlName="replacement" />
+                </div>
+              </div>
+            }
+            @case ('number-operation') {
+              <div class="row g-2 mt-1">
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'operator-' + index" translate="south.workflows.field-process.operator"></label>
+                  <select class="form-select form-select-sm" [id]="'operator-' + index" formControlName="operator">
+                    @for (operator of numberOperators; track operator) {
+                      <option [value]="operator">{{ 'south.workflows.field-process.number-operator.' + operator | translate }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'operand-' + index" translate="south.workflows.field-process.operand"></label>
+                  <input type="number" class="form-control form-control-sm" [id]="'operand-' + index" formControlName="operand" />
+                  <val-errors controlName="operand" />
+                </div>
+              </div>
+            }
+            @case ('round') {
+              <div class="row g-2 mt-1">
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'decimals-' + index" translate="south.workflows.field-process.decimals"></label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    class="form-control form-control-sm"
+                    [id]="'decimals-' + index"
+                    formControlName="decimals"
+                  />
+                  <val-errors controlName="decimals" />
+                </div>
+              </div>
+            }
+            @case ('datetime') {
+              <div class="row g-2 mt-1">
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'input-type-' + index" translate="south.workflows.field-process.input-type"></label>
+                  <select
+                    class="form-select form-select-sm"
+                    [id]="'input-type-' + index"
+                    formControlName="inputType"
+                    (change)="syncSettings(operation)"
+                  >
+                    @for (datetimeType of datetimeTypes; track datetimeType) {
+                      <option [value]="datetimeType">
+                        {{ 'south.workflows.field-process.datetime-type.' + datetimeType | translate }}
+                      </option>
+                    }
+                  </select>
+                </div>
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'output-type-' + index" translate="south.workflows.field-process.output-type"></label>
+                  <select
+                    class="form-select form-select-sm"
+                    [id]="'output-type-' + index"
+                    formControlName="outputType"
+                    (change)="syncSettings(operation)"
+                  >
+                    @for (datetimeType of datetimeTypes; track datetimeType) {
+                      <option [value]="datetimeType">
+                        {{ 'south.workflows.field-process.datetime-type.' + datetimeType | translate }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              </div>
+              @if (operation.controls.inputType.value === 'string') {
+                <div class="row g-2 mt-1">
+                  <div class="col-sm-4">
+                    <label
+                      class="form-label"
+                      [for]="'input-format-' + index"
+                      translate="south.workflows.field-process.input-format"
+                    ></label>
+                    <input class="form-control form-control-sm" [id]="'input-format-' + index" formControlName="inputFormat" />
+                    <val-errors controlName="inputFormat" />
+                  </div>
+                  <div class="col-sm-4">
+                    <label
+                      class="form-label"
+                      [for]="'input-timezone-' + index"
+                      translate="south.workflows.field-process.input-timezone"
+                    ></label>
+                    <input
+                      class="form-control form-control-sm"
+                      [id]="'input-timezone-' + index"
+                      formControlName="inputTimezone"
+                      [ngbTypeahead]="timezoneTypeahead"
+                      [editable]="false"
+                    />
+                    <val-errors controlName="inputTimezone" />
+                  </div>
+                  <div class="col-sm-4">
+                    <label
+                      class="form-label"
+                      [for]="'input-locale-' + index"
+                      translate="south.workflows.field-process.input-locale"
+                    ></label>
+                    <input class="form-control form-control-sm" [id]="'input-locale-' + index" formControlName="inputLocale" />
+                  </div>
+                </div>
+              }
+              @if (operation.controls.outputType.value === 'string') {
+                <div class="row g-2 mt-1">
+                  <div class="col-sm-4">
+                    <label
+                      class="form-label"
+                      [for]="'output-format-' + index"
+                      translate="south.workflows.field-process.output-format"
+                    ></label>
+                    <input class="form-control form-control-sm" [id]="'output-format-' + index" formControlName="outputFormat" />
+                    <val-errors controlName="outputFormat" />
+                  </div>
+                  <div class="col-sm-4">
+                    <label
+                      class="form-label"
+                      [for]="'output-timezone-' + index"
+                      translate="south.workflows.field-process.output-timezone"
+                    ></label>
+                    <input
+                      class="form-control form-control-sm"
+                      [id]="'output-timezone-' + index"
+                      formControlName="outputTimezone"
+                      [ngbTypeahead]="timezoneTypeahead"
+                      [editable]="false"
+                    />
+                    <val-errors controlName="outputTimezone" />
+                  </div>
+                  <div class="col-sm-4">
+                    <label
+                      class="form-label"
+                      [for]="'output-locale-' + index"
+                      translate="south.workflows.field-process.output-locale"
+                    ></label>
+                    <input class="form-control form-control-sm" [id]="'output-locale-' + index" formControlName="outputLocale" />
+                  </div>
+                </div>
+              }
+            }
+            @case ('expression') {
+              <div class="mt-1">
+                <label class="form-label" [for]="'expression-' + index" translate="south.workflows.field-process.expression"></label>
+                <input class="form-control form-control-sm font-monospace" [id]="'expression-' + index" formControlName="expression" />
+                <val-errors controlName="expression" />
+                <div class="form-text" translate="south.workflows.field-process.expression-hint"></div>
+              </div>
+            }
+            @default {
+              <!-- A change of case, or a trim, has no setting -->
+            }
+          }
+        </div>
+      } @empty {
+        <div class="text-muted small mb-2" id="field-operations-none" translate="south.workflows.field-process.none"></div>
+      }
+    </div>
+
+    <div class="d-flex gap-1 align-items-center mb-3">
+      <select
+        class="form-select form-select-sm w-auto"
+        id="new-operation-type"
+        [attr.aria-label]="'south.workflows.field-process.new-operation' | translate"
+        [formControl]="newOperationType"
+      >
+        @for (type of operationTypes; track type) {
+          <option [value]="type">{{ 'south.workflows.field-process.operation.' + type | translate }}</option>
+        }
+      </select>
+      <button type="button" class="btn btn-secondary btn-sm" id="add-operation" (click)="addOperation()">
+        <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
+        <span translate="south.workflows.field-process.add-operation"></span>
+      </button>
+    </div>
+
+    <!-- The test, on the first values discovered for the field -->
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        id="test-field-process"
+        [disabled]="testing() || values().length === 0"
+        (click)="test()"
+      >
+        @if (testing()) {
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+        }
+        <span translate="south.workflows.field-process.test"></span>
+      </button>
+      @if (values().length === 0) {
+        <span class="text-muted small" id="field-process-no-value" translate="south.workflows.field-process.no-value"></span>
+      } @else {
+        <span
+          class="text-muted small"
+          [translate]="'south.workflows.field-process.test-hint'"
+          [translateParams]="{ count: values().length }"
+        ></span>
+      }
+    </div>
+    @if (testError(); as testError) {
+      <div class="alert alert-danger py-1 px-2" id="field-process-test-error">{{ testError }}</div>
+    }
+    @if (testResults(); as testResults) {
+      <table class="table table-sm" id="field-process-test-results">
+        <thead>
+          <tr>
+            <th translate="south.workflows.field-process.value"></th>
+            <th translate="south.workflows.field-process.result"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (testResult of testResults; track $index) {
+            <tr>
+              <td class="text-break small">{{ testResult.value }}</td>
+              @if (testResult.error) {
+                <td class="text-break small text-danger">{{ testResult.error }}</td>
+              } @else {
+                <td class="text-break small">{{ testResult.result }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="submit" form="field-process-form" class="btn btn-primary" id="save-field-process" translate="common.save"></button>
+    <button type="button" class="btn btn-cancel" id="cancel-field-process" (click)="cancel()" translate="common.cancel"></button>
+  </div>
+</div>

@@ -462,13 +462,13 @@ A synchronisation is created and edited in a wizard. For a tree-based connector 
 [Explore step](#selecting-nodes), where its nodes are checked, then goes through four steps; a SQL connector has a
 **Source** step first, for its query. The steps bar at its top shows where you are, and a click on a step opens it.
 
-| Step                | What it sets                                                                   |
-| ------------------- | ------------------------------------------------------------------------------ |
-| **Source**          | SQL connectors only: the metadata query to discover from.                      |
-| **Filter**          | Which discovered records to act on, with a preview of the matching records.    |
-| **Items**           | The mode, and for local mode how a record becomes an item.                     |
-| **Name & schedule** | The name and description, when to run, and whether scheduled runs are enabled. |
-| **Review**          | A summary, what to fix before saving, and a preview of what a run would do.    |
+| Step                | What it sets                                                                    |
+| ------------------- | ------------------------------------------------------------------------------- |
+| **Source**          | SQL connectors only: the metadata query to discover from.                       |
+| **Filter**          | How the discovered records are processed, which ones to act on, with a preview. |
+| **Items**           | The mode, and for local mode how a record becomes an item.                      |
+| **Name & schedule** | The name and description, when to run, and whether scheduled runs are enabled.  |
+| **Review**          | A summary, what to fix before saving, and a preview of what a run would do.     |
 
 **Next** leaves the Source step once it has a query. A new synchronisation is saved from the Review step; one being
 edited can be saved from any step.
@@ -487,8 +487,41 @@ discovered. The Filter step reminds the nodes; to change them, go back to the Ex
 
 #### Filter {#filter}
 
+##### Field processing {#field-processing}
+
+**Field processing** transforms fields of every discovered record before anything else reads them: the eligibility
+filter, the identity keys, the item mapping and the push to OIAnalytics all use the processed values. Set up the
+processing of a field with the wand button of its column in the records table, or type any field name under
+**Field processing** and click **+** — e.g. a field the eligibility filter leaves out of the table. Each field gets a
+list of operations, applied in order, each on the result of the previous one:
+
+| Operation                | Description                                                                                                                  | Example                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **Upper case**           | Writes the value in upper case.                                                                                              | `temp` → `TEMP`                         |
+| **Lower case**           | Writes the value in lower case.                                                                                              | `TEMP` → `temp`                         |
+| **Trim spaces**          | Removes the leading and trailing spaces.                                                                                     | `temp` → `temp`                         |
+| **Substring**            | Keeps the characters from **Start** to **End** (excluded). A negative position counts from the end, an empty End goes to it. | Start `-4`: `Plant/Flow` → `Flow`       |
+| **Add text**             | Adds a **Prefix** before the value and a **Suffix** after it.                                                                | Prefix `site1.`: `Flow` → `site1.Flow`  |
+| **Replace text**         | Replaces every occurrence of a text.                                                                                         | `/` by `.`: `Plant/Flow` → `Plant.Flow` |
+| **Number operation**     | Adds, subtracts, multiplies or divides a number (or a text holding one) by an operand.                                       | Multiply by `0.001`: `1500` → `1.5`     |
+| **Round**                | Rounds a number to a number of decimals.                                                                                     | 2 decimals: `3.14159` → `3.14`          |
+| **Date time conversion** | Converts a date time from a type to another: ISO string, Unix epoch (s or ms), or a string with a format, timezone, locale.  | Unix epoch (ms) → ISO string            |
+| **Expression**           | Any other processing, as a JavaScript expression on `value` — the same as the field process of the transformers.             | `value.split('/').pop()`                |
+
+**Test** applies the operations to the first five values discovered for the field (as discovered, before any
+processing) and shows each result, or why an operation fails on a value. A missing or empty value is left as is. In a
+run, a value an operation fails on becomes empty, and a warning is logged once per field. Saving the processing of a
+field discovers the records again, processed and filtered.
+
+:::caution
+Processing a field used as an identity key changes the keys: the items of the previous runs are then seen as missing,
+and new ones are created.
+:::
+
+##### Eligibility filter {#eligibility-filter}
+
 The **Eligibility filter** lists the conditions a discovered record must **all** satisfy (logical AND) to be acted
-on — leave it empty to make every record eligible. Each condition has:
+on — leave it empty to make every record eligible. It compares the processed values. Each condition has:
 
 | Setting      | Description                                                                                   | Example Value |
 | ------------ | --------------------------------------------------------------------------------------------- | ------------- |
@@ -514,7 +547,7 @@ nodes and the filter are the same as in the Filter step.
 Pick **Create/update items locally** or **Push to OIAnalytics**. Switching between them clears what was configured
 for the other.
 
-- **Push to OIAnalytics** forwards every run's eligible records to OIAnalytics as-is. Saving and running are never
+- **Push to OIAnalytics** forwards every run's eligible records to OIAnalytics, as processed. Saving and running are never
   blocked by the registration status, but the push only happens once OIBus is
   [registered with OIAnalytics](../installation/oianalytics.mdx): until then, a warning is shown in the wizard, and
   each run logs a warning and sends nothing.
@@ -623,14 +656,14 @@ Nothing is written by a preview.
 
 ### Running an Items Synchronisation {#running-an-items-synchronisation}
 
-A run always discovers the data source (as the discovery scope defines it) and keeps the eligible records, then acts
-depending on the mode:
+A run always discovers the data source (as the discovery scope defines it), processes the fields of the records and keeps
+the eligible ones, then acts depending on the mode:
 
 - **Create/update items locally** matches the eligible records by identity key against the previous run: it creates
   or updates an item for each new, changed or reactivated record, skips the unchanged ones, and disables — never
   deletes — the item of each missing record, with the reason "Configuration workflow no longer discovers this entry".
   A new item gets the usual default value of every field the mapping leaves out, where it applies.
-- **Push to OIAnalytics** forwards the eligible records as-is to OIAnalytics, as one message per run. Nothing is
+- **Push to OIAnalytics** forwards the eligible records, as processed, to OIAnalytics, as one message per run. Nothing is
   created, updated or disabled.
 
 :::tip Run now works on a disabled connector

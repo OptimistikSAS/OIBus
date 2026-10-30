@@ -48,7 +48,7 @@ const run: WorkflowRunDTO = {
   triggeredBy: { id: 'user1', friendlyName: 'User One' }
 };
 const runDetail: WorkflowRunDetailDTO = { ...run, entries: [], records: [{ nodeId: 'a' }] };
-const previewResult: WorkflowPreviewResultDTO = { discoveredCount: 2, eligibleCount: 1, entries: [], records: [] };
+const previewResult: WorkflowPreviewResultDTO = { discoveredCount: 2, eligibleCount: 1, entries: [], records: [], samples: {} };
 
 describe('ConfigurationWorkflowService', () => {
   let http: HttpTestingController;
@@ -136,6 +136,14 @@ describe('ConfigurationWorkflowService', () => {
       url: '/api/south/create/test/workflow-preview?southType=opcua',
       body: { southSettings, workflowId: null, workflow: command },
       response: previewResult
+    },
+    {
+      name: 'test a field process on values',
+      call: s => s.testFieldProcess('create', { operations: [{ type: 'uppercase' }], values: ['a'] }),
+      method: 'POST',
+      url: '/api/south/create/test/field-process',
+      body: { operations: [{ type: 'uppercase' }], values: ['a'] },
+      response: [{ value: 'a', result: 'A', error: null }]
     },
     {
       name: 'list the run history with the given page',

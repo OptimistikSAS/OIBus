@@ -745,6 +745,7 @@ export default class ConfigImportService {
           discoveryScope: workflow.discoveryScope,
           // Same as `ConfigurationWorkflowService`: a remote workflow never diffs against a previous run
           identityKeyFields: workflow.pushToOIAnalytics ? [] : workflow.identityKeyFields,
+          fieldProcesses: workflow.fieldProcesses,
           eligibilityFilter: workflow.eligibilityFilter,
           itemFieldMapping: workflow.itemFieldMapping,
           pushToOIAnalytics: workflow.pushToOIAnalytics,

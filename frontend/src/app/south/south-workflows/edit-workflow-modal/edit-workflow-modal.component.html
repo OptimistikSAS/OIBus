@@ -90,6 +90,78 @@
           </div>
         </div>
       }
+      <!-- Field processing: applied to the discovered records before the eligibility filter -->
+      <div class="form-group" id="field-processes">
+        <div class="form-label" translate="south.workflows.field-processes"></div>
+        <div class="form-text" translate="south.workflows.field-processes-hint"></div>
+        @if (fieldProcesses().length === 0) {
+          <div class="text-muted small mb-2" id="field-processes-none" translate="south.workflows.field-processes-none"></div>
+        } @else {
+          <table class="table table-sm" id="field-processes-table">
+            <thead>
+              <tr>
+                <th translate="south.workflows.field-processes-field"></th>
+                <th translate="south.workflows.field-processes-operations"></th>
+                <th class="oib-actions-column-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (process of fieldProcesses(); track process.field) {
+                <tr>
+                  <td>{{ process.field }}</td>
+                  <td>
+                    @for (operation of process.operations; track $index) {
+                      @if (!$first) {
+                        <span class="fa-solid fa-arrow-right small text-muted mx-1" aria-hidden="true"></span>
+                      }
+                      <span>{{ 'south.workflows.field-process.operation.' + operation.type | translate }}</span>
+                    }
+                  </td>
+                  <td class="oib-actions">
+                    <button
+                      type="button"
+                      class="btn btn-link edit-field-process"
+                      [attr.aria-label]="'common.edit' | translate"
+                      (click)="openFieldProcess(process.field)"
+                    >
+                      <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-link remove-field-process"
+                      [attr.aria-label]="'common.delete' | translate"
+                      (click)="removeFieldProcess(process.field)"
+                    >
+                      <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        <div class="d-flex gap-1 align-items-center">
+          <input
+            class="form-control form-control-sm"
+            id="new-processed-field"
+            list="record-fields"
+            [(ngModel)]="newProcessedField"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'south.workflows.field-processes-field' | translate"
+            (keydown.enter)="$event.preventDefault(); addFieldProcess()"
+          />
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            id="add-field-process"
+            [attr.aria-label]="'common.add' | translate"
+            (click)="addFieldProcess()"
+          >
+            <span class="fa-solid fa-plus" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+
       <!-- Eligibility filter -->
       <div class="form-group">
         <div class="form-label" translate="south.workflows.eligibility-filter"></div>
@@ -256,7 +328,12 @@
         }
       </div>
       @if (previewResultRecords().length > 0) {
-        <oib-workflow-records-preview [records]="previewResultRecords()" />
+        <oib-workflow-records-preview
+          [records]="previewResultRecords()"
+          [processable]="true"
+          [processedFields]="processedFields()"
+          (processField)="openFieldProcess($event)"
+        />
       }
     </div>
 
@@ -410,6 +487,14 @@
             {{ discoveryNodeIds().join(', ') }}
           } @else {
             <span translate="south.workflows.wizard.nodes-none"></span>
+          }
+        </dd>
+        <dt class="col-sm-3" translate="south.workflows.field-processes"></dt>
+        <dd class="col-sm-9" id="review-field-processes">
+          @if (fieldProcesses().length > 0) {
+            {{ processedFields().join(', ') }}
+          } @else {
+            <span translate="south.workflows.field-processes-none-short"></span>
           }
         </dd>
         <dt class="col-sm-3" translate="south.workflows.eligibility-filter"></dt>
