@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import type { ILogger } from '../model/logger.model';
+import { createMock } from '../tests/utils/test-utils';
 import { applyFieldProcess, createStringFieldProcess } from './field-process';
 
 describe('applyFieldProcess', () => {
@@ -106,11 +108,33 @@ describe('applyFieldProcess', () => {
 
   // ─── Error propagation ───────────────────────────────────────────────────────
 
-  it('should throw a descriptive error when the expression calls a non-existent method', () => {
-    assert.throws(
-      () => applyFieldProcess('hello', 'value.nonExistentMethod()'),
-      /Field process evaluation failed for expression "value\.nonExistentMethod\(\)"/
-    );
+  it('should skip the value when the expression calls a non-existent method', () => {
+    assert.strictEqual(applyFieldProcess('hello', 'value.nonExistentMethod()'), null);
+  });
+
+  it('should throw a descriptive error when the expression calls a non-existent function', () => {
+    assert.throws(() => applyFieldProcess('hello', 'nonExistentFunction(value)'), /Field process evaluation failed for expression/);
+  });
+
+  it('should return a null or undefined value without processing it', () => {
+    assert.strictEqual(applyFieldProcess(null, 'value.toUpperCase()'), null);
+    assert.strictEqual(applyFieldProcess(undefined, 'value.toUpperCase()'), undefined);
+  });
+
+  it('should skip the value with a single warning when a string method is called on a number', () => {
+    const logger = createMock<ILogger>();
+    assert.strictEqual(applyFieldProcess(12, 'value.toUpperCase()', logger), null);
+    assert.strictEqual(applyFieldProcess(13, 'value.toUpperCase()', logger), null);
+    assert.strictEqual(logger.warn.mock.calls.length, 1);
+    assert.match(logger.warn.mock.calls[0].arguments[0] as string, /method "toUpperCase" is not available on a value of type number/);
+  });
+
+  it('should skip the value when a number method is called on a string', () => {
+    assert.strictEqual(applyFieldProcess('12', 'value.toFixed(2)'), null);
+  });
+
+  it('should apply a number method on a number', () => {
+    assert.strictEqual(applyFieldProcess(3.14159, 'value.toFixed(2)'), '3.14');
   });
 
   it('should throw a descriptive error when the expression has a syntax error', () => {
@@ -150,6 +174,12 @@ describe('createStringFieldProcess', () => {
   });
 
   it('should throw when the expression fails', () => {
-    assert.throws(() => createStringFieldProcess('value.boom()')('ref'), /Field process evaluation failed/);
+    assert.throws(() => createStringFieldProcess('boom(value)')('ref'), /Field process evaluation failed/);
+  });
+
+  it('should keep the reference as is, with a warning, when the expression cannot process it', () => {
+    const logger = createMock<ILogger>();
+    assert.strictEqual(createStringFieldProcess('value.toFixed(2)', logger)('ref'), 'ref');
+    assert.strictEqual(logger.warn.mock.calls.length, 1);
   });
 });

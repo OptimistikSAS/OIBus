@@ -75,7 +75,7 @@ export default class FileToFileTransformer extends OIBusTransformer {
       if (errors > 0) {
         this.logger.warn(`[FileToFile] ${errors} parsing error(s) in the file of "${JSON.stringify(source)}"`);
       }
-      ({ output, contentFile } = writeFile(rows, settings, source, filename));
+      ({ output, contentFile } = writeFile(rows, settings, source, filename, this.logger));
       numberOfElement = rows.length;
     }
     const metadata: CacheMetadata = {
