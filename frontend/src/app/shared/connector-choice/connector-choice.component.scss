@@ -47,9 +47,10 @@
   }
 }
 
+// One column in a narrow container, more in a wide one
 .connector-choices {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
   gap: 0.375rem;
 }
 

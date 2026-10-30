@@ -120,10 +120,11 @@ export class NorthTransformersComponent {
   readonly scanModes = input.required<Array<ScanModeDTO>>();
   readonly transformers = input.required<Array<TransformerDTO>>();
 
-  // Local transformers: initialized from the edited connector and kept in sync with it, then updated in memory
+  // Local transformers: initialized from the edited connector and kept in sync with it, then updated in memory. A new connector
+  // starts without any, as does one whose duplicated connector is replaced by a type.
   readonly transformersWithOptions = linkedSignal<NorthConnectorDTO | null, Array<TransformerDTOWithOptions>>({
     source: this.northConnector,
-    computation: (connector, previous) => (connector ? [...connector.transformers] : (previous?.value ?? []))
+    computation: connector => (connector ? [...connector.transformers] : [])
   });
   private readonly southConnectors = toSignal(this.southConnectorService.list(), { initialValue: [] });
 
