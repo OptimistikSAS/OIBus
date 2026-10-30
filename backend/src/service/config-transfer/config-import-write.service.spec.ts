@@ -331,11 +331,12 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
     const afterEngine = engineRepository.get()!;
     assert.strictEqual(afterEngine.general.name, 'imported name');
-    // an export without https settings keeps the local ones
+    // an export without https or content endpoint settings keeps the local ones
     assert.deepStrictEqual(afterEngine.webServer, {
       port: beforeEngine.webServer.port + 1,
       authTokenDuration: '1d',
-      https: beforeEngine.webServer.https
+      https: beforeEngine.webServer.https,
+      enableContentEndpoint: beforeEngine.webServer.enableContentEndpoint
     });
     assert.strictEqual(afterEngine.proxyServer.enabled, true);
     assert.strictEqual(afterEngine.proxyServer.port, 8888);
@@ -347,6 +348,19 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     assert.strictEqual(result.newPort, beforeEngine.webServer.port + 1);
     assert.strictEqual(result.newProtocol, 'http');
     assert.ok(result.warnings.some(warning => warning.includes(`port ${beforeEngine.webServer.port + 1}`)));
+  });
+
+  it('imports the content endpoint setting', async () => {
+    const beforeEngine = engineRepository.get()!;
+    const envelope = cloneEnvelope();
+    envelope.config.engine.settings.webServer = {
+      ...envelope.config.engine.settings.webServer,
+      enableContentEndpoint: !beforeEngine.webServer.enableContentEndpoint
+    };
+
+    await service.importConfiguration(envelope, importerId());
+
+    assert.strictEqual(engineRepository.get()!.webServer.enableContentEndpoint, !beforeEngine.webServer.enableContentEndpoint);
   });
 
   it('imports the https settings disabled, and redirects to http when the local web server served https', async () => {

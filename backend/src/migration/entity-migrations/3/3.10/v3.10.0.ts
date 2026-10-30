@@ -97,6 +97,7 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   addRegistrationPermissions,
   replaceRawResampling,
   addHttpsSettings,
+  addContentEndpointSetting,
   replaceTimeValuesByRecordLists,
   replaceIsoAndIgnoreTransformers,
   groupOIAnalyticsOptions,
@@ -138,6 +139,7 @@ export async function down(knex: Knex): Promise<void> {
   await dropColumns(knex, SOUTH_ITEMS_TABLE, ['description']);
   await dropColumns(knex, HISTORY_ITEMS_TABLE, ['description']);
   await dropColumns(knex, NORTH_TRANSFORMERS_ITEMS_TABLE, ['excluded']);
+  await dropColumns(knex, ENGINES_TABLE, ['enable_content_endpoint']);
   await dropColumns(knex, ENGINES_TABLE, [
     'https_enabled',
     'https_certificate_source',
@@ -792,6 +794,22 @@ export async function addHttpsSettings(knex: Knex): Promise<void> {
     t.string('https_certificate_path');
     t.string('https_private_key_path');
   });
+}
+
+/**
+ * Add the setting enabling the content endpoints of the web server (`/api/content`), through which external systems push
+ * data to the Norths. It is disabled by default, but enabled on the installs already receiving data from the OIBus API:
+ * the ones with a North transformer applying to it. Runs before `replaceIsoAndIgnoreTransformers`, which adds such a
+ * transformer to every North.
+ */
+export async function addContentEndpointSetting(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(ENGINES_TABLE, t => {
+    t.boolean('enable_content_endpoint').notNullable().defaultTo(false);
+  });
+  const apiLink = await knex(NORTH_TRANSFORMERS_TABLE).select('id').where('source_type', 'oibus-api').first();
+  if (apiLink) {
+    await knex(ENGINES_TABLE).update({ enable_content_endpoint: true });
+  }
 }
 
 /**

@@ -20,6 +20,10 @@ none is. A South connector whose items all have a transformer, through their gro
 transformer can send to this North connector is dropped too: a custom transformer can still send it. Filter the list by what
 reaches the North connector, by the status or the type of the South connectors, or search a source by name.
 
+The OIBus API is listed only when the [content endpoints](./engine-settings.mdx#content-endpoints) of the web server are
+enabled, and the OIAnalytics setpoints only when OIBus is [registered](../installation/oianalytics.mdx) and OIAnalytics is allowed to
+send setpoints.
+
 - **Add a transformer to a source** from its line: the button named after a transformer adds it in one click (the
   obvious transformer for its data, when its default options are valid), and **Other…** opens the configuration modal
   for that source.

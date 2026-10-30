@@ -41,7 +41,7 @@ const engineSettings: EngineSettingsDTO = {
   launcherVersion: '3.4.9',
   auditRetentionDuration: null,
   general: engineCommand.general,
-  webServer: { ...engineCommand.webServer, https: buildEngineSettings().webServer.https },
+  webServer: { ...engineCommand.webServer, https: buildEngineSettings().webServer.https, enableContentEndpoint: false },
   proxyServer: {
     enabled: true,
     port: 9000,

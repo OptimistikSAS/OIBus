@@ -29,6 +29,7 @@ import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { InputType } from '@oibus/shared/connector/transformer-manifest.model';
 import { DataSourceType } from '@oibus/shared/domain/transformer.model';
 
+import { EngineService } from '../../services/engine.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
@@ -102,6 +103,7 @@ export class NorthTransformersComponent {
   private readonly modalService = inject(ModalService);
   private readonly northConnectorService = inject(NorthConnectorService);
   private readonly southConnectorService = inject(SouthConnectorService);
+  private readonly engineService = inject(EngineService);
   private readonly translateService = inject(TranslateService);
   private readonly docsUrlService = inject(DocsUrlService);
   private readonly fb = inject(NonNullableFormBuilder);
@@ -127,6 +129,15 @@ export class NorthTransformersComponent {
     computation: connector => (connector ? [...connector.transformers] : [])
   });
   private readonly southConnectors = toSignal(this.southConnectorService.list(), { initialValue: [] });
+  private readonly engineSettings = toSignal(this.engineService.getEngineSettings(), { initialValue: null });
+  private readonly registration = toSignal(this.engineService.getRegistrationSettings(), { initialValue: null });
+  /** The OIBus API is a source only when the content endpoints of the web server are enabled */
+  readonly oibusApiAvailable = computed(() => this.engineSettings()?.webServer.enableContentEndpoint ?? false);
+  /** The OIAnalytics setpoints are a source only when OIBus is registered and OIAnalytics is allowed to send setpoints */
+  readonly setpointsAvailable = computed(() => {
+    const registration = this.registration();
+    return registration?.status === 'REGISTERED' && registration.commandPermissions.setpoint;
+  });
 
   readonly search = signal('');
   // The filters, as in the south list: no selected value keeps every source
@@ -171,25 +182,31 @@ export class NorthTransformersComponent {
       const row = this.buildRow(south.id, 'south', south, getAssociatedInputType(south.type), southLevel, others);
       return { ...row, status: this.southStatus(south.id, row.status) };
     });
-    const apiTransformers = transformers.filter(transformer => transformer.source.type === 'oibus-api');
-    rows.push(
-      this.buildRow(
-        'oibus-api',
-        'oibus-api',
-        null,
-        'file',
-        apiTransformers.filter(transformer => transformer.source.type === 'oibus-api' && !transformer.source.dataSourceId),
-        apiTransformers.filter(transformer => transformer.source.type === 'oibus-api' && !!transformer.source.dataSourceId)
-      ),
-      this.buildRow(
-        'oianalytics-setpoint',
-        'oianalytics-setpoint',
-        null,
-        'record-list',
-        transformers.filter(transformer => transformer.source.type === 'oianalytics-setpoint'),
-        []
-      )
-    );
+    if (this.oibusApiAvailable()) {
+      const apiTransformers = transformers.filter(transformer => transformer.source.type === 'oibus-api');
+      rows.push(
+        this.buildRow(
+          'oibus-api',
+          'oibus-api',
+          null,
+          'file',
+          apiTransformers.filter(transformer => transformer.source.type === 'oibus-api' && !transformer.source.dataSourceId),
+          apiTransformers.filter(transformer => transformer.source.type === 'oibus-api' && !!transformer.source.dataSourceId)
+        )
+      );
+    }
+    if (this.setpointsAvailable()) {
+      rows.push(
+        this.buildRow(
+          'oianalytics-setpoint',
+          'oianalytics-setpoint',
+          null,
+          'record-list',
+          transformers.filter(transformer => transformer.source.type === 'oianalytics-setpoint'),
+          []
+        )
+      );
+    }
     return rows;
   });
 
@@ -275,6 +292,8 @@ export class NorthTransformersComponent {
     const component: EditNorthTransformerModalComponent = modalRef.componentInstance;
     component.directSave.set(this.saveChangesDirectly());
     component.existingTransformers.set(this.transformersWithOptions());
+    component.oibusApiAvailable.set(this.oibusApiAvailable());
+    component.setpointsAvailable.set(this.setpointsAvailable());
     component.prepareForCreation(
       this.southConnectors(),
       this.scanModes(),

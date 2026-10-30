@@ -241,6 +241,34 @@ describe('WebServer', () => {
     assert.equal(res.status, 401);
   });
 
+  it('should reject the content endpoints when they are disabled', async () => {
+    oIBusService.getEngineSettings.mock.mockImplementation(() => ({
+      ...testData.engine.settings,
+      webServer: { ...testData.engine.settings.webServer, enableContentEndpoint: false }
+    }));
+    await webServer.init();
+
+    const res = await fetch(`http://localhost:${TEST_PORT}/api/content/content?northId=n1&dataSourceId=ds`, { method: 'POST' });
+
+    assert.equal(res.status, 403);
+    assert.deepEqual(await res.json(), {
+      error: 'Forbidden',
+      message: 'The content endpoints are disabled in the web server settings'
+    });
+  });
+
+  it('should authenticate the calls to the content endpoints when they are enabled', async () => {
+    oIBusService.getEngineSettings.mock.mockImplementation(() => ({
+      ...testData.engine.settings,
+      webServer: { ...testData.engine.settings.webServer, enableContentEndpoint: true }
+    }));
+    await webServer.init();
+
+    const res = await fetch(`http://localhost:${TEST_PORT}/api/content/content?northId=n1&dataSourceId=ds`, { method: 'POST' });
+
+    assert.equal(res.status, 401);
+  });
+
   it('should stop and restart when webServerChangeEvent fires', async () => {
     await webServer.init();
     // Web server change event triggers stop + restart on a new port.

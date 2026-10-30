@@ -44,6 +44,18 @@ paramètres. Un certificat du magasin régénéré ou réimporté pendant son ut
 serveur web.
 :::
 
+### Points d'accès de contenu {#content-endpoints}
+
+Cochez **Activer les points d'accès de contenu** pour permettre à des systèmes externes d'envoyer des fichiers et du
+contenu JSON aux connecteurs North via l'API OIBus (`/api/content`). Ils sont désactivés par défaut : leurs appels sont
+alors rejetés (HTTP 403), et l'API OIBus n'est pas proposée comme source des [transformateurs](./transformers.mdx) des
+connecteurs North.
+
+:::note
+Lors d'une mise à jour depuis une version antérieure à 3.10, les points d'accès de contenu sont activés si un connecteur
+North avait un transformateur pour l'API OIBus.
+:::
+
 ## Serveur proxy {#proxy-server}
 
 OIBus peut agir comme un **serveur proxy**, lui permettant de transférer des requêtes HTTP(S) vers un hôte cible.

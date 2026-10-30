@@ -802,7 +802,8 @@ describe('OIBus Service', () => {
         webServer: {
           port: engineSettings.webServer.port,
           authTokenDuration: engineSettings.webServer.authTokenDuration,
-          https: engineSettings.webServer.https
+          https: engineSettings.webServer.https,
+          enableContentEndpoint: engineSettings.webServer.enableContentEndpoint
         },
         proxyServer: {
           enabled: engineSettings.proxyServer.enabled,
