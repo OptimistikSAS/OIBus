@@ -133,6 +133,7 @@ describe('DiscoveredItemsReviewComponent', () => {
       ...discovered(name, 'same'),
       settings: {
         query: 'SELECT * FROM logs',
+        requestTimeout: 15000,
         trackingInstant: fieldName ? { trackInstant: true, fieldName, dateTimeInput: { type: 'date-time-2' } } : { trackInstant: false }
       }
     });

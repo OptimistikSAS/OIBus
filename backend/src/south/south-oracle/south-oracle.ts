@@ -30,6 +30,11 @@ import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '..
 import { ORACLE_DIALECT } from '../sql-dialects';
 import { discoverTables, extractCombine, extractNodeIds, toColumnExploreEntry, withTableSelect } from '../sql-table-discovery';
 
+// Upper bound of maxParallelRun, as in the manifest.
+const MAX_PARALLEL_RUN_CEILING = 8;
+// Seconds the connections still in use are left to finish when the pool closes
+const POOL_DRAIN_TIME = 10;
+
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send the resulting rows as record-list
  * content to the cache. Row values are passed through untouched — datetime parsing for display is
@@ -40,6 +45,12 @@ export default class SouthOracle
   extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings>
   implements SouthHistoryQuery, SouthExplore, SouthConfigurationDiscovery
 {
+  // Connection pool shared by the queries while the connector runs, sized to getMaxParallelRun(). Created on the first
+  // query, its connections opened on demand. Null when the connector is not running: the queries of a test then open
+  // their own connection.
+  private pool: Promise<oracledb.Pool> | null = null;
+  private poolEnabled = false;
+
   constructor(
     connector: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
     engineAddContentCallback: (
@@ -52,11 +63,12 @@ export default class SouthOracle
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
-    if (this.connector.settings.thickMode && this.connector.settings.oracleClient) {
+    const { thickMode, oracleClient } = this.connector.settings.connectionSettings;
+    if (thickMode && oracleClient) {
       try {
         if (!oracledb.oracleClientVersion) {
-          oracledb.initOracleClient({ libDir: path.resolve(this.connector.settings.oracleClient) });
-          this.logger.info(`Successfully loaded Oracle Thick mode from ${path.resolve(this.connector.settings.oracleClient)}`);
+          oracledb.initOracleClient({ libDir: path.resolve(oracleClient) });
+          this.logger.info(`Successfully loaded Oracle Thick mode from ${path.resolve(oracleClient)}`);
         }
       } catch (err) {
         this.logger.error(
@@ -66,16 +78,78 @@ export default class SouthOracle
     }
   }
 
-  override async testConnection(): Promise<OIBusConnectionTestResult> {
-    let connectString = `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`;
-    if (this.connector.settings.connectionTimeout) {
-      connectString += `?connect_timeout=${this.connector.settings.connectionTimeout}ms`;
+  override async connect(): Promise<void> {
+    this.poolEnabled = true;
+    await super.connect();
+  }
+
+  override async disconnect(): Promise<void> {
+    this.poolEnabled = false;
+    const pool = this.pool;
+    this.pool = null;
+    if (pool) {
+      try {
+        // Leaves the connections still in use a few seconds to finish
+        await (await pool).close(POOL_DRAIN_TIME);
+      } catch {
+        // The pool was never created: nothing to close
+      }
     }
-    const config: ConnectionAttributes = {
-      user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
-      connectString: connectString
-    };
+    await super.disconnect();
+  }
+
+  /** Each work-unit queries on its own connection of the pool (see withConnection). */
+  protected override getMaxParallelRun(): number {
+    return Math.max(1, Math.min(this.connector.settings.maxParallelRun, MAX_PARALLEL_RUN_CEILING));
+  }
+
+  /**
+   * Runs `fn` on a connection of the pool of the running connector, created on first use, or on a connection of its own
+   * closed afterwards when the connector is not running (e.g. testing an item).
+   */
+  private async withConnection<T>(fn: (connection: oracledb.Connection) => Promise<T>): Promise<T> {
+    process.env.ORA_SDTZ = 'UTC';
+    oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+    if (!this.poolEnabled) {
+      const connection = await oracledb.getConnection(await this.createConnectionAttributes());
+      try {
+        return await fn(connection);
+      } finally {
+        await connection.close();
+      }
+    }
+    if (!this.pool) {
+      const pool = this.createPool();
+      this.pool = pool;
+      // Created again by the next query
+      pool.catch(() => {
+        if (this.pool === pool) this.pool = null;
+      });
+    }
+    const connection = await (await this.pool).getConnection();
+    // A pooled connection keeps the call timeout set by its previous query
+    connection.callTimeout = 0;
+    try {
+      return await fn(connection);
+    } finally {
+      // Gives the connection back to the pool
+      await connection.close();
+    }
+  }
+
+  private async createPool(): Promise<oracledb.Pool> {
+    return oracledb.createPool({
+      ...(await this.createConnectionAttributes()),
+      poolMin: 0,
+      poolMax: this.getMaxParallelRun(),
+      poolIncrement: 1,
+      // In seconds
+      poolTimeout: Math.ceil(this.connector.settings.connectionSettings.idleTimeout / 1000)
+    });
+  }
+
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
+    const config = await this.createConnectionAttributes();
 
     let connection;
     try {
@@ -96,7 +170,7 @@ export default class SouthOracle
 
         case 'NJS-518':
           throw new Error(
-            `Cannot connect to database "${this.connector.settings.database}". Service is not registered. ${getErrorMessage(error)}`
+            `Cannot connect to database "${this.connector.settings.connectionSettings.database}". Service is not registered. ${getErrorMessage(error)}`
           );
 
         default:
@@ -118,13 +192,15 @@ export default class SouthOracle
       }
     } catch (error: unknown) {
       await connection.close();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}": ${getErrorMessage(error)}`);
+      throw new Error(
+        `Unable to read tables in database "${this.connector.settings.connectionSettings.database}": ${getErrorMessage(error)}`
+      );
     }
 
     await connection.close();
 
     if (table_count === 0) {
-      throw new Error(`No tables in the "${this.connector.settings.username}" schema`);
+      throw new Error(`No tables in the "${this.connector.settings.connectionSettings.username}" schema`);
     }
     return { items: [] };
   }
@@ -207,52 +283,30 @@ export default class SouthOracle
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<OIBusRecord>> {
-    let connectString = `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`;
-    if (this.connector.settings.connectionTimeout) {
-      connectString += `?connect_timeout=${this.connector.settings.connectionTimeout}ms`;
-    }
-    const config: ConnectionAttributes = {
-      user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
-      connectString
-    };
     const dateTimeInput = item.settings.trackingInstant?.trackInstant ? item.settings.trackingInstant.dateTimeInput : null;
     const oracleStartTime = dateTimeInput ? formatInstant(startTime, dateTimeInput) : startTime;
     const oracleEndTime = dateTimeInput ? formatInstant(endTime, dateTimeInput) : endTime;
     logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger, workUnitLogCtx([item]));
 
-    let connection;
-    try {
-      process.env.ORA_SDTZ = 'UTC';
-      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
-      connection = await oracledb.getConnection(config);
+    const params = generateReplacementParameters(item.settings.query, oracleStartTime, oracleEndTime);
+    const query = item.settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2');
+    return await this.withConnection(async connection => {
       connection.callTimeout = item.settings.requestTimeout;
-
-      const params = generateReplacementParameters(item.settings.query, oracleStartTime, oracleEndTime);
-      const query = item.settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2');
       const result = await connection.execute(query, params);
-      await connection.close();
-      if (!result.rows) {
-        return [];
-      }
-      return result.rows as Array<OIBusRecord>;
-    } catch (error) {
-      if (connection) {
-        await connection.close();
-      }
-      throw error;
-    }
+      return (result.rows ?? []) as Array<OIBusRecord>;
+    });
   }
 
   /** The connection to the database, as the connector settings describe it. */
   private async createConnectionAttributes(): Promise<ConnectionAttributes> {
-    let connectString = `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`;
-    if (this.connector.settings.connectionTimeout) {
-      connectString += `?connect_timeout=${this.connector.settings.connectionTimeout}ms`;
+    const settings = this.connector.settings.connectionSettings;
+    let connectString = `${settings.host}:${settings.port}/${settings.database}`;
+    if (settings.connectionTimeout) {
+      connectString += `?connect_timeout=${settings.connectionTimeout}ms`;
     }
     return {
-      user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
+      user: settings.username || undefined,
+      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
       connectString
     };
   }
@@ -264,16 +318,13 @@ export default class SouthOracle
    * @param parentId - a table name to list the columns of, or null to list the tables
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
-    const connection = await oracledb.getConnection(await this.createConnectionAttributes());
-    try {
-      return withTableSelect(
+    return await this.withConnection(async connection =>
+      withTableSelect(
         parentId,
         parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId),
         ORACLE_DIALECT
-      );
-    } finally {
-      await connection.close();
-    }
+      )
+    );
   }
 
   private async exploreTables(connection: oracledb.Connection): Promise<Array<SouthConnectorExploreEntry>> {
@@ -341,21 +392,6 @@ export default class SouthOracle
       return discoverTables(parentId => this.explore(parentId), nodeIds, ORACLE_DIALECT, extractCombine(scope));
     }
     const query = extractDiscoveryQuery(scope);
-    const config = await this.createConnectionAttributes();
-
-    let connection;
-    try {
-      process.env.ORA_SDTZ = 'UTC';
-      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
-      connection = await oracledb.getConnection(config);
-      const result = await connection.execute(query);
-      await connection.close();
-      return (result.rows ?? []) as Array<OIBusRecord>;
-    } catch (error) {
-      if (connection) {
-        await connection.close();
-      }
-      throw error;
-    }
+    return await this.withConnection(async connection => ((await connection.execute(query)).rows ?? []) as Array<OIBusRecord>);
   }
 }

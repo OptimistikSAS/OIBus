@@ -28,6 +28,11 @@ import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '..
 import { MSSQL_DIALECT } from '../sql-dialects';
 import { discoverTables, extractCombine, extractNodeIds, splitSchemaTable, withTableSelect } from '../sql-table-discovery';
 
+// Upper bound of maxParallelRun, as in the manifest.
+const MAX_PARALLEL_RUN_CEILING = 8;
+// Timeout of the queries run outside an item (connection test, explore, discovery), in ms
+const DEFAULT_REQUEST_TIMEOUT = 15_000;
+
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send the resulting rows as record-list
  * content to the cache. Row values are passed through untouched — datetime parsing for display is
@@ -38,6 +43,12 @@ export default class SouthMSSQL
   extends SouthConnector<SouthMSSQLSettings, SouthMSSQLItemSettings>
   implements SouthHistoryQuery, SouthExplore, SouthConfigurationDiscovery
 {
+  // Connection pool shared by the queries while the connector runs, sized to getMaxParallelRun(). Connected on the first
+  // query rather than in connect(), so that an unreachable database fails the run (retried by the next one) instead of the
+  // start. Null when the connector is not running: the queries of a test then open their own pool.
+  private pool: Promise<ConnectionPool> | null = null;
+  private poolEnabled = false;
+
   constructor(
     connector: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
     engineAddContentCallback: (
@@ -53,24 +64,83 @@ export default class SouthMSSQL
   }
 
   async createConnectionOptions(): Promise<config> {
+    const settings = this.connector.settings.connectionSettings;
     const config: config = {
-      user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
-      server: this.connector.settings.host,
-      port: this.connector.settings.port,
-      database: this.connector.settings.database,
-      connectionTimeout: this.connector.settings.connectionTimeout,
-      requestTimeout: this.connector.settings.requestTimeout,
+      user: settings.username || undefined,
+      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
+      server: settings.host,
+      port: settings.port,
+      database: settings.database,
+      connectionTimeout: settings.connectionTimeout,
+      requestTimeout: DEFAULT_REQUEST_TIMEOUT,
       options: {
-        encrypt: this.connector.settings.encryption,
-        trustServerCertificate: this.connector.settings.trustServerCertificate,
+        encrypt: settings.encryption,
+        trustServerCertificate: settings.trustServerCertificate,
         useUTC: true
       }
     };
-    if (this.connector.settings.domain) {
-      config.domain = this.connector.settings.domain;
+    if (settings.domain) {
+      config.domain = settings.domain;
     }
     return config;
+  }
+
+  override async connect(): Promise<void> {
+    this.poolEnabled = true;
+    await super.connect();
+  }
+
+  override async disconnect(): Promise<void> {
+    this.poolEnabled = false;
+    const pool = this.pool;
+    this.pool = null;
+    if (pool) {
+      try {
+        await (await pool).close();
+      } catch {
+        // The pool never connected: nothing to close
+      }
+    }
+    await super.disconnect();
+  }
+
+  /** Each work-unit queries on its own connection of the pool (see withPool). */
+  protected override getMaxParallelRun(): number {
+    return Math.max(1, Math.min(this.connector.settings.maxParallelRun, MAX_PARALLEL_RUN_CEILING));
+  }
+
+  /**
+   * Runs `fn` on the pool of the running connector, connected on first use, or on a pool of its own closed afterwards when
+   * the connector is not running (e.g. testing an item).
+   */
+  private async withPool<T>(fn: (pool: ConnectionPool) => Promise<T>): Promise<T> {
+    if (!this.poolEnabled) {
+      const pool = await new mssql.ConnectionPool(await this.createConnectionOptions()).connect();
+      try {
+        return await fn(pool);
+      } finally {
+        await pool.close();
+      }
+    }
+    if (!this.pool) {
+      const pool = this.connectPool();
+      this.pool = pool;
+      // Connected again by the next query
+      pool.catch(() => {
+        if (this.pool === pool) this.pool = null;
+      });
+    }
+    return fn(await this.pool);
+  }
+
+  private async connectPool(): Promise<ConnectionPool> {
+    const pool = new mssql.ConnectionPool({
+      ...(await this.createConnectionOptions()),
+      pool: { min: 0, max: this.getMaxParallelRun(), idleTimeoutMillis: this.connector.settings.connectionSettings.idleTimeout }
+    });
+    // Without a listener, a connection error raised outside a query would crash the process
+    pool.on('error', (error: unknown) => this.logger.error(`MSSQL connection pool error: ${getErrorMessage(error)}`));
+    return pool.connect();
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -107,12 +177,14 @@ export default class SouthMSSQL
       table_count = (recordset[0]?.table_count as number) ?? 0;
     } catch (error: unknown) {
       await pool.close();
-      throw new OIBusTestingError(`Unable to read tables in database "${this.connector.settings.database}". ${getErrorMessage(error)}`);
+      throw new OIBusTestingError(
+        `Unable to read tables in database "${this.connector.settings.connectionSettings.database}". ${getErrorMessage(error)}`
+      );
     }
 
     if (table_count === 0) {
       await pool.close();
-      throw new OIBusTestingError(`Database "${this.connector.settings.database}" has no tables`);
+      throw new OIBusTestingError(`Database "${this.connector.settings.connectionSettings.database}" has no tables`);
     }
 
     const items: Array<{ key: string; value: string }> = [{ key: 'Tables', value: String(table_count) }];
@@ -211,30 +283,23 @@ export default class SouthMSSQL
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<OIBusRecord>> {
-    const config = await this.createConnectionOptions();
-
     const dateTimeInput = item.settings.trackingInstant?.trackInstant ? item.settings.trackingInstant.dateTimeInput : null;
     const mssqlStartTime = dateTimeInput == null ? startTime : formatInstant(startTime, dateTimeInput);
     const mssqlEndTime = dateTimeInput == null ? endTime : formatInstant(endTime, dateTimeInput);
     logQuery(item.settings.query, mssqlStartTime, mssqlEndTime, this.logger, workUnitLogCtx([item]));
 
-    const pool = await new mssql.ConnectionPool(config).connect();
-    const request = pool.request();
-    if (item.settings.query.indexOf('@StartTime') !== -1) {
-      request.input('StartTime', mssqlStartTime);
-    }
-    if (item.settings.query.indexOf('@EndTime') !== -1) {
-      request.input('EndTime', mssqlEndTime);
-    }
-    try {
+    return await this.withPool(async pool => {
+      const request = pool.request({ requestTimeout: item.settings.requestTimeout });
+      if (item.settings.query.indexOf('@StartTime') !== -1) {
+        request.input('StartTime', mssqlStartTime);
+      }
+      if (item.settings.query.indexOf('@EndTime') !== -1) {
+        request.input('EndTime', mssqlEndTime);
+      }
       const result = await request.query(item.settings.query);
       const [first] = result.recordsets as Array<unknown>;
-      await pool.close();
       return first as Array<OIBusRecord>;
-    } catch (error) {
-      await pool.close();
-      throw error;
-    }
+    });
   }
 
   /**
@@ -247,20 +312,13 @@ export default class SouthMSSQL
    * @param parentId - a "schema.table" id to list columns for, or null to list every table in the database
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
-    const config = await this.createConnectionOptions();
-    const pool = await new mssql.ConnectionPool(config).connect();
-    try {
-      const entries = withTableSelect(
+    return await this.withPool(async pool =>
+      withTableSelect(
         parentId,
         parentId === null ? await this.exploreTables(pool) : await this.exploreColumns(pool, parentId),
         MSSQL_DIALECT
-      );
-      await pool.close();
-      return entries;
-    } catch (error) {
-      await pool.close();
-      throw error;
-    }
+      )
+    );
   }
 
   /** Root level of `explore()`: every table in the database, schema-qualified. */
@@ -345,17 +403,10 @@ export default class SouthMSSQL
       return discoverTables(parentId => this.explore(parentId), nodeIds, MSSQL_DIALECT, extractCombine(scope));
     }
     const query = extractDiscoveryQuery(scope);
-    const config = await this.createConnectionOptions();
-
-    const pool = await new mssql.ConnectionPool(config).connect();
-    try {
+    return await this.withPool(async pool => {
       const result = await pool.request().query(query);
       const [first] = result.recordsets as Array<unknown>;
-      await pool.close();
       return (first ?? []) as Array<OIBusRecord>;
-    } catch (error) {
-      await pool.close();
-      throw error;
-    }
+    });
   }
 }

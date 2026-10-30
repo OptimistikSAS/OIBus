@@ -1840,24 +1840,33 @@
             "max-number-of-messages": "Number of messages before flush"
           },
           "mssql": {
-            "host": "Host",
-            "port": "Port",
-            "connection-timeout": "Connection timeout",
-            "database": "Database",
-            "username": "Username",
-            "password": "Password",
-            "domain": "Domain",
-            "encryption": "Use encryption",
-            "trust-server-certificate": "Trust server certificate",
-            "request-timeout": "Request timeout"
+            "connection-settings": {
+              "title": "Connection settings",
+              "host": "Host",
+              "port": "Port",
+              "connection-timeout": "Connection timeout",
+              "database": "Database",
+              "username": "Username",
+              "password": "Password",
+              "domain": "Domain",
+              "encryption": "Use encryption",
+              "trust-server-certificate": "Trust server certificate",
+              "idle-timeout": "Idle connection timeout"
+            },
+            "max-parallel-run": "Max parallel queries"
           },
           "mysql": {
-            "host": "Host",
-            "port": "Port",
-            "connection-timeout": "Connection timeout",
-            "database": "Database",
-            "username": "Username",
-            "password": "Password"
+            "connection-settings": {
+              "title": "Connection settings",
+              "host": "Host",
+              "port": "Port",
+              "connection-timeout": "Connection timeout",
+              "database": "Database",
+              "username": "Username",
+              "password": "Password",
+              "idle-timeout": "Idle connection timeout"
+            },
+            "max-parallel-run": "Max parallel queries"
           },
           "mongodb": {
             "connection-string": "Connection string",
@@ -1866,26 +1875,30 @@
             "password": "Password"
           },
           "influxdb": {
-            "version": {
-              "title": "Version",
-              "1": "v1 (InfluxDB 1.x – InfluxQL)",
-              "2": "v2 (InfluxDB 2.x – Flux)",
-              "3": "v3 (InfluxDB 3.x – SQL)"
+            "connection-settings": {
+              "title": "Connection settings",
+              "version": {
+                "title": "Version",
+                "1": "v1 (InfluxDB 1.x – InfluxQL)",
+                "2": "v2 (InfluxDB 2.x – Flux)",
+                "3": "v3 (InfluxDB 3.x – SQL)"
+              },
+              "host": "Host",
+              "port": "Port",
+              "protocol": {
+                "title": "Protocol",
+                "http": "HTTP",
+                "https": "HTTPS"
+              },
+              "database": "Database",
+              "username": "Username",
+              "password": "Password",
+              "url": "URL",
+              "token": "API token",
+              "organisation": "Organisation",
+              "bucket": "Bucket"
             },
-            "host": "Host",
-            "port": "Port",
-            "protocol": {
-              "title": "Protocol",
-              "http": "HTTP",
-              "https": "HTTPS"
-            },
-            "database": "Database",
-            "username": "Username",
-            "password": "Password",
-            "url": "URL",
-            "token": "API token",
-            "organisation": "Organisation",
-            "bucket": "Bucket"
+            "max-parallel-run": "Max parallel queries"
           },
           "odbc": {
             "remote-agent": "Use remote agent",
@@ -1894,7 +1907,8 @@
             "retry-interval": "Retry interval",
             "request-timeout": "Request timeout",
             "connection-string": "Connection string",
-            "password": "Password"
+            "password": "Password",
+            "max-parallel-run": "Max parallel queries"
           },
           "oianalytics": {
             "use-oia-module": "Use OIAnalytics registration",
@@ -1987,28 +2001,37 @@
             }
           },
           "oracle": {
-            "thick-mode": "Thick mode",
-            "oracle-client": "Oracle Client Library",
-            "host": "Host",
-            "port": "Port",
-            "connection-timeout": "Connection timeout",
-            "database": "Database",
-            "username": "Username",
-            "password": "Password"
+            "connection-settings": {
+              "title": "Connection settings",
+              "thick-mode": "Thick mode",
+              "oracle-client": "Oracle Client Library",
+              "host": "Host",
+              "port": "Port",
+              "connection-timeout": "Connection timeout",
+              "database": "Database",
+              "username": "Username",
+              "password": "Password",
+              "idle-timeout": "Idle connection timeout"
+            },
+            "max-parallel-run": "Max parallel queries"
           },
           "osisoft-pi": {
             "agent-url": "Remote agent URL",
             "retry-interval": "Retry interval"
           },
           "postgresql": {
-            "host": "Host",
-            "port": "Port",
-            "ssl-mode": "SSL",
-            "connection-timeout": "Connection timeout",
-            "request-timeout": "Request timeout",
-            "database": "Database",
-            "username": "Username",
-            "password": "Password"
+            "connection-settings": {
+              "title": "Connection settings",
+              "host": "Host",
+              "port": "Port",
+              "ssl-mode": "SSL",
+              "connection-timeout": "Connection timeout",
+              "database": "Database",
+              "username": "Username",
+              "password": "Password",
+              "idle-timeout": "Idle connection timeout"
+            },
+            "max-parallel-run": "Max parallel queries"
           },
           "rest": {
             "host": "Host",
@@ -2176,6 +2199,7 @@
             },
             "mssql": {
               "query": "Query",
+              "request-timeout": "Request timeout",
               "tracking-instant": {
                 "title": "Tracking instant",
                 "track-instant": "Track instant",
@@ -2432,6 +2456,7 @@
             },
             "postgresql": {
               "query": "Query",
+              "request-timeout": "Request timeout",
               "tracking-instant": {
                 "title": "Tracking instant",
                 "track-instant": "Track instant",

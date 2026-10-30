@@ -633,16 +633,19 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     createdAt: '',
     updatedAt: '',
     settings: {
-      host: 'host',
-      port: 1433,
-      connectionTimeout: 1_000,
-      database: 'database',
-      username: 'oibus',
-      password: 'pass',
-      domain: 'domain',
-      encryption: true,
-      trustServerCertificate: true,
-      requestTimeout: 5_000
+      connectionSettings: {
+        host: 'host',
+        port: 1433,
+        connectionTimeout: 1_000,
+        database: 'database',
+        username: 'oibus',
+        password: 'pass',
+        domain: 'domain',
+        encryption: true,
+        trustServerCertificate: true,
+        idleTimeout: 30_000
+      },
+      maxParallelRun: 1
     },
     items: [
       {
@@ -652,7 +655,11 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'item3',
         description: 'Temperature of the reactor inlet',
         enabled: true,
-        settings: {} as SouthItemSettings,
+        settings: {
+          query: 'SELECT * FROM table',
+          requestTimeout: 5_000,
+          trackingInstant: { trackInstant: false }
+        } as SouthMSSQLItemSettings,
         scanMode: scanModes[0],
         createdBy: '',
         updatedBy: '',
@@ -680,7 +687,11 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'item4',
         description: null,
         enabled: true,
-        settings: {} as SouthItemSettings,
+        settings: {
+          query: 'SELECT * FROM table',
+          requestTimeout: 5_000,
+          trackingInstant: { trackInstant: false }
+        } as SouthMSSQLItemSettings,
         scanMode: scanModes[0],
         createdBy: '',
         updatedBy: '',
@@ -1208,16 +1219,19 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     createdAt: '',
     updatedAt: '',
     southSettings: {
-      host: 'host',
-      port: 1433,
-      connectionTimeout: 1_000,
-      database: 'database',
-      username: 'oibus',
-      password: 'pass',
-      domain: 'domain',
-      encryption: true,
-      trustServerCertificate: true,
-      requestTimeout: 5_000
+      connectionSettings: {
+        host: 'host',
+        port: 1433,
+        connectionTimeout: 1_000,
+        database: 'database',
+        username: 'oibus',
+        password: 'pass',
+        domain: 'domain',
+        encryption: true,
+        trustServerCertificate: true,
+        idleTimeout: 30_000
+      },
+      maxParallelRun: 1
     },
     northSettings: {
       useOiaModule: true,
@@ -1253,6 +1267,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {
           query: 'SELECT * FROM table1',
+          requestTimeout: 5_000,
           trackingInstant: {
             trackInstant: false
           }
@@ -1269,6 +1284,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {
           query: 'SELECT * FROM table2',
+          requestTimeout: 5_000,
           trackingInstant: {
             trackInstant: false
           }
@@ -1317,16 +1333,19 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     createdAt: '',
     updatedAt: '',
     southSettings: {
-      host: 'host',
-      port: 1433,
-      connectionTimeout: 1_000,
-      database: 'database',
-      username: 'oibus',
-      password: 'pass',
-      domain: 'domain',
-      encryption: true,
-      trustServerCertificate: true,
-      requestTimeout: 5_000
+      connectionSettings: {
+        host: 'host',
+        port: 1433,
+        connectionTimeout: 1_000,
+        database: 'database',
+        username: 'oibus',
+        password: 'pass',
+        domain: 'domain',
+        encryption: true,
+        trustServerCertificate: true,
+        idleTimeout: 30_000
+      },
+      maxParallelRun: 1
     },
     northSettings: {
       outputFolder: 'output-folder',
@@ -1363,6 +1382,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {
           query: 'SELECT * FROM table3',
+          requestTimeout: 5_000,
           trackingInstant: {
             trackInstant: false
           }
@@ -1402,16 +1422,19 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   southType: 'mssql',
   northType: 'file-writer',
   southSettings: {
-    host: 'host',
-    port: 1433,
-    connectionTimeout: 1_000,
-    database: 'database',
-    username: 'oibus',
-    password: 'pass',
-    domain: 'domain',
-    encryption: true,
-    trustServerCertificate: true,
-    requestTimeout: 5_000
+    connectionSettings: {
+      host: 'host',
+      port: 1433,
+      connectionTimeout: 1_000,
+      database: 'database',
+      username: 'oibus',
+      password: 'pass',
+      domain: 'domain',
+      encryption: true,
+      trustServerCertificate: true,
+      idleTimeout: 30_000
+    },
+    maxParallelRun: 1
   },
   northSettings: {
     outputFolder: 'output-folder',
@@ -1449,6 +1472,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
       enabled: true,
       settings: {
         query: 'SELECT * FROM table4',
+        requestTimeout: 5_000,
         trackingInstant: {
           trackInstant: false
         }
@@ -1483,6 +1507,7 @@ const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
   enabled: true,
   settings: {
     query: 'SELECT * FROM newTable',
+    requestTimeout: 5_000,
     trackingInstant: {
       trackInstant: false
     }

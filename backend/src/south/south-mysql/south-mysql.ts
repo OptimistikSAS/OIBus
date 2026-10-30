@@ -28,6 +28,9 @@ import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '..
 import { MYSQL_DIALECT } from '../sql-dialects';
 import { discoverTables, extractCombine, extractNodeIds, toColumnExploreEntry, withTableSelect } from '../sql-table-discovery';
 
+// Upper bound of maxParallelRun, as in the manifest.
+const MAX_PARALLEL_RUN_CEILING = 8;
+
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send the resulting rows as
  * record-list content to the cache. Row values are passed through untouched — datetime parsing for
@@ -38,6 +41,11 @@ export default class SouthMySQL
   extends SouthConnector<SouthMySQLSettings, SouthMySQLItemSettings>
   implements SouthHistoryQuery, SouthExplore, SouthConfigurationDiscovery
 {
+  // Connection pool shared by the queries while the connector runs, sized to getMaxParallelRun(). Its connections are
+  // opened on demand. Null when the connector is not running: the queries of a test then open their own connection.
+  private pool: Promise<mysql.Pool> | null = null;
+  private poolEnabled = false;
+
   constructor(
     connector: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings>,
     engineAddContentCallback: (
@@ -53,15 +61,70 @@ export default class SouthMySQL
   }
 
   async createConnectionOptions(): Promise<mysql.ConnectionOptions> {
+    const settings = this.connector.settings.connectionSettings;
     return {
-      host: this.connector.settings.host,
-      port: this.connector.settings.port,
-      user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
-      database: this.connector.settings.database,
-      connectTimeout: this.connector.settings.connectionTimeout,
+      host: settings.host,
+      port: settings.port,
+      user: settings.username || undefined,
+      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
+      database: settings.database,
+      connectTimeout: settings.connectionTimeout,
       timezone: 'Z'
     };
+  }
+
+  override async connect(): Promise<void> {
+    this.poolEnabled = true;
+    await super.connect();
+  }
+
+  override async disconnect(): Promise<void> {
+    this.poolEnabled = false;
+    const pool = this.pool;
+    this.pool = null;
+    if (pool) {
+      await (await pool).end();
+    }
+    await super.disconnect();
+  }
+
+  /** Each work-unit queries on its own connection of the pool (see withConnection). */
+  protected override getMaxParallelRun(): number {
+    return Math.max(1, Math.min(this.connector.settings.maxParallelRun, MAX_PARALLEL_RUN_CEILING));
+  }
+
+  /**
+   * Runs `fn` on a connection of the pool of the running connector, or on a connection of its own closed afterwards when
+   * the connector is not running (e.g. testing an item).
+   */
+  private async withConnection<T>(fn: (connection: mysql.Connection) => Promise<T>): Promise<T> {
+    if (!this.poolEnabled) {
+      const connection = await mysql.createConnection(await this.createConnectionOptions());
+      try {
+        return await fn(connection);
+      } finally {
+        await connection.end();
+      }
+    }
+    this.pool ??= this.createPool();
+    const connection = await (await this.pool).getConnection();
+    try {
+      return await fn(connection);
+    } finally {
+      connection.release();
+    }
+  }
+
+  private async createPool(): Promise<mysql.Pool> {
+    const maxConnections = this.getMaxParallelRun();
+    return mysql.createPool({
+      ...(await this.createConnectionOptions()),
+      connectionLimit: maxConnections,
+      maxIdle: maxConnections,
+      idleTimeout: this.connector.settings.connectionSettings.idleTimeout,
+      // Keeps the idle connections from being dropped silently by the network
+      enableKeepAlive: true
+    });
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -85,11 +148,11 @@ export default class SouthMySQL
 
         case 'ER_DBACCESS_DENIED_ERROR':
           throw new Error(
-            `User "${this.connector.settings.username}" does not have access to database "${this.connector.settings.database}". ${getErrorMessage(error)}`
+            `User "${this.connector.settings.connectionSettings.username}" does not have access to database "${this.connector.settings.connectionSettings.database}". ${getErrorMessage(error)}`
           );
 
         case 'ER_BAD_DB_ERROR':
-          throw new Error(`Database "${this.connector.settings.database}" does not exist. ${getErrorMessage(error)}`);
+          throw new Error(`Database "${this.connector.settings.connectionSettings.database}" does not exist. ${getErrorMessage(error)}`);
 
         default:
           throw new Error(`Unexpected error. ${getErrorMessage(error)}`);
@@ -107,12 +170,14 @@ export default class SouthMySQL
       table_count = rows[0]?.table_count ?? 0;
     } catch (error: unknown) {
       await connection.end();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${getErrorMessage(error)}`);
+      throw new Error(
+        `Unable to read tables in database "${this.connector.settings.connectionSettings.database}". ${getErrorMessage(error)}`
+      );
     }
 
     if (table_count === 0) {
       await connection.end();
-      throw new Error(`Database "${this.connector.settings.database}" has no tables`);
+      throw new Error(`Database "${this.connector.settings.connectionSettings.database}" has no tables`);
     }
 
     const items: Array<{ key: string; value: string }> = [{ key: 'Tables', value: String(table_count) }];
@@ -209,30 +274,20 @@ export default class SouthMySQL
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<OIBusRecord>> {
-    const config = await this.createConnectionOptions();
-
     const dateTimeInput = item.settings.trackingInstant?.trackInstant ? item.settings.trackingInstant.dateTimeInput : null;
     const mysqlStartTime = dateTimeInput == null ? startTime : formatInstant(startTime, dateTimeInput);
     const mysqlEndTime = dateTimeInput == null ? endTime : formatInstant(endTime, dateTimeInput);
     logQuery(item.settings.query, mysqlStartTime, mysqlEndTime, this.logger, workUnitLogCtx([item]));
 
-    let connection;
-    try {
-      connection = await mysql.createConnection(config);
-      const params = generateReplacementParameters(item.settings.query, mysqlStartTime, mysqlEndTime);
+    const params = generateReplacementParameters(item.settings.query, mysqlStartTime, mysqlEndTime);
+    return await this.withConnection(async connection => {
       const [data] = await connection.execute({
         sql: item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
         values: params,
         timeout: item.settings.requestTimeout
       });
-      await connection.end();
       return data as Array<OIBusRecord>;
-    } catch (error) {
-      if (connection) {
-        await connection.end();
-      }
-      throw error;
-    }
+    });
   }
 
   /**
@@ -242,16 +297,13 @@ export default class SouthMySQL
    * @param parentId - a table name to list the columns of, or null to list the tables
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
-    const connection = await mysql.createConnection(await this.createConnectionOptions());
-    try {
-      return withTableSelect(
+    return await this.withConnection(async connection =>
+      withTableSelect(
         parentId,
         parentId === null ? await this.exploreTables(connection) : await this.exploreColumns(connection, parentId),
         MYSQL_DIALECT
-      );
-    } finally {
-      await connection.end();
-    }
+      )
+    );
   }
 
   private async exploreTables(connection: mysql.Connection): Promise<Array<SouthConnectorExploreEntry>> {
@@ -307,19 +359,9 @@ export default class SouthMySQL
       return discoverTables(parentId => this.explore(parentId), nodeIds, MYSQL_DIALECT, extractCombine(scope));
     }
     const query = extractDiscoveryQuery(scope);
-    const config = await this.createConnectionOptions();
-
-    let connection;
-    try {
-      connection = await mysql.createConnection(config);
+    return await this.withConnection(async connection => {
       const [data] = await connection.execute(query);
-      await connection.end();
       return data as Array<OIBusRecord>;
-    } catch (error) {
-      if (connection) {
-        await connection.end();
-      }
-      throw error;
-    }
+    });
   }
 }

@@ -21,6 +21,9 @@ import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
 import { loadOdbc } from './odbc-loader';
 
+// Upper bound of maxParallelRun, as in the manifest.
+const MAX_PARALLEL_RUN_CEILING = 8;
+
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as record-list content.
  */
@@ -97,6 +100,15 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
     this.connected = false;
     await super.disconnect();
+  }
+
+  /**
+   * Each query opens its own ODBC connection in local mode (see queryOdbcData): work-units can query in parallel. The
+   * remote agent shares one connection per connector, so its queries stay sequential.
+   */
+  protected override getMaxParallelRun(): number {
+    if (this.connector.settings.remoteAgent) return 1;
+    return Math.max(1, Math.min(this.connector.settings.maxParallelRun, MAX_PARALLEL_RUN_CEILING));
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {

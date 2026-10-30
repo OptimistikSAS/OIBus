@@ -13,7 +13,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import testData from '../../tests/utils/test-data';
-import { createMock, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthODBCClass from './south-odbc';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -69,6 +69,7 @@ const buildConfiguration = (settings: Partial<SouthODBCSettings>): SouthConnecto
     connectionTimeout: 1000,
     retryInterval: 1000,
     requestTimeout: 1000,
+    maxParallelRun: 1,
     ...settings
   },
   groups: [],
@@ -662,6 +663,43 @@ describe('SouthODBC', () => {
         south.testConnection(),
         new Error(`Error occurred when sending connect command to remote agent with status 500`)
       );
+    });
+  });
+
+  describe('SouthODBC parallel runs', () => {
+    it('should run up to maxParallelRun work-units in parallel, within the ceiling of the manifest', () => {
+      for (const [maxParallelRun, expected] of [
+        [1, 1],
+        [4, 4],
+        [50, 8],
+        [0, 1]
+      ]) {
+        const south = createSouth(buildConfiguration({ maxParallelRun }));
+        assert.strictEqual(south['getMaxParallelRun'](), expected);
+      }
+    });
+
+    it('should keep the queries sequential through the remote agent', () => {
+      const south = createSouth(buildConfiguration({ remoteAgent: true, agentUrl: 'http://localhost:2224', maxParallelRun: 4 }));
+      assert.strictEqual(south['getMaxParallelRun'](), 1);
+    });
+
+    it('should open its own ODBC connection for each query running at the same time', async () => {
+      const south = createSouth(buildConfiguration({ maxParallelRun: 2 }));
+      const resolvers: Array<() => void> = [];
+      odbcConnection.query.mock.mockImplementation(() => new Promise(resolve => resolvers.push(() => resolve([{ value: 1 }]))));
+
+      const runs = Promise.all([
+        south.queryData(south.connectorConfiguration.items[0], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW),
+        south.queryData(south.connectorConfiguration.items[1], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW)
+      ]);
+      await flushPromises();
+      assert.strictEqual(odbc.connect.mock.calls.length, 2);
+      assert.strictEqual(odbcConnection.close.mock.calls.length, 0);
+
+      resolvers.forEach(resolve => resolve());
+      assert.deepStrictEqual(await runs, [[{ value: 1 }], [{ value: 1 }]]);
+      assert.strictEqual(odbcConnection.close.mock.calls.length, 2);
     });
   });
 });
