@@ -82,7 +82,7 @@
         <div class="form-group" id="filter-scope">
           <div class="form-label" translate="south.workflows.discovery-scope"></div>
           <div class="d-flex flex-wrap align-items-center gap-1" id="discovery-nodes">
-            @for (nodeId of discoveryNodeIds(); track nodeId) {
+            @for (nodeId of discoveryNodeIds(); track $index) {
               <span class="badge bg-secondary discovery-node">{{ nodeId }}</span>
             } @empty {
               <span class="text-muted small" id="discovery-nodes-none" translate="south.workflows.wizard.nodes-none"></span>
@@ -227,7 +227,7 @@
         </div>
       </div>
       <datalist id="record-fields">
-        @for (field of recordFields(); track field) {
+        @for (field of recordFields(); track $index) {
           <option [value]="field"></option>
         }
       </datalist>
@@ -311,7 +311,7 @@
           <label class="form-label" for="new-identity-key-field" translate="south.workflows.identity-key-fields"></label>
           <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
           <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
-            @for (field of identityKeyFields(); track field) {
+            @for (field of identityKeyFields(); track $index) {
               <span class="badge bg-secondary d-flex align-items-center">
                 {{ field }}
                 <button
