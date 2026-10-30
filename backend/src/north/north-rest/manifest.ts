@@ -2,7 +2,7 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 
 const manifest: NorthConnectorManifest = {
   id: 'rest',
-  category: 'file',
+  category: 'api',
   types: ['file'],
   settings: {
     type: 'object',
