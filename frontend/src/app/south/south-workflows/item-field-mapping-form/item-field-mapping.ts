@@ -61,6 +61,7 @@ export const VARIABLE_SENTINEL = '__variable__';
  */
 export const SCHEDULE_ITEM_PATH_ORDER = [
   'name',
+  'description',
   'enabled',
   'groupId',
   'scanModeId',
@@ -119,6 +120,10 @@ const CONSTANT_ONLY_ITEM_PATHS = new Set([
   'recoveryStrategy',
   'syncWithGroup'
 ]);
+
+// The description of an item is not part of the manifest's item attribute tree either (the item edit form
+// adds it by hand, for every connector type): an optional text, which may vary per discovered record.
+const DESCRIPTION_ITEM_FIELD: MappableField = { path: 'description', translationKey: 'south.items.description', attributeType: 'string' };
 
 // Item fields that exist on every south item but aren't part of the manifest's item attribute tree
 // (the real item edit form adds them by hand too, gated on the same manifest.modes.history flag).
@@ -251,7 +256,7 @@ function walkItemAttributes(
  * Flattens a south connector's item manifest into a mappable-field list: every top-level item
  * attribute (name, enabled, ...), the connector-specific settings.* fields nested arbitrarily deep
  * under the manifest's own `settings` object attribute, `scanMode` renamed to the `scanModeId` path
- * the workflow command actually uses, plus the historian fields the real item form adds by hand
+ * the workflow command actually uses, plus the description and the historian fields the real item form adds by hand
  * outside the manifest tree (gated on the same `manifest.modes.history` flag it uses). Each field
  * carries the manifest's own `enablingConditions`, resolved to full paths, so the UI can hide a field
  * until its condition is met.
@@ -259,6 +264,7 @@ function walkItemAttributes(
 export function buildItemMappableFields(manifest: SouthConnectorManifest): Array<MappableField> {
   const fields: Array<MappableField> = [];
   walkItemAttributes(manifest.items.rootAttribute, '', [], [], fields);
+  fields.push(DESCRIPTION_ITEM_FIELD);
   if (manifest.modes.history) {
     fields.push(...HISTORIAN_ITEM_FIELDS);
   }

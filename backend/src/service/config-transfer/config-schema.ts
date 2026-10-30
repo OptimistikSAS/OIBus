@@ -99,6 +99,7 @@ const transformerEntry = Joi.object({
 const southItemEntry = Joi.object({
   id: Joi.string().required(),
   name: Joi.string().required(),
+  description: Joi.string().allow(null, ''),
   enabled: Joi.boolean().required(),
   settings: settingsBlob,
   scanModeId: Joi.string().allow(null).required(),
@@ -145,6 +146,7 @@ const southGroupEntry = Joi.object({
 const configurationWorkflowEntry = Joi.object({
   id: Joi.string().required(),
   name: Joi.string().required(),
+  description: Joi.string().allow(null, ''),
   discoveryScope: Joi.object().required(),
   identityKeyFields: Joi.array().items(Joi.string()).required(),
   eligibilityFilter: Joi.array()
@@ -269,6 +271,7 @@ const historyQueryEntry = Joi.object({
         Joi.object({
           id: Joi.string().required(),
           name: Joi.string().required(),
+          description: Joi.string().allow(null, ''),
           enabled: Joi.boolean().required(),
           settings: settingsBlob
         })

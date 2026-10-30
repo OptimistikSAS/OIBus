@@ -13,7 +13,7 @@ const CONFIGURATION_WORKFLOWS_TABLE = 'configuration_workflows';
 const SCAN_MODE_TABLE = 'scan_modes';
 
 const SELECT_COLUMNS =
-  'w.id, w.created_at, w.updated_at, w.created_by, w.updated_by, w.name, w.south_id, ' +
+  'w.id, w.created_at, w.updated_at, w.created_by, w.updated_by, w.name, w.description, w.south_id, ' +
   'w.discovery_scope, w.identity_key_fields, w.eligibility_filter, w.item_field_mapping, w.push_to_oi_analytics, ' +
   'w.scan_mode_id, w.enabled';
 
@@ -68,14 +68,15 @@ export default class ConfigurationWorkflowRepository {
   create(command: ConfigurationWorkflowCommand, createdBy: string, id = generateRandomId(6)): ConfigurationWorkflowEntity {
     const insertQuery =
       `INSERT INTO ${CONFIGURATION_WORKFLOWS_TABLE} ` +
-      `(id, name, south_id, discovery_scope, identity_key_fields, eligibility_filter, item_field_mapping, ` +
+      `(id, name, description, south_id, discovery_scope, identity_key_fields, eligibility_filter, item_field_mapping, ` +
       `push_to_oi_analytics, scan_mode_id, enabled, created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(insertQuery)
       .run(
         id,
         command.name,
+        command.description ?? null,
         command.southId,
         JSON.stringify(command.discoveryScope),
         JSON.stringify(command.identityKeyFields),
@@ -106,13 +107,14 @@ export default class ConfigurationWorkflowRepository {
     const before = this.findById(id);
     const query =
       `UPDATE ${CONFIGURATION_WORKFLOWS_TABLE} ` +
-      `SET name = ?, discovery_scope = ?, identity_key_fields = ?, eligibility_filter = ?, item_field_mapping = ?, ` +
+      `SET name = ?, description = ?, discovery_scope = ?, identity_key_fields = ?, eligibility_filter = ?, item_field_mapping = ?, ` +
       `push_to_oi_analytics = ?, scan_mode_id = ?, enabled = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE id = ?;`;
     this.database
       .prepare(query)
       .run(
         command.name,
+        command.description ?? null,
         JSON.stringify(command.discoveryScope),
         JSON.stringify(command.identityKeyFields),
         JSON.stringify(command.eligibilityFilter),
@@ -170,6 +172,7 @@ export default class ConfigurationWorkflowRepository {
 export const toConfigurationWorkflow = (result: Record<string, unknown>): ConfigurationWorkflowEntity => ({
   id: result.id as string,
   name: result.name as string,
+  description: (result.description as string | null) ?? null,
   southId: result.south_id as string,
   discoveryScope: JSON.parse(result.discovery_scope as string),
   identityKeyFields: JSON.parse(result.identity_key_fields as string),

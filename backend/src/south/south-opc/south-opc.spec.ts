@@ -22,6 +22,7 @@ const buildItem = (
 ): SouthConnectorItemEntity<SouthOPCItemSettings> => ({
   id,
   name,
+  description: null,
   enabled: true,
   settings,
   scanMode: testData.scanMode.list[0],

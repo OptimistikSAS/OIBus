@@ -119,6 +119,7 @@ export default class ConfigTransferBuilderService {
               oIBusCreatedAt: item.createdAt,
               oIBusUpdatedAt: item.updatedAt,
               name: item.name,
+              description: item.description,
               enabled: item.enabled,
               settings: this.encryptionService.filterSecrets(item.settings, itemSettingsManifest)
             })),
@@ -362,6 +363,7 @@ export default class ConfigTransferBuilderService {
             oIBusCreatedAt: item.createdAt,
             oIBusUpdatedAt: item.updatedAt,
             name: item.name,
+            description: item.description,
             enabled: item.enabled,
             scanModeId: item.scanMode?.id || null,
             scanModeName: null,
@@ -412,6 +414,7 @@ export default class ConfigTransferBuilderService {
     return {
       id: workflow.id,
       name: workflow.name,
+      description: workflow.description,
       discoveryScope: workflow.discoveryScope,
       identityKeyFields: workflow.identityKeyFields,
       eligibilityFilter: workflow.eligibilityFilter,

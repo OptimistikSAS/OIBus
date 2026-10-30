@@ -55,6 +55,7 @@ const buildItem = (
 ): SouthConnectorItemEntity<SouthS7ItemSettings> => ({
   id,
   name,
+  description: null,
   enabled: true,
   settings: { address },
   scanMode: testData.scanMode.list[0],

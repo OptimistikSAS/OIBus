@@ -21,6 +21,12 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
   name: string;
 
   /**
+   * An optional free-text description of the workflow.
+   * @example "Creates an item for each variable of the reactor"
+   */
+  description: string | null;
+
+  /**
    * The south connector this workflow discovers from.
    * @example "b7f8e6d2-1c3a-4b5d-9e0f-2a3b4c5d6e7f"
    */
@@ -73,6 +79,11 @@ export interface ConfigurationWorkflowCommandDTO {
   id: string | null;
 
   name: string;
+  /**
+   * An optional free-text description of the workflow.
+   * @example "Creates an item for each variable of the reactor"
+   */
+  description: string | null;
   discoveryScope: Record<string, unknown>;
 
   /**

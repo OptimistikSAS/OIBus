@@ -104,7 +104,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   mergeSetpointsIntoRecordLists,
   replaceFileTransformer,
   moveFilenamePrefixAndSuffixToTransformers,
-  addOPCUATimeoutsAndSubscriptionSettings
+  addOPCUATimeoutsAndSubscriptionSettings,
+  addItemAndWorkflowDescriptions
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -125,6 +126,8 @@ export async function up(knex: Knex): Promise<void> {
  * is enabled.
  */
 export async function down(knex: Knex): Promise<void> {
+  await dropColumns(knex, SOUTH_ITEMS_TABLE, ['description']);
+  await dropColumns(knex, HISTORY_ITEMS_TABLE, ['description']);
   await dropColumns(knex, NORTH_TRANSFORMERS_ITEMS_TABLE, ['excluded']);
   await dropColumns(knex, ENGINES_TABLE, [
     'https_enabled',
@@ -1589,6 +1592,18 @@ export async function addOPCUATimeoutsAndSubscriptionSettings(knex: Knex): Promi
         .where('id', row.id)
         .update({ [settingsColumn]: JSON.stringify(convert(JSON.parse(row.settings))) });
     }
+  }
+}
+
+/**
+ * The south items, the history query items and the configuration workflows gain an optional free-text description, null
+ * for the existing rows.
+ */
+export async function addItemAndWorkflowDescriptions(knex: Knex): Promise<void> {
+  for (const table of [SOUTH_ITEMS_TABLE, HISTORY_ITEMS_TABLE, CONFIGURATION_WORKFLOWS_TABLE]) {
+    await knex.schema.alterTable(table, t => {
+      t.text('description').nullable();
+    });
   }
 }
 

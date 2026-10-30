@@ -45,6 +45,18 @@ describe('item field mapping', () => {
     expect(paths).not.toContain('scanMode');
   });
 
+  test('builds an optional description field, which takes an expression, whether the connector has history or not', () => {
+    for (const manifest of [
+      testData.south.manifest,
+      { ...testData.south.manifest, modes: { ...testData.south.manifest.modes, history: false } }
+    ]) {
+      const description = buildItemMappableFields(manifest).find(field => field.path === 'description');
+      expect(description).toEqual({ path: 'description', translationKey: 'south.items.description', attributeType: 'string' });
+      expect(allowsVariable(description!)).toBe(true);
+      expect(isMandatoryFieldMissing(description!, {})).toBe(false);
+    }
+  });
+
   test('takes an expression but for the schedule and the constant-only fields', () => {
     expect(allowsVariable(name)).toBe(true);
     expect(allowsVariable(scanModeId)).toBe(false);

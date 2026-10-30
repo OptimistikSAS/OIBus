@@ -5,6 +5,9 @@
   </div>
 
   <div class="modal-body">
+    @if (item.description) {
+      <p class="oib-multiline-text mb-2" id="item-description">{{ item.description }}</p>
+    }
     <div class="text-body-secondary mb-3" id="item-audit-info">
       <i class="fa-solid fa-clock-rotate-left me-1" aria-hidden="true"></i>
       <oib-audit-info

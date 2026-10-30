@@ -449,7 +449,7 @@ export class HistoryQueryDetailComponent {
   importItems() {
     const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled'];
-    const optionalHeaders: Array<string> = ['scanMode'];
+    const optionalHeaders: Array<string> = ['description', 'scanMode'];
 
     const settingsAttribute = this.itemSettingsAttribute()!;
     settingsAttribute.attributes.forEach(setting => {

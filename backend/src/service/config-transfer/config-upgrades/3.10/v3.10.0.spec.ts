@@ -148,6 +148,23 @@ describe('3.10.0 config upgrade', () => {
     );
   });
 
+  it('adds an empty description to the south and history query items, keeping the existing ones', () => {
+    const config: JsonObject = {
+      southConnectors: [{ type: 'mqtt', settings: { items: [{ name: 'item1' }, { name: 'item2', description: 'Kept' }] } }],
+      historyQueries: [{ settings: { southType: 'mqtt', items: [{ name: 'item3' }] } }]
+    };
+
+    upgrade.apply(config);
+
+    const southItems = ((config.southConnectors as Array<JsonObject>)[0].settings as JsonObject).items as Array<JsonObject>;
+    assert.deepStrictEqual(
+      southItems.map(item => item.description),
+      [null, 'Kept']
+    );
+    const historyItems = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).items as Array<JsonObject>;
+    assert.strictEqual(historyItems[0].description, null);
+  });
+
   it('leaves the other resamplings untouched', () => {
     assert.strictEqual(toNoneResamplingItemSettings('opcua', { mode: 'ha', haMode: { aggregate: 'count', resampling: '1min' } }), null);
     assert.strictEqual(toNoneResamplingItemSettings('opcua', { mode: 'da', haMode: null }), null);

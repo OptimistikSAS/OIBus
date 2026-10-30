@@ -2378,6 +2378,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -2504,6 +2510,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -2649,6 +2656,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -2775,6 +2788,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -2987,6 +3001,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -3113,6 +3133,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -3269,6 +3290,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -3395,6 +3422,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -3570,6 +3598,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -3696,6 +3730,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -3770,6 +3805,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -3896,6 +3937,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -4075,6 +4117,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -4201,6 +4249,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -4292,6 +4341,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -4418,6 +4473,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -4572,6 +4628,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -4698,6 +4760,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -4809,6 +4872,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -4935,6 +5004,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -5140,6 +5210,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -5266,6 +5342,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -5391,6 +5468,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -5517,6 +5600,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -5748,6 +5832,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -5874,6 +5964,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -5951,6 +6042,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -6077,6 +6174,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -6226,6 +6324,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -6352,6 +6456,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -6493,6 +6598,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -6619,6 +6730,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -6835,6 +6947,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -6961,6 +7079,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -7065,6 +7184,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -7191,6 +7316,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -7408,6 +7534,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -7534,6 +7666,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -7620,6 +7753,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -7746,6 +7885,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -7957,6 +8097,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -8083,6 +8229,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -8171,6 +8318,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -8297,6 +8450,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -8469,6 +8623,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -8595,6 +8755,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -8735,6 +8896,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -8861,6 +9028,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -9072,6 +9240,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -9198,6 +9372,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -9284,6 +9459,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -9410,6 +9591,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -9608,6 +9790,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -9734,6 +9922,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -9820,6 +10009,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -9946,6 +10141,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -10157,6 +10353,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -10283,6 +10485,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -10469,6 +10672,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -10595,6 +10804,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -10812,6 +11022,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -10938,6 +11154,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -11031,6 +11248,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -11157,6 +11380,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -11319,6 +11543,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -11445,6 +11675,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -11512,6 +11743,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -11638,6 +11875,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -11851,6 +12089,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -11977,6 +12221,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -12072,6 +12317,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -12198,6 +12449,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -12638,6 +12890,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -12764,6 +13022,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -12952,6 +13211,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -13078,6 +13343,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -13227,6 +13493,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -13353,6 +13625,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -13457,6 +13730,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -13583,6 +13862,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -13762,6 +14042,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -13888,6 +14174,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -13986,6 +14273,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -14112,6 +14405,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -14323,6 +14617,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -14449,6 +14749,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -14511,6 +14812,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean",
 						"description": "Whether this item is enabled and should be collected.",
@@ -14637,6 +14944,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings",
 					"scanMode",
@@ -14882,6 +15190,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"settings": {
 						"additionalProperties": false,
 						"type": "object",
@@ -15014,6 +15328,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -15053,6 +15368,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"settings": {
 						"additionalProperties": false,
 						"type": "object",
@@ -15185,6 +15506,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -15353,6 +15675,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the workflow.",
+						"example": "Creates an item for each variable of the reactor"
+					},
 					"discoveryScope": {
 						"$ref": "#/components/schemas/Record_string.unknown_"
 					},
@@ -15396,6 +15724,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"discoveryScope",
 					"identityKeyFields",
 					"eligibilityFilter",
@@ -15930,6 +16259,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthADSItemSettings",
 						"description": "Item-specific settings for data collection."
@@ -16061,6 +16396,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -16100,6 +16436,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthBACnetItemSettings",
@@ -16232,6 +16574,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -16271,6 +16614,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthFolderScannerItemSettings",
@@ -16403,6 +16752,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -16442,6 +16792,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthFTPItemSettings",
@@ -16574,6 +16930,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -16613,6 +16970,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthInfluxDBItemSettings",
@@ -16745,6 +17108,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -16784,6 +17148,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthModbusItemSettings",
@@ -16916,6 +17286,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -16955,6 +17326,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthMongoDBItemSettings",
@@ -17087,6 +17464,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -17126,6 +17504,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthMQTTItemSettings",
@@ -17258,6 +17642,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -17297,6 +17682,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthMSSQLItemSettings",
@@ -17429,6 +17820,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -17468,6 +17860,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthMySQLItemSettings",
@@ -17600,6 +17998,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -17639,6 +18038,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthODBCItemSettings",
@@ -17771,6 +18176,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -17810,6 +18216,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOIAnalyticsItemSettings",
@@ -17942,6 +18354,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -17981,6 +18394,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOLEDBItemSettings",
@@ -18113,6 +18532,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -18152,6 +18572,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOPCItemSettings",
@@ -18284,6 +18710,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -18323,6 +18750,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOPCUAItemSettings",
@@ -18455,6 +18888,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -18494,6 +18928,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOracleItemSettings",
@@ -18626,6 +19066,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -18665,6 +19106,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthPIItemSettings",
@@ -18797,6 +19244,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -18836,6 +19284,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthPostgreSQLItemSettings",
@@ -18968,6 +19422,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -19007,6 +19462,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthRestItemSettings",
@@ -19139,6 +19600,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -19178,6 +19640,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthS7ItemSettings",
@@ -19310,6 +19778,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -19349,6 +19818,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthSFTPItemSettings",
@@ -19481,6 +19956,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -19520,6 +19996,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthSQLiteItemSettings",
@@ -19652,6 +20134,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -22894,6 +23377,12 @@
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthADSItemSettings",
 						"description": "Item-specific settings for data collection."
@@ -23025,6 +23514,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -23129,6 +23619,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthBACnetItemSettings",
@@ -23261,6 +23757,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -23365,6 +23862,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthFolderScannerItemSettings",
@@ -23497,6 +24000,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -23601,6 +24105,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthFTPItemSettings",
@@ -23733,6 +24243,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -23837,6 +24348,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthInfluxDBItemSettings",
@@ -23969,6 +24486,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -24073,6 +24591,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthModbusItemSettings",
@@ -24205,6 +24729,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -24309,6 +24834,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthMongoDBItemSettings",
@@ -24441,6 +24972,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -24545,6 +25077,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthMQTTItemSettings",
@@ -24677,6 +25215,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -24781,6 +25320,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthMSSQLItemSettings",
@@ -24913,6 +25458,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -25017,6 +25563,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthMySQLItemSettings",
@@ -25149,6 +25701,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -25253,6 +25806,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthODBCItemSettings",
@@ -25385,6 +25944,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -25489,6 +26049,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOIAnalyticsItemSettings",
@@ -25621,6 +26187,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -25725,6 +26292,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOLEDBItemSettings",
@@ -25857,6 +26430,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -25961,6 +26535,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOPCItemSettings",
@@ -26093,6 +26673,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -26197,6 +26778,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOPCUAItemSettings",
@@ -26329,6 +26916,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -26433,6 +27021,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthOracleItemSettings",
@@ -26565,6 +27159,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -26669,6 +27264,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthPIItemSettings",
@@ -26801,6 +27402,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -26905,6 +27507,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthPostgreSQLItemSettings",
@@ -27037,6 +27645,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -27141,6 +27750,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthRestItemSettings",
@@ -27273,6 +27888,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -27377,6 +27993,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthS7ItemSettings",
@@ -27509,6 +28131,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -27613,6 +28236,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthSFTPItemSettings",
@@ -27745,6 +28374,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -27849,6 +28479,12 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthSQLiteItemSettings",
@@ -27981,6 +28617,7 @@
 					"id",
 					"enabled",
 					"name",
+					"description",
 					"settings",
 					"scanModeId",
 					"scanModeName",
@@ -32209,6 +32846,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32219,6 +32862,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32234,6 +32878,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32244,6 +32894,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32288,6 +32939,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32298,6 +32955,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32313,6 +32971,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32323,6 +32987,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32367,6 +33032,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32377,6 +33048,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32392,6 +33064,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32402,6 +33080,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32446,6 +33125,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32456,6 +33141,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32471,6 +33157,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32481,6 +33173,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32525,6 +33218,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32535,6 +33234,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32550,6 +33250,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32560,6 +33266,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32604,6 +33311,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32614,6 +33327,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32629,6 +33343,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32639,6 +33359,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32683,6 +33404,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32693,6 +33420,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32708,6 +33436,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32718,6 +33452,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32762,6 +33497,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32772,6 +33513,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32787,6 +33529,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32797,6 +33545,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32841,6 +33590,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32851,6 +33606,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32866,6 +33622,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32876,6 +33638,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32920,6 +33683,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32930,6 +33699,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32945,6 +33715,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -32955,6 +33731,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -32999,6 +33776,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33009,6 +33792,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33024,6 +33808,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33034,6 +33824,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33078,6 +33869,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33088,6 +33885,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33103,6 +33901,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33113,6 +33917,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33157,6 +33962,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33167,6 +33978,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33182,6 +33994,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33192,6 +34010,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33236,6 +34055,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33246,6 +34071,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33261,6 +34087,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33271,6 +34103,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33315,6 +34148,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33325,6 +34164,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33340,6 +34180,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33350,6 +34196,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33394,6 +34241,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33404,6 +34257,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33419,6 +34273,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33429,6 +34289,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33473,6 +34334,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33483,6 +34350,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33498,6 +34366,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33508,6 +34382,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33552,6 +34427,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33562,6 +34443,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33577,6 +34459,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33587,6 +34475,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33631,6 +34520,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33641,6 +34536,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33656,6 +34552,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33666,6 +34568,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33710,6 +34613,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33720,6 +34629,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33735,6 +34645,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33745,6 +34661,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33789,6 +34706,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33799,6 +34722,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33814,6 +34738,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33824,6 +34754,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33868,6 +34799,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33878,6 +34815,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -33893,6 +34831,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -33903,6 +34847,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40035,6 +40980,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40049,6 +41000,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40083,6 +41035,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40097,6 +41055,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40160,6 +41119,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40174,6 +41139,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40208,6 +41174,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40222,6 +41194,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40285,6 +41258,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40299,6 +41278,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40333,6 +41313,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40347,6 +41333,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40410,6 +41397,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40424,6 +41417,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40458,6 +41452,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40472,6 +41472,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40535,6 +41536,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40549,6 +41556,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40583,6 +41591,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40597,6 +41611,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40660,6 +41675,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40674,6 +41695,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40708,6 +41730,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40722,6 +41750,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40785,6 +41814,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40799,6 +41834,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40833,6 +41869,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40847,6 +41889,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40910,6 +41953,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40924,6 +41973,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -40958,6 +42008,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -40972,6 +42028,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41035,6 +42092,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41049,6 +42112,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41083,6 +42147,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41097,6 +42167,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41160,6 +42231,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41174,6 +42251,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41208,6 +42286,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41222,6 +42306,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41285,6 +42370,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41299,6 +42390,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41333,6 +42425,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41347,6 +42445,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41410,6 +42509,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41424,6 +42529,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41458,6 +42564,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41472,6 +42584,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41535,6 +42648,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41549,6 +42668,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41583,6 +42703,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41597,6 +42723,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41660,6 +42787,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41674,6 +42807,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41708,6 +42842,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41722,6 +42862,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41785,6 +42926,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41799,6 +42946,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41833,6 +42981,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41847,6 +43001,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41910,6 +43065,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41924,6 +43085,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -41958,6 +43120,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -41972,6 +43140,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42035,6 +43204,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42049,6 +43224,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42083,6 +43259,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42097,6 +43279,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42160,6 +43343,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42174,6 +43363,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42208,6 +43398,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42222,6 +43418,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42285,6 +43482,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42299,6 +43502,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42333,6 +43537,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42347,6 +43557,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42410,6 +43621,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42424,6 +43641,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42458,6 +43676,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42472,6 +43696,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42535,6 +43760,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42549,6 +43780,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42583,6 +43815,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42597,6 +43835,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42660,6 +43899,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42674,6 +43919,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -42708,6 +43954,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -42722,6 +43974,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -43113,6 +44366,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -43124,6 +44383,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -43139,6 +44399,12 @@
 					"name": {
 						"type": "string"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
 					"enabled": {
 						"type": "boolean"
 					},
@@ -43150,6 +44416,7 @@
 				"required": [
 					"id",
 					"name",
+					"description",
 					"enabled",
 					"settings"
 				],
@@ -44620,6 +45887,12 @@
 						"description": "Unique per south connector.",
 						"example": "Reactor OPC-UA discovery"
 					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the workflow.",
+						"example": "Creates an item for each variable of the reactor"
+					},
 					"southId": {
 						"type": "string",
 						"description": "The south connector this workflow discovers from.",
@@ -44683,6 +45956,7 @@
 					"createdAt",
 					"updatedAt",
 					"name",
+					"description",
 					"southId",
 					"discoveryScope",
 					"identityKeyFields",

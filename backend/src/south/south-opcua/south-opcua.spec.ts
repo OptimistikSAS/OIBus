@@ -68,6 +68,7 @@ const buildItem = (
 ): SouthConnectorItemEntity<SouthOPCUAItemSettings> => ({
   id,
   name,
+  description: null,
   enabled: true,
   settings,
   scanMode,

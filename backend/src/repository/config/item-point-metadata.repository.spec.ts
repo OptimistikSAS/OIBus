@@ -26,6 +26,7 @@ describe('Item Point Metadata Repository', () => {
     workflowId = workflowRepository.create(
       {
         name: 'Item point metadata test workflow',
+        description: null,
         southId: testData.south.list[0].id,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],

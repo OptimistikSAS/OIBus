@@ -373,6 +373,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
                   ({
                     id: this.duplicateId ? `temp_${item.id}` : item.id, // temp id id used to create items and use this id to reference them from transformers
                     name: item.name,
+                    description: item.description,
                     enabled: item.enabled,
                     settings: item.settings
                   }) as HistoryQueryItemCommandDTO
@@ -406,6 +407,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
                     ({
                       id: `temp_${item.id}`,
                       name: item.name,
+                      description: item.description,
                       enabled: item.enabled,
                       settings: item.settings
                     }) as HistoryQueryItemCommandDTO
@@ -1082,7 +1084,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   importItems() {
     const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled'];
-    const optionalHeaders: Array<string> = ['scanMode'];
+    const optionalHeaders: Array<string> = ['description', 'scanMode'];
     const settingsAttribute = this.southManifest()!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;

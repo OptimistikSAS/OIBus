@@ -548,6 +548,7 @@ const createSouthConnectorItem = async (
       connector_id: southConnectorId,
       scan_mode_id: item.scanMode?.id || null,
       name: item.name,
+      description: item.description,
       enabled: item.enabled,
       settings: JSON.stringify(item.settings),
       sync_with_group: item.syncWithGroup,
@@ -682,6 +683,7 @@ const createHistoryQueryItem = async (database: knex.Knex, historyQueryId: strin
       id: item.id,
       history_id: historyQueryId,
       name: item.name,
+      description: item.description,
       enabled: item.enabled,
       settings: JSON.stringify(item.settings)
     })

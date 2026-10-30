@@ -1233,6 +1233,14 @@ describe('Service utils', () => {
       assert.ok(capturedColumns.includes('settings_address'));
       assert.ok(capturedColumns.includes('settings_objectSetting'));
     });
+
+    it('should export the description of the items, after their name', () => {
+      utils.itemToFlattenedCSV([{ ...baseItem, description: 'Temperature of the reactor inlet' }], ',', emptySchema);
+
+      assert.strictEqual(unparsedData()[0].description, 'Temperature of the reactor inlet');
+      const capturedColumns = (csvExports.unparse.mock.calls[0].arguments[1] as { columns: Array<string> }).columns;
+      assert.deepStrictEqual(capturedColumns.slice(0, 3), ['name', 'description', 'enabled']);
+    });
   });
 
   describe('stringToBoolean', () => {

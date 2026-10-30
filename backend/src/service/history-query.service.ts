@@ -525,6 +525,7 @@ export default class HistoryQueryService {
       const item: HistoryQueryItemDTO = {
         id: '',
         name: data.name,
+        description: data.description || null,
         enabled: stringToBoolean(data.enabled),
         settings: {} as SouthItemSettings
       } as HistoryQueryItemDTO;
@@ -743,6 +744,7 @@ const copyHistoryQueryItemCommandToHistoryQueryItemEntity = async (
   )! as OIBusObjectAttribute;
   historyQueryItemEntity.id = command.id || '';
   historyQueryItemEntity.name = command.name;
+  historyQueryItemEntity.description = command.description ?? null;
   historyQueryItemEntity.enabled = command.enabled;
   historyQueryItemEntity.settings = await encryptionService.encryptConnectorSecrets(
     command.settings,

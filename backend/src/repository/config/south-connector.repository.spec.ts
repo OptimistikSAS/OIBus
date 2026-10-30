@@ -42,6 +42,7 @@ const newSouth = (name: string, overrides: Partial<South> = {}, fixture = testDa
 const newItem = (name: string, overrides: Partial<SouthItem> = {}): SouthItem => ({
   id: '',
   name,
+  description: null,
   enabled: true,
   scanMode: testData.scanMode.list[0],
   settings: {} as SouthItemSettings,
@@ -155,6 +156,7 @@ describe('SouthConnectorRepository', () => {
     workflowRepository.create(
       {
         name,
+        description: null,
         southId: testData.south.list[0].id,
         discoveryScope: {},
         identityKeyFields: ['nodeId'],
@@ -240,6 +242,7 @@ describe('SouthConnectorRepository', () => {
     const workflow = {
       id: null,
       name: 'workflow',
+      description: null,
       discoveryScope: {},
       identityKeyFields: [],
       eligibilityFilter: [],
@@ -270,6 +273,7 @@ describe('SouthConnectorRepository', () => {
     const workflow = {
       id: null,
       name: 'workflow',
+      description: null,
       discoveryScope: {},
       identityKeyFields: ['name'],
       eligibilityFilter: [],
@@ -504,6 +508,7 @@ describe('SouthConnectorRepository', () => {
     const stripped = stripAuditFields(result);
     assert.ok(stripped);
     assert.strictEqual(stripped.id, testData.south.list[1].items[0].id);
+    assert.strictEqual(stripped.description, 'Temperature of the reactor inlet');
     assert.strictEqual(repository.findItemById(testData.south.list[0].id, testData.south.list[1].items[0].id), null);
   });
 
@@ -679,10 +684,12 @@ describe('SouthConnectorRepository', () => {
     const beforeUpdate = repository.findItemById(testData.south.list[0].id, item.id);
 
     item.name = 'save-item-update-audit-renamed';
+    item.description = 'save-item-update-audit description';
     item.updatedBy = 'updaterUser';
     const calls = auditsDuring(() => repository.saveItem(testData.south.list[0].id, item));
 
     const afterUpdate = repository.findItemById(testData.south.list[0].id, item.id);
+    assert.strictEqual(afterUpdate?.description, 'save-item-update-audit description');
     assert.deepStrictEqual(calls, [['south_item', item.id, 'UPDATE', beforeUpdate, afterUpdate, 'updaterUser']]);
   });
 

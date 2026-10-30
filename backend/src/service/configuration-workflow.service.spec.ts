@@ -25,6 +25,7 @@ let service: ConfigurationWorkflowService;
 const localCommand: ConfigurationWorkflowCommandDTO = {
   id: null,
   name: 'Reactor discovery',
+  description: 'Creates an item for each variable',
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
@@ -37,6 +38,7 @@ const localCommand: ConfigurationWorkflowCommandDTO = {
 const existingWorkflow: ConfigurationWorkflowEntity = {
   id: 'workflowId1',
   name: 'Reactor discovery',
+  description: null,
   southId: testData.south.list[0].id,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
@@ -206,6 +208,7 @@ describe('Configuration Workflow Service', () => {
       assert.strictEqual(created, existingWorkflow);
       const createCall = configurationWorkflowRepository.create.mock.calls[0];
       assert.strictEqual((createCall.arguments[0] as { southId: string }).southId, testData.south.list[0].id);
+      assert.strictEqual((createCall.arguments[0] as { description: string }).description, 'Creates an item for each variable');
       assert.strictEqual(createCall.arguments[1], 'userTest');
     });
 
@@ -273,6 +276,7 @@ describe('Configuration Workflow Service', () => {
       assert.strictEqual(updated, existingWorkflow);
       const updateCall = configurationWorkflowRepository.update.mock.calls[0];
       assert.strictEqual(updateCall.arguments[0], existingWorkflow.id);
+      assert.strictEqual((updateCall.arguments[1] as { description: string }).description, 'Creates an item for each variable');
       assert.strictEqual(updateCall.arguments[2], 'updateUser');
     });
 

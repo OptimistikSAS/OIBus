@@ -39,6 +39,8 @@ class ViewSouthItemModalComponentTester {
   readonly closeButton = this.root.getByRole('button', { name: 'Close' });
   readonly editButton = this.root.getByRole('button', { name: 'Edit' });
   readonly test = this.root.getByCss('#item-test');
+  readonly description = this.root.getByCss('#item-description');
+  readonly auditInfo = this.root.getByCss('#item-audit-info');
 
   constructor(item: SouthConnectorItemDTO = savedItem, itemManifest: SouthConnectorManifest = manifest) {
     this.fixture.componentInstance.prepare(item, southConnector, itemManifest, scanModes, []);
@@ -116,6 +118,22 @@ describe('ViewSouthItemModalComponent', () => {
     await expect.element(tester.test.getByText('Testing item')).toBeVisible();
     await expect.element(tester.test.getByCss('#north-raw')).toHaveAttribute('aria-current', 'true');
     await expect.element(tester.test.getByCss('#raw-test #test-item')).toBeVisible();
+  });
+
+  test('should display the description of the item above its audit information', async () => {
+    const tester = new ViewSouthItemModalComponentTester({ ...savedItem, description: 'Temperature of the reactor inlet' });
+
+    await expect.element(tester.description).toHaveTextContent('Temperature of the reactor inlet');
+    expect(tester.description.element().compareDocumentPosition(tester.auditInfo.element())).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    // shown once, not again in the settings
+    await expect.element(tester.root.getByCss('#item-summary').getByText('Description', { exact: true })).not.toBeInTheDocument();
+  });
+
+  test('should not display a description when the item has none', async () => {
+    const tester = new ViewSouthItemModalComponentTester();
+
+    await expect.element(tester.auditInfo).toBeInTheDocument();
+    await expect.element(tester.description).not.toBeInTheDocument();
   });
 
   test('should display the history settings of the group the item is synced with', async () => {

@@ -41,6 +41,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     const savedItem = testData.historyQueries.list[0].items[0];
     const itemList = testData.historyQueries.list[0].items;
     const nameInput = page.getByLabelText('Name', { exact: true });
+    const descriptionInput = page.getByLabelText('Description', { exact: true });
     const enabledInput = page.getByLabelText('Enabled');
     /** The Disabled choice of the status, by its label: its radio button is hidden behind it */
     const disableButton = page.getByCss('label[for="item-enabled-disabled"]');
@@ -73,15 +74,17 @@ describe('EditHistoryQueryItemModalComponent', () => {
       await nextButton.click();
       await expect.element(step('general')).toHaveAttribute('aria-current', 'step');
       await nameInput.fill('new item');
+      await descriptionInput.fill(' Reactor inlet ');
       await disableButton.click();
       await nextButton.click();
       const summaryValues = page.getByCss('#item-summary').getByRole('definition');
       await expect.element(summaryValues.nth(0)).toHaveTextContent('new item');
-      await expect.element(summaryValues.nth(1)).toHaveTextContent('Disabled');
+      await expect.element(summaryValues.nth(1)).toHaveTextContent('Reactor inlet');
+      await expect.element(summaryValues.nth(2)).toHaveTextContent('Disabled');
       await saveButton.click();
 
       expect(activeModal.close).toHaveBeenCalledWith(
-        expect.objectContaining({ id: expect.stringMatching(/^temp_/), name: 'new item', enabled: false })
+        expect.objectContaining({ id: expect.stringMatching(/^temp_/), name: 'new item', description: 'Reactor inlet', enabled: false })
       );
     });
 
@@ -133,6 +136,29 @@ describe('EditHistoryQueryItemModalComponent', () => {
       await saveButton.click();
 
       expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ id: savedItem.id, name: 'renamed', enabled: true }));
+    });
+
+    test('should load and save the description of an edited item, a blank one as none', async () => {
+      const item: HistoryQueryItemDTO = { ...savedItem, description: 'Reactor inlet' };
+      createModal().prepareForEdition(itemList, item, historyId, null, testData.south.command, testData.south.manifest, 0);
+      await step('general').click();
+      await expect.element(descriptionInput).toHaveValue('Reactor inlet');
+
+      await descriptionInput.fill('  ');
+      await saveButton.click();
+
+      expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ id: savedItem.id, description: null }));
+    });
+
+    test('should keep the description of a copied item', async () => {
+      const item: HistoryQueryItemDTO = { ...savedItem, description: 'Reactor inlet' };
+      createModal().prepareForCopy(itemList, item, historyId, null, testData.south.command, testData.south.manifest);
+      await step('general').click();
+      await expect.element(descriptionInput).toHaveValue('Reactor inlet');
+
+      await saveButton.click();
+
+      expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ id: '', description: 'Reactor inlet' }));
     });
 
     test('should close with a copy of the item, without id', async () => {

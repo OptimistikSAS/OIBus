@@ -6,6 +6,8 @@
 /** What every item displayed in the table has. */
 export interface TableItem {
   name: string;
+  /** Shown with the name of the item when hovered */
+  description?: string | null;
   enabled: boolean;
   createdAt?: string;
   createdBy?: { friendlyName: string };

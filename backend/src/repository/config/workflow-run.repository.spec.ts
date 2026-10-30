@@ -32,6 +32,7 @@ describe('Workflow Run Repository', () => {
     workflowId = workflowRepository.create(
       {
         name: 'Workflow run test workflow',
+        description: null,
         southId: testData.south.list[0].id,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],
