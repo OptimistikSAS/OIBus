@@ -1,11 +1,15 @@
 <div class="oib-padded-container">
   <div class="row justify-content-center">
-    @let form = this.form();
-    @if (form && manifest(); as manifest) {
+    @let form = manifest() ? this.form() : null;
+    @if (form || choosesConnector) {
       <div class="col-md-10 col-lg-8">
         <div class="d-flex">
           @if (mode() === 'create') {
-            <h1 translate="north.create-title" [translateParams]="{ type: manifest.id | oIBusNorthTypeEnum }"></h1>
+            @if (manifest(); as manifest) {
+              <h1 translate="north.create-title" [translateParams]="{ type: manifest.id | oIBusNorthTypeEnum }"></h1>
+            } @else {
+              <h1 translate="north.create-new-title"></h1>
+            }
           }
           @if (mode() === 'edit' && northConnector(); as northConnector) {
             <h1 translate="north.edit-title" [translateParams]="{ name: northConnector.name }"></h1>
@@ -14,264 +18,287 @@
         <oib-modal-steps
           class="d-block mt-3"
           [steps]="steps.steps"
-          [(current)]="steps.current"
+          [current]="steps.current()"
+          (currentChange)="goTo($event)"
           [invalidSteps]="steps.invalid()"
           labelPrefix="north.steps.step."
           ariaLabel="north.steps.steps"
           idPrefix="north-step-"
         />
-        <form [formGroup]="form" (ngSubmit)="submitStep()" (keydown.enter)="onEnter($event)" id="north-form" class="mt-3">
-          <div class="oib-steps-panel">
-            <!-- 1. Specific settings -->
-            <section [hidden]="steps.current() !== 'settings'">
-              <div class="oib-section-title">
+        <!-- 0. A new connector starts with the existing connector it duplicates, or with a type, the form being built from it -->
+        @if (choosesConnector) {
+          <div class="oib-steps-panel mt-3" [hidden]="steps.current() !== 'connector'">
+            <oib-connector-choice
+              side="north"
+              titleKey="common.connector-choice.north"
+              [form]="connectorForm"
+              [existing]="existingNorthConnectors()"
+              [types]="northTypes()"
+            />
+          </div>
+        }
+        @if (form) {
+          @let manifest = this.manifest()!;
+          <form
+            [formGroup]="form"
+            (ngSubmit)="submitStep()"
+            (keydown.enter)="onEnter($event)"
+            id="north-form"
+            class="mt-3"
+            [hidden]="steps.current() === 'connector'"
+          >
+            <div class="oib-steps-panel">
+              <!-- 1. Specific settings -->
+              <section [hidden]="steps.current() !== 'settings'">
+                <div class="oib-section-title">
+                  <h5
+                    translate="north.specific-settings"
+                    [translateParams]="{ type: manifest.id | oIBusNorthTypeEnum }"
+                    id="specific-settings-title"
+                  ></h5>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    id="test-connection"
+                    (click)="form.controls.settings.markAllAsTouched(); submit('test')"
+                    translate="north.test-connection.button"
+                  ></button>
+                  <oib-help [url]="northTypeHelpUrl()" />
+                </div>
+                <div formGroupName="settings" class="row">
+                  <oib-oibus-object-form-control
+                    [scanModes]="scanModes()"
+                    [certificates]="certificates()"
+                    [group]="form.controls.settings"
+                    [objectAttribute]="manifest.settings"
+                    layout="sections"
+                  />
+                </div>
+              </section>
+              <!-- 2. Cache settings -->
+              <section [hidden]="steps.current() !== 'caching'">
+                <div class="oib-section-title">
+                  <h5 translate="north.caching.title"></h5>
+                  <oib-help [url]="cachingHelpUrl" />
+                </div>
+                <div formGroupName="caching">
+                  <h6 class="oib-group-title" translate="north.caching.trigger.title"></h6>
+                  <div formGroupName="trigger" class="row">
+                    <!-- Scan mode -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <oib-oibus-scan-mode-form-control [allScanModes]="scanModes()" [scanModeAttribute]="scanModeAttribute" />
+                      </div>
+                    </div>
+                    <!-- Number of elements -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="number-of-elements" translate="north.caching.trigger.number-of-elements"></label>
+                        <input type="number" formControlName="numberOfElements" id="number-of-elements" class="form-control" />
+                        <val-errors controlName="numberOfElements" />
+                      </div>
+                    </div>
+                    <!-- Number of files -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="number-of-files" translate="north.caching.trigger.number-of-files"></label>
+                        <input type="number" formControlName="numberOfFiles" id="number-of-files" class="form-control" />
+                        <val-errors controlName="numberOfFiles" />
+                      </div>
+                    </div>
+                  </div>
+                  <h6 class="oib-group-title" translate="north.caching.throttling.title"></h6>
+                  <div formGroupName="throttling" class="row">
+                    <!-- Run min delay -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="run-min-delay" translate="north.caching.throttling.run-min-delay"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="runMinDelay" id="run-min-delay" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.ms"></span>
+                        </div>
+                        <val-errors controlName="runMinDelay" />
+                      </div>
+                    </div>
+                    <!-- Max send count -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label
+                          class="form-label"
+                          for="max-number-of-elements"
+                          translate="north.caching.throttling.max-number-of-elements"
+                        ></label>
+                        <input type="number" formControlName="maxNumberOfElements" id="max-number-of-elements" class="form-control" />
+                        <val-errors controlName="maxNumberOfElements" />
+                      </div>
+                    </div>
+                    <!-- Max size -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="maxSize" translate="north.caching.throttling.max-size"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.MB"></span>
+                        </div>
+                        <val-errors controlName="maxSize" />
+                      </div>
+                    </div>
+                  </div>
+                  <h6 class="oib-group-title" translate="north.caching.error.title"></h6>
+                  <div formGroupName="error" class="row">
+                    <!-- Retry interval -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="retry-interval" translate="north.caching.error.retry-interval"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.ms"></span>
+                        </div>
+                        <val-errors controlName="retryInterval" />
+                      </div>
+                    </div>
+                    <!-- Retry count -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="retry-count" translate="north.caching.error.retry-count"></label>
+                        <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
+                        <val-errors controlName="retryCount" />
+                      </div>
+                    </div>
+                    <!-- Retention duration -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="error-retention-duration" translate="north.caching.error.retention-duration"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="retentionDuration" id="error-retention-duration" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.hr"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <h6 class="oib-group-title" translate="north.caching.archive.title"></h6>
+                  <div formGroupName="archive" class="row">
+                    <!-- Archive Enabled -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <div class="form-check form-switch padded">
+                          <label class="form-check-label" for="archive-enabled" translate="north.caching.archive.enabled"></label>
+                          <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Retention duration -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label
+                          class="form-label"
+                          for="archive-retention-duration"
+                          translate="north.caching.archive.retention-duration"
+                        ></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.hr"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <!-- 3. Transformers -->
+              <oib-north-transformers
+                [hidden]="steps.current() !== 'transformers'"
+                layout="section"
+                [scanModes]="scanModes()"
+                [certificates]="certificates()"
+                [northManifest]="manifest"
+                [northConnector]="northConnector()"
+                [transformers]="transformers()"
+                (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
+              />
+              <!-- 4. General settings: last, once the connector is set up and tested -->
+              <section [hidden]="steps.current() !== 'general'">
+                <div class="oib-section-title">
+                  <h5 translate="north.general-settings"></h5>
+                  <oib-help [url]="generalSettingsHelpUrl" />
+                </div>
+                <div class="row">
+                  <!-- Name -->
+                  <div class="col-8">
+                    <div class="form-group">
+                      <label class="form-label" for="north-name" translate="north.name"></label>
+                      <input formControlName="name" id="north-name" class="form-control" />
+                      <val-errors controlName="name" />
+                    </div>
+                  </div>
+                  <!-- Status -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <div class="form-label" id="north-status" translate="north.status"></div>
+                      <oib-enabled-selector formControlName="enabled" inputId="north-enabled" labelledBy="north-status" />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <!-- Description -->
+                  <div class="col-12">
+                    <div class="form-group">
+                      <label class="form-label" for="north-description" translate="north.description"></label>
+                      <textarea formControlName="description" id="north-description" class="form-control" rows="3"></textarea>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <!-- 5. Review & save: the connector as it will be saved, what changed since it was saved, and what to fix before -->
+              <section [hidden]="steps.current() !== 'review'" id="north-review">
+                @let summary = reviewSummary();
+                @let saved = savedSummary();
+                @if (steps.withErrors().length > 0) {
+                  <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 py-2" id="review-errors" role="alert">
+                    <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
+                    <span translate="north.steps.review-errors"></span>
+                    @for (step of steps.withErrors(); track step) {
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="steps.current.set(step)"
+                        [translate]="'north.steps.step.' + step"
+                      ></button>
+                    }
+                  </div>
+                } @else if (changeCount(); as changeCount) {
+                  <div class="alert alert-warning py-2" id="review-changes" role="status">
+                    {{ 'north.steps.review-changes' | translate: { count: changeCount } }}
+                  </div>
+                } @else if (saved) {
+                  <div class="alert alert-secondary py-2" id="review-changes" role="status" translate="north.steps.review-no-changes"></div>
+                }
+                <h5 class="oib-section-title" translate="north.general-settings"></h5>
+                <oib-oibus-settings-summary id="general-summary" [settings]="summary.general" [previous]="saved?.general ?? null" />
                 <h5
+                  class="oib-section-title"
                   translate="north.specific-settings"
                   [translateParams]="{ type: manifest.id | oIBusNorthTypeEnum }"
-                  id="specific-settings-title"
                 ></h5>
-                <button
-                  type="button"
-                  class="btn btn-secondary btn-sm"
-                  id="test-connection"
-                  (click)="form.controls.settings.markAllAsTouched(); submit('test')"
-                  translate="north.test-connection.button"
-                ></button>
-                <oib-help [url]="northTypeHelpUrl()" />
-              </div>
-              <div formGroupName="settings" class="row">
-                <oib-oibus-object-form-control
-                  [scanModes]="scanModes()"
-                  [certificates]="certificates()"
-                  [group]="form.controls.settings"
-                  [objectAttribute]="manifest.settings"
-                  layout="sections"
+                <oib-oibus-settings-summary id="settings-summary" [settings]="summary.settings" [previous]="saved?.settings ?? null" />
+                <h5 class="oib-section-title" translate="north.caching.title"></h5>
+                <oib-oibus-settings-summary id="caching-summary" [settings]="summary.caching" [previous]="saved?.caching ?? null" />
+                <h5 class="oib-section-title" translate="north.steps.step.transformers"></h5>
+                <oib-oibus-settings-summary
+                  id="transformers-summary"
+                  [settings]="summary.transformers"
+                  [previous]="saved?.transformers ?? null"
                 />
-              </div>
-            </section>
-            <!-- 2. Cache settings -->
-            <section [hidden]="steps.current() !== 'caching'">
-              <div class="oib-section-title">
-                <h5 translate="north.caching.title"></h5>
-                <oib-help [url]="cachingHelpUrl" />
-              </div>
-              <div formGroupName="caching">
-                <h6 class="oib-group-title" translate="north.caching.trigger.title"></h6>
-                <div formGroupName="trigger" class="row">
-                  <!-- Scan mode -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <oib-oibus-scan-mode-form-control [allScanModes]="scanModes()" [scanModeAttribute]="scanModeAttribute" />
+                @if (transformerChanges(); as transformerChanges) {
+                  @if (transformerChanges.added + transformerChanges.changed + transformerChanges.removed > 0) {
+                    <div class="mt-2 text-muted small" id="transformer-changes">
+                      {{ 'north.steps.transformer-changes' | translate: transformerChanges }}
                     </div>
-                  </div>
-                  <!-- Number of elements -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="number-of-elements" translate="north.caching.trigger.number-of-elements"></label>
-                      <input type="number" formControlName="numberOfElements" id="number-of-elements" class="form-control" />
-                      <val-errors controlName="numberOfElements" />
-                    </div>
-                  </div>
-                  <!-- Number of files -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="number-of-files" translate="north.caching.trigger.number-of-files"></label>
-                      <input type="number" formControlName="numberOfFiles" id="number-of-files" class="form-control" />
-                      <val-errors controlName="numberOfFiles" />
-                    </div>
-                  </div>
-                </div>
-                <h6 class="oib-group-title" translate="north.caching.throttling.title"></h6>
-                <div formGroupName="throttling" class="row">
-                  <!-- Run min delay -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="run-min-delay" translate="north.caching.throttling.run-min-delay"></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="runMinDelay" id="run-min-delay" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.ms"></span>
-                      </div>
-                      <val-errors controlName="runMinDelay" />
-                    </div>
-                  </div>
-                  <!-- Max send count -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label
-                        class="form-label"
-                        for="max-number-of-elements"
-                        translate="north.caching.throttling.max-number-of-elements"
-                      ></label>
-                      <input type="number" formControlName="maxNumberOfElements" id="max-number-of-elements" class="form-control" />
-                      <val-errors controlName="maxNumberOfElements" />
-                    </div>
-                  </div>
-                  <!-- Max size -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="maxSize" translate="north.caching.throttling.max-size"></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.MB"></span>
-                      </div>
-                      <val-errors controlName="maxSize" />
-                    </div>
-                  </div>
-                </div>
-                <h6 class="oib-group-title" translate="north.caching.error.title"></h6>
-                <div formGroupName="error" class="row">
-                  <!-- Retry interval -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="retry-interval" translate="north.caching.error.retry-interval"></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.ms"></span>
-                      </div>
-                      <val-errors controlName="retryInterval" />
-                    </div>
-                  </div>
-                  <!-- Retry count -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="retry-count" translate="north.caching.error.retry-count"></label>
-                      <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
-                      <val-errors controlName="retryCount" />
-                    </div>
-                  </div>
-                  <!-- Retention duration -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="error-retention-duration" translate="north.caching.error.retention-duration"></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="retentionDuration" id="error-retention-duration" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.hr"></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <h6 class="oib-group-title" translate="north.caching.archive.title"></h6>
-                <div formGroupName="archive" class="row">
-                  <!-- Archive Enabled -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <div class="form-check form-switch padded">
-                        <label class="form-check-label" for="archive-enabled" translate="north.caching.archive.enabled"></label>
-                        <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
-                      </div>
-                    </div>
-                  </div>
-                  <!-- Retention duration -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label
-                        class="form-label"
-                        for="archive-retention-duration"
-                        translate="north.caching.archive.retention-duration"
-                      ></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.hr"></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-            <!-- 3. Transformers -->
-            <oib-north-transformers
-              [hidden]="steps.current() !== 'transformers'"
-              layout="section"
-              [scanModes]="scanModes()"
-              [certificates]="certificates()"
-              [northManifest]="manifest"
-              [northConnector]="northConnector()"
-              [transformers]="transformers()"
-              (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
-            />
-            <!-- 4. General settings: last, once the connector is set up and tested -->
-            <section [hidden]="steps.current() !== 'general'">
-              <div class="oib-section-title">
-                <h5 translate="north.general-settings"></h5>
-                <oib-help [url]="generalSettingsHelpUrl" />
-              </div>
-              <div class="row">
-                <!-- Name -->
-                <div class="col-8">
-                  <div class="form-group">
-                    <label class="form-label" for="north-name" translate="north.name"></label>
-                    <input formControlName="name" id="north-name" class="form-control" />
-                    <val-errors controlName="name" />
-                  </div>
-                </div>
-                <!-- Status -->
-                <div class="col-4">
-                  <div class="form-group">
-                    <div class="form-label" id="north-status" translate="north.status"></div>
-                    <oib-enabled-selector formControlName="enabled" inputId="north-enabled" labelledBy="north-status" />
-                  </div>
-                </div>
-              </div>
-              <div class="row">
-                <!-- Description -->
-                <div class="col-12">
-                  <div class="form-group">
-                    <label class="form-label" for="north-description" translate="north.description"></label>
-                    <textarea formControlName="description" id="north-description" class="form-control" rows="3"></textarea>
-                  </div>
-                </div>
-              </div>
-            </section>
-            <!-- 5. Review & save: the connector as it will be saved, what changed since it was saved, and what to fix before -->
-            <section [hidden]="steps.current() !== 'review'" id="north-review">
-              @let summary = reviewSummary();
-              @let saved = savedSummary();
-              @if (steps.withErrors().length > 0) {
-                <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 py-2" id="review-errors" role="alert">
-                  <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
-                  <span translate="north.steps.review-errors"></span>
-                  @for (step of steps.withErrors(); track step) {
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-outline-danger"
-                      (click)="steps.current.set(step)"
-                      [translate]="'north.steps.step.' + step"
-                    ></button>
                   }
-                </div>
-              } @else if (changeCount(); as changeCount) {
-                <div class="alert alert-warning py-2" id="review-changes" role="status">
-                  {{ 'north.steps.review-changes' | translate: { count: changeCount } }}
-                </div>
-              } @else if (saved) {
-                <div class="alert alert-secondary py-2" id="review-changes" role="status" translate="north.steps.review-no-changes"></div>
-              }
-              <h5 class="oib-section-title" translate="north.general-settings"></h5>
-              <oib-oibus-settings-summary id="general-summary" [settings]="summary.general" [previous]="saved?.general ?? null" />
-              <h5
-                class="oib-section-title"
-                translate="north.specific-settings"
-                [translateParams]="{ type: manifest.id | oIBusNorthTypeEnum }"
-              ></h5>
-              <oib-oibus-settings-summary id="settings-summary" [settings]="summary.settings" [previous]="saved?.settings ?? null" />
-              <h5 class="oib-section-title" translate="north.caching.title"></h5>
-              <oib-oibus-settings-summary id="caching-summary" [settings]="summary.caching" [previous]="saved?.caching ?? null" />
-              <h5 class="oib-section-title" translate="north.steps.step.transformers"></h5>
-              <oib-oibus-settings-summary
-                id="transformers-summary"
-                [settings]="summary.transformers"
-                [previous]="saved?.transformers ?? null"
-              />
-              @if (transformerChanges(); as transformerChanges) {
-                @if (transformerChanges.added + transformerChanges.changed + transformerChanges.removed > 0) {
-                  <div class="mt-2 text-muted small" id="transformer-changes">
-                    {{ 'north.steps.transformer-changes' | translate: transformerChanges }}
-                  </div>
                 }
-              }
-            </section>
-          </div>
-        </form>
+              </section>
+            </div>
+          </form>
+        }
         <!-- Moving between the steps, apart from saving: the main action is Save once it shows, Next before -->
         <div id="actions" class="mt-2 mb-3 d-flex">
           <div class="d-flex gap-2 me-auto">
@@ -287,7 +314,7 @@
                 [class.btn-primary]="!canSave()"
                 [class.btn-subtle]="canSave()"
                 id="next-step"
-                (click)="steps.next()"
+                (click)="nextStep()"
               >
                 <span translate="common.next"></span><i class="fa-solid fa-chevron-right ms-1" aria-hidden="true"></i>
               </button>

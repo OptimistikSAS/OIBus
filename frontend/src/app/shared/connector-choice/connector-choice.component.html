@@ -1,0 +1,73 @@
+@let side = this.side();
+@let duplicates = fromExisting();
+@let chosenId = chosen();
+@let controls = form().controls;
+<div class="oib-section-title">
+  <h5 [translate]="titleKey()"></h5>
+</div>
+<div class="d-flex gap-2 mb-3" role="group" [attr.aria-label]="titleKey() | translate">
+  @if (existing().length > 0) {
+    <button
+      type="button"
+      class="btn btn-sm rounded-pill connector-mode"
+      [class.active]="duplicates"
+      [attr.aria-pressed]="duplicates"
+      (click)="setFromExisting(true)"
+      translate="common.connector-choice.duplicate-existing"
+    ></button>
+  }
+  <button
+    type="button"
+    class="btn btn-sm rounded-pill connector-mode"
+    [class.active]="!duplicates"
+    [attr.aria-pressed]="!duplicates"
+    (click)="setFromExisting(false)"
+    translate="common.connector-choice.new-settings"
+  ></button>
+</div>
+@if (duplicates) {
+  <div class="connector-choices" role="group" [attr.aria-label]="'common.connector-choice.duplicate-existing' | translate">
+    @for (connector of existing(); track connector.id) {
+      <button
+        type="button"
+        class="connector-choice"
+        [class.selected]="chosenId === connector.id"
+        [attr.aria-pressed]="chosenId === connector.id"
+        (click)="choose(connector.id)"
+      >
+        <span class="connector-choice-header">
+          <span class="connector-choice-name">{{ connector.name }}</span>
+          <span class="connector-type-badge">{{ 'enums.oibus-' + side + '-type.' + connector.type | translate }}</span>
+        </span>
+      </button>
+    }
+  </div>
+  <val-errors [control]="controls.id" />
+} @else {
+  @for (group of categories(); track group.category) {
+    <div class="connector-category">
+      <span class="connector-category-icon"><img [src]="'/' + group.category + '.svg'" alt="" /></span>
+      <span [translate]="'enums.oibus-' + side + '-category.' + group.category"></span>
+    </div>
+    <div class="connector-choices" role="group" [attr.aria-label]="'enums.oibus-' + side + '-category.' + group.category | translate">
+      @for (type of group.types; track type.id) {
+        <button
+          type="button"
+          class="connector-choice"
+          [class.selected]="chosenId === type.id"
+          [attr.aria-pressed]="chosenId === type.id"
+          (click)="choose(type.id)"
+        >
+          <span class="connector-choice-header">
+            <span class="connector-choice-name">{{ 'enums.oibus-' + side + '-type.' + type.id | translate }}</span>
+            @if (type.beta) {
+              <span class="badge bg-secondary" translate="common.beta"></span>
+            }
+          </span>
+          <span class="connector-choice-description">{{ 'enums.oibus-' + side + '-type-description.' + type.id | translate }}</span>
+        </button>
+      }
+    </div>
+  }
+  <val-errors [control]="controls.type" />
+}

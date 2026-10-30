@@ -1586,9 +1586,8 @@
   },
   "south": {
     "list": "South 列表",
-    "type-title": "South 类型",
-    "type-error": "您必须选择一个 South 类型",
     "create-title": "创建 {{ type }} south 连接器",
+    "create-new-title": "创建 South 连接器",
     "edit-title": "编辑 {{ name }}",
     "confirm-deletion": "您确定要删除 south 连接器 {{ name }} 吗？",
     "updated": "South 连接器 {{ name }} 已成功更新",
@@ -2190,6 +2189,7 @@
     "steps": {
       "steps": "连接器步骤",
       "step": {
+        "connector": "连接器",
         "general": "常规",
         "settings": "设置",
         "items": "项",
@@ -2200,7 +2200,8 @@
       "review-no-changes": "自连接器上次保存以来没有修改",
       "groups": "组",
       "workflows": "项同步",
-      "item-changes": "已添加项：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}"
+      "item-changes": "已添加项：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
+      "confirm-connector-change": "更改连接器将重新开始：其设置和数据项将来自新的选择。是否继续？"
     }
   },
   "scan-mode": {
@@ -3006,12 +3007,6 @@
       "item-changes": "已添加项目：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
       "transformer-changes": "已添加转换器：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
       "confirm-connectors-change": "更换连接器将重新开始历史查询：其设置、项目和转换器将来自新的连接器。是否继续？"
-    },
-    "connectors": {
-      "south": "South 连接器",
-      "north": "North 连接器",
-      "duplicate-existing": "复制现有",
-      "new-settings": "新设置"
     }
   },
   "explore-cache": {
@@ -3152,9 +3147,8 @@
   "north": {
     "list": "North 列表",
     "search-by-name": "名称",
-    "choose-north-type-title": "选择 North 的类型",
-    "type-error": "您必须选择一个 North 类型",
     "create-title": "创建 {{ type }} North 连接器",
+    "create-new-title": "创建 North 连接器",
     "edit-title": "编辑 {{ name }}",
     "confirm-deletion": "您确定要删除 North 连接器 {{ name }} 吗？",
     "updated": "North 连接器 {{ name }} 更新成功",
@@ -3331,6 +3325,7 @@
     "steps": {
       "steps": "连接器步骤",
       "step": {
+        "connector": "连接器",
         "general": "常规",
         "settings": "设置",
         "caching": "缓存",
@@ -3340,7 +3335,8 @@
       "review-errors": "保存前请修正以下步骤：",
       "review-changes": "自连接器上次保存以来的修改：{{count}}",
       "review-no-changes": "自连接器上次保存以来没有修改",
-      "transformer-changes": "已添加转换器：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}"
+      "transformer-changes": "已添加转换器：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
+      "confirm-connector-change": "更改连接器将重新开始：其设置和转换器将来自新的选择。是否继续？"
     }
   },
   "oia-module": {
@@ -3534,6 +3530,12 @@
     "yes": "是",
     "no": "否",
     "beta": "测试版",
+    "connector-choice": {
+      "south": "South 连接器",
+      "north": "North 连接器",
+      "duplicate-existing": "复制现有",
+      "new-settings": "新设置"
+    },
     "ok": "确定",
     "save": "保存",
     "back": "返回",

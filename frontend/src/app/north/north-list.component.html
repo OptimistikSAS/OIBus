@@ -7,7 +7,7 @@
         class="btn btn-primary"
         id="create-modal"
         [attr.aria-label]="'north.tooltips.add' | translate"
-        (click)="createNorth()"
+        [routerLink]="['/north', 'create']"
       >
         <span class="fa-solid fa-plus me-1" aria-hidden="true"></span>
         <span translate="common.create"></span>

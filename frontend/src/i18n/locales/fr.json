@@ -1586,9 +1586,8 @@
   },
   "south": {
     "list": "Liste des South",
-    "type-title": "Type de South",
-    "type-error": "Vous devez sélectionner un type de South",
     "create-title": "Créer un connecteur South {{ type }}",
+    "create-new-title": "Créer un connecteur South",
     "edit-title": "Modifier {{ name }}",
     "confirm-deletion": "Êtes-vous sûr de vouloir supprimer le connecteur South {{ name }} ?",
     "updated": "Connecteur South {{ name }} mis à jour avec succès",
@@ -2190,6 +2189,7 @@
     "steps": {
       "steps": "Étapes du connecteur",
       "step": {
+        "connector": "Connecteur",
         "general": "Général",
         "settings": "Paramètres",
         "items": "Éléments",
@@ -2200,7 +2200,8 @@
       "review-no-changes": "Aucune modification depuis l'enregistrement du connecteur",
       "groups": "Groupes",
       "workflows": "Synchronisations des points",
-      "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}"
+      "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
+      "confirm-connector-change": "Changer de connecteur le recommence : ses paramètres et ses items seront ceux du nouveau choix. Continuer ?"
     }
   },
   "scan-mode": {
@@ -3006,12 +3007,6 @@
       "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
       "transformer-changes": "Transformateurs ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
       "confirm-connectors-change": "Changer de connecteurs recommence la requête d'historique : ses paramètres, éléments et transformateurs seront ceux des nouveaux connecteurs. Continuer ?"
-    },
-    "connectors": {
-      "south": "Connecteur South",
-      "north": "Connecteur North",
-      "duplicate-existing": "Dupliquer l'existant",
-      "new-settings": "Nouveaux paramètres"
     }
   },
   "explore-cache": {
@@ -3152,9 +3147,8 @@
   "north": {
     "list": "Liste des North",
     "search-by-name": "Nom",
-    "choose-north-type-title": "Choisissez le type de North",
-    "type-error": "Vous devez sélectionner un type de North",
     "create-title": "Créer un connecteur North {{ type }}",
+    "create-new-title": "Créer un connecteur North",
     "edit-title": "Modifier {{ name }}",
     "confirm-deletion": "Êtes-vous sûr de vouloir supprimer le connecteur North {{ name }} ?",
     "updated": "Connecteur North {{ name }} mis à jour avec succès",
@@ -3331,6 +3325,7 @@
     "steps": {
       "steps": "Étapes du connecteur",
       "step": {
+        "connector": "Connecteur",
         "general": "Général",
         "settings": "Paramètres",
         "caching": "Cache",
@@ -3340,7 +3335,8 @@
       "review-errors": "Corrigez ces étapes avant d'enregistrer :",
       "review-changes": "Modifications depuis l'enregistrement du connecteur : {{count}}",
       "review-no-changes": "Aucune modification depuis l'enregistrement du connecteur",
-      "transformer-changes": "Transformateurs ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}"
+      "transformer-changes": "Transformateurs ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
+      "confirm-connector-change": "Changer de connecteur le recommence : ses paramètres et ses transformateurs seront ceux du nouveau choix. Continuer ?"
     }
   },
   "oia-module": {
@@ -3534,6 +3530,12 @@
     "yes": "Oui",
     "no": "Non",
     "beta": "Bêta",
+    "connector-choice": {
+      "south": "Connecteur South",
+      "north": "Connecteur North",
+      "duplicate-existing": "Dupliquer l'existant",
+      "new-settings": "Nouveaux paramètres"
+    },
     "ok": "OK",
     "save": "Enregistrer",
     "back": "Retour",

@@ -20,7 +20,6 @@ import { ModalService } from '../shared/modal.service';
 import { NotificationService } from '../shared/notification.service';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
-import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
 
 type SouthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -107,14 +106,6 @@ export class SouthListComponent {
           name: south.name
         });
       });
-  }
-
-  /**
-   * Open a modal to create a South connector
-   */
-  createSouth() {
-    const modalRef = this.modalService.open(ChooseSouthConnectorTypeModalComponent, { size: 'xl', backdrop: 'static' });
-    modalRef.result.subscribe();
   }
 
   /**
