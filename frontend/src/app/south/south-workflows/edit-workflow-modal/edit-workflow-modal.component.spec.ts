@@ -27,6 +27,7 @@ import { NotificationService } from '../../../shared/notification.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
+import { FieldProcessModalComponent } from '../field-process-modal/field-process-modal.component';
 import EditWorkflowModalComponent from './edit-workflow-modal.component';
 import { ExploreWizardOptions, WizardStep, WorkflowStep } from './explore-wizard';
 
@@ -171,6 +172,10 @@ class EditWorkflowModalComponentTester {
   readonly newEligibilityOperator = this.root.getByCss('#new-eligibility-operator');
   readonly newEligibilityValue = this.root.getByCss('#new-eligibility-value');
   readonly addEligibilityConditionButton = this.root.getByCss('#add-eligibility-condition');
+  // field processing
+  readonly fieldProcessRows = this.root.getByCss('#field-processes-table tbody tr');
+  readonly newProcessedField = this.root.getByCss('#new-processed-field');
+  readonly addFieldProcessButton = this.root.getByCss('#add-field-process');
   // item field mapping
   readonly mappingTable = this.root.getByCss('#item-field-mapping-general');
   readonly enabledSwitch = this.root.getByCss('#workflow-enabled');
@@ -466,6 +471,7 @@ describe('EditWorkflowModalComponent', () => {
         description: null,
         discoveryScope: { nodeIds: ['ns=1;s=Root'] },
         identityKeyFields: ['nodeId'],
+        fieldProcesses: [],
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id, ...withoutMaxReadInterval },
         pushToOIAnalytics: false,
@@ -1090,7 +1096,14 @@ describe('EditWorkflowModalComponent', () => {
     ];
 
     function previewResult(overrides: Partial<WorkflowPreviewResultDTO> = {}): WorkflowPreviewResultDTO {
-      return { discoveredCount: 3, eligibleCount: 2, entries: [], records, ...overrides };
+      return {
+        discoveredCount: 3,
+        eligibleCount: 2,
+        entries: [],
+        records,
+        samples: { id: ['ns=1;s=T', 'ns=1;s=P'], path: ['Reactor/Temperature', 'Reactor/Pressure'], unit: ['°C', 'bar'] },
+        ...overrides
+      };
     }
 
     test('should walk through the steps of a tree-based connector, a new workflow being saved from the last one', async () => {
@@ -1163,6 +1176,79 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.root.getByCss('#step-filter .records-table tbody tr')).toHaveLength(2);
       await expect.element(tester.root.getByCss('#record-fields option')).toHaveLength(3);
       await expect.element(tester.newEligibilityField).toHaveAttribute('list', 'record-fields');
+    });
+
+    test('should set up the processing of a field from its column, tested on its first discovered values, and discover again', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const tester = create({ mode: 'edit' });
+      await tester.goToStep('filter');
+      const fieldProcessModal = createMock(FieldProcessModalComponent);
+      modalService.mockClosedModal(fieldProcessModal, [{ type: 'uppercase' }]);
+      configurationWorkflowService.previewCommand.mockClear();
+
+      await tester.root.getByRole('button', { name: 'Set up the processing of the field unit' }).click();
+
+      expect(fieldProcessModal.initialize).toHaveBeenCalledWith(southId, 'unit', [], ['°C', 'bar']);
+      expect(configurationWorkflowService.previewCommand).toHaveBeenCalledTimes(1);
+      expect(configurationWorkflowService.previewCommand.mock.lastCall![4].fieldProcesses).toEqual([
+        { field: 'unit', operations: [{ type: 'uppercase' }] }
+      ]);
+      await expect.element(tester.fieldProcessRows).toHaveLength(1);
+      await expect.element(tester.fieldProcessRows.nth(0)).toMatchTextContent(/unit\s*Upper case/);
+      await expect
+        .element(tester.root.getByRole('button', { name: 'Set up the processing of the field unit' }))
+        .toHaveAttribute('aria-pressed', 'true');
+    });
+
+    test('should edit, add and remove the processing of fields, and save them', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      // a remote workflow: nothing else to set up before saving it
+      const workflow: ConfigurationWorkflowCommandDTO = {
+        ...existingWorkflow,
+        identityKeyFields: [],
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        fieldProcesses: [{ field: 'path', operations: [{ type: 'lowercase' }, { type: 'trim' }] }]
+      };
+      const tester = create({ mode: 'edit', workflow, existingWorkflows: [workflow] });
+      await tester.goToStep('filter');
+      await expect.element(tester.fieldProcessRows.nth(0)).toMatchTextContent(/path\s*Lower case\s*Trim spaces/);
+
+      // an edited processing keeps its place
+      const editModal = createMock(FieldProcessModalComponent);
+      modalService.mockClosedModal(editModal, [{ type: 'substring', start: 0, end: 7 }]);
+      await tester.fieldProcessRows.nth(0).getByRole('button', { name: 'Edit' }).click();
+      expect(editModal.initialize).toHaveBeenCalledWith(southId, 'path', workflow.fieldProcesses[0].operations, [
+        'Reactor/Temperature',
+        'Reactor/Pressure'
+      ]);
+
+      // a field that is not a column of the records shown, with no value discovered
+      const addModal = createMock(FieldProcessModalComponent);
+      modalService.mockClosedModal(addModal, [{ type: 'trim' }]);
+      await tester.newProcessedField.fill('description');
+      await tester.addFieldProcessButton.click();
+      expect(addModal.initialize).toHaveBeenCalledWith(southId, 'description', [], []);
+      await expect.element(tester.fieldProcessRows).toHaveLength(2);
+
+      // removing every operation stops processing the field
+      const emptyModal = createMock(FieldProcessModalComponent);
+      modalService.mockClosedModal(emptyModal, []);
+      await tester.fieldProcessRows.nth(1).getByRole('button', { name: 'Edit' }).click();
+      await expect.element(tester.fieldProcessRows).toHaveLength(1);
+
+      modalService.mockClosedModal(addModal, [{ type: 'uppercase' }]);
+      await tester.newProcessedField.fill('unit');
+      await tester.addFieldProcessButton.click();
+      await tester.fieldProcessRows.nth(1).getByRole('button', { name: 'Delete' }).click();
+      await expect.element(tester.fieldProcessRows).toHaveLength(1);
+
+      await tester.goToStep('review');
+      await expect.element(tester.root.getByCss('#review-field-processes')).toHaveTextContent('path');
+      await tester.saveButton.click();
+      expect(activeModal.close.mock.lastCall![0].fieldProcesses).toEqual([
+        { field: 'path', operations: [{ type: 'substring', start: 0, end: 7 }] }
+      ]);
     });
 
     test('should show the records, with the values of their fields, on the Items step too', async () => {

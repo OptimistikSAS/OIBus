@@ -6,6 +6,8 @@ import { Observable } from 'rxjs';
 import {
   ConfigurationWorkflowCommandDTO,
   ConfigurationWorkflowDTO,
+  FieldProcessTestCommandDTO,
+  FieldProcessTestResultDTO,
   WorkflowPreviewResultDTO
 } from '@oibus/shared/api/configuration-workflow.model';
 import { WorkflowRunDetailDTO, WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
@@ -102,6 +104,14 @@ export class ConfigurationWorkflowService {
       { southSettings, workflowId, workflow: command },
       { params: { southType }, context }
     );
+  }
+
+  /**
+   * Apply the operations of a field process to values (the first ones discovered for the field), as a run would - each
+   * value comes back processed, or with why an operation failed on it. `southId` may be `create`.
+   */
+  testFieldProcess(southId: string, command: FieldProcessTestCommandDTO): Observable<Array<FieldProcessTestResultDTO>> {
+    return this.http.post<Array<FieldProcessTestResultDTO>>(`/api/south/${southId}/test/field-process`, command);
   }
 
   /**

@@ -130,6 +130,7 @@ describe('OIAnalyticsMessageRepository', () => {
         southId: testData.south.list[0].id,
         discoveryScope: { query: 'SELECT tag_name FROM metadata_table' },
         identityKeyFields: ['tagName'],
+        fieldProcesses: [],
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,

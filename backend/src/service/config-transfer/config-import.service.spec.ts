@@ -133,6 +133,7 @@ describe('Config Import Service', () => {
     description: null,
     discoveryScope: { rootNodeId: 'ns=1;s=Root' },
     identityKeyFields: ['nodeId'],
+    fieldProcesses: [],
     eligibilityFilter: [],
     itemFieldMapping: { name: '{{name}}' },
     pushToOIAnalytics: false,

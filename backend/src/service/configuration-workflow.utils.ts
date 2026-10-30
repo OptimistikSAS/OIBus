@@ -1,8 +1,17 @@
-import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO, FieldProcessTestResultDTO } from '../../shared/model/api/configuration-workflow.model';
 import { OIBusRecord } from '../../shared/model/common/content.model';
+import {
+  FieldDatetimeOperation,
+  FieldNumberOperation,
+  FieldOperation,
+  RecordFieldValue
+} from '../../shared/model/domain/configuration-workflow.model';
 
-import { RecordFilterCondition } from '../model/configuration-workflow.model';
+import { RecordFieldProcess, RecordFilterCondition } from '../model/configuration-workflow.model';
+import type { ILogger } from '../model/logger.model';
 import { OIBusValidationError } from '../model/types';
+import { applyFieldProcess } from '../transformers/field-process';
+import { convertDateTimeToInstant, formatInstant } from './utils';
 
 /**
  * Exactly one of itemFieldMapping (local)/pushToOIAnalytics (remote) applies - never both, never neither -
@@ -25,6 +34,178 @@ export function checkWorkflowMode(command: ConfigurationWorkflowCommandDTO): voi
  *  so whatever it was sent with is discarded rather than stored as meaningless configuration. */
 export function resolveIdentityKeyFields(command: ConfigurationWorkflowCommandDTO): Array<string> {
   return command.pushToOIAnalytics ? [] : command.identityKeyFields;
+}
+
+/** How many values of each field a preview returns, for a field process to be tested on. */
+const FIELD_SAMPLE_SIZE = 5;
+
+/**
+ * Processes the fields of every discovered record through the workflow's `fieldProcesses`, before anything else reads
+ * them (the eligibility filter included). A missing field stays missing, and an empty value stays empty: there is
+ * nothing to process. Never throws: a value an operation fails on (e.g. a text for a number operation) is set to null,
+ * with a warning, rather than failing the whole run over one unexpected value.
+ */
+export function processRecords(
+  records: Array<OIBusRecord>,
+  fieldProcesses: Array<RecordFieldProcess>,
+  logger?: ILogger
+): Array<OIBusRecord> {
+  const processes = fieldProcesses.filter(process => process.operations.length > 0);
+  if (processes.length === 0) {
+    return records;
+  }
+  const warned = new Set<string>();
+  return records.map(record => {
+    const processed = { ...record };
+    for (const { field, operations } of processes) {
+      if (processed[field] === undefined || processed[field] === null) {
+        continue;
+      }
+      try {
+        processed[field] = applyFieldOperations(processed[field], operations);
+      } catch (error: unknown) {
+        processed[field] = null;
+        const message = `Field process of "${field}" failed: ${(error as Error).message}`;
+        if (logger && !warned.has(field)) {
+          warned.add(field);
+          logger.warn(`${message} - the field is set to null (later failures of this field are not logged)`);
+        }
+      }
+    }
+    return processed;
+  });
+}
+
+/** Tests the operations of a field process on values, as `processRecords` applies them - but with each failure told. */
+export function testFieldOperations(operations: Array<FieldOperation>, values: Array<RecordFieldValue>): Array<FieldProcessTestResultDTO> {
+  return values.map(value => {
+    if (value === null || value === undefined) {
+      return { value: null, result: null, error: null };
+    }
+    try {
+      return { value, result: applyFieldOperations(value, operations), error: null };
+    } catch (error: unknown) {
+      return { value, result: null, error: (error as Error).message };
+    }
+  });
+}
+
+/** The first non-empty values of each field of the discovered records - what a field process is tested on. */
+export function sampleFieldValues(records: Array<OIBusRecord>): Record<string, Array<RecordFieldValue>> {
+  const samples: Record<string, Array<RecordFieldValue>> = {};
+  for (const record of records) {
+    for (const [field, value] of Object.entries(record)) {
+      samples[field] ??= [];
+      if (value !== null && value !== undefined && samples[field].length < FIELD_SAMPLE_SIZE) {
+        samples[field].push(value);
+      }
+    }
+  }
+  return samples;
+}
+
+/** Applies the operations in order, each on the result of the previous one. Throws when one can't apply to its value. */
+function applyFieldOperations(value: RecordFieldValue, operations: Array<FieldOperation>): RecordFieldValue {
+  let result = value;
+  for (const operation of operations) {
+    if (result === null) {
+      // An expression may return null: there is nothing left to process
+      return null;
+    }
+    result = applyFieldOperation(result, operation);
+  }
+  return result;
+}
+
+function applyFieldOperation(value: string | number | boolean, operation: FieldOperation): RecordFieldValue {
+  switch (operation.type) {
+    case 'uppercase':
+      return String(value).toUpperCase();
+    case 'lowercase':
+      return String(value).toLowerCase();
+    case 'trim':
+      return String(value).trim();
+    case 'substring':
+      return String(value).slice(operation.start, operation.end ?? undefined);
+    case 'add-to-string':
+      return `${operation.prefix}${value}${operation.suffix}`;
+    case 'replace':
+      return operation.search ? String(value).replaceAll(operation.search, operation.replacement) : String(value);
+    case 'number-operation':
+      return applyNumberOperation(toNumber(value), operation);
+    case 'round': {
+      const factor = 10 ** operation.decimals;
+      return Math.round(toNumber(value) * factor) / factor;
+    }
+    case 'datetime':
+      return convertFieldDatetime(value, operation);
+    case 'expression':
+      return toRecordFieldValue(applyFieldProcess(value, operation.expression));
+  }
+}
+
+function applyNumberOperation(value: number, operation: FieldNumberOperation): number {
+  switch (operation.operator) {
+    case 'add':
+      return value + operation.operand;
+    case 'subtract':
+      return value - operation.operand;
+    case 'multiply':
+      return value * operation.operand;
+    case 'divide':
+      if (operation.operand === 0) {
+        throw new Error('division by zero');
+      }
+      return value / operation.operand;
+  }
+}
+
+/** A number, or a text holding one - anything else can't go through a number operation. */
+function toNumber(value: string | number | boolean): number {
+  const number = typeof value === 'number' ? value : typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN;
+  if (Number.isNaN(number)) {
+    throw new Error(`"${value}" is not a number`);
+  }
+  return number;
+}
+
+function convertFieldDatetime(value: string | number | boolean, operation: FieldDatetimeOperation): string | number {
+  if (typeof value === 'boolean') {
+    throw new Error(`"${value}" is not a date time`);
+  }
+  if (operation.inputType === 'string' && (!operation.inputFormat || !operation.inputTimezone)) {
+    throw new Error('the input format and timezone are required to read a date time string');
+  }
+  if (operation.outputType === 'string' && (!operation.outputFormat || !operation.outputTimezone)) {
+    throw new Error('the output format and timezone are required to write a date time string');
+  }
+  const instant = convertDateTimeToInstant(operation.inputType === 'string' ? String(value) : value, {
+    type: operation.inputType,
+    timezone: operation.inputTimezone,
+    format: operation.inputFormat,
+    locale: operation.inputLocale
+  });
+  // An unparsable ISO string or formatted string converts to no instant at all
+  if (!instant) {
+    throw new Error(`"${value}" is not a valid date time of type "${operation.inputType}"`);
+  }
+  return formatInstant(instant, {
+    type: operation.outputType,
+    timezone: operation.outputTimezone,
+    format: operation.outputFormat,
+    locale: operation.outputLocale
+  });
+}
+
+/** What an expression returns, as a value a record can hold: an object or an array as JSON text. */
+function toRecordFieldValue(value: unknown): RecordFieldValue {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  return JSON.stringify(value);
 }
 
 /**

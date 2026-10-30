@@ -3803,6 +3803,112 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldCaseOperation": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["uppercase"]},{"dataType":"enum","enums":["lowercase"]},{"dataType":"enum","enums":["trim"]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldSubstringOperation": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["substring"],"required":true},
+            "start": {"dataType":"double","required":true},
+            "end": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldAddToStringOperation": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["add-to-string"],"required":true},
+            "prefix": {"dataType":"string","required":true},
+            "suffix": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldReplaceOperation": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["replace"],"required":true},
+            "search": {"dataType":"string","required":true},
+            "replacement": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldNumberOperator": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["add"]},{"dataType":"enum","enums":["subtract"]},{"dataType":"enum","enums":["multiply"]},{"dataType":"enum","enums":["divide"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldNumberOperation": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["number-operation"],"required":true},
+            "operator": {"ref":"FieldNumberOperator","required":true},
+            "operand": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldRoundOperation": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["round"],"required":true},
+            "decimals": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldDatetimeType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldDatetimeOperation": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["datetime"],"required":true},
+            "inputType": {"ref":"FieldDatetimeType","required":true},
+            "inputTimezone": {"ref":"Timezone"},
+            "inputFormat": {"dataType":"string"},
+            "inputLocale": {"dataType":"string"},
+            "outputType": {"ref":"FieldDatetimeType","required":true},
+            "outputTimezone": {"ref":"Timezone"},
+            "outputFormat": {"dataType":"string"},
+            "outputLocale": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldExpressionOperation": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["expression"],"required":true},
+            "expression": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldOperation": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"ref":"FieldCaseOperation"},{"ref":"FieldSubstringOperation"},{"ref":"FieldAddToStringOperation"},{"ref":"FieldReplaceOperation"},{"ref":"FieldNumberOperation"},{"ref":"FieldRoundOperation"},{"ref":"FieldDatetimeOperation"},{"ref":"FieldExpressionOperation"}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RecordFieldProcess": {
+        "dataType": "refObject",
+        "properties": {
+            "field": {"dataType":"string","required":true},
+            "operations": {"dataType":"array","array":{"dataType":"refAlias","ref":"FieldOperation"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "RecordFilterOperator": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["equals"]},{"dataType":"enum","enums":["notEquals"]},{"dataType":"enum","enums":["contains"]},{"dataType":"enum","enums":["matches"]},{"dataType":"enum","enums":["exists"]},{"dataType":"enum","enums":["greaterThan"]},{"dataType":"enum","enums":["lessThan"]}],"validators":{}},
@@ -3826,6 +3932,7 @@ const models: TsoaRoute.Models = {
             "description": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "discoveryScope": {"ref":"Record_string.unknown_","required":true},
             "identityKeyFields": {"dataType":"array","array":{"dataType":"string"},"required":true},
+            "fieldProcesses": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFieldProcess"},"required":true},
             "eligibilityFilter": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFilterCondition"},"required":true},
             "itemFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
             "pushToOIAnalytics": {"dataType":"boolean","required":true},
@@ -3927,6 +4034,21 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RecordFieldValue": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"},{"dataType":"boolean"},{"dataType":"enum","enums":[null]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RecordFieldValues": {
+        "dataType": "refAlias",
+        "type": {"dataType":"array","array":{"dataType":"refAlias","ref":"RecordFieldValue"},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Record_string.RecordFieldValues_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"ref":"RecordFieldValues"},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "WorkflowPreviewResultDTO": {
         "dataType": "refObject",
         "properties": {
@@ -3934,6 +4056,7 @@ const models: TsoaRoute.Models = {
             "eligibleCount": {"dataType":"double","required":true},
             "entries": {"dataType":"array","array":{"dataType":"refObject","ref":"WorkflowPreviewEntryDTO"},"required":true},
             "records": {"dataType":"array","array":{"dataType":"refAlias","ref":"OIBusRecord"},"required":true},
+            "samples": {"ref":"Record_string.RecordFieldValues_","required":true},
         },
         "additionalProperties": false,
     },
@@ -4619,6 +4742,25 @@ const models: TsoaRoute.Models = {
             "southSettings": {"ref":"SouthSettings","required":true},
             "discoveryScope": {"ref":"Record_string.unknown_","required":true},
             "itemFieldMapping": {"ref":"Record_string.string_","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldProcessTestResultDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "value": {"ref":"RecordFieldValue","required":true},
+            "result": {"ref":"RecordFieldValue","required":true},
+            "error": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldProcessTestCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "operations": {"dataType":"array","array":{"dataType":"refAlias","ref":"FieldOperation"},"required":true},
+            "values": {"dataType":"array","array":{"dataType":"refAlias","ref":"RecordFieldValue"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -10116,6 +10258,7 @@ const models: TsoaRoute.Models = {
             "southId": {"dataType":"string","required":true},
             "discoveryScope": {"ref":"Record_string.unknown_","required":true},
             "identityKeyFields": {"dataType":"array","array":{"dataType":"string"},"required":true},
+            "fieldProcesses": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFieldProcess"},"required":true},
             "eligibilityFilter": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFilterCondition"},"required":true},
             "itemFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
             "pushToOIAnalytics": {"dataType":"boolean","required":true},
@@ -11517,6 +11660,37 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'discoverItems',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_testFieldProcess: Record<string, TsoaRoute.ParameterSchema> = {
+                _southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"FieldProcessTestCommandDTO"},
+        };
+        app.post('/api/south/:southId/test/field-process',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.testFieldProcess)),
+
+            async function SouthConnectorController_testFieldProcess(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_testFieldProcess, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'testFieldProcess',
                 controller,
                 response,
                 next,

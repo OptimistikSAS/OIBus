@@ -1,6 +1,13 @@
 import { OIBusRecord } from '../common/content.model';
 import { BaseEntity } from '../common/types';
-import { RecordFilterCondition, WorkflowPreviewEntryStatus } from '../domain/configuration-workflow.model';
+import {
+  FieldOperation,
+  RecordFieldProcess,
+  RecordFieldValue,
+  RecordFieldValues,
+  RecordFilterCondition,
+  WorkflowPreviewEntryStatus
+} from '../domain/configuration-workflow.model';
 import { ScanModeDTO } from './scan-mode.model';
 
 /**
@@ -45,6 +52,12 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
    * @example ["nodeId"]
    */
   identityKeyFields: Array<string>;
+
+  /**
+   * How fields of every discovered record are processed (upper case, substring, date time conversion...) before the
+   * eligibility filter - empty means the records are kept as discovered.
+   */
+  fieldProcesses: Array<RecordFieldProcess>;
 
   /** Conditions a discovered record must all satisfy to be eligible for action — empty means every record is eligible. */
   eligibilityFilter: Array<RecordFilterCondition>;
@@ -92,6 +105,7 @@ export interface ConfigurationWorkflowCommandDTO {
    * @example ["nodeId"]
    */
   identityKeyFields: Array<string>;
+  fieldProcesses: Array<RecordFieldProcess>;
   eligibilityFilter: Array<RecordFilterCondition>;
   itemFieldMapping: Record<string, string> | null;
   pushToOIAnalytics: boolean;
@@ -130,7 +144,29 @@ export interface WorkflowPreviewResultDTO {
   /** Local (item-creating) workflow only - the per-entry new/changed/unchanged/missing classification
    *  against the previous run. Empty for a remote workflow. */
   entries: Array<WorkflowPreviewEntryDTO>;
-  /** Remote (push-to-OIAnalytics) workflow only - the raw eligible records that would be sent, exactly
-   *  as discovered, with no mapping or diffing applied. Empty for a local workflow. */
+  /** Remote (push-to-OIAnalytics) workflow only - the eligible records that would be sent, as processed by the
+   *  field processes, with no mapping or diffing applied. Empty for a local workflow. */
   records: Array<OIBusRecord>;
+  /**
+   * The first values of each field of the discovered records, as discovered - before the field processes and the
+   * eligibility filter: what a field process is tested on.
+   * @example { "path": ["Plant/Reactor/Temperature", "Plant/Reactor/Pressure"] }
+   */
+  samples: Record<string, RecordFieldValues>;
+}
+
+/** The values to test the operations of a field process on. */
+export interface FieldProcessTestCommandDTO {
+  operations: Array<FieldOperation>;
+  values: Array<RecordFieldValue>;
+}
+
+/** One value tested through the operations of a field process. */
+export interface FieldProcessTestResultDTO {
+  /** The value as discovered */
+  value: RecordFieldValue;
+  /** The processed value - null when an operation failed */
+  result: RecordFieldValue;
+  /** Why an operation failed on the value, null when none did */
+  error: string | null;
 }

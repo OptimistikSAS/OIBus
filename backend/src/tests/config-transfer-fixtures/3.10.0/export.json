@@ -351,6 +351,12 @@
                 "rootNodeId": "ns=1;s=Root"
               },
               "identityKeyFields": ["nodeId"],
+              "fieldProcesses": [
+                {
+                  "field": "name",
+                  "operations": [{ "type": "lowercase" }, { "type": "add-to-string", "prefix": "plant1.", "suffix": "" }]
+                }
+              ],
               "eligibilityFilter": [
                 {
                   "field": "type",
@@ -480,6 +486,7 @@
                 "query": "SELECT tag_name, unit FROM tags"
               },
               "identityKeyFields": [],
+              "fieldProcesses": [],
               "eligibilityFilter": [],
               "itemFieldMapping": null,
               "pushToOIAnalytics": true,

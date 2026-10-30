@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output, signal } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
@@ -12,7 +12,8 @@ const FIELD_SAMPLE_SIZE = 100;
 
 /**
  * The records a workflow discovers, with the values of their fields, one page at a time and searchable - in memory, over the
- * values of every field. The columns are the fields of the records.
+ * values of every field. The columns are the fields of the records: when `processable`, each has a button to set up how
+ * the field is processed.
  */
 @Component({
   selector: 'oib-workflow-records-preview',
@@ -24,6 +25,12 @@ const FIELD_SAMPLE_SIZE = 100;
 export class WorkflowRecordsPreviewComponent {
   readonly records = input.required<ReadonlyArray<OIBusRecord>>();
   readonly pageSize = input(10);
+  /** Whether the columns have a button to set up the processing of their field */
+  readonly processable = input(false);
+  /** The fields that are processed, whose button is highlighted */
+  readonly processedFields = input<ReadonlyArray<string>>([]);
+  /** The field whose processing is to set up */
+  readonly processField = output<string>();
 
   readonly search = signal('');
   readonly fields = computed(() =>

@@ -35,6 +35,7 @@ const baseWorkflow: ConfigurationWorkflowEntity = {
   southId: SOUTH_ID,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
+  fieldProcesses: [],
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
   itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
   pushToOIAnalytics: false,
@@ -478,6 +479,7 @@ describe('Configuration Workflow Run Service', () => {
     const remoteWorkflow: ConfigurationWorkflowEntity = {
       ...baseWorkflow,
       identityKeyFields: [],
+      fieldProcesses: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true
     };
@@ -722,6 +724,7 @@ describe('Configuration Workflow Run Service', () => {
       description: null,
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
+      fieldProcesses: [],
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}' },
       pushToOIAnalytics: false,
@@ -752,9 +755,46 @@ describe('Configuration Workflow Run Service', () => {
             previousMetadata: null
           }
         ],
-        records: []
+        records: [],
+        samples: {
+          nodeId: ['ns=1;s=Temperature', 'ns=1;s=Folder'],
+          name: ['Temperature', 'Folder'],
+          type: ['Variable', 'Object']
+        }
       });
       assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
+    });
+
+    it('should process the fields before filtering and identifying the records, sampling them as discovered', async () => {
+      southService.discover.mock.mockImplementation(async () => [
+        { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'variable' },
+        { nodeId: 'ns=1;s=Folder', name: 'Folder', type: 'object' }
+      ]);
+
+      const result = await service.previewCommand('create', 'opcua', southSettings, null, {
+        ...command,
+        fieldProcesses: [
+          {
+            field: 'type',
+            operations: [
+              { type: 'substring', start: 0, end: 1 },
+              { type: 'uppercase' },
+              { type: 'add-to-string', prefix: '', suffix: 'ariable' }
+            ]
+          },
+          { field: 'nodeId', operations: [{ type: 'replace', search: 'ns=1;s=', replacement: '' }] }
+        ]
+      });
+
+      assert.deepStrictEqual(result.entries, [
+        {
+          key: 'nodeId=Temperature',
+          status: 'new',
+          record: { nodeId: 'Temperature', name: 'Temperature', type: 'Variable' },
+          previousMetadata: null
+        }
+      ]);
+      assert.deepStrictEqual(result.samples.type, ['variable', 'object']);
     });
 
     it('should check ownership and classify against the previous run of the saved workflow being edited', async () => {
@@ -794,7 +834,8 @@ describe('Configuration Workflow Run Service', () => {
         discoveredCount: 1,
         eligibleCount: 1,
         entries: [],
-        records: [{ nodeId: 'ns=1;s=Temperature', type: 'Variable' }]
+        records: [{ nodeId: 'ns=1;s=Temperature', type: 'Variable' }],
+        samples: { nodeId: ['ns=1;s=Temperature'], type: ['Variable'] }
       });
     });
 
