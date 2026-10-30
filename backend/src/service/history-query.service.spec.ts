@@ -524,7 +524,8 @@ describe('History Query service', () => {
       testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings
+      testData.south.itemTestingSettings,
+      undefined
     ]);
   });
 
@@ -545,7 +546,8 @@ describe('History Query service', () => {
       testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
-      testData.south.itemTestingSettings
+      testData.south.itemTestingSettings,
+      undefined
     ]);
   });
 
@@ -561,6 +563,8 @@ describe('History Query service', () => {
     );
 
     assert.strictEqual(southService.testItem.mock.calls.length, 1);
+    // the history query is the connector the item is tested for
+    assert.strictEqual(southService.testItem.mock.calls[0].arguments[6], testData.historyQueries.list[0].name);
   });
 
   it('should list items', async () => {

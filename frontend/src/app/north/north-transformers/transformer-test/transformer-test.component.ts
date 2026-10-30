@@ -2,7 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal, viewChild } from '@angular/core';
 import { rxResource, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
@@ -128,7 +128,7 @@ export class NorthTransformerTestComponent {
   readonly form = this.fb.group({
     inputSource: this.fb.control<'paste' | 'item'>('item'),
     inputData: this.fb.control<string>(''),
-    item: this.fb.control<TestItem | null>(null),
+    item: this.fb.control<TestItem | null>(null, Validators.required),
     // No initial value here: <oib-date-range-selector> seeds itself from its `defaultRange` input
     // (last 10 minutes) and pushes the computed value up as soon as it initializes.
     dateRange: this.fb.control<DateRange | null>(null)
@@ -185,6 +185,9 @@ export class NorthTransformerTestComponent {
   /** Whether the latest test ran an item, which connects to the source and queries it */
   readonly testedOnItem = signal(false);
 
+  /** A test on an item needs one to be selected, as a test on pasted data needs no item */
+  readonly canRunTest = computed(() => this.inputSource() === 'paste' || !!this.item());
+
   /** One-line recap of the current input settings, shown on the collapsed summary chip. */
   readonly settingsSummary = computed(() => {
     if (this.inputSource() === 'paste') {
@@ -207,7 +210,7 @@ export class NorthTransformerTestComponent {
 
   runTest() {
     const transformer = this.transformer();
-    if (!transformer) {
+    if (!transformer || !this.canRunTest()) {
       return;
     }
     const request = this.buildRequest(transformer);

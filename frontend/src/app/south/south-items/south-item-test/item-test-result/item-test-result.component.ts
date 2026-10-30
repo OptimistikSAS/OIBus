@@ -29,6 +29,20 @@ export type ContentDisplayMode = 'table' | 'raw' | 'json';
 
 const PAGE_SIZE = 10;
 
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const cellToString = (value: unknown): string => (value == null ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value));
+
+/** The JSON of a file content, undefined if it is not a JSON text */
+function parseJson(content: string | undefined): { value: unknown } | undefined {
+  if (!content) return undefined;
+  try {
+    return { value: JSON.parse(content) };
+  } catch {
+    return undefined;
+  }
+}
+
 function emptyPage<T>(): Page<T> {
   return { content: [], totalElements: 0, totalPages: 0, size: PAGE_SIZE, number: 0 };
 }
@@ -71,16 +85,23 @@ export class ItemTestResultComponent {
   private languageCompartment: Compartment | null = null;
   private currentWriteId = 0;
 
-  private readonly isRawJson = computed(() => {
-    if (this.displayMode() !== 'raw') return false;
+  /** The JSON of a file content, shown in the JSON view (formatted) and the table view (a JSON array of objects) */
+  private readonly fileJson = computed(() => {
     const content = this._result();
-    if (!content || content.type !== 'file') return false;
-    try {
-      JSON.parse(content.content || '');
-      return true;
-    } catch {
-      return false;
-    }
+    return content?.type === 'file' ? parseJson(content.content) : undefined;
+  });
+
+  /** A JSON array of objects (or an empty array), shown as a table: one row per object, one column per key */
+  /** The name of the file shown: its logical filename, else the last segment of its path */
+  readonly fileName = computed(() => {
+    const content = this._result();
+    if (content?.type !== 'file') return null;
+    return content.filename ?? content.filePath?.split(/[\\/]/).pop() ?? null;
+  });
+
+  private readonly isJsonTable = computed(() => {
+    const json = this.fileJson()?.value;
+    return Array.isArray(json) && json.length > 0 && json.every(isRecord);
   });
 
   constructor() {
@@ -203,6 +224,14 @@ export class ItemTestResultComponent {
           this.genericTableView.set(emptyPage());
           break;
         }
+        if (this.isJsonTable()) {
+          const records = this.fileJson()!.value as Array<Record<string, unknown>>;
+          const headers = [...new Set(records.flatMap(record => Object.keys(record)))];
+          this.headers.set(headers);
+          const rows = records.map(record => headers.map(header => cellToString(record[header])));
+          this.genericTableView.set(createPageFromArray(rows, PAGE_SIZE, pageNumber));
+          break;
+        }
         const rows = Papa.parse<Array<string>>(contentString).data;
         this.headers.set(rows.shift()!);
         this.genericTableView.set(createPageFromArray(rows, PAGE_SIZE, pageNumber));
@@ -212,7 +241,7 @@ export class ItemTestResultComponent {
         // The records may not all have the same fields (e.g. a point record with or without quality)
         const headers = [...new Set(content.content.flatMap(record => Object.keys(record)))];
         this.headers.set(headers);
-        const rows = content.content.map(record => headers.map(header => (record[header] == null ? '' : String(record[header]))));
+        const rows = content.content.map(record => headers.map(header => cellToString(record[header])));
         this.genericTableView.set(createPageFromArray(rows, PAGE_SIZE, pageNumber));
         break;
       }
@@ -224,8 +253,14 @@ export class ItemTestResultComponent {
 
     switch (content.type) {
       case 'file':
+        // The first mode is the default one: the table (CSV, or JSON array of objects), then the JSON, then the raw content
         if ((content.filename ?? content.filePath)?.endsWith('.csv') && content.content) {
           modes.add('table');
+        } else if (this.isJsonTable()) {
+          modes.add('table');
+        }
+        if (typeof this.fileJson()?.value === 'object' && this.fileJson()!.value !== null) {
+          modes.add('json');
         }
         modes.add('raw');
         break;
@@ -244,7 +279,7 @@ export class ItemTestResultComponent {
   }
 
   private getLanguageExtension({ json }: CodeMirror) {
-    return this.displayMode() === 'json' || this.isRawJson() ? json() : [];
+    return this.displayMode() === 'json' ? json() : [];
   }
 
   private getDisplayContent(content: OIBusContent): string {
@@ -252,8 +287,9 @@ export class ItemTestResultComponent {
       return JSON.stringify(content.content, null, 2);
     }
     if (content.type === 'file') {
-      if (this.isRawJson()) {
-        return JSON.stringify(JSON.parse(content.content!), null, 2);
+      // The JSON view formats the JSON, the raw view shows the content as it is
+      if (this.displayMode() === 'json' && this.fileJson()) {
+        return JSON.stringify(this.fileJson()!.value, null, 2);
       }
       return content.content || '';
     }
