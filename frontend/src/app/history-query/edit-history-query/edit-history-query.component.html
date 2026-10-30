@@ -394,7 +394,7 @@
                   <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 py-2" id="review-errors" role="alert">
                     <span class="fa-solid fa-circle-exclamation" aria-hidden="true"></span>
                     <span translate="history-query.steps.review-errors"></span>
-                    @for (step of steps.withErrors(); track step) {
+                    @for (step of steps.withErrors(); track $index) {
                       <button
                         type="button"
                         class="btn btn-sm btn-outline-danger"

@@ -41,6 +41,7 @@
             class="form-control form-control-sm discovered-item-name"
             [class.is-invalid]="nameErrors()[index]"
             [ngModel]="row.name"
+            [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="setName(index, $event)"
             [attr.aria-label]="'south.add-discovered-items.name' | translate"
           />

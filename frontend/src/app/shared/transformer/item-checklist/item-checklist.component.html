@@ -6,9 +6,15 @@
       [placeholder]="'configuration.oibus.manifest.transformers.search-items' | translate"
       [attr.aria-label]="'configuration.oibus.manifest.transformers.search-items' | translate"
       [(ngModel)]="searchText"
+      [ngModelOptions]="{ standalone: true }"
     />
     @if (groups().length) {
-      <select class="form-select form-select-sm w-auto" [attr.aria-label]="'south.items.group' | translate" [(ngModel)]="groupFilter">
+      <select
+        class="form-select form-select-sm w-auto"
+        [attr.aria-label]="'south.items.group' | translate"
+        [(ngModel)]="groupFilter"
+        [ngModelOptions]="{ standalone: true }"
+      >
         <option [ngValue]="null" translate="south.items.all-groups"></option>
         <option ngValue="none" translate="south.items.group-none"></option>
         @for (group of groups(); track group.id) {
@@ -16,13 +22,23 @@
         }
       </select>
     }
-    <select class="form-select form-select-sm w-auto" [attr.aria-label]="'south.items.scan-mode' | translate" [(ngModel)]="scanModeFilter">
+    <select
+      class="form-select form-select-sm w-auto"
+      [attr.aria-label]="'south.items.scan-mode' | translate"
+      [(ngModel)]="scanModeFilter"
+      [ngModelOptions]="{ standalone: true }"
+    >
       <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
       @for (scanMode of scanModes(); track scanMode.id) {
         <option [ngValue]="scanMode.id">{{ scanMode.name }}</option>
       }
     </select>
-    <select class="form-select form-select-sm w-auto" [attr.aria-label]="'south.items.status' | translate" [(ngModel)]="statusFilter">
+    <select
+      class="form-select form-select-sm w-auto"
+      [attr.aria-label]="'south.items.status' | translate"
+      [(ngModel)]="statusFilter"
+      [ngModelOptions]="{ standalone: true }"
+    >
       <option [ngValue]="null" translate="south.items.all-statuses"></option>
       <option ngValue="enabled" translate="south.items.enabled-label"></option>
       <option ngValue="disabled" translate="south.items.disabled-label"></option>
@@ -42,7 +58,14 @@
     />
     <span class="small selection-count">{{ countKey() | translate: { count: selection().length, total: items().length } }}</span>
     <div class="form-check form-switch mb-0 ms-auto">
-      <input class="form-check-input" type="checkbox" role="switch" id="selected-only" [(ngModel)]="selectedOnly" />
+      <input
+        class="form-check-input"
+        type="checkbox"
+        role="switch"
+        id="selected-only"
+        [(ngModel)]="selectedOnly"
+        [ngModelOptions]="{ standalone: true }"
+      />
       <label class="form-check-label small" for="selected-only" translate="configuration.oibus.manifest.transformers.selected-only"></label>
     </div>
     @if (selection().length) {
