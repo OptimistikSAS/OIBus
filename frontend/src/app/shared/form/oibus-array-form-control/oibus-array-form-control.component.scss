@@ -10,3 +10,48 @@
 .table-fixed {
   table-layout: fixed;
 }
+
+// An array in the sections layout: a frame holding its title, its actions and its elements, set apart from the fields around it
+.array-group {
+  margin: 0.75rem 0 1rem;
+  border: 1px solid $mediumGrey;
+  border-radius: 0.75rem;
+
+  .table {
+    margin-bottom: 0;
+
+    th:first-child,
+    td:first-child {
+      padding-left: 0.75rem;
+    }
+
+    // lighter than the title of the array, which they come under
+    th {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: $new-link-color;
+    }
+  }
+}
+
+.array-group-empty {
+  padding: 0.5rem 0.75rem;
+}
+
+.array-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: $veryLightGrey;
+  border-bottom: 1px solid $mediumGrey;
+  // the frame does not clip its content, which would hide the menu of the actions
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.array-group-title {
+  margin-right: auto;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: $darkGrey;
+}

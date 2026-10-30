@@ -14,7 +14,8 @@
           "edit": "编辑元素",
           "copy": "复制元素",
           "delete": "删除元素"
-        }
+        },
+        "more-actions": "更多元素操作"
       },
       "manifest": {
         "north": {
