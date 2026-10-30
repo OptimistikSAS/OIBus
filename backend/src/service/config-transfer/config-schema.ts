@@ -1,6 +1,11 @@
 import Joi from 'joi';
 
-import { RECORD_FILTER_OPERATORS } from '../../../shared/model/domain/configuration-workflow.model';
+import {
+  FIELD_DATETIME_TYPES,
+  FIELD_NUMBER_OPERATORS,
+  FIELD_OPERATION_TYPES,
+  RECORD_FILTER_OPERATORS
+} from '../../../shared/model/domain/configuration-workflow.model';
 import { HISTORY_QUERY_STATUS } from '../../../shared/model/domain/history-query.model';
 
 import {
@@ -140,6 +145,52 @@ const southGroupEntry = Joi.object({
   }).required()
 });
 
+const datetimeTypes = Joi.string()
+  .valid(...FIELD_DATETIME_TYPES)
+  .required();
+
+/** One operation of a workflow field process - its settings depend on its type. */
+const fieldOperation = Joi.object({
+  type: Joi.string()
+    .valid(...FIELD_OPERATION_TYPES)
+    .required()
+})
+  .when(Joi.object({ type: 'substring' }).unknown(), {
+    then: Joi.object({ start: Joi.number().integer().required(), end: Joi.number().integer().allow(null).required() })
+  })
+  .when(Joi.object({ type: 'add-to-string' }).unknown(), {
+    then: Joi.object({ prefix: Joi.string().allow('').required(), suffix: Joi.string().allow('').required() })
+  })
+  .when(Joi.object({ type: 'replace' }).unknown(), {
+    then: Joi.object({ search: Joi.string().allow('').required(), replacement: Joi.string().allow('').required() })
+  })
+  .when(Joi.object({ type: 'number-operation' }).unknown(), {
+    then: Joi.object({
+      operator: Joi.string()
+        .valid(...FIELD_NUMBER_OPERATORS)
+        .required(),
+      operand: Joi.number().required()
+    })
+  })
+  .when(Joi.object({ type: 'round' }).unknown(), {
+    then: Joi.object({ decimals: Joi.number().integer().min(0).required() })
+  })
+  .when(Joi.object({ type: 'datetime' }).unknown(), {
+    then: Joi.object({
+      inputType: datetimeTypes,
+      inputTimezone: Joi.string(),
+      inputFormat: Joi.string(),
+      inputLocale: Joi.string(),
+      outputType: datetimeTypes,
+      outputTimezone: Joi.string(),
+      outputFormat: Joi.string(),
+      outputLocale: Joi.string()
+    })
+  })
+  .when(Joi.object({ type: 'expression' }).unknown(), {
+    then: Joi.object({ expression: Joi.string().required() })
+  });
+
 /**
  * Same rules `ConfigurationWorkflowService` enforces on create/update: a workflow is either local
  * (`itemFieldMapping` set, at least one identity key field) or remote (`pushToOIAnalytics`), never both
@@ -151,6 +202,9 @@ const configurationWorkflowEntry = Joi.object({
   description: Joi.string().allow(null, ''),
   discoveryScope: Joi.object().required(),
   identityKeyFields: Joi.array().items(Joi.string()).required(),
+  fieldProcesses: Joi.array()
+    .items(Joi.object({ field: Joi.string().required(), operations: Joi.array().items(fieldOperation).required() }))
+    .required(),
   eligibilityFilter: Joi.array()
     .items(
       Joi.object({

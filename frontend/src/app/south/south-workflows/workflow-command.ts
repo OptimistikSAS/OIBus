@@ -12,6 +12,7 @@ export function toConfigurationWorkflowCommand(workflow: ConfigurationWorkflowDT
     description: workflow.description,
     discoveryScope: workflow.discoveryScope,
     identityKeyFields: workflow.identityKeyFields,
+    fieldProcesses: workflow.fieldProcesses,
     eligibilityFilter: workflow.eligibilityFilter,
     itemFieldMapping: workflow.itemFieldMapping,
     pushToOIAnalytics: workflow.pushToOIAnalytics,

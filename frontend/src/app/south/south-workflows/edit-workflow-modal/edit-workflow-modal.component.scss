@@ -14,10 +14,12 @@
 }
 
 // Same global `.btn-link` white-on-white gotcha as #clear-root-node above - these icon-only actions
-// sit in the eligibility filter table, on the same white modal body.
+// sit in the eligibility filter and field processing tables, on the same white modal body.
 .edit-eligibility-condition,
 .remove-eligibility-condition,
-.cancel-eligibility-condition {
+.cancel-eligibility-condition,
+.edit-field-process,
+.remove-field-process {
   color: $darkGrey;
 
   &:hover,

@@ -22,7 +22,21 @@
       <thead>
         <tr>
           @for (field of fields(); track field) {
-            <th>{{ field }}</th>
+            <th>
+              {{ field }}
+              @if (processable()) {
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm p-0 ms-1 process-field"
+                  [class.text-muted]="!processedFields().includes(field)"
+                  [attr.aria-label]="'south.workflows.field-process.open' | translate: { field }"
+                  [attr.aria-pressed]="processedFields().includes(field)"
+                  (click)="processField.emit(field)"
+                >
+                  <span class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></span>
+                </button>
+              }
+            </th>
           }
         </tr>
       </thead>

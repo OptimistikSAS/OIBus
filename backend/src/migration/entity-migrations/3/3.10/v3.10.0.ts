@@ -542,7 +542,7 @@ export async function addConfigurationWorkflows(knex: Knex): Promise<void> {
   // built from) — there's no "targets one pre-existing item" case: local mode only ever creates/updates its own items,
   // and remote mode has no local item at all.
   //
-  // `discovery_scope`, `identity_key_fields`, `eligibility_filter` and `item_field_mapping` are stored as JSON text
+  // `discovery_scope`, `identity_key_fields`, `field_processes`, `eligibility_filter` and `item_field_mapping` are stored as JSON text
   // rather than normalized columns: they're connector-specific and open-ended (an OPC-UA root node id, a folder subtree,
   // a dedicated SQL metadata query, ...), the same way `south_items.settings` already stores connector-specific item
   // configuration as JSON.
@@ -561,6 +561,7 @@ export async function addConfigurationWorkflows(knex: Knex): Promise<void> {
     table.string('south_id', 36).notNullable().references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('CASCADE');
     table.text('discovery_scope').notNullable();
     table.text('identity_key_fields').notNullable();
+    table.text('field_processes').notNullable().defaultTo('[]');
     table.text('eligibility_filter').notNullable();
     table.text('item_field_mapping').nullable();
     table.boolean('push_to_oi_analytics').notNullable().defaultTo(false);

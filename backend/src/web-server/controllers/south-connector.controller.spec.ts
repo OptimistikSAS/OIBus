@@ -374,6 +374,7 @@ describe('SouthConnectorController', () => {
         description: null,
         discoveryScope: {},
         identityKeyFields: [],
+        fieldProcesses: [],
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
@@ -381,7 +382,13 @@ describe('SouthConnectorController', () => {
         enabled: true
       }
     };
-    const previewResult = { discoveredCount: 1, eligibleCount: 1, entries: [], records: [{ name: 'sensor1' }] };
+    const previewResult = {
+      discoveredCount: 1,
+      eligibleCount: 1,
+      entries: [],
+      records: [{ name: 'sensor1' }],
+      samples: { name: ['sensor1'] }
+    };
     configurationWorkflowRunService.previewCommand.mock.mockImplementation(async () => previewResult);
 
     const result = await controller.testWorkflowPreview(
@@ -399,6 +406,19 @@ describe('SouthConnectorController', () => {
       requestBody.workflow
     ]);
     assert.deepStrictEqual(result, previewResult);
+  });
+
+  it('should test a field process on values', () => {
+    const result = controller.testFieldProcess('create', {
+      operations: [{ type: 'number-operation', operator: 'multiply', operand: 10 }],
+      values: ['1.5', 'abc', null]
+    });
+
+    assert.deepStrictEqual(result, [
+      { value: '1.5', result: 15, error: null },
+      { value: 'abc', result: null, error: '"abc" is not a number' },
+      { value: null, result: null, error: null }
+    ]);
   });
 
   it('should map what a discovery scope finds to new items', async () => {

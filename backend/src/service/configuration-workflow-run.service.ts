@@ -9,11 +9,12 @@ import { Page } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
-import { WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
+import { RecordFieldValue, WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
+import type { ILogger } from '../model/logger.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { WorkflowRunCounts, WorkflowRunEntity, WorkflowRunSearchParam, WorkflowRunTriggerType } from '../model/workflow-run.model';
@@ -25,8 +26,10 @@ import {
   checkWorkflowMode,
   computeIdentityKey,
   isEligible,
+  processRecords,
   resolveFieldMapping,
-  resolveIdentityKeyFields
+  resolveIdentityKeyFields,
+  sampleFieldValues
 } from './configuration-workflow.utils';
 import { OIBusConfigurationWorkflowResultCommandDTO } from './oia/oianalytics.model';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
@@ -236,11 +239,10 @@ export default class ConfigurationWorkflowRunService {
       this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
     }
     const records = await this.southService.discover(southId, southType, southSettings, command.discoveryScope);
-    const eligible = records.filter(record => isEligible(record, command.eligibilityFilter));
     return this.classifyForPreview(
       { pushToOIAnalytics: command.pushToOIAnalytics, identityKeyFields: resolveIdentityKeyFields(command) },
       workflowId,
-      { eligible, discoveredCount: records.length }
+      decide(records, command)
     );
   }
 
@@ -281,14 +283,15 @@ export default class ConfigurationWorkflowRunService {
   private classifyForPreview(
     workflow: Pick<ConfigurationWorkflowEntity, 'pushToOIAnalytics' | 'identityKeyFields'>,
     workflowId: string | null,
-    retrieved: { eligible: Array<OIBusRecord>; discoveredCount: number }
+    retrieved: RetrievedRecords
   ): WorkflowPreviewResultDTO {
     if (workflow.pushToOIAnalytics) {
       return {
         discoveredCount: retrieved.discoveredCount,
         eligibleCount: retrieved.eligible.length,
         entries: [],
-        records: retrieved.eligible
+        records: retrieved.eligible,
+        samples: retrieved.samples
       };
     }
 
@@ -309,7 +312,13 @@ export default class ConfigurationWorkflowRunService {
       entries.push({ key: point.discoveredEntryKey, status: 'missing', record: null, previousMetadata: point.discoveredMetadata });
     }
 
-    return { discoveredCount: retrieved.discoveredCount, eligibleCount: eligibleByKey.size, entries, records: [] };
+    return {
+      discoveredCount: retrieved.discoveredCount,
+      eligibleCount: eligibleByKey.size,
+      entries,
+      records: [],
+      samples: retrieved.samples
+    };
   }
 
   findRuns(southId: string, workflowId: string, searchParams: WorkflowRunSearchParam): Page<WorkflowRunEntity> {
@@ -331,11 +340,8 @@ export default class ConfigurationWorkflowRunService {
     return run;
   }
 
-  /** Trigger + Retrieve + Decide's eligibility filter - shared by `runNow`, `preview` and remote Act. */
-  private async retrieve(
-    southId: string,
-    workflow: ConfigurationWorkflowEntity
-  ): Promise<{ eligible: Array<OIBusRecord>; discoveredCount: number }> {
+  /** Trigger + Retrieve + Decide's field processes and eligibility filter - shared by `runNow`, `preview` and remote Act. */
+  private async retrieve(southId: string, workflow: ConfigurationWorkflowEntity): Promise<RetrievedRecords> {
     if (!this.engine.hasSouth(southId)) {
       throw new OIBusValidationError(`South connector "${southId}" is not running - start it before running a workflow`);
     }
@@ -345,8 +351,7 @@ export default class ConfigurationWorkflowRunService {
     }
 
     const records = await south.discover(workflow.discoveryScope);
-    const eligible = records.filter(record => isEligible(record, workflow.eligibilityFilter));
-    return { eligible, discoveredCount: records.length };
+    return decide(records, workflow, this.engine.logger);
   }
 
   /**
@@ -653,6 +658,27 @@ function toNumberOrNull(value: unknown): number | null {
   }
   const numericValue = Number(value);
   return Number.isNaN(numericValue) ? null : numericValue;
+}
+
+/** The records a run or a preview acts on, out of what was discovered. */
+interface RetrievedRecords {
+  /** The processed records the eligibility filter keeps */
+  eligible: Array<OIBusRecord>;
+  discoveredCount: number;
+  /** The first values of each field, as discovered: what a field process is tested on */
+  samples: Record<string, Array<RecordFieldValue>>;
+}
+
+/** Decide's first part: the discovered records are processed, then filtered on their processed values. */
+function decide(
+  records: Array<OIBusRecord>,
+  workflow: Pick<ConfigurationWorkflowEntity, 'fieldProcesses' | 'eligibilityFilter'>,
+  logger?: ILogger
+): RetrievedRecords {
+  const eligible = processRecords(records, workflow.fieldProcesses, logger).filter(record =>
+    isEligible(record, workflow.eligibilityFilter)
+  );
+  return { eligible, discoveredCount: records.length, samples: sampleFieldValues(records) };
 }
 
 /**

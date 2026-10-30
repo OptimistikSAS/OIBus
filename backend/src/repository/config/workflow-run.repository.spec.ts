@@ -36,6 +36,7 @@ describe('Workflow Run Repository', () => {
         southId: testData.south.list[0].id,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],
+        fieldProcesses: [],
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}' },
         pushToOIAnalytics: false,

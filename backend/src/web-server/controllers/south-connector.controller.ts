@@ -17,7 +17,12 @@ import {
   UploadedFile
 } from 'tsoa';
 
-import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../shared/model/api/configuration-workflow.model';
+import {
+  ConfigurationWorkflowCommandDTO,
+  FieldProcessTestCommandDTO,
+  FieldProcessTestResultDTO,
+  WorkflowPreviewResultDTO
+} from '../../../shared/model/api/configuration-workflow.model';
 import {
   SouthConnectorCommandBodyDTO,
   SouthConnectorCommandDTO,
@@ -41,6 +46,7 @@ import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../share
 import { SouthConnectorItemSearchParam, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
+import { testFieldOperations } from '../../service/configuration-workflow.utils';
 import SouthService, {
   toSouthConnectorDTO,
   toSouthConnectorItemDTO,
@@ -387,6 +393,18 @@ export class SouthConnectorController extends Controller {
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
+  }
+
+  /**
+   * Applies the operations of a Configuration Workflow field process to values (e.g. the first ones discovered for the
+   * field), as a run would before its eligibility filter, telling why an operation fails on a value. Nothing is saved.
+   * @summary Test a field process
+   * @param southId The south connector id, or "create" for a connector not created yet - the operations don't depend on it
+   * @returns {Array<FieldProcessTestResultDTO>} Each value, processed
+   */
+  @Post('/{southId}/test/field-process')
+  testFieldProcess(@Path('southId') _southId: string, @Body() command: FieldProcessTestCommandDTO): Array<FieldProcessTestResultDTO> {
+    return testFieldOperations(command.operations, command.values);
   }
 
   /**

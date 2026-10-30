@@ -37,6 +37,7 @@ const workflowEntity: ConfigurationWorkflowEntity = {
   southId: SOUTH_ID,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
+  fieldProcesses: [],
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
   pushToOIAnalytics: false,
@@ -54,6 +55,7 @@ const command: ConfigurationWorkflowCommandDTO = {
   description: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
+  fieldProcesses: [],
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
   pushToOIAnalytics: false,
@@ -198,7 +200,8 @@ describe('ConfigurationWorkflowController', () => {
         discoveredCount: 2,
         eligibleCount: 1,
         entries: [{ key: 'nodeId=x', status: 'new', record: { nodeId: 'x' }, previousMetadata: null }],
-        records: []
+        records: [],
+        samples: { nodeId: ['x'] }
       };
       configurationWorkflowRunService.preview.mock.mockImplementation(async () => previewResult);
 

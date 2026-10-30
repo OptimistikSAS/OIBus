@@ -17,6 +17,7 @@ class WorkflowRecordsPreviewComponentTester {
   readonly headers = this.root.getByCss('thead th');
   readonly rows = this.root.getByCss('tbody tr');
   readonly pagination = this.root.getByCss('oib-pagination');
+  readonly processButtons = this.root.getByCss('.process-field');
 
   show(records: Array<OIBusRecord>, pageSize?: number) {
     this.fixture.componentRef.setInput('records', records);
@@ -52,6 +53,26 @@ describe('WorkflowRecordsPreviewComponent', () => {
     await expect.element(tester.rows.nth(1)).toMatchTextContent('Plant/Boiler/Sensor1');
     await expect.element(tester.count).toHaveTextContent('Records shown: 3 of 3');
     await expect.element(tester.pagination).not.toBeInTheDocument();
+  });
+
+  test('should only have buttons to process the fields when the records are processable, highlighting the processed ones', async () => {
+    tester.show(sensors(3));
+    await expect.element(tester.processButtons).not.toBeInTheDocument();
+
+    tester.fixture.componentRef.setInput('processable', true);
+    tester.fixture.componentRef.setInput('processedFields', ['unit']);
+    const processed: Array<string> = [];
+    tester.fixture.componentInstance.processField.subscribe(field => processed.push(field));
+
+    await expect.element(tester.processButtons).toHaveLength(3);
+    await expect
+      .element(tester.root.getByRole('button', { name: 'Set up the processing of the field unit' }))
+      .toHaveAttribute('aria-pressed', 'true');
+    await expect
+      .element(tester.root.getByRole('button', { name: 'Set up the processing of the field path' }))
+      .toHaveAttribute('aria-pressed', 'false');
+    await tester.root.getByRole('button', { name: 'Set up the processing of the field path' }).click();
+    expect(processed).toEqual(['path']);
   });
 
   test('should paginate the records', async () => {
