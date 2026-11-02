@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { Readable } from 'node:stream';
 import { beforeEach, describe, it } from 'node:test';
 
+import { FieldOperation } from '../../../../shared/model/connector/field-process.model';
+
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
 import { OIBusMQTTValue } from '../../connector-types.model';
@@ -18,10 +20,17 @@ describe('FileToMQTTTransformer', () => {
   const noHeaderOptions = {
     input: { fileType: 'csv', delimiter: 'COMMA', hasHeader: false },
     topicField: '0',
-    payloadType: 'string'
+    payloadType: 'value',
+    valueProcess: []
   };
   // '2023-01-01' (UTC) as unix epoch in ms
-  const datetimeSettings = { inputType: 'string', inputTimezone: 'UTC', inputFormat: 'yyyy-MM-dd', outputType: 'unix-epoch-ms' };
+  const toEpochMs: FieldOperation = {
+    type: 'datetime',
+    inputType: 'string',
+    inputTimezone: 'UTC',
+    inputFormat: 'yyyy-MM-dd',
+    outputType: 'unix-epoch-ms'
+  };
   const EPOCH_MS = 1672531200000;
 
   /** Transforms `csvContent` and returns the parsed MQTT messages */
@@ -41,9 +50,10 @@ describe('FileToMQTTTransformer', () => {
         ...baseOptions,
         payloadType: 'object',
         objectFields: [
-          { key: 'temp', field: 'temperature', dataType: 'number' },
-          { key: 'active', field: 'isEnabled', dataType: 'boolean' },
-          { key: 'time', field: 'timestamp', dataType: 'datetime', datetimeSettings }
+          { key: 'temp', field: 'temperature', fieldProcess: [{ type: 'convert', to: 'number' }] },
+          { key: 'active', field: 'isEnabled', fieldProcess: [{ type: 'convert', to: 'boolean' }] },
+          { key: 'time', field: 'timestamp', fieldProcess: [toEpochMs] },
+          { key: 'raw', field: 'temperature', fieldProcess: [] }
         ]
       },
       `topic,temperature,isEnabled,timestamp\ndevice/1,25.5,true,2023-01-01`
@@ -51,27 +61,37 @@ describe('FileToMQTTTransformer', () => {
 
     assert.strictEqual(output.length, 1);
     assert.strictEqual(output[0].topic, 'device/1');
-    assert.deepStrictEqual(JSON.parse(output[0].payload), { temp: 25.5, active: true, time: EPOCH_MS });
+    // a field without operation is as read
+    assert.deepStrictEqual(JSON.parse(output[0].payload), { temp: 25.5, active: true, time: EPOCH_MS, raw: 25.5 });
   });
 
-  const payloadTypeCases = [
-    { payloadType: 'string', value: '123', expected: '123' },
-    { payloadType: 'number', value: '45.6', expected: '45.6' },
-    { payloadType: 'boolean', value: 'true', expected: 'true' },
-    { payloadType: 'datetime', value: '2023-01-01', expected: `${EPOCH_MS}`, datetimeSettings },
-    // an unknown type falls back to the raw value in formatValue
-    { payloadType: 'unknown', value: 'raw-content', expected: 'raw-content' }
+  const valueCases: Array<{ label: string; valueProcess: Array<FieldOperation>; value: string; expected: string }> = [
+    { label: 'as it is', valueProcess: [], value: '123', expected: '123' },
+    { label: 'as a number', valueProcess: [{ type: 'convert', to: 'number' }], value: '45.60', expected: '45.6' },
+    { label: 'as a boolean', valueProcess: [{ type: 'convert', to: 'boolean' }], value: '1', expected: 'true' },
+    { label: 'as a date time', valueProcess: [toEpochMs], value: '2023-01-01', expected: `${EPOCH_MS}` },
+    { label: 'as an object', valueProcess: [{ type: 'convert', to: 'json' }], value: '{""a"":1}', expected: '{"a":1}' }
   ];
-  for (const { payloadType, value, expected, ...extraOptions } of payloadTypeCases) {
-    it(`should transform CSV data into a ${payloadType.toUpperCase()} payload`, async () => {
+  for (const { label, valueProcess, value, expected } of valueCases) {
+    it(`should publish a processed value ${label}`, async () => {
       const output = await transformCsv(
-        { ...baseOptions, payloadType, valueField: 'val', ...extraOptions },
-        `topic,val\ndevice/1,${value}`
+        { ...baseOptions, payloadType: 'value', valueField: 'val', valueProcess },
+        `topic,val\ndevice/1,"${value}"`
       );
 
       assert.strictEqual(output[0].payload, expected);
     });
   }
+
+  it('should skip a value its operations fail on, with a warning', async () => {
+    const output = await transformCsv(
+      { ...baseOptions, payloadType: 'value', valueField: 'val', valueProcess: [{ type: 'convert', to: 'number' }] },
+      'topic,val\ndevice/1,abc\ndevice/2,2'
+    );
+
+    assert.deepStrictEqual(output, [{ topic: 'device/2', payload: '2' }]);
+    assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, ['Field process of value "val" skipped a value: "abc" is not a number']);
+  });
 
   it('should extract values by INDEX when hasHeader is false', async () => {
     const output = await transformCsv({ ...noHeaderOptions, valueField: '1' }, 'device/1,100\ndevice/2,200');
@@ -111,21 +131,27 @@ describe('FileToMQTTTransformer', () => {
   }
 
   it('should skip rows where TOPIC is missing', async () => {
-    const output = await transformCsv({ ...baseOptions, payloadType: 'string', valueField: 'val' }, 'topic,val\ndevice/1,10\n,20');
+    const output = await transformCsv(
+      { ...baseOptions, payloadType: 'value', valueProcess: [], valueField: 'val' },
+      'topic,val\ndevice/1,10\n,20'
+    );
 
     assert.strictEqual(output.length, 1);
     assert.strictEqual(output[0].topic, 'device/1');
   });
 
   it('should skip rows where VALUE is missing or null', async () => {
-    const output = await transformCsv({ ...baseOptions, payloadType: 'string', valueField: 'val' }, 'topic,val\ndevice/1,10\ndevice/2,');
+    const output = await transformCsv(
+      { ...baseOptions, payloadType: 'value', valueProcess: [], valueField: 'val' },
+      'topic,val\ndevice/1,10\ndevice/2,'
+    );
 
     assert.strictEqual(output.length, 1);
     assert.strictEqual(output[0].topic, 'device/1');
   });
 
   it('should log warning if CSV parsing has errors', async () => {
-    await transformCsv({ ...baseOptions, payloadType: 'string', valueField: 'val' }, 'topic,val\n"device/1,10');
+    await transformCsv({ ...baseOptions, payloadType: 'value', valueProcess: [], valueField: 'val' }, 'topic,val\n"device/1,10');
 
     assert.ok(logger.warn.mock.calls.length > 0);
     assert.deepStrictEqual(logger.warn.mock.calls[0].arguments, ['[FileToMQTT] 2 parsing error(s) in the file of "{"source":"test"}"']);
@@ -137,8 +163,8 @@ describe('FileToMQTTTransformer', () => {
       topicField: 'name',
       payloadType: 'object',
       objectFields: [
-        { key: 'temp', field: '$.devices[*].data.temperature', dataType: 'number' },
-        { key: 'site', field: '$.site', dataType: 'string' }
+        { key: 'temp', field: '$.devices[*].data.temperature', fieldProcess: [{ type: 'convert', to: 'number' }] },
+        { key: 'site', field: '$.site', fieldProcess: [] }
       ]
     });
     const content = { site: 'plant', devices: [{ name: 'd1', data: { temperature: '21.5' } }, { data: { temperature: 3 } }] };
@@ -150,7 +176,10 @@ describe('FileToMQTTTransformer', () => {
   });
 
   it('should skip the rows without payload when no value field is set', async () => {
-    const output = await transformCsv({ ...baseOptions, payloadType: 'string', valueField: null }, 'topic,val\ndevice/1,10');
+    const output = await transformCsv(
+      { ...baseOptions, payloadType: 'value', valueProcess: [], valueField: null },
+      'topic,val\ndevice/1,10'
+    );
 
     assert.deepStrictEqual(output, []);
   });

@@ -304,10 +304,10 @@ describe('3.10.0 config upgrade', () => {
       }
     };
     const fieldInputs = (options: Record<string, unknown>) =>
-      // the fields of record-list-to-csv, then of the record-list-to-file replacing it
+      // the fields of record-list-to-csv, then of the record-list-to-file replacing it, converting the date times by operations
       (options.fields as Array<JsonObject>).map(field => [
         field.fieldName ?? field.field,
-        (field.datetimeSettings as JsonObject).inputType
+        ((field.datetimeSettings ?? (field.fieldProcess as Array<JsonObject>)[0]) as JsonObject).inputType
       ]);
 
     it('tells which souths query their database through the remote agent', () => {
@@ -423,8 +423,10 @@ describe('3.10.0 config upgrade', () => {
           options: {
             input: { fileType: 'csv', delimiter: 'COMMA', hasHeader: true },
             topicField: 't',
-            payloadType: 'string',
-            valueField: 'v'
+            // a value payload is sent as a text: no operation
+            payloadType: 'value',
+            valueField: 'v',
+            valueProcess: []
           }
         },
         { id: 'l2', transformerId: 'existing', options: { input: { fileType: 'csv', delimiter: 'SEMI_COLON', hasHeader: true } } }
@@ -436,7 +438,7 @@ describe('3.10.0 config upgrade', () => {
           options: {
             input: { fileType: 'json', rowIteratorPath: '$[*]' },
             reference: { referenceField: 'id', referenceProcess: [] },
-            timestamp: { timestampField: 't', sourceType: 'iso-string', precision: 'ms' },
+            timestamp: { timestampField: 't', timestampProcess: [] },
             value: { valueField: 'v', valueProcess: [] }
           }
         }
@@ -1055,16 +1057,13 @@ describe('3.10.0 config upgrade', () => {
         reference: { referenceField: 'pointId', referenceProcess: [] },
         timestamp: {
           timestampField: 'timestamp',
-          sourceType: 'iso-string',
-          precision: 's',
-          timezone: 'UTC',
-          format: 'yyyy-MM-dd HH:mm:ss',
-          locale: 'en-En'
+          timestampProcess: [{ type: 'datetime', inputType: 'iso-string', outputType: 'iso-string', precision: 's' }]
         },
         value: { valueField: 'value', valueProcess: [] }
       });
       const [h1] = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;
-      assert.strictEqual(((h1.options as JsonObject).timestamp as JsonObject).precision, 'ms');
+      // in milliseconds: not rounded down
+      assert.deepStrictEqual(((h1.options as JsonObject).timestamp as JsonObject).timestampProcess, []);
     });
 
     it('is safe to run twice', () => {
@@ -1336,6 +1335,122 @@ describe('3.10.0 config upgrade', () => {
           }
         }
       ]
+    });
+
+    it('turns the data types and datetime settings of the file fields into operations, first', () => {
+      const datetimeSettings = { inputType: 'unix-epoch', outputType: 'string', outputFormat: 'yyyy', outputTimezone: 'UTC' };
+      const fields = [
+        { field: 'a', name: null, dataType: 'string', fieldProcess: 'value.trim()' },
+        { field: 'b', name: null, dataType: 'number', fieldProcess: null },
+        { field: 'c', name: null, dataType: 'boolean', fieldProcess: null },
+        { field: 'd', name: null, dataType: 'object', fieldProcess: null },
+        { field: 'e', name: null, dataType: 'datetime', datetimeSettings, fieldProcess: null }
+      ];
+      const operations = (fileType: string) =>
+        (toFieldProcessOperations({ output: { fileType }, fields }).fields as Array<JsonObject>).map(field => field.fieldProcess);
+      const datetime = {
+        type: 'datetime',
+        inputType: 'unix-epoch',
+        outputType: 'string',
+        outputFormat: 'yyyy',
+        outputTimezone: 'UTC',
+        outputLocale: 'en-En'
+      };
+
+      assert.deepStrictEqual(operations('json'), [
+        [
+          { type: 'convert', to: 'string' },
+          { type: 'expression', expression: 'value.trim()' }
+        ],
+        [{ type: 'convert', to: 'number' }],
+        [{ type: 'convert', to: 'boolean' }],
+        [{ type: 'convert', to: 'json' }],
+        [datetime]
+      ]);
+      // texts need no conversion to be written in a CSV file
+      assert.deepStrictEqual(operations('csv'), [
+        [{ type: 'expression', expression: 'value.trim()' }],
+        [{ type: 'convert', to: 'number' }],
+        [{ type: 'convert', to: 'boolean' }],
+        [],
+        [datetime]
+      ]);
+      assert.deepStrictEqual(Object.keys((toFieldProcessOperations({ fields }).fields as Array<JsonObject>)[4]), [
+        'field',
+        'name',
+        'fieldProcess'
+      ]);
+    });
+
+    it('turns the payload type and datetime settings of an MQTT payload into operations', () => {
+      const datetimeSettings = { inputType: 'iso-string', outputType: 'unix-epoch-ms' };
+
+      assert.deepStrictEqual(toFieldProcessOperations({ topicField: 't', payloadType: 'datetime', valueField: 'v', datetimeSettings }), {
+        topicField: 't',
+        payloadType: 'value',
+        valueField: 'v',
+        valueProcess: [{ type: 'datetime', inputType: 'iso-string', outputType: 'unix-epoch-ms' }]
+      });
+      assert.deepStrictEqual(
+        toFieldProcessOperations({
+          payloadType: 'object',
+          objectFields: [
+            { key: 'k', field: 'f', dataType: 'string' },
+            { key: 'n', field: 'g', dataType: 'number', datetimeSettings: null }
+          ]
+        }),
+        {
+          payloadType: 'object',
+          valueProcess: [],
+          objectFields: [
+            { key: 'k', field: 'f', fieldProcess: [{ type: 'convert', to: 'string' }] },
+            { key: 'n', field: 'g', fieldProcess: [{ type: 'convert', to: 'number' }] }
+          ]
+        }
+      );
+    });
+
+    it('turns the source type and precision of an OIAnalytics timestamp into a date time conversion to an ISO string', () => {
+      const timestampOf = (timestamp: JsonObject) => toFieldProcessOperations({ timestamp }).timestamp;
+
+      assert.deepStrictEqual(timestampOf({ timestampField: 't', sourceType: 'iso-string', precision: 'ms' }), {
+        timestampField: 't',
+        timestampProcess: []
+      });
+      // an ISO timestamp is rounded down by a conversion added for it
+      assert.deepStrictEqual(timestampOf({ timestampField: 't', sourceType: 'iso-string', precision: 's' }), {
+        timestampField: 't',
+        timestampProcess: [{ type: 'datetime', inputType: 'iso-string', outputType: 'iso-string', precision: 's' }]
+      });
+      assert.deepStrictEqual(
+        timestampOf({
+          timestampField: 't',
+          sourceType: 'string',
+          precision: 'hr',
+          timezone: 'Europe/Paris',
+          format: 'dd/MM/yyyy',
+          locale: 'fr'
+        }),
+        {
+          timestampField: 't',
+          timestampProcess: [
+            {
+              type: 'datetime',
+              inputType: 'string',
+              inputFormat: 'dd/MM/yyyy',
+              inputTimezone: 'Europe/Paris',
+              inputLocale: 'fr',
+              outputType: 'iso-string',
+              precision: 'hr'
+            }
+          ]
+        }
+      );
+      const converted = timestampOf({ timestampField: 't', sourceType: 'unix-epoch', precision: 'min' }) as JsonObject;
+      assert.deepStrictEqual(converted.timestampProcess, [
+        { type: 'datetime', inputType: 'unix-epoch', outputType: 'iso-string', precision: 'min' }
+      ]);
+      assert.deepStrictEqual(timestampOf(converted), converted);
     });
 
     it('turns the expressions into an expression operation, and no expression into no operation', () => {

@@ -1,6 +1,7 @@
 import { DateTimeType, Timezone } from '../common/types';
 
 export const FIELD_OPERATION_TYPES = [
+  'convert',
   'uppercase',
   'lowercase',
   'trim',
@@ -18,6 +19,13 @@ export const FIELD_OPERATION_TYPES = [
  */
 export type FieldOperationType = (typeof FIELD_OPERATION_TYPES)[number];
 
+export const FIELD_CONVERT_TYPES = ['string', 'number', 'boolean', 'json'] as const;
+/**
+ * What a `convert` operation converts a value to: a text, a number, a boolean, or the object or array a JSON text holds.
+ * @example "number"
+ */
+export type FieldConvertType = (typeof FIELD_CONVERT_TYPES)[number];
+
 export const FIELD_NUMBER_OPERATORS = ['add', 'subtract', 'multiply', 'divide'] as const;
 /**
  * The arithmetic a `number-operation` applies to a numeric value, with its operand.
@@ -31,6 +39,12 @@ export const FIELD_DATETIME_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms'
  * @example "iso-string"
  */
 export type FieldDatetimeType = (typeof FIELD_DATETIME_TYPES)[number];
+
+/** Converts the value to another type - e.g. the text of a CSV file to a number. */
+export interface FieldConvertOperation {
+  type: 'convert';
+  to: FieldConvertType;
+}
 
 /** Changes the case of the value, or removes its leading and trailing spaces. */
 export interface FieldCaseOperation {
@@ -79,7 +93,18 @@ export interface FieldRoundOperation {
   decimals: number;
 }
 
-/** Converts a date time from a type to another - the timezone and format only apply to the `string` type. */
+export const FIELD_DATETIME_PRECISIONS = ['s', 'min', 'hr', 'day'] as const;
+/**
+ * The unit a `datetime` operation rounds a date time down to: the smaller units are set to 0. Left out, the date time is
+ * unchanged.
+ * @example "min"
+ */
+export type FieldDatetimePrecision = (typeof FIELD_DATETIME_PRECISIONS)[number];
+
+/**
+ * Converts a date time from a type to another - the timezone and format only apply to the `string` type - possibly
+ * rounded down to a precision (in UTC, or in the output timezone for a `string`).
+ */
 export interface FieldDatetimeOperation {
   type: 'datetime';
   inputType: FieldDatetimeType;
@@ -90,6 +115,7 @@ export interface FieldDatetimeOperation {
   outputTimezone?: Timezone;
   outputFormat?: string;
   outputLocale?: string;
+  precision?: FieldDatetimePrecision;
 }
 
 /** Any other processing, as a JavaScript expression on `value`. */
@@ -100,6 +126,7 @@ export interface FieldExpressionOperation {
 }
 
 export type FieldOperation =
+  | FieldConvertOperation
   | FieldCaseOperation
   | FieldSubstringOperation
   | FieldAddToStringOperation

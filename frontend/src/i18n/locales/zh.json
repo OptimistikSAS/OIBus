@@ -551,69 +551,18 @@
             },
             "field": "字段（或 JSONPath）",
             "name": "写入名称",
-            "data-type": {
-              "title": "数据类型",
-              "string": "字符串",
-              "number": "数字",
-              "boolean": "布尔值",
-              "datetime": "日期时间",
-              "array": "数组",
-              "object": "对象"
-            },
             "field-process": "字段处理",
-            "datetime-settings": {
-              "title": "日期时间设置",
-              "input-type": {
-                "title": "时间戳输入类型",
-                "string": "字符串",
-                "iso-string": "ISO 字符串",
-                "unix-epoch": "Unix 纪元（秒）",
-                "unix-epoch-ms": "Unix 纪元（毫秒）"
-              },
-              "output-type": {
-                "title": "时间戳输出类型",
-                "string": "字符串",
-                "iso-string": "ISO 字符串",
-                "unix-epoch": "Unix 纪元（秒）",
-                "unix-epoch-ms": "Unix 纪元（毫秒）"
-              },
-              "timezone": "时区",
-              "format": "格式",
-              "locale": "区域设置"
-            },
             "keep-other-fields": "保留其他字段"
           },
           "file-to-mqtt": {
             "topic-field": "主题字段",
             "payload-type": {
               "title": "有效载荷类型",
-              "string": "字符串",
-              "number": "数字",
-              "boolean": "布尔值",
-              "datetime": "日期时间",
+              "value": "值",
               "object": "对象"
             },
             "value-field": "值字段",
-            "datetime-settings": {
-              "title": "日期时间设置",
-              "input-type": {
-                "title": "时间戳输入类型",
-                "string": "字符串",
-                "iso-string": "ISO 字符串",
-                "unix-epoch": "Unix 纪元（秒）",
-                "unix-epoch-ms": "Unix 纪元（毫秒）"
-              },
-              "output-type": {
-                "title": "时间戳输出类型",
-                "string": "字符串",
-                "iso-string": "ISO 字符串",
-                "unix-epoch": "Unix 纪元（秒）",
-                "unix-epoch-ms": "Unix 纪元（毫秒）"
-              },
-              "timezone": "时区",
-              "format": "格式",
-              "locale": "区域设置"
-            },
+            "value-process": "值处理",
             "object-fields": {
               "title": "对象字段",
               "item": {
@@ -621,15 +570,7 @@
               },
               "key": "键",
               "field": "字段",
-              "data-type": {
-                "title": "数据类型",
-                "string": "字符串",
-                "number": "数字",
-                "boolean": "布尔值",
-                "datetime": "日期时间",
-                "array": "数组",
-                "object": "对象"
-              }
+              "field-process": "字段处理"
             }
           },
           "record-list-to-modbus": {
@@ -669,23 +610,7 @@
             "timestamp": {
               "title": "时间戳",
               "timestamp-field": "时间戳字段",
-              "source-type": {
-                "title": "源类型",
-                "string": "字符串",
-                "iso-string": "ISO 字符串",
-                "unix-epoch": "Unix 纪元（秒）",
-                "unix-epoch-ms": "Unix 纪元（毫秒）"
-              },
-              "timezone": "时区",
-              "format": "格式",
-              "locale": "区域设置",
-              "precision": {
-                "title": "输出精度",
-                "ms": "毫秒",
-                "s": "秒",
-                "min": "分钟",
-                "hr": "小时"
-              }
+              "timestamp-process": "时间戳处理（结果必须为 ISO 日期时间）"
             },
             "value": {
               "title": "值",
@@ -2238,6 +2163,8 @@
     "output-format": "输出格式",
     "output-timezone": "输出时区",
     "output-locale": "输出区域设置",
+    "precision": "精度",
+    "precision-hint": "更小的单位置为 0 —— 例如 分钟：10:42:37.512 → 10:42:00.000",
     "expression": "表达式",
     "expression-hint": "作用于 value 的 JavaScript 表达式，例如 value.split('/').pop()",
     "test": "测试",
@@ -2246,6 +2173,7 @@
     "value": "值",
     "result": "结果",
     "operation": {
+      "convert": "转换",
       "uppercase": "大写",
       "lowercase": "小写",
       "trim": "去除空格",
@@ -2273,7 +2201,21 @@
     "add-value": "添加值",
     "remove-value": "移除该值",
     "summary-none": "无处理",
-    "set-up": "设置…"
+    "set-up": "设置…",
+    "convert-to": "转换为",
+    "convert-type": {
+      "string": "文本",
+      "number": "数字",
+      "boolean": "布尔值",
+      "json": "JSON（对象或数组）"
+    },
+    "datetime-precision": {
+      "unchanged": "不变",
+      "s": "秒",
+      "min": "分钟",
+      "hr": "小时",
+      "day": "天"
+    }
   },
   "scan-mode": {
     "subscription": "订阅"

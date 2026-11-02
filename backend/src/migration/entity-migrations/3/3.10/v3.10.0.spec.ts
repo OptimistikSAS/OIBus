@@ -4559,22 +4559,24 @@ describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
     await db('transformers').insert([
       { id: 'file', type: 'standard', function_name: 'record-list-to-file', input_type: 'record-list', output_type: 'file' },
       { id: 'oia', type: 'standard', function_name: 'file-to-oianalytics', input_type: 'file', output_type: 'oianalytics' },
-      { id: 'mqtt', type: 'standard', function_name: 'record-list-to-mqtt', input_type: 'record-list', output_type: 'mqtt' }
+      { id: 'mqtt', type: 'standard', function_name: 'record-list-to-mqtt', input_type: 'record-list', output_type: 'mqtt' },
+      { id: 'fileMqtt', type: 'standard', function_name: 'file-to-mqtt', input_type: 'file', output_type: 'mqtt' }
     ]);
   });
 
   afterEach(() => harness.afterEach());
 
-  it('should turn the expressions of the field processes into an expression operation, and no expression into none', async () => {
+  it('should process the fields with operations only: expressions, data types and timestamp source types', async () => {
     await db('north_transformers').insert([
       {
         id: 'fields',
         north_id: 'north1',
         transformer_id: 'file',
         options: JSON.stringify({
+          output: { fileType: 'json' },
           fields: [
-            { field: 'id', fieldProcess: 'value.trim()' },
-            { field: 'v', fieldProcess: null }
+            { field: 'id', dataType: 'string', fieldProcess: 'value.trim()' },
+            { field: 'v', dataType: 'number', fieldProcess: null }
           ]
         }),
         source_type: 'oibus-api'
@@ -4585,6 +4587,13 @@ describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
         transformer_id: 'mqtt',
         options: JSON.stringify({ fieldProcess: 'kept' }),
         source_type: 'oibus-api'
+      },
+      {
+        id: 'payload',
+        north_id: 'north1',
+        transformer_id: 'fileMqtt',
+        options: JSON.stringify({ topicField: 't', payloadType: 'boolean', valueField: 'v', datetimeSettings: null }),
+        source_type: 'oibus-api'
       }
     ]);
     await db('history_query_transformers').insert({
@@ -4593,6 +4602,7 @@ describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
       transformer_id: 'oia',
       options: JSON.stringify({
         reference: { referenceField: 'ref', referenceProcess: null },
+        timestamp: { timestampField: 't', sourceType: 'unix-epoch-ms', precision: 's' },
         value: { valueField: 'v', valueProcess: 'value * 2' }
       })
     });
@@ -4600,14 +4610,31 @@ describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
     await convertFieldProcessesToOperations(db);
 
     assert.deepStrictEqual(await optionsOf('north_transformers', 'fields'), {
+      output: { fileType: 'json' },
       fields: [
-        { field: 'id', fieldProcess: [{ type: 'expression', expression: 'value.trim()' }] },
-        { field: 'v', fieldProcess: [] }
+        {
+          field: 'id',
+          fieldProcess: [
+            { type: 'convert', to: 'string' },
+            { type: 'expression', expression: 'value.trim()' }
+          ]
+        },
+        { field: 'v', fieldProcess: [{ type: 'convert', to: 'number' }] }
       ]
+    });
+    assert.deepStrictEqual(await optionsOf('north_transformers', 'payload'), {
+      topicField: 't',
+      payloadType: 'value',
+      valueField: 'v',
+      valueProcess: [{ type: 'convert', to: 'boolean' }]
     });
     assert.deepStrictEqual(await optionsOf('north_transformers', 'other'), { fieldProcess: 'kept' });
     assert.deepStrictEqual(await optionsOf('history_query_transformers', 'history'), {
       reference: { referenceField: 'ref', referenceProcess: [] },
+      timestamp: {
+        timestampField: 't',
+        timestampProcess: [{ type: 'datetime', inputType: 'unix-epoch-ms', outputType: 'iso-string', precision: 's' }]
+      },
       value: { valueField: 'v', valueProcess: [{ type: 'expression', expression: 'value * 2' }] }
     });
   });

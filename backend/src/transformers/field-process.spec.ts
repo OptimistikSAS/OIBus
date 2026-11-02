@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { FieldOperation } from '../../shared/model/connector/field-process.model';
+import { FieldDatetimePrecision, FieldOperation } from '../../shared/model/connector/field-process.model';
 
 import type { ILogger } from '../model/logger.model';
 import { createMock } from '../tests/utils/test-utils';
@@ -133,6 +133,26 @@ describe('evaluateExpression', () => {
 describe('applyFieldOperations', () => {
   const apply = (value: unknown, ...operations: Array<FieldOperation>) => applyFieldOperations(value, operations);
 
+  it('should convert the value', () => {
+    assert.strictEqual(apply(12, { type: 'convert', to: 'string' }), '12');
+    assert.strictEqual(apply({ a: 1 }, { type: 'convert', to: 'string' }), '{"a":1}');
+    assert.strictEqual(apply('1.5', { type: 'convert', to: 'number' }), 1.5);
+    assert.strictEqual(apply('TRUE', { type: 'convert', to: 'boolean' }), true);
+    assert.strictEqual(apply(0, { type: 'convert', to: 'boolean' }), false);
+    assert.strictEqual(apply(false, { type: 'convert', to: 'boolean' }), false);
+    assert.deepStrictEqual(apply('{"a":[1]}', { type: 'convert', to: 'json' }), { a: [1] });
+    assert.strictEqual(apply(3, { type: 'convert', to: 'json' }), 3);
+    // a date of a database driver is processed as its ISO string
+    assert.strictEqual(apply(new Date('2024-01-01T00:00:00.000Z'), { type: 'convert', to: 'string' }), '2024-01-01T00:00:00.000Z');
+  });
+
+  it('should throw when a conversion can not apply', () => {
+    assert.throws(() => apply('abc', { type: 'convert', to: 'number' }), /"abc" is not a number/);
+    assert.throws(() => apply(true, { type: 'convert', to: 'number' }), /true is not a number/);
+    assert.throws(() => apply([1], { type: 'convert', to: 'boolean' }), /\[1\] is not a boolean/);
+    assert.throws(() => apply('{a', { type: 'convert', to: 'json' }), /"\{a" is not a JSON text/);
+  });
+
   it('should change the case and trim', () => {
     assert.strictEqual(apply('Temperature', { type: 'uppercase' }), 'TEMPERATURE');
     assert.strictEqual(apply('Temperature', { type: 'lowercase' }), 'temperature');
@@ -188,6 +208,40 @@ describe('applyFieldOperations', () => {
       }),
       '2024-01-01 00:00'
     );
+  });
+
+  it('should round a date time down to a precision, in UTC or in the timezone it is written in', () => {
+    const roundDown = (precision: FieldDatetimePrecision, outputType: 'iso-string' | 'unix-epoch-ms' = 'iso-string') =>
+      apply('2024-01-01T10:42:37.512Z', { type: 'datetime', inputType: 'iso-string', outputType, precision });
+
+    assert.strictEqual(roundDown('s'), '2024-01-01T10:42:37.000Z');
+    assert.strictEqual(roundDown('min'), '2024-01-01T10:42:00.000Z');
+    assert.strictEqual(roundDown('hr'), '2024-01-01T10:00:00.000Z');
+    assert.strictEqual(roundDown('day'), '2024-01-01T00:00:00.000Z');
+    assert.strictEqual(roundDown('min', 'unix-epoch-ms'), 1704105720000);
+    // the hours of India start at half past the hours of UTC
+    assert.strictEqual(
+      apply('2024-01-01T10:42:37.512Z', {
+        type: 'datetime',
+        inputType: 'iso-string',
+        outputType: 'string',
+        outputFormat: 'yyyy-MM-dd HH:mm:ss',
+        outputTimezone: 'Asia/Kolkata',
+        precision: 'hr'
+      }),
+      '2024-01-01 16:00:00'
+    );
+  });
+
+  it('should convert a date of a database driver as an instant, whatever the input type', () => {
+    const date = new Date('2024-01-01T10:42:37.512Z');
+
+    assert.strictEqual(
+      apply(date, { type: 'datetime', inputType: 'string', inputFormat: 'yyyy', inputTimezone: 'UTC', outputType: 'unix-epoch' }),
+      1704105757
+    );
+    assert.strictEqual(apply(date, { type: 'uppercase' }), '2024-01-01T10:42:37.512Z');
+    assert.throws(() => apply(new Date('nope'), { type: 'datetime', inputType: 'iso-string', outputType: 'unix-epoch' }), /invalid date/);
   });
 
   it('should throw when a date time conversion can not apply', () => {

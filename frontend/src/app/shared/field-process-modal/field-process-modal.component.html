@@ -43,6 +43,18 @@
           </div>
 
           @switch (operation.controls.type.value) {
+            @case ('convert') {
+              <div class="row g-2 mt-1">
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'to-' + index" translate="field-process.convert-to"></label>
+                  <select class="form-select form-select-sm" [id]="'to-' + index" formControlName="to">
+                    @for (convertType of convertTypes; track convertType) {
+                      <option [value]="convertType">{{ 'field-process.convert-type.' + convertType | translate }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            }
             @case ('substring') {
               <div class="row g-2 mt-1">
                 <div class="col-sm-6">
@@ -147,6 +159,17 @@
                     }
                   </select>
                 </div>
+              </div>
+              <div class="row g-2 mt-1">
+                <div class="col-sm-6">
+                  <label class="form-label" [for]="'precision-' + index" translate="field-process.precision"></label>
+                  <select class="form-select form-select-sm" [id]="'precision-' + index" formControlName="precision">
+                    @for (precision of datetimePrecisions; track precision) {
+                      <option [value]="precision">{{ 'field-process.datetime-precision.' + precision | translate }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-sm-6 form-text align-self-end" translate="field-process.precision-hint"></div>
               </div>
               @if (operation.controls.inputType.value === 'string') {
                 <div class="row g-2 mt-1">

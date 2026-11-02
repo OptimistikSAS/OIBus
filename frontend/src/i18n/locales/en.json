@@ -1547,69 +1547,18 @@
             },
             "field": "Field (or JSONPath)",
             "name": "Written name",
-            "data-type": {
-              "title": "Data Type",
-              "string": "String",
-              "number": "Number",
-              "boolean": "Boolean",
-              "datetime": "Datetime",
-              "array": "Array",
-              "object": "Object"
-            },
             "field-process": "Field processing",
-            "datetime-settings": {
-              "title": "Datetime Settings",
-              "input-type": {
-                "title": "Timestamp input type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "output-type": {
-                "title": "Timestamp output type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "timezone": "Timezone",
-              "format": "Format",
-              "locale": "Locale"
-            },
             "keep-other-fields": "Keep the other fields"
           },
           "file-to-mqtt": {
             "topic-field": "Topic field",
             "payload-type": {
               "title": "Payload Type",
-              "string": "String",
-              "number": "Number",
-              "boolean": "Boolean",
-              "datetime": "Datetime",
+              "value": "Value",
               "object": "Object"
             },
             "value-field": "Value field",
-            "datetime-settings": {
-              "title": "Datetime Settings",
-              "input-type": {
-                "title": "Timestamp input type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "output-type": {
-                "title": "Timestamp output type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "timezone": "Timezone",
-              "format": "Format",
-              "locale": "Locale"
-            },
+            "value-process": "Value processing",
             "object-fields": {
               "title": "Object Fields",
               "item": {
@@ -1617,15 +1566,7 @@
               },
               "key": "Key",
               "field": "Field",
-              "data-type": {
-                "title": "Data Type",
-                "string": "String",
-                "number": "Number",
-                "boolean": "Boolean",
-                "datetime": "Datetime",
-                "array": "Array",
-                "object": "Object"
-              }
+              "field-process": "Field processing"
             }
           },
           "record-list-to-modbus": {
@@ -1665,23 +1606,7 @@
             "timestamp": {
               "title": "Timestamp",
               "timestamp-field": "Timestamp field",
-              "source-type": {
-                "title": "Source type",
-                "string": "String",
-                "iso-string": "ISO string",
-                "unix-epoch": "Unix epoch (s)",
-                "unix-epoch-ms": "Unix epoch (ms)"
-              },
-              "timezone": "Timezone",
-              "format": "Format",
-              "locale": "Locale",
-              "precision": {
-                "title": "Output precision",
-                "ms": "Millisecond",
-                "s": "Second",
-                "min": "Minute",
-                "hr": "Hour"
-              }
+              "timestamp-process": "Timestamp processing (must give an ISO date time)"
             },
             "value": {
               "title": "Value",
@@ -3768,6 +3693,8 @@
     "output-format": "Output format",
     "output-timezone": "Output timezone",
     "output-locale": "Output locale",
+    "precision": "Precision",
+    "precision-hint": "The smaller units are set to 0 — e.g. Minute: 10:42:37.512 → 10:42:00.000",
     "expression": "Expression",
     "expression-hint": "A JavaScript expression on value, e.g. value.split('/').pop()",
     "test": "Test",
@@ -3776,6 +3703,7 @@
     "value": "Value",
     "result": "Result",
     "operation": {
+      "convert": "Convert",
       "uppercase": "Upper case",
       "lowercase": "Lower case",
       "trim": "Trim spaces",
@@ -3803,7 +3731,21 @@
     "add-value": "Add a value",
     "remove-value": "Remove the value",
     "summary-none": "No processing",
-    "set-up": "Set up…"
+    "set-up": "Set up…",
+    "convert-to": "To",
+    "convert-type": {
+      "string": "Text",
+      "number": "Number",
+      "boolean": "Boolean",
+      "json": "JSON (object or array)"
+    },
+    "datetime-precision": {
+      "unchanged": "Unchanged",
+      "s": "Second",
+      "min": "Minute",
+      "hr": "Hour",
+      "day": "Day"
+    }
   },
   "scan-mode": {
     "subscription": "Subscribe"

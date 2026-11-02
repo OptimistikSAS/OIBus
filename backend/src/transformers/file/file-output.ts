@@ -9,13 +9,11 @@ import { CacheMetadataSource } from '../../model/engine.model';
 import type { ILogger } from '../../model/logger.model';
 import {
   applyFilenameVariables,
-  convertDateTime,
   convertDelimiter,
   convertEscapeChar,
   convertNewline,
   convertQuoteChar,
-  sanitizeFilename,
-  stringToBoolean
+  sanitizeFilename
 } from '../../service/utils';
 import { createFieldProcess } from '../field-process';
 import { Row } from '../record-list/point-record';
@@ -25,7 +23,6 @@ const FIELDS_KEY = 'configuration.oibus.manifest.transformers.file-fields';
 
 /** How the file transformers write their file: its type, name and format, and the fields of its rows */
 export type FileOutputSettings = Pick<TransformerRecordListToFileSettings, 'output' | 'filename' | 'keepOtherFields' | 'fields'>;
-type FileOutputField = NonNullable<FileOutputSettings['fields']>[number];
 
 /**
  * The `output` options of the file transformers: the type of the written file (CSV or JSON), its encoding and
@@ -139,17 +136,9 @@ export const buildFilenameAttribute = (defaultValue: string): OIBusAttribute => 
 
 /**
  * The fields of the written rows: every field of the rows unless only the configured ones are kept, each configured
- * field being renamed, cast to a data type and processed by operations (upper case, substring, number operation...).
+ * field being renamed and processed by operations (conversion, upper case, substring, date time conversion...).
  */
 export const fileFieldsAttributes: Array<OIBusAttribute> = [
-  {
-    type: 'boolean',
-    key: 'keepOtherFields',
-    translationKey: `${FIELDS_KEY}.keep-other-fields`,
-    defaultValue: true,
-    validators: [{ type: 'REQUIRED', arguments: [] }],
-    displayProperties: { row: 0, columns: 4, displayInViewMode: true }
-  },
   {
     type: 'array',
     key: 'fields',
@@ -165,13 +154,7 @@ export const fileFieldsAttributes: Array<OIBusAttribute> = [
         visible: true,
         wrapInBox: true
       },
-      enablingConditions: [
-        {
-          referralPathFromRoot: 'dataType',
-          targetPathFromRoot: 'datetimeSettings',
-          values: ['datetime']
-        }
-      ],
+      enablingConditions: [],
       validators: [],
       attributes: [
         {
@@ -183,7 +166,7 @@ export const fileFieldsAttributes: Array<OIBusAttribute> = [
             { type: 'REQUIRED', arguments: [] },
             { type: 'UNIQUE', arguments: [] }
           ],
-          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+          displayProperties: { row: 0, columns: 6, displayInViewMode: true }
         },
         {
           type: 'string',
@@ -191,16 +174,7 @@ export const fileFieldsAttributes: Array<OIBusAttribute> = [
           translationKey: `${FIELDS_KEY}.name`,
           defaultValue: null,
           validators: [],
-          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
-        },
-        {
-          type: 'string-select',
-          key: 'dataType',
-          translationKey: `${FIELDS_KEY}.data-type`,
-          defaultValue: 'string',
-          selectableValues: ['string', 'number', 'datetime', 'array', 'boolean', 'object'],
-          validators: [{ type: 'REQUIRED', arguments: [] }],
-          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+          displayProperties: { row: 0, columns: 6, displayInViewMode: true }
         },
         {
           type: 'field-process',
@@ -208,96 +182,18 @@ export const fileFieldsAttributes: Array<OIBusAttribute> = [
           translationKey: `${FIELDS_KEY}.field-process`,
           fieldKey: 'field',
           validators: [],
-          displayProperties: { row: 1, columns: 12, displayInViewMode: false }
-        },
-        {
-          type: 'object',
-          key: 'datetimeSettings',
-          translationKey: `${FIELDS_KEY}.datetime-settings.title`,
-          displayProperties: {
-            visible: true,
-            wrapInBox: false
-          },
-          enablingConditions: [
-            { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputTimezone', values: ['string'] },
-            { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputFormat', values: ['string'] },
-            { referralPathFromRoot: 'inputType', targetPathFromRoot: 'inputLocale', values: ['string'] },
-            { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputTimezone', values: ['string'] },
-            { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputFormat', values: ['string'] },
-            { referralPathFromRoot: 'outputType', targetPathFromRoot: 'outputLocale', values: ['string'] }
-          ],
-          validators: [],
-          attributes: [
-            {
-              type: 'string-select',
-              key: 'inputType',
-              translationKey: `${FIELDS_KEY}.datetime-settings.input-type`,
-              defaultValue: 'iso-string',
-              selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
-              validators: [{ type: 'REQUIRED', arguments: [] }],
-              displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-            },
-            {
-              type: 'timezone',
-              key: 'inputTimezone',
-              translationKey: `${FIELDS_KEY}.datetime-settings.timezone`,
-              defaultValue: 'UTC',
-              validators: [{ type: 'REQUIRED', arguments: [] }],
-              displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-            },
-            {
-              type: 'string',
-              key: 'inputFormat',
-              translationKey: `${FIELDS_KEY}.datetime-settings.format`,
-              defaultValue: 'yyyy-MM-dd HH:mm:ss',
-              validators: [{ type: 'REQUIRED', arguments: [] }],
-              displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-            },
-            {
-              type: 'string',
-              key: 'inputLocale',
-              translationKey: `${FIELDS_KEY}.datetime-settings.locale`,
-              defaultValue: 'en-En',
-              validators: [{ type: 'REQUIRED', arguments: [] }],
-              displayProperties: { row: 0, columns: 3, displayInViewMode: false }
-            },
-            {
-              type: 'string-select',
-              key: 'outputType',
-              translationKey: `${FIELDS_KEY}.datetime-settings.output-type`,
-              defaultValue: 'iso-string',
-              selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
-              validators: [{ type: 'REQUIRED', arguments: [] }],
-              displayProperties: { row: 1, columns: 3, displayInViewMode: false }
-            },
-            {
-              type: 'timezone',
-              key: 'outputTimezone',
-              translationKey: `${FIELDS_KEY}.datetime-settings.timezone`,
-              defaultValue: 'UTC',
-              validators: [{ type: 'REQUIRED', arguments: [] }],
-              displayProperties: { row: 1, columns: 3, displayInViewMode: false }
-            },
-            {
-              type: 'string',
-              key: 'outputFormat',
-              translationKey: `${FIELDS_KEY}.datetime-settings.format`,
-              defaultValue: 'yyyy-MM-dd HH:mm:ss',
-              validators: [{ type: 'REQUIRED', arguments: [] }],
-              displayProperties: { row: 1, columns: 3, displayInViewMode: false }
-            },
-            {
-              type: 'string',
-              key: 'outputLocale',
-              translationKey: `${FIELDS_KEY}.datetime-settings.locale`,
-              defaultValue: 'en-En',
-              validators: [{ type: 'REQUIRED', arguments: [] }],
-              displayProperties: { row: 1, columns: 3, displayInViewMode: false }
-            }
-          ]
+          displayProperties: { row: 1, columns: 12, displayInViewMode: true }
         }
       ]
     }
+  },
+  {
+    type: 'boolean',
+    key: 'keepOtherFields',
+    translationKey: `${FIELDS_KEY}.keep-other-fields`,
+    defaultValue: true,
+    validators: [{ type: 'REQUIRED', arguments: [] }],
+    displayProperties: { row: 4, columns: 4, displayInViewMode: true }
   }
 ];
 
@@ -365,74 +261,21 @@ function writeRow(row: Row, settings: FileOutputSettings, fieldProcesses: Array<
     }
   }
   fields.forEach((field, index) => {
-    writtenRow[field.name || field.field] = writeField(row[field.field], field, settings.output, fieldProcesses[index]);
+    writtenRow[field.name || field.field] = writeField(row[field.field], settings.output, fieldProcesses[index]);
   });
   return writtenRow;
 }
 
 /**
- * A field cast to its data type, then processed by its operations (a value they fail on is written empty). A missing
- * field is the null value of a CSV file, null in a JSON file; in a CSV file, a boolean is written as text and an object or
- * an array as its JSON text.
+ * A field processed by its operations: a missing field, or a value they fail on, is the null value of a CSV file, null in a
+ * JSON file. In a CSV file, an object or an array is written as its JSON text.
  */
-function writeField(
-  value: Row[string] | undefined,
-  field: FileOutputField,
-  format: FileOutputSettings['output'],
-  process: (value: unknown) => unknown
-): unknown {
+function writeField(value: Row[string] | undefined, format: FileOutputSettings['output'], process: (value: unknown) => unknown): unknown {
   const csvFile = format.fileType === 'csv';
-  let typedValue: unknown;
-  if (value === undefined || value === null) {
-    typedValue = csvFile ? (format.nullValue ?? '') : null;
-  } else {
-    const raw = value instanceof Date ? value.toISOString() : value;
-    switch (field.dataType) {
-      case 'datetime':
-        typedValue = convertDateTime(
-          raw as string | number,
-          {
-            type: field.datetimeSettings!.inputType,
-            timezone: field.datetimeSettings!.inputTimezone,
-            format: field.datetimeSettings!.inputFormat,
-            locale: field.datetimeSettings!.inputLocale
-          },
-          {
-            type: field.datetimeSettings!.outputType,
-            timezone: field.datetimeSettings!.outputTimezone,
-            format: field.datetimeSettings!.outputFormat,
-            locale: field.datetimeSettings!.outputLocale
-          }
-        );
-        break;
-      case 'number':
-        typedValue = Number(raw);
-        break;
-      case 'boolean': {
-        const booleanValue = typeof raw === 'boolean' ? raw : stringToBoolean(String(raw));
-        typedValue = csvFile ? booleanValue.toString() : booleanValue;
-        break;
-      }
-      case 'object':
-      case 'array':
-        // The fields read from a JSON file hold their objects and arrays as JSON text
-        typedValue = csvFile ? (typeof raw === 'string' ? raw : JSON.stringify(raw)) : parseJson(raw);
-        break;
-      default:
-        typedValue = String(raw);
-    }
+  // The operations apply to the values of the field only
+  const processed = value === undefined || value === null ? null : process(value instanceof Date ? value.toISOString() : value);
+  if (processed === null || processed === undefined) {
+    return csvFile ? (format.nullValue ?? '') : null;
   }
-  // A missing field is written as is: the operations apply to the values of the field only
-  if (value === undefined || value === null) return typedValue;
-  const processed = process(typedValue);
-  return processed === null && csvFile ? (format.nullValue ?? '') : processed;
-}
-
-function parseJson(value: unknown): unknown {
-  if (typeof value !== 'string') return value;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
+  return csvFile && typeof processed === 'object' ? JSON.stringify(processed) : processed;
 }

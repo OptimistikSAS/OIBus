@@ -118,6 +118,20 @@ describe('FieldProcessModalComponent', () => {
     ]);
   });
 
+  test('should convert values to another type', async () => {
+    const tester = new FieldProcessModalComponentTester([{ type: 'convert', to: 'boolean' }]);
+    await expect.element(tester.operation(0).getByLabelText('To')).toHaveDisplayValue('Boolean');
+
+    await tester.addOperation('Convert');
+    await tester.operation(1).getByLabelText('To').selectOptions('JSON (object or array)');
+    await tester.saveButton.click();
+
+    expect(activeModal.close).toHaveBeenCalledWith([
+      { type: 'convert', to: 'boolean' },
+      { type: 'convert', to: 'json' }
+    ]);
+  });
+
   test('should convert date times, with the format, timezone and locale of a string only', async () => {
     const tester = new FieldProcessModalComponentTester([]);
 
@@ -126,6 +140,7 @@ describe('FieldProcessModalComponent', () => {
     await tester.operation(0).getByLabelText('Input type').selectOptions('Unix epoch (ms)');
     await tester.operation(0).getByLabelText('Output type').selectOptions('String');
     await tester.operation(0).getByLabelText('Output format').fill('yyyy-MM-dd');
+    await expect.element(tester.operation(0).getByLabelText('Precision')).toHaveDisplayValue('Unchanged');
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith([
@@ -137,6 +152,22 @@ describe('FieldProcessModalComponent', () => {
         outputTimezone: 'UTC',
         outputLocale: 'en-En'
       }
+    ]);
+  });
+
+  test('should round a date time down to a precision', async () => {
+    const tester = new FieldProcessModalComponentTester([
+      { type: 'datetime', inputType: 'iso-string', outputType: 'iso-string', precision: 'hr' }
+    ]);
+    await expect.element(tester.operation(0).getByLabelText('Precision')).toHaveDisplayValue('Hour');
+
+    await tester.operation(0).getByLabelText('Precision').selectOptions('Minute');
+    await tester.addOperation('Date time conversion');
+    await tester.saveButton.click();
+
+    expect(activeModal.close).toHaveBeenCalledWith([
+      { type: 'datetime', inputType: 'iso-string', outputType: 'iso-string', precision: 'min' },
+      { type: 'datetime', inputType: 'iso-string', outputType: 'iso-string' }
     ]);
   });
 

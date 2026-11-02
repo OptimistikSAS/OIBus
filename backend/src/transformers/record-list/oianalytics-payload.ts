@@ -1,7 +1,7 @@
 import { TransformerRecordListToOianalyticsSettings } from '../../../shared/model/connector/transformer-settings.model';
 
 import type { ILogger } from '../../model/logger.model';
-import { PointValueLike, toCompactTimeValues, truncateInstant } from '../../service/oia/compact-time-values';
+import { PointValueLike, toCompactTimeValues } from '../../service/oia/compact-time-values';
 import { createFieldProcess, createStringFieldProcess } from '../field-process';
 import { readInstant, readPointId, readValue, Row } from './point-record';
 
@@ -10,9 +10,10 @@ export type OIAnalyticsPayloadSettings = Pick<TransformerRecordListToOianalytics
 
 /**
  * Reads the reference, timestamp and value fields of each row, for the OIAnalytics compact format
- * `{ timestamps, values, references }`: the timestamps truncated to the precision, the references and values processed
- * by their operations. Rows without reference, value or valid timestamp, or whose value the operations fail on, are
- * skipped, with a single warning; a reference the operations fail on is kept as is.
+ * `{ timestamps, values, references }`: the references, timestamps and values processed by their operations - the
+ * timestamps must then be ISO date times, rounded down by their date time conversion if needed. Rows without reference,
+ * value or valid timestamp, or whose value the operations fail on, are skipped, with a single warning; a reference the
+ * operations fail on is kept as is.
  */
 export function toOIAnalyticsPayload(
   rows: Iterable<Row>,
@@ -20,18 +21,13 @@ export function toOIAnalyticsPayload(
   logger: ILogger
 ): { content: ReturnType<typeof toCompactTimeValues>; numberOfElement: number } {
   const { reference, timestamp: timestampOptions, value: valueOptions } = settings;
-  const timestampSettings = {
-    type: timestampOptions.sourceType,
-    timezone: timestampOptions.timezone,
-    format: timestampOptions.format,
-    locale: timestampOptions.locale
-  };
+  const processTimestamp = createFieldProcess(timestampOptions.timestampProcess, `timestamp "${timestampOptions.timestampField}"`, logger);
   const processValue = createFieldProcess(valueOptions.valueProcess, `value "${valueOptions.valueField}"`, logger);
   const values: Array<PointValueLike> = [];
   let skippedRows = 0;
   for (const row of rows) {
     const pointId = readPointId(row, reference.referenceField);
-    const timestamp = readInstant(row, timestampOptions.timestampField, timestampSettings);
+    const timestamp = readInstant(row, timestampOptions.timestampField, processTimestamp);
     const value = readValue(row, valueOptions.valueField);
     if (pointId === null || timestamp === null || value === null) {
       skippedRows++;
@@ -42,7 +38,7 @@ export function toOIAnalyticsPayload(
       skippedRows++;
       continue;
     }
-    values.push({ pointId, timestamp: truncateInstant(timestamp, timestampOptions.precision), value: processedValue });
+    values.push({ pointId, timestamp, value: processedValue });
   }
   if (skippedRows > 0) {
     logger.warn(

@@ -1,15 +1,13 @@
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
-import {
-  TransformerFileToMqttSettings,
-  TransformerFileToMqttSettingsDatetimeSettings
-} from '../../../../shared/model/connector/transformer-settings.model';
+import { TransformerFileToMqttSettings } from '../../../../shared/model/connector/transformer-settings.model';
 import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
-import { convertDateTime, generateRandomId, streamToString, stringToBoolean } from '../../../service/utils';
+import { generateRandomId, streamToString } from '../../../service/utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
+import { createFieldProcess } from '../../field-process';
 import OIBusTransformer from '../../oibus-transformer';
 import { Row } from '../../record-list/point-record';
 import { readFileRows } from '../file-input';
@@ -26,8 +24,8 @@ export default class FileToMQTTTransformer extends OIBusTransformer {
   }
 
   /**
-   * Publish a MQTT message per row with a topic: its payload is the value field formatted with the payload type, or an
-   * object of the configured fields.
+   * Publish a MQTT message per row with a topic: its payload is the value field, or an object of the configured fields, each
+   * processed by its operations (a value they fail on is left empty, with a warning).
    */
   override transformInMemory(
     data: unknown,
@@ -44,11 +42,13 @@ export default class FileToMQTTTransformer extends OIBusTransformer {
       this.logger.warn(`[FileToMQTT] ${errors} parsing error(s) in the file of "${JSON.stringify(source)}"`);
     }
 
+    const processValue = createFieldProcess(this.options.valueProcess, `value "${this.options.valueField}"`, this.logger);
+    const fieldProcesses = objectFields.map(field => createFieldProcess(field.fieldProcess, `field "${field.field}"`, this.logger));
     const content: Array<OIBusMQTTValue> = [];
     for (const row of rows) {
       const topic = row[this.options.topicField];
       if (topic === null || topic === undefined || topic === '') continue;
-      const payload = this.payloadOf(row, objectFields);
+      const payload = this.payloadOf(row, objectFields, processValue, fieldProcesses);
       if (payload !== null) {
         content.push({ topic: String(topic), payload });
       }
@@ -64,16 +64,22 @@ export default class FileToMQTTTransformer extends OIBusTransformer {
     return Promise.resolve({ output: Buffer.from(JSON.stringify(content)), metadata });
   }
 
-  private payloadOf(row: Row, objectFields: TransformerFileToMqttSettings['objectFields']): string | null {
+  private payloadOf(
+    row: Row,
+    objectFields: NonNullable<TransformerFileToMqttSettings['objectFields']>,
+    processValue: (value: unknown) => unknown,
+    fieldProcesses: Array<(value: unknown) => unknown>
+  ): string | null {
     if (this.options.payloadType === 'object') {
-      if (!objectFields?.length) return null;
+      if (!objectFields.length) return null;
       return JSON.stringify(
-        Object.fromEntries(objectFields.map(field => [field.key, formatValue(row[field.field], field.dataType, field.datetimeSettings)]))
+        Object.fromEntries(objectFields.map((field, index) => [field.key, valueOf(row[field.field], fieldProcesses[index])]))
       );
     }
     if (!this.options.valueField) return null;
-    const value = formatValue(row[this.options.valueField], this.options.payloadType, this.options.datetimeSettings);
-    return value === null ? null : String(value);
+    const value = valueOf(row[this.options.valueField], processValue);
+    if (value === null) return null;
+    return typeof value === 'object' ? JSON.stringify(value) : String(value);
   }
 
   get options(): TransformerFileToMqttSettings {
@@ -81,33 +87,8 @@ export default class FileToMQTTTransformer extends OIBusTransformer {
   }
 }
 
-/** A field formatted with a data type, null when missing */
-function formatValue(raw: unknown, type: string, datetimeSettings?: TransformerFileToMqttSettingsDatetimeSettings | null) {
+/** A field processed by its operations, null when missing or when they fail on it */
+function valueOf(raw: unknown, process: (value: unknown) => unknown): unknown {
   if (raw === undefined || raw === null) return null;
-  switch (type) {
-    case 'string':
-      return String(raw);
-    case 'number':
-      return Number(raw);
-    case 'boolean':
-      return stringToBoolean(String(raw));
-    case 'datetime':
-      return convertDateTime(
-        raw as string | number,
-        {
-          type: datetimeSettings!.inputType,
-          timezone: datetimeSettings!.inputTimezone,
-          format: datetimeSettings!.inputFormat,
-          locale: datetimeSettings!.inputLocale
-        },
-        {
-          type: datetimeSettings!.outputType,
-          timezone: datetimeSettings!.outputTimezone,
-          format: datetimeSettings!.outputFormat,
-          locale: datetimeSettings!.outputLocale
-        }
-      );
-    default:
-      return raw;
-  }
+  return process(raw) ?? null;
 }
