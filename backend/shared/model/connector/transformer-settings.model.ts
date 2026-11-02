@@ -3,6 +3,7 @@
 // To update the typescript model run npm run generate-settings-interface on the backend project
 
 import { Timezone } from '../common/types';
+import { FieldOperation } from './field-process.model';
 
 export const TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json', 'other'] as const;
 export type TransformerFileToFileSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_FILE_TYPES)[number];
@@ -312,7 +313,7 @@ export interface TransformerFileToFileSettingsFields {
   field: string;
   name: string | null;
   dataType: TransformerFileToFileSettingsFieldsDataType;
-  fieldProcess: string | null;
+  fieldProcess: Array<FieldOperation>;
   datetimeSettings?: TransformerFileToFileSettingsFieldsDatetimeSettings | null;
 }
 
@@ -374,7 +375,7 @@ export interface TransformerFileToOianalyticsSettingsInput {
 
 export interface TransformerFileToOianalyticsSettingsReference {
   referenceField: string;
-  referenceProcess: string | null;
+  referenceProcess: Array<FieldOperation>;
 }
 
 export interface TransformerFileToOianalyticsSettingsTimestamp {
@@ -388,7 +389,7 @@ export interface TransformerFileToOianalyticsSettingsTimestamp {
 
 export interface TransformerFileToOianalyticsSettingsValue {
   valueField: string;
-  valueProcess: string | null;
+  valueProcess: Array<FieldOperation>;
 }
 
 export interface TransformerFileToOpcuaSettingsInput {
@@ -437,7 +438,7 @@ export interface TransformerRecordListToFileSettingsFields {
   field: string;
   name: string | null;
   dataType: TransformerRecordListToFileSettingsFieldsDataType;
-  fieldProcess: string | null;
+  fieldProcess: Array<FieldOperation>;
   datetimeSettings?: TransformerRecordListToFileSettingsFieldsDatetimeSettings | null;
 }
 
@@ -454,7 +455,7 @@ export interface TransformerRecordListToMqttSettingsMapping {
 
 export interface TransformerRecordListToOianalyticsSettingsReference {
   referenceField: string;
-  referenceProcess: string | null;
+  referenceProcess: Array<FieldOperation>;
 }
 
 export interface TransformerRecordListToOianalyticsSettingsTimestamp {
@@ -468,7 +469,7 @@ export interface TransformerRecordListToOianalyticsSettingsTimestamp {
 
 export interface TransformerRecordListToOianalyticsSettingsValue {
   valueField: string;
-  valueProcess: string | null;
+  valueProcess: Array<FieldOperation>;
 }
 
 export interface TransformerRecordListToOpcuaSettingsMapping {

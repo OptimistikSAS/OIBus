@@ -2,10 +2,11 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { FieldOperation } from '@oibus/shared/connector/field-process.model';
 import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 
 import { checkCondition } from '../dynamic-form.builder';
-import { FormUtils } from '../form-utils';
+import { FormUtils, summarizeFieldOperations } from '../form-utils';
 
 /** How the value of a setting shows */
 export type SettingValue =
@@ -135,6 +136,16 @@ function summarizeAttribute(
     case 'instant':
     case 'timezone':
       return text(attribute.translationKey, () => String(value));
+    case 'field-process': {
+      // No operation is no processing: shown empty, as an empty text
+      const operations = (value as Array<FieldOperation> | null) ?? [];
+      return {
+        kind: 'text',
+        labelKey: attribute.translationKey,
+        text: operations.length === 0 ? null : summarizeFieldOperations(operations, context.translateService),
+        invalid
+      };
+    }
   }
 }
 

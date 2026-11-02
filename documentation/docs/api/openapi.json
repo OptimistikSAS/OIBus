@@ -381,6 +381,7 @@
 					"transformer-array",
 					"certificate",
 					"timezone",
+					"field-process",
 					"array"
 				],
 				"description": "Type representing the possible attribute types for OIBus form elements."
@@ -937,6 +938,55 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"OIBusFieldProcessAttribute": {
+				"description": "The operations processing the values of a field of the records (upper case, substring, date time conversion...), applied\nin order: an `Array<FieldOperation>`, empty for none. Set up in a modal, where they are tested on values of the field.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"field-process"
+						],
+						"nullable": false,
+						"description": "The type of this attribute (always \"field-process\")."
+					},
+					"key": {
+						"type": "string",
+						"description": "The unique key/identifier for this attribute.",
+						"example": "serverUrl"
+					},
+					"translationKey": {
+						"type": "string",
+						"description": "Translation key for internationalization.",
+						"example": "connection.serverUrl"
+					},
+					"validators": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusAttributeValidator"
+						},
+						"type": "array",
+						"description": "Validators to apply to this attribute."
+					},
+					"displayProperties": {
+						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
+						"description": "Display properties for this attribute."
+					},
+					"fieldKey": {
+						"type": "string",
+						"description": "The key of the sibling attribute holding the name of the processed field, whose values the operations are tested on.",
+						"example": "valueField"
+					}
+				},
+				"required": [
+					"type",
+					"key",
+					"translationKey",
+					"validators",
+					"displayProperties",
+					"fieldKey"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusArrayAttribute": {
 				"description": "Array attribute for managing collections of objects.\nUsed for repeatable sections in forms.",
 				"properties": {
@@ -1027,6 +1077,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusTimezoneAttribute"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusFieldProcessAttribute"
 					},
 					{
 						"$ref": "#/components/schemas/OIBusArrayAttribute"
@@ -1490,6 +1543,336 @@
 				},
 				"required": [
 					"inputData"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"RecordFieldValue": {
+				"anyOf": [
+					{
+						"type": "string"
+					},
+					{
+						"type": "number",
+						"format": "double"
+					},
+					{
+						"type": "boolean"
+					}
+				],
+				"nullable": true,
+				"description": "The value of a field of a record (a discovered record, a row of a transformed content...)."
+			},
+			"FieldProcessTestResultDTO": {
+				"description": "One value tested through the operations of a field process.",
+				"properties": {
+					"value": {
+						"$ref": "#/components/schemas/RecordFieldValue",
+						"description": "The value tested"
+					},
+					"result": {
+						"$ref": "#/components/schemas/RecordFieldValue",
+						"description": "The processed value - null when an operation failed"
+					},
+					"error": {
+						"type": "string",
+						"nullable": true,
+						"description": "Why an operation failed on the value, null when none did"
+					}
+				},
+				"required": [
+					"value",
+					"result",
+					"error"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldCaseOperation": {
+				"description": "Changes the case of the value, or removes its leading and trailing spaces.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"uppercase",
+							"lowercase",
+							"trim"
+						]
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldSubstringOperation": {
+				"description": "Keeps the characters of the value from `start` to `end` (excluded) - a negative index counts from the end.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"substring"
+						],
+						"nullable": false
+					},
+					"start": {
+						"type": "number",
+						"format": "double",
+						"example": 0
+					},
+					"end": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Null keeps the characters up to the end of the value."
+					}
+				},
+				"required": [
+					"type",
+					"start",
+					"end"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldAddToStringOperation": {
+				"description": "Adds text before and after the value.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"add-to-string"
+						],
+						"nullable": false
+					},
+					"prefix": {
+						"type": "string",
+						"example": "plant1."
+					},
+					"suffix": {
+						"type": "string",
+						"example": ""
+					}
+				},
+				"required": [
+					"type",
+					"prefix",
+					"suffix"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldReplaceOperation": {
+				"description": "Replaces every occurrence of a text of the value.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"replace"
+						],
+						"nullable": false
+					},
+					"search": {
+						"type": "string",
+						"example": "/"
+					},
+					"replacement": {
+						"type": "string",
+						"example": "."
+					}
+				},
+				"required": [
+					"type",
+					"search",
+					"replacement"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldNumberOperator": {
+				"type": "string",
+				"enum": [
+					"add",
+					"subtract",
+					"multiply",
+					"divide"
+				],
+				"example": "multiply",
+				"description": "The arithmetic a `number-operation` applies to a numeric value, with its operand."
+			},
+			"FieldNumberOperation": {
+				"description": "Applies an arithmetic operation to a numeric value.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"number-operation"
+						],
+						"nullable": false
+					},
+					"operator": {
+						"$ref": "#/components/schemas/FieldNumberOperator"
+					},
+					"operand": {
+						"type": "number",
+						"format": "double",
+						"example": 1000
+					}
+				},
+				"required": [
+					"type",
+					"operator",
+					"operand"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldRoundOperation": {
+				"description": "Rounds a numeric value to a number of decimals.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"round"
+						],
+						"nullable": false
+					},
+					"decimals": {
+						"type": "number",
+						"format": "double",
+						"example": 2
+					}
+				},
+				"required": [
+					"type",
+					"decimals"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldDatetimeType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				],
+				"example": "iso-string"
+			},
+			"FieldDatetimeOperation": {
+				"description": "Converts a date time from a type to another - the timezone and format only apply to the `string` type.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"datetime"
+						],
+						"nullable": false
+					},
+					"inputType": {
+						"$ref": "#/components/schemas/FieldDatetimeType"
+					},
+					"inputTimezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
+					"inputFormat": {
+						"type": "string"
+					},
+					"inputLocale": {
+						"type": "string"
+					},
+					"outputType": {
+						"$ref": "#/components/schemas/FieldDatetimeType"
+					},
+					"outputTimezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
+					"outputFormat": {
+						"type": "string"
+					},
+					"outputLocale": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"type",
+					"inputType",
+					"outputType"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldExpressionOperation": {
+				"description": "Any other processing, as a JavaScript expression on `value`.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"expression"
+						],
+						"nullable": false
+					},
+					"expression": {
+						"type": "string",
+						"example": "value.split('.').pop()"
+					}
+				},
+				"required": [
+					"type",
+					"expression"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FieldOperation": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/FieldCaseOperation"
+					},
+					{
+						"$ref": "#/components/schemas/FieldSubstringOperation"
+					},
+					{
+						"$ref": "#/components/schemas/FieldAddToStringOperation"
+					},
+					{
+						"$ref": "#/components/schemas/FieldReplaceOperation"
+					},
+					{
+						"$ref": "#/components/schemas/FieldNumberOperation"
+					},
+					{
+						"$ref": "#/components/schemas/FieldRoundOperation"
+					},
+					{
+						"$ref": "#/components/schemas/FieldDatetimeOperation"
+					},
+					{
+						"$ref": "#/components/schemas/FieldExpressionOperation"
+					}
+				]
+			},
+			"FieldProcessTestCommandDTO": {
+				"description": "The values to test the operations of a field process on.",
+				"properties": {
+					"operations": {
+						"items": {
+							"$ref": "#/components/schemas/FieldOperation"
+						},
+						"type": "array"
+					},
+					"values": {
+						"items": {
+							"$ref": "#/components/schemas/RecordFieldValue"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"operations",
+					"values"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5886,10 +6269,10 @@
 				"type": "string",
 				"enum": [
 					"string",
-					"timestamp",
 					"iso-string",
 					"unix-epoch",
-					"unix-epoch-ms"
+					"unix-epoch-ms",
+					"timestamp"
 				]
 			},
 			"SouthMongoDBItemSettingsTrackingInstantDateTimeInput": {
@@ -7057,10 +7440,10 @@
 					"unix-epoch",
 					"unix-epoch-ms",
 					"date",
+					"small-date-time",
 					"date-time",
 					"date-time-2",
-					"date-time-offset",
-					"small-date-time"
+					"date-time-offset"
 				]
 			},
 			"SouthMSSQLItemSettingsTrackingInstantDateTimeInput": {
@@ -12467,10 +12850,10 @@
 				"type": "string",
 				"enum": [
 					"string",
-					"timestamp",
 					"iso-string",
 					"unix-epoch",
 					"unix-epoch-ms",
+					"timestamp",
 					"timestamptz"
 				]
 			},
@@ -16272,272 +16655,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"FieldCaseOperation": {
-				"description": "Changes the case of the value, or removes its leading and trailing spaces.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"uppercase",
-							"lowercase",
-							"trim"
-						]
-					}
-				},
-				"required": [
-					"type"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldSubstringOperation": {
-				"description": "Keeps the characters of the value from `start` to `end` (excluded) - a negative index counts from the end.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"substring"
-						],
-						"nullable": false
-					},
-					"start": {
-						"type": "number",
-						"format": "double",
-						"example": 0
-					},
-					"end": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Null keeps the characters up to the end of the value."
-					}
-				},
-				"required": [
-					"type",
-					"start",
-					"end"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldAddToStringOperation": {
-				"description": "Adds text before and after the value.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"add-to-string"
-						],
-						"nullable": false
-					},
-					"prefix": {
-						"type": "string",
-						"example": "plant1."
-					},
-					"suffix": {
-						"type": "string",
-						"example": ""
-					}
-				},
-				"required": [
-					"type",
-					"prefix",
-					"suffix"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldReplaceOperation": {
-				"description": "Replaces every occurrence of a text of the value.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"replace"
-						],
-						"nullable": false
-					},
-					"search": {
-						"type": "string",
-						"example": "/"
-					},
-					"replacement": {
-						"type": "string",
-						"example": "."
-					}
-				},
-				"required": [
-					"type",
-					"search",
-					"replacement"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldNumberOperator": {
-				"type": "string",
-				"enum": [
-					"add",
-					"subtract",
-					"multiply",
-					"divide"
-				],
-				"example": "multiply",
-				"description": "The arithmetic a `number-operation` applies to a numeric value, with its operand."
-			},
-			"FieldNumberOperation": {
-				"description": "Applies an arithmetic operation to a numeric value.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"number-operation"
-						],
-						"nullable": false
-					},
-					"operator": {
-						"$ref": "#/components/schemas/FieldNumberOperator"
-					},
-					"operand": {
-						"type": "number",
-						"format": "double",
-						"example": 1000
-					}
-				},
-				"required": [
-					"type",
-					"operator",
-					"operand"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldRoundOperation": {
-				"description": "Rounds a numeric value to a number of decimals.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"round"
-						],
-						"nullable": false
-					},
-					"decimals": {
-						"type": "number",
-						"format": "double",
-						"example": 2
-					}
-				},
-				"required": [
-					"type",
-					"decimals"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldDatetimeType": {
-				"type": "string",
-				"enum": [
-					"string",
-					"iso-string",
-					"unix-epoch",
-					"unix-epoch-ms"
-				],
-				"example": "iso-string"
-			},
-			"FieldDatetimeOperation": {
-				"description": "Converts a date time from a type to another - the timezone and format only apply to the `string` type.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"datetime"
-						],
-						"nullable": false
-					},
-					"inputType": {
-						"$ref": "#/components/schemas/FieldDatetimeType"
-					},
-					"inputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
-					},
-					"inputFormat": {
-						"type": "string"
-					},
-					"inputLocale": {
-						"type": "string"
-					},
-					"outputType": {
-						"$ref": "#/components/schemas/FieldDatetimeType"
-					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
-					},
-					"outputFormat": {
-						"type": "string"
-					},
-					"outputLocale": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"type",
-					"inputType",
-					"outputType"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldExpressionOperation": {
-				"description": "Any other processing, as the JavaScript expression of a transformer field process, on `value`.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"expression"
-						],
-						"nullable": false
-					},
-					"expression": {
-						"type": "string",
-						"example": "value.split('.').pop()"
-					}
-				},
-				"required": [
-					"type",
-					"expression"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldOperation": {
-				"anyOf": [
-					{
-						"$ref": "#/components/schemas/FieldCaseOperation"
-					},
-					{
-						"$ref": "#/components/schemas/FieldSubstringOperation"
-					},
-					{
-						"$ref": "#/components/schemas/FieldAddToStringOperation"
-					},
-					{
-						"$ref": "#/components/schemas/FieldReplaceOperation"
-					},
-					{
-						"$ref": "#/components/schemas/FieldNumberOperation"
-					},
-					{
-						"$ref": "#/components/schemas/FieldRoundOperation"
-					},
-					{
-						"$ref": "#/components/schemas/FieldDatetimeOperation"
-					},
-					{
-						"$ref": "#/components/schemas/FieldExpressionOperation"
-					}
-				]
-			},
 			"RecordFieldProcess": {
 				"description": "How a Configuration Workflow processes one field of every discovered record, before its eligibility filter: the\noperations apply in order, each on the result of the previous one.",
 				"properties": {
@@ -17121,22 +17238,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"RecordFieldValue": {
-				"anyOf": [
-					{
-						"type": "string"
-					},
-					{
-						"type": "number",
-						"format": "double"
-					},
-					{
-						"type": "boolean"
-					}
-				],
-				"nullable": true,
-				"description": "The value of a discovered record's field."
 			},
 			"RecordFieldValues": {
 				"items": {
@@ -21471,54 +21572,6 @@
 					"southSettings",
 					"discoveryScope",
 					"itemFieldMapping"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldProcessTestResultDTO": {
-				"description": "One value tested through the operations of a field process.",
-				"properties": {
-					"value": {
-						"$ref": "#/components/schemas/RecordFieldValue",
-						"description": "The value as discovered"
-					},
-					"result": {
-						"$ref": "#/components/schemas/RecordFieldValue",
-						"description": "The processed value - null when an operation failed"
-					},
-					"error": {
-						"type": "string",
-						"nullable": true,
-						"description": "Why an operation failed on the value, null when none did"
-					}
-				},
-				"required": [
-					"value",
-					"result",
-					"error"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FieldProcessTestCommandDTO": {
-				"description": "The values to test the operations of a field process on.",
-				"properties": {
-					"operations": {
-						"items": {
-							"$ref": "#/components/schemas/FieldOperation"
-						},
-						"type": "array"
-					},
-					"values": {
-						"items": {
-							"$ref": "#/components/schemas/RecordFieldValue"
-						},
-						"type": "array"
-					}
-				},
-				"required": [
-					"operations",
-					"values"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -49215,6 +49268,43 @@
 				}
 			}
 		},
+		"/api/transformers/test/field-process": {
+			"post": {
+				"operationId": "TestFieldProcess",
+				"responses": {
+					"200": {
+						"description": "Each value, processed",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/FieldProcessTestResultDTO"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Applies the operations of a field process (of a transformer setting, or of a configuration workflow) to values - e.g.\nthe first ones of the field - telling why an operation fails on a value. Nothing is saved.",
+				"summary": "Test a field process",
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/FieldProcessTestCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/transformers/{transformerId}/test": {
 			"post": {
 				"operationId": "TestTransformer",
@@ -49886,52 +49976,6 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/SouthDiscoveredItemsRequest"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/api/south/{southId}/test/field-process": {
-			"post": {
-				"operationId": "TestFieldProcess",
-				"responses": {
-					"200": {
-						"description": "Each value, processed",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/FieldProcessTestResultDTO"
-									},
-									"type": "array"
-								}
-							}
-						}
-					}
-				},
-				"description": "Applies the operations of a Configuration Workflow field process to values (e.g. the first ones discovered for the\nfield), as a run would before its eligibility filter, telling why an operation fails on a value. Nothing is saved.",
-				"summary": "Test a field process",
-				"tags": [
-					"South Connectors"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "southId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/FieldProcessTestCommandDTO"
 							}
 						}
 					}

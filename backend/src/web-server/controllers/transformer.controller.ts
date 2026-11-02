@@ -4,6 +4,8 @@ import { SouthConnectorItemTestResult } from '../../../shared/model/api/south-co
 import {
   CustomTransformerCommandDTO,
   CustomTransformerDTO,
+  FieldProcessTestCommandDTO,
+  FieldProcessTestResultDTO,
   InputTemplate,
   TransformerDTO,
   TransformerTestRequest,
@@ -15,6 +17,7 @@ import { InputType, TransformerManifest } from '../../../shared/model/connector/
 import { TransformerSearchParam } from '../../../shared/model/domain/transformer.model';
 
 import { OIBusTestingError } from '../../model/types';
+import { testFieldOperations } from '../../service/field-process.utils';
 import TransformerService, { toTransformerDTO } from '../../service/transformer.service';
 import { CustomExpressRequest } from '../express';
 
@@ -165,6 +168,17 @@ export class TransformerController extends Controller {
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
+  }
+
+  /**
+   * Applies the operations of a field process (of a transformer setting, or of a configuration workflow) to values - e.g.
+   * the first ones of the field - telling why an operation fails on a value. Nothing is saved.
+   * @summary Test a field process
+   * @returns {Array<FieldProcessTestResultDTO>} Each value, processed
+   */
+  @Post('/test/field-process')
+  testFieldProcess(@Body() command: FieldProcessTestCommandDTO): Array<FieldProcessTestResultDTO> {
+    return testFieldOperations(command.operations, command.values);
   }
 
   /**

@@ -89,7 +89,8 @@ describe('FormUtils', () => {
       type: 'iso-string',
       scanModeId: 'scanModeId2',
       unknownScanModeId: 'unknown',
-      settings: { nested: { value: 'nested value' } }
+      settings: { nested: { value: 'nested value' } },
+      valueProcess: [{ type: 'trim' }, { type: 'round', decimals: 2 }]
     };
     const selectTranslationKey = 'configuration.oibus.manifest.south.items.mssql.tracking-instant.date-time-input.type';
 
@@ -110,6 +111,7 @@ describe('FormUtils', () => {
       { label: 'a string-select', path: ['type'], type: 'string-select', translationKey: selectTranslationKey, expected: 'ISO String' },
       { label: 'a scan mode by its name', path: ['scanModeId'], type: 'scan-mode', translationKey: '', expected: 'scanMode2' },
       { label: 'an unknown scan mode', path: ['unknownScanModeId'], type: 'scan-mode', translationKey: '', expected: undefined },
+      { label: 'a field process', path: ['valueProcess'], type: 'field-process', translationKey: '', expected: 'Trim spaces → Round' },
       { label: 'an object', path: ['settings'], type: 'object', translationKey: '', expected: '' },
       { label: 'an array', path: ['settings'], type: 'array', translationKey: '', expected: '' },
       { label: 'a missing value', path: ['missing'], type: 'string', translationKey: '', expected: '' },

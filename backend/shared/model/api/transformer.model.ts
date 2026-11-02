@@ -1,4 +1,5 @@
 import { Instant, UserInfo } from '../common/types';
+import { FieldOperation, RecordFieldValue } from '../connector/field-process.model';
 import { OIBusObjectAttribute } from '../connector/form.model';
 import { InputType, OutputType } from '../connector/transformer-manifest.model';
 import { DataSourceType, TransformerLanguage } from '../domain/transformer.model';
@@ -501,4 +502,20 @@ export interface TransformerTestResponse {
      */
     numberOfElement: number;
   };
+}
+
+/** The values to test the operations of a field process on. */
+export interface FieldProcessTestCommandDTO {
+  operations: Array<FieldOperation>;
+  values: Array<RecordFieldValue>;
+}
+
+/** One value tested through the operations of a field process. */
+export interface FieldProcessTestResultDTO {
+  /** The value tested */
+  value: RecordFieldValue;
+  /** The processed value - null when an operation failed */
+  result: RecordFieldValue;
+  /** Why an operation failed on the value, null when none did */
+  error: string | null;
 }

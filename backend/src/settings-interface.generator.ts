@@ -17,6 +17,7 @@ const TRANSFORMER_SETTINGS_DESTINATION_PATH = 'shared/model/connector/transforme
 
 const SCAN_MODE_IMPORT = 'import { ScanModeDTO } from "../api/scan-mode.model";';
 const TIMEZONE_IMPORT = "import { Timezone } from '../common/types';\n";
+const FIELD_OPERATION_IMPORT = "import { FieldOperation } from './field-process.model';\n";
 
 type ConnectorType = 'South' | 'North';
 
@@ -265,6 +266,11 @@ export function generateInterface(
       case 'timezone':
         typesToGenerate.imports.add(TIMEZONE_IMPORT);
         attributes.push({ key: setting.key, type: 'Timezone', ...checkIfNullableOrUndefined(setting, settings.enablingConditions) });
+        break;
+      case 'field-process':
+        // Empty for no operation: never null nor left out
+        typesToGenerate.imports.add(FIELD_OPERATION_IMPORT);
+        attributes.push({ key: setting.key, type: 'Array<FieldOperation>', nullable: false, undefinable: false });
         break;
       case 'array':
         attributes.push({

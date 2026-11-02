@@ -1556,7 +1556,7 @@
               "array": "Array",
               "object": "Object"
             },
-            "field-process": "Field Process (JS expression, e.g. value.toUpperCase())",
+            "field-process": "Field processing",
             "datetime-settings": {
               "title": "Datetime Settings",
               "input-type": {
@@ -1660,7 +1660,7 @@
             "reference": {
               "title": "Reference",
               "reference-field": "Reference field",
-              "reference-process": "Reference process (JS expression, e.g. value.toUpperCase())"
+              "reference-process": "Reference processing"
             },
             "timestamp": {
               "title": "Timestamp",
@@ -1686,7 +1686,7 @@
             "value": {
               "title": "Value",
               "value-field": "Value field",
-              "value-process": "Value process (JS expression, e.g. Math.round(value * 100) / 100)"
+              "value-process": "Value processing"
             }
           },
           "record-list-to-opcua": {
@@ -3031,65 +3031,6 @@
       "field-processes-none-short": "None",
       "field-processes-field": "Field",
       "field-processes-operations": "Operations",
-      "field-process": {
-        "title": "Processing of the field {{field}}",
-        "hint": "The operations apply in order, each to the result of the previous one. A missing or empty value is left as is, and a value an operation fails on becomes empty",
-        "open": "Set up the processing of the field {{field}}",
-        "none": "No operation - the field is kept as discovered",
-        "new-operation": "Operation to add",
-        "add-operation": "Add",
-        "move-up": "Move up",
-        "move-down": "Move down",
-        "start": "Start",
-        "end": "End",
-        "substring-hint": "Characters from Start to End (excluded) - a negative position counts from the end, and an empty End goes to the end",
-        "prefix": "Prefix",
-        "suffix": "Suffix",
-        "search": "Text to replace",
-        "replacement": "Replacement",
-        "operator": "Operation",
-        "operand": "Operand",
-        "decimals": "Decimals",
-        "input-type": "Input type",
-        "output-type": "Output type",
-        "input-format": "Input format",
-        "input-timezone": "Input timezone",
-        "input-locale": "Input locale",
-        "output-format": "Output format",
-        "output-timezone": "Output timezone",
-        "output-locale": "Output locale",
-        "expression": "Expression",
-        "expression-hint": "A JavaScript expression on value, e.g. value.split('/').pop()",
-        "test": "Test",
-        "test-hint": "On the first {{count}} values discovered for the field",
-        "no-value": "No value discovered for this field yet: preview the records first",
-        "value": "Value",
-        "result": "Result",
-        "operation": {
-          "uppercase": "Upper case",
-          "lowercase": "Lower case",
-          "trim": "Trim spaces",
-          "substring": "Substring",
-          "add-to-string": "Add text",
-          "replace": "Replace text",
-          "number-operation": "Number operation",
-          "round": "Round",
-          "datetime": "Date time conversion",
-          "expression": "Expression"
-        },
-        "number-operator": {
-          "add": "Add",
-          "subtract": "Subtract",
-          "multiply": "Multiply by",
-          "divide": "Divide by"
-        },
-        "datetime-type": {
-          "iso-string": "ISO string",
-          "unix-epoch": "Unix epoch (s)",
-          "unix-epoch-ms": "Unix epoch (ms)",
-          "string": "String"
-        }
-      },
       "operator": {
         "equals": "equals",
         "notEquals": "not equals",
@@ -3799,6 +3740,70 @@
       "content-type": "Content type: {{ contentType }}",
       "content-type-truncated": "Content type: {{ contentType }}. Displayed as raw text because the content is truncated"
     }
+  },
+  "field-process": {
+    "open": "Set up the processing of the field {{field}}",
+    "title": "Processing of the field {{field}}",
+    "hint": "The operations apply in order, each to the result of the previous one. A missing or empty value is left as is, and a value an operation fails on becomes empty",
+    "none": "No operation - the field is kept as it is",
+    "new-operation": "Operation to add",
+    "add-operation": "Add",
+    "move-up": "Move up",
+    "move-down": "Move down",
+    "start": "Start",
+    "end": "End",
+    "substring-hint": "Characters from Start to End (excluded) - a negative position counts from the end, and an empty End goes to the end",
+    "prefix": "Prefix",
+    "suffix": "Suffix",
+    "search": "Text to replace",
+    "replacement": "Replacement",
+    "operator": "Operation",
+    "operand": "Operand",
+    "decimals": "Decimals",
+    "input-type": "Input type",
+    "output-type": "Output type",
+    "input-format": "Input format",
+    "input-timezone": "Input timezone",
+    "input-locale": "Input locale",
+    "output-format": "Output format",
+    "output-timezone": "Output timezone",
+    "output-locale": "Output locale",
+    "expression": "Expression",
+    "expression-hint": "A JavaScript expression on value, e.g. value.split('/').pop()",
+    "test": "Test",
+    "test-hint": "The first values of the field: change them, add or remove some to test other cases",
+    "no-value": "No value of the field yet: add some to test the operations",
+    "value": "Value",
+    "result": "Result",
+    "operation": {
+      "uppercase": "Upper case",
+      "lowercase": "Lower case",
+      "trim": "Trim spaces",
+      "substring": "Substring",
+      "add-to-string": "Add text",
+      "replace": "Replace text",
+      "number-operation": "Number operation",
+      "round": "Round",
+      "datetime": "Date time conversion",
+      "expression": "Expression"
+    },
+    "number-operator": {
+      "add": "Add",
+      "subtract": "Subtract",
+      "multiply": "Multiply by",
+      "divide": "Divide by"
+    },
+    "datetime-type": {
+      "iso-string": "ISO string",
+      "unix-epoch": "Unix epoch (s)",
+      "unix-epoch-ms": "Unix epoch (ms)",
+      "string": "String"
+    },
+    "test-values": "Test values",
+    "add-value": "Add a value",
+    "remove-value": "Remove the value",
+    "summary-none": "No processing",
+    "set-up": "Set up…"
   },
   "scan-mode": {
     "subscription": "Subscribe"

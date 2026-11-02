@@ -5,7 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
-import { FieldProcessTestResultDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { FieldProcessTestResultDTO } from '@oibus/shared/api/transformer.model';
 import { Timezone } from '@oibus/shared/common/types';
 import {
   FIELD_DATETIME_TYPES,
@@ -16,13 +16,13 @@ import {
   FieldOperation,
   FieldOperationType,
   RecordFieldValue
-} from '@oibus/shared/domain/configuration-workflow.model';
+} from '@oibus/shared/connector/field-process.model';
 
-import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
-import { extractErrorMessage } from '../../../shared/extract-error-message';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
-import { inMemoryTypeahead } from '../../../shared/form/typeahead';
-import { OI_TYPEAHEAD_DIRECTIVES } from '../../../shared/form/typeahead-directives';
+import { TransformerService } from '../../services/transformer.service';
+import { extractErrorMessage } from '../extract-error-message';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../form/form-validation-directives';
+import { inMemoryTypeahead } from '../form/typeahead';
+import { OI_TYPEAHEAD_DIRECTIVES } from '../form/typeahead-directives';
 
 /**
  * The settings of an operation, whatever its type: only the ones of its type are enabled (see `OPERATION_SETTINGS`), so
@@ -70,8 +70,9 @@ const OPERATION_SETTINGS: Record<FieldOperationType, ReadonlyArray<OperationSett
 };
 
 /**
- * Sets up the operations a Configuration Workflow applies to a field of the discovered records, in order, and tests them on
- * the first values discovered for the field. Closes with the operations - none to stop processing the field.
+ * Sets up the operations applied to the values of a field, in order - by a configuration workflow to its discovered records,
+ * or by a transformer to the rows it transforms - and tests them on values: the first ones of the field, which can be changed.
+ * Closes with the operations - none to stop processing the field.
  */
 @Component({
   selector: 'oib-field-process-modal',
@@ -83,7 +84,7 @@ const OPERATION_SETTINGS: Record<FieldOperationType, ReadonlyArray<OperationSett
 export class FieldProcessModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
-  private configurationWorkflowService = inject(ConfigurationWorkflowService);
+  private transformerService = inject(TransformerService);
 
   readonly operationTypes = FIELD_OPERATION_TYPES;
   readonly numberOperators = FIELD_NUMBER_OPERATORS;
@@ -94,9 +95,8 @@ export class FieldProcessModalComponent {
   );
 
   readonly field = signal('');
-  /** The first values discovered for the field, to test the operations on */
+  /** The values to test the operations on: the first ones of the field, which can be changed */
   readonly values = signal<Array<RecordFieldValue>>([]);
-  private southId = '';
 
   readonly operations: FormArray<OperationForm> = this.fb.array<OperationForm>([]);
   readonly form = this.fb.group({ operations: this.operations });
@@ -107,8 +107,7 @@ export class FieldProcessModalComponent {
   readonly testError = signal<string | null>(null);
   readonly testResults = signal<Array<FieldProcessTestResultDTO> | null>(null);
 
-  initialize(southId: string, field: string, operations: Array<FieldOperation>, values: Array<RecordFieldValue>) {
-    this.southId = southId;
+  initialize(field: string, operations: Array<FieldOperation>, values: Array<RecordFieldValue>) {
     this.field.set(field);
     this.values.set(values);
     for (const operation of operations) {
@@ -155,6 +154,23 @@ export class FieldProcessModalComponent {
     }
   }
 
+  /** A value typed in is a text: the number operations read the numbers it holds */
+  updateValue(index: number, event: Event) {
+    const text = (event.target as HTMLInputElement).value;
+    this.values.update(values => values.map((value, valueIndex) => (valueIndex === index ? text : value)));
+    this.testResults.set(null);
+  }
+
+  addValue() {
+    this.values.update(values => [...values, '']);
+    this.testResults.set(null);
+  }
+
+  removeValue(index: number) {
+    this.values.update(values => values.filter((_, valueIndex) => valueIndex !== index));
+    this.testResults.set(null);
+  }
+
   test() {
     this.form.markAllAsTouched();
     if (!this.form.valid || this.values().length === 0) {
@@ -162,7 +178,7 @@ export class FieldProcessModalComponent {
     }
     this.testing.set(true);
     this.testError.set(null);
-    this.configurationWorkflowService.testFieldProcess(this.southId, { operations: this.toOperations(), values: this.values() }).subscribe({
+    this.transformerService.testFieldProcess({ operations: this.toOperations(), values: this.values() }).subscribe({
       next: results => {
         this.testResults.set(results);
         this.testing.set(false);

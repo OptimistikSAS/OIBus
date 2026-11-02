@@ -3,6 +3,7 @@ import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, Valida
 import { Subscription } from 'rxjs';
 
 import { Instant } from '@oibus/shared/common/types';
+import { FieldOperation } from '@oibus/shared/connector/field-process.model';
 import {
   isEnabledOnPlatform,
   OIBusAttribute,
@@ -39,6 +40,7 @@ export function addAttributeToForm(fb: NonNullableFormBuilder, formGroup: FormGr
     case 'scan-mode':
     case 'certificate':
     case 'timezone':
+    case 'field-process':
       formGroup.addControl(attribute.key, createControl(fb, attribute));
       return true;
   }
@@ -61,6 +63,8 @@ export function createControl(fb: NonNullableFormBuilder, attribute: OIBusContro
     case 'scan-mode':
     case 'certificate':
       return fb.control<string | null>(null, buildValidators(attribute.validators));
+    case 'field-process':
+      return fb.control<Array<FieldOperation>>([], buildValidators(attribute.validators));
   }
 }
 
@@ -211,6 +215,7 @@ export function isDisplayableAttribute(attribute: OIBusAttribute): attribute is 
     case 'instant':
     case 'scan-mode':
     case 'certificate':
+    case 'field-process':
       return true;
   }
 }

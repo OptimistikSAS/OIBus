@@ -59,6 +59,9 @@
                 @case ('timezone') {
                   <oib-oibus-timezone-form-control [timezoneAttribute]="column.attribute" />
                 }
+                @case ('field-process') {
+                  <oib-oibus-field-process-form-control [fieldProcessAttribute]="column.attribute" [group]="group()" />
+                }
                 @default never(column.attribute);
               }
             </div>

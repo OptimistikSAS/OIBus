@@ -29,7 +29,7 @@
                   type="button"
                   class="btn btn-link btn-sm p-0 ms-1 process-field"
                   [class.text-muted]="!processedFields().includes(field)"
-                  [attr.aria-label]="'south.workflows.field-process.open' | translate: { field }"
+                  [attr.aria-label]="'field-process.open' | translate: { field }"
                   [attr.aria-pressed]="processedFields().includes(field)"
                   (click)="processField.emit(field)"
                 >

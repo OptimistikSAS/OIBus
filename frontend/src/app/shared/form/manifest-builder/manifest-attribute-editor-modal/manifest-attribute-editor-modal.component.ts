@@ -56,7 +56,8 @@ export class ManifestAttributeEditorModalComponent {
   private readonly depth = signal(0);
 
   readonly state = new ObservableState();
-  readonly availableTypes = OIBUS_ATTRIBUTE_TYPES.filter(type => type !== 'transformer-array');
+  // A field process is tested on the values of a sibling field: only the standard transformers have one
+  readonly availableTypes = OIBUS_ATTRIBUTE_TYPES.filter(type => type !== 'transformer-array' && type !== 'field-process');
 
   readonly form = this.fb.group({
     type: ['string' as OIBusAttributeType, [Validators.required]],

@@ -30,11 +30,11 @@ import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibu
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
 import { OIBusRecordListContent } from '@oibus/shared/common/content.model';
+import { FieldOperation } from '@oibus/shared/connector/field-process.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import {
-  FieldOperation,
   RECORD_FILTER_OPERATORS,
   RecordFieldProcess,
   RecordFilterCondition,
@@ -46,6 +46,7 @@ import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.component';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
+import { FieldProcessModalComponent } from '../../../shared/field-process-modal/field-process-modal.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { trackControl } from '../../../shared/form/tracked-control';
@@ -57,7 +58,6 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
 import { SouthItemGroups } from '../../south-items/south-item-groups';
 import { AddItemsStepComponent } from '../add-items-step/add-items-step.component';
 import { ExploreStepComponent } from '../explore-step/explore-step.component';
-import { FieldProcessModalComponent } from '../field-process-modal/field-process-modal.component';
 import {
   buildItemMappableFields,
   HISTORY_ITEM_DEFAULTS,
@@ -661,7 +661,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   openFieldProcess(field: string) {
     const modalRef = this.modalService.open(FieldProcessModalComponent, { size: 'lg', backdrop: 'static' });
     modalRef.componentInstance.initialize(
-      this.southId,
       field,
       this.fieldProcesses().find(process => process.field === field)?.operations ?? [],
       this.filterPreview()?.result?.samples[field] ?? []

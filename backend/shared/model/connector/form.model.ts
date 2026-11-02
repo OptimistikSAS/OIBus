@@ -14,6 +14,7 @@ export const OIBUS_ATTRIBUTE_TYPES = [
   'transformer-array', // Array of transformer configurations
   'certificate', // Certificate upload/selection field
   'timezone', // Timezone selection field
+  'field-process', // Operations processing the values of a field (upper case, substring, date time conversion...)
   'array', // Array of objects
   'object' // Group of related attributes
 ] as const;
@@ -443,6 +444,24 @@ export interface OIBusTimezoneAttribute extends BaseOIBusDisplayableAttribute {
 }
 
 /**
+ * The operations processing the values of a field of the records (upper case, substring, date time conversion...), applied
+ * in order: an `Array<FieldOperation>`, empty for none. Set up in a modal, where they are tested on values of the field.
+ */
+export interface OIBusFieldProcessAttribute extends BaseOIBusDisplayableAttribute {
+  /**
+   * The type of this attribute (always "field-process").
+   */
+  type: 'field-process';
+
+  /**
+   * The key of the sibling attribute holding the name of the processed field, whose values the operations are tested on.
+   *
+   * @example "valueField"
+   */
+  fieldKey: string;
+}
+
+/**
  * Union type representing all possible OIBus form attributes.
  * Includes both displayable attributes and array/object containers.
  */
@@ -458,6 +477,7 @@ export type OIBusAttribute =
   | OIBusScanModeAttribute
   | OIBusCertificateAttribute
   | OIBusTimezoneAttribute
+  | OIBusFieldProcessAttribute
   | OIBusArrayAttribute;
 
 /**
@@ -474,6 +494,7 @@ export type OIBusControlAttribute =
   | OIBusInstantAttribute
   | OIBusScanModeAttribute
   | OIBusTimezoneAttribute
+  | OIBusFieldProcessAttribute
   | OIBusCertificateAttribute;
 
 /**
@@ -490,7 +511,8 @@ export type OIBusDisplayableAttribute =
   | OIBusInstantAttribute
   | OIBusScanModeAttribute
   | OIBusCertificateAttribute
-  | OIBusTimezoneAttribute;
+  | OIBusTimezoneAttribute
+  | OIBusFieldProcessAttribute;
 
 /**
  * Whether an attribute is enabled on the given platform.

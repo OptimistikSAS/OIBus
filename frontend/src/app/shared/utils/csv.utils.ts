@@ -113,7 +113,8 @@ const flattenObject = (
         }
         break;
       case 'array':
-        flattened[fullKey] = JSON.stringify(value);
+      case 'field-process':
+        flattened[fullKey] = JSON.stringify(value ?? []);
         break;
       case 'boolean':
       case 'number':
@@ -162,6 +163,7 @@ const unflattenObject = (
         break;
       }
       case 'array':
+      case 'field-process':
         result[key] = parseArrayValue(value, fullKey);
         break;
       case 'boolean':
