@@ -285,10 +285,10 @@ describe('NorthTransformersComponent', () => {
           },
           {
             type: 'string-select',
-            key: 'precision',
-            translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.timestamp.precision',
-            defaultValue: 'ms',
-            selectableValues: ['ms', 's', 'min', 'hr'],
+            key: 'payloadType',
+            translationKey: 'configuration.oibus.manifest.transformers.file-to-mqtt.payload-type',
+            defaultValue: 'object',
+            selectableValues: ['value', 'object'],
             validators: [],
             displayProperties: { row: 1, columns: 4, displayInViewMode: true }
           }
@@ -298,11 +298,11 @@ describe('NorthTransformersComponent', () => {
     northConnector.transformers[2] = {
       ...northConnector.transformers[2],
       transformer: oianalytics,
-      options: { pointIdColumn: 'id', precision: 's' }
+      options: { pointIdColumn: 'id', payloadType: 'value' }
     };
     const tester = new NorthTransformersComponentTester(northConnector, true);
 
-    await expect.element(tester.row('South 2').getByCss('.transformer-options')).toMatchTextContent('Output precision: Second');
+    await expect.element(tester.row('South 2').getByCss('.transformer-options')).toMatchTextContent('Payload Type: Value');
   });
 
   test('should flag the transformers which are never used', async () => {

@@ -667,30 +667,120 @@ export const defaultRecordListToOIAnalyticsOptions = (): Record<string, unknown>
   toRecordListTransformerOptions('time-values-to-oianalytics', {});
 
 // The transformers whose options hold field processes, once the others are replaced by them
-export const FIELD_PROCESS_FUNCTION_NAMES = ['file-to-file', 'record-list-to-file', 'file-to-oianalytics', 'record-list-to-oianalytics'];
+export const FIELD_PROCESS_FUNCTION_NAMES = [
+  'file-to-file',
+  'record-list-to-file',
+  'file-to-oianalytics',
+  'record-list-to-oianalytics',
+  'file-to-mqtt'
+];
+
+type JsonRecord = Record<string, unknown>;
+
+/** A JS expression as the operations of a field process: a single `expression` operation, none without expression */
+const toOperations = (process: unknown): Array<unknown> =>
+  Array.isArray(process) ? process : typeof process === 'string' && process.trim() ? [{ type: 'expression', expression: process }] : [];
+
+/** The date time conversion of datetime settings (`inputType`, `inputTimezone`...), their format only for a string */
+function toDatetimeOperation(settings: JsonRecord | null | undefined): JsonRecord {
+  const side = (prefix: 'input' | 'output'): JsonRecord => {
+    const type = (settings?.[`${prefix}Type`] as string | undefined) ?? 'iso-string';
+    if (type !== 'string') return { [`${prefix}Type`]: type };
+    return {
+      [`${prefix}Type`]: type,
+      [`${prefix}Format`]: settings?.[`${prefix}Format`] ?? 'yyyy-MM-dd HH:mm:ss',
+      [`${prefix}Timezone`]: settings?.[`${prefix}Timezone`] ?? 'UTC',
+      [`${prefix}Locale`]: settings?.[`${prefix}Locale`] ?? 'en-En'
+    };
+  };
+  return { type: 'datetime', ...side('input'), ...side('output') };
+}
 
 /**
- * The field processes of the options of a transformer (of `FIELD_PROCESS_FUNCTION_NAMES`) become operations instead of a
- * JS expression: the expression of a field, a reference or a value becomes a single `expression` operation, and no
- * expression no operation.
+ * The operations doing what a data type did: a conversion, or the date time conversion of the datetime settings. A text
+ * (or the JSON text of an object) needs none to be written in a CSV file, nor in an MQTT message payload.
  */
-export function toFieldProcessOperations(options: Record<string, unknown>): Record<string, unknown> {
-  const toOperations = (process: unknown): unknown =>
-    Array.isArray(process) ? process : typeof process === 'string' && process.trim() ? [{ type: 'expression', expression: process }] : [];
-  const converted: Record<string, unknown> = { ...options };
-  if (Array.isArray(options.fields)) {
-    converted.fields = (options.fields as Array<Record<string, unknown>>).map(field => ({
-      ...field,
-      fieldProcess: toOperations(field.fieldProcess)
-    }));
+function toTypeOperations(dataType: unknown, datetimeSettings: unknown, textOutput: boolean): Array<JsonRecord> {
+  switch (dataType) {
+    case 'string':
+      return textOutput ? [] : [{ type: 'convert', to: 'string' }];
+    case 'number':
+      return [{ type: 'convert', to: 'number' }];
+    case 'boolean':
+      return [{ type: 'convert', to: 'boolean' }];
+    case 'object':
+    case 'array':
+      return textOutput ? [] : [{ type: 'convert', to: 'json' }];
+    case 'datetime':
+      return [toDatetimeOperation(datetimeSettings as JsonRecord | null)];
+    default:
+      return [];
   }
-  const reference = options.reference as Record<string, unknown> | undefined;
+}
+
+/**
+ * A timestamp process rounding down to the precision of an OIAnalytics timestamp: the precision of its last date time
+ * conversion, or of a conversion from an ISO string to an ISO string added for it. Milliseconds need no rounding.
+ */
+function withPrecision(operations: Array<JsonRecord>, precision: unknown): Array<JsonRecord> {
+  if (!precision || precision === 'ms') return operations;
+  const last = operations.at(-1);
+  if (last?.type === 'datetime' && last.outputType === 'iso-string') {
+    return [...operations.slice(0, -1), { ...last, precision }];
+  }
+  return [...operations, { type: 'datetime', inputType: 'iso-string', outputType: 'iso-string', precision }];
+}
+
+/** A field with a data type (and datetime settings) and an expression, as a field with the operations doing the same */
+function toProcessedField(field: JsonRecord, textOutput: boolean): JsonRecord {
+  const { dataType, datetimeSettings, ...kept } = field;
+  return { ...kept, fieldProcess: [...toTypeOperations(dataType, datetimeSettings, textOutput), ...toOperations(field.fieldProcess)] };
+}
+
+/**
+ * The options of a transformer (of `FIELD_PROCESS_FUNCTION_NAMES`) only process their fields with operations:
+ *  - a JS expression (of a field, a reference or a value) becomes a single `expression` operation;
+ *  - the data type and datetime settings of a file field, and of an MQTT payload or object field, become the operations
+ *    doing the same (a conversion, a date time conversion), first;
+ *  - the source type of an OIAnalytics timestamp (with its timezone, format and locale) becomes a date time conversion to
+ *    an ISO string, and its precision the precision of a date time conversion.
+ */
+export function toFieldProcessOperations(options: JsonRecord): JsonRecord {
+  const converted: JsonRecord = { ...options };
+  if (Array.isArray(options.fields)) {
+    const csvOutput = (options.output as JsonRecord | undefined)?.fileType === 'csv';
+    converted.fields = (options.fields as Array<JsonRecord>).map(field => toProcessedField(field, csvOutput));
+  }
+  const reference = options.reference as JsonRecord | undefined;
   if (reference && typeof reference === 'object') {
     converted.reference = { ...reference, referenceProcess: toOperations(reference.referenceProcess) };
   }
-  const value = options.value as Record<string, unknown> | undefined;
+  const timestamp = options.timestamp as JsonRecord | undefined;
+  if (timestamp && typeof timestamp === 'object') {
+    const { sourceType, timezone, format, locale, precision, ...kept } = timestamp;
+    const timestampProcess = Array.isArray(timestamp.timestampProcess)
+      ? timestamp.timestampProcess
+      : !sourceType || sourceType === 'iso-string'
+        ? []
+        : [toDatetimeOperation({ inputType: sourceType, inputTimezone: timezone, inputFormat: format, inputLocale: locale })];
+    converted.timestamp = { ...kept, timestampProcess: withPrecision(timestampProcess as Array<JsonRecord>, precision) };
+  }
+  const value = options.value as JsonRecord | undefined;
   if (value && typeof value === 'object') {
     converted.value = { ...value, valueProcess: toOperations(value.valueProcess) };
+  }
+  if (typeof options.payloadType === 'string') {
+    delete converted.datetimeSettings;
+    if (options.payloadType !== 'value' && options.payloadType !== 'object') {
+      // A value payload is sent as a text
+      converted.payloadType = 'value';
+      converted.valueProcess = toTypeOperations(options.payloadType, options.datetimeSettings, true);
+    } else {
+      converted.valueProcess = toOperations(options.valueProcess);
+    }
+    if (Array.isArray(options.objectFields)) {
+      converted.objectFields = (options.objectFields as Array<JsonRecord>).map(field => toProcessedField(field, false));
+    }
   }
   return converted;
 }

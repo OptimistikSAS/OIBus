@@ -551,69 +551,18 @@
             },
             "field": "Champ (ou JSONPath)",
             "name": "Nom écrit",
-            "data-type": {
-              "title": "Type de données",
-              "string": "Chaîne",
-              "number": "Nombre",
-              "boolean": "Booléen",
-              "datetime": "Date/heure",
-              "array": "Tableau",
-              "object": "Objet"
-            },
             "field-process": "Traitement du champ",
-            "datetime-settings": {
-              "title": "Paramètres de date/heure",
-              "input-type": {
-                "title": "Type d'entrée de l'horodatage",
-                "string": "Chaîne",
-                "iso-string": "Chaîne ISO",
-                "unix-epoch": "Époque Unix (s)",
-                "unix-epoch-ms": "Époque Unix (ms)"
-              },
-              "output-type": {
-                "title": "Type de sortie de l'horodatage",
-                "string": "Chaîne",
-                "iso-string": "Chaîne ISO",
-                "unix-epoch": "Époque Unix (s)",
-                "unix-epoch-ms": "Époque Unix (ms)"
-              },
-              "timezone": "Fuseau horaire",
-              "format": "Format",
-              "locale": "Paramètres régionaux"
-            },
             "keep-other-fields": "Conserver les autres champs"
           },
           "file-to-mqtt": {
             "topic-field": "Champ du sujet",
             "payload-type": {
               "title": "Type de charge utile",
-              "string": "Chaîne",
-              "number": "Nombre",
-              "boolean": "Booléen",
-              "datetime": "Date/heure",
+              "value": "Valeur",
               "object": "Objet"
             },
             "value-field": "Champ de valeur",
-            "datetime-settings": {
-              "title": "Paramètres de date/heure",
-              "input-type": {
-                "title": "Type d'entrée de l'horodatage",
-                "string": "Chaîne",
-                "iso-string": "Chaîne ISO",
-                "unix-epoch": "Époque Unix (s)",
-                "unix-epoch-ms": "Époque Unix (ms)"
-              },
-              "output-type": {
-                "title": "Type de sortie de l'horodatage",
-                "string": "Chaîne",
-                "iso-string": "Chaîne ISO",
-                "unix-epoch": "Époque Unix (s)",
-                "unix-epoch-ms": "Époque Unix (ms)"
-              },
-              "timezone": "Fuseau horaire",
-              "format": "Format",
-              "locale": "Paramètres régionaux"
-            },
+            "value-process": "Traitement de la valeur",
             "object-fields": {
               "title": "Champs objet",
               "item": {
@@ -621,15 +570,7 @@
               },
               "key": "Clé",
               "field": "Champ",
-              "data-type": {
-                "title": "Type de données",
-                "string": "Chaîne",
-                "number": "Nombre",
-                "boolean": "Booléen",
-                "datetime": "Date/heure",
-                "array": "Tableau",
-                "object": "Objet"
-              }
+              "field-process": "Traitement du champ"
             }
           },
           "record-list-to-modbus": {
@@ -669,23 +610,7 @@
             "timestamp": {
               "title": "Horodatage",
               "timestamp-field": "Champ de l'horodatage",
-              "source-type": {
-                "title": "Type source",
-                "string": "Chaîne",
-                "iso-string": "Chaîne ISO",
-                "unix-epoch": "Époque Unix (s)",
-                "unix-epoch-ms": "Époque Unix (ms)"
-              },
-              "timezone": "Fuseau horaire",
-              "format": "Format",
-              "locale": "Paramètres régionaux",
-              "precision": {
-                "title": "Précision en sortie",
-                "ms": "Milliseconde",
-                "s": "Seconde",
-                "min": "Minute",
-                "hr": "Heure"
-              }
+              "timestamp-process": "Traitement de l'horodatage (doit donner une date ISO)"
             },
             "value": {
               "title": "Valeur",
@@ -2238,6 +2163,8 @@
     "output-format": "Format de sortie",
     "output-timezone": "Fuseau horaire de sortie",
     "output-locale": "Locale de sortie",
+    "precision": "Précision",
+    "precision-hint": "Les unités plus petites sont mises à 0 — ex. Minute : 10:42:37.512 → 10:42:00.000",
     "expression": "Expression",
     "expression-hint": "Une expression JavaScript sur value, par exemple value.split('/').pop()",
     "test": "Tester",
@@ -2246,6 +2173,7 @@
     "value": "Valeur",
     "result": "Résultat",
     "operation": {
+      "convert": "Convertir",
       "uppercase": "Majuscules",
       "lowercase": "Minuscules",
       "trim": "Supprimer les espaces",
@@ -2273,7 +2201,21 @@
     "add-value": "Ajouter une valeur",
     "remove-value": "Retirer la valeur",
     "summary-none": "Aucun traitement",
-    "set-up": "Configurer…"
+    "set-up": "Configurer…",
+    "convert-to": "En",
+    "convert-type": {
+      "string": "Texte",
+      "number": "Nombre",
+      "boolean": "Booléen",
+      "json": "JSON (objet ou tableau)"
+    },
+    "datetime-precision": {
+      "unchanged": "Inchangée",
+      "s": "Seconde",
+      "min": "Minute",
+      "hr": "Heure",
+      "day": "Jour"
+    }
   },
   "scan-mode": {
     "subscription": "S'abonner"

@@ -2,6 +2,8 @@ import Joi from 'joi';
 
 import { FieldProcessTestResultDTO } from '../../shared/model/api/transformer.model';
 import {
+  FIELD_CONVERT_TYPES,
+  FIELD_DATETIME_PRECISIONS,
   FIELD_DATETIME_TYPES,
   FIELD_NUMBER_OPERATORS,
   FIELD_OPERATION_TYPES,
@@ -21,6 +23,13 @@ const fieldOperation = Joi.object({
     .valid(...FIELD_OPERATION_TYPES)
     .required()
 })
+  .when(Joi.object({ type: 'convert' }).unknown(), {
+    then: Joi.object({
+      to: Joi.string()
+        .valid(...FIELD_CONVERT_TYPES)
+        .required()
+    })
+  })
   .when(Joi.object({ type: 'substring' }).unknown(), {
     then: Joi.object({ start: Joi.number().integer().required(), end: Joi.number().integer().allow(null).required() })
   })
@@ -50,7 +59,8 @@ const fieldOperation = Joi.object({
       outputType: datetimeTypes,
       outputTimezone: Joi.string(),
       outputFormat: Joi.string(),
-      outputLocale: Joi.string()
+      outputLocale: Joi.string(),
+      precision: Joi.string().valid(...FIELD_DATETIME_PRECISIONS)
     })
   })
   .when(Joi.object({ type: 'expression' }).unknown(), {

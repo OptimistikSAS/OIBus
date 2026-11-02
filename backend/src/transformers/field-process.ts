@@ -1,9 +1,18 @@
 import vm from 'node:vm';
 
-import { FieldDatetimeOperation, FieldNumberOperation, FieldOperation } from '../../shared/model/connector/field-process.model';
+import { DateTime, DateTimeUnit } from 'luxon';
+
+import { Instant, Timezone } from '../../shared/model/common/types';
+import {
+  FieldConvertType,
+  FieldDatetimeOperation,
+  FieldDatetimePrecision,
+  FieldNumberOperation,
+  FieldOperation
+} from '../../shared/model/connector/field-process.model';
 
 import type { ILogger } from '../model/logger.model';
-import { convertDateTimeToInstant, formatInstant } from '../service/utils';
+import { convertDateTimeToInstant, formatInstant, stringToBoolean } from '../service/utils';
 
 /**
  * Whitelisted standard globals accessible inside the expression of an `expression` operation.
@@ -122,9 +131,18 @@ export function createStringFieldProcess(
   };
 }
 
-function applyFieldOperation(value: unknown, operation: FieldOperation): unknown {
+function applyFieldOperation(operand: unknown, operation: FieldOperation): unknown {
+  // A database driver may return a date column as a Date object: an instant for a date time conversion, whatever its
+  // input type, and its ISO string for the other operations
+  if (operand instanceof Date && operation.type === 'datetime') {
+    return convertFieldDatetime(operand, operation);
+  }
+  const value = operand instanceof Date ? operand.toISOString() : operand;
   if (operation.type === 'expression') {
     return evaluateExpression(value, operation.expression) ?? null;
+  }
+  if (operation.type === 'convert') {
+    return convert(value, operation.to);
   }
   if (typeof value === 'object') {
     // Objects and arrays (of the JSON files) have no text nor number to process
@@ -155,6 +173,32 @@ function applyFieldOperation(value: unknown, operation: FieldOperation): unknown
   }
 }
 
+function convert(value: unknown, to: FieldConvertType): unknown {
+  switch (to) {
+    case 'string':
+      return typeof value === 'object' ? JSON.stringify(value) : String(value);
+    case 'number':
+      if (typeof value === 'object' || typeof value === 'boolean') {
+        throw new Error(`${JSON.stringify(value)} is not a number`);
+      }
+      return toNumber(value as string | number);
+    case 'boolean':
+      if (typeof value === 'object') {
+        throw new Error(`${JSON.stringify(value)} is not a boolean`);
+      }
+      return typeof value === 'boolean' ? value : stringToBoolean(String(value));
+    case 'json':
+      if (typeof value !== 'string') {
+        return value;
+      }
+      try {
+        return JSON.parse(value);
+      } catch {
+        throw new Error(`"${value}" is not a JSON text`);
+      }
+  }
+}
+
 function applyNumberOperation(value: number, operation: FieldNumberOperation): number {
   switch (operation.operator) {
     case 'add':
@@ -180,32 +224,59 @@ function toNumber(value: string | number | boolean): number {
   return number;
 }
 
-function convertFieldDatetime(value: string | number | boolean, operation: FieldDatetimeOperation): string | number {
+function convertFieldDatetime(value: string | number | boolean | Date, operation: FieldDatetimeOperation): string | number {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      throw new Error('invalid date');
+    }
+    return formatOperationInstant(value.toISOString(), operation);
+  }
   if (typeof value === 'boolean') {
     throw new Error(`"${value}" is not a date time`);
   }
   if (operation.inputType === 'string' && (!operation.inputFormat || !operation.inputTimezone)) {
     throw new Error('the input format and timezone are required to read a date time string');
   }
-  if (operation.outputType === 'string' && (!operation.outputFormat || !operation.outputTimezone)) {
-    throw new Error('the output format and timezone are required to write a date time string');
-  }
-  const instant = convertDateTimeToInstant(operation.inputType === 'string' ? String(value) : value, {
+  const converted = convertDateTimeToInstant(operation.inputType === 'string' ? String(value) : value, {
     type: operation.inputType,
     timezone: operation.inputTimezone,
     format: operation.inputFormat,
     locale: operation.inputLocale
   });
   // An unparsable ISO string or formatted string converts to no instant at all
-  if (!instant) {
+  if (!converted) {
     throw new Error(`"${value}" is not a valid date time of type "${operation.inputType}"`);
   }
+  return formatOperationInstant(converted, operation);
+}
+
+/** An instant written with the output type of a date time conversion, rounded down to its precision */
+function formatOperationInstant(converted: Instant, operation: FieldDatetimeOperation): string | number {
+  if (operation.outputType === 'string' && (!operation.outputFormat || !operation.outputTimezone)) {
+    throw new Error('the output format and timezone are required to write a date time string');
+  }
+  const instant = operation.precision
+    ? roundDownInstant(converted, operation.precision, operation.outputType === 'string' ? operation.outputTimezone : undefined)
+    : converted;
   return formatInstant(instant, {
     type: operation.outputType,
     timezone: operation.outputTimezone,
     format: operation.outputFormat,
     locale: operation.outputLocale
   });
+}
+
+const PRECISION_UNITS: Record<FieldDatetimePrecision, DateTimeUnit> = { s: 'second', min: 'minute', hr: 'hour', day: 'day' };
+
+/**
+ * An instant rounded down to a precision: in UTC, or in the timezone it is written in - hours and days start at different
+ * instants in a timezone with a non-whole-hour offset.
+ */
+function roundDownInstant(instant: Instant, precision: FieldDatetimePrecision, timezone: Timezone | undefined): Instant {
+  return DateTime.fromISO(instant, { zone: timezone ?? 'utc' })
+    .startOf(PRECISION_UNITS[precision])
+    .toUTC()
+    .toISO()!;
 }
 
 /**

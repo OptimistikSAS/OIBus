@@ -34,6 +34,7 @@ describe('field-process.utils', () => {
     it('should accept the settings of each type of operation', () => {
       assert.strictEqual(
         errorOf([
+          { type: 'convert', to: 'json' },
           { type: 'uppercase' },
           { type: 'substring', start: 0, end: null },
           { type: 'add-to-string', prefix: 'a', suffix: '' },
@@ -49,6 +50,7 @@ describe('field-process.utils', () => {
 
     it('should reject an unknown operation, a missing setting or one of another type', () => {
       assert.match(errorOf([{ type: 'nope' }])!, /"\[0\].type" must be one of/);
+      assert.match(errorOf([{ type: 'convert', to: 'date' }])!, /"\[0\].to" must be one of/);
       assert.match(errorOf([{ type: 'substring', start: 0 }])!, /"\[0\].end" is required/);
       assert.match(errorOf([{ type: 'uppercase', start: 1 }])!, /"\[0\].start" is not allowed/);
       assert.match(errorOf([{ type: 'number-operation', operator: 'pow', operand: 2 }])!, /"\[0\].operator" must be one of/);
