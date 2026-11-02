@@ -22,7 +22,7 @@ import {
   Validators
 } from '@angular/forms';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
@@ -32,7 +32,7 @@ import { SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.
 import { OIBusRecordListContent } from '@oibus/shared/common/content.model';
 import { FieldOperation } from '@oibus/shared/connector/field-process.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
-import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthConnectorManifest, SouthDiscoveryTemplate } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import {
   RECORD_FILTER_OPERATORS,
@@ -44,6 +44,7 @@ import {
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.component';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { FieldProcessModalComponent } from '../../../shared/field-process-modal/field-process-modal.component';
@@ -104,6 +105,7 @@ const PREVIEW_RECORD_LIMIT = 20;
     FormsModule,
     TranslateDirective,
     TranslatePipe,
+    NgbDropdownModule,
     OI_FORM_VALIDATION_DIRECTIVES,
     SaveButtonComponent,
     ExploreTreeComponent,
@@ -125,6 +127,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private configurationWorkflowService = inject(ConfigurationWorkflowService);
   private engineService = inject(EngineService);
   private modalService = inject(ModalService);
+  private confirmationService = inject(ConfirmationService);
   private injector = inject(Injector);
 
   // The inline, read-only explore tree shown alongside the SQL query editor (for the SQL connectors that can be
@@ -267,6 +270,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly discoveryNodeIds = signal<Array<string>>([]);
   /** The dedicated metadata query, as typed by the user (SQL-family connectors only). */
   readonly discoveryQuery = signal('');
+  /** The ready-made metadata queries of the connector, to start the query from */
+  readonly discoveryTemplates = computed(() => this.currentManifest()?.discovery?.templates ?? []);
+  /** The template the query was last started from, its description telling how to use it */
+  readonly appliedTemplate = signal<SouthDiscoveryTemplate | null>(null);
 
   /** "Test query" state - runs discoveryQuery as currently typed, independent of Save. */
   readonly queryTestRunning = signal(false);
@@ -529,6 +536,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.filterPreviewKey = null;
     this.reviewPreview.set(null);
     this.discoveryQuery.set(typeof scope['query'] === 'string' ? scope['query'] : '');
+    this.appliedTemplate.set(null);
     // A new workflow starts from the connector's own defaults: the records it discovers always have the same shape
     const defaults = manifest.discovery?.defaults;
     const startingValues =
@@ -900,6 +908,27 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     }
     // No node at all means the whole data source - a deliberate, valid choice.
     return this.isTreeBased() && this.discoveryNodeIds().length > 0 ? { nodeIds: this.discoveryNodeIds() } : {};
+  }
+
+  /** The translation key of a template of the connector, under which its title and description are */
+  templateKey(template: SouthDiscoveryTemplate): string {
+    return `configuration.oibus.manifest.south.${this.currentManifest()!.id}.discovery.templates.${template.id}`;
+  }
+
+  /** Start the query from a template - once confirmed when it replaces a query of its own */
+  applyTemplate(template: SouthDiscoveryTemplate) {
+    const apply = () => {
+      this.discoveryQuery.set(template.query);
+      this.appliedTemplate.set(template);
+      this.queryTestError.set(null);
+      this.queryTestResult.set(null);
+    };
+    const query = this.discoveryQuery().trim();
+    if (query && query !== template.query) {
+      this.confirmationService.confirm({ messageKey: 'south.workflows.discovery-template-replace' }).subscribe(apply);
+    } else {
+      apply();
+    }
   }
 
   /**

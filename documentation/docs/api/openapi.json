@@ -2176,6 +2176,26 @@
 				],
 				"description": "Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:\n- `tree`: the nodes checked in the Explore modal (`{ nodeIds: Array<string> }`), each point for itself and any other\n  node for everything under it - or a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA\n- `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors. Their tables and columns\n  checked in the Explore modal (`{ nodeIds }`) are discovered too, one record per table, to add as items"
 			},
+			"SouthDiscoveryTemplate": {
+				"description": "A ready-made metadata query of a known data source (e.g. the tags of a Wonderware Historian on MSSQL), offered to start\nthe query of a Configuration Workflow from. Its title and description are translated under\n`configuration.oibus.manifest.south.<connector id>.discovery.templates.<id>`.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Identifies the template among the ones of its connector, and its translations.",
+						"example": "wonderware-historian-tags"
+					},
+					"query": {
+						"type": "string",
+						"description": "The metadata query, each returned row becoming one discovered record"
+					}
+				},
+				"required": [
+					"id",
+					"query"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Record_string.string_": {
 				"properties": {},
 				"additionalProperties": {
@@ -2220,6 +2240,13 @@
 					"kind": {
 						"$ref": "#/components/schemas/SouthDiscoveryKind",
 						"description": "The shape of a workflow's discovery scope"
+					},
+					"templates": {
+						"items": {
+							"$ref": "#/components/schemas/SouthDiscoveryTemplate"
+						},
+						"type": "array",
+						"description": "The metadata queries a workflow can start from (`query` discovery only)"
 					},
 					"defaults": {
 						"$ref": "#/components/schemas/SouthDiscoveryDefaults",

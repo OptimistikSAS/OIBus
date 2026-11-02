@@ -1788,7 +1788,15 @@
               "trust-server-certificate": "Trust server certificate",
               "idle-timeout": "Idle connection timeout"
             },
-            "max-parallel-run": "Max parallel queries"
+            "max-parallel-run": "Max parallel queries",
+            "discovery": {
+              "templates": {
+                "wonderware-historian-tags": {
+                  "title": "Wonderware Historian tags",
+                  "description": "The analog, discrete and string tags of a Wonderware (AVEVA) Historian, with their description, unit, engineering range and where they are acquired from. Connect to its Runtime database; the Historian's system tags (Sys...) are left out."
+                }
+              }
+            }
           },
           "mysql": {
             "connection-settings": {
@@ -2939,6 +2947,8 @@
       "discovery-scope-query-hint": "A dedicated metadata query, independent of any item's own query - each returned row becomes one discovered record. E.g. SELECT column_name, description, unit FROM my_metadata_table",
       "discovery-scope-query-required": "A metadata query is required",
       "discovery-scope-query-test": "Test query",
+      "discovery-template": "Start from a template",
+      "discovery-template-replace": "The template replaces the current query. Continue?",
       "discovery-scope-unsupported": "This south connector type does not support items synchronisation yet",
       "identity-key-fields": "Identity key fields",
       "identity-key-fields-hint": "Discovered-record field(s) that uniquely identify an entry across runs",

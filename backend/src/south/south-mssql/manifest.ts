@@ -1,6 +1,7 @@
 import { SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
 
 import { SQL_TABLE_RECORD_FIELDS } from '../sql-table-discovery';
+import { WONDERWARE_HISTORIAN_TAGS } from './discovery-templates';
 
 const manifest: SouthConnectorManifest = {
   id: 'mssql',
@@ -14,6 +15,7 @@ const manifest: SouthConnectorManifest = {
   explore: true,
   discovery: {
     kind: 'query',
+    templates: [WONDERWARE_HISTORIAN_TAGS],
     recordFields: SQL_TABLE_RECORD_FIELDS,
     // The item of each table checked in the Explore modal (see discoverTables())
     defaults: {

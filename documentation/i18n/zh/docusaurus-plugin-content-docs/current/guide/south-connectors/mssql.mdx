@@ -67,6 +67,12 @@ OIBus 维护一个最多包含该数量数据库连接的连接池，连接在�
 此连接器上的[项同步](./common-settings.md#items-synchronisation)会运行一个元数据查询并将其结果行推送到 OIAnalytics；
 它从不创建项目。
 
+其**来源**步骤可以**从模板开始**，即一个可按需调整的现成查询：
+
+- **Wonderware Historian 标签**：Wonderware (AVEVA) Historian 的模拟量、离散量和字符串标签，包括其描述、单位、工程量程
+  （EU 及原始最小/最大值）、离散消息以及采集和存储设置。请将连接器连接到 Historian 的 `Runtime` 数据库。Historian 的系统标签
+  (`Sys...`) 不包含在内，其代码（采集、存储、原始类型等）按存储原样保留。
+
 <ItemSettings />
 
 :::note MSSQL 项目请求超时

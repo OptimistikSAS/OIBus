@@ -693,6 +693,15 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["tree"]},{"dataType":"enum","enums":["query"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthDiscoveryTemplate": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "query": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Record_string.string_": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"string"},"validators":{}},
@@ -711,6 +720,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "kind": {"ref":"SouthDiscoveryKind","required":true},
+            "templates": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthDiscoveryTemplate"}},
             "defaults": {"ref":"SouthDiscoveryDefaults"},
             "recordFields": {"dataType":"array","array":{"dataType":"string"}},
         },

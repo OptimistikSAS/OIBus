@@ -38,6 +38,26 @@
         <div class="form-label" translate="south.workflows.discovery-scope"></div>
         @if (isSqlFamily()) {
           <div class="form-text" translate="south.workflows.discovery-scope-query-hint"></div>
+          @if (discoveryTemplates().length > 0) {
+            <div ngbDropdown class="d-inline-block mt-1 mb-2" id="discovery-templates">
+              <button type="button" class="btn btn-secondary btn-sm" id="discovery-template-toggle" ngbDropdownToggle>
+                <span translate="south.workflows.discovery-template"></span>
+              </button>
+              <div ngbDropdownMenu>
+                @for (template of discoveryTemplates(); track template.id) {
+                  <button type="button" ngbDropdownItem [id]="'discovery-template-' + template.id" (click)="applyTemplate(template)">
+                    {{ templateKey(template) + '.title' | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+            @if (appliedTemplate(); as appliedTemplate) {
+              <div class="alert alert-info small py-2 mb-2" id="discovery-template-description">
+                <strong>{{ templateKey(appliedTemplate) + '.title' | translate }}</strong>
+                - {{ templateKey(appliedTemplate) + '.description' | translate }}
+              </div>
+            }
+          }
           @if (showSqlExploreTree()) {
             <div class="border rounded p-2 mb-2" id="discovery-explore-tree">
               <oib-explore-tree #inlineExploreTree maxHeight="12rem" />
