@@ -70,6 +70,13 @@ date/time column picked automatically — see [SQL Tables in an Item](./common-s
 An [items synchronisation](./common-settings.md#items-synchronisation) on this connector runs a metadata query and
 pushes its rows to OIAnalytics; it never creates items.
 
+Its **Source** step can **Start from a template**, a ready-made query to adapt if needed:
+
+- **Wonderware Historian tags**: the analog, discrete and string tags of a Wonderware (AVEVA) Historian, with their
+  description, unit, engineering range (min/max EU and raw), discrete messages, acquisition and storage settings. Connect
+  the connector to the Historian's `Runtime` database. The Historian's system tags (`Sys...`) are left out, and its codes
+  (acquisition, storage, raw type...) are kept as stored.
+
 <ItemSettings />
 
 :::note MSSQL item request timeout

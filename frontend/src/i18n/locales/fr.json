@@ -792,7 +792,15 @@
               "trust-server-certificate": "Faire confiance au certificat du serveur",
               "idle-timeout": "Délai d'inactivité des connexions"
             },
-            "max-parallel-run": "Requêtes parallèles max"
+            "max-parallel-run": "Requêtes parallèles max",
+            "discovery": {
+              "templates": {
+                "wonderware-historian-tags": {
+                  "title": "Tags Wonderware Historian",
+                  "description": "Les tags analogiques, discrets et texte d'un Wonderware (AVEVA) Historian, avec leur description, leur unité, leur plage de mesure et leur source d'acquisition. Se connecter à sa base Runtime ; les tags système de l'Historian (Sys...) sont exclus."
+                }
+              }
+            }
           },
           "mysql": {
             "connection-settings": {
@@ -1943,6 +1951,8 @@
       "discovery-scope-query-hint": "Une requête de métadonnées dédiée, indépendante de la requête propre à chaque point - chaque ligne retournée devient un enregistrement découvert. Ex. : SELECT column_name, description, unit FROM my_metadata_table",
       "discovery-scope-query-required": "Une requête de métadonnées est requise",
       "discovery-scope-query-test": "Tester la requête",
+      "discovery-template": "Partir d'un modèle",
+      "discovery-template-replace": "Le modèle remplace la requête actuelle. Continuer ?",
       "discovery-scope-unsupported": "Ce type de connecteur South ne prend pas encore en charge la synchronisation des points",
       "identity-key-fields": "Champs de clé d'identité",
       "identity-key-fields-hint": "Champ(s) de l'enregistrement découvert qui identifient de manière unique une entrée d'une exécution à l'autre",

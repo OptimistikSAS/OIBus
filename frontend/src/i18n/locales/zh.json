@@ -792,7 +792,15 @@
               "trust-server-certificate": "信任服务器证书",
               "idle-timeout": "空闲连接超时"
             },
-            "max-parallel-run": "最大并行查询数"
+            "max-parallel-run": "最大并行查询数",
+            "discovery": {
+              "templates": {
+                "wonderware-historian-tags": {
+                  "title": "Wonderware Historian 标签",
+                  "description": "Wonderware (AVEVA) Historian 的模拟量、离散量和字符串标签，包括其描述、单位、工程量程和采集来源。请连接到其 Runtime 数据库；Historian 的系统标签 (Sys...) 不包含在内。"
+                }
+              }
+            }
           },
           "mysql": {
             "connection-settings": {
@@ -1943,6 +1951,8 @@
       "discovery-scope-query-hint": "专用的元数据查询，独立于各项自身的查询 - 返回的每一行都会成为一条已发现的记录。例如：SELECT column_name, description, unit FROM my_metadata_table",
       "discovery-scope-query-required": "必须提供元数据查询",
       "discovery-scope-query-test": "测试查询",
+      "discovery-template": "从模板开始",
+      "discovery-template-replace": "模板将替换当前查询。是否继续？",
       "discovery-scope-unsupported": "此 South 连接器类型尚不支持项同步",
       "identity-key-fields": "标识键字段",
       "identity-key-fields-hint": "在多次运行之间唯一标识一个条目的已发现记录字段",
