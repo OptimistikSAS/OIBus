@@ -6,10 +6,11 @@ import {
 import { SouthConnectorItemCommandDTO } from '../../shared/model/api/south-connector.model';
 import { OIBusRecord } from '../../shared/model/common/content.model';
 import { Page } from '../../shared/model/common/types';
+import { RecordFieldValue } from '../../shared/model/connector/field-process.model';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
-import { RecordFieldValue, WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
+import { WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';

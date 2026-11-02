@@ -107,6 +107,14 @@ describe('TransformerService', () => {
       response: itemTestResult
     },
     {
+      name: 'test a field process on values',
+      call: s => s.testFieldProcess({ operations: [{ type: 'uppercase' }], values: ['a'] }),
+      method: 'POST',
+      url: '/api/transformers/test/field-process',
+      body: { operations: [{ type: 'uppercase' }], values: ['a'] },
+      response: [{ value: 'a', result: 'A', error: null }]
+    },
+    {
       name: 'get an input template',
       call: s => s.getInputTemplate('record-list'),
       method: 'GET',

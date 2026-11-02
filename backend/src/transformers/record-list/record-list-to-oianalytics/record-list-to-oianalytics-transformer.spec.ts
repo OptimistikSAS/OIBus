@@ -31,9 +31,9 @@ const metadata = (numberOfElement: number, contentType: string) => ({
 describe('RecordListToOIAnalyticsTransformer', () => {
   let logger: PinoLogger;
   const options = {
-    reference: { referenceField: 'pointId', referenceProcess: null },
+    reference: { referenceField: 'pointId', referenceProcess: [] },
     timestamp: { timestampField: 'timestamp', sourceType: 'iso-string', precision: 'ms' },
-    value: { valueField: 'value', valueProcess: null }
+    value: { valueField: 'value', valueProcess: [] }
   };
 
   beforeEach(() => {
@@ -59,7 +59,7 @@ describe('RecordListToOIAnalyticsTransformer', () => {
 
   it('should read the configured fields of rows, truncate the timestamps and process the references and the values', async () => {
     const transformer = new Transformer(logger, testData.transformers.list[0], {
-      reference: { referenceField: 'tag', referenceProcess: 'value.toUpperCase()' },
+      reference: { referenceField: 'tag', referenceProcess: [{ type: 'uppercase' }] },
       timestamp: {
         timestampField: 'date',
         sourceType: 'string',
@@ -68,7 +68,7 @@ describe('RecordListToOIAnalyticsTransformer', () => {
         format: 'yyyy-MM-dd HH:mm:ss',
         locale: 'en-En'
       },
-      value: { valueField: 'reading', valueProcess: 'value * 10' }
+      value: { valueField: 'reading', valueProcess: [{ type: 'number-operation', operator: 'multiply', operand: 10 }] }
     });
     const rows = [
       { tag: 'a', date: '2024-01-01 01:00:30', reading: 1 },

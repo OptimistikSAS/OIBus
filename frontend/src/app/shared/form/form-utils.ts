@@ -1,6 +1,7 @@
 import { TranslateService } from '@ngx-translate/core';
 
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { FieldOperation } from '@oibus/shared/connector/field-process.model';
 import { OIBusAttribute, OIBusAttributeType } from '@oibus/shared/connector/form.model';
 
 import { isDisplayableAttribute } from './dynamic-form.builder';
@@ -9,6 +10,11 @@ export interface Column {
   path: Array<string>;
   type: OIBusAttributeType;
   translationKey: string;
+}
+
+/** The operations of a field process, by their names in order - empty without operation */
+export function summarizeFieldOperations(operations: Array<FieldOperation> | null, translateService: TranslateService): string {
+  return (operations ?? []).map(operation => translateService.instant(`field-process.operation.${operation.type}`)).join(' → ');
 }
 
 export class FormUtils {
@@ -29,6 +35,7 @@ export class FormUtils {
           case 'string':
           case 'code':
           case 'string-select':
+          case 'field-process':
             return [{ path: [...prefix, attribute.key], type: attribute.type, translationKey: attribute.translationKey }];
           case 'object':
             return this.buildColumn(attribute.attributes, [...prefix, attribute.key]);
@@ -67,6 +74,8 @@ export class FormUtils {
         return translateService.instant(`enums.boolean.${value}`);
       case 'scan-mode':
         return scanModes.find(scanMode => scanMode.id === value)?.name;
+      case 'field-process':
+        return summarizeFieldOperations(value as Array<FieldOperation> | null, translateService);
     }
   }
 

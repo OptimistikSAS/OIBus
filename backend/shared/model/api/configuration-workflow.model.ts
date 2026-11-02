@@ -1,9 +1,7 @@
 import { OIBusRecord } from '../common/content.model';
 import { BaseEntity } from '../common/types';
 import {
-  FieldOperation,
   RecordFieldProcess,
-  RecordFieldValue,
   RecordFieldValues,
   RecordFilterCondition,
   WorkflowPreviewEntryStatus
@@ -153,20 +151,4 @@ export interface WorkflowPreviewResultDTO {
    * @example { "path": ["Plant/Reactor/Temperature", "Plant/Reactor/Pressure"] }
    */
   samples: Record<string, RecordFieldValues>;
-}
-
-/** The values to test the operations of a field process on. */
-export interface FieldProcessTestCommandDTO {
-  operations: Array<FieldOperation>;
-  values: Array<RecordFieldValue>;
-}
-
-/** One value tested through the operations of a field process. */
-export interface FieldProcessTestResultDTO {
-  /** The value as discovered */
-  value: RecordFieldValue;
-  /** The processed value - null when an operation failed */
-  result: RecordFieldValue;
-  /** Why an operation failed on the value, null when none did */
-  error: string | null;
 }

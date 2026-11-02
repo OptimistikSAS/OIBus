@@ -138,14 +138,6 @@ describe('ConfigurationWorkflowService', () => {
       response: previewResult
     },
     {
-      name: 'test a field process on values',
-      call: s => s.testFieldProcess('create', { operations: [{ type: 'uppercase' }], values: ['a'] }),
-      method: 'POST',
-      url: '/api/south/create/test/field-process',
-      body: { operations: [{ type: 'uppercase' }], values: ['a'] },
-      response: [{ value: 'a', result: 'A', error: null }]
-    },
-    {
       name: 'list the run history with the given page',
       call: s => s.listRuns(SOUTH_ID, WORKFLOW_ID, { page: 2, start: undefined, end: undefined, statuses: [], triggerTypes: [] }),
       method: 'GET',

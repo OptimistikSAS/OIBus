@@ -7,6 +7,8 @@ import { switchMap, tap } from 'rxjs/operators';
 import { SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
 import {
   CustomTransformerCommandDTO,
+  FieldProcessTestCommandDTO,
+  FieldProcessTestResultDTO,
   InputTemplate,
   TransformerDTO,
   TransformerTestRequest,
@@ -82,6 +84,14 @@ export class TransformerService {
    */
   testTransformer(transformerId: string, testRequest: TransformerTestRequest): Observable<SouthConnectorItemTestResult> {
     return this.http.post<SouthConnectorItemTestResult>(`/api/transformers/${transformerId}/test`, testRequest);
+  }
+
+  /**
+   * Apply the operations of a field process (of a transformer setting, or of a configuration workflow) to values - each value
+   * comes back processed, or with why an operation failed on it
+   */
+  testFieldProcess(command: FieldProcessTestCommandDTO): Observable<Array<FieldProcessTestResultDTO>> {
+    return this.http.post<Array<FieldProcessTestResultDTO>>('/api/transformers/test/field-process', command);
   }
 
   /**

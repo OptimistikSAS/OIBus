@@ -1,6 +1,17 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+  viewChild
+} from '@angular/core';
 import { rxResource, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -19,6 +30,7 @@ import { SouthConnectorService } from '../../../services/south-connector.service
 import { TransformerService } from '../../../services/transformer.service';
 import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-range-selector/date-range-selector.component';
 import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
+import { FieldProcessSamplesService } from '../../../shared/field-process-modal/field-process-samples.service';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { inMemoryTypeahead } from '../../../shared/form/typeahead';
 import { OI_TYPEAHEAD_DIRECTIVES } from '../../../shared/form/typeahead-directives';
@@ -67,6 +79,7 @@ export class NorthTransformerTestComponent {
   private readonly southConnectorService = inject(SouthConnectorService);
   private readonly historyQueryService = inject(HistoryQueryService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly fieldProcessSamples = inject(FieldProcessSamplesService);
 
   readonly transformer = input<TransformerDTO | null>(null);
   readonly options = input<Record<string, unknown>>({});
@@ -148,6 +161,9 @@ export class NorthTransformerTestComponent {
   private readonly dateRange = toSignal(this.form.controls.dateRange.valueChanges, { initialValue: this.form.controls.dateRange.value });
 
   constructor() {
+    // The field processes of the options are tested on the values of the content the last test ran on
+    effect(() => this.fieldProcessSamples.setContent(this.testResult()?.raw ?? null));
+    inject(DestroyRef).onDestroy(() => this.fieldProcessSamples.setContent(null));
     // A different transformer is being tested: drop the previous one's stale result and reopen
     // the settings, then prefill the paste editor with a sample payload for its input type.
     toObservable(this.transformer)

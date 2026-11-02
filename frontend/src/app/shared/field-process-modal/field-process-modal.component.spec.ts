@@ -6,12 +6,12 @@ import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { FieldOperation, RecordFieldValue } from '@oibus/shared/domain/configuration-workflow.model';
+import { FieldOperation, RecordFieldValue } from '@oibus/shared/connector/field-process.model';
 
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
-import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { TransformerService } from '../../services/transformer.service';
+import { DefaultValidationErrorsComponent } from '../default-validation-errors/default-validation-errors.component';
 import { FieldProcessModalComponent } from './field-process-modal.component';
 
 class FieldProcessModalComponentTester {
@@ -22,20 +22,28 @@ class FieldProcessModalComponentTester {
   readonly operationTypes = this.root.getByCss('.field-operation .operation-type');
   readonly noOperation = this.root.getByCss('#field-operations-none');
   readonly newOperationType = this.root.getByLabelText('Operation to add');
-  readonly addButton = this.root.getByRole('button', { name: 'Add' });
+  readonly addButton = this.root.getByRole('button', { name: 'Add', exact: true });
   readonly testButton = this.root.getByRole('button', { name: 'Test' });
-  readonly noValue = this.root.getByCss('#field-process-no-value');
   readonly testError = this.root.getByCss('#field-process-test-error');
-  readonly testResults = this.root.getByCss('#field-process-test-results tbody tr');
+  readonly testValues = this.root.getByCss('#field-process-test-values tbody tr');
+  readonly addValueButton = this.root.getByRole('button', { name: 'Add a value' });
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
 
   constructor(operations: Array<FieldOperation> = [], values: Array<RecordFieldValue> = ['Reactor/Temperature', 'Reactor/Pressure']) {
-    this.fixture.componentInstance.initialize('southId1', 'path', operations, values);
+    this.fixture.componentInstance.initialize('path', operations, values);
   }
 
   operation(index: number) {
     return this.operations.nth(index);
+  }
+
+  testValue(index: number) {
+    return this.testValues.nth(index).getByCss('.test-value');
+  }
+
+  testResult(index: number) {
+    return this.testValues.nth(index).getByCss('.test-result');
   }
 
   async addOperation(type: string) {
@@ -46,17 +54,17 @@ class FieldProcessModalComponentTester {
 
 describe('FieldProcessModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
-  let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
+  let transformerService: MockObject<TransformerService>;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
-    configurationWorkflowService = createMock(ConfigurationWorkflowService);
+    transformerService = createMock(TransformerService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
-        { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService }
+        { provide: TransformerService, useValue: transformerService }
       ]
     });
 
@@ -153,31 +161,45 @@ describe('FieldProcessModalComponent', () => {
   });
 
   test('should test the operations on the first values of the field, telling why one fails', async () => {
-    configurationWorkflowService.testFieldProcess.mockReturnValue(
+    transformerService.testFieldProcess.mockReturnValue(
       of([
         { value: 'Reactor/Temperature', result: 'Temperature', error: null },
         { value: 'Reactor/Pressure', result: null, error: 'something went wrong' }
       ])
     );
     const tester = new FieldProcessModalComponentTester([{ type: 'substring', start: 8, end: null }]);
+    await expect.element(tester.testValue(0)).toHaveValue('Reactor/Temperature');
 
     await tester.testButton.click();
 
-    expect(configurationWorkflowService.testFieldProcess).toHaveBeenCalledWith('southId1', {
+    expect(transformerService.testFieldProcess).toHaveBeenCalledWith({
       operations: [{ type: 'substring', start: 8, end: null }],
       values: ['Reactor/Temperature', 'Reactor/Pressure']
     });
-    await expect.element(tester.testResults).toHaveLength(2);
-    await expect.element(tester.testResults.nth(0)).toMatchTextContent(/Reactor\/Temperature\s*Temperature/);
-    await expect.element(tester.testResults.nth(1).getByCss('.text-danger')).toHaveTextContent('something went wrong');
+    await expect.element(tester.testResult(0)).toHaveTextContent('Temperature');
+    await expect.element(tester.testResult(1)).toHaveClass('text-danger');
+    await expect.element(tester.testResult(1)).toHaveTextContent('something went wrong');
 
     // the results are of the operations tested
     await tester.addOperation('Upper case');
-    await expect.element(tester.testResults).not.toBeInTheDocument();
+    await expect.element(tester.testResult(0)).toBeEmptyDOMElement();
+  });
+
+  test('should test values changed, added or removed', async () => {
+    transformerService.testFieldProcess.mockReturnValue(of([]));
+    const tester = new FieldProcessModalComponentTester([{ type: 'uppercase' }], ['a', 12, 'c']);
+
+    await tester.testValue(0).fill('b');
+    await tester.testValues.nth(2).getByRole('button', { name: 'Remove the value' }).click();
+    await tester.addValueButton.click();
+    await tester.testValue(2).fill('d');
+    await tester.testButton.click();
+
+    expect(transformerService.testFieldProcess).toHaveBeenCalledWith({ operations: [{ type: 'uppercase' }], values: ['b', 12, 'd'] });
   });
 
   test('should show why a test failed', async () => {
-    configurationWorkflowService.testFieldProcess.mockReturnValue(
+    transformerService.testFieldProcess.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'Invalid operations' } }))
     );
     const tester = new FieldProcessModalComponentTester([{ type: 'uppercase' }]);
@@ -187,11 +209,13 @@ describe('FieldProcessModalComponent', () => {
     await expect.element(tester.testError).toHaveTextContent('Invalid operations');
   });
 
-  test('should not test without any value discovered for the field', async () => {
+  test('should not test without any value of the field', async () => {
     const tester = new FieldProcessModalComponentTester([{ type: 'uppercase' }], []);
 
-    await expect.element(tester.noValue).toHaveTextContent('No value discovered for this field yet: preview the records first');
+    await expect.element(tester.root.getByText('No value of the field yet: add some to test the operations')).toBeInTheDocument();
     await expect.element(tester.testButton).toBeDisabled();
+    await tester.addValueButton.click();
+    await expect.element(tester.testButton).toBeEnabled();
   });
 
   test('should cancel', async () => {

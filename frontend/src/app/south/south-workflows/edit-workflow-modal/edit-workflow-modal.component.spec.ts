@@ -22,12 +22,12 @@ import { ConfigurationWorkflowService } from '../../../services/configuration-wo
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { FieldProcessModalComponent } from '../../../shared/field-process-modal/field-process-modal.component';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../../shared/notification.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
-import { FieldProcessModalComponent } from '../field-process-modal/field-process-modal.component';
 import EditWorkflowModalComponent from './edit-workflow-modal.component';
 import { ExploreWizardOptions, WizardStep, WorkflowStep } from './explore-wizard';
 
@@ -1188,7 +1188,7 @@ describe('EditWorkflowModalComponent', () => {
 
       await tester.root.getByRole('button', { name: 'Set up the processing of the field unit' }).click();
 
-      expect(fieldProcessModal.initialize).toHaveBeenCalledWith(southId, 'unit', [], ['°C', 'bar']);
+      expect(fieldProcessModal.initialize).toHaveBeenCalledWith('unit', [], ['°C', 'bar']);
       expect(configurationWorkflowService.previewCommand).toHaveBeenCalledTimes(1);
       expect(configurationWorkflowService.previewCommand.mock.lastCall![4].fieldProcesses).toEqual([
         { field: 'unit', operations: [{ type: 'uppercase' }] }
@@ -1218,7 +1218,7 @@ describe('EditWorkflowModalComponent', () => {
       const editModal = createMock(FieldProcessModalComponent);
       modalService.mockClosedModal(editModal, [{ type: 'substring', start: 0, end: 7 }]);
       await tester.fieldProcessRows.nth(0).getByRole('button', { name: 'Edit' }).click();
-      expect(editModal.initialize).toHaveBeenCalledWith(southId, 'path', workflow.fieldProcesses[0].operations, [
+      expect(editModal.initialize).toHaveBeenCalledWith('path', workflow.fieldProcesses[0].operations, [
         'Reactor/Temperature',
         'Reactor/Pressure'
       ]);
@@ -1228,7 +1228,7 @@ describe('EditWorkflowModalComponent', () => {
       modalService.mockClosedModal(addModal, [{ type: 'trim' }]);
       await tester.newProcessedField.fill('description');
       await tester.addFieldProcessButton.click();
-      expect(addModal.initialize).toHaveBeenCalledWith(southId, 'description', [], []);
+      expect(addModal.initialize).toHaveBeenCalledWith('description', [], []);
       await expect.element(tester.fieldProcessRows).toHaveLength(2);
 
       // removing every operation stops processing the field

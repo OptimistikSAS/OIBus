@@ -10,6 +10,7 @@ import {
   COMPRESSED_FILE_OPTIONS,
   FILE_AS_IS_OPTIONS,
   keepsResolvedTransformer,
+  toFieldProcessOperations,
   toNewSqlItemSettings,
   toNoneResamplingItemSettings,
   toOIAnalyticsItemFileOptions,
@@ -434,9 +435,9 @@ describe('3.10.0 config upgrade', () => {
           transformerId: 'oia',
           options: {
             input: { fileType: 'json', rowIteratorPath: '$[*]' },
-            reference: { referenceField: 'id', referenceProcess: null },
+            reference: { referenceField: 'id', referenceProcess: [] },
             timestamp: { timestampField: 't', sourceType: 'iso-string', precision: 'ms' },
-            value: { valueField: 'v', valueProcess: null }
+            value: { valueField: 'v', valueProcess: [] }
           }
         }
       ]);
@@ -883,7 +884,7 @@ describe('3.10.0 config upgrade', () => {
         {
           id: undefined,
           transformerId: 'records',
-          options: toOIAnalyticsItemFileOptions(serialization),
+          options: toFieldProcessOperations(toOIAnalyticsItemFileOptions(serialization)),
           source: { type: 'south', southId: 'oia', items: [{ id: 'i2', name: 'i2', enabled: true }] }
         }
       );
@@ -1051,7 +1052,7 @@ describe('3.10.0 config upgrade', () => {
       assert.strictEqual(l3.transformerId, 'tvOia');
       // grouped by part of the OIAnalytics payload
       assert.deepStrictEqual(l3.options, {
-        reference: { referenceField: 'pointId', referenceProcess: null },
+        reference: { referenceField: 'pointId', referenceProcess: [] },
         timestamp: {
           timestampField: 'timestamp',
           sourceType: 'iso-string',
@@ -1060,7 +1061,7 @@ describe('3.10.0 config upgrade', () => {
           format: 'yyyy-MM-dd HH:mm:ss',
           locale: 'en-En'
         },
-        value: { valueField: 'value', valueProcess: null }
+        value: { valueField: 'value', valueProcess: [] }
       });
       const [h1] = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;
       assert.strictEqual(((h1.options as JsonObject).timestamp as JsonObject).precision, 'ms');
@@ -1277,6 +1278,81 @@ describe('3.10.0 config upgrade', () => {
         historyLinks.map(link => [link.transformerId, link.options, link.items]),
         [['csv', jsonFileOptions, lightItems('h2')]]
       );
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+  describe('field processes', () => {
+    const buildConfig = (): JsonObject => ({
+      transformers: [
+        {
+          oIBusInternalId: 'file',
+          type: 'standard',
+          settings: { functionName: 'record-list-to-file', inputType: 'record-list', outputType: 'file' }
+        },
+        {
+          oIBusInternalId: 'oia',
+          type: 'standard',
+          settings: { functionName: 'record-list-to-oianalytics', inputType: 'record-list', outputType: 'oianalytics' }
+        }
+      ],
+      northConnectors: [
+        {
+          oIBusInternalId: 'northId',
+          type: 'console',
+          settings: {
+            transformers: [
+              {
+                id: 'l1',
+                transformerId: 'file',
+                options: {
+                  fields: [
+                    { field: 'id', fieldProcess: 'value.toUpperCase()' },
+                    { field: 'v', fieldProcess: null },
+                    { field: 'w', fieldProcess: '  ' }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      historyQueries: [
+        {
+          settings: {
+            southType: 'opcua',
+            items: [],
+            northTransformers: [
+              {
+                id: 'h1',
+                transformerId: 'oia',
+                options: { reference: { referenceField: 'pointId', referenceProcess: 'value.trim()' }, value: { valueField: 'value' } }
+              }
+            ]
+          }
+        }
+      ]
+    });
+
+    it('turns the expressions into an expression operation, and no expression into no operation', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const [l1] = ((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
+      assert.deepStrictEqual((l1.options as JsonObject).fields, [
+        { field: 'id', fieldProcess: [{ type: 'expression', expression: 'value.toUpperCase()' }] },
+        { field: 'v', fieldProcess: [] },
+        { field: 'w', fieldProcess: [] }
+      ]);
+      const [h1] = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;
+      assert.deepStrictEqual((h1.options as JsonObject).reference, {
+        referenceField: 'pointId',
+        referenceProcess: [{ type: 'expression', expression: 'value.trim()' }]
+      });
+      assert.deepStrictEqual((h1.options as JsonObject).value, { valueField: 'value', valueProcess: [] });
     });
 
     it('is safe to run twice', () => {

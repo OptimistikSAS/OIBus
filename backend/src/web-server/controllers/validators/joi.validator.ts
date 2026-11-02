@@ -18,6 +18,7 @@ import {
   OIBusTimezoneAttribute
 } from '../../../../shared/model/connector/form.model';
 
+import { FIELD_OPERATIONS_SCHEMA } from '../../../service/field-process.utils';
 import { getCurrentPlatform } from '../../../service/utils';
 
 export default class JoiValidator {
@@ -84,6 +85,8 @@ export default class JoiValidator {
         return this.generateFormGroupJoiSchema(oibFormControl);
       case 'array':
         return this.generateFormArrayJoiSchema(oibFormControl);
+      case 'field-process':
+        return { [oibFormControl.key]: FIELD_OPERATIONS_SCHEMA.required() };
     }
   }
 

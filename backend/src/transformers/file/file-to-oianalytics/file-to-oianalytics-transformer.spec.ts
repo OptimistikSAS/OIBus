@@ -23,9 +23,9 @@ before(() => {
 describe('FileToOIAnalyticsTransformer', () => {
   let logger: PinoLogger;
   const payloadOptions = {
-    reference: { referenceField: 'pointId', referenceProcess: null },
+    reference: { referenceField: 'pointId', referenceProcess: [] },
     timestamp: { timestampField: 'timestamp', sourceType: 'iso-string', precision: 'ms' },
-    value: { valueField: 'value', valueProcess: null }
+    value: { valueField: 'value', valueProcess: [] }
   };
 
   beforeEach(() => {
@@ -61,9 +61,9 @@ describe('FileToOIAnalyticsTransformer', () => {
   it('should read the JSONPath fields of a JSON file, process the references and values and truncate the timestamps', async () => {
     const transformer = new Transformer(logger, testData.transformers.list[0], {
       input: { fileType: 'json', rowIteratorPath: '$.metrics[*]' },
-      reference: { referenceField: '$.metrics[*].name', referenceProcess: 'value.toUpperCase()' },
+      reference: { referenceField: '$.metrics[*].name', referenceProcess: [{ type: 'uppercase' }] },
       timestamp: { timestampField: '$.time', sourceType: 'unix-epoch-ms', precision: 's' },
-      value: { valueField: 'reading', valueProcess: 'value * 2' }
+      value: { valueField: 'reading', valueProcess: [{ type: 'number-operation', operator: 'multiply', operand: 2 }] }
     });
     const content = { time: 1704067200123, metrics: [{ name: 'a', reading: 1 }, { name: 'b' }] };
 

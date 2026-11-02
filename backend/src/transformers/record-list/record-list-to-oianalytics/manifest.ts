@@ -5,7 +5,7 @@ const KEY = 'configuration.oibus.manifest.transformers.record-list-to-oianalytic
 
 /**
  * The OIAnalytics payload is made of references, timestamps and values: each one is read from a field of the records, and
- * the references and values can be processed by a JS expression. Shared with the file-to-oianalytics transformer.
+ * the references and values can be processed by operations (upper case, substring, number operation...). Shared with the file-to-oianalytics transformer.
  */
 export const oianalyticsPayloadAttributes: Array<OIBusAttribute> = [
   {
@@ -25,10 +25,10 @@ export const oianalyticsPayloadAttributes: Array<OIBusAttribute> = [
         displayProperties: { row: 0, columns: 4, displayInViewMode: false }
       },
       {
-        type: 'string',
+        type: 'field-process',
         key: 'referenceProcess',
         translationKey: `${KEY}.reference.reference-process`,
-        defaultValue: null,
+        fieldKey: 'referenceField',
         validators: [],
         displayProperties: { row: 0, columns: 8, displayInViewMode: false }
       }
@@ -115,10 +115,10 @@ export const oianalyticsPayloadAttributes: Array<OIBusAttribute> = [
         displayProperties: { row: 0, columns: 4, displayInViewMode: false }
       },
       {
-        type: 'string',
+        type: 'field-process',
         key: 'valueProcess',
         translationKey: `${KEY}.value.value-process`,
-        defaultValue: null,
+        fieldKey: 'valueField',
         validators: [],
         displayProperties: { row: 0, columns: 8, displayInViewMode: false }
       }

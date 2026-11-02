@@ -100,7 +100,18 @@ const controlAttributes: Array<{ attribute: OIBusControlAttribute; value: unknow
     attribute: { type: 'scan-mode', key: 'scanMode', translationKey: '', acceptableType: 'POLL', validators: [], displayProperties },
     value: null
   },
-  { attribute: { type: 'certificate', key: 'certificate', translationKey: '', validators: [], displayProperties }, value: null }
+  { attribute: { type: 'certificate', key: 'certificate', translationKey: '', validators: [], displayProperties }, value: null },
+  {
+    attribute: {
+      type: 'field-process',
+      key: 'valueProcess',
+      translationKey: '',
+      fieldKey: 'valueField',
+      validators: [],
+      displayProperties
+    },
+    value: []
+  }
 ];
 
 describe('dynamic-form.builder', () => {

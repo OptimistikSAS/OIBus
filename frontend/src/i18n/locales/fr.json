@@ -560,7 +560,7 @@
               "array": "Tableau",
               "object": "Objet"
             },
-            "field-process": "Traitement du champ (expression JS, ex. value.toUpperCase())",
+            "field-process": "Traitement du champ",
             "datetime-settings": {
               "title": "Paramètres de date/heure",
               "input-type": {
@@ -664,7 +664,7 @@
             "reference": {
               "title": "Référence",
               "reference-field": "Champ de la référence",
-              "reference-process": "Traitement de la référence (expression JS, ex. value.toUpperCase())"
+              "reference-process": "Traitement de la référence"
             },
             "timestamp": {
               "title": "Horodatage",
@@ -690,7 +690,7 @@
             "value": {
               "title": "Valeur",
               "value-field": "Champ de la valeur",
-              "value-process": "Traitement de la valeur (expression JS, ex. Math.round(value * 100) / 100)"
+              "value-process": "Traitement de la valeur"
             }
           },
           "record-list-to-opcua": {
@@ -2035,65 +2035,6 @@
       "field-processes-none-short": "Aucun",
       "field-processes-field": "Champ",
       "field-processes-operations": "Opérations",
-      "field-process": {
-        "title": "Traitement du champ {{field}}",
-        "hint": "Les opérations s'appliquent dans l'ordre, chacune au résultat de la précédente. Une valeur absente ou vide est laissée telle quelle, et une valeur sur laquelle une opération échoue devient vide",
-        "open": "Configurer le traitement du champ {{field}}",
-        "none": "Aucune opération - le champ est gardé tel que découvert",
-        "new-operation": "Opération à ajouter",
-        "add-operation": "Ajouter",
-        "move-up": "Monter",
-        "move-down": "Descendre",
-        "start": "Début",
-        "end": "Fin",
-        "substring-hint": "Caractères de Début à Fin (exclue) - une position négative compte depuis la fin, et une Fin vide va jusqu'à la fin",
-        "prefix": "Préfixe",
-        "suffix": "Suffixe",
-        "search": "Texte à remplacer",
-        "replacement": "Remplacement",
-        "operator": "Opération",
-        "operand": "Opérande",
-        "decimals": "Décimales",
-        "input-type": "Type d'entrée",
-        "output-type": "Type de sortie",
-        "input-format": "Format d'entrée",
-        "input-timezone": "Fuseau horaire d'entrée",
-        "input-locale": "Locale d'entrée",
-        "output-format": "Format de sortie",
-        "output-timezone": "Fuseau horaire de sortie",
-        "output-locale": "Locale de sortie",
-        "expression": "Expression",
-        "expression-hint": "Une expression JavaScript sur value, par exemple value.split('/').pop()",
-        "test": "Tester",
-        "test-hint": "Sur les {{count}} premières valeurs découvertes pour le champ",
-        "no-value": "Aucune valeur découverte pour ce champ : prévisualisez d'abord les enregistrements",
-        "value": "Valeur",
-        "result": "Résultat",
-        "operation": {
-          "uppercase": "Majuscules",
-          "lowercase": "Minuscules",
-          "trim": "Supprimer les espaces",
-          "substring": "Sous-chaîne",
-          "add-to-string": "Ajouter du texte",
-          "replace": "Remplacer du texte",
-          "number-operation": "Opération numérique",
-          "round": "Arrondir",
-          "datetime": "Conversion de date",
-          "expression": "Expression"
-        },
-        "number-operator": {
-          "add": "Ajouter",
-          "subtract": "Soustraire",
-          "multiply": "Multiplier par",
-          "divide": "Diviser par"
-        },
-        "datetime-type": {
-          "iso-string": "Chaîne ISO",
-          "unix-epoch": "Epoch Unix (s)",
-          "unix-epoch-ms": "Epoch Unix (ms)",
-          "string": "Chaîne"
-        }
-      },
       "operator": {
         "equals": "égal à",
         "notEquals": "différent de",
@@ -2269,6 +2210,70 @@
       "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
       "confirm-connector-change": "Changer de connecteur le recommence : ses paramètres et ses items seront ceux du nouveau choix. Continuer ?"
     }
+  },
+  "field-process": {
+    "open": "Configurer le traitement du champ {{field}}",
+    "title": "Traitement du champ {{field}}",
+    "hint": "Les opérations s'appliquent dans l'ordre, chacune au résultat de la précédente. Une valeur absente ou vide est laissée telle quelle, et une valeur sur laquelle une opération échoue devient vide",
+    "none": "Aucune opération - le champ est gardé tel quel",
+    "new-operation": "Opération à ajouter",
+    "add-operation": "Ajouter",
+    "move-up": "Monter",
+    "move-down": "Descendre",
+    "start": "Début",
+    "end": "Fin",
+    "substring-hint": "Caractères de Début à Fin (exclue) - une position négative compte depuis la fin, et une Fin vide va jusqu'à la fin",
+    "prefix": "Préfixe",
+    "suffix": "Suffixe",
+    "search": "Texte à remplacer",
+    "replacement": "Remplacement",
+    "operator": "Opération",
+    "operand": "Opérande",
+    "decimals": "Décimales",
+    "input-type": "Type d'entrée",
+    "output-type": "Type de sortie",
+    "input-format": "Format d'entrée",
+    "input-timezone": "Fuseau horaire d'entrée",
+    "input-locale": "Locale d'entrée",
+    "output-format": "Format de sortie",
+    "output-timezone": "Fuseau horaire de sortie",
+    "output-locale": "Locale de sortie",
+    "expression": "Expression",
+    "expression-hint": "Une expression JavaScript sur value, par exemple value.split('/').pop()",
+    "test": "Tester",
+    "test-hint": "Les premières valeurs du champ : modifiez-les, ajoutez-en ou retirez-en pour tester d'autres cas",
+    "no-value": "Aucune valeur du champ pour l'instant : ajoutez-en pour tester les opérations",
+    "value": "Valeur",
+    "result": "Résultat",
+    "operation": {
+      "uppercase": "Majuscules",
+      "lowercase": "Minuscules",
+      "trim": "Supprimer les espaces",
+      "substring": "Sous-chaîne",
+      "add-to-string": "Ajouter du texte",
+      "replace": "Remplacer du texte",
+      "number-operation": "Opération numérique",
+      "round": "Arrondir",
+      "datetime": "Conversion de date",
+      "expression": "Expression"
+    },
+    "number-operator": {
+      "add": "Ajouter",
+      "subtract": "Soustraire",
+      "multiply": "Multiplier par",
+      "divide": "Diviser par"
+    },
+    "datetime-type": {
+      "iso-string": "Chaîne ISO",
+      "unix-epoch": "Epoch Unix (s)",
+      "unix-epoch-ms": "Epoch Unix (ms)",
+      "string": "Chaîne"
+    },
+    "test-values": "Valeurs de test",
+    "add-value": "Ajouter une valeur",
+    "remove-value": "Retirer la valeur",
+    "summary-none": "Aucun traitement",
+    "set-up": "Configurer…"
   },
   "scan-mode": {
     "subscription": "S'abonner"

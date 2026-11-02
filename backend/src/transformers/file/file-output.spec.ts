@@ -32,7 +32,7 @@ describe('File output', () => {
     field: name,
     name: null,
     dataType,
-    fieldProcess: null,
+    fieldProcess: [],
     datetimeSettings: null,
     ...extra
   });
@@ -65,7 +65,7 @@ describe('File output', () => {
         output: { ...csvSettings.output, quoteChar: 'DOUBLE_QUOTE' },
         keepOtherFields: false,
         fields: [
-          field('id', 'string', { name: 'Reference', fieldProcess: 'value.toUpperCase()' }),
+          field('id', 'string', { name: 'Reference', fieldProcess: [{ type: 'uppercase' }] }),
           field('value', 'number'),
           field('on', 'boolean'),
           field('time', 'datetime', { datetimeSettings }),

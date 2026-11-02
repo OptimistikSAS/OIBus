@@ -17,7 +17,7 @@ import {
   sanitizeFilename,
   stringToBoolean
 } from '../../service/utils';
-import { applyFieldProcess } from '../field-process';
+import { createFieldProcess } from '../field-process';
 import { Row } from '../record-list/point-record';
 
 const OUTPUT_KEY = 'configuration.oibus.manifest.transformers.file-output';
@@ -139,7 +139,7 @@ export const buildFilenameAttribute = (defaultValue: string): OIBusAttribute => 
 
 /**
  * The fields of the written rows: every field of the rows unless only the configured ones are kept, each configured
- * field being renamed, cast to a data type and processed by a JS expression.
+ * field being renamed, cast to a data type and processed by operations (upper case, substring, number operation...).
  */
 export const fileFieldsAttributes: Array<OIBusAttribute> = [
   {
@@ -203,10 +203,10 @@ export const fileFieldsAttributes: Array<OIBusAttribute> = [
           displayProperties: { row: 0, columns: 4, displayInViewMode: true }
         },
         {
-          type: 'string',
+          type: 'field-process',
           key: 'fieldProcess',
           translationKey: `${FIELDS_KEY}.field-process`,
-          defaultValue: null,
+          fieldKey: 'field',
           validators: [],
           displayProperties: { row: 1, columns: 12, displayInViewMode: false }
         },
@@ -313,7 +313,8 @@ export function writeFile(
   logger?: ILogger
 ): { output: Buffer; contentFile: string } {
   const { output: format } = settings;
-  const writtenRows = rows.map(row => writeRow(row, settings, logger));
+  const fieldProcesses = (settings.fields ?? []).map(field => createFieldProcess(field.fieldProcess, `field "${field.field}"`, logger));
+  const writtenRows = rows.map(row => writeRow(row, settings, fieldProcesses));
   let text: string;
   if (format.fileType === 'csv') {
     const quoteChar = convertQuoteChar(format.quoteChar ?? 'NONE');
@@ -350,8 +351,11 @@ export function writeFile(
   return { output, contentFile };
 }
 
-/** A written row: the other fields of the row unless only the configured ones are kept, then the configured fields */
-function writeRow(row: Row, settings: FileOutputSettings, logger?: ILogger): Record<string, unknown> {
+/**
+ * A written row: the other fields of the row unless only the configured ones are kept, then the configured fields, each
+ * processed by the field process at the same index
+ */
+function writeRow(row: Row, settings: FileOutputSettings, fieldProcesses: Array<(value: unknown) => unknown>): Record<string, unknown> {
   const fields = settings.fields ?? [];
   const writtenRow: Record<string, unknown> = {};
   if (settings.keepOtherFields) {
@@ -360,21 +364,22 @@ function writeRow(row: Row, settings: FileOutputSettings, logger?: ILogger): Rec
       if (!configuredFields.has(key)) writtenRow[key] = value instanceof Date ? value.toISOString() : value;
     }
   }
-  for (const field of fields) {
-    writtenRow[field.name || field.field] = writeField(row[field.field], field, settings.output, logger);
-  }
+  fields.forEach((field, index) => {
+    writtenRow[field.name || field.field] = writeField(row[field.field], field, settings.output, fieldProcesses[index]);
+  });
   return writtenRow;
 }
 
 /**
- * A field cast to its data type, then processed by its expression. A missing field is the null value of a CSV file,
- * null in a JSON file; in a CSV file, a boolean is written as text and an object or an array as its JSON text.
+ * A field cast to its data type, then processed by its operations (a value they fail on is written empty). A missing
+ * field is the null value of a CSV file, null in a JSON file; in a CSV file, a boolean is written as text and an object or
+ * an array as its JSON text.
  */
 function writeField(
   value: Row[string] | undefined,
   field: FileOutputField,
   format: FileOutputSettings['output'],
-  logger?: ILogger
+  process: (value: unknown) => unknown
 ): unknown {
   const csvFile = format.fileType === 'csv';
   let typedValue: unknown;
@@ -417,9 +422,10 @@ function writeField(
         typedValue = String(raw);
     }
   }
-  // A missing field is written as is: the expression applies to the values of the field only
+  // A missing field is written as is: the operations apply to the values of the field only
   if (value === undefined || value === null) return typedValue;
-  return applyFieldProcess(typedValue, field.fieldProcess, logger);
+  const processed = process(typedValue);
+  return processed === null && csvFile ? (format.nullValue ?? '') : processed;
 }
 
 function parseJson(value: unknown): unknown {

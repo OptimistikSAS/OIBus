@@ -18,6 +18,7 @@ import {
   COMPRESSED_FILE_OPTIONS,
   COMPRESSING_SOUTH_TYPES,
   defaultRecordListToOIAnalyticsOptions,
+  FIELD_PROCESS_FUNCTION_NAMES,
   FILE_AS_IS_OPTIONS,
   FILE_AS_IS_REPLACEMENT,
   FILE_OUTPUT_TRANSFORMER_REPLACEMENTS,
@@ -41,6 +42,7 @@ import {
   SQL_SOUTH_TYPES,
   TIME_VALUES_TRANSFORMER_REPLACEMENTS,
   toDatabaseSouthSettings,
+  toFieldProcessOperations,
   toFileDataType,
   toFileOutputTransformerOptions,
   toFileTransformerOptions,
@@ -113,7 +115,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   addOPCUATimeoutsAndSubscriptionSettings,
   addItemAndWorkflowDescriptions,
   addEmptyIntervalStrategies,
-  addDatabaseConnectionSettings
+  addDatabaseConnectionSettings,
+  convertFieldProcessesToOperations
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -1761,5 +1764,16 @@ async function moveLinks(
         .where('id', link.id)
         .update({ transformer_id: newTransformerId, options: JSON.stringify(options) });
     }
+  }
+}
+
+/** See `toFieldProcessOperations`: the field processes of the transformers become operations instead of a JS expression */
+export async function convertFieldProcessesToOperations(knex: Knex): Promise<void> {
+  const transformers: Array<{ id: string }> = await knex(TRANSFORMERS_TABLE)
+    .select('id')
+    .where('type', 'standard')
+    .whereIn('function_name', FIELD_PROCESS_FUNCTION_NAMES);
+  for (const transformer of transformers) {
+    await moveLinks(knex, transformer.id, transformer.id, toFieldProcessOperations);
   }
 }
