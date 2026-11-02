@@ -310,6 +310,18 @@ describe('settings-interface.generator', () => {
       assert.ok([...desc.imports].some(i => i.includes('Timezone')));
     });
 
+    it('handles field-process type (adds import, never null nor undefined)', () => {
+      const desc = emptyDesc();
+      const result = generateInterface('MyInterface', makeObjectAttr('root', [makeSimpleAttr('field-process', 'valueProcess')]), desc);
+      assert.deepStrictEqual(result.attributes[0], {
+        key: 'valueProcess',
+        type: 'Array<FieldOperation>',
+        nullable: false,
+        undefinable: false
+      });
+      assert.ok([...desc.imports].some(i => i.includes('FieldOperation')));
+    });
+
     it('handles array type', () => {
       const arrayAttr = {
         type: 'array',

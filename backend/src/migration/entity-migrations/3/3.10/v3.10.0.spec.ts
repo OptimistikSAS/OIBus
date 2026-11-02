@@ -19,6 +19,7 @@ import {
   addOIAnalyticsReferenceProcess,
   addOPCUATimeoutsAndSubscriptionSettings,
   addRegistrationPermissions,
+  convertFieldProcessesToOperations,
   convertFileWriterLinks,
   convertOIAnalyticsSouths,
   down,
@@ -4525,5 +4526,89 @@ describe('Entity migration v3.10.0: addDatabaseConnectionSettings', () => {
       maxParallelRun: 3
     });
     assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-sqlite'), { databasePath: 'p' });
+  });
+});
+
+describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(convertFieldProcessesToOperations, db)
+  });
+  let db: Knex;
+  const optionsOf = async (table: string, id: string) => JSON.parse((await db(table).where('id', id).first('options')).options);
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+    await db('north_connectors').insert({ ...caching, id: 'north1', name: 'North 1', type: 'console', enabled: true, settings: '{}' });
+    await db('history_queries').insert({
+      ...caching,
+      id: 'hq1',
+      name: 'HQ 1',
+      start_time: NOW,
+      end_time: NOW,
+      south_type: 'opcua',
+      north_type: 'console',
+      south_settings: '{}',
+      north_settings: '{}'
+    });
+    await db('transformers').where('type', 'standard').del();
+    await db('transformers').insert([
+      { id: 'file', type: 'standard', function_name: 'record-list-to-file', input_type: 'record-list', output_type: 'file' },
+      { id: 'oia', type: 'standard', function_name: 'file-to-oianalytics', input_type: 'file', output_type: 'oianalytics' },
+      { id: 'mqtt', type: 'standard', function_name: 'record-list-to-mqtt', input_type: 'record-list', output_type: 'mqtt' }
+    ]);
+  });
+
+  afterEach(() => harness.afterEach());
+
+  it('should turn the expressions of the field processes into an expression operation, and no expression into none', async () => {
+    await db('north_transformers').insert([
+      {
+        id: 'fields',
+        north_id: 'north1',
+        transformer_id: 'file',
+        options: JSON.stringify({
+          fields: [
+            { field: 'id', fieldProcess: 'value.trim()' },
+            { field: 'v', fieldProcess: null }
+          ]
+        }),
+        source_type: 'oibus-api'
+      },
+      {
+        id: 'other',
+        north_id: 'north1',
+        transformer_id: 'mqtt',
+        options: JSON.stringify({ fieldProcess: 'kept' }),
+        source_type: 'oibus-api'
+      }
+    ]);
+    await db('history_query_transformers').insert({
+      id: 'history',
+      history_id: 'hq1',
+      transformer_id: 'oia',
+      options: JSON.stringify({
+        reference: { referenceField: 'ref', referenceProcess: null },
+        value: { valueField: 'v', valueProcess: 'value * 2' }
+      })
+    });
+
+    await convertFieldProcessesToOperations(db);
+
+    assert.deepStrictEqual(await optionsOf('north_transformers', 'fields'), {
+      fields: [
+        { field: 'id', fieldProcess: [{ type: 'expression', expression: 'value.trim()' }] },
+        { field: 'v', fieldProcess: [] }
+      ]
+    });
+    assert.deepStrictEqual(await optionsOf('north_transformers', 'other'), { fieldProcess: 'kept' });
+    assert.deepStrictEqual(await optionsOf('history_query_transformers', 'history'), {
+      reference: { referenceField: 'ref', referenceProcess: [] },
+      value: { valueField: 'v', valueProcess: [{ type: 'expression', expression: 'value * 2' }] }
+    });
   });
 });

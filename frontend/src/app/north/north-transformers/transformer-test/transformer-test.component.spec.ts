@@ -15,6 +15,7 @@ import { HistoryQueryService } from '../../../services/history-query.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { TransformerService } from '../../../services/transformer.service';
 import { provideCurrentUser } from '../../../shared/current-user-testing';
+import { FieldProcessSamplesService } from '../../../shared/field-process-modal/field-process-samples.service';
 import { NorthTransformerTestComponent, TransformerTestItemSource } from './transformer-test.component';
 
 const transformer: StandardTransformerDTO = {
@@ -151,6 +152,22 @@ describe('NorthTransformerTestComponent', () => {
     await tester.summaryChip.click();
     await expect.element(tester.summaryChip).not.toBeInTheDocument();
     await expect.element(tester.editor).toBeVisible();
+  });
+
+  test('should give the rows the test ran on to the field processes of the options', async () => {
+    transformerService.testTransformer.mockReturnValue(
+      of({ ...testResult, raw: { type: 'record-list', content: [{ pointId: 'p1' }, { pointId: 'p2' }] } })
+    );
+    const samples = TestBed.inject(FieldProcessSamplesService);
+    const tester = new NorthTransformerTestComponentTester();
+    await expect.element(tester.editor).toHaveTextContent('[]');
+
+    await tester.runButton.click();
+
+    await expect.element(tester.result).toBeInTheDocument();
+    expect(samples.valuesOf('pointId')).toEqual(['p1', 'p2']);
+    tester.fixture.destroy();
+    expect(samples.valuesOf('pointId')).toEqual([]);
   });
 
   test('should flag the result as outdated when the input or the options change, and run it again', async () => {

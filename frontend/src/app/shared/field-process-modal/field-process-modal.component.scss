@@ -1,10 +1,11 @@
-@import '../../../../common';
+@import '../../../common';
 
 // The global `.btn-link` rule (styles.scss) is white, for the dark box titles: these icon-only actions sit on the white
 // modal body
 .move-operation-up,
 .move-operation-down,
-.remove-operation {
+.remove-operation,
+.remove-test-value {
   color: $darkGrey;
 
   &:hover,

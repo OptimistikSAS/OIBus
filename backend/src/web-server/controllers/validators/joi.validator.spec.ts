@@ -9,6 +9,7 @@ import {
   OIBusBooleanAttribute,
   OIBusCertificateAttribute,
   OIBusCodeAttribute,
+  OIBusFieldProcessAttribute,
   OIBusNumberAttribute,
   OIBusObjectAttribute,
   OIBusScanModeAttribute,
@@ -18,6 +19,7 @@ import {
   OIBusTimezoneAttribute
 } from '../../../../shared/model/connector/form.model';
 
+import { FIELD_OPERATIONS_SCHEMA } from '../../../service/field-process.utils';
 import { createMock } from '../../../tests/utils/test-utils';
 import JoiValidator from './joi.validator';
 
@@ -196,7 +198,13 @@ describe('Joi validator', () => {
           key: 'certificate',
           type: 'certificate',
           translationKey: 'OibCertificate'
-        } as OIBusCertificateAttribute
+        } as OIBusCertificateAttribute,
+        {
+          key: 'valueProcess',
+          type: 'field-process',
+          translationKey: 'OibFieldProcess',
+          fieldKey: 'valueField'
+        } as OIBusFieldProcessAttribute
       ]
     };
 
@@ -212,7 +220,8 @@ describe('Joi validator', () => {
         checkbox: Joi.boolean().falsy(0).truthy(1),
         timezone: Joi.string().allow(null, ''),
         scanMode: Joi.string().allow(null, ''),
-        certificate: Joi.string().allow(null, '')
+        certificate: Joi.string().allow(null, ''),
+        valueProcess: FIELD_OPERATIONS_SCHEMA.required()
       })
     });
     assert.deepStrictEqual(expectedSchema.describe(), generatedSchema.describe());

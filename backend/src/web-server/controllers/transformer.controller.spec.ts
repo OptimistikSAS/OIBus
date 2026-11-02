@@ -215,6 +215,19 @@ describe('TransformerController', () => {
     await assert.rejects(controller.test(body, mockRequest as CustomExpressRequest), { message: 'transformer failed' });
   });
 
+  it('should test a field process on values', () => {
+    const result = controller.testFieldProcess({
+      operations: [{ type: 'number-operation', operator: 'multiply', operand: 10 }],
+      values: ['1.5', 'abc', null]
+    });
+
+    assert.deepStrictEqual(result, [
+      { value: '1.5', result: 15, error: null },
+      { value: 'abc', result: null, error: '"abc" is not a number' },
+      { value: null, result: null, error: null }
+    ]);
+  });
+
   it('should test a transformer with input data by id', async () => {
     const testRequest: TransformerTestRequest = { inputData: '[]', options: { foo: 'bar' } };
     const testResult = {

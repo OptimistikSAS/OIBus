@@ -32,7 +32,8 @@ describe('shared form model constants', () => {
   it('OIBUS_ATTRIBUTE_TYPES contains the expected attribute types', () => {
     assert.ok(OIBUS_ATTRIBUTE_TYPES.includes('string'));
     assert.ok(OIBUS_ATTRIBUTE_TYPES.includes('object'));
-    assert.equal(OIBUS_ATTRIBUTE_TYPES.length, 13);
+    assert.ok(OIBUS_ATTRIBUTE_TYPES.includes('field-process'));
+    assert.equal(OIBUS_ATTRIBUTE_TYPES.length, 14);
   });
 
   it('OIBUS_ATTRIBUTE_VALIDATOR_TYPES contains the expected validator types', () => {

@@ -2,7 +2,7 @@ import { TransformerRecordListToOianalyticsSettings } from '../../../shared/mode
 
 import type { ILogger } from '../../model/logger.model';
 import { PointValueLike, toCompactTimeValues, truncateInstant } from '../../service/oia/compact-time-values';
-import { applyFieldProcess, createStringFieldProcess } from '../field-process';
+import { createFieldProcess, createStringFieldProcess } from '../field-process';
 import { readInstant, readPointId, readValue, Row } from './point-record';
 
 /** The options of an OIAnalytics payload: where to read its references, timestamps and values */
@@ -11,7 +11,8 @@ export type OIAnalyticsPayloadSettings = Pick<TransformerRecordListToOianalytics
 /**
  * Reads the reference, timestamp and value fields of each row, for the OIAnalytics compact format
  * `{ timestamps, values, references }`: the timestamps truncated to the precision, the references and values processed
- * by their expressions. Rows without reference, value or valid timestamp are skipped, with a single warning.
+ * by their operations. Rows without reference, value or valid timestamp, or whose value the operations fail on, are
+ * skipped, with a single warning; a reference the operations fail on is kept as is.
  */
 export function toOIAnalyticsPayload(
   rows: Iterable<Row>,
@@ -25,6 +26,7 @@ export function toOIAnalyticsPayload(
     format: timestampOptions.format,
     locale: timestampOptions.locale
   };
+  const processValue = createFieldProcess(valueOptions.valueProcess, `value "${valueOptions.valueField}"`, logger);
   const values: Array<PointValueLike> = [];
   let skippedRows = 0;
   for (const row of rows) {
@@ -35,7 +37,7 @@ export function toOIAnalyticsPayload(
       skippedRows++;
       continue;
     }
-    const processedValue = applyFieldProcess(value, valueOptions.valueProcess, logger);
+    const processedValue = processValue(value);
     if (processedValue === null) {
       skippedRows++;
       continue;
@@ -48,7 +50,11 @@ export function toOIAnalyticsPayload(
     );
   }
   return {
-    content: toCompactTimeValues(values, undefined, createStringFieldProcess(reference.referenceProcess, logger)),
+    content: toCompactTimeValues(
+      values,
+      undefined,
+      createStringFieldProcess(reference.referenceProcess, `reference "${reference.referenceField}"`, logger)
+    ),
     numberOfElement: values.length
   };
 }

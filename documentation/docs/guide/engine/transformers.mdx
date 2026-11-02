@@ -215,7 +215,7 @@ Each entry in **Fields** targets one field, by its name in the records:
 | **Field**             | Name of the field to configure, matching a key in the records                                                                                     |
 | **Written name**      | Column (CSV) or property (JSON) name in the output. Leave empty to keep the field name.                                                           |
 | **Data Type**         | How to cast the value: `string`, `number`, `boolean`, `datetime`, `array`, or `object` (an array or object is written as JSON text in a CSV file) |
-| **Field Process**     | Optional JavaScript expression applied after casting (e.g. `value.toUpperCase()`), see [Field and value processes](#field-processes)              |
+| **Field processing**  | Optional operations applied after casting (e.g. Upper case), see [Field and value processes](#field-processes)                                    |
 | **Datetime Settings** | Shown only when Data Type is `datetime` — input/output type, timezone, format and locale (see below)                                              |
 
 When **Data Type** is `datetime`, **Datetime Settings** describes how to parse the raw value and how to render
@@ -230,16 +230,29 @@ it:
 
 ##### Field and value processes {#field-processes}
 
-The **Field Process** of the file transformers, and the **Reference process** and **Value process** of the OIAnalytics
-payload, are JavaScript expressions where `value` is the field value. They are only applied to a value that can be
-processed:
+The **Field processing** of the file transformers, and the **Reference processing** and **Value processing** of the
+OIAnalytics payload, are lists of operations applied in order, each on the result of the previous one: upper or lower
+case, trim, substring, add text, replace text, number operation, round, date time conversion, or a JavaScript
+**Expression** on `value` for anything else — the same operations as the
+[field processing of the items synchronisations](../south-connectors/common-settings.md#field-processing). The settings
+show the operations in order; **Set up…** opens them in a modal, to add, change, reorder or remove them.
+
+The modal tests the operations on values of the field: the first ones of the content the last transformer test ran on
+(run the test panel of the transformer first), which can be changed, added or removed to test other cases. Each value
+is shown with its result, or why an operation fails on it.
+
+The operations only apply to a value that can be processed:
 
 - a missing value (`null`) is left as it is: it is not processed. In a CSV file, it is written with the **Null value**;
   in an OIAnalytics payload, the record is skipped;
-- a value whose type does not have the method called in the expression (e.g. `value.toUpperCase()` on a number, or
-  `value.toFixed(2)` on a text) is skipped with a warning in the logs, once per expression. The field is written as
-  `null` in a file, the record is skipped in an OIAnalytics payload, and a reference is kept as it is. Cast the field
-  to the right **Data Type** to process it, or convert it in the expression (e.g. `Number(value).toFixed(2)`).
+- a value an operation fails on (e.g. a text in a number operation, or an expression calling a method the value does not
+  have) is skipped with a warning in the logs, once per field. The field is written empty in a file, the record is
+  skipped in an OIAnalytics payload, and a reference is kept as it is. Cast the field to the right **Data Type**, or
+  convert it first (e.g. an expression `Number(value)`);
+- an object or an array (of a JSON file) can only be processed by an expression.
+
+Before 3.10, the processes were JavaScript expressions: upgrading turns each of them into a single **Expression**
+operation.
 
 ##### Example — Point records in a CSV file {#example}
 
@@ -253,7 +266,7 @@ processed:
 ```
 
 With File type `CSV`, Delimiter `SEMI_COLON`, **Keep the other fields** off, and three fields: `pointId` (written
-name `Reference`, field process `value.split('/').pop()`), `timestamp` (written name `Timestamp`, datetime from
+name `Reference`, field processing: an expression `value.split('/').pop()`), `timestamp` (written name `Timestamp`, datetime from
 `iso-string` to `string` with format `yyyy-MM-dd HH:mm:ss` and timezone `Europe/Paris`) and `value` (written name
 `Value`):
 
@@ -393,16 +406,16 @@ settings.
 
 The settings are grouped by part of the OIAnalytics payload.
 
-| Group         | Setting                        | Description                                                                                                                                |
-| ------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Reference** | **Reference field**            | Field of the records holding the reference (default `pointId`)                                                                             |
-|               | **Reference process**          | Optional JavaScript expression applied to each reference, `value` being the field value (e.g. `value.replace('plant/', '').toUpperCase()`) |
-| **Timestamp** | **Timestamp field**            | Field of the records holding the timestamp (default `timestamp`)                                                                           |
-|               | **Source type**                | Format of the raw timestamp: `iso-string` (default, as in point records), `unix-epoch`, `unix-epoch-ms`, or `string`                       |
-|               | **Precision**                  | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr`                                                                                 |
-|               | **Timezone / Format / Locale** | Used to parse the raw timestamp when its source type is `string`                                                                           |
-| **Value**     | **Value field**                | Field of the records holding the value (default `value`)                                                                                   |
-|               | **Value process**              | Optional JavaScript expression applied to each value, `value` being the field value (e.g. `Math.round(value * 100) / 100`)                 |
+| Group         | Setting                        | Description                                                                                                                                               |
+| ------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Reference** | **Reference field**            | Field of the records holding the reference (default `pointId`)                                                                                            |
+|               | **Reference processing**       | Optional operations applied to each reference (e.g. Replace text `plant/` by nothing, then Upper case), see [Field and value processes](#field-processes) |
+| **Timestamp** | **Timestamp field**            | Field of the records holding the timestamp (default `timestamp`)                                                                                          |
+|               | **Source type**                | Format of the raw timestamp: `iso-string` (default, as in point records), `unix-epoch`, `unix-epoch-ms`, or `string`                                      |
+|               | **Precision**                  | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr`                                                                                                |
+|               | **Timezone / Format / Locale** | Used to parse the raw timestamp when its source type is `string`                                                                                          |
+| **Value**     | **Value field**                | Field of the records holding the value (default `value`)                                                                                                  |
+|               | **Value processing**           | Optional operations applied to each value (e.g. Round to 2 decimals), see [Field and value processes](#field-processes)                                   |
 
 Before 3.10, the settings were not grouped: upgrading moves them in their group, without value process.
 

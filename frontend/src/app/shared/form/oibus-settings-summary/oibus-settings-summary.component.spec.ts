@@ -45,6 +45,14 @@ const settingsAttribute: OIBusObjectAttribute = {
     { type: 'scan-mode', key: 'scanMode', translationKey: `${items}.scan-mode`, acceptableType: 'POLL', validators: [], displayProperties },
     { type: 'boolean', key: 'recursive', translationKey: `${items}.ftp.recursive`, defaultValue: false, validators: [], displayProperties },
     {
+      type: 'field-process',
+      key: 'valueProcess',
+      translationKey: 'configuration.oibus.manifest.transformers.record-list-to-oianalytics.value.value-process',
+      fieldKey: 'value',
+      validators: [],
+      displayProperties
+    },
+    {
       type: 'code',
       key: 'query',
       translationKey: `${items}.sqlite.query`,
@@ -121,6 +129,7 @@ class TestComponent {
     password: 'secret',
     scanMode: testData.scanMode.list[1].id,
     query: 'SELECT * FROM logs',
+    valueProcess: [{ type: 'trim' }, { type: 'uppercase' }],
     trackingInstant: { trackInstant: true },
     queryParams: [{ key: 'from', value: '@StartTime' }]
   });
@@ -166,6 +175,7 @@ describe('OIBusSettingsSummaryComponent', () => {
     await expect.element(tester.setting('Name')).toHaveTextContent('••••••••');
     await expect.element(tester.setting('Schedule')).toHaveTextContent(testData.scanMode.list[1].name);
     await expect.element(tester.setting('Query')).toHaveTextContent('SELECT * FROM logs');
+    await expect.element(tester.setting('Value processing')).toHaveTextContent('Trim spaces → Upper case');
     await expect.element(tester.setting('Track instant')).toHaveTextContent('Yes');
     await expect.element(tester.root.getByText('Tracking instant', { exact: true })).toBeInTheDocument();
     await expect.element(tester.setting('Query parameters')).toHaveTextContent('KeyValuefrom@StartTime');
@@ -177,9 +187,10 @@ describe('OIBusSettingsSummaryComponent', () => {
     // the form leaves out of its value the settings disabled by an enabling condition
     await expect.element(tester.root.getByRole('term').filter({ hasText: 'Scan sub-folders' })).not.toBeInTheDocument();
 
-    tester.fixture.componentInstance.value.update(value => ({ ...value, password: '', query: null }));
+    tester.fixture.componentInstance.value.update(value => ({ ...value, password: '', query: null, valueProcess: [] }));
 
     await expect.element(tester.setting('Name')).toHaveTextContent('–');
+    await expect.element(tester.setting('Value processing')).toHaveTextContent('–');
     await expect.element(tester.setting('Query')).toHaveTextContent('–');
   });
 

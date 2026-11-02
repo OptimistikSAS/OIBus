@@ -2031,10 +2031,10 @@
                     }
                   },
                   {
-                    "type": "string",
+                    "type": "field-process",
                     "key": "fieldProcess",
                     "translationKey": "configuration.oibus.manifest.transformers.file-fields.field-process",
-                    "defaultValue": null,
+                    "fieldKey": "field",
                     "validators": [],
                     "displayProperties": {
                       "row": 1,
@@ -2578,10 +2578,10 @@
                   }
                 },
                 {
-                  "type": "string",
+                  "type": "field-process",
                   "key": "referenceProcess",
                   "translationKey": "configuration.oibus.manifest.transformers.record-list-to-oianalytics.reference.reference-process",
-                  "defaultValue": null,
+                  "fieldKey": "referenceField",
                   "validators": [],
                   "displayProperties": {
                     "row": 0,
@@ -2763,10 +2763,10 @@
                   }
                 },
                 {
-                  "type": "string",
+                  "type": "field-process",
                   "key": "valueProcess",
                   "translationKey": "configuration.oibus.manifest.transformers.record-list-to-oianalytics.value.value-process",
-                  "defaultValue": null,
+                  "fieldKey": "valueField",
                   "validators": [],
                   "displayProperties": {
                     "row": 0,
@@ -3227,10 +3227,10 @@
                     }
                   },
                   {
-                    "type": "string",
+                    "type": "field-process",
                     "key": "fieldProcess",
                     "translationKey": "configuration.oibus.manifest.transformers.file-fields.field-process",
-                    "defaultValue": null,
+                    "fieldKey": "field",
                     "validators": [],
                     "displayProperties": {
                       "row": 1,
@@ -4128,10 +4128,10 @@
                   }
                 },
                 {
-                  "type": "string",
+                  "type": "field-process",
                   "key": "referenceProcess",
                   "translationKey": "configuration.oibus.manifest.transformers.record-list-to-oianalytics.reference.reference-process",
-                  "defaultValue": null,
+                  "fieldKey": "referenceField",
                   "validators": [],
                   "displayProperties": {
                     "row": 0,
@@ -4313,10 +4313,10 @@
                   }
                 },
                 {
-                  "type": "string",
+                  "type": "field-process",
                   "key": "valueProcess",
                   "translationKey": "configuration.oibus.manifest.transformers.record-list-to-oianalytics.value.value-process",
-                  "defaultValue": null,
+                  "fieldKey": "valueField",
                   "validators": [],
                   "displayProperties": {
                     "row": 0,

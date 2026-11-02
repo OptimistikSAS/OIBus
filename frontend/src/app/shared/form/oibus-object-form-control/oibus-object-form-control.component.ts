@@ -17,6 +17,7 @@ import { OIBusArrayFormControlComponent } from '../oibus-array-form-control/oibu
 import { OIBusBooleanFormControlComponent } from '../oibus-boolean-form-control/oibus-boolean-form-control.component';
 import { OibusCertificateFormControlComponent } from '../oibus-certificate-form-control/oibus-certificate-form-control.component';
 import { OIBusCodeFormControlComponent } from '../oibus-code-form-control/oibus-code-form-control.component';
+import { OIBusFieldProcessFormControlComponent } from '../oibus-field-process-form-control/oibus-field-process-form-control.component';
 import { OIBusInstantFormControlComponent } from '../oibus-instant-form-control/oibus-instant-form-control.component';
 import { OIBusNumberFormControlComponent } from '../oibus-number-form-control/oibus-number-form-control.component';
 import { OIBusScanModeFormControlComponent } from '../oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
@@ -58,6 +59,7 @@ class ObjectFormGroupDirective {}
     BoxComponent,
     BoxTitleDirective,
     OIBusNumberFormControlComponent,
+    OIBusFieldProcessFormControlComponent,
     OIBusStringFormControlComponent,
     OIBusInstantFormControlComponent,
     OIBusBooleanFormControlComponent,
@@ -120,7 +122,8 @@ export class OIBusObjectFormControlComponent {
         case 'secret':
         case 'scan-mode':
         case 'certificate':
-        case 'timezone': {
+        case 'timezone':
+        case 'field-process': {
           const rowNumber = attribute.displayProperties.row;
           let row = (rows[rowNumber] ??= { wrapInRow: true, columns: [] });
           if (!row.wrapInRow) {

@@ -666,6 +666,35 @@ export function toRecordListTransformerOptions(oldFunctionName: string, options:
 export const defaultRecordListToOIAnalyticsOptions = (): Record<string, unknown> =>
   toRecordListTransformerOptions('time-values-to-oianalytics', {});
 
+// The transformers whose options hold field processes, once the others are replaced by them
+export const FIELD_PROCESS_FUNCTION_NAMES = ['file-to-file', 'record-list-to-file', 'file-to-oianalytics', 'record-list-to-oianalytics'];
+
+/**
+ * The field processes of the options of a transformer (of `FIELD_PROCESS_FUNCTION_NAMES`) become operations instead of a
+ * JS expression: the expression of a field, a reference or a value becomes a single `expression` operation, and no
+ * expression no operation.
+ */
+export function toFieldProcessOperations(options: Record<string, unknown>): Record<string, unknown> {
+  const toOperations = (process: unknown): unknown =>
+    Array.isArray(process) ? process : typeof process === 'string' && process.trim() ? [{ type: 'expression', expression: process }] : [];
+  const converted: Record<string, unknown> = { ...options };
+  if (Array.isArray(options.fields)) {
+    converted.fields = (options.fields as Array<Record<string, unknown>>).map(field => ({
+      ...field,
+      fieldProcess: toOperations(field.fieldProcess)
+    }));
+  }
+  const reference = options.reference as Record<string, unknown> | undefined;
+  if (reference && typeof reference === 'object') {
+    converted.reference = { ...reference, referenceProcess: toOperations(reference.referenceProcess) };
+  }
+  const value = options.value as Record<string, unknown> | undefined;
+  if (value && typeof value === 'object') {
+    converted.value = { ...value, valueProcess: toOperations(value.valueProcess) };
+  }
+  return converted;
+}
+
 // The south types whose item manifest defaulted the resampling to 'raw', which is not one of its selectable values
 // ('none', '1s', ...). 'raw' already meant no resampling at runtime.
 export const RAW_RESAMPLING_SOUTH_TYPES = ['opcua', 'opc'];
@@ -1502,6 +1531,24 @@ function addDatabaseConnectionSettings(config: JsonObject): void {
   }
 }
 
+/** See `toFieldProcessOperations`, on the links of the north connectors and of the history queries */
+function convertFieldProcessesToOperations(config: JsonObject): void {
+  const transformerIds = asObjects(config.transformers)
+    .filter(
+      transformer =>
+        transformer.type === 'standard' &&
+        FIELD_PROCESS_FUNCTION_NAMES.includes((transformer.settings as JsonObject).functionName as string)
+    )
+    .map(transformer => transformer.oIBusInternalId);
+  const convert = (link: JsonObject): void => {
+    if (transformerIds.includes(link.transformerId)) {
+      link.options = toFieldProcessOperations((link.options as JsonObject | null) ?? {}) as JsonObject;
+    }
+  };
+  forEachNorth(config, null, north => asObjects((north.settings as JsonObject).transformers).forEach(convert));
+  forEachHistoryQuery(config, null, settings => asObjects(settings.northTransformers).forEach(convert));
+}
+
 /** Whether a North transformer applies to the OIBus API */
 function usesOIBusApi(config: JsonObject): boolean {
   let used = false;
@@ -1640,6 +1687,7 @@ export const upgrade: ConfigUpgrade = {
     moveFilenamePrefixAndSuffixToTransformers(config);
     addOPCUATimeoutsAndSubscriptionSettings(config);
     addDatabaseConnectionSettings(config);
+    convertFieldProcessesToOperations(config);
 
     return config;
   }

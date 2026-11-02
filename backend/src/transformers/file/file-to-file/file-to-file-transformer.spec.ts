@@ -36,8 +36,8 @@ describe('FileToFileTransformer', () => {
       filename: '@SourceFilename.csv',
       keepOtherFields: false,
       fields: [
-        { field: '$.data[*].tag', name: 'Tag', dataType: 'string', fieldProcess: null },
-        { field: 'val', name: 'Value', dataType: 'number', fieldProcess: null }
+        { field: '$.data[*].tag', name: 'Tag', dataType: 'string', fieldProcess: [] },
+        { field: 'val', name: 'Value', dataType: 'number', fieldProcess: [] }
       ]
     });
     const content = {

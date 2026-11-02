@@ -1,0 +1,20 @@
+<div class="form-group">
+  <div class="form-label" [id]="fieldProcessAttribute().key + '-label'" [translate]="fieldProcessAttribute().translationKey"></div>
+  <div class="d-flex flex-wrap align-items-center gap-1">
+    @for (operation of operations(); track $index) {
+      @if (!$first) {
+        <span class="fa-solid fa-arrow-right small text-muted" aria-hidden="true"></span>
+      }
+      <span class="badge field-operation-badge">{{ 'field-process.operation.' + operation.type | translate }}</span>
+    } @empty {
+      <span class="text-muted small field-process-none" translate="field-process.summary-none"></span>
+    }
+    <button
+      type="button"
+      class="btn btn-secondary btn-sm ms-2 set-up-field-process"
+      [attr.aria-describedby]="fieldProcessAttribute().key + '-label'"
+      (click)="open()"
+      translate="field-process.set-up"
+    ></button>
+  </div>
+</div>
