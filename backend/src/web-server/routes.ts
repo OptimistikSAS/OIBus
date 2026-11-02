@@ -485,6 +485,20 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldConvertType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["number"]},{"dataType":"enum","enums":["boolean"]},{"dataType":"enum","enums":["json"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldConvertOperation": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["convert"],"required":true},
+            "to": {"ref":"FieldConvertType","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "FieldCaseOperation": {
         "dataType": "refObject",
         "properties": {
@@ -552,6 +566,11 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "FieldDatetimePrecision": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["s"]},{"dataType":"enum","enums":["min"]},{"dataType":"enum","enums":["hr"]},{"dataType":"enum","enums":["day"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "FieldDatetimeOperation": {
         "dataType": "refObject",
         "properties": {
@@ -564,6 +583,7 @@ const models: TsoaRoute.Models = {
             "outputTimezone": {"ref":"Timezone"},
             "outputFormat": {"dataType":"string"},
             "outputLocale": {"dataType":"string"},
+            "precision": {"ref":"FieldDatetimePrecision"},
         },
         "additionalProperties": false,
     },
@@ -579,7 +599,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "FieldOperation": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"FieldCaseOperation"},{"ref":"FieldSubstringOperation"},{"ref":"FieldAddToStringOperation"},{"ref":"FieldReplaceOperation"},{"ref":"FieldNumberOperation"},{"ref":"FieldRoundOperation"},{"ref":"FieldDatetimeOperation"},{"ref":"FieldExpressionOperation"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"FieldConvertOperation"},{"ref":"FieldCaseOperation"},{"ref":"FieldSubstringOperation"},{"ref":"FieldAddToStringOperation"},{"ref":"FieldReplaceOperation"},{"ref":"FieldNumberOperation"},{"ref":"FieldRoundOperation"},{"ref":"FieldDatetimeOperation"},{"ref":"FieldExpressionOperation"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "FieldProcessTestCommandDTO": {
@@ -743,7 +763,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "IntervalUnit": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ms"]},{"dataType":"enum","enums":["s"]},{"dataType":"enum","enums":["min"]},{"dataType":"enum","enums":["hour"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["s"]},{"dataType":"enum","enums":["min"]},{"dataType":"enum","enums":["ms"]},{"dataType":"enum","enums":["hour"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ScanModeInterval": {
@@ -6662,7 +6682,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthAzureDataExplorerSettingsDataFormat": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["csv"]},{"dataType":"enum","enums":["json"]},{"dataType":"enum","enums":["multijson"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["json"]},{"dataType":"enum","enums":["csv"]},{"dataType":"enum","enums":["multijson"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthAzureDataExplorerSettings": {

@@ -1588,6 +1588,38 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"FieldConvertType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"number",
+					"boolean",
+					"json"
+				],
+				"example": "number",
+				"description": "What a `convert` operation converts a value to: a text, a number, a boolean, or the object or array a JSON text holds."
+			},
+			"FieldConvertOperation": {
+				"description": "Converts the value to another type - e.g. the text of a CSV file to a number.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"convert"
+						],
+						"nullable": false
+					},
+					"to": {
+						"$ref": "#/components/schemas/FieldConvertType"
+					}
+				},
+				"required": [
+					"type",
+					"to"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"FieldCaseOperation": {
 				"description": "Changes the case of the value, or removes its leading and trailing spaces.",
 				"properties": {
@@ -1761,8 +1793,19 @@
 				],
 				"example": "iso-string"
 			},
+			"FieldDatetimePrecision": {
+				"type": "string",
+				"enum": [
+					"s",
+					"min",
+					"hr",
+					"day"
+				],
+				"example": "min",
+				"description": "The unit a `datetime` operation rounds a date time down to: the smaller units are set to 0. Left out, the date time is\nunchanged."
+			},
 			"FieldDatetimeOperation": {
-				"description": "Converts a date time from a type to another - the timezone and format only apply to the `string` type.",
+				"description": "Converts a date time from a type to another - the timezone and format only apply to the `string` type - possibly\nrounded down to a precision (in UTC, or in the output timezone for a `string`).",
 				"properties": {
 					"type": {
 						"type": "string",
@@ -1794,6 +1837,9 @@
 					},
 					"outputLocale": {
 						"type": "string"
+					},
+					"precision": {
+						"$ref": "#/components/schemas/FieldDatetimePrecision"
 					}
 				},
 				"required": [
@@ -1828,6 +1874,9 @@
 			},
 			"FieldOperation": {
 				"anyOf": [
+					{
+						"$ref": "#/components/schemas/FieldConvertOperation"
+					},
 					{
 						"$ref": "#/components/schemas/FieldCaseOperation"
 					},
@@ -2359,9 +2408,9 @@
 			"IntervalUnit": {
 				"type": "string",
 				"enum": [
-					"ms",
 					"s",
 					"min",
+					"ms",
 					"hour"
 				]
 			},
@@ -31434,8 +31483,8 @@
 			"NorthAzureDataExplorerSettingsDataFormat": {
 				"type": "string",
 				"enum": [
-					"csv",
 					"json",
+					"csv",
 					"multijson"
 				]
 			},

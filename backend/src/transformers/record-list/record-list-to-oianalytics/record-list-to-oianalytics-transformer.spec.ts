@@ -32,7 +32,7 @@ describe('RecordListToOIAnalyticsTransformer', () => {
   let logger: PinoLogger;
   const options = {
     reference: { referenceField: 'pointId', referenceProcess: [] },
-    timestamp: { timestampField: 'timestamp', sourceType: 'iso-string', precision: 'ms' },
+    timestamp: { timestampField: 'timestamp', timestampProcess: [] },
     value: { valueField: 'value', valueProcess: [] }
   };
 
@@ -62,11 +62,17 @@ describe('RecordListToOIAnalyticsTransformer', () => {
       reference: { referenceField: 'tag', referenceProcess: [{ type: 'uppercase' }] },
       timestamp: {
         timestampField: 'date',
-        sourceType: 'string',
-        precision: 'min',
-        timezone: 'Europe/Paris',
-        format: 'yyyy-MM-dd HH:mm:ss',
-        locale: 'en-En'
+        timestampProcess: [
+          {
+            type: 'datetime',
+            inputType: 'string',
+            inputTimezone: 'Europe/Paris',
+            inputFormat: 'yyyy-MM-dd HH:mm:ss',
+            inputLocale: 'en-En',
+            outputType: 'iso-string',
+            precision: 'min'
+          }
+        ]
       },
       value: { valueField: 'reading', valueProcess: [{ type: 'number-operation', operator: 'multiply', operand: 10 }] }
     });

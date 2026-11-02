@@ -4,8 +4,9 @@ import { TransformerManifest } from '../../../../shared/model/connector/transfor
 const KEY = 'configuration.oibus.manifest.transformers.record-list-to-oianalytics';
 
 /**
- * The OIAnalytics payload is made of references, timestamps and values: each one is read from a field of the records, and
- * the references and values can be processed by operations (upper case, substring, number operation...). Shared with the file-to-oianalytics transformer.
+ * The OIAnalytics payload is made of references, timestamps and values: each one is read from a field of the records and
+ * can be processed by operations (upper case, substring, date time conversion...) - a timestamp must end as an ISO date
+ * time, possibly rounded down to a precision by its date time conversion. Shared with the file-to-oianalytics transformer.
  */
 export const oianalyticsPayloadAttributes: Array<OIBusAttribute> = [
   {
@@ -39,11 +40,7 @@ export const oianalyticsPayloadAttributes: Array<OIBusAttribute> = [
     key: 'timestamp',
     translationKey: `${KEY}.timestamp.title`,
     displayProperties: { visible: true, wrapInBox: true },
-    enablingConditions: [
-      { referralPathFromRoot: 'sourceType', targetPathFromRoot: 'timezone', values: ['string'] },
-      { referralPathFromRoot: 'sourceType', targetPathFromRoot: 'format', values: ['string'] },
-      { referralPathFromRoot: 'sourceType', targetPathFromRoot: 'locale', values: ['string'] }
-    ],
+    enablingConditions: [],
     validators: [{ type: 'REQUIRED', arguments: [] }],
     attributes: [
       {
@@ -55,46 +52,12 @@ export const oianalyticsPayloadAttributes: Array<OIBusAttribute> = [
         displayProperties: { row: 0, columns: 4, displayInViewMode: false }
       },
       {
-        type: 'string-select',
-        key: 'sourceType',
-        translationKey: `${KEY}.timestamp.source-type`,
-        defaultValue: 'iso-string',
-        selectableValues: ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'],
-        validators: [{ type: 'REQUIRED', arguments: [] }],
-        displayProperties: { row: 0, columns: 4, displayInViewMode: false }
-      },
-      {
-        type: 'string-select',
-        key: 'precision',
-        translationKey: `${KEY}.timestamp.precision`,
-        defaultValue: 'ms',
-        selectableValues: ['ms', 's', 'min', 'hr'],
-        validators: [{ type: 'REQUIRED', arguments: [] }],
-        displayProperties: { row: 0, columns: 4, displayInViewMode: true }
-      },
-      {
-        type: 'timezone',
-        key: 'timezone',
-        translationKey: `${KEY}.timestamp.timezone`,
-        defaultValue: 'UTC',
-        validators: [{ type: 'REQUIRED', arguments: [] }],
-        displayProperties: { row: 1, columns: 4, displayInViewMode: false }
-      },
-      {
-        type: 'string',
-        key: 'format',
-        translationKey: `${KEY}.timestamp.format`,
-        defaultValue: 'yyyy-MM-dd HH:mm:ss',
-        validators: [{ type: 'REQUIRED', arguments: [] }],
-        displayProperties: { row: 1, columns: 4, displayInViewMode: false }
-      },
-      {
-        type: 'string',
-        key: 'locale',
-        translationKey: `${KEY}.timestamp.locale`,
-        defaultValue: 'en-En',
-        validators: [{ type: 'REQUIRED', arguments: [] }],
-        displayProperties: { row: 1, columns: 4, displayInViewMode: false }
+        type: 'field-process',
+        key: 'timestampProcess',
+        translationKey: `${KEY}.timestamp.timestamp-process`,
+        fieldKey: 'timestampField',
+        validators: [],
+        displayProperties: { row: 0, columns: 8, displayInViewMode: false }
       }
     ]
   },

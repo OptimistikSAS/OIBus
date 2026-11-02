@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import zlib from 'node:zlib';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
+import { FieldOperation } from '../../../shared/model/connector/field-process.model';
+
 import testData from '../../tests/utils/test-data';
 import { buildFileOutputAttribute, FileOutputSettings, writeFile } from './file-output';
 
@@ -28,12 +30,10 @@ describe('File output', () => {
     keepOtherFields: true,
     fields: []
   };
-  const field = (name: string, dataType: string, extra: object = {}) => ({
+  const field = (name: string, fieldProcess: Array<FieldOperation> = [], extra: object = {}) => ({
     field: name,
     name: null,
-    dataType,
-    fieldProcess: [],
-    datetimeSettings: null,
+    fieldProcess,
     ...extra
   });
   const write = (settings: object, rows: Array<Record<string, unknown>>) =>
@@ -57,42 +57,54 @@ describe('File output', () => {
     assert.strictEqual(result.output.toString(), 'id;value;date\na;1;2024-01-01T00:00:00.000Z\nb;;');
   });
 
-  it('should rename, cast and process the configured fields, keeping only them when asked', () => {
-    const datetimeSettings = { inputType: 'iso-string', outputType: 'unix-epoch-ms' };
+  it('should rename and process the configured fields, keeping only them when asked', () => {
     const result = write(
       {
         ...csvSettings,
         output: { ...csvSettings.output, quoteChar: 'DOUBLE_QUOTE' },
         keepOtherFields: false,
         fields: [
-          field('id', 'string', { name: 'Reference', fieldProcess: [{ type: 'uppercase' }] }),
-          field('value', 'number'),
-          field('on', 'boolean'),
-          field('time', 'datetime', { datetimeSettings }),
-          field('data', 'object'),
-          field('list', 'array'),
-          field('missing', 'string')
+          field('id', [{ type: 'uppercase' }], { name: 'Reference' }),
+          field('value', [{ type: 'convert', to: 'number' }]),
+          field('on', [{ type: 'convert', to: 'boolean' }]),
+          field('time', [{ type: 'datetime', inputType: 'iso-string', outputType: 'unix-epoch-ms' }]),
+          field('data'),
+          field('list'),
+          field('missing'),
+          field('failing', [{ type: 'convert', to: 'number' }])
         ]
       },
-      [{ id: 'a', value: '1.5', on: 'true', time: '2024-01-01T00:00:00.000Z', data: '{"a":1}', list: [1], other: 'dropped' }]
+      [
+        {
+          id: 'a',
+          value: '1.5',
+          on: 'true',
+          time: new Date('2024-01-01T00:00:00.000Z'),
+          data: '{"a":1}',
+          list: [1],
+          failing: 'abc',
+          other: 'dropped'
+        }
+      ]
     );
 
+    // an object or an array is written as its JSON text, a value the operations fail on with the null value
     assert.strictEqual(
       result.output.toString(),
-      '"Reference";"value";"on";"time";"data";"list";"missing"\n"A";"1.5";"true";"1704067200000";"{""a"":1}";"[1]";"NULL"'
+      '"Reference";"value";"on";"time";"data";"list";"missing";"failing"\n"A";"1.5";"true";"1704067200000";"{""a"":1}";"[1]";"NULL";"NULL"'
     );
   });
 
-  it('should write the rows in a JSON file, typing the configured fields', () => {
+  it('should write the rows in a JSON file, converting the configured fields', () => {
     const result = write(
       {
         ...jsonSettings,
         fields: [
-          field('on', 'boolean'),
-          field('data', 'object'),
-          field('raw', 'array'),
-          field('missing', 'number'),
-          field('value', 'string')
+          field('on', [{ type: 'convert', to: 'boolean' }]),
+          field('data', [{ type: 'convert', to: 'json' }]),
+          field('raw', [{ type: 'convert', to: 'json' }]),
+          field('missing', [{ type: 'convert', to: 'number' }]),
+          field('value', [{ type: 'convert', to: 'string' }])
         ]
       },
       [{ id: 'a', on: 'false', data: '{"a":1}', raw: 'not json', value: 2 }]
@@ -100,7 +112,7 @@ describe('File output', () => {
 
     assert.strictEqual(result.contentFile, 'out.json');
     assert.deepStrictEqual(JSON.parse(result.output.toString()), [
-      { id: 'a', on: false, data: { a: 1 }, raw: 'not json', missing: null, value: '2' }
+      { id: 'a', on: false, data: { a: 1 }, raw: null, missing: null, value: '2' }
     ]);
   });
 

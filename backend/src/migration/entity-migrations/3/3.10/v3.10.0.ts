@@ -1767,7 +1767,7 @@ async function moveLinks(
   }
 }
 
-/** See `toFieldProcessOperations`: the field processes of the transformers become operations instead of a JS expression */
+/** See `toFieldProcessOperations`: the transformers only process their fields with operations, instead of JS expressions, data types and datetime settings */
 export async function convertFieldProcessesToOperations(knex: Knex): Promise<void> {
   const transformers: Array<{ id: string }> = await knex(TRANSFORMERS_TABLE)
     .select('id')

@@ -8,9 +8,13 @@ import { Observable } from 'rxjs';
 import { FieldProcessTestResultDTO } from '@oibus/shared/api/transformer.model';
 import { Timezone } from '@oibus/shared/common/types';
 import {
+  FIELD_CONVERT_TYPES,
+  FIELD_DATETIME_PRECISIONS,
   FIELD_DATETIME_TYPES,
   FIELD_NUMBER_OPERATORS,
   FIELD_OPERATION_TYPES,
+  FieldConvertType,
+  FieldDatetimePrecision,
   FieldDatetimeType,
   FieldNumberOperator,
   FieldOperation,
@@ -30,6 +34,7 @@ import { OI_TYPEAHEAD_DIRECTIVES } from '../form/typeahead-directives';
  */
 type OperationForm = FormGroup<{
   type: FormControl<FieldOperationType>;
+  to: FormControl<FieldConvertType>;
   start: FormControl<number | null>;
   end: FormControl<number | null>;
   prefix: FormControl<string>;
@@ -47,6 +52,7 @@ type OperationForm = FormGroup<{
   outputFormat: FormControl<string>;
   outputTimezone: FormControl<string>;
   outputLocale: FormControl<string>;
+  precision: FormControl<FieldDatetimePrecision | 'unchanged'>;
   expression: FormControl<string>;
 }>;
 
@@ -57,6 +63,7 @@ const DATETIME_OUTPUT_STRING_SETTINGS: ReadonlyArray<OperationSetting> = ['outpu
 
 /** The settings of each type of operation - a datetime one also has those of a string input or output, see `syncSettings` */
 const OPERATION_SETTINGS: Record<FieldOperationType, ReadonlyArray<OperationSetting>> = {
+  convert: ['to'],
   uppercase: [],
   lowercase: [],
   trim: [],
@@ -65,7 +72,7 @@ const OPERATION_SETTINGS: Record<FieldOperationType, ReadonlyArray<OperationSett
   replace: ['search', 'replacement'],
   'number-operation': ['operator', 'operand'],
   round: ['decimals'],
-  datetime: ['inputType', 'outputType'],
+  datetime: ['inputType', 'outputType', 'precision'],
   expression: ['expression']
 };
 
@@ -87,8 +94,11 @@ export class FieldProcessModalComponent {
   private transformerService = inject(TransformerService);
 
   readonly operationTypes = FIELD_OPERATION_TYPES;
+  readonly convertTypes = FIELD_CONVERT_TYPES;
   readonly numberOperators = FIELD_NUMBER_OPERATORS;
   readonly datetimeTypes = FIELD_DATETIME_TYPES;
+  /** A date time is unchanged unless rounded down to a precision */
+  readonly datetimePrecisions = ['unchanged', ...FIELD_DATETIME_PRECISIONS] as const;
   readonly timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
     () => ['UTC', ...Intl.supportedValuesOf('timeZone')],
     timezone => timezone
@@ -209,6 +219,7 @@ export class FieldProcessModalComponent {
     const number = (key: OperationSetting, defaultValue: number | null) => (value[key] as number | null | undefined) ?? defaultValue;
     const form: OperationForm = this.fb.group({
       type: this.fb.control(operation.type),
+      to: this.fb.control<FieldConvertType>((value.to as FieldConvertType | undefined) ?? 'number'),
       start: this.fb.control<number | null>(number('start', 0), Validators.required),
       end: this.fb.control<number | null>(number('end', null)),
       prefix: this.fb.control(text('prefix')),
@@ -226,6 +237,9 @@ export class FieldProcessModalComponent {
       outputFormat: this.fb.control(text('outputFormat', 'yyyy-MM-dd HH:mm:ss'), Validators.required),
       outputTimezone: this.fb.control(text('outputTimezone', 'UTC'), Validators.required),
       outputLocale: this.fb.control(text('outputLocale', 'en-En')),
+      precision: this.fb.control<FieldDatetimePrecision | 'unchanged'>(
+        (value.precision as FieldDatetimePrecision | undefined) ?? 'unchanged'
+      ),
       expression: this.fb.control(text('expression'), Validators.required)
     });
     this.syncSettings(form);
@@ -240,6 +254,8 @@ export class FieldProcessModalComponent {
 function toOperation(operation: OperationForm): FieldOperation {
   const value = operation.getRawValue();
   switch (value.type) {
+    case 'convert':
+      return { type: value.type, to: value.to };
     case 'uppercase':
     case 'lowercase':
     case 'trim':
@@ -272,7 +288,8 @@ function toOperation(operation: OperationForm): FieldOperation {
               outputTimezone: value.outputTimezone,
               ...(value.outputLocale ? { outputLocale: value.outputLocale } : {})
             }
-          : {})
+          : {}),
+        ...(value.precision !== 'unchanged' ? { precision: value.precision } : {})
       };
     case 'expression':
       return { type: value.type, expression: value.expression };
