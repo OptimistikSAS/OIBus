@@ -21,7 +21,7 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/cdk": "22.2.3",
+    "@angular/cdk": "22.2.4",
     "@angular/common": "22.2.3",
     "@angular/compiler": "22.2.3",
     "@angular/core": "22.2.3",
@@ -37,7 +37,7 @@
     "@codemirror/view": "6.43.15",
     "@fortawesome/fontawesome-free": "7.3.1",
     "@ng-bootstrap/ng-bootstrap": "21.0.0",
-    "@ngx-translate/core": "18.0.0",
+    "@ngx-translate/core": "18.1.0",
     "@popperjs/core": "2.11.8",
     "bootstrap": "5.3.8",
     "codemirror": "6.0.2",
@@ -48,8 +48,8 @@
     "tslib": "2.8.1"
   },
   "devDependencies": {
-    "@angular/build": "22.2.3",
-    "@angular/cli": "22.2.3",
+    "@angular/build": "22.2.4",
+    "@angular/cli": "22.2.4",
     "@angular/compiler-cli": "22.2.3",
     "@types/luxon": "3.7.6",
     "@types/papaparse": "5.5.2",
@@ -63,7 +63,7 @@
     "playwright": "1.64.1",
     "prettier": "3.9.10",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.72.0",
+    "typescript-eslint": "8.72.1",
     "vitest": "5.0.5"
   },
   "allowScripts": {
