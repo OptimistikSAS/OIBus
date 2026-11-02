@@ -91,11 +91,30 @@ export interface SouthDiscoveryDefaults {
 }
 
 /**
+ * A ready-made metadata query of a known data source (e.g. the tags of a Wonderware Historian on MSSQL), offered to start
+ * the query of a Configuration Workflow from. Its title and description are translated under
+ * `configuration.oibus.manifest.south.<connector id>.discovery.templates.<id>`.
+ */
+export interface SouthDiscoveryTemplate {
+  /**
+   * Identifies the template among the ones of its connector, and its translations.
+   * @example "wonderware-historian-tags"
+   */
+  id: string;
+
+  /** The metadata query, each returned row becoming one discovered record */
+  query: string;
+}
+
+/**
  * How a connector type feeds Configuration Workflows.
  */
 export interface SouthConnectorDiscovery {
   /** The shape of a workflow's discovery scope */
   kind: SouthDiscoveryKind;
+
+  /** The metadata queries a workflow can start from (`query` discovery only) */
+  templates?: Array<SouthDiscoveryTemplate>;
 
   /** How the records of checked nodes become items; absent when the connector can't tell (see SouthDiscoveryDefaults) */
   defaults?: SouthDiscoveryDefaults;

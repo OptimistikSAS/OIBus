@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { NEVER, of, throwError } from 'rxjs';
+import { EMPTY, NEVER, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -21,6 +21,7 @@ import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { FieldProcessModalComponent } from '../../../shared/field-process-modal/field-process-modal.component';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
@@ -39,6 +40,13 @@ const southSettings = testData.south.list[0].settings;
 const manifest: SouthConnectorManifest = { ...testData.south.manifest, discovery: { kind: 'tree' } };
 // A SQL-family connector with no explore() - query-only discovery scope, no reference tree.
 const sqlManifest: SouthConnectorManifest = { ...manifest, id: 'mysql', explore: false, discovery: { kind: 'query' } };
+// A SQL-family connector with a metadata query template (e.g. MSSQL and its Wonderware Historian tags)
+const templateManifest: SouthConnectorManifest = {
+  ...manifest,
+  id: 'mssql',
+  explore: false,
+  discovery: { kind: 'query', templates: [{ id: 'wonderware-historian-tags', query: 'SELECT TagName FROM Tag' }] }
+};
 // A SQL-family connector that also has explore() (e.g. SQLite) - query editor plus the reference tree.
 const sqliteManifest: SouthConnectorManifest = { ...manifest, id: 'sqlite', explore: true, discovery: { kind: 'query' } };
 // No discovery at all, even though it can be explored (e.g. Folder Scanner).
@@ -160,6 +168,9 @@ class EditWorkflowModalComponentTester {
   readonly queryTestError = this.root.getByCss('#discovery-query-test-error');
   readonly queryTestResult = this.root.getByCss('#discovery-query-test-result');
   readonly unsupportedScope = this.root.getByCss('#discovery-scope-unsupported');
+  readonly templateButton = this.root.getByRole('button', { name: 'Start from a template' });
+  readonly wonderwareTemplate = this.root.getByRole('button', { name: 'Wonderware Historian tags' });
+  readonly templateDescription = this.root.getByCss('#discovery-template-description');
   // identity key fields
   readonly identityKeyFields = this.root.getByCss('#identity-key-fields-list');
   readonly newIdentityKeyField = this.root.getByLabelText('Identity key fields');
@@ -285,6 +296,7 @@ describe('EditWorkflowModalComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
   let engineService: MockObject<EngineService>;
   let unsavedChangesService: MockObject<UnsavedChangesConfirmationService>;
+  let confirmationService: MockObject<ConfirmationService>;
   let modalService: MockModalService<unknown>;
   let clipboard: MockObject<Clipboard>;
   let notificationService: MockObject<NotificationService>;
@@ -298,6 +310,7 @@ describe('EditWorkflowModalComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
     engineService = createMock(EngineService);
     unsavedChangesService = createMock(UnsavedChangesConfirmationService);
+    confirmationService = createMock(ConfirmationService);
     configurationWorkflowService = createMock(ConfigurationWorkflowService);
     clipboard = createMock(Clipboard);
     notificationService = createMock(NotificationService);
@@ -321,7 +334,8 @@ describe('EditWorkflowModalComponent', () => {
         { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
         { provide: Clipboard, useValue: clipboard },
         { provide: NotificationService, useValue: notificationService },
-        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesService }
+        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesService },
+        { provide: ConfirmationService, useValue: confirmationService }
       ]
     });
 
@@ -652,6 +666,75 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.queryTestError).toHaveTextContent('no such table: nope');
       await expect.element(tester.queryTestResult).not.toBeInTheDocument();
       await expect.element(tester.testQueryButton).toBeEnabled();
+    });
+
+    test('should offer no template when the connector has none', async () => {
+      const tester = create({ workflowManifest: sqlManifest, step: 'source' });
+
+      await expect.element(tester.discoveryQuery).toBeInTheDocument();
+      await expect.element(tester.templateButton).not.toBeInTheDocument();
+    });
+
+    test('should start an empty query from a template, and tell how to use it', async () => {
+      const tester = create({ workflowManifest: templateManifest, step: 'source' });
+      await expect.element(tester.templateDescription).not.toBeInTheDocument();
+
+      await tester.templateButton.click();
+      await tester.wonderwareTemplate.click();
+
+      await expect.element(tester.discoveryQueryInput).toHaveTextContent('SELECT TagName FROM Tag');
+      await expect.element(tester.templateDescription).toMatchTextContent(/Wonderware Historian tags.*Runtime database/);
+      expect(confirmationService.confirm).not.toHaveBeenCalled();
+    });
+
+    test('should clear the result of the query tested before starting from a template', async () => {
+      const tester = create({ workflowManifest: templateManifest, step: 'source' });
+      southConnectorService.testDiscoveryQuery.mockReturnValue(of([{ name: 'sensor1' }]));
+      confirmationService.confirm.mockReturnValue(of(undefined));
+      await tester.discoveryQueryInput.fill('SELECT name FROM metadata');
+      await tester.testQueryButton.click();
+      await expect.element(tester.queryTestResult).toBeInTheDocument();
+
+      await tester.templateButton.click();
+      await tester.wonderwareTemplate.click();
+
+      await expect.element(tester.queryTestResult).not.toBeInTheDocument();
+    });
+
+    test('should replace a query of its own by a template once confirmed', async () => {
+      const tester = create({ workflowManifest: templateManifest, step: 'source' });
+      confirmationService.confirm.mockReturnValue(of(undefined));
+      await tester.discoveryQueryInput.fill('SELECT name FROM metadata');
+
+      await tester.templateButton.click();
+      await tester.wonderwareTemplate.click();
+
+      expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'south.workflows.discovery-template-replace' });
+      await expect.element(tester.discoveryQueryInput).toHaveTextContent('SELECT TagName FROM Tag');
+    });
+
+    test('should keep a query of its own when replacing it by a template is not confirmed', async () => {
+      const tester = create({ workflowManifest: templateManifest, step: 'source' });
+      confirmationService.confirm.mockReturnValue(EMPTY);
+      await tester.discoveryQueryInput.fill('SELECT name FROM metadata');
+
+      await tester.templateButton.click();
+      await tester.wonderwareTemplate.click();
+
+      await expect.element(tester.discoveryQueryInput).toHaveTextContent('SELECT name FROM metadata');
+      await expect.element(tester.templateDescription).not.toBeInTheDocument();
+    });
+
+    test('should save the query started from a template', async () => {
+      const tester = create({ workflowManifest: templateManifest, step: 'source' });
+      await tester.templateButton.click();
+      await tester.wonderwareTemplate.click();
+      await tester.goToStep('schedule');
+      await tester.name.fill('Historian tags');
+
+      await tester.save();
+
+      expect(savedCommand().discoveryScope).toEqual({ query: 'SELECT TagName FROM Tag' });
     });
 
     test('should read discoveryScope.query back for a SQL-family workflow being edited', async () => {

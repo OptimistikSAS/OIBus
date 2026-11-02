@@ -70,6 +70,13 @@ suivie sur une colonne date/heure choisie automatiquement — voir
 Une [synchronisation des points](./common-settings.md#items-synchronisation) sur ce connecteur exécute une requête de
 métadonnées et envoie ses lignes à OIAnalytics ; elle ne crée jamais d'éléments.
 
+Son étape **Source** peut **Partir d'un modèle**, une requête toute faite à adapter si besoin :
+
+- **Tags Wonderware Historian** : les tags analogiques, discrets et texte d'un Wonderware (AVEVA) Historian, avec leur
+  description, leur unité, leur plage de mesure (min/max EU et brute), leurs messages discrets et leurs réglages
+  d'acquisition et de stockage. Connecter le connecteur à la base `Runtime` de l'Historian. Les tags système de
+  l'Historian (`Sys...`) sont exclus, et ses codes (acquisition, stockage, type brut...) sont gardés tels qu'enregistrés.
+
 <ItemSettings />
 
 :::note Délai de requête d'un élément MSSQL
