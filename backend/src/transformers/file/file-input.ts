@@ -51,7 +51,7 @@ export const buildFileInputAttribute = (
       key: 'delimiter',
       translationKey: `${KEY}.delimiter`,
       defaultValue: 'SEMI_COLON',
-      selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+      selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'SLASH', 'TAB', 'PIPE'],
       validators: [{ type: 'REQUIRED', arguments: [] }],
       displayProperties: { row: 0, columns: 4, displayInViewMode: false }
     },

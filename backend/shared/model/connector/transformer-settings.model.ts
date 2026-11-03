@@ -7,16 +7,7 @@ import { FieldOperation } from './field-process.model';
 export const TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json', 'other'] as const;
 export type TransformerFileToFileSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_FILE_TYPES)[number];
 
-export const TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'SLASH', 'TAB', 'PIPE'] as const;
 export type TransformerFileToFileSettingsInputDelimiter = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_INPUT_DELIMITERS)[number];
 
 export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_FILE_TYPES = ['csv', 'json'] as const;
@@ -25,16 +16,7 @@ export type TransformerFileToFileSettingsOutputFileType = (typeof TRANSFORMER_FI
 export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_ENCODINGS = ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'] as const;
 export type TransformerFileToFileSettingsOutputEncoding = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_ENCODINGS)[number];
 
-export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
+export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'SLASH', 'TAB', 'PIPE'] as const;
 export type TransformerFileToFileSettingsOutputDelimiter = (typeof TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_DELIMITERS)[number];
 
 export const TRANSFORMER_FILE_TO_FILE_SETTINGS_OUTPUT_NEWLINES = ['CRLF', 'LF', 'CR'] as const;
@@ -54,7 +36,6 @@ export const TRANSFORMER_FILE_TO_MODBUS_SETTINGS_INPUT_DELIMITERS = [
   'SEMI_COLON',
   'COLON',
   'COMMA',
-  'NON_BREAKING_SPACE',
   'SLASH',
   'TAB',
   'PIPE'
@@ -67,16 +48,7 @@ export type TransformerFileToModbusSettingsMappingModbusType = (typeof TRANSFORM
 export const TRANSFORMER_FILE_TO_MQTT_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json'] as const;
 export type TransformerFileToMqttSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_MQTT_SETTINGS_INPUT_FILE_TYPES)[number];
 
-export const TRANSFORMER_FILE_TO_MQTT_SETTINGS_INPUT_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
+export const TRANSFORMER_FILE_TO_MQTT_SETTINGS_INPUT_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'SLASH', 'TAB', 'PIPE'] as const;
 export type TransformerFileToMqttSettingsInputDelimiter = (typeof TRANSFORMER_FILE_TO_MQTT_SETTINGS_INPUT_DELIMITERS)[number];
 
 export const TRANSFORMER_FILE_TO_MQTT_SETTINGS_PAYLOAD_TYPES = ['value', 'object'] as const;
@@ -90,7 +62,6 @@ export const TRANSFORMER_FILE_TO_OIANALYTICS_SETTINGS_INPUT_DELIMITERS = [
   'SEMI_COLON',
   'COLON',
   'COMMA',
-  'NON_BREAKING_SPACE',
   'SLASH',
   'TAB',
   'PIPE'
@@ -100,16 +71,7 @@ export type TransformerFileToOianalyticsSettingsInputDelimiter = (typeof TRANSFO
 export const TRANSFORMER_FILE_TO_OPCUA_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json'] as const;
 export type TransformerFileToOpcuaSettingsInputFileType = (typeof TRANSFORMER_FILE_TO_OPCUA_SETTINGS_INPUT_FILE_TYPES)[number];
 
-export const TRANSFORMER_FILE_TO_OPCUA_SETTINGS_INPUT_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
+export const TRANSFORMER_FILE_TO_OPCUA_SETTINGS_INPUT_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'SLASH', 'TAB', 'PIPE'] as const;
 export type TransformerFileToOpcuaSettingsInputDelimiter = (typeof TRANSFORMER_FILE_TO_OPCUA_SETTINGS_INPUT_DELIMITERS)[number];
 
 export const TRANSFORMER_FILE_TO_RECORD_LIST_SETTINGS_INPUT_FILE_TYPES = ['csv', 'json'] as const;
@@ -120,7 +82,6 @@ export const TRANSFORMER_FILE_TO_RECORD_LIST_SETTINGS_INPUT_DELIMITERS = [
   'SEMI_COLON',
   'COLON',
   'COMMA',
-  'NON_BREAKING_SPACE',
   'SLASH',
   'TAB',
   'PIPE'
@@ -138,7 +99,6 @@ export const TRANSFORMER_RECORD_LIST_TO_FILE_SETTINGS_OUTPUT_DELIMITERS = [
   'SEMI_COLON',
   'COLON',
   'COMMA',
-  'NON_BREAKING_SPACE',
   'SLASH',
   'TAB',
   'PIPE'

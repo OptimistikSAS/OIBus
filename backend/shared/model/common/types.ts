@@ -236,7 +236,7 @@ export type Resampling = (typeof RESAMPLING)[number];
 /**
  * List of supported CSV delimiter characters.
  */
-export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
+export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'SLASH', 'TAB', 'PIPE'] as const;
 
 /**
  * Type representing a supported CSV delimiter character.

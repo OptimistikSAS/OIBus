@@ -558,7 +558,6 @@ describe('Service utils', () => {
 
   describe('convertDelimiter', () => {
     it('should convert to csv delimiter', () => {
-      assert.deepStrictEqual(utils.convertDelimiter('NON_BREAKING_SPACE'), '\u00a0');
       assert.deepStrictEqual(utils.convertDelimiter('COLON'), ':');
       assert.deepStrictEqual(utils.convertDelimiter('COMMA'), ',');
       assert.deepStrictEqual(utils.convertDelimiter('DOT'), '.');
