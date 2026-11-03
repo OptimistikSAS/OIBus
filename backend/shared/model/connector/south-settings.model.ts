@@ -515,11 +515,7 @@ export interface SouthMySQLSettings {
 }
 
 export interface SouthODBCSettings {
-  remoteAgent: boolean;
-  agentUrl?: string;
   connectionTimeout: number;
-  retryInterval: number;
-  requestTimeout?: number;
   connectionString: string;
   password: string | null;
   maxParallelRun: number;

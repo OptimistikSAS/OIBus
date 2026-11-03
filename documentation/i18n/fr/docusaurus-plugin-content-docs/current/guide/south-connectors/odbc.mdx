@@ -6,31 +6,27 @@ import ItemSettings from './_south-sql-item-settings.mdx';
 
 # ODBC
 
-Se connecter à des sources de données ODBC, localement ou via un [OIBus Agent](../oibus-agent/odbc.md) distant. Particulièrement utile pour des systèmes tels qu'Aspen InfoPlus.21® (IP21) et d'autres applications compatibles ODBC.
+Se connecter à des sources de données ODBC via un pilote ODBC installé sur la machine OIBus. Particulièrement utile pour des systèmes tels qu'Aspen InfoPlus.21® (IP21) et d'autres applications compatibles ODBC.
 
 :::info Notes de compatibilité
 
 - Fonctionne avec toute source de données compatible ODBC
 - Recommandé pour les connexions Aspen IP21
-- Prend en charge les configurations de pilotes locales et distantes
+- Nécessite le pilote ODBC de la source de données sur la machine OIBus
 
 :::
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Paramètre                        | Description                                                                                                                                                                                                                                          | Exemple de valeur                                 |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Utiliser un agent distant        | Activer pour acheminer les requêtes via un OIBus Agent sur une machine distante.                                                                                                                                                                     | Activé/Désactivé                                  |
-| URL de l'agent distant           | URL du point de terminaison de l'agent. Requis en cas d'utilisation d'un agent distant.                                                                                                                                                              | `http://host:2224`                                |
-| Délai de connexion               | Temps maximal en millisecondes pour établir la connexion. Par défaut : `15000`.                                                                                                                                                                      | `15000`                                           |
-| Intervalle de nouvelle tentative | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`.                                                                                                                                                              | `10000`                                           |
-| Délai de requête                 | _(Utilisé uniquement avec **Utiliser un agent distant**)_ Temps d'exécution maximal en millisecondes pour chaque requête individuelle, envoyé à l'agent. Par défaut : `15000`. Non applicable aux connexions locales (sans agent).                   | `15000`                                           |
-| Chaîne de connexion              | Chaîne de connexion ODBC dans un format spécifique au pilote.                                                                                                                                                                                        | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
-| Mot de passe                     | Mot de passe d'authentification (stocké de façon sécurisée). Toujours ajouté sous forme de `PWD=<password>;` — si votre chaîne de connexion contient déjà sa propre entrée `PWD=`/`Pwd=`, supprimez-la ici ou dans la chaîne pour éviter un doublon. | `••••••••`                                        |
-| Requêtes parallèles max          | Nombre maximal d'éléments ou de groupes interrogés en même temps, de `1` (séquentiel) à `8`. Par défaut : `1`. Pilote local uniquement : via l'agent distant, les requêtes restent séquentielles.                                                    | `2`                                               |
+| Paramètre               | Description                                                                                                                                                                                                                                          | Exemple de valeur                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Délai de connexion      | Temps maximal en millisecondes pour établir la connexion. Par défaut : `15000`.                                                                                                                                                                      | `15000`                                           |
+| Chaîne de connexion     | Chaîne de connexion ODBC dans un format spécifique au pilote.                                                                                                                                                                                        | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
+| Mot de passe            | Mot de passe d'authentification (stocké de façon sécurisée). Toujours ajouté sous forme de `PWD=<password>;` — si votre chaîne de connexion contient déjà sa propre entrée `PWD=`/`Pwd=`, supprimez-la ici ou dans la chaîne pour éviter un doublon. | `••••••••`                                        |
+| Requêtes parallèles max | Nombre maximal d'éléments ou de groupes interrogés en même temps, de `1` (séquentiel) à `8`. Par défaut : `1`.                                                                                                                                       | `2`                                               |
 
 :::note Requêtes parallèles
-Avec le pilote local, chaque requête exécutée en parallèle ouvre sa propre connexion à la base de données et augmente la charge de la source. Les appels au pilote ODBC s'exécutent sur le pool de threads de Node.js (4 threads par défaut, partagés avec les accès aux fichiers) : une valeur supérieure à `4` ne les accélère pas. Via l'agent distant, les requêtes restent séquentielles quelle que soit cette valeur.
+Chaque requête exécutée en parallèle ouvre sa propre connexion à la base de données et augmente la charge de la source. Les appels au pilote ODBC s'exécutent sur le pool de threads de Node.js (4 threads par défaut, partagés avec les accès aux fichiers) : une valeur supérieure à `4` ne les accélère pas.
 :::
 
 ### Exemples de chaîne de connexion {#connection-string-examples}
@@ -64,15 +60,14 @@ Avec le pilote local, chaque requête exécutée en parallèle ouvre sa propre c
 
 Pour des performances IP21 optimales :
 
-1. Installer OIBus Agent sur la machine IP21
-2. Utiliser la chaîne de connexion : `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014;MAXROWS=12000000`
-3. S'assurer que le pilote `AspenTech SQLplus` est installé sur la machine de l'agent
-4. Configurer le service de l'agent avec les permissions appropriées
+1. Installer OIBus sur la machine IP21, ou au moins sur le même réseau local (le pilote SQLplus est sensible à la latence réseau)
+2. Installer le pilote ODBC `AspenTech SQLplus` sur la machine OIBus
+3. Utiliser la chaîne de connexion : `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014;MAXROWS=12000000`
 
 :::caution Authentification
 
 - Les mots de passe dans les chaînes de connexion sont stockés en texte clair. Utilisez plutôt le champ **Mot de passe**.
-- Pour l'authentification locale, assurez-vous qu'OIBus Agent s'exécute avec les permissions appropriées
+- Pour l'authentification locale, assurez-vous que le service OIBus s'exécute avec les permissions appropriées
 
 :::
 

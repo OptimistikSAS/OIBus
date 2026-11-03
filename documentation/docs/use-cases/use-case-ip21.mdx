@@ -11,7 +11,7 @@ AspenTech IP21 is a real-time data historian that collects, stores, and analyses
 
 See the [North Amazon S3](../guide/north-connectors/aws-s3.md) and [South ODBC](../guide/south-connectors/odbc) connector pages for full configuration details.
 
-This use case requires an [OIBus Agent](../guide/oibus-agent/installation). The example uses the following fictional network.
+This use case requires the **AspenTech SQLplus** ODBC driver on the OIBus machine. The example uses the following fictional network.
 
 <div style={{ textAlign: 'center' }}>
 
@@ -19,28 +19,15 @@ This use case requires an [OIBus Agent](../guide/oibus-agent/installation). The 
 
 </div>
 
-:::caution Install the Agent close to IP21
-The Aspen SQLplus driver is sensitive to network latency. Install the OIBus Agent on the IP21 server, or at least on the same local network. Additional network hops or firewalls between the Agent and the historian can cause data collection issues and performance degradation.
+:::caution Install OIBus close to IP21
+The Aspen SQLplus driver is sensitive to network latency. Install OIBus on the IP21 server, or at least on the same local network. Additional network hops or firewalls between OIBus and the historian can cause data collection issues and performance degradation.
 :::
 
 ## South ODBC {#south-odbc}
 
-ODBC connections can be managed in two ways:
+The ODBC connector uses the [node-odbc](https://github.com/markdirish/node-odbc) driver, which relies on the ODBC drivers installed on the OIBus machine. Install the **AspenTech SQLplus** ODBC driver on the machine running OIBus.
 
-- The internal [node-odbc](https://github.com/markdirish/node-odbc) JavaScript driver.
-- The [OIBus Agent](../guide/oibus-agent/installation) with its C# ODBC implementation.
-
-:::info
-This use case uses the OIBus Agent — the recommended approach for IP21.
-:::
-
-Install the OIBus Agent on the IP21 machine, enable **Use remote agent** in the connector settings, and enter `http://192.169.0.2:2224` as the **Remote agent URL**.
-
-:::tip OIBus Agent port
-Port 2224 is the default. You can change it during installation. Make sure the chosen port is open for inbound HTTP connections in your firewall.
-:::
-
-The connection string follows the standard ODBC format. The **AspenTech SQLplus** ODBC driver must be installed on the machine running the OIBus Agent.
+The connection string follows the standard ODBC format, for example `Driver={AspenTech SQLplus};HOST=192.169.0.2;PORT=10014;MAXROWS=12000000`.
 
 <div style={{ textAlign: 'center' }}>
 

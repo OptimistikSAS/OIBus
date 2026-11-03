@@ -16,6 +16,7 @@ import {
   toOIAnalyticsItemFileOptions,
   upgrade,
   usesRemoteAgent,
+  withoutOdbcAgentSettings,
   withPrefixAndSuffix
 } from './v3.10.0';
 
@@ -711,7 +712,7 @@ describe('3.10.0 config upgrade', () => {
         [
           { connectionSettings: { host: 'h', port: 3306, idleTimeout: 30_000 }, maxParallelRun: 1 },
           { connectionSettings: { host: 'h', idleTimeout: 30_000 }, maxParallelRun: 1 },
-          { remoteAgent: false, maxParallelRun: 4 },
+          { maxParallelRun: 4 },
           { agentUrl: 'u' }
         ]
       );
@@ -729,6 +730,47 @@ describe('3.10.0 config upgrade', () => {
       const once = upgrade.apply(buildConfig());
 
       assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
+  describe('ODBC agent settings', () => {
+    it('removes the settings of the OIBus Agent from the ODBC souths and history queries only', () => {
+      const agentSettings = { remoteAgent: true, agentUrl: 'u', retryInterval: 1000, requestTimeout: 2000 };
+      const config = upgrade.apply({
+        southConnectors: [
+          { type: 'odbc', settings: { name: 'ODBC', settings: { ...agentSettings, connectionString: 'c', maxParallelRun: 1 } } },
+          { type: 'oledb', settings: { name: 'OLEDB', settings: { agentUrl: 'u', retryInterval: 1000, requestTimeout: 2000 } } }
+        ],
+        historyQueries: [
+          {
+            settings: {
+              southType: 'odbc',
+              northType: 'console',
+              southSettings: { ...agentSettings, connectionString: 'c' },
+              northSettings: {}
+            }
+          }
+        ]
+      });
+
+      assert.deepStrictEqual(
+        (config.southConnectors as Array<JsonObject>).map(south => (south.settings as JsonObject).settings),
+        [
+          { connectionString: 'c', maxParallelRun: 1 },
+          { agentUrl: 'u', retryInterval: 1000, requestTimeout: 2000 }
+        ]
+      );
+      assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).southSettings, {
+        connectionString: 'c',
+        maxParallelRun: 1
+      });
+    });
+
+    it('leaves settings without the agent ones untouched', () => {
+      assert.deepStrictEqual(withoutOdbcAgentSettings({ connectionString: 'c', maxParallelRun: 2 }), {
+        connectionString: 'c',
+        maxParallelRun: 2
+      });
     });
   });
 

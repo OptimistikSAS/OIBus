@@ -7,11 +7,9 @@ import type { SouthItemSettings, SouthODBCItemSettings, SouthODBCSettings } from
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type { ReqResponse } from '../../service/http-request.utils';
 import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthODBCClass from './south-odbc';
@@ -63,12 +61,9 @@ const buildConfiguration = (settings: Partial<SouthODBCSettings>): SouthConnecto
   description: 'my test connector',
   enabled: true,
   settings: {
-    remoteAgent: false,
     connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
     password: 'password',
     connectionTimeout: 1000,
-    retryInterval: 1000,
-    requestTimeout: 1000,
     maxParallelRun: 1,
     ...settings
   },
@@ -92,14 +87,12 @@ describe('SouthODBC', () => {
   let addContentCallback: Mock<
     (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
   >;
-  let HTTPRequest: Mock<(url: URL | string, options?: unknown) => Promise<ReqResponse>>;
   // The odbc driver loaded by loadOdbc(), and the connection its connect() opens
   let odbcConnection: { query: Mock<(sql: string) => unknown>; close: Mock<() => void> };
   let odbc: { connect: Mock<(args: unknown) => unknown> };
   let loadOdbc: Mock<() => unknown>;
 
   const odbcLoaderExports: Record<string, unknown> = {};
-  const httpRequestExports: Record<string, unknown> = { __esModule: true };
 
   const realUtils: typeof Utils = nodeRequire('../../service/utils');
   const createUtilsMocks = () => ({
@@ -112,7 +105,6 @@ describe('SouthODBC', () => {
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, './odbc-loader', odbcLoaderExports);
-    mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
     mockModule(nodeRequire, '../../service/encryption.service', {
       __esModule: true,
       encryptionService: new EncryptionServiceMock('', '')
@@ -128,8 +120,6 @@ describe('SouthODBC', () => {
   beforeEach(() => {
     logger = new PinoLogger();
     addContentCallback = mock.fn(async () => undefined);
-    HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
-    httpRequestExports.HTTPRequest = HTTPRequest;
     odbcConnection = { query: mock.fn(() => []), close: mock.fn() };
     odbc = { connect: mock.fn(() => odbcConnection) };
     loadOdbc = mock.fn(() => odbc);
@@ -151,12 +141,6 @@ describe('SouthODBC', () => {
 
     beforeEach(() => {
       south = createSouth(configuration);
-    });
-
-    it('should do nothing on connect and disconnect', async () => {
-      await south.connect();
-      await south.disconnect();
-      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
     });
 
     it('should not add ; if present', async () => {
@@ -248,7 +232,6 @@ describe('SouthODBC', () => {
       assert.strictEqual(odbcConnection.close.mock.calls.length, 1);
       // Only the rows are kept, not the statement metadata the driver adds to the array
       assert.deepStrictEqual(result, [{ value: 1, timestamp: '2020-02-01 00:00:00.000' }]);
-      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
     });
 
     it('should not format the query times without tracking field', async () => {
@@ -467,205 +450,6 @@ describe('SouthODBC', () => {
     });
   });
 
-  describe('SouthODBC odbc remote with authentication', () => {
-    const configuration = buildConfiguration({ remoteAgent: true, agentUrl: 'http://localhost:2224' });
-
-    beforeEach(() => {
-      south = createSouth(configuration);
-    });
-
-    it('should properly connect to remote agent and disconnect', async () => {
-      await south.connect();
-      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
-      assert.ok(
-        (HTTPRequest.mock.calls[0].arguments[0] as URL).href === `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect`
-      );
-      assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: configuration.settings.connectionString,
-          connectionTimeout: configuration.settings.connectionTimeout
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      await south.disconnect();
-      assert.strictEqual(HTTPRequest.mock.calls.length, 2);
-      assert.ok(
-        (HTTPRequest.mock.calls[1].arguments[0] as URL).href ===
-          `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/disconnect`
-      );
-      assert.deepStrictEqual(HTTPRequest.mock.calls[1].arguments[1], {
-        method: 'DELETE'
-      });
-    });
-
-    it('should properly reconnect to when connection fails', async () => {
-      HTTPRequest.mock.mockImplementationOnce(async () => {
-        throw new Error('connection failed');
-      });
-
-      await south.connect();
-      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
-      assert.ok(
-        (HTTPRequest.mock.calls[0].arguments[0] as URL).href === `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect`
-      );
-      assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: configuration.settings.connectionString,
-          connectionTimeout: configuration.settings.connectionTimeout
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      mock.timers.tick(configuration.settings.retryInterval!);
-      // Wait for the promise created by the setTimeout callback to settle
-      await new Promise(resolve => setImmediate(resolve));
-      assert.strictEqual(HTTPRequest.mock.calls.length, 2);
-    });
-
-    it('should properly clear reconnect timeout on disconnect', async () => {
-      HTTPRequest.mock.mockImplementationOnce(async () => {
-        throw new Error('connection failed');
-      }, 0);
-      HTTPRequest.mock.mockImplementationOnce(async () => {
-        throw new Error('disconnection failed');
-      }, 2);
-
-      await south.connect();
-      assert.strictEqual(HTTPRequest.mock.calls.length, 1);
-
-      await south.connect();
-
-      await south.disconnect();
-      // After disconnect, advancing timer should not trigger another reconnect
-      mock.timers.tick(configuration.settings.retryInterval!);
-      await new Promise(resolve => setImmediate(resolve));
-      assert.strictEqual(HTTPRequest.mock.calls.length, 3);
-
-      assert.ok(
-        logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(
-            `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms.`
-          )
-        )
-      );
-      assert.ok(
-        logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(`Error while sending disconnection HTTP request into agent:`)
-        )
-      );
-    });
-
-    it('should get data from the remote agent', async () => {
-      const startTime = '2020-01-01T00:00:00.000Z';
-      const endTime = '2022-01-01T00:00:00.000Z';
-      const content = ['value\u001Ftimestamp', '1\u001F2020-02-01T00:00:00.000Z', '2\u001F', ''].join('\r\n');
-      HTTPRequest.mock.mockImplementation(async () =>
-        createMockResponse(200, { recordCount: 2, content, maxInstant: '2020-02-01T00:00:00Z' })
-      );
-
-      const result = await south.queryData(configuration.items[0], startTime, endTime);
-
-      const adaptedQuery = `SELECT * FROM logs WHERE timestamp > formatted ${startTime} AND timestamp <= formatted ${endTime}`;
-      assert.strictEqual(
-        (HTTPRequest.mock.calls[0].arguments[0] as URL).href,
-        `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read`
-      );
-      assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: configuration.settings.connectionString,
-          sql: adaptedQuery,
-          readTimeout: configuration.settings.requestTimeout,
-          timeColumn: 'timestamp',
-          datasourceTimestampFormat: trackingInstant!.dateTimeInput!.format,
-          datasourceTimezone: trackingInstant!.dateTimeInput!.timezone,
-          delimiter: '\u001F',
-          outputTimestampFormat: "uuuu'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'",
-          outputTimezone: 'UTC'
-        }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      assert.deepStrictEqual(result, [
-        { value: '1', timestamp: '2020-02-01T00:00:00.000Z' },
-        { value: '2', timestamp: null }
-      ]);
-      assert.strictEqual(odbc.connect.mock.calls.length, 0);
-    });
-
-    it('should not send the time column to the remote agent without tracking field', async () => {
-      HTTPRequest.mock.mockImplementation(async () => createMockResponse(200, { recordCount: 0, content: 'value', maxInstant: '' }));
-
-      const result = await south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
-
-      assert.deepStrictEqual(JSON.parse((HTTPRequest.mock.calls[0].arguments[1] as { body: string }).body), {
-        connectionString: configuration.settings.connectionString,
-        sql: 'query2',
-        readTimeout: configuration.settings.requestTimeout,
-        delimiter: '\u001F',
-        outputTimestampFormat: "uuuu'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'",
-        outputTimezone: 'UTC'
-      });
-      assert.deepStrictEqual(result, []);
-    });
-
-    it('should track the max instant from the ISO strings sent by the remote agent', async () => {
-      mock.method(south, 'queryData', async () => [{ timestamp: '2020-02-01T00:00:00.000Z' }]);
-
-      const result = await south.historyQuery([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.FAKE_NOW);
-
-      assert.deepStrictEqual(utilsExports.convertDateTimeToInstant.mock.calls[0].arguments, [
-        '2020-02-01T00:00:00.000Z',
-        { type: 'iso-string' }
-      ]);
-      assert.strictEqual(result.trackedInstant, '2020-02-01T00:00:00.000Z');
-    });
-
-    it('should manage query error', async () => {
-      HTTPRequest.mock.mockImplementation(async () => createMockResponse(500));
-      HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(400, 'bad request'));
-
-      await assert.rejects(south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), {
-        message: `Error occurred when querying remote agent with status 400: bad request`
-      });
-
-      await assert.rejects(south.queryData(configuration.items[1], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), {
-        message: `Error occurred when querying remote agent with status 500`
-      });
-    });
-  });
-
-  describe('SouthODBC odbc remote test connection', () => {
-    beforeEach(() => {
-      south = createSouth(buildConfiguration({ remoteAgent: true, agentUrl: 'http://localhost:2224' }));
-    });
-
-    it('should test connection successfully', async () => {
-      await assert.doesNotReject(south.testConnection());
-    });
-
-    it('should test connection fail', async () => {
-      HTTPRequest.mock.mockImplementation(async () => createMockResponse(500, 'another error'));
-      HTTPRequest.mock.mockImplementationOnce(async () => createMockResponse(400, 'bad request'));
-
-      await assert.rejects(
-        south.testConnection(),
-        new Error(`Error occurred when sending connect command to remote agent with status 400: bad request`)
-      );
-
-      await assert.rejects(
-        south.testConnection(),
-        new Error(`Error occurred when sending connect command to remote agent with status 500`)
-      );
-    });
-  });
-
   describe('SouthODBC parallel runs', () => {
     it('should run up to maxParallelRun work-units in parallel, within the ceiling of the manifest', () => {
       for (const [maxParallelRun, expected] of [
@@ -677,11 +461,6 @@ describe('SouthODBC', () => {
         const south = createSouth(buildConfiguration({ maxParallelRun }));
         assert.strictEqual(south['getMaxParallelRun'](), expected);
       }
-    });
-
-    it('should keep the queries sequential through the remote agent', () => {
-      const south = createSouth(buildConfiguration({ remoteAgent: true, agentUrl: 'http://localhost:2224', maxParallelRun: 4 }));
-      assert.strictEqual(south['getMaxParallelRun'](), 1);
     });
 
     it('should open its own ODBC connection for each query running at the same time', async () => {

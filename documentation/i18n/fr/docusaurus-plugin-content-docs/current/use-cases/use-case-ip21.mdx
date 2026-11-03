@@ -11,7 +11,7 @@ AspenTech IP21 est un historien de données temps réel qui collecte, stocke et 
 
 Consultez les pages des connecteurs [North Amazon S3](../guide/north-connectors/aws-s3.md) et [South ODBC](../guide/south-connectors/odbc) pour tous les détails de configuration.
 
-Ce cas d'usage nécessite un [OIBus Agent](../guide/oibus-agent/installation). L'exemple utilise le réseau fictif suivant.
+Ce cas d'usage nécessite le pilote ODBC **AspenTech SQLplus** sur la machine OIBus. L'exemple utilise le réseau fictif suivant.
 
 <div style={{ textAlign: 'center' }}>
 
@@ -19,28 +19,15 @@ Ce cas d'usage nécessite un [OIBus Agent](../guide/oibus-agent/installation). L
 
 </div>
 
-:::caution Installez l'Agent à proximité d'IP21
-Le pilote Aspen SQLplus est sensible à la latence réseau. Installez l'OIBus Agent sur le serveur IP21, ou au moins sur le même réseau local. Des sauts réseau ou pare-feu supplémentaires entre l'Agent et l'historien peuvent provoquer des problèmes de collecte de données et une dégradation des performances.
+:::caution Installez OIBus à proximité d'IP21
+Le pilote Aspen SQLplus est sensible à la latence réseau. Installez OIBus sur le serveur IP21, ou au moins sur le même réseau local. Des sauts réseau ou pare-feu supplémentaires entre OIBus et l'historien peuvent provoquer des problèmes de collecte de données et une dégradation des performances.
 :::
 
 ## South ODBC {#south-odbc}
 
-Les connexions ODBC peuvent être gérées de deux manières :
+Le connecteur ODBC utilise le pilote [node-odbc](https://github.com/markdirish/node-odbc), qui s'appuie sur les pilotes ODBC installés sur la machine OIBus. Installez le pilote ODBC **AspenTech SQLplus** sur la machine exécutant OIBus.
 
-- Le pilote JavaScript interne [node-odbc](https://github.com/markdirish/node-odbc).
-- L'[OIBus Agent](../guide/oibus-agent/installation) avec son implémentation ODBC en C#.
-
-:::info
-Ce cas d'usage utilise l'OIBus Agent — l'approche recommandée pour IP21.
-:::
-
-Installez l'OIBus Agent sur la machine IP21, activez **Utiliser un agent distant** dans les paramètres du connecteur, et saisissez `http://192.169.0.2:2224` comme **URL de l'agent distant**.
-
-:::tip Port de l'OIBus Agent
-Le port 2224 est celui par défaut. Vous pouvez le modifier lors de l'installation. Assurez-vous que le port choisi est ouvert pour les connexions HTTP entrantes dans votre pare-feu.
-:::
-
-La chaîne de connexion suit le format ODBC standard. Le pilote ODBC **AspenTech SQLplus** doit être installé sur la machine exécutant l'OIBus Agent.
+La chaîne de connexion suit le format ODBC standard, par exemple `Driver={AspenTech SQLplus};HOST=192.169.0.2;PORT=10014;MAXROWS=12000000`.
 
 <div style={{ textAlign: 'center' }}>
 

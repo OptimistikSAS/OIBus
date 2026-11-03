@@ -28,6 +28,7 @@ import {
   moveCompressionToNorths,
   moveFilenamePrefixAndSuffixToTransformers,
   moveSqlSerializationToTransformers,
+  removeOdbcAgentSettings,
   renameAnyDataType,
   replaceCsvAndJsonReaders,
   replaceCsvAndJsonWriters,
@@ -4637,5 +4638,54 @@ describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
       },
       value: { valueField: 'v', valueProcess: [{ type: 'expression', expression: 'value * 2' }] }
     });
+  });
+});
+
+describe('Entity migration v3.10.0: removeOdbcAgentSettings', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(removeOdbcAgentSettings, db)
+  });
+  let db: Knex;
+  const settingsOf = async (table: string, column: string, id: string) =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+  const agentSettings = { remoteAgent: true, agentUrl: 'u', retryInterval: 1000, requestTimeout: 2000 };
+
+  before(() => harness.before());
+  after(() => harness.after());
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should remove the settings of the OIBus Agent from the ODBC connectors and history queries only', async () => {
+    await db('south_connectors').insert([
+      {
+        id: 'odbc',
+        name: 'ODBC',
+        type: 'odbc',
+        enabled: true,
+        settings: JSON.stringify({ ...agentSettings, connectionString: 'c', maxParallelRun: 1 })
+      },
+      { id: 'oledb', name: 'OLEDB', type: 'oledb', enabled: true, settings: JSON.stringify({ agentUrl: 'u', retryInterval: 1000 }) }
+    ]);
+    await db('history_queries').insert({
+      ...caching,
+      id: 'hq-odbc',
+      name: 'hq-odbc',
+      start_time: NOW,
+      end_time: NOW,
+      south_type: 'odbc',
+      north_type: 'console',
+      south_settings: JSON.stringify({ ...agentSettings, connectionString: 'c', maxParallelRun: 2 }),
+      north_settings: '{}'
+    });
+
+    await runStepsFrom(removeOdbcAgentSettings, db);
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'odbc'), { connectionString: 'c', maxParallelRun: 1 });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'oledb'), { agentUrl: 'u', retryInterval: 1000 });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-odbc'), { connectionString: 'c', maxParallelRun: 2 });
   });
 });
