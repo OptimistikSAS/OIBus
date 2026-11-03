@@ -411,7 +411,6 @@
             "csv-delimiter-comma": "Virgule ,",
             "csv-delimiter-slash": "Barre oblique /",
             "csv-delimiter-tab": "Tabulation",
-            "csv-delimiter-non-breaking-space": "Espace",
             "csv-delimiter-pipe": "Barre verticale |"
           },
           "attributes": {
@@ -491,7 +490,6 @@
               "COMMA": "Virgule ,",
               "SLASH": "Barre oblique /",
               "TAB": "Tabulation",
-              "NON_BREAKING_SPACE": "Espace",
               "PIPE": "Barre verticale |"
             },
             "has-header": "Comporte un en-tête",
@@ -522,7 +520,6 @@
               "COMMA": "Virgule ,",
               "SLASH": "Barre oblique /",
               "TAB": "Tabulation",
-              "NON_BREAKING_SPACE": "Espace",
               "PIPE": "Barre verticale |"
             },
             "newline": {
@@ -2652,7 +2649,6 @@
       "COMMA": "Virgule ,",
       "SLASH": "Barre oblique /",
       "TAB": "Tabulation",
-      "NON_BREAKING_SPACE": "Espace",
       "PIPE": "Barre verticale |"
     },
     "status": {
