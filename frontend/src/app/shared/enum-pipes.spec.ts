@@ -70,10 +70,7 @@ const ENUM_PIPES: Array<EnumPipeCase> = [
       [false, 'No']
     ]
   ),
-  enumPipeCase(CsvCharacterEnumPipe, ALL_CSV_CHARACTERS, [
-    ['TAB', 'Tab'],
-    ['NON_BREAKING_SPACE', 'Space']
-  ]),
+  enumPipeCase(CsvCharacterEnumPipe, ALL_CSV_CHARACTERS, [['TAB', 'Tab']]),
   enumPipeCase(LogLevelsEnumPipe, LOG_LEVELS, [
     ['silent', 'Silent'],
     ['error', 'Error']

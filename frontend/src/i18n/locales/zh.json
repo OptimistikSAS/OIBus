@@ -411,7 +411,6 @@
             "csv-delimiter-comma": "逗号 ,",
             "csv-delimiter-slash": "斜杠 /",
             "csv-delimiter-tab": "制表符",
-            "csv-delimiter-non-breaking-space": "空格",
             "csv-delimiter-pipe": "竖线 |"
           },
           "attributes": {
@@ -491,7 +490,6 @@
               "COMMA": "逗号 ,",
               "SLASH": "斜杠 /",
               "TAB": "制表符",
-              "NON_BREAKING_SPACE": "空格",
               "PIPE": "竖线 |"
             },
             "has-header": "包含表头",
@@ -522,7 +520,6 @@
               "COMMA": "逗号 ,",
               "SLASH": "斜杠 /",
               "TAB": "制表符",
-              "NON_BREAKING_SPACE": "空格",
               "PIPE": "竖线 |"
             },
             "newline": {
@@ -2652,7 +2649,6 @@
       "COMMA": "逗号 ,",
       "SLASH": "斜杠 /",
       "TAB": "制表符",
-      "NON_BREAKING_SPACE": "空格",
       "PIPE": "竖线 |"
     },
     "status": {

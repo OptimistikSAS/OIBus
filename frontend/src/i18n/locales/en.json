@@ -225,7 +225,6 @@
       "COMMA": "Comma ,",
       "SLASH": "Slash /",
       "TAB": "Tab",
-      "NON_BREAKING_SPACE": "Space",
       "PIPE": "Pipe |"
     },
     "status": {
@@ -1407,7 +1406,6 @@
             "csv-delimiter-comma": "Comma ,",
             "csv-delimiter-slash": "Slash /",
             "csv-delimiter-tab": "Tab",
-            "csv-delimiter-non-breaking-space": "Space",
             "csv-delimiter-pipe": "Pipe |"
           },
           "attributes": {
@@ -1487,7 +1485,6 @@
               "COMMA": "Comma ,",
               "SLASH": "Slash /",
               "TAB": "Tab",
-              "NON_BREAKING_SPACE": "Space",
               "PIPE": "Pipe |"
             },
             "has-header": "Has Header",
@@ -1518,7 +1515,6 @@
               "COMMA": "Comma ,",
               "SLASH": "Slash /",
               "TAB": "Tab",
-              "NON_BREAKING_SPACE": "Space",
               "PIPE": "Pipe |"
             },
             "newline": {

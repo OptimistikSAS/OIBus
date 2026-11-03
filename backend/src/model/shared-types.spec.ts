@@ -92,6 +92,6 @@ describe('shared model type constants', () => {
 
   it('ALL_CSV_CHARACTERS contains the expected values', () => {
     assert.ok(ALL_CSV_CHARACTERS.includes('COMMA'));
-    assert.equal(ALL_CSV_CHARACTERS.length, 8);
+    assert.equal(ALL_CSV_CHARACTERS.length, 7);
   });
 });

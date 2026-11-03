@@ -68,7 +68,6 @@ describe('csv.utils', () => {
       { delimiter: 'SEMI_COLON', expected: ';' },
       { delimiter: 'COLON', expected: ':' },
       { delimiter: 'COMMA', expected: ',' },
-      { delimiter: 'NON_BREAKING_SPACE', expected: ' ' },
       { delimiter: 'SLASH', expected: '/' },
       { delimiter: 'TAB', expected: '\t' },
       { delimiter: 'PIPE', expected: '|' }

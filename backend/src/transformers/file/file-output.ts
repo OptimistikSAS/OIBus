@@ -79,7 +79,7 @@ export const buildFileOutputAttribute = (defaultFileType: 'csv' | 'json'): OIBus
       key: 'delimiter',
       translationKey: `${OUTPUT_KEY}.delimiter`,
       defaultValue: 'COMMA',
-      selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+      selectableValues: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'SLASH', 'TAB', 'PIPE'],
       validators: [{ type: 'REQUIRED', arguments: [] }],
       displayProperties: { row: 1, columns: 3, displayInViewMode: false }
     },

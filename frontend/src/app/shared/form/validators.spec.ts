@@ -192,13 +192,13 @@ describe('validators', () => {
       await expect(validateCsvHeaders(csvFile('anything'), ',', [])).resolves.toBeNull();
     });
 
-    test.each([
-      { delimiter: 'TAB', separator: '\t' },
-      { delimiter: 'NON_BREAKING_SPACE', separator: '\u00a0' }
-    ] as const)('should accept the headers of a file separated with $delimiter', async ({ delimiter, separator }) => {
-      const file = csvFile(`name${separator}enabled${separator}scanMode\nitem1${separator}true${separator}Every second`);
-      await expect(validateCsvHeaders(file, convertCsvDelimiter(delimiter), ['name', 'enabled', 'scanMode'])).resolves.toBeNull();
-    });
+    test.each([{ delimiter: 'TAB', separator: '\t' }] as const)(
+      'should accept the headers of a file separated with $delimiter',
+      async ({ delimiter, separator }) => {
+        const file = csvFile(`name${separator}enabled${separator}scanMode\nitem1${separator}true${separator}Every second`);
+        await expect(validateCsvHeaders(file, convertCsvDelimiter(delimiter), ['name', 'enabled', 'scanMode'])).resolves.toBeNull();
+      }
+    );
 
     test.each([
       { label: 'an empty file', content: '' },
