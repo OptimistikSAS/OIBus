@@ -1840,11 +1840,7 @@
             "max-parallel-run": "Max parallel queries"
           },
           "odbc": {
-            "remote-agent": "Use remote agent",
-            "agent-url": "Remote agent URL",
             "connection-timeout": "Connection timeout",
-            "retry-interval": "Retry interval",
-            "request-timeout": "Request timeout",
             "connection-string": "Connection string",
             "password": "Password",
             "max-parallel-run": "Max parallel queries"
