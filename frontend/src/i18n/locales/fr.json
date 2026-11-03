@@ -885,9 +885,8 @@
             "password": "Mot de passe"
           },
           "opc": {
-            "agent-url": "URL de l'agent distant",
             "retry-interval": "Intervalle de nouvelle tentative",
-            "host": "URL du serveur (depuis l'agent)",
+            "host": "Hôte du serveur",
             "server-name": "Nom du serveur",
             "mode": {
               "title": "Mode",
@@ -2812,7 +2811,7 @@
       "odbc": "Interroger des bases de données SQL avec un pilote ODBC",
       "oianalytics": "Interroger des valeurs temporelles depuis OIAnalytics®",
       "oledb": "Interroger des bases de données SQL avec OLEDB",
-      "opc": "Se connecter à un agent OIBus pour récupérer des données depuis un serveur OPC Classic™ (HDA/DA)",
+      "opc": "Récupérer des données depuis un serveur OPC Classic™ (HDA/DA)",
       "opcua": "Interroger des données depuis un serveur OPC UA™ (HA/DA)",
       "oracle": "Interroger des données depuis une base de données Oracle Database™",
       "osisoft-pi": "Établir une connexion avec un agent OIBus pour accéder aux données d'un PI System™",

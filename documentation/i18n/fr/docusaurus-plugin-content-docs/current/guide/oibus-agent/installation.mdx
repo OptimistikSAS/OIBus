@@ -10,11 +10,11 @@ L'agent OIBus est un service Windows léger qui permet la collecte de données s
 
 ## Fonctionnalités clés {#key-features}
 
-| Fonctionnalité                | Protocoles pris en charge         | Avantages                                       |
-| ------------------------------ | ---------------------------------- | ------------------------------------------------ |
-| Accès natif Windows            | OPC Classic™, OLEDB, OSIsoft PI™  | Intégration directe avec les technologies Windows |
-| Intégration au service         | Gestionnaire des services Windows  | Fonctionnement en arrière-plan fiable             |
-| Multi-architecture              | x64, x86, ARM64                    | Prend en charge tous les systèmes Windows modernes |
+| Fonctionnalité         | Protocoles pris en charge         | Avantages                                          |
+| ---------------------- | --------------------------------- | -------------------------------------------------- |
+| Accès natif Windows    | OLEDB, OSIsoft PI™                | Intégration directe avec les technologies Windows  |
+| Intégration au service | Gestionnaire des services Windows | Fonctionnement en arrière-plan fiable              |
+| Multi-architecture     | x64, x86, ARM64                   | Prend en charge tous les systèmes Windows modernes |
 
 ## Téléchargement {#download}
 
@@ -34,13 +34,13 @@ L'agent OIBus est un service Windows léger qui permet la collecte de données s
 
 ## Configuration requise {#system-requirements}
 
-| Configuration requise | Spécification                       |
-| ---------------------- | ------------------------------------ |
-| Système d'exploitation | Windows 10/11, Windows Server 2016+  |
-| Architecture            | x64, x86 ou ARM64                    |
-| .NET Framework          | 4.8 ou ultérieur                     |
-| Espace disque           | 50 Mo minimum                        |
-| Mémoire                 | 128 Mo minimum                       |
+| Configuration requise  | Spécification                       |
+| ---------------------- | ----------------------------------- |
+| Système d'exploitation | Windows 10/11, Windows Server 2016+ |
+| Architecture           | x64, x86 ou ARM64                   |
+| .NET Framework         | 4.8 ou ultérieur                    |
+| Espace disque          | 50 Mo minimum                       |
+| Mémoire                | 128 Mo minimum                      |
 
 ## Installation {#installation}
 
@@ -48,11 +48,11 @@ L'agent OIBus est un service Windows léger qui permet la collecte de données s
 
 Lorsque vous décompressez l'archive téléchargée, vous trouverez les fichiers suivants :
 
-| Fichier                | But                                   |
-| ----------------------- | -------------------------------------- |
-| `OIBusAgent.exe`        | Exécutable principal                   |
-| `install-agent.bat`     | Script d'installation du service       |
-| `uninstall-agent.bat`   | Script de suppression du service       |
+| Fichier               | But                              |
+| --------------------- | -------------------------------- |
+| `OIBusAgent.exe`      | Exécutable principal             |
+| `install-agent.bat`   | Script d'installation du service |
+| `uninstall-agent.bat` | Script de suppression du service |
 
 ### Méthodes d'installation {#installation-methods}
 
@@ -66,10 +66,10 @@ install-agent.bat
 install-agent.bat -n="CustomServiceName" -p=2225
 ```
 
-| Paramètre | Description        | Valeur par défaut |
-| --------- | ------------------- | ------------------- |
-| `-n`      | Nom du service       | "OIBusAgent"        |
-| `-p`      | Port HTTP            | 2224                 |
+| Paramètre | Description    | Valeur par défaut |
+| --------- | -------------- | ----------------- |
+| `-n`      | Nom du service | "OIBusAgent"      |
+| `-p`      | Port HTTP      | 2224              |
 
 #### 2. Exécution manuelle {#2-manual-execution}
 

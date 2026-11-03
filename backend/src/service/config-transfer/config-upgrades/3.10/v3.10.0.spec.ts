@@ -17,6 +17,7 @@ import {
   upgrade,
   usesRemoteAgent,
   withoutOdbcAgentSettings,
+  withoutOpcAgentSettings,
   withPrefixAndSuffix
 } from './v3.10.0';
 
@@ -771,6 +772,31 @@ describe('3.10.0 config upgrade', () => {
         connectionString: 'c',
         maxParallelRun: 2
       });
+    });
+  });
+
+  describe('OPC agent settings', () => {
+    it('removes the URL of the OIBus Agent from the OPC souths and history queries only', () => {
+      const opcSettings = { retryInterval: 1000, host: 'localhost', serverName: 'Matrikon.OPC.Simulation', mode: 'hda' };
+      const config = upgrade.apply({
+        southConnectors: [
+          { type: 'opc', settings: { name: 'OPC', settings: { agentUrl: 'u', ...opcSettings } } },
+          { type: 'oledb', settings: { name: 'OLEDB', settings: { agentUrl: 'u', retryInterval: 1000, requestTimeout: 2000 } } }
+        ],
+        historyQueries: [
+          { settings: { southType: 'opc', northType: 'console', southSettings: { agentUrl: 'u', ...opcSettings }, northSettings: {} } }
+        ]
+      });
+
+      assert.deepStrictEqual(
+        (config.southConnectors as Array<JsonObject>).map(south => (south.settings as JsonObject).settings),
+        [opcSettings, { agentUrl: 'u', retryInterval: 1000, requestTimeout: 2000 }]
+      );
+      assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).southSettings, opcSettings);
+    });
+
+    it('leaves settings without the agent URL untouched', () => {
+      assert.deepStrictEqual(withoutOpcAgentSettings({ retryInterval: 1000, host: 'h' }), { retryInterval: 1000, host: 'h' });
     });
   });
 
