@@ -38,10 +38,10 @@ Use the tester below to see how these three settings affect the decoded value fo
 
 ### Query Optimisation {#query-optimisation}
 
-| Setting                  | Description                                                                                                                                                                                                                                             | Example Value    |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| **Group batch queries?** | Enable to merge items of the same Modbus type into as few requests as possible, instead of issuing one request per item. Disabled by default.                                                                                                           | Enabled/Disabled |
-| **Grouping gap**         | _(Only shown when **Group batch queries?** is enabled)_ Maximum address gap (in registers) allowed when merging non-consecutive items of the same type into a single Modbus request. Set to `0` to batch only strictly consecutive addresses (default). | `0` – `100`      |
+| Setting                          | Description                                                                                                                                                                                                                                             | Example Value    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| **Group batch queries?**         | Enable to merge items of the same Modbus type into as few requests as possible, instead of issuing one request per item. Disabled by default.                                                                                                           | Enabled/Disabled |
+| **Max grouping gap (addresses)** | _(Only shown when **Group batch queries?** is enabled)_ Maximum address gap (in registers) allowed when merging non-consecutive items of the same type into a single Modbus request. Set to `0` to batch only strictly consecutive addresses (default). | `0` – `100`      |
 
 With **Group batch queries?** disabled (the default), OIBus issues one Modbus request per item — no merging at all.
 Enabling it makes OIBus group items of the same Modbus type (coil, discrete input, input register, holding register)

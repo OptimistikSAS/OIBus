@@ -21,10 +21,10 @@ Utilisez cette configuration si TwinCAT est installé sur la même machine et le
 
 **Paramètres du serveur AMS local**
 
-| Paramètre | Description                                                                                     | Exemple de valeur |
-| --------- | ------------------------------------------------------------------------------------------------ | ------------------ |
-| Net ID    | Adresse unique de l'automate, ressemblant à une adresse IP avec deux valeurs numériques supplémentaires. | `127.0.0.1.1.1`    |
-| Port      | Point de terminaison de communication de l'automate.                                             | `851`               |
+| Paramètre | Description                                                                                              | Exemple de valeur |
+| --------- | -------------------------------------------------------------------------------------------------------- | ----------------- |
+| Net ID    | Adresse unique de l'automate, ressemblant à une adresse IP avec deux valeurs numériques supplémentaires. | `127.0.0.1.1.1`   |
+| Port      | Point de terminaison de communication de l'automate.                                                     | `851`             |
 
 > **Remarque** : lors de l'utilisation d'un serveur AMS local, vous n'avez pas besoin de renseigner l'adresse du
 > routeur, le port TCP du routeur, le Net ID AMS du client, ni le port ADS du client.
@@ -35,14 +35,14 @@ Utilisez cette configuration si TwinCAT est installé sur une machine distante.
 
 **Paramètres du serveur AMS distant**
 
-| Paramètre           | Description                                                                                | Exemple de valeur   |
-| -------------------- | -------------------------------------------------------------------------------------------- | -------------------- |
-| Net ID               | Adresse unique de l'automate.                                                                | `192.168.1.10.1.1`   |
-| Port                 | Point de terminaison de communication de l'automate.                                         | `851`                |
-| Adresse du routeur   | Adresse IP ou nom de domaine du routeur AMS.                                                 | `192.168.1.100`      |
-| Port TCP du routeur  | Port utilisé par le routeur AMS pour la communication.                                       | `48898`              |
-| AMS Net ID           | Identifiant client pour se connecter au runtime TwinCAT.                                     | `192.168.1.50.1.1`   |
-| Port client ADS      | (Optionnel) Port utilisé par le client. S'il est laissé vide, le serveur AMS attribue un port aléatoire. | `1200`     |
+| Paramètre           | Description                                                                                              | Exemple de valeur  |
+| ------------------- | -------------------------------------------------------------------------------------------------------- | ------------------ |
+| Net ID              | Adresse unique de l'automate.                                                                            | `192.168.1.10.1.1` |
+| Port                | Point de terminaison de communication de l'automate.                                                     | `851`              |
+| Adresse du routeur  | Adresse IP ou nom de domaine du routeur AMS.                                                             | `192.168.1.100`    |
+| Port TCP du routeur | Port utilisé par le routeur AMS pour la communication.                                                   | `48898`            |
+| AMS Net ID          | Identifiant client pour se connecter au runtime TwinCAT.                                                 | `192.168.1.50.1.1` |
+| Port client ADS     | (Optionnel) Port utilisé par le client. S'il est laissé vide, le serveur AMS attribue un port aléatoire. | `1200`             |
 
 :::caution Routes statiques
 Pour activer la communication, configurez des **routes statiques** à l'aide de l'outil _TwinCAT Static Routes_. Le
@@ -62,22 +62,22 @@ simultanément, utilisez un serveur AMS local.
 
 **Paramètres avancés**
 
-| Paramètre           | Description                                                                                                                                     | Exemple de valeur |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| Intervalle de nouvelle tentative | Temps d'attente (en millisecondes) avant de retenter la connexion.                                                                          | `10000`             |
-| Nom de l'automate    | Préfixe ajouté à chaque nom d'élément (par exemple, `PLC001.MyVariable.Value`). Utile pour distinguer les données de plusieurs automates dans les caches ou exports North. | `PLC001.` |
-| Valeur d'énumération | Choisissez de sérialiser les énumérations sous forme d'entiers ou de texte.                                                                     | `text`              |
-| Valeur booléenne     | Choisissez de sérialiser les booléens sous forme d'entiers ou de texte.                                                                          | `integer`           |
+| Paramètre                        | Description                                                                                                                                                                | Exemple de valeur |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Intervalle de nouvelle tentative | Temps d'attente (en millisecondes) avant de retenter la connexion.                                                                                                         | `10000`           |
+| Nom de l'automate                | Préfixe ajouté à chaque nom d'élément (par exemple, `PLC001.MyVariable.Value`). Utile pour distinguer les données de plusieurs automates dans les caches ou exports North. | `PLC001.`         |
+| Valeur d'énumération             | Choisissez de sérialiser les énumérations sous forme d'entiers ou de texte.                                                                                                | `text`            |
+| Valeur booléenne                 | Choisissez de sérialiser les booléens sous forme d'entiers ou de texte.                                                                                                    | `integer`         |
 
 #### Filtrage de structure {#structure-filtering}
 
-| Paramètre               | Description                                                                                       | Exemple de valeur  |
-| ------------------------ | ----------------------------------------------------------------------------------------------------- | -------------------- |
-| Nom de la structure      | Nom de la structure à filtrer.                                                                        | `MyStructure`         |
-| Champs à conserver       | Liste de champs séparés par des virgules à récupérer depuis la structure, ou `*` pour conserver tous les champs. | `MyDate,MyNumber` |
+| Paramètre           | Description                                                                                                                     | Exemple de valeur |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Nom de la structure | Nom de la structure à filtrer.                                                                                                  | `MyStructure`     |
+| Champs à conserver  | Liste de champs séparés par des virgules (sans espaces) à récupérer depuis la structure, ou `*` pour conserver tous les champs. | `MyDate,MyNumber` |
 
 > **Exemple** : si `MyVariable` est de type `MyStructure` avec les champs `MyDate`, `MyNumber` et `Value`, filtrer
-> pour ne conserver que `MyDate, MyNumber` génèrera des identifiants de point uniques :
+> pour ne conserver que `MyDate,MyNumber` (sans espaces autour des virgules) génèrera des identifiants de point uniques :
 >
 > - `MyVariable.MyDate`
 > - `MyVariable.MyNumber`
@@ -89,6 +89,6 @@ individuellement.
 
 ## Paramètres des éléments {#item-settings}
 
-| Paramètre | Description                                    | Exemple de valeur  |
-| --------- | ------------------------------------------------ | -------------------- |
-| Adresse   | L'adresse automate de la donnée à interroger.     | `MAIN.MyVariable`    |
+| Paramètre | Description                                   | Exemple de valeur |
+| --------- | --------------------------------------------- | ----------------- |
+| Adresse   | L'adresse automate de la donnée à interroger. | `MAIN.MyVariable` |

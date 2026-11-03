@@ -40,21 +40,21 @@ Use the **Test settings** button to verify your connection configuration.
 
 Configure when data is sent to the target application:
 
-| Setting                | Description                                                                                         | Example Value |
-| ---------------------- | --------------------------------------------------------------------------------------------------- | ------------- |
-| **Schedule**           | Define how often data is transmitted. Configure using [scan modes](../engine/scan-modes.mdx).       | `Every 10 s`  |
-| **Number of elements** | (JSON payloads) Send data when the specified number of elements is reached, bypassing the schedule. | `1000`        |
-| **Number of files**    | (Files) Send data when the specified number of files is reached, bypassing the schedule.            | `10`          |
+| Setting                | Description                                                                                                                   | Example Value |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| **Schedule**           | Define how often data is transmitted. Configure using [scan modes](../engine/scan-modes.mdx).                                 | `Every 10 s`  |
+| **Number of elements** | (Record lists) Send data when the specified number of elements is reached, bypassing the schedule. `0` disables this trigger. | `1000`        |
+| **Number of files**    | (Files) Send data when the specified number of files is reached, bypassing the schedule. `0` disables this trigger.           | `10`          |
 
 ### Throttling {#throttling}
 
 Control data transmission to avoid overwhelming the target or network:
 
-| Setting                                 | Description                                                                                           | Example Value |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------- |
-| **Minimum delay between transmissions** | Time (in milliseconds) to wait between transmissions.                                                 | `1000`        |
-| **Maximum number of elements**          | Maximum number of elements sent in a single transmission.                                             | `10000`       |
-| **Maximum storage size**                | Maximum size (in MB) for cache + error + archive. Excess data is discarded once the limit is reached. | `1000`        |
+| Setting                                 | Description                                                                                                               | Example Value |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| **Minimum delay between transmissions** | Time (in milliseconds) to wait between transmissions.                                                                     | `1000`        |
+| **Maximum number of elements**          | Maximum number of elements sent in a single transmission.                                                                 | `10000`       |
+| **Maximum storage size**                | Maximum size (in MB) for cache + error + archive. Excess data is discarded once the limit is reached. `0` means no limit. | `1000`        |
 
 ### Errors {#errors}
 
@@ -91,16 +91,17 @@ If files are retained indefinitely, manually clear the archive folder periodical
 Transformers run **before data is cached** — they process incoming data from South connectors and determine what
 actually enters the North connector's cache. You can apply one or more transformers to a North connector to:
 
-- **Filter data**: Include or exclude specific data points based on source type.
+- **Filter data**: Include or exclude specific data points based on their source.
 - **Modify data**: Change values, rename fields, or restructure data.
 - **Enrich data**: Add additional context or metadata.
 - **Convert formats**: Transform data between different formats (e.g., JSON to CSV).
 
-Each transformer is associated with a **source type** (the kind of data it accepts). When adding a transformer,
-you select the source type first, then choose a compatible transformer for that North connector type.
+Each transformer is associated with a **source** (a South connector, the OIBus API or OIAnalytics setpoints) and, for a
+South connector, the items it applies to. When adding a transformer, you select the source first, then choose a compatible
+transformer for that North connector type. See [Configuring a Transformer](../engine/transformers.mdx#configuring-a-transformer).
 
 :::info Standard Transformers
-Standard transformers are pre-built and available based on the source type and North connector type. These transformers
+Standard transformers are pre-built and available based on the source and North connector type. These transformers
 cover common use cases and can be configured directly in the UI.
 :::
 

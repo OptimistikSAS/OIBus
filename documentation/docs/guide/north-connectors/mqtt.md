@@ -17,8 +17,8 @@ The **MQTT North Connector** enables OIBus to **publish data to MQTT brokers**, 
 | **URL**                            | URL of the MQTT broker.                                                                                                                          | `mqtt://broker.example.com:1883` |
 | **QoS**                            | Quality of Service level: `0` (at most once), `1` (at least once), `2` (exactly once).                                                           | `0`, `1`, `2`                    |
 | **Reject unauthorized connection** | Reject connections that cannot be authorized.                                                                                                    | Enabled/Disabled                 |
-| **Reconnect period**               | Time interval between reconnection attempts (in milliseconds).                                                                                   | `5000`                           |
-| **Connect timeout**                | Maximum time to wait for a connection (in milliseconds).                                                                                         | `30000`                          |
+| **Reconnect period**               | Time interval between reconnection attempts (in milliseconds).                                                                                   | `10000`                          |
+| **Connect timeout**                | Maximum time to wait for a connection (in milliseconds).                                                                                         | `10000`                          |
 | **Persistent**                     | Enable for persistent sessions that survive broker restarts. Only available when **QoS** is `1` or `2` — a QoS `0` session cannot be persistent. | Enabled/Disabled                 |
 
 ### Authentication {#authentication}

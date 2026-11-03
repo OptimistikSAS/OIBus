@@ -56,13 +56,19 @@ interopérables**.
 
 ### Configuration de la connexion {#connection-configuration}
 
-| Paramètre                                      | Description                                                                                                                                   | Exemple de valeur          |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| **URL du point d'accès**                       | URL du serveur OPC UA.                                                                                                                        | `opc.tcp://localhost:4840` |
-| **Maintenir la session active**                | Maintenir la session active entre les messages.                                                                                               | Activé/Désactivé           |
-| **Intervalle de nouvelle tentative**           | Délai en millisecondes entre les nouvelles tentatives.                                                                                        | `5000`                     |
-| **Délai de lecture**                           | Durée d'exécution maximale en millisecondes pour les requêtes.                                                                                | `15000`                    |
-| **Requêtes parallèles max** (`maxParallelRun`) | Nombre maximal de requêtes d'éléments/groupes qu'OIBus peut exécuter simultanément contre ce serveur. De `1` (entièrement séquentiel) à `32`. | `1`                        |
+| Paramètre                                      | Description                                                                                                                                                                                 | Exemple de valeur          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **URL du point d'accès**                       | URL du serveur OPC UA.                                                                                                                                                                      | `opc.tcp://localhost:4840` |
+| **Maintenir la session active**                | Interroger régulièrement le serveur pour qu'il ne supprime pas la session lorsqu'elle est inactive. Activé par défaut.                                                                      | Activé/Désactivé           |
+| **Délai de connexion**                         | Temps maximal en millisecondes pour se connecter au serveur : connexion TCP, canal sécurisé et création de la session. Le connecteur réessaie après l'**Intervalle de nouvelle tentative**. | `15000`                    |
+| **Intervalle de nouvelle tentative**           | Délai en millisecondes entre les nouvelles tentatives.                                                                                                                                      | `5000`                     |
+| **Requêtes parallèles max** (`maxParallelRun`) | Nombre maximal de requêtes d'éléments/groupes qu'OIBus peut exécuter simultanément contre ce serveur. De `1` (entièrement séquentiel) à `32`.                                               | `1`                        |
+| **Délai de lecture**                           | Temps maximal en millisecondes pour attendre la réponse d'une requête (lecture, lecture d'historique, navigation...).                                                                       | `15000`                    |
+
+Le serveur OPC UA supprime une session qui reste inactive trop longtemps (60 secondes par défaut). Lorsque **Maintenir la
+session active** est désactivé et que le mode de scan d'un élément est plus long que cette durée, la session a expiré au
+scan suivant, qui échoue, et le connecteur se reconnecte. Gardez ce paramètre activé, sauf si le serveur ne le prend pas
+en charge.
 
 ### Requêtes parallèles {#parallel-queries}
 
@@ -85,12 +91,21 @@ journaux du connecteur — un serveur avec une capacité de traitement limitée 
 davantage de requêtes simultanées seraient techniquement autorisées.
 :::
 
-### Limitation des données {#data-throttling}
+### Souscription {#subscription}
 
-| Paramètre                       | Description                                                                    | Exemple de valeur |
-| ------------------------------- | ------------------------------------------------------------------------------ | ----------------- |
-| Nombre de messages avant vidage | Nombre de messages à accumuler avant de les vider vers les caches North        | `1000`            |
-| Délai entre les vidages         | Délai (en millisecondes) entre les vidages automatiques des messages accumulés | `1000`            |
+Ces paramètres s'appliquent aux éléments en mode souscription.
+
+| Paramètre                                                    | Description                                                                                                                        | Exemple de valeur |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Intervalle de publication**                                | Intervalle en millisecondes auquel le serveur envoie les notifications des éléments surveillés. Le serveur peut le réviser.        | `150`             |
+| **Nombre max de cycles avant keep-alive**                    | Nombre d'intervalles de publication sans données après lequel le serveur envoie un message keep-alive. Le serveur peut le réviser. | `10`              |
+| **Nombre de messages avant vidage** (limitation des données) | Nombre de messages à accumuler avant de les vider vers les caches North.                                                           | `1000`            |
+| **Délai entre les vidages** (limitation des données)         | Délai (en millisecondes) entre les vidages automatiques des messages accumulés.                                                    | `1000`            |
+
+La période de keep-alive est l'**Intervalle de publication** multiplié par le **Nombre max de cycles avant keep-alive**. Le
+serveur abandonne la souscription lorsqu'il n'a pas reçu de requête de publication pendant 10 périodes de keep-alive :
+lorsque la souscription reste silencieuse aussi longtemps, OIBus la considère perdue et se reconnecte. Le **Délai de
+lecture** n'est pas utilisé pour les souscriptions.
 
 ### Paramètres de sécurité {#security-settings}
 
@@ -146,13 +161,13 @@ formulaire d'édition de l'élément.
 
 ## Paramètres des éléments {#item-settings}
 
-| Paramètre               | Description                                                                                                                                 | Exemple de valeur                               |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| ID de nœud              | Chemin vers le point de données dans l'espace de noms du serveur OPC UA.                                                                    | `ns=3;i=1001`, `ns=3;s=Counter`                 |
-| Mode                    | Méthode d'accès aux données : `ha` (Historical Access) ou `da` (Data Access).                                                               | `ha`, `da`                                      |
-| Agrégat                 | Méthode d'agrégation des valeurs (mode HA uniquement).                                                                                      | `Raw`, `Average`, `Minimum`, `Maximum`, `Count` |
-| Rééchantillonnage       | Rééchantillonnage de l'intervalle (mode HA uniquement).                                                                                     | `None`, `1 second`, `1 hour`, `1 day`           |
-| Origine de l'horodatage | Source de l'horodatage : `OIBus` (heure de la requête), `Point` (horodatage rapporté par le serveur), `Server` (heure actuelle du serveur). | `OIBus`, `Point`, `Server`                      |
+| Paramètre               | Description                                                                                                                                                      | Exemple de valeur                               |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| ID de nœud              | Chemin vers le point de données dans l'espace de noms du serveur OPC UA.                                                                                         | `ns=3;i=1001`, `ns=3;s=Counter`                 |
+| Mode                    | Méthode d'accès aux données : `ha` (Historical Access) ou `da` (Data Access).                                                                                    | `ha`, `da`                                      |
+| Agrégat                 | Méthode d'agrégation des valeurs (mode HA uniquement).                                                                                                           | `Raw`, `Average`, `Minimum`, `Maximum`, `Count` |
+| Rééchantillonnage       | Rééchantillonnage de l'intervalle (mode HA uniquement).                                                                                                          | `None`, `1 second`, `1 hour`, `1 day`           |
+| Origine de l'horodatage | Source de l'horodatage (mode DA uniquement) : `OIBus` (heure de la requête), `Point` (horodatage rapporté par le serveur), `Server` (heure actuelle du serveur). | `OIBus`, `Point`, `Server`                      |
 
 :::caution Compatibilité du serveur
 

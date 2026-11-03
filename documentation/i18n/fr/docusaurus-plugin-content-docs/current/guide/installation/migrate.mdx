@@ -48,22 +48,23 @@ Migrez d'OIBus v1 et v2 vers la nouvelle version OIBus v3 grâce à notre outil 
 ## Télécharger une version spécifique {#download-specific-version}
 
 :::caution Version d'OIBus
-La migration ne fonctionnera qu'avec la version OIBus 3.8.8. Si vous souhaitez migrer vers une version ultérieure,
-installez d'abord OIBus v3.8.8 à partir de l'un des liens ci-dessous, puis mettez à jour OIBus de la v3.8.8 vers une version ultérieure.
+L'outil de migration écrit directement dans la base de données d'OIBus v3.9.6. Il refuse de s'exécuter sur un dossier de
+données initialisé par une autre version d'OIBus : installez OIBus v3.9.6 à partir de l'un des liens ci-dessous. Vous
+pourrez mettre à jour OIBus vers une version ultérieure une fois la migration terminée.
 :::
 
 <Tabs>
   <TabItem value="windows" label="Windows" default>
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-setup-v3.8.8.exe">
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-win_x64-setup-v3.9.6.exe">
         <div>
-          <div>{`OIBus v3.8.8 (installateur)`}</div>
+          <div>{`OIBus v3.9.6 (installateur)`}</div>
           <div>Windows (x64)</div>
         </div>
       </DownloadButton>
-      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-v3.8.8.zip">
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-win_x64-v3.9.6.zip">
         <div>
-          <div>{`OIBus v3.8.8 (zip)`}</div>
+          <div>{`OIBus v3.9.6 (zip)`}</div>
           <div>Windows (x64)</div>
         </div>
       </DownloadButton>
@@ -74,9 +75,9 @@ installez d'abord OIBus v3.8.8 à partir de l'un des liens ci-dessous, puis mett
   </TabItem>
   <TabItem value="linux" label="Linux">
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-linux_x64-v3.8.8.zip`}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-linux_x64-v3.9.6.zip`}>
         <div>
-          <div>{`OIBus v3.8.8`}</div>
+          <div>{`OIBus v3.9.6`}</div>
           <div>Linux (x64)</div>
         </div>
       </DownloadButton>
@@ -87,9 +88,9 @@ installez d'abord OIBus v3.8.8 à partir de l'un des liens ci-dessous, puis mett
   </TabItem>
   <TabItem value="macos" label="MacOS">
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-macos_x64-v3.8.8.zip`}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-macos_x64-v3.9.6.zip`}>
         <div>
-          <div>{`OIBus v3.8.8`}</div>
+          <div>{`OIBus v3.9.6`}</div>
           <div>MacOS (Intel chip)</div>
         </div>
       </DownloadButton>
@@ -108,7 +109,7 @@ installez d'abord OIBus v3.8.8 à partir de l'un des liens ci-dessous, puis mett
    `keys`, en guise de sauvegarde.
    :::
 
-2. Installez [OIBus v3.8.8](#download-specific-version). Veillez à spécifier le **même dossier de données**. Vérifiez
+2. Installez [OIBus v3.9.6](#download-specific-version). Veillez à spécifier le **même dossier de données**. Vérifiez
    qu'OIBus v3 fonctionne correctement en vous connectant sur `http://localhost:2223` avec admin / pass. Si tout
    fonctionne, passez à l'étape suivante.
 
@@ -135,3 +136,16 @@ oibus-upgrade.exe --config D:\OIBusData
 :::tip
 Le fichier `upgrade-journal.log` contient les journaux de la migration.
 :::
+
+:::info Ce qui est migré
+
+- Les paramètres du moteur, les filtres IP et l'utilisateur admin (il remplace l'utilisateur `admin` par défaut d'OIBus v3).
+- Les modes de scan utilisés par les connecteurs South.
+- Les connecteurs South et leurs points. Les points des connecteurs OPC UA, OPC HDA, Modbus et ADS sont regroupés en
+  groupes, un par mode de scan. Le chevauchement des connecteurs d'historique devient un décalage de l'heure de début
+  négatif.
+- Le dernier instant traité des connecteurs South d'historique, ainsi que les fichiers déjà traités par les scanners de
+  dossier qui conservent leurs fichiers.
+- Les connecteurs North, leurs abonnements, et les données en attente dans leurs dossiers de cache, d'erreurs et
+  d'archive.
+  :::

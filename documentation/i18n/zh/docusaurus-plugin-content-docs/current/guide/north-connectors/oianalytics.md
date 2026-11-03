@@ -5,7 +5,7 @@
 
 OIAnalytics® 可以处理：
 
-- **JSON 时间值有效载荷**：来自南向协议（例如 OPC UA、MQTT）的格式化数据点。
+- **JSON 值有效载荷**：由 OIAnalytics 转换器根据南向连接器（例如 OPC UA、Modbus、SQL）的记录构建的值。
 - **文件**：原样传输（压缩或未压缩）。支持的格式包括 CSV、TXT 和 XLSX。
 
 OIAnalytics® 内置**文件解析器**，无需预处理。解析直接在 SaaS 应用程序中配置。
@@ -26,10 +26,10 @@ OIAnalytics® 内置**文件解析器**，无需预处理。解析直接在 SaaS
 
 ### 手动配置（未使用注册时） {#manual-configuration-if-registration-is-not-used}
 
-| 设置               | 描述                                                 | 示例值                               |
-| ------------------ | ---------------------------------------------------- | ------------------------------------ |
-| **主机**           | OIAnalytics® SaaS 应用程序的主机名。                 | `https://optimistik.oianalytics.com` |
-| **接受未授权证书** | 如果 HTTP 查询通过会剥离证书的防火墙，请启用此选项。 | 已启用/已禁用                        |
+| 设置           | 描述                                                 | 示例值                               |
+| -------------- | ---------------------------------------------------- | ------------------------------------ |
+| **URL**        | OIAnalytics® SaaS 应用程序的 URL。                   | `https://optimistik.oianalytics.com` |
+| **接受未授权** | 如果 HTTP 查询通过会剥离证书的防火墙，请启用此选项。 | 已启用/已禁用                        |
 
 #### 身份验证 {#authentication}
 
@@ -42,7 +42,7 @@ OIAnalytics® 内置**文件解析器**，无需预处理。解析直接在 SaaS
 | **客户端 ID**  | 应用程序（客户端）ID。AAD 方式必填。                                 | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                                      |
 | **客户端密钥** | 应用程序客户端密钥。带客户端密钥的 Azure Active Directory 方式必填。 | `••••••••`                                                                                  |
 | **证书**       | 应用程序证书。带证书的 Azure Active Directory 方式必填。             | （从列表中选择）                                                                            |
-| **作用域**     | OAuth2 作用域。带证书的 Azure Active Directory 方式必填。            | `https://example.com/.default`                                                              |
+| **作用域**     | OAuth2 作用域。AAD 方式必填。                                        | `https://example.com/.default`                                                              |
 
 #### 代理配置 {#proxy-configuration}
 
@@ -91,5 +91,6 @@ OIAnalytics® 内置**文件解析器**，无需预处理。解析直接在 SaaS
 
 ## 数据格式 {#data-format}
 
-- OIBus **时间值**以 **JSON 有效载荷**的形式发送到 OIAnalytics®。
-- OIAnalytics® 直接在时间值的 `pointId` 字段中引用外部数据（无需文件解析器）。
+- 记录通过 [OIAnalytics 转换器](../engine/transformers.mdx#oianalytics-payload)以 **JSON 有效载荷**的形式发送到
+  OIAnalytics®，该转换器读取其点位 ID、时间戳和值列。没有转换器时，记录列表不会发送到 OIAnalytics®。
+- OIAnalytics® 直接在 `pointId` 字段中引用外部数据（无需文件解析器）。

@@ -5,8 +5,8 @@ en charge à la fois les **charges utiles JSON** et les **données basées sur d
 
 OIAnalytics® peut traiter :
 
-- **Charges utiles JSON de valeurs temporelles** : points de données formatés provenant de protocoles South (par
-  exemple, OPC UA, MQTT).
+- **Charges utiles JSON de valeurs** : valeurs construites par les transformateurs OIAnalytics à partir des
+  enregistrements des connecteurs South (par exemple, OPC UA, Modbus, SQL).
 - **Fichiers** : transmis tels quels (compressés ou non compressés). Les formats pris en charge incluent CSV, TXT et
   XLSX.
 
@@ -29,10 +29,10 @@ configurée directement dans l'application SaaS.
 
 ### Configuration manuelle (si l'enregistrement n'est pas utilisé) {#manual-configuration-if-registration-is-not-used}
 
-| Paramètre                                  | Description                                                                           | Exemple de valeur                    |
-| ------------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------ |
-| **Hôte**                                   | Nom d'hôte de l'application SaaS OIAnalytics®.                                        | `https://optimistik.oianalytics.com` |
-| **Accepter les certificats non autorisés** | Activer si les requêtes HTTP transitent par un pare-feu qui supprime les certificats. | Activé/Désactivé                     |
+| Paramètre                 | Description                                                                           | Exemple de valeur                    |
+| ------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------ |
+| **URL**                   | URL de l'application SaaS OIAnalytics®.                                               | `https://optimistik.oianalytics.com` |
+| **Accepter non autorisé** | Activer si les requêtes HTTP transitent par un pare-feu qui supprime les certificats. | Activé/Désactivé                     |
 
 #### Authentification {#authentication}
 
@@ -45,7 +45,7 @@ configurée directement dans l'application SaaS.
 | **ID client**        | ID de l'application (client). Requis pour les méthodes AAD.                            | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                                                      |
 | **Secret client**    | Secret client de l'application. Requis pour Azure Active Directory avec secret client. | `••••••••`                                                                                                  |
 | **Certificat**       | Certificat de l'application. Requis pour Azure Active Directory avec certificat.       | (sélectionné dans une liste)                                                                                |
-| **Portée**           | Portée OAuth2. Requise pour Azure Active Directory avec certificat.                    | `https://example.com/.default`                                                                              |
+| **Portée**           | Portée OAuth2. Requise pour les méthodes AAD.                                          | `https://example.com/.default`                                                                              |
 
 #### Configuration du proxy {#proxy-configuration}
 
@@ -96,6 +96,8 @@ générer une nouvelle clé API.
 
 ## Format des données {#data-format}
 
-- Les **valeurs temporelles** OIBus sont envoyées sous forme de **charges utiles JSON** à OIAnalytics®.
-- OIAnalytics® référence directement les données externes dans le champ `pointId` des valeurs temporelles (aucun
-  analyseur de fichiers nécessaire).
+- Les enregistrements sont envoyés sous forme de **charges utiles JSON** à OIAnalytics® via le
+  [transformateur OIAnalytics](../engine/transformers.mdx#oianalytics-payload), qui lit leurs colonnes d'ID du point,
+  d'horodatage et de valeur. Sans transformateur, les listes d'enregistrements ne sont pas envoyées à OIAnalytics®.
+- OIAnalytics® référence directement les données externes dans le champ `pointId` (aucun analyseur de fichiers
+  nécessaire).

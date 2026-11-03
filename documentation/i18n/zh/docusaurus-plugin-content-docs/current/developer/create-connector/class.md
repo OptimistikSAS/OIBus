@@ -22,7 +22,7 @@ import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusRecord } from '../../../shared/model/common/content.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { ReadStream } from 'node:fs';
@@ -34,7 +34,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'time-values', 'setpoint'];
+    return ['file', 'record-list'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -46,17 +46,12 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     switch (cacheMetadata.contentType) {
-      case 'time-values': {
-        const values = JSON.parse(await streamToString(fileStream)) as Array<OIBusTimeValue>;
-        console.table(values, ['pointId', 'timestamp', 'data']);
+      case 'record-list': {
+        const records = JSON.parse(await streamToString(fileStream)) as Array<OIBusRecord>;
+        console.table(records);
         return;
       }
-      case 'setpoint': {
-        const setpoints = JSON.parse(await streamToString(fileStream)) as Array<OIBusSetpoint>;
-        console.table(setpoints, ['reference', 'value']);
-        return;
-      }
-      case 'any':
+      case 'file':
         console.log(`Sending file ${cacheMetadata.contentFile} (${cacheMetadata.contentSize} bytes)`);
         return;
     }
@@ -66,18 +61,18 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 
 ### 必须实现的方法 {#required-methods}
 
-| 方法                                                    | 用途                                                                                                       |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| 方法                                                   | 用途                                                                                                                  |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | `supportedTypes(): Array<string>`                      | 该北向连接器能够投递的 `contentType` 值。**必须与清单的 `types` 数组保持一致。** 不受支持的类型会被路由到错误文件夹。 |
-| `testConnection(): Promise<OIBusConnectionTestResult>` | 使用当前设置探测目的地。失败时抛出异常——该消息会展示给用户。成功时返回一个包含诊断信息的 `{ items: [...] }`。 |
-| `handleContent(fileStream, metadata): Promise<void>`   | 实际投递一份缓存的负载。可以抛出异常——基类会处理重试和错误文件夹。                                        |
+| `testConnection(): Promise<OIBusConnectionTestResult>` | 使用当前设置探测目的地。失败时抛出异常——该消息会展示给用户。成功时返回一个包含诊断信息的 `{ items: [...] }`。         |
+| `handleContent(fileStream, metadata): Promise<void>`   | 实际投递一份缓存的负载。可以抛出异常——基类会处理重试和错误文件夹。                                                    |
 
 ### 可选重写方法 {#optional-overrides}
 
-| 方法           | 何时重写                                                                          |
-| -------------- | --------------------------------------------------------------------------------- |
+| 方法           | 何时重写                                                                            |
+| -------------- | ----------------------------------------------------------------------------------- |
 | `connect()`    | 打开一个长期存在的会话 / 套接字 / HTTP 客户端。当传输就绪后调用 `super.connect()`。 |
-| `disconnect()` | 关闭您的传输层。在末尾调用 `super.disconnect()`。必须是幂等的（可被多次调用）。       |
+| `disconnect()` | 关闭您的传输层。在末尾调用 `super.disconnect()`。必须是幂等的（可被多次调用）。     |
 
 ### 重试语义 {#retry-semantics}
 
@@ -107,7 +102,7 @@ import pino from 'pino';
 import { DateTime } from 'luxon';
 import { SouthMyTypeSettings, SouthMyTypeItemSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -150,16 +145,16 @@ export default class SouthMyType extends SouthConnector<SouthMyTypeSettings, Sou
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<OIBusContent> {
     // run a single item once and return the produced content
-    return { type: 'time-values', content: [] };
+    return { type: 'record-list', content: [] };
   }
 
   // ─── If you implement SouthDirectQuery ────────────────────────────────────
-  async directQuery(items: Array<SouthConnectorItemEntity<SouthMyTypeItemSettings>>): Promise<OIBusTimeValue | null> {
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthMyTypeItemSettings>>): Promise<OIBusPointRecord | null> {
     const startTime = DateTime.now().toUTC().toISO()!;
-    const values: Array<OIBusTimeValue> = [];
-    // read each item, push to values…
+    const values: Array<OIBusPointRecord> = [];
+    // read each item, push { pointId: item.name, timestamp, value } to values…
 
-    await this.addContent({ type: 'time-values', content: values }, startTime, items);
+    await this.addContent({ type: 'record-list', content: values }, startTime, items);
     return values.length ? values[values.length - 1] : null;
   }
 }
@@ -167,10 +162,10 @@ export default class SouthMyType extends SouthConnector<SouthMyTypeSettings, Sou
 
 ### 必须实现的方法 {#required-methods-1}
 
-| 方法                                                       | 用途                                                     |
-| ---------------------------------------------------------- | -------------------------------------------------------- |
-| `testConnection(): Promise<OIBusConnectionTestResult>`     | 探测数据源。失败时抛出异常。                              |
-| `testItem(item, testingSettings): Promise<OIBusContent>`   | 为 UI 的“测试”按钮运行一次单个项目。返回生成的内容。      |
+| 方法                                                     | 用途                                                 |
+| -------------------------------------------------------- | ---------------------------------------------------- |
+| `testConnection(): Promise<OIBusConnectionTestResult>`   | 探测数据源。失败时抛出异常。                         |
+| `testItem(item, testingSettings): Promise<OIBusContent>` | 为 UI 的“测试”按钮运行一次单个项目。返回生成的内容。 |
 
 ### 可选重写方法 {#optional-overrides-1}
 
@@ -261,11 +256,10 @@ await this.addContent(
 
 `OIBusContent` 是一个可判别联合类型：
 
-| `type`          | `content` 形状                                                              | 用途                                     |
-| --------------- | ---------------------------------------------------------------------------- | ----------------------------------------- |
-| `'time-values'` | `Array<OIBusTimeValue>` — `{ pointId, timestamp, data: { value, quality? } }` | 大多数数值型 / 文本型时间序列数据          |
-| `'any-content'` | `string` — 一段不透明的序列化负载（例如 JSON 字符串化的 MQTT 消息）           | 当目的地需要原始负载时                     |
-| `'any'`         | `{ filePath: string }` — 一个已写入磁盘的文件                                 | 基于文件的连接器（文件夹扫描器、FTP）      |
+| `type`          | `content` 形状                                                                                                                     | 用途                                            |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `'record-list'` | `Array<OIBusRecord>` — 点位记录 `{ pointId, timestamp, value, quality? }`，或查询结果行                                            | 点位值（时间序列）、查询结果                    |
+| `'file'`        | `{ filePath: string }` — 一个已写入磁盘的文件，或 `{ content: string }` — 一个保存在内存中的文件（例如 JSON 字符串化的 MQTT 消息） | 基于文件的连接器（文件夹扫描器、FTP）、原始负载 |
 
 引擎负责通过其转换器管道，将内容写入每个启用的北向连接器的缓存中。
 请勿直接写入缓存——始终通过 `addContent` 完成。

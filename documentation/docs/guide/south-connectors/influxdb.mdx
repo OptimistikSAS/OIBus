@@ -58,17 +58,17 @@ Each query running in parallel sends its own request to the InfluxDB instance: i
 | Setting          | Description                                             | Example Value           |
 | ---------------- | ------------------------------------------------------- | ----------------------- |
 | **URL**          | Full URL of the InfluxDB v2 instance.                   | `http://localhost:8086` |
-| **Token**        | API token with read access to the target bucket.        | `••••••••`              |
+| **API token**    | API token with read access to the target bucket.        | `••••••••`              |
 | **Organisation** | Name of the InfluxDB organisation that owns the bucket. | `my-org`                |
 | **Bucket**       | Name of the bucket to query.                            | `sensors`               |
 
 ### InfluxDB v3 {#influxdb-v3}
 
-| Setting      | Description                                                      | Example Value                                   |
-| ------------ | ---------------------------------------------------------------- | ----------------------------------------------- |
-| **URL**      | Full URL of the InfluxDB v3 / Cloud Serverless endpoint.         | `https://us-east-1-1.aws.cloud2.influxdata.com` |
-| **Token**    | API token with read access to the target database.               | `••••••••`                                      |
-| **Database** | Name of the database (equivalent to a v1 database or v2 bucket). | `sensors`                                       |
+| Setting       | Description                                                      | Example Value                                   |
+| ------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
+| **URL**       | Full URL of the InfluxDB v3 / Cloud Serverless endpoint.         | `https://us-east-1-1.aws.cloud2.influxdata.com` |
+| **API token** | API token with read access to the target database.               | `••••••••`                                      |
+| **Database**  | Name of the database (equivalent to a v1 database or v2 bucket). | `sensors`                                       |
 
 :::tip Use a read-only token
 Create a dedicated read-only token or user for OIBus. On InfluxDB v1, grant only `READ` privilege on
@@ -78,7 +78,7 @@ the target database; on v2/v3, scope the token to the specific bucket or databas
 ## Item Settings {#item-settings}
 
 Each item represents one query executed against the InfluxDB server on each scan cycle. Items have
-their own scan mode and throttling settings (there are no groups in the InfluxDB connector).
+their own scan mode and throttling settings.
 
 | Setting       | Description                         | Example Value |
 | ------------- | ----------------------------------- | ------------- |
@@ -88,10 +88,10 @@ their own scan mode and throttling settings (there are no groups in the InfluxDB
 
 ### Query {#query}
 
-| Setting             | Description                                                                   | Example Value |
-| ------------------- | ----------------------------------------------------------------------------- | ------------- |
-| **Query**           | The query to run. Supports `@StartTime` and `@EndTime` placeholders.          | See below     |
-| **Request timeout** | Maximum execution time in milliseconds before the query is aborted. (v1 only) | `15000`       |
+| Setting             | Description                                                                                            | Example Value |
+| ------------------- | ------------------------------------------------------------------------------------------------------ | ------------- |
+| **Query**           | The query to run. Supports `@StartTime` and `@EndTime` placeholders.                                   | See below     |
+| **Request timeout** | Maximum execution time in milliseconds before the query is aborted. Used by v1 and v3 (ignored by v2). | `15000`       |
 
 #### Query examples by version {#query-examples-by-version}
 
@@ -179,18 +179,19 @@ The timestamp column name is determined by the API version:
 | v2      | `_time`          | RFC 3339 string returned directly by the Flux query API                       |
 | v3      | `time`           | ISO 8601 string returned by the Arrow Flight client                           |
 
-If no results are returned, `@StartTime` is not advanced and the next scan retries the same interval.
+If no results are returned, `@StartTime` is not advanced and the next scan retries the same interval, unless
+**When no data is found** is set to `Advance the tracked instant`.
 
 ## Data Flow {#data-flow}
 
 1. OIBus substitutes `@StartTime` and `@EndTime` into the query string.
 2. The query is sent to the InfluxDB server via the appropriate client library for the configured version.
 3. Results are collected as a list of rows.
-4. OIBus extracts the maximum value of the timestamp column (`time` for v1/v3, `_time` for v2) and
-   stores it as the `@StartTime` for the next scan cycle.
+4. OIBus takes the timestamp of the last row (`time` for v1/v3, `_time` for v2) and stores it as the
+   `@StartTime` for the next scan cycle.
 5. The rows are forwarded to configured North connectors as a record list, like the SQL connectors.
 
 :::note Output format
-The rows are sent as they are returned. Add a transformer on the North connector to shape them, e.g. **CSV (from
-Record list)** to write CSV files.
+The rows are sent as they are returned. Add a transformer on the North connector to shape them, e.g. the
+[File](../engine/transformers.mdx#file-from-records) transformer to write CSV files.
 :::

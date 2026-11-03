@@ -43,11 +43,11 @@ dans le formulaire d'édition de l'élément.
 
 ### Méthodes d'accès aux points {#point-access-methods}
 
-| Paramètre         | Description                                                                                                                                                                                          | Exemple de valeur        |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| Type              | Méthode d'accès : `PI point` (point unique par ID) ou `PI query` (plusieurs points via une expression de requête)                                                                                    | `PI point` ou `PI query` |
-| ID du point       | ID complet du point (sans le nom du serveur). Utilisé lorsque le Type est `PI point`.                                                                                                                | `\\CDT158\SINUSOID`      |
-| Requête de points | Sélecteur de requête pour plusieurs points (voir [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Utilisé lorsque le Type est `PI query`. | `Name:='SINUSOID'`       |
+| Paramètre  | Description                                                                                                                                                                                                                              | Exemple de valeur        |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Type       | Méthode d'accès : `PI point` (point unique par ID) ou `PI query` (plusieurs points via une expression de requête)                                                                                                                        | `PI point` ou `PI query` |
+| Point PI   | Nom du point (sans le nom du serveur). Utilisé lorsque le Type est `PI point`.                                                                                                                                                           | `SINUSOID`               |
+| Requête PI | Sélecteur de requête pour plusieurs points (voir [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Utilisé lorsque le Type est `PI query`. Par défaut : `*` (tous les points). | `Name:='SINUSOID'`       |
 
 :::info Noms de référence
 

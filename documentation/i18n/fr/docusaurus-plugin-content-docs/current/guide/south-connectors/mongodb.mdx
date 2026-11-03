@@ -130,8 +130,8 @@ Les documents sont envoyés en aval comme contenu de liste d'enregistrements, un
 | `null` / `undefined`                                  | `null`                                 |
 | Objet imbriqué, tableau, `Decimal128`, `Binary`, etc. | Converti en chaîne JSON                |
 
-Pour rendre ces données au format CSV (ou dans un autre format), attachez un transformateur compatible — ex. **record-list-to-csv** —
-au connecteur North ou à la requête d'historique. Consultez [Transformateurs](../engine/transformers.mdx) pour plus de détails.
+Pour rendre ces données au format CSV (ou dans un autre format), attachez un transformateur compatible — ex. le
+transformateur [Fichier](../engine/transformers.mdx#file-from-records) — au connecteur North ou à la requête d'historique. Consultez [Transformateurs](../engine/transformers.mdx) pour plus de détails.
 
 :::tip Bonnes pratiques
 

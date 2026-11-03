@@ -233,7 +233,7 @@ Le port WebSocket `9001` est disponible pour les clients MQTT basés sur navigat
 | **Mot de passe**      | `pass` (ou `$MQTT_PASSWORD`) |
 
 Les éléments s'abonnent aux [sujets scalaires](#scalar-topics) publiés par le simulateur (les sujets
-JSON sont destinés aux tests `any-content` / transformateur personnalisé, pas aux éléments de valeur
+JSON sont destinés aux tests de fichiers / transformateurs personnalisés, pas aux éléments de valeur
 ponctuelle) :
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -631,7 +631,7 @@ publication envoie **deux familles** de sujets :
 
 - **Sujets scalaires** — un nombre unique, pour les éléments basés sur des valeurs.
 - **Sujets JSON** (sous `<workshop>/json/<shape>`) — des charges utiles structurées de différentes formes.
-  Le South MQTT d'OIBus les ingère en tant qu'`any-content`, ce qui les rend idéaux pour tester des
+  Le South MQTT d'OIBus les ingère sous forme de fichier JSON conservé en mémoire, ce qui les rend idéaux pour tester des
   transformateurs personnalisés.
 
 ##### Sujets scalaires {#scalar-topics}

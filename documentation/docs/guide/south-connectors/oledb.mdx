@@ -44,6 +44,6 @@ The following **Type** values are available for the tracking instant's datetime 
 :::info Through the OIBus Agent
 The agent returns the rows as text: the tracked field comes as an ISO 8601 string in UTC (e.g.
 `2024-01-15T10:30:00.000Z`), every other column as the database driver renders it, and empty or null values as
-`null`. Use a [record-list transformer](../engine/transformers.mdx) to format them downstream (e.g. CSV from
-Record list).
+`null`. Use a record-list transformer to format them downstream (e.g. the
+[File](../engine/transformers.mdx#file-from-records) transformer).
 :::
