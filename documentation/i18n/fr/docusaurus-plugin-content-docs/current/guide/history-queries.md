@@ -84,7 +84,7 @@ AND timestamp <= @EndTime
 Une requête d'historique intègre un connecteur South complet et un connecteur North complet. Le côté North (paramètres,
 mise en cache, transformateurs) est configuré exactement comme un connecteur North en direct. Les paramètres de connexion du côté South
 sont configurés de la même manière également, mais les éléments sont simplifiés : un élément de requête d'historique n'a qu'un
-**nom**, un indicateur **activé**, et ses paramètres spécifiques au type — il n'y a pas de mode de scan, de groupe, ni de
+**nom**, une **description** facultative, un indicateur **activé**, et ses paramètres spécifiques au type — il n'y a pas de mode de scan, de groupe, ni de
 dérogation de limitation par élément. Chaque élément partage à la place les seuls paramètres de **Plage temporelle**
 ci-dessus.
 

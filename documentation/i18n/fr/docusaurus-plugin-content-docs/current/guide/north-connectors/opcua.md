@@ -14,11 +14,13 @@ UA, ce connecteur North **envoie des données** depuis OIBus vers des serveurs O
 
 ### Configuration de la connexion {#connection-configuration}
 
-| Paramètre                            | Description                                    | Exemple de valeur          |
-| ------------------------------------ | ---------------------------------------------- | -------------------------- |
-| **URL du point de terminaison**      | URL du serveur OPC UA.                         | `opc.tcp://localhost:4840` |
-| **Maintenir la session active**      | Garder la session active entre les messages.   | Activé/Désactivé           |
-| **Intervalle de nouvelle tentative** | Délai entre les tentatives (en millisecondes). | `5000`                     |
+| Paramètre                            | Description                                                                                                            | Exemple de valeur          |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **URL**                              | URL du serveur OPC UA.                                                                                                 | `opc.tcp://localhost:4840` |
+| **Maintenir la session active**      | Interroger régulièrement le serveur afin qu'il ne supprime pas la session lorsqu'elle est inactive. Activé par défaut. | Activé/Désactivé           |
+| **Délai de connexion**               | Temps maximal en millisecondes pour se connecter au serveur : connexion TCP, canal sécurisé et création de la session. | `15000`                    |
+| **Délai d'écriture**                 | Temps maximal en millisecondes d'attente de la réponse à une requête de lecture ou d'écriture.                         | `15000`                    |
+| **Intervalle de nouvelle tentative** | Délai entre les tentatives (en millisecondes). Par défaut : `10000`.                                                   | `10000`                    |
 
 ### Paramètres de sécurité {#security-settings}
 

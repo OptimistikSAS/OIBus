@@ -1,7 +1,7 @@
 # SFTP
 
-Le **connecteur North SFTP** téléverse de manière sécurisée des fichiers et des données vers un **serveur SFTP (SSH File
-Transfer Protocol)**.
+Le **connecteur North SFTP** téléverse de manière sécurisée des fichiers vers un **serveur SFTP (SSH File Transfer
+Protocol)**.
 
 ## Paramètres spécifiques {#specific-settings}
 
@@ -22,19 +22,17 @@ Transfer Protocol)**.
 
 ### Configuration des fichiers {#file-configuration}
 
-| Paramètre           | Description                                                                                                                  | Exemple de valeur |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| **Dossier distant** | Répertoire sur le serveur SFTP où les fichiers seront stockés.                                                               | `/data/oibus`     |
-| **Préfixe**         | Texte à ajouter au début du nom de fichier. Prend en charge les variables internes comme `@ConnectorName`.                   | `@ConnectorName-` |
-| **Suffixe**         | Texte à ajouter à la fin du nom de fichier (avant l'extension). Prend en charge les variables internes comme `@CurrentDate`. | `-@CurrentDate`   |
+| Paramètre           | Description                                                    | Exemple de valeur |
+| ------------------- | -------------------------------------------------------------- | ----------------- |
+| **Dossier distant** | Répertoire sur le serveur SFTP où les fichiers seront stockés. | `/data/oibus`     |
 
-:::tip Noms de fichiers dynamiques
-Utilisez des variables internes pour créer des noms de fichiers dynamiques :
+Les fichiers sont écrits avec le nom donné par leur transformateur, sans leur sous-dossier : le **Nom du fichier** des
+transformateurs [Fichier (tel quel, renommé ou converti)](../engine/transformers.mdx#file-as-is-renamed-or-converted)
+et [Fichier](../engine/transformers.mdx#file-from-records) (par exemple `@SourceFilename-@CurrentDate@SourceExtension`).
 
-- `@ConnectorName` : insère le nom du connecteur.
-- `@CurrentDate` : insère l'horodatage actuel au format `yyyy_MM_dd_HH_mm_ss_SSS`.
-
-**Exemple** :
-Avec le préfixe `@ConnectorName-` et le suffixe `-@CurrentDate`, un fichier nommé `example.file` devient :
-`<ConnectorName>-example-<CurrentDate>.file`
+:::info Mise à jour vers la 3.10
+Avant la 3.10, le connecteur ajoutait un **Préfixe** et un **Suffixe** au nom des fichiers. La mise à jour les ajoute
+au nom de fichier de ses transformateurs, `@ConnectorName` étant remplacé par le nom du connecteur (dans un
+transformateur, `@ConnectorName` est le nom du connecteur South), et renomme les fichiers en attente dans son cache. Un
+transformateur personnalisé nomme lui-même les fichiers.
 :::

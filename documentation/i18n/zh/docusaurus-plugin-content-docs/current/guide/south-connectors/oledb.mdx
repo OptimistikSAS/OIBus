@@ -2,7 +2,7 @@
 sidebar_position: 9
 ---
 
-import ItemSettings from './_south-sql-item-settings.mdx';
+import ItemSettings from './_south-record-list-item-settings.mdx';
 
 # OLEDB
 
@@ -31,7 +31,7 @@ import ItemSettings from './_south-sql-item-settings.mdx';
 <ItemSettings />
 
 :::note OLEDB 日期时间字段类型
-以下**类型**值可用于日期时间字段配置：
+以下**类型**值可用于跟踪的时刻的日期时间字段：
 
 | 类型              | 描述                                               |
 | ----------------- | -------------------------------------------------- |
@@ -40,4 +40,10 @@ import ItemSettings from './_south-sql-item-settings.mdx';
 | UNIX 纪元（秒）   | 以秒为单位的 Unix 时间戳                           |
 | UNIX 纪元（毫秒） | 以毫秒为单位的 Unix 时间戳                         |
 
+:::
+
+:::info 通过 OIBus Agent
+Agent 以文本形式返回各行：跟踪字段为 UTC 时间的 ISO 8601 字符串（例如 `2024-01-15T10:30:00.000Z`），其他每一列按数据库
+驱动程序呈现的形式返回，空值或 null 值返回为 `null`。请使用记录列表转换器在下游对其进行格式化
+（例如[文件](../engine/transformers.mdx#file-from-records)转换器）。
 :::

@@ -48,22 +48,22 @@ import DownloadButton from '@site/src/components/DownloadButton';
 ## 下载指定版本 {#download-specific-version}
 
 :::caution OIBus 版本
-迁移仅适用于 3.8.8 版本的 OIBus。如果您想迁移到更新的版本，请先通过下方链接安装 OIBus v3.8.8，
-然后再将 OIBus 从 v3.8.8 更新到更新的版本。
+迁移工具会直接写入 OIBus v3.9.6 的数据库。它拒绝在由其他 OIBus 版本初始化的数据文件夹上运行：请通过下方链接
+安装 OIBus v3.9.6。迁移完成后，您可以将 OIBus 更新到更新的版本。
 :::
 
 <Tabs>
   <TabItem value="windows" label="Windows" default>
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-setup-v3.8.8.exe">
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-win_x64-setup-v3.9.6.exe">
         <div>
-          <div>{`OIBus v3.8.8（安装程序）`}</div>
+          <div>{`OIBus v3.9.6（安装程序）`}</div>
           <div>Windows (x64)</div>
         </div>
       </DownloadButton>
-      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-v3.8.8.zip">
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-win_x64-v3.9.6.zip">
         <div>
-          <div>{`OIBus v3.8.8（zip 压缩包）`}</div>
+          <div>{`OIBus v3.9.6（zip 压缩包）`}</div>
           <div>Windows (x64)</div>
         </div>
       </DownloadButton>
@@ -74,9 +74,9 @@ import DownloadButton from '@site/src/components/DownloadButton';
   </TabItem>
   <TabItem value="linux" label="Linux">
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-linux_x64-v3.8.8.zip`}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-linux_x64-v3.9.6.zip`}>
         <div>
-          <div>{`OIBus v3.8.8`}</div>
+          <div>{`OIBus v3.9.6`}</div>
           <div>Linux (x64)</div>
         </div>
       </DownloadButton>
@@ -87,9 +87,9 @@ import DownloadButton from '@site/src/components/DownloadButton';
   </TabItem>
   <TabItem value="macos" label="MacOS">
     <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-macos_x64-v3.8.8.zip`}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.9.6/oibus-macos_x64-v3.9.6.zip`}>
         <div>
-          <div>{`OIBus v3.8.8`}</div>
+          <div>{`OIBus v3.9.6`}</div>
           <div>MacOS (Intel chip)</div>
         </div>
       </DownloadButton>
@@ -107,7 +107,7 @@ import DownloadButton from '@site/src/components/DownloadButton';
    您可以将数据文件夹压缩打包，或至少备份配置文件 `oibus.json` 及其 `keys` 目录。
    :::
 
-2. 安装 [OIBus v3.8.8](#download-specific-version)。请务必指定**相同的数据文件夹**。通过登录
+2. 安装 [OIBus v3.9.6](#download-specific-version)。请务必指定**相同的数据文件夹**。通过登录
    `http://localhost:2223`（用户名 admin，密码 pass）检查 OIBus v3 是否正常运行。如果一切正常，继续下一步。
 
 3. 停止 OIBus v3。
@@ -133,3 +133,13 @@ oibus-upgrade.exe --config D:\OIBusData
 :::tip
 文件 `upgrade-journal.log` 包含迁移过程的日志。
 :::
+
+:::info 迁移的内容
+
+- 引擎设置、IP 过滤器和 admin 用户（它会替换 OIBus v3 的默认 `admin` 用户）。
+- South 连接器所使用的扫描模式。
+- South 连接器及其点位。OPC UA、OPC HDA、Modbus 和 ADS 连接器的点位会被归入分组，每个扫描模式一个分组。
+  历史连接器的重叠时间会变为负的起始时间偏移。
+- 历史 South 连接器最后完成的时刻，以及保留文件的文件夹扫描器已处理过的文件。
+- North 连接器、它们的订阅，以及在其缓存、错误和归档文件夹中等待的数据。
+  :::

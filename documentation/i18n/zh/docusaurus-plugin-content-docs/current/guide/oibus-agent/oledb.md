@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # OLEDB
 
-发送 HTTP 请求以连接到 ODBC 驱动程序，并通过 SQL 查询读取数据。
+发送 HTTP 请求以连接到 OLEDB 提供程序，并通过 SQL 查询读取数据。
 
 ## HTTP API {#http-api}
 
@@ -20,7 +20,7 @@ curl --location 'http://localhost:2224/api/ole/id/status'
 curl --location --request PUT 'http://localhost:2224/api/ole/id/connect' \
 --header 'Content-Type: application/json' \
 --data '{
-"connectionString": "Driver={AspenTech SQLplus};HOST=localhost;PORT=10014",
+"connectionString": "Provider=OraOLEDB.Oracle;Data Source=mydb",
 "connectionTimeout": 10000
 }'
 ```
@@ -31,7 +31,7 @@ curl --location --request PUT 'http://localhost:2224/api/ole/id/connect' \
 curl --location --request PUT 'http://localhost:2224/api/ole/id/read' \
 --header 'Content-Type: application/json' \
 --data '{
-    "connectionString": "Driver={AspenTech SQLplus};HOST=localhost;PORT=10014",
+    "connectionString": "Provider=OraOLEDB.Oracle;Data Source=mydb",
     "sql": "SELECT timestamp, reference, value FROM demo",
     "readTimeout": 10000,
     "timeColumn": "timestamp",

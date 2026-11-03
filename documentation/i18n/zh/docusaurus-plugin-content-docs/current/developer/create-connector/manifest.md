@@ -52,7 +52,7 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 const manifest: NorthConnectorManifest = {
   id: 'console', // must be in OIBUS_NORTH_TYPES
   category: 'debug', // 'debug' | 'api' | 'file' | 'iot'
-  types: ['any', 'time-values', 'setpoint'], // content types this North can deliver
+  types: ['file', 'record-list'], // content types this North can deliver
   settings: {/* OIBusObjectAttribute */}
 };
 
@@ -83,29 +83,29 @@ export default manifest;
 
 ### 属性类型 {#attribute-types}
 
-| `type`            | UI 元素                  | 生成的 TypeScript 类型     | 额外字段                                                                        |
-| ------------------ | ------------------------- | --------------------------- | --------------------------------------------------------------------------------- |
-| `'string'`        | 文本输入框                | `string \| null`          | `defaultValue`                                                                  |
-| `'number'`        | 数字输入框                | `number \| null`          | `defaultValue`、`unit`（例如 `'ms'`、`'MB'`）                                    |
-| `'boolean'`       | 开关 / 复选框             | `boolean`                 | `defaultValue`                                                                  |
-| `'secret'`        | 密码输入框（掩码显示）     | `string \| null`          | （由 OIBus 加密存储）                                                            |
-| `'string-select'` | 下拉选择框                | `string \| null`          | `selectableValues: Array<string>`、`defaultValue`                               |
-| `'code'`          | Codemirror 编辑器         | `string \| null`          | `contentType: 'sql' \| 'json'`、`defaultValue`                                  |
-| `'instant'`       | 日期+时间选择器           | `Instant \| null`         | —                                                                               |
-| `'timezone'`      | 时区选择框                | `string \| null`          | `defaultValue`                                                                  |
-| `'scan-mode'`     | 扫描模式选择框             | `ScanMode`                | `acceptableType: 'POLL' \| 'SUBSCRIPTION' \| 'SUBSCRIPTION_AND_POLL'`           |
-| `'certificate'`   | 证书选择器                | `string \| null`          | —                                                                               |
-| `'object'`        | 分组容器                  | 嵌套对象                    | `attributes`、`displayProperties: { visible, wrapInBox }`、`enablingConditions` |
-| `'array'`         | 可重复的行                | `Array<T>`                | `paginate`、`numberOfElementPerPage`、`rootAttribute`                           |
+| `type`            | UI 元素                | 生成的 TypeScript 类型 | 额外字段                                                                        |
+| ----------------- | ---------------------- | ---------------------- | ------------------------------------------------------------------------------- |
+| `'string'`        | 文本输入框             | `string \| null`       | `defaultValue`                                                                  |
+| `'number'`        | 数字输入框             | `number \| null`       | `defaultValue`、`unit`（例如 `'ms'`、`'MB'`）                                   |
+| `'boolean'`       | 开关 / 复选框          | `boolean`              | `defaultValue`                                                                  |
+| `'secret'`        | 密码输入框（掩码显示） | `string \| null`       | （由 OIBus 加密存储）                                                           |
+| `'string-select'` | 下拉选择框             | `string \| null`       | `selectableValues: Array<string>`、`defaultValue`                               |
+| `'code'`          | Codemirror 编辑器      | `string \| null`       | `contentType: 'sql' \| 'json'`、`defaultValue`                                  |
+| `'instant'`       | 日期+时间选择器        | `Instant \| null`      | —                                                                               |
+| `'timezone'`      | 时区选择框             | `string \| null`       | `defaultValue`                                                                  |
+| `'scan-mode'`     | 扫描模式选择框         | `ScanMode`             | `acceptableType: 'POLL' \| 'SUBSCRIPTION' \| 'SUBSCRIPTION_AND_POLL'`           |
+| `'certificate'`   | 证书选择器             | `string \| null`       | —                                                                               |
+| `'object'`        | 分组容器               | 嵌套对象               | `attributes`、`displayProperties: { visible, wrapInBox }`、`enablingConditions` |
+| `'array'`         | 可重复的行             | `Array<T>`             | `paginate`、`numberOfElementPerPage`、`rootAttribute`                           |
 
 每个叶子属性都带有相同的通用字段：
 
-| 字段                 | 用途                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------------- |
-| `key`                | camelCase 字段名——将成为 TypeScript 属性名                                               |
-| `translationKey`     | 标签的 i18n key                                                                           |
-| `validators`         | `{ type, arguments }` 数组——见下文                                                       |
-| `displayProperties`  | 叶子属性使用 `{ row, columns, displayInViewMode }`；对象则使用 `{ visible, wrapInBox }`   |
+| 字段                | 用途                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| `key`               | camelCase 字段名——将成为 TypeScript 属性名                                              |
+| `translationKey`    | 标签的 i18n key                                                                         |
+| `validators`        | `{ type, arguments }` 数组——见下文                                                      |
+| `displayProperties` | 叶子属性使用 `{ row, columns, displayInViewMode }`；对象则使用 `{ visible, wrapInBox }` |
 
 ### 一个具体示例 {#a-concrete-example}
 
@@ -257,11 +257,11 @@ items: {
 
 `scanMode.acceptableType` 控制操作人员可以选择的内容：
 
-| 值                        | 效果                                                                              |
-| ------------------------- | ---------------------------------------------------------------------------------- |
-| `'POLL'`                  | 仅周期性触发（大多数南向连接器的默认值）                                        |
-| `'SUBSCRIPTION'`          | 仅推送驱动——用于该连接器**只**支持订阅的场景（例如 MQTT）                         |
-| `'SUBSCRIPTION_AND_POLL'` | 每个项目均可选择其一（OPC UA：部分项目轮询，部分项目订阅）                        |
+| 值                        | 效果                                                       |
+| ------------------------- | ---------------------------------------------------------- |
+| `'POLL'`                  | 仅周期性触发（大多数南向连接器的默认值）                   |
+| `'SUBSCRIPTION'`          | 仅推送驱动——用于该连接器**只**支持订阅的场景（例如 MQTT）  |
+| `'SUBSCRIPTION_AND_POLL'` | 每个项目均可选择其一（OPC UA：部分项目轮询，部分项目订阅） |
 
 一个完整的真实示例是 `backend/src/south/south-folder-scanner/manifest.ts`。
 

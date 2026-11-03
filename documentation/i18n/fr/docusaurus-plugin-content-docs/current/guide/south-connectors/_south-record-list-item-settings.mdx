@@ -4,13 +4,14 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 
 Les éléments peuvent être organisés en groupes. Chaque groupe définit une planification de collecte partagée et des
 paramètres de limitation par défaut. Les éléments d'un même groupe sont toujours récupérés **un à la fois** en
-séquence — le groupe fournit simplement des valeurs par défaut communes que chaque élément peut redéfinir.
+séquence — sauf si **Requêtes parallèles max** est supérieur à 1 (MSSQL, MySQL, PostgreSQL, Oracle, ODBC) — le groupe
+fournit simplement des valeurs par défaut communes que chaque élément peut redéfinir.
 
-| Paramètre      | Description                                                                                                                                       | Exemple de valeur         |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| **Nom**        | Libellé unique pour le groupe au sein de ce connecteur.                                                                                                 | `Group A`                 |
-| **Mode de scan** | Mode de scan utilisé pour collecter tous les éléments du groupe.                                                                                                  | `Every 1 min`             |
-| **Limitation** | Valeurs de limitation par défaut (intervalle de lecture maximal, délai de lecture, décalage de l'heure de début, décalage de l'heure de fin, stratégie de récupération) héritées par les éléments du groupe. | `3600, 200, 0, 0, oldest` |
+| Paramètre        | Description                                                                                                                                                                                                                                  | Exemple de valeur               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| **Nom**          | Libellé unique pour le groupe au sein de ce connecteur.                                                                                                                                                                                      | `Group A`                       |
+| **Mode de scan** | Mode de scan utilisé pour collecter tous les éléments du groupe.                                                                                                                                                                             | `Every 1 min`                   |
+| **Limitation**   | Valeurs de limitation par défaut (intervalle de lecture maximal, délai de lecture, décalage de l'heure de début, décalage de l'heure de fin, stratégie de récupération, si aucune donnée n'est trouvée) héritées par les éléments du groupe. | `3600, 200, 0, 0, oldest, keep` |
 
 ## Paramètres des éléments {#item-settings}
 
@@ -27,10 +28,10 @@ résilience de la récupération des données et l'optimisation des performances
 
 #### Variables de requête {#query-variables}
 
-| Paramètre    | Description                                                                                           | Exemple de valeur          |
-| ------------ | ----------------------------------------------------------------------------------------------------- | --------------------------- |
+| Paramètre    | Description                                                                                                      | Exemple de valeur          |
+| ------------ | ---------------------------------------------------------------------------------------------------------------- | -------------------------- |
 | `@StartTime` | Initialisée à l'heure de la première exécution, puis mise à jour avec l'horodatage le plus récent du champ suivi | `2024-01-15T10:00:00.000Z` |
-| `@EndTime`   | Définie sur l'heure actuelle (`now()`) ou sur la fin du sous-intervalle lorsque les requêtes sont découpées                              | `2024-01-15T11:00:00.000Z` |
+| `@EndTime`   | Définie sur l'heure actuelle (`now()`) ou sur la fin du sous-intervalle lorsque les requêtes sont découpées      | `2024-01-15T11:00:00.000Z` |
 
 Exemple de requête :
 
@@ -54,14 +55,14 @@ OIBus ne l'analyse, ne la reformate ni ne la restructure en aucune façon. Le se
 est un **instant de suivi** : une seule colonne dont la valeur maximale sur un lot devient le `@StartTime` de la
 requête suivante, pour une collecte incrémentale.
 
-| Paramètre         | Description                                                                                                    | Exemple de valeur           |
-| ----------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| **Suivre l'instant** | Active la collecte incrémentale à l'aide du champ ci-dessous. Lorsqu'il est désactivé, chaque requête relit l'ensemble complet des résultats. | Activé/Désactivé            |
-| **Nom du champ**  | Nom de la colonne date/heure à suivre dans votre instruction SELECT                                                  | `timestamp`, `reading_time` |
-| **Type**          | Type de données de cette colonne. Les valeurs disponibles diffèrent selon le connecteur — voir la note spécifique au connecteur ci-dessous.        | `iso-string`, `unix-epoch`  |
-| **Fuseau horaire** | Fuseau horaire de la date/heure stockée (pour les types chaîne/date)                                                        | `UTC`, `Europe/Paris`       |
-| **Format**        | Modèle de format pour les dates/heures sous forme de chaîne                                                      | `yyyy-MM-dd HH:mm:ss`       |
-| **Paramètres régionaux** | Paramètres régionaux pour les éléments de format (par exemple, les noms de mois)                                                 | `en_US`, `fr_FR`            |
+| Paramètre                | Description                                                                                                                                   | Exemple de valeur           |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **Suivre l'instant**     | Active la collecte incrémentale à l'aide du champ ci-dessous. Lorsqu'il est désactivé, chaque requête relit l'ensemble complet des résultats. | Activé/Désactivé            |
+| **Nom du champ**         | Nom de la colonne date/heure à suivre dans votre instruction SELECT                                                                           | `timestamp`, `reading_time` |
+| **Type**                 | Type de données de cette colonne. Les valeurs disponibles diffèrent selon le connecteur — voir la note spécifique au connecteur ci-dessous.   | `iso-string`, `unix-epoch`  |
+| **Fuseau horaire**       | Fuseau horaire de la date/heure stockée (pour les types chaîne/date)                                                                          | `UTC`, `Europe/Paris`       |
+| **Format**               | Modèle de format pour les dates/heures sous forme de chaîne                                                                                   | `yyyy-MM-dd HH:mm:ss`       |
+| **Paramètres régionaux** | Paramètres régionaux pour les éléments de format (par exemple, les noms de mois)                                                              | `en_US`, `fr_FR`            |
 
 :::warning Exigence de cohérence de type
 Lors de l'utilisation de conversions de date/heure dans les requêtes, gardez le type cohérent à la fois dans la
@@ -87,13 +88,14 @@ WHERE CONVERT(datetime, string_field) > @StartTime
 
 ### Processus de flux de données {#data-flow-process}
 
-1. OIBus exécute chaque requête configurée de manière séquentielle.
+1. OIBus exécute chaque requête configurée de manière séquentielle, sauf si **Requêtes parallèles max** est supérieur à 1
+   (MSSQL, MySQL, PostgreSQL, Oracle, ODBC).
 2. Les lignes sont envoyées en aval telles quelles — aucune colonne n'est analysée, reformatée ou restructurée.
 3. Si **Suivre l'instant** est activé, la valeur maximale du champ suivi sur le lot est extraite, convertie en
    UTC, puis stockée comme prochain `@StartTime`.
 4. Les données sont envoyées aux connecteurs North configurés sous forme de contenu record-list (une entrée par ligne).
 5. Pour restituer ces données au format CSV (ou dans un autre format), attachez un transformateur compatible — par
-   exemple **record-list-to-csv** — au connecteur North ou à la requête d'historique. Voir
+   exemple le transformateur [Fichier](../engine/transformers.mdx#file-from-records) — au connecteur North ou à la requête d'historique. Voir
    [Transformateurs](../engine/transformers.mdx) pour plus de détails.
 
 :::tip Bonnes pratiques

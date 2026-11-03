@@ -23,7 +23,7 @@ import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusRecord } from '../../../shared/model/common/content.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { ReadStream } from 'node:fs';
@@ -35,7 +35,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   }
 
   supportedTypes(): Array<string> {
-    return ['any', 'time-values', 'setpoint'];
+    return ['file', 'record-list'];
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -47,17 +47,12 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     switch (cacheMetadata.contentType) {
-      case 'time-values': {
-        const values = JSON.parse(await streamToString(fileStream)) as Array<OIBusTimeValue>;
-        console.table(values, ['pointId', 'timestamp', 'data']);
+      case 'record-list': {
+        const records = JSON.parse(await streamToString(fileStream)) as Array<OIBusRecord>;
+        console.table(records);
         return;
       }
-      case 'setpoint': {
-        const setpoints = JSON.parse(await streamToString(fileStream)) as Array<OIBusSetpoint>;
-        console.table(setpoints, ['reference', 'value']);
-        return;
-      }
-      case 'any':
+      case 'file':
         console.log(`Sending file ${cacheMetadata.contentFile} (${cacheMetadata.contentSize} bytes)`);
         return;
     }
@@ -67,17 +62,17 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 
 ### Méthodes obligatoires {#required-methods}
 
-| Méthode                                                 | Objet                                                                                                                                                  |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supportedTypes(): Array<string>`                      | Les valeurs de `contentType` que ce North peut livrer. **Doit correspondre au tableau `types` du manifeste.** Les types non pris en charge sont routés vers le dossier d'erreurs. |
+| Méthode                                                | Objet                                                                                                                                                                                         |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supportedTypes(): Array<string>`                      | Les valeurs de `contentType` que ce North peut livrer. **Doit correspondre au tableau `types` du manifeste.** Les types non pris en charge sont routés vers le dossier d'erreurs.             |
 | `testConnection(): Promise<OIBusConnectionTestResult>` | Sonde la destination avec les paramètres actuels. Lève une exception en cas d'échec — le message est affiché à l'utilisateur. Retourne un `{ items: [...] }` de diagnostics en cas de succès. |
-| `handleContent(fileStream, metadata): Promise<void>`   | Livre effectivement une charge utile mise en cache. Peut lever une exception — la classe de base gère la nouvelle tentative et le dossier d'erreurs.     |
+| `handleContent(fileStream, metadata): Promise<void>`   | Livre effectivement une charge utile mise en cache. Peut lever une exception — la classe de base gère la nouvelle tentative et le dossier d'erreurs.                                          |
 
 ### Surcharges optionnelles {#optional-overrides}
 
-| Méthode        | Quand la surcharger                                                                                              |
-| -------------- | ------------------------------------------------------------------------------------------------------------- |
-| `connect()`    | Ouvrir une session / un socket / un client HTTP persistant. Appelez `super.connect()` une fois votre transport prêt.        |
+| Méthode        | Quand la surcharger                                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `connect()`    | Ouvrir une session / un socket / un client HTTP persistant. Appelez `super.connect()` une fois votre transport prêt.                  |
 | `disconnect()` | Fermer votre transport. Appelez `super.disconnect()` à la fin. Doit être idempotent (peut être appelé plus d'une fois sans problème). |
 
 ### Sémantique de nouvelle tentative {#retry-semantics}
@@ -108,7 +103,7 @@ import pino from 'pino';
 import { DateTime } from 'luxon';
 import { SouthMyTypeSettings, SouthMyTypeItemSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -151,16 +146,16 @@ export default class SouthMyType extends SouthConnector<SouthMyTypeSettings, Sou
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<OIBusContent> {
     // run a single item once and return the produced content
-    return { type: 'time-values', content: [] };
+    return { type: 'record-list', content: [] };
   }
 
   // ─── If you implement SouthDirectQuery ────────────────────────────────────
-  async directQuery(items: Array<SouthConnectorItemEntity<SouthMyTypeItemSettings>>): Promise<OIBusTimeValue | null> {
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthMyTypeItemSettings>>): Promise<OIBusPointRecord | null> {
     const startTime = DateTime.now().toUTC().toISO()!;
-    const values: Array<OIBusTimeValue> = [];
-    // read each item, push to values…
+    const values: Array<OIBusPointRecord> = [];
+    // read each item, push { pointId: item.name, timestamp, value } to values…
 
-    await this.addContent({ type: 'time-values', content: values }, startTime, items);
+    await this.addContent({ type: 'record-list', content: values }, startTime, items);
     return values.length ? values[values.length - 1] : null;
   }
 }
@@ -168,9 +163,9 @@ export default class SouthMyType extends SouthConnector<SouthMyTypeSettings, Sou
 
 ### Méthodes obligatoires {#required-methods-1}
 
-| Méthode                                                   | Objet                                                                    |
-| -------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `testConnection(): Promise<OIBusConnectionTestResult>`   | Sonde la source. Lève une exception en cas d'échec.                         |
+| Méthode                                                  | Objet                                                                                              |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `testConnection(): Promise<OIBusConnectionTestResult>`   | Sonde la source. Lève une exception en cas d'échec.                                                |
 | `testItem(item, testingSettings): Promise<OIBusContent>` | Exécute un élément une fois pour le bouton « tester » de l'interface. Retourne le contenu produit. |
 
 ### Surcharges optionnelles {#optional-overrides-1}
@@ -266,11 +261,10 @@ await this.addContent(
 
 `OIBusContent` est une union discriminée :
 
-| `type`          | Forme de `content`                                                               | Utilisation                                     |
-| --------------- | ----------------------------------------------------------------------------- | -------------------------------------------- |
-| `'time-values'` | `Array<OIBusTimeValue>` — `{ pointId, timestamp, data: { value, quality? } }` | La plupart des données de séries temporelles numériques / textuelles |
-| `'any-content'` | `string` — une charge utile sérialisée opaque (par ex. messages MQTT sérialisés en JSON) | Lorsque la destination a besoin de la charge utile brute |
-| `'any'`         | `{ filePath: string }` — un fichier déjà écrit sur le disque                       | Connecteurs basés sur des fichiers (scanner de dossier, FTP) |
+| `type`          | Forme de `content`                                                                                                                                                 | Utilisation                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `'record-list'` | `Array<OIBusRecord>` — enregistrements de points `{ pointId, timestamp, value, quality? }`, ou lignes de requête                                                   | Valeurs de points (séries temporelles), résultats de requêtes                       |
+| `'file'`        | `{ filePath: string }` — un fichier déjà écrit sur le disque, ou `{ content: string }` — un fichier conservé en mémoire (par ex. messages MQTT sérialisés en JSON) | Connecteurs basés sur des fichiers (scanner de dossier, FTP), charges utiles brutes |
 
 Le moteur se charge d'écrire le contenu dans le cache de chaque North activé via son pipeline de transformateurs.
 N'écrivez jamais directement dans le cache — passez toujours par `addContent`.

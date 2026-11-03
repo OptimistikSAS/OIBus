@@ -16,19 +16,19 @@ Query data from any HTTP/HTTPS REST API using configurable methods, query parame
 | ----------------------------------- | --------------------------------------------------------------------------- | ------------------------ |
 | **Host**                            | Base URL of the REST API server. Must start with `http://` or `https://`.   | `http://server.com:8080` |
 | **Accept unauthorized certificate** | Allow HTTPS connections with self-signed or invalid certificates.           | Enabled/Disabled         |
-| **Timeout**                         | Duration in seconds before a connection failure is reported. Default: `30`. | `30`                     |
+| **Request timeout**                 | Duration in seconds before a connection failure is reported. Default: `30`. | `30`                     |
 
 ### Authentication {#authentication}
 
-| Setting               | Description                                                       | Example Value                             |
-| --------------------- | ----------------------------------------------------------------- | ----------------------------------------- |
-| Authentication method | Authentication type for the connection.                           | `None`, `Basic`, `Bearer`, `API Key`      |
-| Username              | Username for Basic authentication.                                | `api_user`                                |
-| Password              | Password for Basic authentication.                                | `••••••••`                                |
-| Token                 | Bearer token sent in the `Authorization` header.                  | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
-| API Key               | Name of the header or query parameter for API Key authentication. | `X-Api-Key`                               |
-| API Value             | Secret value sent with the request (stored encrypted).            | `••••••••`                                |
-| Add to                | Where the API key/value pair is injected.                         | `header`, `query-params`                  |
+| Setting      | Description                                                       | Example Value                             |
+| ------------ | ----------------------------------------------------------------- | ----------------------------------------- |
+| Type         | Authentication type for the connection.                           | `None`, `Basic`, `Bearer`, `API Key`      |
+| Username     | Username for Basic authentication.                                | `api_user`                                |
+| Password     | Password for Basic authentication.                                | `••••••••`                                |
+| Bearer token | Bearer token sent in the `Authorization` header.                  | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
+| API Key      | Name of the header or query parameter for API Key authentication. | `X-Api-Key`                               |
+| API Value    | Secret value sent with the request (stored encrypted).            | `••••••••`                                |
+| Add to       | Where the API key/value pair is injected.                         | `header`, `query-params`                  |
 
 ### Proxy Configuration {#proxy-configuration}
 
@@ -41,14 +41,14 @@ Query data from any HTTP/HTTPS REST API using configurable methods, query parame
 
 ### Connection Test {#connection-test}
 
-OIBus can test the connection to the server before any item query is executed. This is useful to verify credentials and reachability.
+These settings are used by the **Test settings** button to check the connection to the server. They are not used when items are queried. This is useful to verify credentials and reachability.
 
-| Setting           | Description                                                          | Example Value |
-| ----------------- | -------------------------------------------------------------------- | ------------- |
-| **Method**        | HTTP method used for the test request. Default: `GET`.               | `GET`         |
-| **Test Endpoint** | Path appended to the host. Default: `/`.                             | `/health`     |
-| **Body**          | Optional JSON body for `POST` or `PUT` test requests.                | `{}`          |
-| **Success code**  | HTTP status code indicating a successful connection. Default: `200`. | `200`         |
+| Setting                   | Description                                                          | Example Value |
+| ------------------------- | -------------------------------------------------------------------- | ------------- |
+| **Method**                | HTTP method used for the test request. Default: `GET`.               | `GET`         |
+| **Test Endpoint**         | Path appended to the host. Default: `/`.                             | `/health`     |
+| **Body**                  | Optional JSON body for `POST` or `PUT` test requests.                | `{}`          |
+| **Expected success code** | HTTP status code indicating a successful connection. Default: `200`. | `200`         |
 
 :::info
 The test body is only sent when the method is `POST` or `PUT`.
@@ -60,11 +60,11 @@ Items can be organised into groups. Each group defines a shared collection sched
 settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
 provides common defaults that individual items can override.
 
-| Setting        | Description                                                                                                                                       | Example Value             |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| **Name**       | Unique label for the group within this connector.                                                                                                 | `Group A`                 |
-| **Scan mode**  | Schedule used to collect all items in the group.                                                                                                  | `Every 1 min`             |
-| **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) inherited by items in the group. | `3600, 200, 0, 0, oldest` |
+| Setting        | Description                                                                                                                                                              | Example Value                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| **Name**       | Unique label for the group within this connector.                                                                                                                        | `Group A`                       |
+| **Scan mode**  | Schedule used to collect all items in the group.                                                                                                                         | `Every 1 min`                   |
+| **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy, When no data is found) inherited by items in the group. | `3600, 200, 0, 0, oldest, keep` |
 
 ## Item Settings {#item-settings}
 
@@ -188,10 +188,10 @@ Append `.add(amount, unit)` to `@StartTime` or `@EndTime` to shift it by a fixed
 `amount` is an integer (negative to shift backwards) and `unit` is one of `millisecond(s)`, `second(s)`,
 `minute(s)`, `hour(s)`, or `day(s)`.
 
-| Example                        | Meaning                                    |
-| ------------------------------- | ------------------------------------------- |
-| `@StartTime.add(-1, 'day')`     | One day before the start of the interval.   |
-| `@EndTime.add(30, 'minutes')`   | Thirty minutes after the end of the interval. |
+| Example                       | Meaning                                       |
+| ----------------------------- | --------------------------------------------- |
+| `@StartTime.add(-1, 'day')`   | One day before the start of the interval.     |
+| `@EndTime.add(30, 'minutes')` | Thirty minutes after the end of the interval. |
 
 This is useful for APIs that expect a small buffer or lag around the actual query window, for example
 `{"from": "@StartTime.add(-5, 'minutes')", "to": "@EndTime"}`.

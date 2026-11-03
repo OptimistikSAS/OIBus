@@ -21,14 +21,14 @@ OIAnalytics® includes **built-in file parsers**, eliminating the need for pre-p
 | -------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------- |
 | **Use OIAnalytics registration** | Use connection settings from [OIAnalytics registration](../installation/oianalytics.mdx).            | Enabled/Disabled |
 | **Timeout**                      | Duration (in seconds) before a connection failure is reported.                                       | `30`             |
-| **Compress data**                | Compress data if not already compressed. Adds `.gz` extension to files and compresses JSON payloads. | Enabled/Disabled |
+| **Compress**                     | Compress data if not already compressed. Adds `.gz` extension to files and compresses JSON payloads. | Enabled/Disabled |
 
 ### Manual Configuration (if registration is not used) {#manual-configuration-if-registration-is-not-used}
 
-| Setting                             | Description                                                              | Example Value                        |
-| ----------------------------------- | ------------------------------------------------------------------------ | ------------------------------------ |
-| **Host**                            | Hostname of the OIAnalytics® SaaS application.                           | `https://optimistik.oianalytics.com` |
-| **Accept unauthorized certificate** | Enable if HTTP queries pass through a firewall that strips certificates. | Enabled/Disabled                     |
+| Setting                 | Description                                                              | Example Value                        |
+| ----------------------- | ------------------------------------------------------------------------ | ------------------------------------ |
+| **URL**                 | URL of the OIAnalytics® SaaS application.                                | `https://optimistik.oianalytics.com` |
+| **Accept unauthorized** | Enable if HTTP queries pass through a firewall that strips certificates. | Enabled/Disabled                     |
 
 #### Authentication {#authentication}
 
@@ -41,7 +41,7 @@ OIAnalytics® includes **built-in file parsers**, eliminating the need for pre-p
 | **Client ID**      | Application (client) ID. Required for AAD methods.                                 | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                                                      |
 | **Client secret**  | Application client secret. Required for Azure Active Directory with client secret. | `••••••••`                                                                                                  |
 | **Certificate**    | Application certificate. Required for Azure Active Directory with certificate.     | (selected from list)                                                                                        |
-| **Scope**          | OAuth2 scope. Required for Azure Active Directory with certificate.                | `https://example.com/.default`                                                                              |
+| **Scope**          | OAuth2 scope. Required for AAD methods.                                            | `https://example.com/.default`                                                                              |
 
 #### Proxy Configuration {#proxy-configuration}
 

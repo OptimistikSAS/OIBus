@@ -1,8 +1,15 @@
 # File Writer
 
-Le **connecteur North File Writer** écrit des fichiers et des données dans un dossier de sortie spécifié sur le disque.
-Ce connecteur est utile pour le stockage local, les pipelines de traitement de données ou l'intégration avec des
-systèmes basés sur des fichiers.
+Le **connecteur North File Writer** écrit des fichiers dans un dossier de sortie spécifié sur le disque. Ce connecteur
+est utile pour le stockage local, les pipelines de traitement de données ou l'intégration avec des systèmes basés sur
+des fichiers.
+
+Il ne reçoit que des fichiers : les listes d'enregistrements (consignes OIAnalytics comprises) sont écrites dans des
+fichiers par un transformateur (par exemple [Fichier](../engine/transformers.mdx#file-from-records)). Avant la 3.10, il
+recevait aussi des enregistrements et des consignes : la mise à jour écrit les lignes des transformateurs
+[Enregistrements](../engine/transformers.mdx#records-from-file) dans des fichiers JSON via
+[Fichier (tel quel, renommé ou converti)](../engine/transformers.mdx#file-as-is-renamed-or-converted), et supprime ses
+transformateurs personnalisés envoyant des enregistrements ou des consignes.
 
 ## Paramètres spécifiques {#specific-settings}
 
@@ -29,22 +36,17 @@ gestionnaire d'identification limité aux sessions interactives est peu fiable, 
 ailleurs d'un accès au partage.
 :::
 
-### Options de nommage des fichiers {#file-naming-options}
+### Noms des fichiers {#file-names}
 
-| Paramètre   | Description                                                                                                                  | Exemple de valeur |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| **Préfixe** | Texte à ajouter au début du nom de fichier. Prend en charge les variables internes comme `@ConnectorName`.                   | `@ConnectorName-` |
-| **Suffixe** | Texte à ajouter à la fin du nom de fichier (avant l'extension). Prend en charge les variables internes comme `@CurrentDate`. | `-@CurrentDate`   |
+Les fichiers sont écrits avec le nom donné par leur transformateur, sans leur sous-dossier : le **Nom du fichier** des
+transformateurs [Fichier (tel quel, renommé ou converti)](../engine/transformers.mdx#file-as-is-renamed-or-converted)
+et [Fichier](../engine/transformers.mdx#file-from-records) (par exemple `@SourceFilename-@CurrentDate@SourceExtension`).
 
-:::tip Noms de fichiers dynamiques
-Utilisez des variables internes pour créer des noms de fichiers dynamiques :
-
-- `@ConnectorName` : insère le nom du connecteur.
-- `@CurrentDate` : insère l'horodatage actuel au format `yyyy_MM_dd_HH_mm_ss_SSS`.
-
-**Exemple** :
-Avec le préfixe `@ConnectorName-` et le suffixe `-@CurrentDate`, un fichier nommé `example.file` devient :
-`<ConnectorName>-example-<CurrentDate>.file`
+:::info Mise à jour vers la 3.10
+Avant la 3.10, le connecteur ajoutait un **Préfixe** et un **Suffixe** au nom des fichiers. La mise à jour les ajoute
+au nom de fichier de ses transformateurs, `@ConnectorName` étant remplacé par le nom du connecteur (dans un
+transformateur, `@ConnectorName` est le nom du connecteur South), et renomme les fichiers en attente dans son cache. Un
+transformateur personnalisé nomme lui-même les fichiers.
 :::
 
 ## Bonnes pratiques {#best-practices}

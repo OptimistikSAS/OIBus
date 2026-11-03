@@ -490,7 +490,7 @@ Scanner and OIAnalytics, as well as data injected via the **OIBus API**.
 
 #### Reading the file {#reading-the-file}
 
-The file transformers first read the rows of the file (except the files of type **Other** of
+The file transformers first read the rows of the file (except the files of type **Any file** of
 [File (as is, renamed or converted)](#file-as-is-renamed-or-converted)), with the settings of their **File** group:
 
 | Setting                   | Description                                                                                                 |
@@ -676,13 +676,13 @@ mapping `valve1 → ns=1;s=Valve1`:
 
 #### File (as is, renamed or converted) {#file-as-is-renamed-or-converted}
 
-By default (file type **Other**, filename `@SourceFilename@SourceExtension`), sends the files as they are, keeping their
+By default (file type **Any file**, filename `@SourceFilename@SourceExtension`), sends the files as they are, keeping their
 name, to a North connector expecting files (Azure Blob, Amazon S3, SFTP, REST, File Writer, OIAnalytics...): the North
 connector copies them to its cache without reading them. A file of a sub-folder of the Folder Scanner keeps its folder,
 and the JSON payloads of the MQTT South connector and of the OIBus API, which have no name, are saved as `.json` files
 with a random name.
 
-With the file type **Other**, the file is only **renamed**, and possibly **compressed** (**Compress file**, gzip, adding
+With the file type **Any file**, the file is only **renamed**, and possibly **compressed** (**Compress file**, gzip, adding
 `.gz` to its name): its content is otherwise sent as it is. Changing the content of such a file needs a
 [custom transformer](#custom-transformers).
 
@@ -734,7 +734,7 @@ Timestamp,Tag,Value,OK
 
 ##### Example — Renaming a file {#example--renaming-a-file}
 
-With the file type `Other` and the filename `@SourceFilename_@CurrentDate@SourceExtension`, a file `report.pdf` is
+With the file type `Any file` and the filename `@SourceFilename_@CurrentDate@SourceExtension`, a file `report.pdf` is
 sent unchanged as `report_2024_01_15_10_00_00_000.pdf`.
 
 ---

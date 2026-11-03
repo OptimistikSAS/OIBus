@@ -40,6 +40,10 @@ Configurez les paramètres suivants pour vous connecter à votre Azure Blob Stor
 | **ID client**        | ID de l'application (client). Requis pour l'authentification AAD.                                                    | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                      |
 | **Secret client**    | Secret client de l'application. Requis pour l'authentification AAD.                                                  | `••••••••`                                                                  |
 
+Avec l'authentification **Externe**, OIBus utilise le `DefaultAzureCredential` d'Azure : les identifiants sont pris dans
+l'environnement du processus OIBus (variables d'environnement, identité managée, connexion Azure CLI, …), si bien
+qu'aucun secret n'est stocké dans OIBus.
+
 ### Configuration du proxy {#proxy-configuration}
 
 Si votre infrastructure réseau exige que les requêtes passent par un serveur proxy pour atteindre Azure Blob Storage,
@@ -47,6 +51,7 @@ activez l'option **Utiliser un proxy** et configurez les détails du proxy ci-de
 
 | Paramètre                      | Description                                                  | Exemple de valeur               |
 | ------------------------------ | ------------------------------------------------------------ | ------------------------------- |
+| **Utiliser un proxy**          | Router les requêtes via un serveur proxy.                    | Activé/Désactivé                |
 | **URL du proxy**               | URL du serveur proxy.                                        | `http://proxy.example.com:8080` |
 | **Nom d'utilisateur du proxy** | Nom d'utilisateur pour l'authentification proxy (si requis). | `proxy_user`                    |
 | **Mot de passe du proxy**      | Mot de passe pour l'authentification proxy (si requis).      | `••••••••`                      |

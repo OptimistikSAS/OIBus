@@ -43,11 +43,11 @@ edit form.
 
 ### Point Access Methods {#point-access-methods}
 
-| Setting     | Description                                                                                                                                                                       | Example Value            |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| Type        | Access method: `PI point` (single point by ID) or `PI query` (multiple points by query expression)                                                                                | `PI point` or `PI query` |
-| Point ID    | Fully qualified point ID (without server name). Used when Type is `PI point`.                                                                                                     | `\\CDT158\SINUSOID`      |
-| Point Query | Query selector for multiple points (see [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Used when Type is `PI query`. | `Name:='SINUSOID'`       |
+| Setting  | Description                                                                                                                                                                                                  | Example Value            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| Type     | Access method: `PI point` (single point by ID) or `PI query` (multiple points by query expression)                                                                                                           | `PI point` or `PI query` |
+| PI point | Point name (without server name). Used when Type is `PI point`.                                                                                                                                              | `SINUSOID`               |
+| PI query | Query selector for multiple points (see [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Used when Type is `PI query`. Default: `*` (all points). | `Name:='SINUSOID'`       |
 
 :::info Reference Names
 

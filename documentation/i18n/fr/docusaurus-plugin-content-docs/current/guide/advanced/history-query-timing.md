@@ -5,7 +5,8 @@ sidebar_position: 1
 # Réglage avancé des connecteurs d'historique
 
 Cette page explique en détail comment utiliser les champs `Intervalle de lecture maximal`, `Délai de lecture`,
-`Décalage de l'heure de début`, `Décalage de l'heure de fin` — ainsi que `Stratégie de récupération`. Ils ne se trouvent
+`Décalage de l'heure de début`, `Décalage de l'heure de fin` — ainsi que `Stratégie de récupération` et
+`Si aucune donnée n'est trouvée`. Ils ne se trouvent
 que sur les connecteurs qui accèdent à des sources de données disposant d'un stockage historique : connecteurs SQL,
 OPC UA en mode HA, OPC Classic en mode HDA, OSIsoft PI, OIAnalytics, REST, InfluxDB — voir la liste complète dans
 [Requêtes d'historique](../history-queries.md#compatible-south-connectors). Ces paramètres sont présentés dans
@@ -37,7 +38,9 @@ l'ordre :
    sous-intervalle qui renvoie des données plus récentes que les résultats précédents. En cas de plantage, les données
    seront de nouveau interrogées à partir du dernier instant suivi récupéré. Avec `Du plus récent au plus ancien`,
    l'instant suivi n'avance qu'une fois que _tous_ les sous-intervalles sont terminés. En cas de plantage, les données
-   seront de nouveau interrogées pour l'intervalle complet, puisque l'instant suivi n'a pas encore avancé.
+   seront de nouveau interrogées pour l'intervalle complet, puisque l'instant suivi n'a pas encore avancé. Un
+   sous-intervalle sans nouvelles données laisse l'instant suivi en place, sauf si `Si aucune donnée n'est trouvée` vaut
+   `Avancer l'instant suivi` (voir [plus bas](#when-no-data-is-found-sparse-sources)).
 
 :::info Instant suivi
 L'instant suivi désigne l'horodatage le plus récent récupéré lors de la dernière requête réussie.
@@ -302,6 +305,33 @@ actuelles dès que possible, même pendant qu'un long rattrapage de l'historique
 plus que la vitesse d'apparition du « maintenant » — ce qui est le bon choix pour la plupart des installations non
 supervisées.
 
+## Si aucune donnée n'est trouvée : sources clairsemées {#when-no-data-is-found-sparse-sources}
+
+Par défaut (`Conserver l'instant suivi`), l'instant suivi n'avance que lorsqu'une requête renvoie des données. Rien n'est
+jamais ignoré, mais une source qui n'a pas eu de nouvelles données depuis longtemps est de nouveau interrogée à partir de
+son dernier point de donnée à chaque exécution : la fenêtre effective ne cesse de grandir avec le temps, tout comme le
+nombre de sous-intervalles. Par exemple, un élément dont la dernière valeur date de 25 jours, avec un
+`Intervalle de lecture maximal` de 2 heures, émet environ 300 requêtes à chaque exécution, et 12 de plus chaque jour. Sur
+un connecteur qui exécute ses éléments un par un (connecteurs SQL), ce rattrapage retarde tous les autres éléments, et
+les modes de scrutation les plus rapides journalisent que l'exécution précédente était encore en cours.
+
+Avec `Avancer l'instant suivi`, un sous-intervalle entièrement interrogé sans renvoyer de nouvelles données déplace
+l'instant suivi à sa fin, de sorte que l'exécution suivante ne couvre que ce qui est nouveau :
+
+- Avec `Du plus ancien au plus récent`, l'instant suivi avance après chaque sous-intervalle vide, comme il le fait après
+  un sous-intervalle contenant des données.
+- Avec `Du plus récent au plus ancien`, l'instant suivi avance jusqu'à la fin de la fenêtre une fois que tous les
+  sous-intervalles sont terminés sans nouvelles données. Lorsque des données sont trouvées, leur horodatage le plus
+  récent est conservé, comme avec le comportement par défaut.
+- Un sous-intervalle interrompu par l'arrêt du connecteur ne fait pas avancer l'instant suivi, et celui-ci ne dépasse
+  jamais l'heure de la requête (un `Décalage de l'heure de fin` positif peut repousser la fin de la fenêtre dans le
+  futur).
+
+Les données arrivant plus tard avec un horodatage antérieur à l'instant suivi ne sont alors lues que si elles tombent
+dans un `Décalage de l'heure de début` négatif. Conservez le comportement par défaut lorsque des données en retard
+peuvent arriver plus loin dans le passé ; choisissez `Avancer l'instant suivi` pour les sources clairsemées dont les
+données, lorsqu'elles arrivent, sont horodatées peu de temps avant leur arrivée.
+
 ## Assembler le tout : un exemple concret {#putting-it-together-a-real-life-example}
 
 Un connecteur South MSSQL interroge 200 tags depuis une table historian. La base de données valide les insertions par
@@ -359,3 +389,4 @@ laisserait les trois autres valeurs telles quelles.
 | Il faut éviter les lectures en double, on peut attendre l'exécution suivante pour des valeurs déjà disponibles | `Décalage de l'heure de fin` négatif                                       |
 | Les tableaux de bord doivent afficher rapidement les valeurs actuelles pendant un long rattrapage              | `Stratégie de récupération` → `newest`                                     |
 | Le rattrapage doit être sécurisé en cas de plantage avec un minimum de travail répété                          | `Stratégie de récupération` → `oldest` (par défaut)                        |
+| Une source sans nouvelles données depuis longtemps est interrogée avec de plus en plus de sous-requêtes        | `Si aucune donnée n'est trouvée` → `advance`                               |

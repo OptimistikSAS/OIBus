@@ -10,21 +10,26 @@ Transférez et lisez de manière sécurisée des fichiers depuis des serveurs SF
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Paramètre                   | Description                                           | Exemple de valeur |
-| --------------------------- | ----------------------------------------------------- | ----------------- |
-| **Hôte**                    | Adresse IP ou nom d'hôte du serveur SFTP.             | `192.168.1.100`   |
-| **Port**                    | Port pour la connexion. Par défaut : `22`.            | `22`              |
-| **Compresser les fichiers** | Active la compression gzip avant le traitement North. | Activé/Désactivé  |
+| Paramètre                            | Description                                                                                                               | Exemple de valeur |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Hôte**                             | Adresse IP ou nom d'hôte du serveur SFTP.                                                                                 | `192.168.1.100`   |
+| **Port**                             | Port pour la connexion. Par défaut : `22`.                                                                                | `22`              |
+| **Intervalle de nouvelle tentative** | Délai (en ms) avant de se reconnecter après un échec de connexion ou une déconnexion inattendue. Par défaut : `10000` ms. | `10000`           |
+
+Pour compresser les fichiers (gzip), utilisez le transformateur
+[Fichier (tel quel, renommé ou converti)](../engine/transformers.mdx#file-as-is-renamed-or-converted) avec le type de
+fichier **Tout fichier** et **Compresser le fichier** activé. Avant la 3.10, le connecteur compressait lui-même ses fichiers :
+la mise à jour déplace ce paramètre vers un tel transformateur partout où ses fichiers étaient envoyés tels quels.
 
 ### Authentification {#authentication}
 
-| Paramètre               | Description                                                                                  | Exemple de valeur                  |
-| ----------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Authentification        | Méthode d'authentification.                                                                  | `Username/Password`, `Private Key` |
-| Nom d'utilisateur       | Nom d'utilisateur pour l'authentification SFTP.                                              | `sftp_user`                        |
-| Mot de passe            | Mot de passe (pour l'authentification Nom d'utilisateur/Mot de passe).                       | `••••••••`                         |
-| Chemin de la clé privée | Chemin vers le fichier de clé privée au format PEM (pour l'authentification par clé privée). | `/home/user/.ssh/id_rsa`           |
-| Phrase secrète          | Phrase secrète de la clé privée, si elle est protégée (facultatif).                          | `••••••••`                         |
+| Paramètre         | Description                                                                                  | Exemple de valeur                  |
+| ----------------- | -------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Authentification  | Méthode d'authentification.                                                                  | `Username/Password`, `Private key` |
+| Nom d'utilisateur | Nom d'utilisateur pour l'authentification SFTP.                                              | `sftp_user`                        |
+| Mot de passe      | Mot de passe (pour l'authentification Nom d'utilisateur/Mot de passe).                       | `••••••••`                         |
+| Clé privée        | Chemin vers le fichier de clé privée au format PEM (pour l'authentification par clé privée). | `/home/user/.ssh/id_rsa`           |
+| Phrase secrète    | Phrase secrète de la clé privée, si elle est protégée (facultatif).                          | `••••••••`                         |
 
 :::info Notes sur la clé privée
 

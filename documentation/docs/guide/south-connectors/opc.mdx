@@ -91,16 +91,16 @@ edit form.
 
 ## Item Settings {#item-settings}
 
-| Setting    | Description                                                                    | Example Value                   |
-| ---------- | ------------------------------------------------------------------------------ | ------------------------------- |
-| Node ID    | Path to data in OPC server namespace                                           | `Channel1.Device1.Tag1`         |
-| Aggregate  | Data aggregation method (verify server support). See note below for full list. | `Raw`, `Average`, `Minimum`, …  |
-| Resampling | Resample aggregated values at requested interval (requires non-Raw aggregate)  | `None`, `1 second`, `1 hour`, … |
+| Setting    | Description                                                                                                  | Example Value                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| Node ID    | Path to data in OPC server namespace                                                                         | `Channel1.Device1.Tag1`         |
+| Aggregate  | Data aggregation method (verify server support). See note below for full list.                               | `Raw`, `Average`, `Minimum`, …  |
+| Resampling | Resample aggregated values at requested interval (not available with the `Raw` and `Annotations` aggregates) | `None`, `1 second`, `1 hour`, … |
 
 :::caution Compatibility Notes
 
 1. **Aggregation Support**: Not all servers support all aggregation methods
-2. **Resampling**: Only available when aggregate ≠ `Raw`
+2. **Resampling**: Only available when aggregate is neither `Raw` nor `Annotations`
 3. **Recommended Settings**: Use `Raw` aggregation and `None` resampling for maximum compatibility
 4. **Server Capabilities**: Verify supported features with your OPC server documentation
 
@@ -162,4 +162,4 @@ edit form.
 
 - Node ID: `Process.Vessel.Pressure`
 - Aggregate: `Minimum`
-- Resampling: `1s`
+- Resampling: `1 second`

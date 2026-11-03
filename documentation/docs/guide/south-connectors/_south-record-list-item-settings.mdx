@@ -3,14 +3,15 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 ## Group Settings {#group-settings}
 
 Items can be organised into groups. Each group defines a shared collection schedule and default throttling
-settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
-provides common defaults that individual items can override.
+settings. Items in the same group are still fetched **one at a time** in sequence — unless **Max parallel queries** is
+above 1 (MSSQL, MySQL, PostgreSQL, Oracle, ODBC) — the group simply provides common defaults that individual items
+can override.
 
-| Setting        | Description                                                                                                                                       | Example Value             |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| **Name**       | Unique label for the group within this connector.                                                                                                 | `Group A`                 |
-| **Scan mode**  | Schedule used to collect all items in the group.                                                                                                  | `Every 1 min`             |
-| **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) inherited by items in the group. | `3600, 200, 0, 0, oldest` |
+| Setting        | Description                                                                                                                                                              | Example Value                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| **Name**       | Unique label for the group within this connector.                                                                                                                        | `Group A`                       |
+| **Scan mode**  | Schedule used to collect all items in the group.                                                                                                                         | `Every 1 min`                   |
+| **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy, When no data is found) inherited by items in the group. | `3600, 200, 0, 0, oldest, keep` |
 
 ## Item Settings {#item-settings}
 
@@ -85,7 +86,8 @@ WHERE CONVERT(datetime, string_field) > @StartTime
 
 ### Data Flow Process {#data-flow-process}
 
-1. OIBus executes each configured query sequentially.
+1. OIBus executes each configured query sequentially, unless **Max parallel queries** is above 1 (MSSQL, MySQL,
+   PostgreSQL, Oracle, ODBC).
 2. Rows are sent downstream as-is — no column is parsed, reformatted, or reshaped.
 3. If **Track instant** is enabled, the tracked field's max value across the batch is extracted, converted to
    UTC, and stored as the next `@StartTime`.
