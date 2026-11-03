@@ -885,9 +885,8 @@
             "password": "密码"
           },
           "opc": {
-            "agent-url": "远程代理 URL",
             "retry-interval": "重试间隔",
-            "host": "服务器 URL（来自代理）",
+            "host": "服务器主机",
             "server-name": "服务器名称",
             "mode": {
               "title": "模式",
@@ -2812,7 +2811,7 @@
       "odbc": "使用 ODBC 驱动程序查询 SQL 数据库",
       "oianalytics": "从 OIAnalytics® 查询时间值",
       "oledb": "使用 OLEDB 查询 SQL 数据库",
-      "opc": "连接到 OIBus Agent 以从 OPC Classic™（HDA/DA）服务器获取数据",
+      "opc": "从 OPC Classic™（HDA/DA）服务器获取数据",
       "opcua": "从 OPC UA™ 服务器（HA/DA）查询数据",
       "oracle": "从 Oracle Database™ 查询数据",
       "osisoft-pi": "与 OIBus Agent 建立连接以访问 PI System™ 数据",

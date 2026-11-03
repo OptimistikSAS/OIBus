@@ -21,23 +21,6 @@ const manifest: SouthConnectorManifest = {
     validators: [],
     attributes: [
       {
-        type: 'string',
-        key: 'agentUrl',
-        translationKey: 'configuration.oibus.manifest.south.opc.agent-url',
-        defaultValue: 'http://ip-adress-or-host:2224',
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 9,
-          displayInViewMode: false
-        }
-      },
-      {
         type: 'number',
         key: 'retryInterval',
         translationKey: 'configuration.oibus.manifest.south.opc.retry-interval',

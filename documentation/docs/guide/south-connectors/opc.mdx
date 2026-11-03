@@ -6,32 +6,39 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OPC Classic™
 
-Connect to OPC Classic™ servers using OIBus with the [OIBus Agent](../oibus-agent/installation.mdx).
+Connect OIBus to OPC Classic™ servers (DA and HDA). OIBus talks to the server itself through a small Windows helper
+process shipped with it: no OIBus Agent is needed.
 
 :::info Technology Context
 
 - Industrial communication protocol by [OPC Foundation](https://opcfoundation.org/)
 - Supports both HDA and DA mode
-- Requires Windows-based OIBus Agent
+- OIBus must run on Windows
 - For OPC UA, see [OPC UA connector](./opcua.mdx)
 
 :::
 
 :::caution System Requirements
-OIBus Agent **must** be installed on a Windows machine
+
+- OIBus **must** run on Windows (x64, x86 or ARM64) to use this connector.
+- The [OPC Core Components](https://opcfoundation.org/developer-tools/samples-and-tools-classic/core-components/)
+  of the OPC Foundation (proxy/stub DLLs and OpcEnum) **must** be installed on the OIBus machine. Most OPC server
+  installers already deploy them; otherwise install the OPC Foundation's redistributable package.
+- To reach a server on another machine, DCOM must be configured between both machines.
+
 :::
 
 ## OPC Classic vs OPC UA {#opc-classic-vs-opc-ua}
 
-|                          | OPC Classic™                                                                                                        | OPC UA                                                                                     |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Standard**             | Three separate specs: **DA** (live values), **HDA** (historical data), **AE** (alarms &amp; events)                 | Single unified standard: **DA** (live values) + **HA** (historical access) + alarms        |
-| **Historical mode name** | **HDA** — Historical Data Access                                                                                    | **HA** — Historical Access (OPC UA Part 11). Same concept, different name — see note below |
-| **Transport**            | COM/DCOM — Windows inter-process communication only                                                                 | TCP/IP or HTTPS — works over any IP network                                                |
-| **Platform**             | Windows only                                                                                                        | Cross-platform: Windows, Linux, macOS, embedded                                            |
-| **Security**             | Relies on Windows domain/DCOM security                                                                              | Built-in: message signing, encryption, certificate-based auth                              |
-| **Introduced**           | 1996                                                                                                                | 2006                                                                                       |
-| **OIBus requirement**    | Requires an [OIBus Agent](../oibus-agent/installation.mdx) running on the Windows machine that hosts the OPC server | Connects directly from OIBus — no agent needed                                             |
+|                          | OPC Classic™                                                                                        | OPC UA                                                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Standard**             | Three separate specs: **DA** (live values), **HDA** (historical data), **AE** (alarms &amp; events) | Single unified standard: **DA** (live values) + **HA** (historical access) + alarms        |
+| **Historical mode name** | **HDA** — Historical Data Access                                                                    | **HA** — Historical Access (OPC UA Part 11). Same concept, different name — see note below |
+| **Transport**            | COM/DCOM — Windows inter-process communication only                                                 | TCP/IP or HTTPS — works over any IP network                                                |
+| **Platform**             | Windows only                                                                                        | Cross-platform: Windows, Linux, macOS, embedded                                            |
+| **Security**             | Relies on Windows domain/DCOM security                                                              | Built-in: message signing, encryption, certificate-based auth                              |
+| **Introduced**           | 1996                                                                                                | 2006                                                                                       |
+| **OIBus requirement**    | OIBus running on Windows, with the OPC Core Components installed                                    | Connects directly from OIBus — no agent needed                                             |
 
 :::note HDA vs HA — the naming confusion
 Users coming from an OPC Classic background often look for **HDA** in OPC UA and cannot find it.
@@ -44,8 +51,8 @@ interoperable**.
 
 **Choose OPC Classic** when your infrastructure already runs OPC DA or OPC HDA servers that cannot be
 migrated. The COM/DCOM technology that OPC Classic relies on is Windows-only and does not travel over
-standard IP networks without DCOM tunnelling — hence the requirement for OIBus Agent to run directly on
-the Windows host.
+standard IP networks without DCOM tunnelling — hence the requirement for OIBus to run on Windows, ideally on
+the same host as the OPC server.
 
 **Choose OPC UA** for any new deployment. OPC UA is the current industry standard, supported on all
 platforms and with security built in. See the [OPC UA connector](./opcua.mdx) for details.
@@ -64,13 +71,12 @@ platforms and with security built in. See the [OPC UA connector](./opcua.mdx) fo
 
 ## Specific Settings {#specific-settings}
 
-| Setting          | Description                                | Example Value               |
-| ---------------- | ------------------------------------------ | --------------------------- |
-| Remote agent URL | Agent endpoint (e.g., `http://host:2224`)  | `http://192.168.1.100:2224` |
-| Retry interval   | Time (ms) before connection retry          | 10000                       |
-| Server URL       | Address of OPC server (from agent machine) | `localhost` or IP address   |
-| Server name      | OPC server name (ProgID)                   | `Matrikon.OPC.Simulation`   |
-| Mode             | Data access mode (DA or HDA)               | `HDA`                       |
+| Setting        | Description                             | Example Value             |
+| -------------- | --------------------------------------- | ------------------------- |
+| Retry interval | Time (ms) before connection retry       | 10000                     |
+| Server host    | Host of the OPC server, seen from OIBus | `localhost` or IP address |
+| Server name    | OPC server name (ProgID)                | `Matrikon.OPC.Simulation` |
+| Mode           | Data access mode (DA or HDA)            | `HDA`                     |
 
 ## Group Settings {#group-settings}
 
@@ -163,3 +169,9 @@ edit form.
 - Node ID: `Process.Vessel.Pressure`
 - Aggregate: `Minimum`
 - Resampling: `1 second`
+
+## Third-Party Components {#third-party-components}
+
+The Windows helper uses the OPC Foundation's OPC Classic .NET API, under the OPC Foundation MIT License. The OPC Core
+Components are not shipped with OIBus. OIBus is not affiliated with or endorsed by the OPC Foundation; OPC Classic™ and
+the OPC Foundation's names are trademarks of their owner.
