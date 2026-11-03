@@ -547,6 +547,21 @@ export function toDatabaseSouthSettings(southType: string, settings: Record<stri
 }
 
 /**
+ * The ODBC South no longer goes through the OIBus Agent: it always uses the local ODBC driver. The settings only used
+ * by the agent (its toggle and URL, its reconnection interval and its HTTP request timeout) are removed.
+ */
+export function withoutOdbcAgentSettings(settings: Record<string, unknown>): Record<string, unknown> {
+  const {
+    remoteAgent: _remoteAgent,
+    agentUrl: _agentUrl,
+    retryInterval: _retryInterval,
+    requestTimeout: _requestTimeout,
+    ...rest
+  } = settings;
+  return rest;
+}
+
+/**
  * The setpoints sent by OIAnalytics are records (`{ reference, value }`): the setpoint transformers are replaced by the
  * record-list ones.
  */
@@ -1621,6 +1636,17 @@ function addDatabaseConnectionSettings(config: JsonObject): void {
   }
 }
 
+/** See `withoutOdbcAgentSettings`, for the connectors and the history queries */
+function removeOdbcAgentSettings(config: JsonObject): void {
+  forEachSouth(config, 'odbc', south => {
+    const settings = south.settings as JsonObject;
+    if (settings.settings) settings.settings = withoutOdbcAgentSettings(settings.settings as JsonObject);
+  });
+  forEachHistoryQuery(config, 'odbc', settings => {
+    if (settings.southSettings) settings.southSettings = withoutOdbcAgentSettings(settings.southSettings as JsonObject);
+  });
+}
+
 /** See `toFieldProcessOperations`, on the links of the north connectors and of the history queries */
 function convertFieldProcessesToOperations(config: JsonObject): void {
   const transformerIds = asObjects(config.transformers)
@@ -1778,6 +1804,7 @@ export const upgrade: ConfigUpgrade = {
     addOPCUATimeoutsAndSubscriptionSettings(config);
     addDatabaseConnectionSettings(config);
     convertFieldProcessesToOperations(config);
+    removeOdbcAgentSettings(config);
 
     return config;
   }

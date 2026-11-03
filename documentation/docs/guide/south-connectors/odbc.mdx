@@ -6,13 +6,13 @@ import ItemSettings from './_south-record-list-item-settings.mdx';
 
 # ODBC
 
-Connect to ODBC data sources either locally or through a remote [OIBus Agent](../oibus-agent/odbc.md). Particularly useful for systems like Aspen InfoPlus.21® (IP21) and other ODBC-compatible applications.
+Connect to ODBC data sources through an ODBC driver installed on the OIBus machine. Particularly useful for systems like Aspen InfoPlus.21® (IP21) and other ODBC-compatible applications.
 
 :::info Compatibility Notes
 
 - Works with any ODBC-compatible data source
 - Recommended for Aspen IP21 connections
-- Supports both local and remote driver configurations
+- Requires the ODBC driver of the data source on the OIBus machine
 
 :::
 
@@ -20,17 +20,13 @@ Connect to ODBC data sources either locally or through a remote [OIBus Agent](..
 
 | Setting              | Description                                                                                                                                                                                                       | Example Value                                     |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Use remote agent     | Enable to route queries through an OIBus Agent on a remote machine.                                                                                                                                               | Enabled/Disabled                                  |
-| Remote agent URL     | Agent endpoint URL. Required when using remote agent.                                                                                                                                                             | `http://host:2224`                                |
 | Connection timeout   | Maximum time in milliseconds to establish connection. Default: `15000`.                                                                                                                                           | `15000`                                           |
-| Retry interval       | Time in milliseconds to wait before retrying the connection. Default: `10000`.                                                                                                                                    | `10000`                                           |
-| Request timeout      | _(Only used with **Use remote agent**)_ Maximum execution time in milliseconds for individual queries, sent to the agent. Default: `15000`. Not applicable to local (non-agent) connections.                      | `15000`                                           |
 | Connection string    | ODBC connection string in driver-specific format.                                                                                                                                                                 | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
 | Password             | Authentication password (stored securely). Always appended as `PWD=<password>;` — if your connection string already includes its own `PWD=`/`Pwd=` entry, remove it here or from the string to avoid a duplicate. | `••••••••`                                        |
-| Max parallel queries | Maximum number of items or groups queried at the same time, from `1` (sequential) to `8`. Default: `1`. Local driver only: through the remote agent, the queries stay sequential.                                 | `2`                                               |
+| Max parallel queries | Maximum number of items or groups queried at the same time, from `1` (sequential) to `8`. Default: `1`.                                                                                                           | `2`                                               |
 
 :::note Parallel queries
-With the local driver, each query running in parallel opens its own connection to the database and adds to the load of the source. The ODBC driver calls run on the Node.js thread pool (4 threads by default, shared with file access): a value above `4` does not speed them up. Through the remote agent, the queries stay sequential whatever this value.
+Each query running in parallel opens its own connection to the database and adds to the load of the source. The ODBC driver calls run on the Node.js thread pool (4 threads by default, shared with file access): a value above `4` does not speed them up.
 :::
 
 ### Connection String Examples {#connection-string-examples}
@@ -64,15 +60,14 @@ With the local driver, each query running in parallel opens its own connection t
 
 For optimal IP21 performance:
 
-1. Install OIBus Agent on IP21 machine
-2. Use connection string: `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014;MAXROWS=12000000`
-3. Ensure `AspenTech SQLplus` driver is installed on agent machine
-4. Configure agent service with appropriate permissions
+1. Install OIBus on the IP21 machine, or at least on the same local network (the SQLplus driver is sensitive to network latency)
+2. Install the `AspenTech SQLplus` ODBC driver on the OIBus machine
+3. Use connection string: `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014;MAXROWS=12000000`
 
 :::caution Authentication
 
 - Passwords in connection strings are stored in plain text. Use **Password** field instead.
-- For local authentication, ensure OIBus Agent runs with proper permissions
+- For local authentication, ensure the OIBus service runs with proper permissions
 
 :::
 
@@ -88,11 +83,4 @@ The following **Type** values are available for the tracking instant's datetime 
 | UNIX epoch (s)  | Unix timestamp in seconds                         |
 | UNIX epoch (ms) | Unix timestamp in milliseconds                    |
 
-:::
-
-:::info Through the OIBus Agent
-The agent returns the rows as text: the tracked field comes as an ISO 8601 string in UTC (e.g.
-`2024-01-15T10:30:00.000Z`), every other column as the database driver renders it, and empty or null values as
-`null`. Use a [record-list transformer](../engine/transformers.mdx) to format them downstream (e.g. CSV from
-Record list).
 :::

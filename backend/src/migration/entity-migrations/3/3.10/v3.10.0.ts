@@ -57,6 +57,7 @@ import {
   toSetpointTransformerOptions,
   usesRemoteAgent,
   withItemRequestTimeout,
+  withoutOdbcAgentSettings,
   withPrefixAndSuffix
 } from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
 import { generateRandomId } from '../../../../service/utils';
@@ -116,7 +117,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   addItemAndWorkflowDescriptions,
   addEmptyIntervalStrategies,
   addDatabaseConnectionSettings,
-  convertFieldProcessesToOperations
+  convertFieldProcessesToOperations,
+  removeOdbcAgentSettings
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -1775,5 +1777,24 @@ export async function convertFieldProcessesToOperations(knex: Knex): Promise<voi
     .whereIn('function_name', FIELD_PROCESS_FUNCTION_NAMES);
   for (const transformer of transformers) {
     await moveLinks(knex, transformer.id, transformer.id, toFieldProcessOperations);
+  }
+}
+
+/** See `withoutOdbcAgentSettings`, for the connectors and the history queries */
+export async function removeOdbcAgentSettings(knex: Knex): Promise<void> {
+  const targets = [
+    { table: SOUTH_CONNECTORS_TABLE, typeColumn: 'type', settingsColumn: 'settings' },
+    { table: HISTORY_QUERIES_TABLE, typeColumn: 'south_type', settingsColumn: 'south_settings' }
+  ];
+  for (const { table, typeColumn, settingsColumn } of targets) {
+    const rows: Array<{ id: string; settings: string }> = await knex(table)
+      .select('id', `${settingsColumn} as settings`)
+      .where(typeColumn, 'odbc');
+    await bulkUpdateSettings(
+      knex,
+      table,
+      settingsColumn,
+      rows.map(row => ({ id: row.id, settings: JSON.stringify(withoutOdbcAgentSettings(JSON.parse(row.settings))) }))
+    );
   }
 }

@@ -15,7 +15,7 @@ Each use case covers a specific South → North pairing. Before following a use 
 | [Microsoft SQL Server → Azure Blob Storage](./use-case-mssql) | MSSQL                        | Azure Blob Storage |
 | [ADS / TwinCAT → OIAnalytics](./use-case-ads)                 | ADS                          | OIAnalytics        |
 | [Modbus → File Writer](./use-case-modbus)                     | Modbus                       | File Writer        |
-| [Aspen IP21 → Amazon S3](./use-case-ip21)                     | ODBC (via OIBus Agent)       | Amazon S3          |
+| [Aspen IP21 → Amazon S3](./use-case-ip21)                     | ODBC                         | Amazon S3          |
 | [OSIsoft PI → OIAnalytics](./use-case-pi)                     | OSIsoft PI (via OIBus Agent) | OIAnalytics        |
 | [Advanced multi-network setup](./use-case-advanced)           | Multiple                     | Multiple           |
 
