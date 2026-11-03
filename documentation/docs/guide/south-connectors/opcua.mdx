@@ -19,15 +19,15 @@ OPC Unified Architecture (OPC UA) protocol for secure industrial data access in 
 
 ## OPC Classic vs OPC UA {#opc-classic-vs-opc-ua}
 
-|                          | OPC Classic™                                                                                                        | OPC UA                                                                                     |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Standard**             | Three separate specs: **DA** (live values), **HDA** (historical data), **AE** (alarms &amp; events)                 | Single unified standard: **DA** (live values) + **HA** (historical access) + alarms        |
-| **Historical mode name** | **HDA** — Historical Data Access                                                                                    | **HA** — Historical Access (OPC UA Part 11). Same concept, different name — see note below |
-| **Transport**            | COM/DCOM — Windows inter-process communication only                                                                 | TCP/IP or HTTPS — works over any IP network                                                |
-| **Platform**             | Windows only                                                                                                        | Cross-platform: Windows, Linux, macOS, embedded                                            |
-| **Security**             | Relies on Windows domain/DCOM security                                                                              | Built-in: message signing, encryption, certificate-based auth                              |
-| **Introduced**           | 1996                                                                                                                | 2006                                                                                       |
-| **OIBus requirement**    | Requires an [OIBus Agent](../oibus-agent/installation.mdx) running on the Windows machine that hosts the OPC server | Connects directly from OIBus — no agent needed                                             |
+|                          | OPC Classic™                                                                                        | OPC UA                                                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Standard**             | Three separate specs: **DA** (live values), **HDA** (historical data), **AE** (alarms &amp; events) | Single unified standard: **DA** (live values) + **HA** (historical access) + alarms        |
+| **Historical mode name** | **HDA** — Historical Data Access                                                                    | **HA** — Historical Access (OPC UA Part 11). Same concept, different name — see note below |
+| **Transport**            | COM/DCOM — Windows inter-process communication only                                                 | TCP/IP or HTTPS — works over any IP network                                                |
+| **Platform**             | Windows only                                                                                        | Cross-platform: Windows, Linux, macOS, embedded                                            |
+| **Security**             | Relies on Windows domain/DCOM security                                                              | Built-in: message signing, encryption, certificate-based auth                              |
+| **Introduced**           | 1996                                                                                                | 2006                                                                                       |
+| **OIBus requirement**    | OIBus running on Windows, with the OPC Core Components installed                                    | Connects directly from OIBus — no agent needed                                             |
 
 :::note HDA vs HA — the naming confusion
 Users coming from an OPC Classic background often look for **HDA** in OPC UA and cannot find it.
@@ -38,7 +38,7 @@ it `HA`. Do not confuse OPC UA HA with OPC Classic HDA: they are separate protoc
 interoperable**.
 :::
 
-**Choose OPC Classic** when your infrastructure already runs OPC DA or OPC HDA servers that cannot be migrated. An OIBus Agent must be deployed on the Windows machine that hosts those servers.
+**Choose OPC Classic** when your infrastructure already runs OPC DA or OPC HDA servers that cannot be migrated. OIBus must run on Windows, with the OPC Core Components installed, ideally on the same host as the OPC server.
 
 **Choose OPC UA** for any new deployment. OPC UA is the current industry standard: platform-independent, network-friendly, and with native security built in.
 

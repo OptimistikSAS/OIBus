@@ -27,7 +27,7 @@ Protocole OPC Unified Architecture (OPC UA) pour un accès sécurisé aux donné
 | **Plateforme**             | Windows uniquement                                                                                                             | Multi-plateforme : Windows, Linux, macOS, embarqué                                                 |
 | **Sécurité**               | Repose sur la sécurité du domaine/DCOM Windows                                                                                 | Intégrée : signature des messages, chiffrement, authentification par certificat                    |
 | **Introduit en**           | 1996                                                                                                                           | 2006                                                                                               |
-| **Exigence OIBus**         | Nécessite un [agent OIBus](../oibus-agent/installation.mdx) s'exécutant sur la machine Windows hébergeant le serveur OPC       | Se connecte directement depuis OIBus — aucun agent requis                                          |
+| **Exigence OIBus**         | OIBus sous Windows, avec les OPC Core Components installés                                                                     | Se connecte directement depuis OIBus — aucun agent requis                                          |
 
 :::note HDA vs HA — la confusion des noms
 Les utilisateurs venant d'un environnement OPC Classic cherchent souvent **HDA** dans OPC UA et ne le trouvent pas.
@@ -38,7 +38,7 @@ a changé. Dans OIBus, le connecteur OPC Classic appelle le mode `HDA`, et le co
 interopérables**.
 :::
 
-**Choisissez OPC Classic** lorsque votre infrastructure exploite déjà des serveurs OPC DA ou OPC HDA qui ne peuvent pas être migrés. Un agent OIBus doit être déployé sur la machine Windows qui héberge ces serveurs.
+**Choisissez OPC Classic** lorsque votre infrastructure exploite déjà des serveurs OPC DA ou OPC HDA qui ne peuvent pas être migrés. OIBus doit s'exécuter sous Windows, avec les OPC Core Components installés, idéalement sur le même hôte que le serveur OPC.
 
 **Choisissez OPC UA** pour tout nouveau déploiement. OPC UA est la norme actuelle de l'industrie : indépendante de la plateforme, adaptée aux réseaux, et avec une sécurité native intégrée.
 
