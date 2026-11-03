@@ -40,21 +40,21 @@ Utilisez le bouton **Tester les paramètres** pour vérifier votre configuration
 
 Configurez le moment où les données sont envoyées à l'application cible :
 
-| Paramètre              | Description                                                                                                                  | Exemple de valeur |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| **Planification**      | Définit la fréquence de transmission des données. Configurez à l'aide des [modes de scan](../engine/scan-modes.mdx).         | `Every 10 s`      |
-| **Nombre d'éléments**  | (Charges utiles JSON) Envoie les données lorsque le nombre d'éléments spécifié est atteint, en contournant la planification. | `1000`            |
-| **Nombre de fichiers** | (Fichiers) Envoie les données lorsque le nombre de fichiers spécifié est atteint, en contournant la planification.           | `10`              |
+| Paramètre              | Description                                                                                                                                                       | Exemple de valeur |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Planification**      | Définit la fréquence de transmission des données. Configurez à l'aide des [modes de scan](../engine/scan-modes.mdx).                                              | `Every 10 s`      |
+| **Nombre d'éléments**  | (Listes d'enregistrements) Envoie les données lorsque le nombre d'éléments spécifié est atteint, en contournant la planification. `0` désactive ce déclenchement. | `1000`            |
+| **Nombre de fichiers** | (Fichiers) Envoie les données lorsque le nombre de fichiers spécifié est atteint, en contournant la planification. `0` désactive ce déclenchement.                | `10`              |
 
 ### Limitation {#throttling}
 
 Contrôlez la transmission des données pour éviter de surcharger la cible ou le réseau :
 
-| Paramètre                                  | Description                                                                                                                             | Exemple de valeur |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| **Délai minimum entre deux transmissions** | Temps (en millisecondes) à attendre entre les transmissions.                                                                            | `1000`            |
-| **Nombre maximal d'éléments**              | Nombre maximum d'éléments envoyés dans une seule transmission.                                                                          | `10000`           |
-| **Taille maximale de stockage**            | Taille maximale (en Mo) pour le cache + les erreurs + l'archive. Les données excédentaires sont supprimées une fois la limite atteinte. | `1000`            |
+| Paramètre                                  | Description                                                                                                                                                         | Exemple de valeur |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Délai minimum entre deux transmissions** | Temps (en millisecondes) à attendre entre les transmissions.                                                                                                        | `1000`            |
+| **Nombre maximal d'éléments**              | Nombre maximum d'éléments envoyés dans une seule transmission.                                                                                                      | `10000`           |
+| **Taille maximale de stockage**            | Taille maximale (en Mo) pour le cache + les erreurs + l'archive. Les données excédentaires sont supprimées une fois la limite atteinte. `0` signifie aucune limite. | `1000`            |
 
 ### Erreurs {#errors}
 
@@ -94,17 +94,18 @@ Les transformateurs s'exécutent **avant la mise en cache des données** — ils
 des connecteurs South et déterminent ce qui entre réellement dans le cache du connecteur North. Vous pouvez appliquer un
 ou plusieurs transformateurs à un connecteur North pour :
 
-- **Filtrer les données** : inclure ou exclure des points de données spécifiques en fonction du type de source.
+- **Filtrer les données** : inclure ou exclure des points de données spécifiques en fonction de leur source.
 - **Modifier les données** : changer des valeurs, renommer des champs ou restructurer les données.
 - **Enrichir les données** : ajouter du contexte ou des métadonnées supplémentaires.
 - **Convertir les formats** : transformer les données entre différents formats (par exemple, de JSON vers CSV).
 
-Chaque transformateur est associé à un **type de source** (le type de données qu'il accepte). Lors de l'ajout d'un
-transformateur, vous sélectionnez d'abord le type de source, puis vous choisissez un transformateur compatible pour ce
-type de connecteur North.
+Chaque transformateur est associé à une **source** (un connecteur South, l'API OIBus ou les consignes OIAnalytics) et,
+pour un connecteur South, aux items auxquels il s'applique. Lors de l'ajout d'un transformateur, vous sélectionnez
+d'abord la source, puis vous choisissez un transformateur compatible pour ce type de connecteur North. Voir
+[Configurer un transformateur](../engine/transformers.mdx#configuring-a-transformer).
 
 :::info Transformateurs standard
-Les transformateurs standard sont préconstruits et disponibles en fonction du type de source et du type de connecteur
+Les transformateurs standard sont préconstruits et disponibles en fonction de la source et du type de connecteur
 North. Ces transformateurs couvrent les cas d'usage courants et peuvent être configurés directement dans l'interface
 utilisateur.
 :::
@@ -122,15 +123,21 @@ Votre transformateur personnalisé sera alors disponible à la sélection dans l
 
 ## Filtrage des données {#data-filtering}
 
-Les transformateurs constituent également le mécanisme de filtrage des données reçues par un connecteur North. En
-sélectionnant un type de source spécifique lors de l'ajout d'un transformateur, vous contrôlez quels types de données
-sont acceptés dans le cache.
+Les transformateurs constituent également le mécanisme de filtrage des données reçues par un connecteur North : un
+connecteur North ne met en cache que les données des sources (et des items) pour lesquelles un transformateur est
+configuré. **Les données sans transformateur sont ignorées.**
 
-:::info Comportement actuel
-Les données qui arrivent sur un connecteur North et qui sont **compatibles avec son type** sont mises en cache et
-envoyées par défaut, même si aucun transformateur n'est configuré pour ce type de source.
+Pour envoyer les données telles quelles, utilisez un transformateur de passage direct :
+[Fichier (tel quel, renommé ou converti)](../engine/transformers.mdx#file-as-is-renamed-or-converted) pour les fichiers
+et les charges utiles JSON, ou [Fichier](../engine/transformers.mdx#file-from-records) pour les listes d'enregistrements
+(consignes OIAnalytics comprises).
 
-Ce comportement par défaut est appelé à changer dans une future version d'OIBus : les données non appariées seront
-**ignorées par défaut** plutôt que transmises. Si vous vous appuyez aujourd'hui sur cette transmission implicite,
-ajoutez un transformateur explicite pour conserver ce comportement après la mise à niveau.
+:::info Mise à jour vers la 3.10
+Avant la 3.10, les données compatibles avec le type du connecteur North étaient mises en cache sans transformateur, et
+les transformateurs **Pas de transformation** et **Ignorer** les forçaient ou les empêchaient. Lors de la mise à jour,
+OIBus ajoute les transformateurs de passage direct reproduisant ce que chaque connecteur North recevait (au niveau du
+connecteur South, afin que les nouveaux items soient toujours envoyés), remplace **Pas de transformation** par ceux-ci,
+et écarte les items réglés sur **Ignorer** des transformateurs dont ils héritaient (**Sauf certains items** ; pour les
+requêtes d'historique, ces transformateurs sont restreints à la liste des autres items). Les fichiers de l'API OIBus
+passent par un transformateur **Fichier (tel quel, renommé ou converti)** s'appliquant à toutes les sources de données.
 :::

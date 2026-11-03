@@ -220,7 +220,7 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 | **密码**     | `pass`（或 `$MQTT_PASSWORD`） |
 
 项目订阅模拟器发布的[标量主题](#scalar-topics)（JSON 主题则用于
-`any-content` / 自定义转换器测试，不适合作为逐点数值项目）：
+文件 / 自定义转换器测试，不适合作为逐点数值项目）：
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/mqtt-item-list.csv">Download item list (CSV)</DownloadButton>
@@ -602,7 +602,7 @@ OIBus 的默认设置一致（`swapWordsInDWords: false`、`endianness: big-endi
 
 - **标量主题** — 单个数字，用于基于数值的项目。
 - **JSON 主题**（位于 `<workshop>/json/<shape>` 下）— 不同形状的结构化负载。OIBus
-  的 MQTT 南向连接器将这些内容作为 `any-content` 摄取，非常适合用来测试自定义转换器。
+  的 MQTT 南向连接器将这些内容作为保存在内存中的 JSON 文件摄取，非常适合用来测试自定义转换器。
 
 ##### 标量主题 {#scalar-topics}
 

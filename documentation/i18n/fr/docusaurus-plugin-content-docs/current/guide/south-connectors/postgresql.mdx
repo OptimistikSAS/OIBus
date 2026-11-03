@@ -55,9 +55,10 @@ OIBus garde un pool d'au plus ce nombre de connexions à la base de données, ou
 Cliquez sur **Explorer** pour parcourir les tables de la base de données (avec leur nombre de colonnes et, lorsque la
 base le fournit, un nombre approximatif de lignes) et les colonnes de chaque table, avec leur type et, lorsque
 disponibles, leur nullabilité, leur clé primaire et leur valeur par défaut. Cochez des tables ou des colonnes et
-cliquez sur **Ajouter comme points** pour créer un élément par table, dont la requête lit les colonnes cochées et est
-suivie sur une colonne date/heure choisie automatiquement — voir
-[Tables SQL comme éléments](./common-settings.md#sql-tables-as-items).
+cliquez sur **Ajouter dans un point** pour commencer un élément dont la requête lit les colonnes cochées (plusieurs tables
+sont jointes), suivi sur une colonne date/heure choisie automatiquement — voir
+[Tables SQL dans un élément](./common-settings.md#sql-tables-as-items) — ou sur **Synchroniser les métadonnées** pour
+envoyer les enregistrements d'une table à OIAnalytics.
 
 Une [synchronisation des points](./common-settings.md#items-synchronisation) sur ce connecteur exécute une requête de
 métadonnées et envoie ses lignes à OIAnalytics ; elle ne crée jamais d'éléments.

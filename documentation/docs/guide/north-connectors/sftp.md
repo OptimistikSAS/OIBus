@@ -1,6 +1,6 @@
 # SFTP
 
-The **SFTP North Connector** securely uploads files and data to an **SFTP (SSH File Transfer Protocol) server**.
+The **SFTP North Connector** securely uploads files to an **SFTP (SSH File Transfer Protocol) server**.
 
 ## Specific Settings {#specific-settings}
 

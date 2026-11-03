@@ -1,7 +1,11 @@
 # 文件写入
 
-**文件写入北向连接器**将文件和数据写入磁盘上指定的输出文件夹。此连接器适用于本地存储、数据处理管道或与基于文件的
-系统集成。
+**文件写入北向连接器**将文件写入磁盘上指定的输出文件夹。此连接器适用于本地存储、数据处理管道或与基于文件的系统集成。
+
+它只接收文件：记录列表（包括 OIAnalytics 设定值）由转换器（例如[文件](../engine/transformers.mdx#file-from-records)）
+写入文件。在 3.10 之前，它也接收记录和设定值：升级时，会通过
+[文件（原样、重命名或转换）](../engine/transformers.mdx#file-as-is-renamed-or-converted)将
+[记录](../engine/transformers.mdx#records-from-file)转换器的行写入 JSON 文件，并删除其发送记录或设定值的自定义转换器。
 
 ## 特定设置 {#specific-settings}
 
@@ -25,22 +29,16 @@
 情况下，仅限交互式会话的凭据管理器即使在原本有权访问该共享的账户下也不可靠。
 :::
 
-### 文件命名选项 {#file-naming-options}
+### 文件名 {#file-names}
 
-| 设置     | 描述                                                                    | 示例值            |
-| -------- | ----------------------------------------------------------------------- | ----------------- |
-| **前缀** | 添加到文件名前面的文本。支持内部变量，如 `@ConnectorName`。             | `@ConnectorName-` |
-| **后缀** | 添加到文件名后面（扩展名之前）的文本。支持内部变量，如 `@CurrentDate`。 | `-@CurrentDate`   |
+文件以其转换器给出的名称写入，不含其子文件夹：即
+[文件（原样、重命名或转换）](../engine/transformers.mdx#file-as-is-renamed-or-converted)和
+[文件](../engine/transformers.mdx#file-from-records)转换器的**文件名**（例如 `@SourceFilename-@CurrentDate@SourceExtension`）。
 
-:::tip 动态文件名
-使用内部变量创建动态文件名：
-
-- `@ConnectorName`：插入连接器的名称。
-- `@CurrentDate`：以 `yyyy_MM_dd_HH_mm_ss_SSS` 格式插入当前时间戳。
-
-**示例**：
-使用前缀 `@ConnectorName-` 和后缀 `-@CurrentDate`，名为 `example.file` 的文件将变为：
-`<ConnectorName>-example-<CurrentDate>.file`
+:::info 升级到 3.10
+在 3.10 之前，连接器会在文件名中添加**前缀**和**后缀**。升级时会将它们添加到其转换器的文件名中，其中 `@ConnectorName`
+会被替换为该连接器的名称（在转换器中，`@ConnectorName` 是南向连接器的名称），并重命名其缓存中等待发送的文件。自定义
+转换器自行为文件命名。
 :::
 
 ## 最佳实践 {#best-practices}

@@ -53,7 +53,7 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 const manifest: NorthConnectorManifest = {
   id: 'console', // must be in OIBUS_NORTH_TYPES
   category: 'debug', // 'debug' | 'api' | 'file' | 'iot'
-  types: ['any', 'time-values', 'setpoint'], // content types this North can deliver
+  types: ['file', 'record-list'], // content types this North can deliver
   settings: {/* OIBusObjectAttribute */}
 };
 
@@ -85,28 +85,28 @@ contenir d'autres attributs — l'imbrication est illimitée.
 
 ### Types d'attributs {#attribute-types}
 
-| `type`            | Élément d'interface       | Type TypeScript généré    | Champs supplémentaires                                                          |
-| ----------------- | -------------------------- | -------------------------- | -------------------------------------------------------------------------------- |
-| `'string'`        | Champ de texte              | `string \| null`          | `defaultValue`                                                                  |
-| `'number'`        | Champ numérique             | `number \| null`          | `defaultValue`, `unit` (e.g. `'ms'`, `'MB'`)                                    |
-| `'boolean'`       | Bascule / case à cocher     | `boolean`                 | `defaultValue`                                                                  |
-| `'secret'`        | Champ de mot de passe (masqué) | `string \| null`          | (chiffré au repos par OIBus)                                                    |
-| `'string-select'` | Liste déroulante            | `string \| null`          | `selectableValues: Array<string>`, `defaultValue`                               |
-| `'code'`          | Éditeur Codemirror          | `string \| null`          | `contentType: 'sql' \| 'json'`, `defaultValue`                                  |
-| `'instant'`       | Sélecteur de date + heure    | `Instant \| null`         | —                                                                               |
-| `'timezone'`      | Sélection de fuseau horaire  | `string \| null`          | `defaultValue`                                                                  |
-| `'scan-mode'`     | Sélection de mode de scan | `ScanMode`                | `acceptableType: 'POLL' \| 'SUBSCRIPTION' \| 'SUBSCRIPTION_AND_POLL'`           |
-| `'certificate'`   | Sélecteur de certificat      | `string \| null`          | —                                                                               |
-| `'object'`        | Conteneur de groupe          | objet imbriqué             | `attributes`, `displayProperties: { visible, wrapInBox }`, `enablingConditions` |
-| `'array'`         | Lignes répétables            | `Array<T>`                | `paginate`, `numberOfElementPerPage`, `rootAttribute`                           |
+| `type`            | Élément d'interface            | Type TypeScript généré | Champs supplémentaires                                                          |
+| ----------------- | ------------------------------ | ---------------------- | ------------------------------------------------------------------------------- |
+| `'string'`        | Champ de texte                 | `string \| null`       | `defaultValue`                                                                  |
+| `'number'`        | Champ numérique                | `number \| null`       | `defaultValue`, `unit` (e.g. `'ms'`, `'MB'`)                                    |
+| `'boolean'`       | Bascule / case à cocher        | `boolean`              | `defaultValue`                                                                  |
+| `'secret'`        | Champ de mot de passe (masqué) | `string \| null`       | (chiffré au repos par OIBus)                                                    |
+| `'string-select'` | Liste déroulante               | `string \| null`       | `selectableValues: Array<string>`, `defaultValue`                               |
+| `'code'`          | Éditeur Codemirror             | `string \| null`       | `contentType: 'sql' \| 'json'`, `defaultValue`                                  |
+| `'instant'`       | Sélecteur de date + heure      | `Instant \| null`      | —                                                                               |
+| `'timezone'`      | Sélection de fuseau horaire    | `string \| null`       | `defaultValue`                                                                  |
+| `'scan-mode'`     | Sélection de mode de scan      | `ScanMode`             | `acceptableType: 'POLL' \| 'SUBSCRIPTION' \| 'SUBSCRIPTION_AND_POLL'`           |
+| `'certificate'`   | Sélecteur de certificat        | `string \| null`       | —                                                                               |
+| `'object'`        | Conteneur de groupe            | objet imbriqué         | `attributes`, `displayProperties: { visible, wrapInBox }`, `enablingConditions` |
+| `'array'`         | Lignes répétables              | `Array<T>`             | `paginate`, `numberOfElementPerPage`, `rootAttribute`                           |
 
 Chaque attribut feuille porte les mêmes champs communs :
 
-| Champ               | Objet                                                                                            |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| `key`               | nom de champ en camelCase — devient la propriété TypeScript                                          |
-| `translationKey`    | clé i18n pour le libellé                                                                             |
-| `validators`        | Tableau de `{ type, arguments }` — voir ci-dessous                                                    |
+| Champ               | Objet                                                                                                          |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `key`               | nom de champ en camelCase — devient la propriété TypeScript                                                    |
+| `translationKey`    | clé i18n pour le libellé                                                                                       |
+| `validators`        | Tableau de `{ type, arguments }` — voir ci-dessous                                                             |
 | `displayProperties` | `{ row, columns, displayInViewMode }` pour les attributs feuilles, ou `{ visible, wrapInBox }` pour les objets |
 
 ### Un exemple concret {#a-concrete-example}
@@ -260,11 +260,11 @@ items: {
 
 `scanMode.acceptableType` contrôle ce que l'opérateur peut choisir :
 
-| Valeur                    | Effet                                                                            |
-| ------------------------- | ----------------------------------------------------------------------------------- |
-| `'POLL'`                  | Périodique uniquement (par défaut pour la plupart des connecteurs South)             |
+| Valeur                    | Effet                                                                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `'POLL'`                  | Périodique uniquement (par défaut pour la plupart des connecteurs South)                                                |
 | `'SUBSCRIPTION'`          | Piloté par événements uniquement — à utiliser quand le connecteur ne prend en charge QUE les abonnements (par ex. MQTT) |
-| `'SUBSCRIPTION_AND_POLL'` | Les deux sont valides par élément (OPC UA : certains éléments scrutés, d'autres abonnés)   |
+| `'SUBSCRIPTION_AND_POLL'` | Les deux sont valides par élément (OPC UA : certains éléments scrutés, d'autres abonnés)                                |
 
 Un exemple réel complet se trouve dans `backend/src/south/south-folder-scanner/manifest.ts`.
 

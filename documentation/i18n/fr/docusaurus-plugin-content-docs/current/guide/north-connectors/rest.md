@@ -6,7 +6,9 @@ acceptant des charges utiles JSON ou des téléversements de fichiers.
 
 OIBus peut transmettre :
 
-- **Charges utiles de valeurs temporelles** : sérialisées en tant que corps JSON ou fichier JSON envoyé via FormData.
+- **Listes d'enregistrements** : converties en fichier JSON par le
+  [transformateur Fichier](../engine/transformers.mdx#file-from-records), puis envoyées en tant que corps JSON ou fichier
+  JSON via FormData.
 - **Fichiers** : transférés tels quels (compressés ou non compressés) via FormData.
 
 **Exemples de cas d'usage** :

@@ -91,16 +91,16 @@ formulaire d'édition de l'élément.
 
 ## Paramètres des éléments {#item-settings}
 
-| Paramètre         | Description                                                                                                        | Exemple de valeur               |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| ID de nœud        | Chemin vers les données dans l'espace de noms du serveur OPC                                                       | `Channel1.Device1.Tag1`         |
-| Agrégat           | Méthode d'agrégation des données (vérifier le support du serveur). Voir la note ci-dessous pour la liste complète. | `Raw`, `Average`, `Minimum`, …  |
-| Rééchantillonnage | Rééchantillonne les valeurs agrégées à l'intervalle demandé (nécessite un agrégat autre que Raw)                   | `None`, `1 second`, `1 hour`, … |
+| Paramètre         | Description                                                                                                           | Exemple de valeur               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| ID de nœud        | Chemin vers les données dans l'espace de noms du serveur OPC                                                          | `Channel1.Device1.Tag1`         |
+| Agrégat           | Méthode d'agrégation des données (vérifier le support du serveur). Voir la note ci-dessous pour la liste complète.    | `Raw`, `Average`, `Minimum`, …  |
+| Rééchantillonnage | Rééchantillonne les valeurs agrégées à l'intervalle demandé (non disponible avec les agrégats `Raw` et `Annotations`) | `None`, `1 second`, `1 hour`, … |
 
 :::caution Remarques de compatibilité
 
 1. **Support de l'agrégation** : Tous les serveurs ne prennent pas en charge toutes les méthodes d'agrégation
-2. **Rééchantillonnage** : Disponible uniquement lorsque l'agrégat ≠ `Raw`
+2. **Rééchantillonnage** : Disponible uniquement lorsque l'agrégat n'est ni `Raw` ni `Annotations`
 3. **Paramètres recommandés** : Utilisez l'agrégat `Raw` et le rééchantillonnage `None` pour une compatibilité maximale
 4. **Capacités du serveur** : Vérifiez les fonctionnalités prises en charge dans la documentation de votre serveur OPC
 
@@ -162,4 +162,4 @@ formulaire d'édition de l'élément.
 
 - ID de nœud : `Process.Vessel.Pressure`
 - Agrégat : `Minimum`
-- Rééchantillonnage : `1s`
+- Rééchantillonnage : `1 second`

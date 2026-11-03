@@ -50,6 +50,7 @@ activez l'option **Utiliser un proxy** et configurez les détails du proxy ci-de
 
 | Paramètre                      | Description                                                  | Exemple de valeur               |
 | ------------------------------ | ------------------------------------------------------------ | ------------------------------- |
+| **Utiliser un proxy**          | Router les requêtes via un serveur proxy.                    | Activé/Désactivé                |
 | **URL du proxy**               | URL du serveur proxy.                                        | `http://proxy.example.com:8080` |
 | **Nom d'utilisateur du proxy** | Nom d'utilisateur pour l'authentification proxy (si requis). | `proxy_user`                    |
 | **Mot de passe du proxy**      | Mot de passe pour l'authentification proxy (si requis).      | `••••••••`                      |
@@ -66,9 +67,9 @@ définissez `HTTPS_PROXY` au niveau du système d'exploitation en complément de
 
 ## Remarques importantes {#important-notes}
 
-- **Le format des données doit correspondre au transformateur** : utilisez le transformateur `oibus-time-values-to-csv`
-  avec le format de données `CSV`, ou le transformateur `oibus-time-values-to-json` avec le format de données `JSON`
-  ou `JSON multiligne`. Une incohérence entre le transformateur et le format de données entraîne des échecs d'ingestion
+- **Le format des données doit correspondre au transformateur** : utilisez le
+  [transformateur Fichier](../engine/transformers.mdx#file-from-records) en écrivant un fichier `CSV` avec le format de
+  données `CSV`, ou un fichier `JSON` avec le format de données `JSON` ou `JSON multiligne`. Une incohérence entre le transformateur et le format de données entraîne des échecs d'ingestion
   côté Azure Data Explorer.
 - **L'ingestion est mise en file d'attente, pas en flux continu** : Azure Data Explorer accepte le lot et termine
   l'ingestion de manière asynchrone, si bien que les lignes ne deviennent interrogeables qu'après la latence de mise en

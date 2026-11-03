@@ -1,6 +1,6 @@
 # SFTP
 
-**SFTP 北向连接器**可将文件和数据安全上传到 **SFTP（SSH 文件传输协议）服务器**。
+**SFTP 北向连接器**可将文件安全上传到 **SFTP（SSH 文件传输协议）服务器**。
 
 ## 特定设置 {#specific-settings}
 
@@ -21,19 +21,16 @@
 
 ### 文件配置 {#file-configuration}
 
-| 设置           | 说明                                                                    | 示例值            |
-| -------------- | ----------------------------------------------------------------------- | ----------------- |
-| **远程文件夹** | SFTP 服务器上存储文件的目录。                                           | `/data/oibus`     |
-| **前缀**       | 添加到文件名前面的文本。支持内部变量，如 `@ConnectorName`。             | `@ConnectorName-` |
-| **后缀**       | 添加到文件名后面（扩展名之前）的文本。支持内部变量，如 `@CurrentDate`。 | `-@CurrentDate`   |
+| 设置           | 说明                          | 示例值        |
+| -------------- | ----------------------------- | ------------- |
+| **远程文件夹** | SFTP 服务器上存储文件的目录。 | `/data/oibus` |
 
-:::tip 动态文件名
-使用内部变量创建动态文件名：
+文件以其转换器给出的名称写入，不含其子文件夹：即
+[文件（原样、重命名或转换）](../engine/transformers.mdx#file-as-is-renamed-or-converted)和
+[文件](../engine/transformers.mdx#file-from-records)转换器的**文件名**（例如 `@SourceFilename-@CurrentDate@SourceExtension`）。
 
-- `@ConnectorName`：插入连接器的名称。
-- `@CurrentDate`：以 `yyyy_MM_dd_HH_mm_ss_SSS` 格式插入当前时间戳。
-
-**示例**：
-使用前缀 `@ConnectorName-` 和后缀 `-@CurrentDate`，文件名 `example.file` 将变为：
-`<ConnectorName>-example-<CurrentDate>.file`
+:::info 升级到 3.10
+在 3.10 之前，连接器会在文件名中添加**前缀**和**后缀**。升级时会将它们添加到其转换器的文件名中，其中 `@ConnectorName`
+会被替换为该连接器的名称（在转换器中，`@ConnectorName` 是南向连接器的名称），并重命名其缓存中等待发送的文件。自定义
+转换器自行为文件命名。
 :::

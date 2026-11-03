@@ -79,6 +79,14 @@
     {
       "type": "generic",
       "path": "documentation/docs/developer/docker.mdx"
+    },
+    {
+      "type": "generic",
+      "path": "documentation/i18n/fr/docusaurus-plugin-content-docs/current/developer/docker.mdx"
+    },
+    {
+      "type": "generic",
+      "path": "documentation/i18n/zh/docusaurus-plugin-content-docs/current/developer/docker.mdx"
     }
   ]
 }

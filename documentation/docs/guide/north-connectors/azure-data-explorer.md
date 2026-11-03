@@ -46,6 +46,7 @@ the **Use proxy** option and configure the proxy details below.
 
 | Setting            | Description                                      | Example Value                   |
 | ------------------ | ------------------------------------------------ | ------------------------------- |
+| **Use proxy**      | Route requests through a proxy server.           | Enabled/Disabled                |
 | **Proxy URL**      | URL of the proxy server.                         | `http://proxy.example.com:8080` |
 | **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
 | **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |

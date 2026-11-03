@@ -35,7 +35,7 @@ Interroger des données de séries temporelles depuis l'application SaaS [OIAnal
 | ID client                  | Identifiant client Azure AD (pour les méthodes Azure AD).                                                                               | `client-id-uuid`                                                          |
 | Secret client              | Secret client Azure AD (pour la méthode Azure AD avec secret client).                                                                   | `••••••••`                                                                |
 | Certificat                 | Certificat sélectionné depuis la page Certificats d'OIBus (pour la méthode Azure AD avec certificat), et non un chemin de fichier brut. | (sélectionné dans la liste)                                               |
-| Portée                     | Portée OAuth (pour la méthode Azure AD avec certificat).                                                                                | `https://resource/.default`                                               |
+| Portée                     | Portée OAuth (pour les méthodes Azure AD).                                                                                              | `https://resource/.default`                                               |
 
 #### Configuration du proxy {#proxy-configuration}
 
@@ -53,11 +53,11 @@ paramètres de limitation par défaut. Les éléments d'un même groupe sont tou
 séquence — le groupe fournit simplement des valeurs par défaut communes que les éléments individuels peuvent
 surcharger.
 
-| Paramètre        | Description                                                                                                                                                                                                  | Exemple de valeur         |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
-| **Nom**          | Libellé unique du groupe au sein de ce connecteur.                                                                                                                                                           | `Group A`                 |
-| **Mode de scan** | Mode de scan utilisé pour collecter tous les éléments du groupe.                                                                                                                                             | `Every 1 min`             |
-| **Limitation**   | Valeurs de limitation par défaut (Intervalle de lecture maximal, Délai de lecture, Décalage de l'heure de début, Décalage de l'heure de fin, Stratégie de récupération) héritées par les éléments du groupe. | `3600, 200, 0, 0, oldest` |
+| Paramètre        | Description                                                                                                                                                                                                                                  | Exemple de valeur               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| **Nom**          | Libellé unique du groupe au sein de ce connecteur.                                                                                                                                                                                           | `Group A`                       |
+| **Mode de scan** | Mode de scan utilisé pour collecter tous les éléments du groupe.                                                                                                                                                                             | `Every 1 min`                   |
+| **Limitation**   | Valeurs de limitation par défaut (Intervalle de lecture maximal, Délai de lecture, Décalage de l'heure de début, Décalage de l'heure de fin, Stratégie de récupération, Si aucune donnée n'est trouvée) héritées par les éléments du groupe. | `3600, 200, 0, 0, oldest, keep` |
 
 ## Paramètres d'élément {#item-settings}
 
@@ -110,20 +110,19 @@ avec le point de terminaison `/api/oianalytics/data/values` et les paramètres d
 Comme `data-reference` est répété, il est envoyé sous la forme `data-reference=CIP_Line_1_Acid_Tank_Level&data-reference=CIP_Line_1_Caustic_Tank_Level`,
 ce qui permet au point de terminaison de renvoyer les valeurs des deux niveaux de réservoir en une seule requête.
 
-## Options de sérialisation CSV {#csv-serialization-options}
+## Données envoyées {#sent-data}
 
-| Paramètre                      | Description                                                                              | Exemple de valeur                                                                                                 |
-| ------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Nom du fichier                 | Modèle de nom de fichier de sortie avec les variables : `@ConnectorName`, `@CurrentDate` | `data_@ConnectorName.csv`                                                                                         |
-| Délimiteur                     | Caractère séparateur de champs                                                           | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t) |
-| Compression                    | Activer la compression gzip                                                              | Activé/Désactivé                                                                                                  |
-| Format de date/heure de sortie | Format des champs date/heure dans le CSV                                                 | `yyyy-MM-dd HH:mm:ss`                                                                                             |
-| Fuseau horaire de sortie       | Fuseau horaire des valeurs date/heure                                                    | `UTC` ou `Europe/Paris`                                                                                           |
+Chaque élément envoie les valeurs qu'il récupère sous forme d'**enregistrements de points**, avec leur unité :
 
-:::info Variables du nom de fichier
+```json
+{ "pointId": "CIP_Line_1_Acid_Tank_Level", "timestamp": "2024-01-15T10:00:00.000Z", "value": 52.3, "unit": "%" }
+```
 
-- `@ConnectorName` : Nom du connecteur
-- `@CurrentDate` : Horodatage actuel au format `yyyy_MM_dd_HH_mm_ss_SSS` (format fixe)
-- Le paramètre de format de date/heure n'affecte pas l'horodatage du nom de fichier
+Pour les écrire dans un fichier CSV (ou JSON), associez le transformateur [Fichier](../engine/transformers.mdx#file-from-records)
+au connecteur North ou à la requête d'historique : ses paramètres choisissent les colonnes, le format et le fuseau horaire
+de l'horodatage, le délimiteur, le nom du fichier et la compression.
 
-:::
+Avant la 3.10, les éléments écrivaient eux-mêmes des fichiers CSV (nom du fichier, délimiteur, compression, format et
+fuseau horaire de l'horodatage) : la mise à jour déplace ces paramètres dans un transformateur Fichier pour chaque élément
+dont les fichiers étaient envoyés tels quels. Les autres transformateurs lisant ses fichiers sont supprimés, les données
+étant des listes d'enregistrements.

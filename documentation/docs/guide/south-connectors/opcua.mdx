@@ -159,13 +159,13 @@ edit form.
 
 ## Item Settings {#item-settings}
 
-| Setting          | Description                                                                                                  | Example Value                                   |
-| ---------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| Node ID          | Path to the data point in the OPC UA server namespace.                                                       | `ns=3;i=1001`, `ns=3;s=Counter`                 |
-| Mode             | Data access method: `ha` (Historical Access) or `da` (Data Access).                                          | `ha`, `da`                                      |
-| Aggregate        | Value aggregation method (HA mode only).                                                                     | `Raw`, `Average`, `Minimum`, `Maximum`, `Count` |
-| Resampling       | Interval resampling (HA mode only).                                                                          | `None`, `1 second`, `1 hour`, `1 day`           |
-| Timestamp origin | Timestamp source: `OIBus` (query time), `Point` (server-reported timestamp), `Server` (server current time). | `OIBus`, `Point`, `Server`                      |
+| Setting          | Description                                                                                                                 | Example Value                                   |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Node ID          | Path to the data point in the OPC UA server namespace.                                                                      | `ns=3;i=1001`, `ns=3;s=Counter`                 |
+| Mode             | Data access method: `ha` (Historical Access) or `da` (Data Access).                                                         | `ha`, `da`                                      |
+| Aggregate        | Value aggregation method (HA mode only).                                                                                    | `Raw`, `Average`, `Minimum`, `Maximum`, `Count` |
+| Resampling       | Interval resampling (HA mode only).                                                                                         | `None`, `1 second`, `1 hour`, `1 day`           |
+| Timestamp origin | Timestamp source (DA mode only): `OIBus` (query time), `Point` (server-reported timestamp), `Server` (server current time). | `OIBus`, `Point`, `Server`                      |
 
 :::caution Server Compatibility
 

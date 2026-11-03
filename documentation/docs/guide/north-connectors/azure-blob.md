@@ -38,6 +38,10 @@ Configure the following parameters to connect to your Azure Blob Storage:
 | **Client ID**      | Application (client) ID. Required for AAD authentication.                                     | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                      |
 | **Client secret**  | Application client secret. Required for AAD authentication.                                   | `••••••••`                                                                  |
 
+With **External** authentication, OIBus uses the Azure `DefaultAzureCredential`: the credentials are taken from the
+environment of the OIBus process (environment variables, managed identity, Azure CLI login, …), so no secret is stored
+in OIBus.
+
 ### Proxy Configuration {#proxy-configuration}
 
 If your network infrastructure requires requests to pass through a proxy server to reach Azure Blob Storage, enable the
@@ -45,6 +49,7 @@ If your network infrastructure requires requests to pass through a proxy server 
 
 | Setting            | Description                                      | Example Value                   |
 | ------------------ | ------------------------------------------------ | ------------------------------- |
+| **Use proxy**      | Route requests through a proxy server.           | Enabled/Disabled                |
 | **Proxy URL**      | URL of the proxy server.                         | `http://proxy.example.com:8080` |
 | **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
 | **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |

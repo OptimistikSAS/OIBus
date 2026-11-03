@@ -47,8 +47,8 @@ Un groupe regroupe des éléments qui partagent la même planification de collec
 
 Les éléments assignés à un groupe héritent de son mode de scan. Pour les connecteurs compatibles historique, les
 éléments héritent également par défaut des paramètres de limitation du groupe (intervalle de lecture maximum, délai
-de lecture, décalage de l'heure de début, décalage de l'heure de fin, stratégie de récupération), mais chaque élément
-peut les surcharger individuellement en désactivant **Synchroniser avec le groupe**.
+de lecture, décalage de l'heure de début, décalage de l'heure de fin, stratégie de récupération, si aucune donnée
+n'est trouvée), mais chaque élément peut les surcharger individuellement en désactivant **Synchroniser avec le groupe**.
 
 Les éléments qui ne sont **assignés à aucun groupe** définissent leur propre mode de scan directement sur l'élément.
 
@@ -104,12 +104,12 @@ La fenêtre de l'élément se parcourt en quatre étapes, affichées dans une ba
 paramètres viennent en premier, pour être testés avant de nommer et de planifier l'élément, et les connecteurs North
 auxquels ses données sont envoyées viennent une fois son groupe choisi :
 
-| Étape                              | Contenu                                                                                                                                                                                                           |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Paramètres**                     | Les paramètres d'élément propres au connecteur (voir la page de chaque connecteur), avec le [panneau de test](#testing-an-item) juste en dessous, pour essayer les paramètres au fil de leur modification.        |
-| **Nom et planification**           | Nom, **Statut** (activé ou désactivé), groupe et planification, puis les **Paramètres d'historique** (connecteurs compatibles historique) et les paramètres de **Mise en cache** (connecteurs de la famille IoT). |
-| **North**                          | Les connecteurs North auxquels les données de l'élément sont envoyées, et le transformateur par lequel elles passent — voir [Où sont envoyées les données d'un élément](#where-the-data-of-an-item-is-sent).      |
-| **Vérification et enregistrement** | Un récapitulatif en lecture seule de l'élément complet : paramètres généraux, d'historique et de mise en cache, ses paramètres de connecteur, puis les transformateurs à rattacher aux connecteurs North.         |
+| Étape                              | Contenu                                                                                                                                                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Paramètres**                     | Les paramètres d'élément propres au connecteur (voir la page de chaque connecteur), avec le [panneau de test](#testing-an-item) juste en dessous, pour essayer les paramètres au fil de leur modification.                     |
+| **Nom et planification**           | Nom, description, **Statut** (activé ou désactivé), groupe et planification, puis les **Paramètres d'historique** (connecteurs compatibles historique) et les paramètres de **Mise en cache** (connecteurs de la famille IoT). |
+| **North**                          | Les connecteurs North auxquels les données de l'élément sont envoyées, et le transformateur par lequel elles passent — voir [Où sont envoyées les données d'un élément](#where-the-data-of-an-item-is-sent).                   |
+| **Vérification et enregistrement** | Un récapitulatif en lecture seule de l'élément complet : paramètres généraux, d'historique et de mise en cache, ses paramètres de connecteur, puis les transformateurs à rattacher aux connecteurs North.                      |
 
 **Suivant** ne passe à l'étape suivante qu'une fois l'étape courante valide. Un nouvel élément s'enregistre depuis la
 dernière étape ; un élément en cours de modification ou de copie peut être enregistré depuis n'importe quelle étape.
@@ -126,20 +126,22 @@ points) sont conservés dans la page et enregistrés avec le connecteur, d'où l
 
 ### Champs d'un élément {#item-fields}
 
-| Paramètre                         | Étape                | Description                                                                                                                                                                           | Exemple de valeur               |
-| --------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| **Nom**                           | Nom et planification | Référence unique utilisée par les connecteurs North et les transformateurs pour identifier ce point de données.                                                                       | `Temperature_Sensor1`           |
-| **Groupe**                        | Nom et planification | Le groupe auquel cet élément appartient. Laissez sur **Aucun** pour un élément autonome avec sa propre planification.                                                                 | `Group A`                       |
-| **Planification**                 | Nom et planification | Mode de scan qui détermine quand OIBus collecte les données. Affiché uniquement lorsque l'élément n'a pas de groupe (la planification du groupe est affichée sinon).                  | `Every 1 min`                   |
-| **Statut**                        | Nom et planification | Indique si l'élément est actif.                                                                                                                                                       | Activé/Désactivé                |
-| **Synchroniser avec le groupe**   | Nom et planification | _(connecteurs compatibles historique, éléments groupés)_ Lorsque activé, les paramètres d'historique ci-dessous sont hérités du groupe.                                               | Activé/Désactivé                |
-| **Intervalle de lecture maximal** | Nom et planification | _(connecteurs compatibles historique)_ Durée maximale d'une sous-requête en secondes.                                                                                                 | `3600`                          |
-| **Délai de lecture**              | Nom et planification | _(connecteurs compatibles historique)_ Pause en millisecondes entre les sous-requêtes consécutives.                                                                                   | `200`                           |
-| **Décalage de l'heure de début**  | Nom et planification | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@StartTime`. Des valeurs négatives l'avancent pour capturer les données arrivées en retard.                          | `-60000`                        |
-| **Décalage de l'heure de fin**    | Nom et planification | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@EndTime`. Des valeurs négatives l'avancent.                                                                         | `0`                             |
-| **Stratégie de récupération**     | Nom et planification | _(connecteurs compatibles historique)_ Ordre dans lequel un arriéré de sous-intervalles non interrogés est rattrapé : du plus ancien au plus récent (par défaut) ou l'inverse.        | `Du plus ancien au plus récent` |
-| **Stratégie de mise en cache**    | Nom et planification | _(connecteurs de la famille IoT uniquement)_ Filtre les valeurs collectées qui sont effectivement mises en cache et transmises. Voir [Stratégie de mise en cache](#caching-strategy). | `On change`                     |
-| **Paramètres spécifiques**        | Paramètres           | Varie selon le type de connecteur — voir la documentation de chaque connecteur.                                                                                                       | —                               |
+| Paramètre                          | Étape                | Description                                                                                                                                                                                                                                                                    | Exemple de valeur               |
+| ---------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| **Nom**                            | Nom et planification | Référence unique utilisée par les connecteurs North et les transformateurs pour identifier ce point de données.                                                                                                                                                                | `Temperature_Sensor1`           |
+| **Description**                    | Nom et planification | Texte libre optionnel sur l'élément. Affiché sous son nom au survol du nom dans la liste des éléments, et en haut de la vue de l'élément.                                                                                                                                      | `Reactor inlet temperature`     |
+| **Groupe**                         | Nom et planification | Le groupe auquel cet élément appartient. Laissez sur **Aucun** pour un élément autonome avec sa propre planification.                                                                                                                                                          | `Group A`                       |
+| **Planification**                  | Nom et planification | Mode de scan qui détermine quand OIBus collecte les données. Affiché uniquement lorsque l'élément n'a pas de groupe (la planification du groupe est affichée sinon).                                                                                                           | `Every 1 min`                   |
+| **Statut**                         | Nom et planification | Indique si l'élément est actif.                                                                                                                                                                                                                                                | Activé/Désactivé                |
+| **Synchroniser avec le groupe**    | Nom et planification | _(connecteurs compatibles historique, éléments groupés)_ Lorsque activé, les paramètres d'historique ci-dessous sont hérités du groupe.                                                                                                                                        | Activé/Désactivé                |
+| **Intervalle de lecture maximal**  | Nom et planification | _(connecteurs compatibles historique)_ Durée maximale d'une sous-requête en secondes.                                                                                                                                                                                          | `3600`                          |
+| **Délai de lecture**               | Nom et planification | _(connecteurs compatibles historique)_ Pause en millisecondes entre les sous-requêtes consécutives.                                                                                                                                                                            | `200`                           |
+| **Décalage de l'heure de début**   | Nom et planification | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@StartTime`. Des valeurs négatives l'avancent pour capturer les données arrivées en retard.                                                                                                                   | `-60000`                        |
+| **Décalage de l'heure de fin**     | Nom et planification | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@EndTime`. Des valeurs négatives l'avancent.                                                                                                                                                                  | `0`                             |
+| **Stratégie de récupération**      | Nom et planification | _(connecteurs compatibles historique)_ Ordre dans lequel un arriéré de sous-intervalles non interrogés est rattrapé : du plus ancien au plus récent (par défaut) ou l'inverse.                                                                                                 | `Du plus ancien au plus récent` |
+| **Si aucune donnée n'est trouvée** | Nom et planification | _(connecteurs compatibles historique)_ Indique si un sous-intervalle sans nouvelles données conserve l'instant suivi (par défaut) ou l'avance jusqu'à sa fin. Voir [Si aucune donnée n'est trouvée](../advanced/history-query-timing.md#when-no-data-is-found-sparse-sources). | `Conserver l'instant suivi`     |
+| **Stratégie de mise en cache**     | Nom et planification | _(connecteurs de la famille IoT uniquement)_ Filtre les valeurs collectées qui sont effectivement mises en cache et transmises. Voir [Stratégie de mise en cache](#caching-strategy).                                                                                          | `On change`                     |
+| **Paramètres spécifiques**         | Paramètres           | Varie selon le type de connecteur — voir la documentation de chaque connecteur.                                                                                                                                                                                                | —                               |
 
 > Pour des conseils sur le dimensionnement de **l'intervalle de lecture maximal**, du **délai de lecture**, du
 > **décalage de l'heure de début** et du **décalage de l'heure de fin** — avec des exemples concrets pour de gros
@@ -200,9 +202,9 @@ création/modification du connecteur, ils sont enregistrés avec le connecteur.
 
 ### Import/Export des éléments {#importexport-items}
 
-- **Exporter** : téléchargez tous les éléments au format CSV. Les colonnes incluent `name`, `enabled`, `scanMode`,
-  `group`, `syncWithGroup`, `maxReadInterval`, `readDelay`, `startTimeOffset`, `endTimeOffset`, `recoveryStrategy`, et
-  les colonnes `settings_*` spécifiques au connecteur.
+- **Exporter** : téléchargez tous les éléments au format CSV. Les colonnes incluent `name`, `description`, `enabled`,
+  `scanMode`, `group`, `syncWithGroup`, `maxReadInterval`, `readDelay`, `startTimeOffset`, `endTimeOffset`,
+  `recoveryStrategy`, `emptyIntervalStrategy`, et les colonnes `settings_*` spécifiques au connecteur.
 - **Importer** : téléversez un CSV pour créer ou mettre à jour des éléments en masse. Exportez une liste existante
   pour obtenir un modèle valide avec les noms de colonnes corrects.
   > **Remarque** : le système vérifie les doublons et le bon formatage avant d'appliquer l'import.
@@ -211,16 +213,18 @@ création/modification du connecteur, ils sont enregistrés avec le connecteur.
 
 ## Explorer la source de données {#exploring-the-data-source}
 
-Les connecteurs capables de parcourir leur source de données affichent un bouton **Explorer** à côté de **Tester les
-paramètres**. Il ouvre la fenêtre **Explorer la source de données** : une arborescence de ce que contient la source de
-données, chargée niveau par niveau au fil du dépliage des nœuds.
+Les connecteurs capables de parcourir leur source de données affichent un bouton **Explorer** dans la section des
+éléments de leur page (**Explorer et synchroniser** pour les connecteurs avec [découverte](#items-synchronisation), qui
+tiennent aussi les éléments à jour : voir [Explorer et synchroniser](#explore-and-sync)). Il ouvre la fenêtre
+**Explorer la source de données** : une arborescence de ce que contient la source de données, chargée niveau par niveau
+au fil du dépliage des nœuds.
 
-| Connecteur                                                | Ce que montre l'arborescence                                                                                 | Actions sur les nœuds sélectionnés          |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| [OPC UA](./opcua.mdx#node-metadata)                       | L'espace d'adressage du serveur, avec les métadonnées des nœuds (ID du nœud, type, description, unité…)      | **Ajouter comme points**, **Synchroniser…** |
-| [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | Les appareils, puis les objets de chaque appareil                                                            | **Ajouter comme points**, **Synchroniser…** |
-| MSSQL, MySQL, PostgreSQL, Oracle, SQLite                  | Les tables (avec leur nombre de colonnes et de lignes lorsque disponible), puis les colonnes de chaque table | **Ajouter comme points**                    |
-| [Folder Scanner](./folder-scanner.mdx)                    | Les dossiers et fichiers du dossier d'entrée, avec leur taille et leurs dates                                | — (navigation uniquement)                   |
+| Connecteur                                                | Ce que montre l'arborescence                                                                                 | Actions sur les nœuds sélectionnés                          |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| [OPC UA](./opcua.mdx#node-metadata)                       | L'espace d'adressage du serveur, avec les métadonnées des nœuds (ID du nœud, type, description, unité…)      | **Ajouter comme points**, **Synchroniser…**                 |
+| [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | Les appareils, puis les objets de chaque appareil                                                            | **Ajouter comme points**, **Synchroniser…**                 |
+| MSSQL, MySQL, PostgreSQL, Oracle, SQLite                  | Les tables (avec leur nombre de colonnes et de lignes lorsque disponible), puis les colonnes de chaque table | **Ajouter dans un point**, **Synchroniser les métadonnées** |
+| [Folder Scanner](./folder-scanner.mdx)                    | Les dossiers et fichiers du dossier d'entrée, avec leur taille et leurs dates                                | — (navigation uniquement)                                   |
 
 Cliquez sur un nœud pour afficher ses détails (les métadonnées que la source de données fournit pour lui) dans un
 panneau latéral, chaque valeur avec un bouton de copie. L'exploration utilise les paramètres tels qu'ils sont en cours
@@ -239,14 +243,15 @@ de sorte que l'exploration ne démarre jamais la collecte propre au connecteur.
 Pour les connecteurs proposant des actions sur les nœuds sélectionnés, chaque nœud possède une case à cocher. Un nœud
 qui a des enfants propose aussi **Sélectionner tous les sous-nœuds**, qui charge et coche ses enfants directs en une
 fois (et les décoche lorsqu'ils sont déjà tous cochés). Le nombre de nœuds sélectionnés est affiché en bas de la
-fenêtre, à côté des actions :
+fenêtre, à côté des actions. Choisir une action passe à l'étape suivante de la même fenêtre ; les étapes sont listées
+sous son titre, et l'étape **Explorer** reste à un clic pour changer les nœuds sélectionnés ou l'action :
 
 - **Ajouter comme points** crée des éléments une fois à partir des nœuds sélectionnés — voir
   [ci-dessous](#adding-explored-nodes-as-items).
 - **Synchroniser…** crée une [synchronisation des points](#items-synchronisation) qui découvre à partir des nœuds
-  sélectionnés : l'assistant s'ouvre avec ces nœuds comme périmètre de découverte, et les
-  [valeurs par défaut de découverte](#discovery-defaults) du connecteur. Contrairement à **Ajouter comme points**, la
-  synchronisation tient les éléments à jour à chaque exécution : les nouveaux points obtiennent un élément, et les
+  sélectionnés : les étapes de l'assistant de synchronisation suivent, avec ces nœuds comme périmètre de découverte, et
+  les [valeurs par défaut de découverte](#discovery-defaults) du connecteur. Contrairement à **Ajouter comme points**,
+  la synchronisation tient les éléments à jour à chaque exécution : les nouveaux points obtiennent un élément, et les
   éléments des points disparus sont désactivés.
 
 Ce que représente un nœud sélectionné dépend de sa nature : un point (une variable OPC UA, un objet BACnet, une
@@ -254,11 +259,24 @@ colonne SQL) vaut pour lui-même, tout autre nœud (un dossier, un appareil, une
 
 ### Ajouter des nœuds explorés comme éléments {#adding-explored-nodes-as-items}
 
-**Ajouter comme points** découvre les points sous les nœuds sélectionnés et ouvre la fenêtre **Ajouter des points
-depuis la source de données**, pour vérifier les éléments avant leur création :
+**Ajouter comme points** passe à l'étape **Ajouter comme points** de la fenêtre d'exploration, pour vérifier les
+éléments avant leur création. Elle contient la **Correspondance des champs des points** d'une
+[synchronisation des points](#items-synchronisation), remplie à partir des
+[valeurs par défaut de découverte](#discovery-defaults) du connecteur, dans les sections de la fenêtre de l'élément :
+**Nom et planification** (nom, description, activé, groupe, planification et, lorsque le connecteur prend en charge
+l'historique, les paramètres d'historique) et les paramètres du connecteur. Comme dans la fenêtre de l'élément, choisir
+un groupe remplace la planification par celle du groupe et affiche **Synchroniser avec le groupe** (activé par défaut),
+et les paramètres d'historique sont masqués tant que l'élément est synchronisé avec son groupe. Les éléments sont
+activés, et les paramètres d'historique démarrent avec les valeurs de la fenêtre de l'élément (intervalle de lecture
+maximal 3600 s, délai de lecture 200 ms, stratégie de récupération du plus ancien, instant suivi conservé si aucune
+donnée n'est trouvée, décalages à 0). Chaque champ est une constante ou une expression de l'enregistrement découvert :
+les champs des enregistrements du connecteur sont listés au-dessus de la correspondance (la même liste se trouve à
+l'étape Points d'une synchronisation), et un clic sur l'un d'eux insère `{{field}}` là où vous saisissiez — ou le copie
+lorsque vous ne saisissiez pas dans un champ qui accepte une expression. En dessous, les points sous les nœuds
+sélectionnés sont découverts avec cette correspondance et listés ; ils sont découverts à nouveau peu après une
+modification de la correspondance (ou avec **Actualiser l'aperçu**), et les éléments ne peuvent pas être ajoutés tant
+qu'ils ne l'ont pas été :
 
-- **Groupe**, **Planification** et **Activer les points** s'appliquent à chaque élément ajouté. Avec un groupe, les
-  éléments prennent la planification du groupe.
 - Chaque ligne est un élément, avec son nom (modifiable) et ses principaux paramètres. Décochez une ligne pour
   l'écarter, ou utilisez la case à cocher de l'en-tête pour tout sélectionner ou rien.
 - Une ligne dont les paramètres sont déjà lus par un élément existant est signalée **Déjà lu par** _cet élément_, et
@@ -268,10 +286,11 @@ depuis la source de données**, pour vérifier les éléments avant leur créati
 [valeurs par défaut de découverte](#discovery-defaults) du connecteur ; chaque paramètre d'élément qu'elles ne
 couvrent pas reçoit sa valeur par défaut habituelle, comme dans la fenêtre de l'élément.
 
-#### Tables SQL comme éléments {#sql-tables-as-items}
+#### Tables SQL dans un élément {#sql-tables-as-items}
 
-Pour les connecteurs SQL, chaque table sélectionnée (ou chaque table à laquelle appartiennent des colonnes
-sélectionnées) donne un élément, nommé d'après la table, dont la requête lit la table :
+Pour les connecteurs SQL, **Ajouter dans un point** donne **un seul élément** pour tout ce qui est coché : sa requête
+est écrite à partir des tables et colonnes cochées, et la fenêtre de l'élément s'ouvre avec elle, pour compléter (nom,
+planification, groupe…) et enregistrer. Rien n'est créé avant l'enregistrement.
 
 - Une table sélectionnée lit toutes ses colonnes (`SELECT *`) ; des colonnes sélectionnées ne lisent que ces
   colonnes.
@@ -290,9 +309,23 @@ sélectionnées) donne un élément, nommé d'après la table, dont la requête 
 
 - Une table sans aucune colonne date/heure est lue entièrement à chaque exécution, sans suivi : vérifiez sa requête
   avant de l'activer.
+- **Plusieurs tables** sont lues par une seule requête qui joint chaque table à une table précédente. La jointure
+  privilégie une clé étrangère nommée d'après la table qu'elle référence (`orders.customer_id` vers la clé primaire
+  `id` de `customers`), puis une colonne qu'elles partagent et qui est la clé primaire de l'une d'elles
+  (`[measures].[tag_id] = [tags].[tag_id]`), puis toute autre colonne qu'elles partagent. Deux clés primaires ne sont
+  jamais jointes entre elles. Deux tables sans une telle colonne sont jointes sur une condition à compléter
+  (`ON 1 = 1 /* join condition to complete */`) : c'est une suggestion, à vérifier et terminer dans l'élément. Une
+  colonne dont le nom est déjà porté par une table précédente est renommée d'après sa table (`tags_value`, ou
+  `tags_value_2` si ce nom est lui aussi pris), et la plage temporelle est celle de la première table qui a une colonne
+  date/heure.
 
 Les noms de tables et de colonnes sont mis entre guillemets selon le dialecte SQL propre au connecteur. La requête
 générée est un point de départ : modifiez ensuite l'élément pour filtrer les lignes ou renommer les colonnes.
+
+Pendant l'écriture de la requête d'un élément SQL, **Parcourir les tables** (à l'étape Paramètres de la fenêtre de
+l'élément) ouvre le navigateur de la base de données pour retrouver une table ou une colonne, sans quitter l'élément.
+Chaque table liste sa requête `SELECT` parmi ses détails, avec un bouton de copie, ainsi que les noms et types de ses
+colonnes.
 
 ---
 
@@ -339,7 +372,9 @@ que tout changement est mis en cache).
 ## Suivi de l'instant maximum {#max-instant-tracking}
 
 Les connecteurs South compatibles historique suivent le dernier horodatage récupéré avec succès (l'_instant
-maximum_) afin que chaque exécution ne récupère que les nouvelles données. Le fait que cet instant soit suivi par
+maximum_) afin que chaque exécution ne récupère que les nouvelles données. Avec **Si aucune donnée n'est trouvée** réglé
+sur **Avancer l'instant suivi**, un intervalle interrogé sans nouvelles données le déplace aussi, jusqu'à la fin de cet
+intervalle. Le fait que cet instant soit suivi par
 élément ou partagé au sein d'un groupe dépend de la façon dont le groupe est réellement interrogé :
 
 - Si le connecteur peut regrouper les éléments d'un groupe en une seule requête (c'est-à-dire qu'il ne s'agit _pas_
@@ -427,60 +462,78 @@ synchronisation des points lorsque la source de données évolue dans le temps (
 que les éléments doivent suivre.
 :::
 
-### Gérer les synchronisations des points {#managing-items-synchronisations}
+### Explorer et synchroniser {#explore-and-sync}
 
-Sur la page d'un connecteur South, cliquez sur **Gérer les synchronisations des points** (à côté de **Gérer les
-groupes**) pour lister les synchronisations du connecteur, et utilisez le bouton **+** pour en créer une. Chaque ligne
-affiche le nom de la synchronisation, sa planification, son mode et si elle est activée, avec ces actions :
+Pour un connecteur avec découverte, le bouton **Explorer et synchroniser** ouvre un écran d'accueil, dans une fenêtre
+dédiée :
 
-| Action                        | Description                                                                                                                          |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Exécuter maintenant** (▶)   | Déclenche immédiatement une exécution réelle — voir [Exécuter une synchronisation des points](#running-an-items-synchronisation).    |
-| **Historique des exécutions** | Les exécutions passées, avec leur statut et leurs compteurs — voir [Historique des exécutions](#run-history).                        |
-| **Modifier** (✏️)             | Ouvre la synchronisation dans l'assistant.                                                                                           |
-| **Dupliquer**                 | Ouvre l'assistant pré-rempli avec les paramètres de cette synchronisation (nom suffixé par `-copy`), enregistrée comme une nouvelle. |
-| **Supprimer**                 | Supprime la synchronisation. Les éléments qu'elle a créés et les métadonnées qu'elle a envoyées ne sont **pas** supprimés.           |
+- **Explorer la source de données** démarre la [fenêtre d'exploration](#selecting-nodes) : sélectionnez des nœuds, puis
+  **Ajouter comme points** ou **Synchroniser…**.
+- Les synchronisations du connecteur sont listées en dessous, avec leur périmètre de découverte (leurs nœuds, toute la
+  source de données, ou une requête), leur planification, leur mode et si elles sont activées (un tiret pour une
+  synchronisation sans planification, qui ne s'exécute qu'à la demande). **Nouvelle synchronisation** en crée une (pour
+  un connecteur SQL, depuis son étape Source, où la requête est écrite).
+- Pour un connecteur SQL, l'accueil propose plutôt de **Parcourir la base de données**, et liste les
+  **Synchronisations de métadonnées** : les enregistrements de leur requête sont envoyés à OIAnalytics. À l'étape
+  Explorer, **Synchroniser les métadonnées** en démarre une à partir des tables cochées (sa requête est écrite pour
+  vous, sans plage temporelle, et l'étape Points est sautée puisqu'il n'y a rien à faire correspondre), et **Ajouter
+  dans un point** démarre un élément, voir [Tables SQL dans un élément](#sql-tables-as-items).
 
-Une synchronisation peut aussi être créée depuis la [fenêtre d'exploration](#selecting-nodes) : sélectionnez des
-nœuds, puis **Synchroniser…**.
+Chaque synchronisation de la liste dispose de ces actions :
 
-Le même bouton **Gérer les synchronisations des points** se trouve sur la page de création/modification du
-connecteur. Là, les modifications sont conservées dans la page et enregistrées avec le connecteur (comme les éléments
-et les groupes), et les aperçus s'exécutent avec les paramètres du connecteur tels qu'ils sont en cours de
-modification — une synchronisation peut donc être essayée avant que le connecteur lui-même ne soit enregistré.
-**Exécuter maintenant** et **Historique des exécutions** ne sont disponibles que depuis la page du connecteur, une fois
-celui-ci enregistré.
+| Action                      | Description                                                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Exécuter maintenant** (▶) | Déclenche immédiatement une exécution réelle — voir [Exécuter une synchronisation des points](#running-an-items-synchronisation).    |
+| **Exécutions passées**      | Les exécutions, avec leur statut et leurs compteurs — voir [Historique des exécutions](#run-history).                                |
+| **Modifier** (✏️)           | Ouvre la synchronisation dans l'assistant, à son étape Explorer avec ses nœuds cochés.                                               |
+| **Dupliquer**               | Ouvre l'assistant pré-rempli avec les paramètres de cette synchronisation (nom suffixé par `-copy`), enregistrée comme une nouvelle. |
+| **Supprimer**               | Supprime la synchronisation. Les éléments qu'elle a créés et les métadonnées qu'elle a envoyées ne sont **pas** supprimés.           |
+
+À l'étape Explorer, une ligne au-dessus de l'arborescence nomme les synchronisations qui tiennent déjà des nœuds à
+jour, et les nœuds qu'elles couvrent sont marqués du nom de leur synchronisation (une synchronisation de toute la source
+de données n'est nommée que dans la ligne). Sous l'arborescence, les nœuds sélectionnés peuvent être ajoutés à une
+synchronisation existante plutôt qu'à une nouvelle (**Synchroniser…** poursuit alors avec les paramètres propres à cette
+synchronisation et ses nœuds plus ceux sélectionnés, et l'enregistrement la met à jour). Décocher des nœuds d'une
+synchronisation en cours de modification avertit que les éléments qu'ils donnaient sont désactivés à sa prochaine
+exécution. **Ajouter comme points** sur des nœuds qu'une synchronisation tient déjà à jour le signale au-dessus de la
+correspondance, puisque les deux peuvent créer les mêmes éléments.
+
+Le même bouton se trouve sur la page de création/modification du connecteur. Là, les modifications sont conservées dans
+la page et enregistrées avec le connecteur (comme les éléments et les groupes), et les aperçus s'exécutent avec les
+paramètres du connecteur tels qu'ils sont en cours de modification — une synchronisation peut donc être essayée avant
+que le connecteur lui-même ne soit enregistré. **Exécuter maintenant** et **Exécutions passées** ne sont disponibles que
+depuis la page du connecteur, une fois celui-ci enregistré.
 
 ### L'assistant {#the-wizard}
 
-Une synchronisation se crée et se modifie dans un assistant en cinq étapes. La barre d'étapes en haut indique où vous
-en êtes, et un clic sur une étape l'ouvre.
+Une synchronisation se crée et se modifie dans un assistant. Pour un connecteur arborescent, il démarre à
+l'[étape Explorer](#selecting-nodes), où ses nœuds sont cochés, puis passe par quatre étapes ; un connecteur SQL a
+d'abord une étape **Source**, pour sa requête. La barre d'étapes en haut indique où vous en êtes, et un clic sur une
+étape l'ouvre.
 
-| Étape             | Ce qu'elle définit                                                                            |
-| ----------------- | --------------------------------------------------------------------------------------------- |
-| **Source**        | Le nom, et ce qu'il faut découvrir : les nœuds à parcourir, ou la requête de métadonnées SQL. |
-| **Filtre**        | Les enregistrements découverts à traiter, avec un aperçu des enregistrements correspondants.  |
-| **Points**        | Le mode, et pour le mode local, la façon dont un enregistrement devient un élément.           |
-| **Planification** | Quand exécuter, et si les exécutions planifiées sont activées.                                |
-| **Vérification**  | Un récapitulatif, et un aperçu de ce que ferait une exécution.                                |
+| Étape                    | Ce qu'elle définit                                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| **Source**               | Connecteurs SQL uniquement : la requête de métadonnées à partir de laquelle découvrir.                     |
+| **Filtre**               | Comment les enregistrements découverts sont traités, lesquels traiter, avec un aperçu.                     |
+| **Points**               | Le mode, et pour le mode local, la façon dont un enregistrement devient un élément.                        |
+| **Nom et planification** | Le nom et la description, quand exécuter, et si les exécutions planifiées sont activées.                   |
+| **Vérification**         | Un récapitulatif, ce qu'il faut corriger avant d'enregistrer, et un aperçu de ce que ferait une exécution. |
 
-**Suivant** quitte l'étape Source dès qu'elle a un nom (et une requête, pour SQL). Une nouvelle synchronisation
-s'enregistre depuis l'étape Vérification ; une synchronisation en cours de modification peut être enregistrée depuis
-n'importe quelle étape.
+**Suivant** quitte l'étape Source dès qu'elle a une requête. Une nouvelle synchronisation s'enregistre depuis l'étape
+Vérification ; une synchronisation en cours de modification peut être enregistrée depuis n'importe quelle étape.
 
 #### Source {#source}
 
-- **Nom** — unique parmi les synchronisations du connecteur.
-- **Périmètre de découverte** :
-  - **Connecteurs arborescents** : **Choisir des nœuds...** ouvre l'arborescence d'exploration avec les nœuds actuels
-    cochés ; cochez les nœuds à partir desquels découvrir et cliquez sur **Utiliser ces nœuds**. Un point vaut pour
-    lui-même, tout autre nœud (un dossier, un appareil) pour tout ce qu'il contient. Retirez un nœud avec la croix de
-    son badge. Sans aucun nœud, toute la source de données est découverte.
-  - **Connecteurs SQL** : écrivez une requête de métadonnées dans l'éditeur SQL — indépendante de la requête propre à
-    chaque élément, chaque ligne qu'elle retourne devient un enregistrement découvert (par ex.
-    `SELECT tag, description, unit FROM tag_list`). Lorsque le connecteur peut être exploré, ses tables et colonnes
-    sont affichées au-dessus de l'éditeur pour référence. **Tester la requête** exécute la requête et affiche ses
-    lignes brutes, sous forme de tableau ou de JSON.
+Pour les connecteurs SQL, écrivez une requête de métadonnées dans l'éditeur SQL — indépendante de la requête propre à
+chaque élément, chaque ligne qu'elle retourne devient un enregistrement découvert (par ex.
+`SELECT tag, description, unit FROM tag_list`). Démarrée depuis **Synchroniser les métadonnées** à l'étape Explorer,
+elle est déjà écrite à partir des tables cochées, et la synchronisation est nommée d'après elles. Lorsque le connecteur
+peut être exploré, ses tables et colonnes sont affichées au-dessus de l'éditeur pour référence. **Tester la requête**
+exécute la requête et affiche ses lignes brutes, sous forme de tableau ou de JSON.
+
+Un connecteur arborescent n'a pas d'étape Source : il découvre à partir des nœuds cochés à l'étape Explorer. Un point
+vaut pour lui-même, tout autre nœud (un dossier, un appareil) pour tout ce qu'il contient, et sans aucun nœud, toute la
+source de données est découverte. L'étape Filtre rappelle les nœuds ; pour les changer, revenez à l'étape Explorer.
 
 #### Filtre {#filter}
 
@@ -534,12 +587,16 @@ Ajoutez une condition avec les champs sous le tableau ; modifiez-en ou supprimez
 corbeille.
 
 L'ouverture de l'étape découvre la source de données et affiche **Enregistrements correspondants : _éligibles_ sur
-_découverts_**, avec les 20 premiers enregistrements correspondants dans un tableau, pour voir quels champs ils
-possèdent. Cliquez sur **Actualiser l'aperçu** après avoir modifié les conditions. La découverte est un véritable
+_découverts_**, avec les enregistrements correspondants dans un tableau, pour voir quels champs ils possèdent et leurs
+valeurs. Le tableau est paginé, et sa zone de recherche cherche un texte dans les valeurs de chaque champ. Cliquez sur **Actualiser l'aperçu** après avoir modifié les conditions. La découverte est un véritable
 aller-retour vers la source de données : prévisualiser une source volumineuse coûte autant qu'une exécution, les
 écritures en moins.
 
 #### Points {#items-step}
+
+L'étape Points liste les mêmes enregistrements correspondants, avec la même recherche et la même pagination, sous
+**Enregistrements découverts**, de sorte que les valeurs de leurs champs sont sous vos yeux pendant que vous écrivez la
+correspondance. Ils ne sont pas découverts à nouveau lorsque les nœuds et le filtre sont les mêmes qu'à l'étape Filtre.
 
 ##### Mode {#mode}
 
@@ -555,8 +612,8 @@ efface ce qui avait été configuré pour l'autre.
 :::note Les connecteurs SQL envoient uniquement à OIAnalytics
 Pour un connecteur SQL, un élément est une requête libre, et une requête peut retourner plusieurs points distincts à
 la fois — élément et point n'y sont pas la même chose. Une synchronisation ne crée ni ne met jamais à jour d'éléments
-pour ces connecteurs, et le choix du mode est remplacé par une note. Pour créer des éléments à partir de tables SQL,
-utilisez [Ajouter comme points](#sql-tables-as-items) dans la fenêtre d'exploration.
+pour ces connecteurs, et le choix du mode est remplacé par une note. Pour créer un élément à partir de tables SQL,
+utilisez [Ajouter dans un point](#sql-tables-as-items) dans la fenêtre d'exploration.
 :::
 
 ##### Correspondance des champs d'élément {#item-field-mapping}
@@ -570,25 +627,34 @@ Chaque champ des éléments du connecteur peut être associé à :
 - une expression `{{field}}` prenant une valeur dans l'enregistrement découvert — voir
   [Expressions de correspondance](#mapping-expressions).
 
-**Nom**, **Groupe** et **Planification** sont affichés en premier. Sous le nom, **Exemples de noms de points** montre
-les noms que donneraient les premiers enregistrements correspondants. La liste déroulante **Groupe** vaut **Aucun**
-par défaut et permet de créer, modifier ou supprimer des groupes, comme dans la fenêtre de l'élément ; avec un
-groupe, l'élément prend la planification du groupe.
+Les [champs de clé d'identité](#identity-key-fields) viennent en premier, puis la correspondance, dans les sections de
+la fenêtre de l'élément (le même formulaire que [Ajouter comme points](#adding-explored-nodes-as-items)) : **Nom et
+planification** — nom, description, activé, groupe, planification et, lorsque le connecteur prend en charge
+l'historique, les paramètres d'historique — puis les paramètres du connecteur. Au-dessus de la correspondance, les
+champs des enregistrements découverts sont listés : cliquez sur l'un d'eux pour insérer `{{field}}` là où vous
+saisissez. En dessous, **Exemples de noms de points** montre les noms que donneraient les premiers enregistrements
+correspondants.
 
-Les autres champs, ainsi que les [champs de clé d'identité](#identity-key-fields), se trouvent sous **Avancé**.
-Lorsque le connecteur a des [valeurs par défaut de découverte](#discovery-defaults), elles remplissent cette section,
-qui reste repliée avec un résumé (par ex. `3 autres champs associés, enregistrements identifiés par id`) ; sinon, elle
-s'ouvre dépliée, puisque tout doit être associé à la main.
+Comme dans la fenêtre de l'élément, la liste déroulante **Groupe** vaut **Aucun** par défaut et permet de créer,
+modifier ou supprimer des groupes. Choisir un groupe remplace la planification par celle du groupe et affiche
+**Synchroniser avec le groupe** (activé par défaut) ; les paramètres d'historique sont masqués tant que l'élément est
+synchronisé avec son groupe. Une nouvelle correspondance démarre avec les éléments activés et les paramètres
+d'historique de la fenêtre de l'élément (intervalle de lecture maximal 3600 s, délai de lecture 200 ms, stratégie de
+récupération du plus ancien, instant suivi conservé si aucune donnée n'est trouvée, décalages à 0) et avec les
+[valeurs par défaut de découverte](#discovery-defaults) du connecteur, lorsqu'il en a.
 
-Deux badges guident la correspondance :
+Un badge **Requis** guide la correspondance :
 
 - **Requis** — le champ doit être associé pour que l'élément soit valide, compte tenu des autres champs actuellement
   affichés. L'enregistrement est bloqué sinon. La planification en est dispensée dès que l'élément est associé à un
-  groupe.
-- **Contrôle la visibilité** — le champ détermine si d'autres champs s'appliquent, il ne peut donc prendre qu'une
-  constante : sa valeur doit être connue lors de l'édition, et non résolue par enregistrement. Il en va de même pour le
-  groupe, la planification et chaque paramètre d'historique (intervalle de lecture maximal, délai de lecture,
-  décalages horaires, stratégie de récupération, synchronisation avec le groupe).
+  groupe. **Activé** est toujours requis : un élément est activé ou non à dessein (il démarre associé à oui dans une
+  nouvelle correspondance). Notez que pour une synchronisation, un **Activé** associé s'applique aussi aux éléments
+  qu'elle met à jour, alors qu'un **Activé** non associé les laisse tels quels.
+
+Le groupe, la planification et chaque paramètre d'historique (intervalle de lecture maximal, délai de lecture, décalages
+horaires, stratégie de récupération, si aucune donnée n'est trouvée, synchronisation avec le groupe) ne prennent qu'une
+constante, puisqu'ils ne peuvent pas varier d'un enregistrement à l'autre : les autres champs acceptent aussi une
+expression `{{field}}`.
 
 ##### Champs de clé d'identité {#identity-key-fields}
 
@@ -619,16 +685,21 @@ Les connecteurs dont les enregistrements découverts ont toujours la même forme
 défaut de découverte : une nouvelle synchronisation (et [Ajouter comme points](#adding-explored-nodes-as-items))
 démarre avec ces champs de clé d'identité et cette correspondance, qui peuvent ensuite être modifiés.
 
-| Connecteur | Clé d'identité | Correspondance des champs d'élément                                                                                                                                                                                                 |
-| ---------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OPC UA     | `id`           | Nom `{{path}}` (les noms d'affichage depuis la racine de découverte, joints par `/`), ID du nœud `{{nodeId}}`, mode `DA`, origine de l'horodatage `OIBus`. Voir [Métadonnées des nœuds](./opcua.mdx#node-metadata).                 |
-| BACnet/IP  | `id`           | Nom `{{deviceName}} - {{name}}`, adresse et instance de l'appareil, type et instance de l'objet, routage (`{{routed}}`, numéro de réseau, adresse MAC) issus de l'enregistrement ; propriété `present-value`, fuseau horaire `UTC`. |
+| Connecteur | Clé d'identité | Correspondance des champs d'élément                                                                                                                                                                                                      |
+| ---------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OPC UA     | `id`           | Nom `{{path}}` (les noms d'affichage depuis la racine de découverte, joints par `/`), ID du nœud `{{nodeId}}`, mode `HA` avec l'agrégat `Raw`, origine de l'horodatage `OIBus`. Voir [Métadonnées des nœuds](./opcua.mdx#node-metadata). |
+| BACnet/IP  | `id`           | Nom `{{deviceName}} - {{name}}`, adresse et instance de l'appareil, type et instance de l'objet, routage (`{{routed}}`, numéro de réseau, adresse MAC) issus de l'enregistrement ; propriété `present-value`, fuseau horaire `UTC`.      |
 
-#### Planification {#schedule}
+#### Nom et planification {#schedule}
 
-- **Planification** — le mode de scan qui pilote les exécutions planifiées. Laissez-le sur **Manuel uniquement** pour
-  n'exécuter la synchronisation qu'avec **Exécuter maintenant**.
-- **Activé** — indique si les exécutions planifiées se déclenchent. **Exécuter maintenant** fonctionne même lorsque la
+- **Nom** — unique parmi les synchronisations du connecteur.
+- **Description** — texte libre optionnel sur la synchronisation, affiché sous son nom au survol du nom dans la liste
+  des synchronisations.
+- **Planification** — le mode de scan qui pilote les exécutions planifiées (l'abonnement n'en fait pas partie : c'est
+  une planification réservée aux éléments). Laissez-le sur **Manuel uniquement** pour n'exécuter la synchronisation
+  qu'avec **Exécuter maintenant**.
+- **Activé** — indique si les exécutions planifiées se déclenchent. Il ne s'affiche qu'une fois une planification
+  choisie : avec **Manuel uniquement**, rien ne se déclenche. **Exécuter maintenant** fonctionne même lorsque la
   synchronisation est désactivée.
 
 En mode local, un rappel indique que lorsqu'un point n'est plus trouvé, l'élément créé pour lui est désactivé.
@@ -637,7 +708,9 @@ En mode local, un rappel indique que lorsqu'un point n'est plus trouvé, l'élé
 
 L'étape Vérification récapitule la synchronisation (nom, périmètre de découverte, nombre de conditions, mode,
 planification) et prévisualise ce que ferait une exécution — l'ouverture de l'étape lance l'aperçu, **Actualiser
-l'aperçu** le relance :
+l'aperçu** le relance. Tant que quelque chose l'empêche (un nom ou une requête manquants, aucun champ de clé
+d'identité, un champ d'élément obligatoire non associé…), l'étape liste ce qu'il faut corriger, chacun avec un bouton
+vers l'étape où le corriger, et aucun aperçu ne s'exécute :
 
 - **Créer/mettre à jour les points localement** : chaque enregistrement est classé par rapport à l'exécution
   précédente comme **Nouveau**, **Modifié**, **Inchangé**, **Réactivé** ou **Manquant**, avec sa clé d'identité et ses
@@ -645,7 +718,9 @@ l'aperçu** le relance :
   enregistrement manquant affiche les valeurs de l'exécution précédente, estompées.
 - **Envoyer à OIAnalytics** : les enregistrements qui seraient envoyés, exactement tels que découverts.
 
-**Exporter en CSV** télécharge les lignes de l'aperçu. Un aperçu n'écrit rien.
+Une zone de recherche au-dessus du tableau cherche un texte dans la clé d'identité, le statut et les valeurs des lignes
+(en mémoire, sur tout l'aperçu), et le tableau est paginé. **Exporter en CSV** télécharge toutes les lignes de
+l'aperçu, quelle que soit la recherche. Un aperçu n'écrit rien.
 
 ### Exécuter une synchronisation des points {#running-an-items-synchronisation}
 
@@ -669,7 +744,7 @@ tant que le connecteur South est désactivé.
 ### Historique des exécutions {#run-history}
 
 Chaque exécution — manuelle ou planifiée, réussie ou non — est enregistrée. La page **Historique des exécutions**,
-ouverte depuis la liste des synchronisations, commence par un formulaire de recherche :
+ouverte avec **Exécutions passées** depuis la liste des synchronisations, commence par un formulaire de recherche :
 
 - **Démarré après / Démarré avant** — une plage de dates sur le démarrage de l'exécution.
 - **Statut** et **Type de déclencheur** — des puces de filtre (cliquez à nouveau pour en retirer une, ou sur

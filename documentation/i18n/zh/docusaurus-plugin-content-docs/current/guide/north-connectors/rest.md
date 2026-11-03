@@ -5,7 +5,8 @@
 
 OIBus 可以传输：
 
-- **时间值有效载荷**：序列化为 JSON 请求体，或作为通过 FormData 发送的 JSON 文件。
+- **记录列表**：由[文件转换器](../engine/transformers.mdx#file-from-records)转换为 JSON 文件，然后作为 JSON 请求体
+  或通过 FormData 作为 JSON 文件发送。
 - **文件**：通过 FormData 原样转发（压缩或未压缩）。
 
 **示例用例**：

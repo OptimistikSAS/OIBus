@@ -2,7 +2,7 @@
 sidebar_position: 9
 ---
 
-import ItemSettings from './_south-sql-item-settings.mdx';
+import ItemSettings from './_south-record-list-item-settings.mdx';
 
 # OLEDB
 
@@ -30,7 +30,7 @@ Connectez-vous à des sources de données OLEDB via un [OIBus Agent](../oibus-ag
 <ItemSettings />
 
 :::note Types de champ date/heure OLEDB
-Les valeurs de **Type** suivantes sont disponibles pour la configuration du champ date/heure :
+Les valeurs de **Type** suivantes sont disponibles pour le champ date/heure de l'instant suivi :
 
 | Type             | Description                                                              |
 | ---------------- | ------------------------------------------------------------------------ |
@@ -39,4 +39,11 @@ Les valeurs de **Type** suivantes sont disponibles pour la configuration du cham
 | Époque UNIX (s)  | Horodatage Unix en secondes                                              |
 | Époque UNIX (ms) | Horodatage Unix en millisecondes                                         |
 
+:::
+
+:::info Via l'OIBus Agent
+L'agent renvoie les lignes sous forme de texte : le champ suivi arrive comme une chaîne ISO 8601 en UTC (par ex.
+`2024-01-15T10:30:00.000Z`), toutes les autres colonnes telles que le pilote de la base de données les restitue, et les
+valeurs vides ou nulles comme `null`. Utilisez un transformateur de liste d'enregistrements
+pour les formater en aval (par ex. le transformateur [Fichier](../engine/transformers.mdx#file-from-records)).
 :::

@@ -70,13 +70,13 @@ simultaneously, use a local AMS server.
 
 #### Structure Filtering {#structure-filtering}
 
-| Setting        | Description                                                                               | Example Value     |
-| -------------- | ----------------------------------------------------------------------------------------- | ----------------- |
-| Structure Name | Name of the structure to filter.                                                          | `MyStructure`     |
-| Fields to Keep | Comma-separated list of fields to retrieve from the structure, or `*` to keep all fields. | `MyDate,MyNumber` |
+| Setting        | Description                                                                                           | Example Value     |
+| -------------- | ----------------------------------------------------------------------------------------------------- | ----------------- |
+| Structure Name | Name of the structure to filter.                                                                      | `MyStructure`     |
+| Fields to Keep | Comma-separated list (no spaces) of fields to retrieve from the structure, or `*` to keep all fields. | `MyDate,MyNumber` |
 
 > **Example**: If `MyVariable` is of type `MyStructure` with fields `MyDate`, `MyNumber`, and `Value`, filtering to keep
-> only `MyDate, MyNumber` will generate unique point IDs:
+> only `MyDate,MyNumber` (no spaces around the commas) will generate unique point IDs:
 >
 > - `MyVariable.MyDate`
 > - `MyVariable.MyNumber`
