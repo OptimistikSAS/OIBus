@@ -547,6 +547,15 @@ export function toDatabaseSouthSettings(southType: string, settings: Record<stri
 }
 
 /**
+ * The OPC Classic South no longer goes through the OIBus Agent: it starts its own local helper process from the
+ * `@oibus/opc-classic` package. The URL of the agent is removed; the reconnection interval is kept for the helper.
+ */
+export function withoutOpcAgentSettings(settings: Record<string, unknown>): Record<string, unknown> {
+  const { agentUrl: _agentUrl, ...rest } = settings;
+  return rest;
+}
+
+/**
  * The ODBC South no longer goes through the OIBus Agent: it always uses the local ODBC driver. The settings only used
  * by the agent (its toggle and URL, its reconnection interval and its HTTP request timeout) are removed.
  */
@@ -1647,6 +1656,17 @@ function removeOdbcAgentSettings(config: JsonObject): void {
   });
 }
 
+/** See `withoutOpcAgentSettings`, for the connectors and the history queries */
+function removeOpcAgentSettings(config: JsonObject): void {
+  forEachSouth(config, 'opc', south => {
+    const settings = south.settings as JsonObject;
+    if (settings.settings) settings.settings = withoutOpcAgentSettings(settings.settings as JsonObject);
+  });
+  forEachHistoryQuery(config, 'opc', settings => {
+    if (settings.southSettings) settings.southSettings = withoutOpcAgentSettings(settings.southSettings as JsonObject);
+  });
+}
+
 /** See `toFieldProcessOperations`, on the links of the north connectors and of the history queries */
 function convertFieldProcessesToOperations(config: JsonObject): void {
   const transformerIds = asObjects(config.transformers)
@@ -1805,6 +1825,7 @@ export const upgrade: ConfigUpgrade = {
     addDatabaseConnectionSettings(config);
     convertFieldProcessesToOperations(config);
     removeOdbcAgentSettings(config);
+    removeOpcAgentSettings(config);
 
     return config;
   }

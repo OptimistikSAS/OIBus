@@ -6,32 +6,38 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OPC Classic™
 
-使用 OIBus 通过 [OIBus Agent](../oibus-agent/installation.mdx) 连接到 OPC Classic™ 服务器。
+将 OIBus 连接到 OPC Classic™ 服务器（DA 和 HDA）。OIBus 通过随附的一个小型 Windows 辅助进程直接与服务器通信：不再需要 OIBus Agent。
 
 :::info 技术背景
 
 - 由 [OPC Foundation](https://opcfoundation.org/) 制定的工业通信协议
 - 同时支持 HDA 和 DA 模式
-- 需要基于 Windows 的 OIBus Agent
+- OIBus 必须运行在 Windows 上
 - 关于 OPC UA，请参见 [OPC UA 连接器](./opcua.mdx)
 
 :::
 
 :::caution 系统要求
-OIBus Agent **必须**安装在 Windows 机器上
+
+- OIBus **必须**运行在 Windows（x64、x86 或 ARM64）上才能使用此连接器。
+- OIBus 所在机器上**必须**安装 OPC Foundation 的
+  [OPC Core Components](https://opcfoundation.org/developer-tools/samples-and-tools-classic/core-components/)
+  （proxy/stub DLL 和 OpcEnum）。大多数 OPC 服务器安装程序已包含它们；否则请安装 OPC Foundation 的可再发行组件包。
+- 若要访问另一台机器上的服务器，必须在两台机器之间配置 DCOM。
+
 :::
 
 ## OPC Classic 与 OPC UA 对比 {#opc-classic-vs-opc-ua}
 
-|                  | OPC Classic™                                                                              | OPC UA                                                                 |
-| ---------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| **标准**         | 三个独立规范：**DA**（实时数据）、**HDA**（历史数据）、**AE**（报警与事件）               | 统一标准：**DA**（实时数据）+ **HA**（历史访问）+ 报警                 |
-| **历史模式名称** | **HDA** —— 历史数据访问                                                                   | **HA** —— 历史访问（OPC UA Part 11）。概念相同，名称不同 —— 见下方说明 |
-| **传输方式**     | COM/DCOM —— 仅限 Windows 进程间通信                                                       | TCP/IP 或 HTTPS —— 可在任何 IP 网络上工作                              |
-| **平台**         | 仅限 Windows                                                                              | 跨平台：Windows、Linux、macOS、嵌入式设备                              |
-| **安全性**       | 依赖 Windows 域/DCOM 安全机制                                                             | 内置：消息签名、加密、基于证书的身份验证                               |
-| **推出时间**     | 1996 年                                                                                   | 2006 年                                                                |
-| **OIBus 要求**   | 需要在托管 OPC 服务器的 Windows 机器上运行 [OIBus Agent](../oibus-agent/installation.mdx) | 由 OIBus 直接连接 —— 无需 Agent                                        |
+|                  | OPC Classic™                                                                | OPC UA                                                                 |
+| ---------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **标准**         | 三个独立规范：**DA**（实时数据）、**HDA**（历史数据）、**AE**（报警与事件） | 统一标准：**DA**（实时数据）+ **HA**（历史访问）+ 报警                 |
+| **历史模式名称** | **HDA** —— 历史数据访问                                                     | **HA** —— 历史访问（OPC UA Part 11）。概念相同，名称不同 —— 见下方说明 |
+| **传输方式**     | COM/DCOM —— 仅限 Windows 进程间通信                                         | TCP/IP 或 HTTPS —— 可在任何 IP 网络上工作                              |
+| **平台**         | 仅限 Windows                                                                | 跨平台：Windows、Linux、macOS、嵌入式设备                              |
+| **安全性**       | 依赖 Windows 域/DCOM 安全机制                                               | 内置：消息签名、加密、基于证书的身份验证                               |
+| **推出时间**     | 1996 年                                                                     | 2006 年                                                                |
+| **OIBus 要求**   | OIBus 运行在 Windows 上，并已安装 OPC Core Components                       | 由 OIBus 直接连接 —— 无需 Agent                                        |
 
 :::note HDA 与 HA —— 命名上的混淆
 来自 OPC Classic 背景的用户经常在 OPC UA 中寻找 **HDA**，却找不到。
@@ -43,7 +49,7 @@ OPC UA 将等效功能重命名为 **HA**（历史访问，定义于 OPC UA Part
 
 **选择 OPC Classic**：当您的基础设施已经运行无法迁移的 OPC DA 或 OPC HDA 服务器时。OPC Classic 所依赖的
 COM/DCOM 技术仅限 Windows 使用，且在没有 DCOM 隧道的情况下无法通过标准 IP 网络传输 —— 因此需要
-OIBus Agent 直接运行在 Windows 主机上。
+OIBus 运行在 Windows 上，最好与 OPC 服务器位于同一主机。
 
 **选择 OPC UA**：适用于任何新部署。OPC UA 是当前的行业标准，支持所有平台并内置安全机制。详情请参见
 [OPC UA 连接器](./opcua.mdx)。
@@ -62,13 +68,12 @@ OIBus Agent 直接运行在 Windows 主机上。
 
 ## 特定设置 {#specific-settings}
 
-| 设置           | 说明                                  | 示例值                      |
-| -------------- | ------------------------------------- | --------------------------- |
-| 远程 Agent URL | Agent 端点（例如 `http://host:2224`） | `http://192.168.1.100:2224` |
-| 重试间隔       | 连接重试前的等待时间（毫秒）          | 10000                       |
-| 服务器 URL     | OPC 服务器地址（从 Agent 机器角度）   | `localhost` 或 IP 地址      |
-| 服务器名称     | OPC 服务器名称（ProgID）              | `Matrikon.OPC.Simulation`   |
-| 模式           | 数据访问模式（DA 或 HDA）             | `HDA`                       |
+| 设置       | 说明                            | 示例值                    |
+| ---------- | ------------------------------- | ------------------------- |
+| 重试间隔   | 连接重试前的等待时间（毫秒）    | 10000                     |
+| 服务器主机 | OPC 服务器主机（从 OIBus 角度） | `localhost` 或 IP 地址    |
+| 服务器名称 | OPC 服务器名称（ProgID）        | `Matrikon.OPC.Simulation` |
+| 模式       | 数据访问模式（DA 或 HDA）       | `HDA`                     |
 
 ## 分组设置 {#group-settings}
 
@@ -159,3 +164,8 @@ OIBus Agent 直接运行在 Windows 主机上。
 - 节点 ID：`Process.Vessel.Pressure`
 - 聚合方式：`Minimum`
 - 重采样：`1 second`
+
+## 第三方组件 {#third-party-components}
+
+Windows 辅助进程使用 OPC Foundation 的 OPC Classic .NET API，遵循 OPC Foundation MIT 许可证。OIBus 不随附 OPC Core
+Components。OIBus 与 OPC Foundation 无关联，也未获其认可；OPC Classic™ 及 OPC Foundation 的名称是其所有者的商标。

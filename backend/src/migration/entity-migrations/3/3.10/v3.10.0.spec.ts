@@ -29,6 +29,7 @@ import {
   moveFilenamePrefixAndSuffixToTransformers,
   moveSqlSerializationToTransformers,
   removeOdbcAgentSettings,
+  removeOpcAgentSettings,
   renameAnyDataType,
   replaceCsvAndJsonReaders,
   replaceCsvAndJsonWriters,
@@ -4687,5 +4688,48 @@ describe('Entity migration v3.10.0: removeOdbcAgentSettings', () => {
     assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'odbc'), { connectionString: 'c', maxParallelRun: 1 });
     assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'oledb'), { agentUrl: 'u', retryInterval: 1000 });
     assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-odbc'), { connectionString: 'c', maxParallelRun: 2 });
+  });
+});
+
+describe('Entity migration v3.10.0: removeOpcAgentSettings', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(removeOpcAgentSettings, db)
+  });
+  let db: Knex;
+  const settingsOf = async (table: string, column: string, id: string) =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+  const opcSettings = { retryInterval: 1000, host: 'localhost', serverName: 'Matrikon.OPC.Simulation', mode: 'hda' };
+
+  before(() => harness.before());
+  after(() => harness.after());
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should remove the URL of the OIBus Agent from the OPC connectors and history queries only', async () => {
+    await db('south_connectors').insert([
+      { id: 'opc', name: 'OPC', type: 'opc', enabled: true, settings: JSON.stringify({ agentUrl: 'u', ...opcSettings }) },
+      { id: 'oledb', name: 'OLEDB', type: 'oledb', enabled: true, settings: JSON.stringify({ agentUrl: 'u', retryInterval: 1000 }) }
+    ]);
+    await db('history_queries').insert({
+      ...caching,
+      id: 'hq-opc',
+      name: 'hq-opc',
+      start_time: NOW,
+      end_time: NOW,
+      south_type: 'opc',
+      north_type: 'console',
+      south_settings: JSON.stringify({ agentUrl: 'u', ...opcSettings }),
+      north_settings: '{}'
+    });
+
+    await runStepsFrom(removeOpcAgentSettings, db);
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'opc'), opcSettings);
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'oledb'), { agentUrl: 'u', retryInterval: 1000 });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-opc'), opcSettings);
   });
 });

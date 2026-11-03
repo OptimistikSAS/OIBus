@@ -6,19 +6,26 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OPC Classic™
 
-Connectez-vous à des serveurs OPC Classic™ avec OIBus en utilisant l'[agent OIBus](../oibus-agent/installation.mdx).
+Connectez OIBus à des serveurs OPC Classic™ (DA et HDA). OIBus dialogue lui-même avec le serveur via un petit processus
+Windows livré avec lui : l'agent OIBus n'est plus nécessaire.
 
 :::info Contexte technologique
 
 - Protocole de communication industriel de l'[OPC Foundation](https://opcfoundation.org/)
 - Prend en charge les modes HDA et DA
-- Nécessite un agent OIBus basé sur Windows
+- OIBus doit s'exécuter sous Windows
 - Pour OPC UA, voir le [connecteur OPC UA](./opcua.mdx)
 
 :::
 
 :::caution Prérequis système
-L'agent OIBus **doit** être installé sur une machine Windows
+
+- OIBus **doit** s'exécuter sous Windows (x64, x86 ou ARM64) pour utiliser ce connecteur.
+- Les [OPC Core Components](https://opcfoundation.org/developer-tools/samples-and-tools-classic/core-components/) de
+  l'OPC Foundation (DLL proxy/stub et OpcEnum) **doivent** être installés sur la machine OIBus. La plupart des
+  installeurs de serveurs OPC les déploient déjà ; sinon, installez le paquet redistribuable de l'OPC Foundation.
+- Pour joindre un serveur sur une autre machine, DCOM doit être configuré entre les deux machines.
+
 :::
 
 ## OPC Classic vs OPC UA {#opc-classic-vs-opc-ua}
@@ -31,7 +38,7 @@ L'agent OIBus **doit** être installé sur une machine Windows
 | **Plateforme**             | Windows uniquement                                                                                                             | Multi-plateforme : Windows, Linux, macOS, embarqué                                                 |
 | **Sécurité**               | Repose sur la sécurité du domaine/DCOM Windows                                                                                 | Intégrée : signature des messages, chiffrement, authentification par certificat                    |
 | **Introduit en**           | 1996                                                                                                                           | 2006                                                                                               |
-| **Exigence OIBus**         | Nécessite un [agent OIBus](../oibus-agent/installation.mdx) s'exécutant sur la machine Windows hébergeant le serveur OPC       | Se connecte directement depuis OIBus — aucun agent requis                                          |
+| **Exigence OIBus**         | OIBus sous Windows, avec les OPC Core Components installés                                                                     | Se connecte directement depuis OIBus — aucun agent requis                                          |
 
 :::note HDA vs HA — la confusion des noms
 Les utilisateurs venant d'un environnement OPC Classic cherchent souvent **HDA** dans OPC UA et ne le trouvent pas.
@@ -44,8 +51,8 @@ interopérables**.
 
 **Choisissez OPC Classic** lorsque votre infrastructure exploite déjà des serveurs OPC DA ou OPC HDA qui ne peuvent pas être
 migrés. La technologie COM/DCOM sur laquelle repose OPC Classic est réservée à Windows et ne transite pas sur les
-réseaux IP standard sans tunnelage DCOM — d'où l'obligation pour l'agent OIBus de s'exécuter directement sur
-l'hôte Windows.
+réseaux IP standard sans tunnelage DCOM — d'où l'obligation pour OIBus de s'exécuter sous Windows, idéalement
+sur le même hôte que le serveur OPC.
 
 **Choisissez OPC UA** pour tout nouveau déploiement. OPC UA est la norme actuelle de l'industrie, prise en charge sur toutes
 les plateformes et avec une sécurité intégrée. Voir le [connecteur OPC UA](./opcua.mdx) pour plus de détails.
@@ -64,13 +71,12 @@ les plateformes et avec une sécurité intégrée. Voir le [connecteur OPC UA](.
 
 ## Paramètres spécifiques {#specific-settings}
 
-| Paramètre                        | Description                                       | Exemple de valeur           |
-| -------------------------------- | ------------------------------------------------- | --------------------------- |
-| URL de l'agent distant           | Point d'accès de l'agent (ex. `http://host:2224`) | `http://192.168.1.100:2224` |
-| Intervalle de nouvelle tentative | Temps (ms) avant nouvelle tentative de connexion  | 10000                       |
-| URL du serveur                   | Adresse du serveur OPC (depuis la machine agent)  | `localhost` ou adresse IP   |
-| Nom du serveur                   | Nom du serveur OPC (ProgID)                       | `Matrikon.OPC.Simulation`   |
-| Mode                             | Mode d'accès aux données (DA ou HDA)              | `HDA`                       |
+| Paramètre                        | Description                                      | Exemple de valeur         |
+| -------------------------------- | ------------------------------------------------ | ------------------------- |
+| Intervalle de nouvelle tentative | Temps (ms) avant nouvelle tentative de connexion | 10000                     |
+| Hôte du serveur                  | Hôte du serveur OPC, vu depuis OIBus             | `localhost` ou adresse IP |
+| Nom du serveur                   | Nom du serveur OPC (ProgID)                      | `Matrikon.OPC.Simulation` |
+| Mode                             | Mode d'accès aux données (DA ou HDA)             | `HDA`                     |
 
 ## Paramètres du groupe {#group-settings}
 
@@ -163,3 +169,9 @@ formulaire d'édition de l'élément.
 - ID de nœud : `Process.Vessel.Pressure`
 - Agrégat : `Minimum`
 - Rééchantillonnage : `1 second`
+
+## Composants tiers {#third-party-components}
+
+Le processus Windows utilise l'API .NET OPC Classic de l'OPC Foundation, sous licence OPC Foundation MIT. Les OPC Core
+Components ne sont pas livrés avec OIBus. OIBus n'est ni affilié à l'OPC Foundation ni approuvé par elle ; OPC Classic™
+et les noms de l'OPC Foundation sont des marques de leur propriétaire.
