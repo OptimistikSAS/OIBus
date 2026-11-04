@@ -1,4 +1,3 @@
-import { OpcConnection, OpcRawValue } from '@oibus/opc-classic';
 import { DateTime } from 'luxon';
 
 import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
@@ -12,6 +11,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
+import { loadOpcClassic, OpcConnection, OpcRawValue } from './opc-classic-loader';
 
 const MAX_READ_VALUES = 3600;
 const INTERVAL_READ_DELAY_MS = 200;
@@ -59,11 +59,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     try {
       this.logger.debug(`Connecting to the OPC ${this.connector.settings.mode.toUpperCase()} server`);
       const connectStart = DateTime.now().toMillis();
-      this.connection = await OpcConnection.connect(
-        this.connector.settings.host,
-        this.connector.settings.serverName,
-        this.connector.settings.mode
-      );
+      this.connection = await this.openConnection();
       const { vendorInfo, productVersion } = this.connection.serverInfo;
       this.logger.info(`Connected to the OPC server ${vendorInfo} (v${productVersion}) in ${DateTime.now().toMillis() - connectStart} ms`);
       await super.connect();
@@ -81,16 +77,24 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     }
   }
 
+  /**
+   * `@oibus/opc-classic` is an optional, Windows-only dependency (see opc-classic-loader.ts): it is not installed on
+   * other platforms, where any connection attempt fails here.
+   */
+  private openConnection(): Promise<OpcConnection> {
+    const opcClassic = loadOpcClassic();
+    if (!opcClassic) {
+      throw new Error('OPC Classic library not available: the OPC south connector only runs on Windows');
+    }
+    return opcClassic.OpcConnection.connect(this.connector.settings.host, this.connector.settings.serverName, this.connector.settings.mode);
+  }
+
   async testConnection(): Promise<OIBusConnectionTestResult> {
     // A throwaway connection, isolated from the live `this.connection` — a running connector's own
     // session is never touched by a connection test.
     this.logger.debug(`Testing connection to the OPC ${this.connector.settings.mode.toUpperCase()} server`);
     const connectStart = DateTime.now().toMillis();
-    const connection = await OpcConnection.connect(
-      this.connector.settings.host,
-      this.connector.settings.serverName,
-      this.connector.settings.mode
-    );
+    const connection = await this.openConnection();
     const { vendorInfo, productVersion, serverState } = connection.serverInfo;
     this.logger.info(`Connected to the OPC server ${vendorInfo} (v${productVersion}) in ${DateTime.now().toMillis() - connectStart} ms`);
     await connection.disconnect();
@@ -115,11 +119,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     const endTime = testingSettings.history!.endTime;
 
     const connectStart = DateTime.now().toMillis();
-    const connection = await OpcConnection.connect(
-      this.connector.settings.host,
-      this.connector.settings.serverName,
-      this.connector.settings.mode
-    );
+    const connection = await this.openConnection();
     const connectionDuration = DateTime.now().toMillis() - connectStart;
 
     try {

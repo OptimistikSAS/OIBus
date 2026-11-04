@@ -55,7 +55,6 @@
     "@bacnet-js/client": "3.3.2",
     "@influxdata/influxdb-client": "1.35.0",
     "@influxdata/influxdb3-client": "2.4.0",
-    "@oibus/opc-classic": "0.2.0",
     "@smithy/node-http-handler": "4.13.0",
     "@st-one-io/nodes7": "1.1.2",
     "ads-client": "2.2.0",
@@ -108,6 +107,7 @@
     "yazl": "3.3.1"
   },
   "optionalDependencies": {
+    "@oibus/opc-classic": "0.2.1",
     "odbc": "2.6.0"
   },
   "devDependencies": {
