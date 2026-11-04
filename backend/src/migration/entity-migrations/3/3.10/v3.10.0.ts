@@ -61,6 +61,7 @@ import {
   withoutOdbcAgentSettings,
   withoutOpcAgentSettings,
   withoutPiAgentSettings,
+  withPiValueFilter,
   withPrefixAndSuffix
 } from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
 import { generateRandomId } from '../../../../service/utils';
@@ -1844,13 +1845,25 @@ export async function useLocalOleDbDriver(knex: Knex): Promise<void> {
   }
 }
 
-/** See `withoutPiAgentSettings`, for the connectors and the history queries */
+/** See `withoutPiAgentSettings` and `withPiValueFilter`, for the connectors, the history queries and their items */
 export async function removePiAgentSettings(knex: Knex): Promise<void> {
   const targets = [
-    { table: SOUTH_CONNECTORS_TABLE, typeColumn: 'type', settingsColumn: 'settings' },
-    { table: HISTORY_QUERIES_TABLE, typeColumn: 'south_type', settingsColumn: 'south_settings' }
+    {
+      table: SOUTH_CONNECTORS_TABLE,
+      typeColumn: 'type',
+      settingsColumn: 'settings',
+      itemsTable: SOUTH_ITEMS_TABLE,
+      parentColumn: 'connector_id'
+    },
+    {
+      table: HISTORY_QUERIES_TABLE,
+      typeColumn: 'south_type',
+      settingsColumn: 'south_settings',
+      itemsTable: HISTORY_ITEMS_TABLE,
+      parentColumn: 'history_id'
+    }
   ];
-  for (const { table, typeColumn, settingsColumn } of targets) {
+  for (const { table, typeColumn, settingsColumn, itemsTable, parentColumn } of targets) {
     const rows: Array<{ id: string; settings: string }> = await knex(table)
       .select('id', `${settingsColumn} as settings`)
       .where(typeColumn, 'osisoft-pi');
@@ -1859,6 +1872,18 @@ export async function removePiAgentSettings(knex: Knex): Promise<void> {
       table,
       settingsColumn,
       rows.map(row => ({ id: row.id, settings: JSON.stringify(withoutPiAgentSettings(JSON.parse(row.settings))) }))
+    );
+    const items: Array<{ id: string; settings: string }> = await knex(itemsTable)
+      .select('id', 'settings')
+      .whereIn(
+        parentColumn,
+        rows.map(row => row.id)
+      );
+    await bulkUpdateSettings(
+      knex,
+      itemsTable,
+      'settings',
+      items.map(item => ({ id: item.id, settings: JSON.stringify(withPiValueFilter(JSON.parse(item.settings))) }))
     );
   }
 }

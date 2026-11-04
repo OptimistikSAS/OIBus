@@ -163,8 +163,9 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
 
   /**
    * Reads the values of the items in one call: the `point-id` items by point name, their records named after the item;
-   * the `point-query` items by PI point query, their records named after each point found. The points not found and the
-   * failed queries are logged, the other values are kept.
+   * the `point-query` items by PI point query, their records named after each point found. Each item can have a value
+   * filter, applied by the PI Data Archive. The points not found and the failed reads are logged, the other values are
+   * kept.
    */
   private async readRecords(
     connection: PiConnection,
@@ -175,16 +176,25 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     const logCtx = workUnitLogCtx(items);
     const pointItems = items.filter(item => item.settings.type === 'point-id' && item.settings.piPoint);
     const queryItems = items.filter(item => item.settings.type === 'point-query' && item.settings.piQuery);
-    const points = Array.from(new Set(pointItems.map(item => item.settings.piPoint!)));
-    const queries = Array.from(new Set(queryItems.map(item => item.settings.piQuery!)));
+    const points = distinctRequests(
+      pointItems.map(item => ({ name: item.settings.piPoint!, ...filterOf(item) })),
+      point => point.name
+    );
+    const queries = distinctRequests(
+      queryItems.map(item => ({ query: item.settings.piQuery!, ...filterOf(item) })),
+      query => query.query
+    );
 
     const result = await connection.recordedValues(startTime, endTime, { points, queries });
 
     if (result.notFound.length > 0) {
       this.logger.warn(logCtx, `PI points not found: ${result.notFound.join(', ')}`);
     }
-    if (result.pointsError) {
-      this.logger.warn(logCtx, `Error with the query of ${points.length} items. ${result.pointsError}`);
+    for (const pointsError of result.pointsErrors) {
+      this.logger.warn(
+        logCtx,
+        `Error with the query of ${pointsError.names.length} items${pointsError.filter ? ` filtered by "${pointsError.filter}"` : ''}. ${pointsError.error}`
+      );
     }
     const records: Array<OIBusPointRecord> = [];
     let maxInstant: Instant | null = null;
@@ -197,13 +207,18 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       }
     };
     for (const pointValues of result.points) {
-      for (const item of pointItems.filter(pointItem => pointItem.settings.piPoint === pointValues.name)) {
+      const matchingItems = pointItems.filter(
+        item => item.settings.piPoint === pointValues.name && filterOf(item).filter === pointValues.filter
+      );
+      for (const item of matchingItems) {
         addRecords(item.name, pointValues.values);
       }
     }
     for (const queryValues of result.queries) {
       if (queryValues.error) {
-        const names = queryItems.filter(item => item.settings.piQuery === queryValues.query).map(item => item.name);
+        const names = queryItems
+          .filter(item => item.settings.piQuery === queryValues.query && filterOf(item).filter === queryValues.filter)
+          .map(item => item.name);
         this.logger.warn(logCtx, `Error with the query of item ${names.join(', ')}. ${queryValues.error}`);
       }
       for (const pointValues of queryValues.points) {
@@ -237,4 +252,21 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
 function toRecordValue(value: PiValue): string | number {
   if (value === null) return '';
   return typeof value === 'boolean' ? String(value) : value;
+}
+
+/** The value filter of an item, trimmed, when set */
+function filterOf(item: SouthConnectorItemEntity<SouthPIItemSettings>): { filter?: string } {
+  const filter = item.settings.valueFilter?.trim();
+  return filter ? { filter } : {};
+}
+
+/** The requests without duplicates: a same point or query is read once per filter */
+function distinctRequests<T extends { filter?: string }>(requests: Array<T>, key: (request: T) => string): Array<T> {
+  const seen = new Set<string>();
+  return requests.filter(request => {
+    const id = `${key(request)}\0${request.filter ?? ''}`;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
 }

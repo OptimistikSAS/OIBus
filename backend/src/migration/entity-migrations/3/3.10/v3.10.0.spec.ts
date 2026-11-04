@@ -4837,7 +4837,7 @@ describe('Entity migration v3.10.0: removePiAgentSettings', () => {
   });
   afterEach(() => harness.afterEach());
 
-  it('should replace the URL of the OIBus Agent by the default PI server in the PI connectors and history queries only', async () => {
+  it('should replace the URL of the OIBus Agent by the default PI server, and add a value filter to the PI items only', async () => {
     await db('south_connectors').insert([
       { id: 'pi', name: 'PI', type: 'osisoft-pi', enabled: true, settings: JSON.stringify({ agentUrl: 'u', retryInterval: 10000 }) },
       { id: 'opc', name: 'OPC', type: 'opc', enabled: true, settings: JSON.stringify({ agentUrl: 'u', retryInterval: 1000 }) }
@@ -4868,9 +4868,49 @@ describe('Entity migration v3.10.0: removePiAgentSettings', () => {
       }
     ]);
 
+    await db('south_items').insert([
+      {
+        id: 'pi-item',
+        name: 'PI item',
+        enabled: true,
+        connector_id: 'pi',
+        scan_mode_id: 'sm1',
+        settings: JSON.stringify({ type: 'point-id', piPoint: 'SINUSOID' })
+      },
+      {
+        id: 'opc-item',
+        name: 'OPC item',
+        enabled: true,
+        connector_id: 'opc',
+        scan_mode_id: 'sm1',
+        settings: JSON.stringify({ nodeId: 'n' })
+      }
+    ]);
+    await db('history_items').insert([
+      {
+        id: 'hq-pi-item',
+        history_id: 'hq-pi-named',
+        name: 'PI item',
+        enabled: true,
+        // Already with a value filter (3.10.0 pre-release): kept as is
+        settings: JSON.stringify({ type: 'point-query', piQuery: '*', valueFilter: "'SINUSOID' > 50" })
+      }
+    ]);
+
     await runStepsFrom(removePiAgentSettings, db);
 
     assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'pi'), { retryInterval: 10000, serverName: null });
+    assert.deepStrictEqual(await settingsOf('south_items', 'settings', 'pi-item'), {
+      type: 'point-id',
+      piPoint: 'SINUSOID',
+      valueFilter: null
+    });
+    assert.deepStrictEqual(await settingsOf('south_items', 'settings', 'opc-item'), { nodeId: 'n' });
+    assert.deepStrictEqual(await settingsOf('history_items', 'settings', 'hq-pi-item'), {
+      type: 'point-query',
+      piQuery: '*',
+      valueFilter: "'SINUSOID' > 50"
+    });
     assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'opc'), { agentUrl: 'u', retryInterval: 1000 });
     assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-pi'), { retryInterval: 10000, serverName: null });
     assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-pi-named'), {

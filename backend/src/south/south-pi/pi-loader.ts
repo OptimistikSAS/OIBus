@@ -23,10 +23,10 @@ export interface PiPointValues {
 }
 
 export interface PiReadResult {
-  points: Array<PiPointValues & { name: string }>;
+  points: Array<PiPointValues & { name: string; filter?: string }>;
   notFound: Array<string>;
-  pointsError?: string;
-  queries: Array<{ query: string; points: Array<PiPointValues>; error?: string }>;
+  pointsErrors: Array<{ names: Array<string>; filter?: string; error: string }>;
+  queries: Array<{ query: string; filter?: string; points: Array<PiPointValues>; error?: string }>;
 }
 
 export interface PiConnection {
@@ -34,7 +34,7 @@ export interface PiConnection {
   recordedValues(
     startTime: string,
     endTime: string,
-    request: { points?: Array<string>; queries?: Array<string> },
+    request: { points?: Array<{ name: string; filter?: string }>; queries?: Array<{ query: string; filter?: string }> },
     options?: { pageSize?: number; timeout?: number }
   ): Promise<PiReadResult>;
   disconnect(): Promise<void>;
