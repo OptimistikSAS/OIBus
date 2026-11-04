@@ -20,6 +20,7 @@ import {
   withoutOdbcAgentSettings,
   withoutOpcAgentSettings,
   withoutPiAgentSettings,
+  withPiValueFilter,
   withPrefixAndSuffix
 } from './v3.10.0';
 
@@ -901,6 +902,56 @@ describe('3.10.0 config upgrade', () => {
       assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).southSettings, {
         retryInterval: 10000,
         serverName: null
+      });
+    });
+
+    it('adds an empty value filter to the PI items of the souths and history queries only', () => {
+      const config = upgrade.apply({
+        southConnectors: [
+          {
+            type: 'osisoft-pi',
+            settings: {
+              name: 'PI',
+              settings: { agentUrl: 'u', retryInterval: 10000 },
+              items: [{ name: 'item', settings: { type: 'point-id', piPoint: 'SINUSOID' } }]
+            }
+          },
+          {
+            type: 'opc',
+            settings: {
+              name: 'OPC',
+              settings: { agentUrl: 'u', retryInterval: 1000 },
+              items: [{ name: 'item', settings: { nodeId: 'n' } }]
+            }
+          }
+        ],
+        historyQueries: [
+          {
+            settings: {
+              southType: 'osisoft-pi',
+              northType: 'console',
+              southSettings: { agentUrl: 'u', retryInterval: 10000 },
+              northSettings: {},
+              items: [{ name: 'item', settings: { type: 'point-query', piQuery: '*' } }]
+            }
+          }
+        ]
+      });
+
+      const southItemSettings = (config.southConnectors as Array<JsonObject>).map(
+        south => (((south.settings as JsonObject).items as Array<JsonObject>)[0] as JsonObject).settings
+      );
+      assert.deepStrictEqual(southItemSettings, [{ type: 'point-id', piPoint: 'SINUSOID', valueFilter: null }, { nodeId: 'n' }]);
+      assert.deepStrictEqual(
+        (((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).items as Array<JsonObject>)[0].settings,
+        { type: 'point-query', piQuery: '*', valueFilter: null }
+      );
+    });
+
+    it('keeps the value filter already set', () => {
+      assert.deepStrictEqual(withPiValueFilter({ type: 'point-id', valueFilter: "'SINUSOID' > 50" }), {
+        type: 'point-id',
+        valueFilter: "'SINUSOID' > 50"
       });
     });
 

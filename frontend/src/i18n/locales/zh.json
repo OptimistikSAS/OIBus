@@ -1391,7 +1391,8 @@
                 "point-query": "PI 查询"
               },
               "pi-point": "PI 点位",
-              "pi-query": "PI 查询"
+              "pi-query": "PI 查询",
+              "value-filter": "值过滤器（PI 表达式，留空：所有值）"
             },
             "postgresql": {
               "query": "查询",

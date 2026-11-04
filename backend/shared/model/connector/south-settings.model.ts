@@ -908,6 +908,7 @@ export interface SouthPIItemSettings {
   type: SouthPIItemSettingsType;
   piPoint?: string;
   piQuery?: string;
+  valueFilter: string | null;
 }
 
 export interface SouthPostgreSQLItemSettings {

@@ -3013,6 +3013,7 @@ const models: TsoaRoute.Models = {
             "type": {"ref":"SouthPIItemSettingsType","required":true},
             "piPoint": {"dataType":"string"},
             "piQuery": {"dataType":"string"},
+            "valueFilter": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },

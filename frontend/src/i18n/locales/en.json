@@ -2386,7 +2386,8 @@
                 "point-query": "PI query"
               },
               "pi-point": "PI point",
-              "pi-query": "PI query"
+              "pi-query": "PI query",
+              "value-filter": "Value filter (PI expression, empty: every value)"
             },
             "postgresql": {
               "query": "Query",

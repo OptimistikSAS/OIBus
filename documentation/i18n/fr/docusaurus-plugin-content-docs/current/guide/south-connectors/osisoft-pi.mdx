@@ -55,17 +55,25 @@ dans le formulaire d'édition de l'élément.
 
 ### Méthodes d'accès aux points {#point-access-methods}
 
-| Paramètre  | Description                                                                                                                                                                                                                                                                     | Exemple de valeur                |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Type       | Méthode d'accès : `PI point` (point unique par nom) ou `PI query` (plusieurs points via une expression de requête)                                                                                                                                                              | `PI point` ou `PI query`         |
-| Point PI   | Nom exact du point (sans le nom du serveur, insensible à la casse). Utilisé lorsque le Type est `PI point`.                                                                                                                                                                     | `SINUSOID`                       |
-| Requête PI | Requête sélectionnant plusieurs points (voir [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Une requête sans nom d'attribut, comme `sinus*`, cherche dans les noms des points. Par défaut : `*` (tous les points). | `tag:=SINUS* AND pointsource:=R` |
+| Paramètre         | Description                                                                                                                                                                                                                                                                                                          | Exemple de valeur                |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Type              | Méthode d'accès : `PI point` (point unique par nom) ou `PI query` (plusieurs points via une expression de requête)                                                                                                                                                                                                   | `PI point` ou `PI query`         |
+| Point PI          | Nom exact du point (sans le nom du serveur, insensible à la casse). Utilisé lorsque le Type est `PI point`.                                                                                                                                                                                                          | `SINUSOID`                       |
+| Requête PI        | Requête sélectionnant plusieurs points (voir [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Une requête sans nom d'attribut, comme `sinus*`, cherche dans les noms des points. Par défaut : `*` (tous les points).                                      | `tag:=SINUS* AND pointsource:=R` |
+| Filtre de valeurs | Condition facultative en [syntaxe performance equation](https://docs.aveva.com/bundle/af-sdk/page/html/M_OSIsoft_AF_PI_PIPoint_RecordedValues.htm), évaluée par le PI Data Archive : seules les valeurs qui la satisfont sont envoyées à OIBus. Elle peut nommer le point qu'elle filtre. Vide : toutes les valeurs. | `'SINUSOID' > 50`                |
 
 :::info Noms de référence
 
 - Pour `PI point` : le nom de l'élément sert de référence dans les charges utiles JSON
 - Pour `PI query` : le nom PI est utilisé comme référence
   :::
+
+:::note Filtres de valeurs
+Le PI Data Archive applique un filtre de valeurs avant d'envoyer les valeurs, ce qui évite leur transfert. Il lit les
+points d'un appel groupé avec un seul filtre : les éléments `PI point` lus ensemble le sont en un appel par filtre
+distinct (un seul appel si aucun n'a de filtre), chaque élément `PI query` dans son propre appel. Avec un élément
+`PI query`, le filtre s'applique à chaque point trouvé par la requête.
+:::
 
 :::info Valeurs
 OIBus lit les valeurs enregistrées entre le début et la fin de chaque intervalle, bornes incluses. Chaque

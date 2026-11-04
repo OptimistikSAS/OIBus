@@ -49,11 +49,13 @@ const buildItem = (
   updatedAt: ''
 });
 
-const pointItem = buildItem('id1', { type: 'point-id', piPoint: 'SINUSOID' });
-const sameSourceItem = buildItem('id2', { type: 'point-id', piPoint: 'SINUSOID' });
-const otherPointItem = buildItem('id3', { type: 'point-id', piPoint: 'CDT158' });
-const queryItem = buildItem('id4', { type: 'point-query', piQuery: 'tag:=BA*' });
-const missingSettingsItem = buildItem('id5', { type: 'point-id' });
+const pointItem = buildItem('id1', { type: 'point-id', piPoint: 'SINUSOID', valueFilter: null });
+const sameSourceItem = buildItem('id2', { type: 'point-id', piPoint: 'SINUSOID', valueFilter: '  ' });
+const otherPointItem = buildItem('id3', { type: 'point-id', piPoint: 'CDT158', valueFilter: null });
+const queryItem = buildItem('id4', { type: 'point-query', piQuery: 'tag:=BA*', valueFilter: null });
+const missingSettingsItem = buildItem('id5', { type: 'point-id', valueFilter: null });
+const filteredPointItem = buildItem('id7', { type: 'point-id', piPoint: 'SINUSOID', valueFilter: " 'SINUSOID' > 1 " });
+const filteredQueryItem = buildItem('id8', { type: 'point-query', piQuery: 'tag:=BA*', valueFilter: "'BA:ACTIVE.1' = 1" });
 
 const buildConfiguration = (settings: Partial<SouthPISettings> = {}): SouthConnectorEntity<SouthPISettings, SouthPIItemSettings> => ({
   id: 'southId',
@@ -74,7 +76,7 @@ const configuration = buildConfiguration();
 const START = '2026-01-01T00:00:00.000Z';
 const END = '2026-01-01T01:00:00.000Z';
 
-const emptyResult = (): PiReadResult => ({ points: [], notFound: [], queries: [] });
+const emptyResult = (): PiReadResult => ({ points: [], notFound: [], pointsErrors: [], queries: [] });
 
 describe('SouthPI', () => {
   let SouthPI: typeof SouthPIClass;
@@ -313,7 +315,7 @@ describe('SouthPI', () => {
       assert.deepStrictEqual(latestConnection().recordedValues.mock.calls[0].arguments, [
         START,
         END,
-        { points: ['SINUSOID'], queries: [] }
+        { points: [{ name: 'SINUSOID' }], queries: [] }
       ]);
       assert.strictEqual(latestConnection().disconnect.mock.calls.length, 1);
       assert.strictEqual(addContentCallback.mock.calls.length, 0);
@@ -360,6 +362,7 @@ describe('SouthPI', () => {
           { name: 'CDT158', point: 'CDT158', values: [{ timestamp: '2026-01-01T00:30:00.000Z', value: 12, good: true }] }
         ],
         notFound: [],
+        pointsErrors: [],
         queries: [
           {
             query: 'tag:=BA*',
@@ -373,7 +376,7 @@ describe('SouthPI', () => {
       assert.deepStrictEqual(latestConnection().recordedValues.mock.calls[0].arguments, [
         START,
         END,
-        { points: ['SINUSOID', 'CDT158'], queries: ['tag:=BA*'] }
+        { points: [{ name: 'SINUSOID' }, { name: 'CDT158' }], queries: [{ query: 'tag:=BA*' }] }
       ]);
       const records = [
         { pointId: 'item1', timestamp: '2026-01-01T00:10:00.000Z', value: 1.5 },
@@ -396,13 +399,16 @@ describe('SouthPI', () => {
       nextRead = async () => ({
         points: [],
         notFound: ['SINUSOID', 'CDT158'],
-        pointsError: '[-11091] Event Not Found',
+        pointsErrors: [
+          { names: ['SINUSOID', 'CDT158'], error: '[-11091] Event Not Found' },
+          { names: ['SINUSOID'], filter: "'SINUSOID' > 1", error: '[-12012] Filter expression is not valid' }
+        ],
         queries: [
           { query: 'tag:=BA*', points: [], error: '[-12010] Bad query' },
           { query: 'tag:=OTHER*', points: [{ point: 'OTHER', values: [{ timestamp: START, value: null, good: false }] }] }
         ]
       });
-      const otherQueryItem = buildItem('id6', { type: 'point-query', piQuery: 'tag:=OTHER*' });
+      const otherQueryItem = buildItem('id6', { type: 'point-query', piQuery: 'tag:=OTHER*', valueFilter: null });
 
       const result = await south.historyQuery([pointItem, otherPointItem, queryItem, otherQueryItem], START, END);
 
@@ -410,6 +416,7 @@ describe('SouthPI', () => {
       assert.deepStrictEqual(warnings, [
         'PI points not found: SINUSOID, CDT158',
         'Error with the query of 2 items. [-11091] Event Not Found',
+        `Error with the query of 1 items filtered by "'SINUSOID' > 1". [-12012] Filter expression is not valid`,
         'Error with the query of item item4. [-12010] Bad query'
       ]);
       // The next query starts just after the last value, even one at the start of the time range
@@ -417,6 +424,46 @@ describe('SouthPI', () => {
         trackedInstant: '2026-01-01T00:00:00.001Z',
         value: { pointId: 'OTHER', timestamp: START, value: '' }
       });
+    });
+
+    it('should read the items of each value filter apart, and name their records after their own items', async () => {
+      nextRead = async () => ({
+        points: [
+          { name: 'SINUSOID', point: 'SINUSOID', values: [{ timestamp: '2026-01-01T00:10:00.000Z', value: 0.5, good: true }] },
+          {
+            name: 'SINUSOID',
+            point: 'SINUSOID',
+            filter: "'SINUSOID' > 1",
+            values: [{ timestamp: '2026-01-01T00:20:00.000Z', value: 1.5, good: true }]
+          }
+        ],
+        notFound: [],
+        pointsErrors: [],
+        queries: [
+          { query: 'tag:=BA*', points: [] },
+          { query: 'tag:=BA*', filter: "'BA:ACTIVE.1' = 1", points: [], error: '[-12012] Filter expression is not valid' }
+        ]
+      });
+
+      const result = await south.historyQuery([pointItem, filteredPointItem, queryItem, filteredQueryItem], START, END);
+
+      assert.deepStrictEqual(latestConnection().recordedValues.mock.calls[0].arguments, [
+        START,
+        END,
+        {
+          points: [{ name: 'SINUSOID' }, { name: 'SINUSOID', filter: "'SINUSOID' > 1" }],
+          queries: [{ query: 'tag:=BA*' }, { query: 'tag:=BA*', filter: "'BA:ACTIVE.1' = 1" }]
+        }
+      ]);
+      assert.deepStrictEqual((addContentCallback.mock.calls[0].arguments[1] as OIBusRecordListContent).content, [
+        { pointId: 'item1', timestamp: '2026-01-01T00:10:00.000Z', value: 0.5 },
+        { pointId: 'item7', timestamp: '2026-01-01T00:20:00.000Z', value: 1.5 }
+      ]);
+      assert.deepStrictEqual(
+        logger.warn.mock.calls.map(c => c.arguments[1]),
+        ['Error with the query of item item8. [-12012] Filter expression is not valid']
+      );
+      assert.strictEqual(result.trackedInstant, '2026-01-01T00:20:00.001Z');
     });
 
     it('should send nothing when no value is found', async () => {
