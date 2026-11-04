@@ -101,7 +101,7 @@ OIAnalytics doit être ressaisi car l'ancien texte chiffré ne peut plus être d
 
 Séparément, OIBus génère sa propre paire certificat/clé RSA de 4096 bits au démarrage (`private.pem` /
 `public.pem` / `cert.pem`) — c'est ce qui signe les JWT décrits ci-dessus, et c'est également utilisé pour auto-signer
-le certificat présenté pour les connexions OPC UA. Il s'agit d'une paire de clés distincte de celle utilisée pour
+le certificat présenté pour les connexions OPC UA®. Il s'agit d'une paire de clés distincte de celle utilisée pour
 l'échange de secrets OIAnalytics.
 
 ## Sécurité réseau {#network-security}

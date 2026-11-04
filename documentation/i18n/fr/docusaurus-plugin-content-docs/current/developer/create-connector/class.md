@@ -197,7 +197,7 @@ Exemple : `backend/src/south/south-modbus/south-modbus.ts`.
 
 #### `SouthHistoryQuery` {#southhistoryquery}
 
-Pour les lectures sur une fenêtre temporelle — par ex. OPC UA HistoryRead, `BETWEEN` en SQL, archive OSIsoft PI.
+Pour les lectures sur une fenêtre temporelle — par ex. OPC UA® HistoryRead, `BETWEEN` en SQL, archive OSIsoft PI.
 
 ```typescript
 interface SouthHistoryQuery {

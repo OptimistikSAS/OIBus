@@ -1950,7 +1950,7 @@
 					},
 					"explore": {
 						"type": "boolean",
-						"description": "Whether this connector type supports the interactive \"explore/discovery\" feature\n(browsing the data source, e.g. expanding OPC-UA nodes or walking a folder tree).\nUI capability flag — mirrors the connector's structural `hasExplore()`.",
+						"description": "Whether this connector type supports the interactive \"explore/discovery\" feature\n(browsing the data source, e.g. expanding OPC UA nodes or walking a folder tree).\nUI capability flag — mirrors the connector's structural `hasExplore()`.",
 						"example": true
 					},
 					"settings": {
@@ -18332,15 +18332,15 @@
 				"description": "Make all properties in T optional"
 			},
 			"SouthConnectorExploreEntry": {
-				"description": "A single entry returned while exploring/discovering a South connector's data source.\nRepresents an OPC-UA node or a file-system entry. Kept intentionally generic and\nextensible so item creation and item synchronisation can build on it later.",
+				"description": "A single entry returned while exploring/discovering a South connector's data source.\nRepresents an OPC UA node or a file-system entry. Kept intentionally generic and\nextensible so item creation and item synchronisation can build on it later.",
 				"properties": {
 					"id": {
 						"type": "string",
-						"description": "Stable identifier of the entry, passed back to expand it.\nOPC-UA node id (e.g. \"ns=1;s=Temperature\") or a folder-relative path."
+						"description": "Stable identifier of the entry, passed back to expand it.\nOPC UA node id (e.g. \"ns=1;s=Temperature\") or a folder-relative path."
 					},
 					"name": {
 						"type": "string",
-						"description": "Human-readable label (OPC-UA display name or file/folder name)."
+						"description": "Human-readable label (OPC UA display name or file/folder name)."
 					},
 					"metadata": {
 						"$ref": "#/components/schemas/Record_string.string-or-number_",

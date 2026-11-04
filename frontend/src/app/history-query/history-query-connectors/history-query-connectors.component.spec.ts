@@ -84,7 +84,7 @@ describe('HistoryQueryConnectorsComponent', () => {
     await expect.element(tester.mode('north', 'Duplicate existing')).toHaveAttribute('aria-pressed', 'true');
     // the folder scanner does not support history queries
     await expect.element(tester.cards('south')).toHaveLength(2);
-    await expect.element(tester.card('south', 'South 3')).toMatchTextContent(/OPC UA™/);
+    await expect.element(tester.card('south', 'South 3')).toMatchTextContent(/OPC UA®/);
 
     await tester.card('south', 'South 3').click();
     await tester.card('north', 'North 2').click();
@@ -130,7 +130,7 @@ describe('HistoryQueryConnectorsComponent', () => {
     await expect.element(tester.mode('south', 'Duplicate existing')).not.toBeInTheDocument();
     await expect.element(tester.mode('north', 'Duplicate existing')).not.toBeInTheDocument();
 
-    await tester.card('south', 'OPC UA™').click();
+    await tester.card('south', 'OPC UA®').click();
     await tester.card('north', 'File writer').click();
 
     expect(tester.choice()).toEqual({ northType: 'file-writer', southType: 'opcua', northId: null, southId: null });

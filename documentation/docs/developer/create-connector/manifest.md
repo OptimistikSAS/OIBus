@@ -262,7 +262,7 @@ The `scanMode.acceptableType` controls what the operator can pick:
 | ------------------------- | --------------------------------------------------------------------------------- |
 | `'POLL'`                  | Periodic only (default for most South connectors)                                 |
 | `'SUBSCRIPTION'`          | Push-driven only — use when the connector ONLY supports subscriptions (e.g. MQTT) |
-| `'SUBSCRIPTION_AND_POLL'` | Either is valid per item (OPC UA: some items polled, some subscribed)             |
+| `'SUBSCRIPTION_AND_POLL'` | Either is valid per item (OPC UA®: some items polled, some subscribed)             |
 
 A complete real example is `backend/src/south/south-folder-scanner/manifest.ts`.
 

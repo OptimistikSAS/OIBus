@@ -46,7 +46,7 @@ openssl pkcs12 -in bundle.pfx -nocerts -nodes -out private-key.pem
 
 The **download** button on a certificate row opens a dialog offering:
 
-- **Format** — **PEM** (`.pem`) or **DER** (`.cer`). DER is what OPC UA servers such as Kepware expect, so it can be handed over directly
+- **Format** — **PEM** (`.pem`) or **DER** (`.cer`). DER is what OPC UA® servers such as Kepware expect, so it can be handed over directly
   without an `openssl` conversion round-trip.
 - **Include the CA chain** — appends the stored chain to the exported file. Only available with PEM, since a DER file holds exactly one
   certificate.

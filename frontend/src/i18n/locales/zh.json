@@ -332,13 +332,13 @@
             "file-to-modbus": "Modbus 值",
             "file-to-mqtt": "MQTT 有效载荷",
             "file-to-oianalytics": "OIAnalytics 有效载荷",
-            "file-to-opcua": "OPCUA 值",
+            "file-to-opcua": "OPC UA 值",
             "file-to-record-list": "记录",
             "record-list-to-file": "文件",
             "record-list-to-modbus": "Modbus 值",
             "record-list-to-mqtt": "MQTT 有效载荷",
             "record-list-to-oianalytics": "OIAnalytics 有效载荷",
-            "record-list-to-opcua": "OPCUA 值"
+            "record-list-to-opcua": "OPC UA 值"
           },
           "standard-description": {
             "file-to-file": "按原样发送文件（可重命名或压缩），或将 CSV 或 JSON 文件转换为另一个 CSV 或 JSON 文件。",
@@ -621,7 +621,7 @@
             "mapping": {
               "title": "映射表",
               "point-id": "点位 ID（引用）",
-              "node-id": "OPCUA 节点 ID",
+              "node-id": "OPC UA 节点 ID",
               "data-type": {
                 "title": "数据类型",
                 "boolean": "布尔值",
@@ -2623,7 +2623,7 @@
     "internal-scope-ids": {
       "engine": "引擎",
       "web-server": "Web 服务器",
-      "node-opcua": "Node OPC-UA"
+      "node-opcua": "node-opcua"
     },
     "categories": {
       "api": "API",
@@ -2727,7 +2727,7 @@
       "mqtt": "MQTT",
       "modbus": "Modbus",
       "oianalytics": "OIAnalytics 时间值",
-      "opcua": "OPCUA",
+      "opcua": "OPC UA",
       "record-list": "记录"
     },
     "oibus-transformer-language": {
@@ -2750,7 +2750,7 @@
       "modbus": "Modbus",
       "mqtt": "MQTT",
       "oianalytics": "OIAnalytics®",
-      "opcua": "OPC UA™",
+      "opcua": "OPC UA®",
       "rest": "REST API",
       "sftp": "SFTP"
     },
@@ -2763,7 +2763,7 @@
       "modbus": "写入 PLC 上的 Modbus 寄存器",
       "mqtt": "发布到 MQTT 代理主题",
       "oianalytics": "将文件和数值发送到 OIAnalytics®",
-      "opcua": "将数据写入 OPC UA™ 服务器",
+      "opcua": "将数据写入 OPC UA® 服务器",
       "rest": "将数据上传到 REST 端点",
       "sftp": "将文件和数据上传到 SFTP 服务器"
     },
@@ -2787,8 +2787,8 @@
       "odbc": "ODBC",
       "oianalytics": "OIAnalytics®",
       "oledb": "OLEDB",
-      "opc": "OPC Classic™",
-      "opcua": "OPC UA™",
+      "opc": "OPC Classic",
+      "opcua": "OPC UA®",
       "oracle": "Oracle Database™",
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
@@ -2811,8 +2811,8 @@
       "odbc": "使用 ODBC 驱动程序查询 SQL 数据库",
       "oianalytics": "从 OIAnalytics® 查询时间值",
       "oledb": "使用 OLEDB 查询 SQL 数据库",
-      "opc": "从 OPC Classic™（HDA/DA）服务器获取数据",
-      "opcua": "从 OPC UA™ 服务器（HA/DA）查询数据",
+      "opc": "从 OPC Classic（HDA/DA）服务器获取数据",
+      "opcua": "从 OPC UA® 服务器（HA/DA）查询数据",
       "oracle": "从 Oracle Database™ 查询数据",
       "osisoft-pi": "与 OIBus Agent 建立连接以访问 PI System™ 数据",
       "postgresql": "查询 PostgreSQL 数据库",

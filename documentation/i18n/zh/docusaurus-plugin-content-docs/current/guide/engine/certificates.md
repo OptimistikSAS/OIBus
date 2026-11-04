@@ -41,7 +41,7 @@ openssl pkcs12 -in bundle.pfx -nocerts -nodes -out private-key.pem
 
 证书行上的**下载**按钮会打开一个对话框，提供以下选项：
 
-- **格式** — **PEM**（`.pem`）或 **DER**（`.cer`）。DER 是 Kepware 等 OPC UA 服务器所期望的格式，因此可以直接使用，
+- **格式** — **PEM**（`.pem`）或 **DER**（`.cer`）。DER 是 Kepware 等 OPC UA® 服务器所期望的格式，因此可以直接使用，
   无需通过 `openssl` 进行转换。
 - **包含 CA 链** — 将存储的证书链附加到导出的文件中。仅在选择 PEM 时可用，因为一个 DER 文件只能容纳一个证书。
 - **包含私钥** — 见下文。

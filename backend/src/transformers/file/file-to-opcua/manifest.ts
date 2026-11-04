@@ -4,7 +4,7 @@ import { opcuaMappingAttributes } from '../../record-list/record-list-to-opcua/m
 import { fileInputAttribute } from '../file-input';
 
 /**
- * Writes the values of the rows of a CSV or JSON file to OPCUA, as the record-list-to-opcua transformer: the point and
+ * Writes the values of the rows of a CSV or JSON file to OPC UA, as the record-list-to-opcua transformer: the point and
  * the value of each row are read from its fields.
  */
 const manifest: TransformerManifest = {

@@ -20,8 +20,8 @@ sidebar_position: 6
 | [ODBC](./south-connectors/odbc.mdx)                     |
 | [OIAnalytics®](./south-connectors/oianalytics.mdx)      |
 | [OLEDB](./south-connectors/oledb.mdx)                   |
-| [OPC Classic™（HDA 模式）](./south-connectors/opc.mdx)  |
-| [OPC UA™（HA 模式）](./south-connectors/opcua.mdx)      |
+| [OPC Classic（HDA 模式）](./south-connectors/opc.mdx)  |
+| [OPC UA®（HA 模式）](./south-connectors/opcua.mdx)      |
 | [Oracle Database™](./south-connectors/oracle.mdx)       |
 | [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx) |
 | [PostgreSQL](./south-connectors/postgresql.mdx)         |

@@ -11,7 +11,7 @@ Each use case covers a specific South → North pairing. Before following a use 
 
 | Use case                                                      | South connector              | North connector    |
 | ------------------------------------------------------------- | ---------------------------- | ------------------ |
-| [OPC UA → OIAnalytics](./use-case-opcua)                      | OPC UA                       | OIAnalytics        |
+| [OPC UA® → OIAnalytics](./use-case-opcua)                      | OPC UA                       | OIAnalytics        |
 | [Microsoft SQL Server → Azure Blob Storage](./use-case-mssql) | MSSQL                        | Azure Blob Storage |
 | [ADS / TwinCAT → OIAnalytics](./use-case-ads)                 | ADS                          | OIAnalytics        |
 | [Modbus → File Writer](./use-case-modbus)                     | Modbus                       | File Writer        |

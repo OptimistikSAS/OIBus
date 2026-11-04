@@ -213,7 +213,7 @@ export default class SouthOPCUA
       this.session = await this.createSession();
       await super.connect();
     } catch (error: unknown) {
-      this.logger.error(`Error while connecting to the OPCUA server: ${getErrorMessage(error)}`);
+      this.logger.error(`Error while connecting to the OPC UA server: ${getErrorMessage(error)}`);
       // Wrap disconnect() so that errors from client.close() / subscription.terminate()
       // on an already-dead session do not escape the catch block. If they did, connect()
       // would itself reject — and since connect() is invoked from setTimeout, that
@@ -256,7 +256,7 @@ export default class SouthOPCUA
           `Disconnected from OPCUA server ${this.connector.settings.url} in ${DateTime.now().toMillis() - disconnectStart} ms`
         );
       } catch (error: unknown) {
-        this.logger.error(`Error closing OPC-UA session: ${getErrorMessage(error)}`);
+        this.logger.error(`Error closing OPC UA session: ${getErrorMessage(error)}`);
       }
       this.session = null;
     }
@@ -469,10 +469,10 @@ export default class SouthOPCUA
       this.connector.settings,
       this.connector.settings.readTimeout
     );
-    this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
+    this.logger.debug(`Connecting to OPC UA on ${this.connector.settings.url}`);
     const connectStart = DateTime.now().toMillis();
     const session = await createOPCUASession(this.connector.settings.url, userIdentity, options, this.connector.settings.connectionTimeout);
-    this.logger.info(`Connected to OPCUA server ${this.connector.settings.url} in ${DateTime.now().toMillis() - connectStart} ms`);
+    this.logger.info(`Connected to OPC UA server ${this.connector.settings.url} in ${DateTime.now().toMillis() - connectStart} ms`);
     return session;
   }
 
@@ -510,7 +510,7 @@ export default class SouthOPCUA
         // The session is dead: release it so a later browse reconnects instead of
         // repeatedly hitting a broken client (and free the socket immediately).
         await this.disconnect();
-        throw new Error(`OPCUA explore session expired, please restart the exploration: ${(error as Error).message}`);
+        throw new Error(`OPC UA explore session expired, please restart the exploration: ${(error as Error).message}`);
       }
       throw error;
     }
@@ -544,7 +544,7 @@ export default class SouthOPCUA
     } catch (error) {
       if (isSessionError(error)) {
         await this.disconnect();
-        throw new Error(`OPCUA discovery session expired, please restart the configuration workflow run: ${(error as Error).message}`);
+        throw new Error(`OPC UA discovery session expired, please restart the configuration workflow run: ${(error as Error).message}`);
       }
       throw error;
     }
@@ -694,7 +694,7 @@ export default class SouthOPCUA
     if (!limits) {
       limits = readOperationLimits(session)
         .catch((error): { maxNodesPerRead?: number; maxNodesPerBrowse?: number } => {
-          this.logger.debug(`Could not read OPCUA server operation limits, using defaults: ${getErrorMessage(error)}`);
+          this.logger.debug(`Could not read OPC UA server operation limits, using defaults: ${getErrorMessage(error)}`);
           return {};
         })
         .then(advertised => ({
@@ -789,7 +789,7 @@ export default class SouthOPCUA
     } catch (error) {
       if (isSessionError(error)) {
         await this.disconnect();
-        throw new Error(`OPCUA discovery session expired, please restart the configuration workflow run: ${(error as Error).message}`);
+        throw new Error(`OPC UA discovery session expired, please restart the configuration workflow run: ${(error as Error).message}`);
       }
       throw error;
     }
@@ -819,7 +819,7 @@ export default class SouthOPCUA
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
     const session = this.session;
     if (!session) {
-      this.logger.debug('No OPCUA session available, skipping history query');
+      this.logger.debug('No OPC UA session available, skipping history query');
       return { trackedInstant: null, value: null };
     }
     try {
@@ -1128,7 +1128,7 @@ export default class SouthOPCUA
     this.logger.debug(logCtx, `Reading ${nodesToRead.length} node(s)`);
     const session = this.session;
     if (!session) {
-      this.logger.debug('No OPCUA session available, skipping direct query');
+      this.logger.debug('No OPC UA session available, skipping direct query');
       return null;
     }
     // addContent is outside the try so that a cache/disk error never causes a
@@ -1270,7 +1270,7 @@ export default class SouthOPCUA
       });
       this.subscription.on('terminated', () => {
         if (!this.disconnecting) {
-          this.logger.error('OPC-UA subscription terminated by server. Triggering reconnect');
+          this.logger.error('OPC UA subscription terminated by server. Triggering reconnect');
           this.triggerReconnect();
         }
       });
@@ -1278,7 +1278,7 @@ export default class SouthOPCUA
         this.resetSubscriptionWatchdog();
       });
       this.subscription.on('status_changed', (status: StatusCode) => {
-        this.logger.warn(`OPC-UA subscription status changed: ${status}`);
+        this.logger.warn(`OPC UA subscription status changed: ${status}`);
       });
       this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.subscription.delayBetweenFlush);
       this.resetSubscriptionWatchdog();
@@ -1407,7 +1407,7 @@ export default class SouthOPCUA
     const timeout = this.getSubscriptionWatchdogTimeout();
     this.subscriptionWatchdog = setTimeout(() => {
       if (!this.disconnecting) {
-        this.logger.error(`OPC-UA subscription watchdog: no keepalive or data received for ${timeout} ms. Triggering reconnect`);
+        this.logger.error(`OPC UA subscription watchdog: no keepalive or data received for ${timeout} ms. Triggering reconnect`);
         this.triggerReconnect();
       }
     }, timeout);

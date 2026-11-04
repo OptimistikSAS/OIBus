@@ -221,14 +221,14 @@ describe('SouthListComponent', () => {
   test('should filter by type', async () => {
     const tester = new SouthListComponentTester();
 
-    await tester.typeChip('OPC UA™').click();
+    await tester.typeChip('OPC UA®').click();
     await expect.element(tester.rows).toHaveLength(1);
     await expect.element(tester.row(0)).toMatchTextContent('South 3');
 
     await tester.typeChip('Folder scanner').click();
     await expect.element(tester.rows).toHaveLength(2);
 
-    await tester.typeChip('OPC UA™').click();
+    await tester.typeChip('OPC UA®').click();
     await expect.element(tester.rows).toHaveLength(1);
     await expect.element(tester.row(0)).toMatchTextContent('South 1');
 

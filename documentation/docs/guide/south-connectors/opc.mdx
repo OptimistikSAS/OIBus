@@ -4,14 +4,14 @@ sidebar_position: 10
 
 import ThrottlingSettings from './_throttling-settings.mdx';
 
-# OPC Classic™
+# OPC Classic
 
-Connect OIBus to OPC Classic™ servers (DA and HDA). OIBus talks to the server itself through a small Windows helper
+Connect OIBus to OPC Classic servers (DA and HDA). OIBus talks to the server itself through a small Windows helper
 process shipped with it: no OIBus Agent is needed.
 
 :::info Technology Context
 
-- Industrial communication protocol by [OPC Foundation](https://opcfoundation.org/)
+- Industrial communication protocol by the [OPC Foundation®](https://opcfoundation.org/)
 - Supports both HDA and DA mode
 - OIBus must run on Windows
 - For OPC UA, see [OPC UA connector](./opcua.mdx)
@@ -30,7 +30,7 @@ process shipped with it: no OIBus Agent is needed.
 
 ## OPC Classic vs OPC UA {#opc-classic-vs-opc-ua}
 
-|                          | OPC Classic™                                                                                        | OPC UA                                                                                     |
+|                          | OPC Classic                                                                                        | OPC UA                                                                                     |
 | ------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | **Standard**             | Three separate specs: **DA** (live values), **HDA** (historical data), **AE** (alarms &amp; events) | Single unified standard: **DA** (live values) + **HA** (historical access) + alarms        |
 | **Historical mode name** | **HDA** — Historical Data Access                                                                    | **HA** — Historical Access (OPC UA Part 11). Same concept, different name — see note below |
@@ -173,5 +173,7 @@ edit form.
 ## Third-Party Components {#third-party-components}
 
 The Windows helper uses the OPC Foundation's OPC Classic .NET API, under the OPC Foundation MIT License. The OPC Core
-Components are not shipped with OIBus. OIBus is not affiliated with or endorsed by the OPC Foundation; OPC Classic™ and
-the OPC Foundation's names are trademarks of their owner.
+Components are not shipped with OIBus.
+
+OPC Foundation® and OPC UA® are registered trademarks of the OPC Foundation. OIBus is not affiliated with or endorsed by
+the OPC Foundation; OPC Classic, OPC DA and OPC HDA are used only to describe the protocols OIBus communicates with.

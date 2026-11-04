@@ -154,7 +154,7 @@ describe('NorthOPCUA', () => {
 
     await north.connect();
 
-    assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'Error while connecting to the OPCUA server: Session creation failed'));
+    assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'Error while connecting to the OPC UA server: Session creation failed'));
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // reconnect timeout should be set
     assert.notStrictEqual(north['reconnectTimeout'], null);
@@ -197,7 +197,7 @@ describe('NorthOPCUA', () => {
     ]);
     north.client = null;
 
-    await assert.rejects(north.handleContent(readStream, metadata), /OPCUA client not set/);
+    await assert.rejects(north.handleContent(readStream, metadata), /OPC UA client not set/);
   });
 
   it('should handle content success', async () => {
@@ -281,7 +281,7 @@ describe('NorthOPCUA', () => {
 
     await assert.rejects(north.handleContent(readStream, metadata), /Connection Lost/);
 
-    assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'Unexpected OPCUA error: Connection Lost'));
+    assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'Unexpected OPC UA error: Connection Lost'));
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // reconnect timeout should be set
     assert.notStrictEqual(north['reconnectTimeout'], null);

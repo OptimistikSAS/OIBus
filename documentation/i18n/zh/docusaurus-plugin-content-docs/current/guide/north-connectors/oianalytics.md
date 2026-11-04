@@ -5,7 +5,7 @@
 
 OIAnalytics® 可以处理：
 
-- **JSON 值有效载荷**：由 OIAnalytics 转换器根据南向连接器（例如 OPC UA、Modbus、SQL）的记录构建的值。
+- **JSON 值有效载荷**：由 OIAnalytics 转换器根据南向连接器（例如 OPC UA®、Modbus、SQL）的记录构建的值。
 - **文件**：原样传输（压缩或未压缩）。支持的格式包括 CSV、TXT 和 XLSX。
 
 OIAnalytics® 内置**文件解析器**，无需预处理。解析直接在 SaaS 应用程序中配置。

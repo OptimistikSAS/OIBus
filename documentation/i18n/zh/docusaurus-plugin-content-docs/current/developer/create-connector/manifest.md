@@ -261,7 +261,7 @@ items: {
 | ------------------------- | ---------------------------------------------------------- |
 | `'POLL'`                  | 仅周期性触发（大多数南向连接器的默认值）                   |
 | `'SUBSCRIPTION'`          | 仅推送驱动——用于该连接器**只**支持订阅的场景（例如 MQTT）  |
-| `'SUBSCRIPTION_AND_POLL'` | 每个项目均可选择其一（OPC UA：部分项目轮询，部分项目订阅） |
+| `'SUBSCRIPTION_AND_POLL'` | 每个项目均可选择其一（OPC UA®：部分项目轮询，部分项目订阅） |
 
 一个完整的真实示例是 `backend/src/south/south-folder-scanner/manifest.ts`。
 
