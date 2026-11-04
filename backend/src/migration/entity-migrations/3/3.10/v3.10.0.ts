@@ -227,8 +227,7 @@ export async function addScanModeSchedulingAndCertificateChain(knex: Knex): Prom
  *     `trackingInstant` (mirroring south-rest's own trackingInstant shape), used only to compute the incremental query
  *     cursor. The CSV-rendering config itself (filename, delimiter, compression, per-column datetime formatting) moves to
  *     a transformer. Through the remote agent (OLEDB, or ODBC with `remoteAgent`), only the reference field was
- *     formatted (by the agent): it alone becomes a datetime field of the transformer, read from the ISO string the
- *     connector now asks the agent for.
+ *     formatted (by the agent): it alone becomes a datetime field of the transformer (see `buildRecordListToCsvOptions`).
  *  2. For every north connector — enabled or not, so a currently-disabled one is already correctly wired up whenever
  *     it's re-enabled later; content fans out to every north connector unconditionally once enabled, see
  *     `DataStreamEngine.addContent` — and every affected item, preserves today's behavior by attaching a
@@ -258,8 +257,8 @@ export async function moveSqlSerializationToTransformers(knex: Knex): Promise<vo
       .select('id', 'settings')
       .where('type', southType);
     for (const south of souths) {
-      const viaRemoteAgent = usesRemoteAgent(southType, JSON.parse(south.settings));
-      await migrateSqlSouthItems(knex, south.id, northIds, recordListToCsvTransformerId, viaRemoteAgent);
+      const remoteAgentSouthType = usesRemoteAgent(southType, JSON.parse(south.settings)) ? southType : null;
+      await migrateSqlSouthItems(knex, south.id, northIds, recordListToCsvTransformerId, remoteAgentSouthType);
     }
   }
 
@@ -364,7 +363,7 @@ async function migrateSqlSouthItems(
   southId: string,
   northIds: Array<string>,
   recordListToCsvTransformerId: string,
-  viaRemoteAgent: boolean
+  remoteAgentSouthType: string | null
 ): Promise<void> {
   const items: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
     .select('id', 'settings')
@@ -387,7 +386,7 @@ async function migrateSqlSouthItems(
     const oldSettings: OldSqlItemSettings = JSON.parse(item.settings);
     settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewSqlItemSettings(oldSettings)) });
 
-    const transformerOptions = buildRecordListToCsvOptions(oldSettings, viaRemoteAgent);
+    const transformerOptions = buildRecordListToCsvOptions(oldSettings, remoteAgentSouthType);
     const groupId = groupIdByItemId.get(item.id) ?? null;
 
     for (const northId of northIds) {
@@ -443,7 +442,9 @@ async function migrateSqlHistoryQueries(knex: Knex, recordListToCsvTransformerId
       .select('id', 'settings')
       .where('history_id', historyQuery.id);
     if (items.length === 0) continue;
-    const viaRemoteAgent = usesRemoteAgent(historyQuery.south_type, JSON.parse(historyQuery.south_settings));
+    const remoteAgentSouthType = usesRemoteAgent(historyQuery.south_type, JSON.parse(historyQuery.south_settings))
+      ? historyQuery.south_type
+      : null;
 
     const existingRows: Array<{ id: string; function_name: string }> = await knex(`${HISTORY_QUERY_TRANSFORMERS_TABLE} as ht`)
       .join(`${TRANSFORMERS_TABLE} as t`, 't.id', 'ht.transformer_id')
@@ -487,7 +488,7 @@ async function migrateSqlHistoryQueries(knex: Knex, recordListToCsvTransformerId
         id,
         history_id: historyQuery.id,
         transformer_id: recordListToCsvTransformerId,
-        options: JSON.stringify(buildRecordListToCsvOptions(oldSettings, viaRemoteAgent))
+        options: JSON.stringify(buildRecordListToCsvOptions(oldSettings, remoteAgentSouthType))
       });
       newTransformerItemLinks.push({ id, item_id: item.id });
     }

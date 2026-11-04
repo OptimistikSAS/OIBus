@@ -936,11 +936,26 @@ describe('Entity migration v3.10.0', () => {
         }
       });
 
-      it('should only format the reference field, sent as an ISO string, when queried through the remote agent', async () => {
+      it('should only format the reference field when queried through the remote agent', async () => {
         await moveSqlSerializationToTransformers(db);
 
+        // Sent as an ISO string by the agent for ODBC
         assert.deepStrictEqual(await transformerFieldsOf('odbc-agent-item'), [isoReferenceField]);
-        assert.deepStrictEqual(await transformerFieldsOf('oledb-item'), [isoReferenceField]);
+        // Sent as a date time of the provider, without the agent, for OLEDB: read in its old timezone
+        assert.deepStrictEqual(await transformerFieldsOf('oledb-item'), [
+          {
+            ...isoReferenceField,
+            datetimeSettings: {
+              inputType: 'string',
+              inputTimezone: 'Europe/Paris',
+              inputFormat: "yyyy-MM-dd'T'HH:mm:ss.SSS",
+              inputLocale: 'en-US',
+              outputType: 'string',
+              outputTimezone: 'UTC',
+              outputFormat: 'yyyy-MM-dd HH:mm'
+            }
+          }
+        ]);
       });
 
       it('should format every date time field of an ODBC item queried locally', async () => {
