@@ -243,8 +243,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
 
   /**
    * Apply the SQL query with the OLE DB provider. Only `@StartTime`/`@EndTime` query parameters are formatted, using the
-   * tracking field's `dateTimeInput` config so they match the source column's native representation. The tracking
-   * field of the returned records is converted to an ISO string in UTC (see `trackInstants`).
+   * tracking field's `dateTimeInput` config so they match the source column's native representation. The records are
+   * returned as the provider sent them: formatting them is the job of the transformers.
    */
   async queryData(
     connection: OleDbConnection,
@@ -259,25 +259,20 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     logQuery(adaptedQuery, oleStartTime, oleEndTime, this.logger, workUnitLogCtx([item]));
 
     const result = await connection.query(adaptedQuery, { timeout: this.connector.settings.requestTimeout });
-    return this.trackInstants(item, result);
+    return { records: result.records, trackedInstant: this.trackMaxInstant(item, result) };
   }
 
   /**
-   * Converts the tracking field of every record to an ISO string in UTC, and returns the max instant found, used as the
-   * cursor of the next incremental query. Records are otherwise left as the provider returned them.
+   * Scans the records for the tracking field and returns the max instant found, used as the cursor of the next
+   * incremental query. The records are left untouched.
    *
    * A date time column of the provider (an ISO string, or a SQL one) has no time zone: it is read in the timezone of
-   * the item's `dateTimeInput` (UTC when it has none), and its format is ignored. A date time column with an offset is read as is. Any other
-   * column (strings, numbers) is converted according to the `dateTimeInput`. A value that cannot be converted is
-   * replaced by null and not tracked.
+   * the item's `dateTimeInput` (UTC when it has none), and its format is ignored. A date time column with an offset is
+   * read as is. Any other column (strings, numbers) is converted according to the `dateTimeInput`. A value that cannot
+   * be converted is not tracked.
    */
-  private trackInstants(
-    item: SouthConnectorItemEntity<SouthOLEDBItemSettings>,
-    result: OleDbQueryResult
-  ): { records: Array<OIBusRecord>; trackedInstant: Instant | null } {
-    if (!item.settings.trackingInstant?.trackInstant) {
-      return { records: result.records, trackedInstant: null };
-    }
+  private trackMaxInstant(item: SouthConnectorItemEntity<SouthOLEDBItemSettings>, result: OleDbQueryResult): Instant | null {
+    if (!item.settings.trackingInstant?.trackInstant) return null;
 
     const fieldName = item.settings.trackingInstant.fieldName!;
     const dateTimeInput = item.settings.trackingInstant.dateTimeInput!;
@@ -292,9 +287,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
         instant = this.toInstant(rawValue, columnType, dateTimeInput);
       } catch (error: unknown) {
         conversionError ??= getErrorMessage(error);
-        instant = null;
+        continue;
       }
-      record[fieldName] = instant;
       if (instant && (!trackedInstant || instant > trackedInstant)) {
         trackedInstant = instant;
       }
@@ -302,7 +296,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     if (conversionError) {
       this.logger.warn(workUnitLogCtx([item]), `Could not convert the values of the tracking field "${fieldName}": ${conversionError}`);
     }
-    return { records: result.records, trackedInstant };
+    return trackedInstant;
   }
 
   private toInstant(
