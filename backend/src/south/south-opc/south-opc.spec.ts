@@ -2,8 +2,6 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import type { OpcConnection, OpcHdaReadOptions, OpcRawValue, OpcServerInfo } from '@oibus/opc-classic';
-
 import type { SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -11,6 +9,8 @@ import type SouthCacheRepository from '../../repository/cache/south-cache.reposi
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import type * as OpcClassicLoaderType from './opc-classic-loader';
+import type { IOpcClassic, OpcConnection, OpcHdaReadOptions, OpcRawValue, OpcServerInfo } from './opc-classic-loader';
 import type SouthOpcClass from './south-opc';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -106,10 +106,15 @@ describe('South OPC', () => {
     OpcConnection: { connect: mock.fn(async (_host: string, _serverName: string, _mode: string) => createConnection()) }
   });
   const opcClassicExports = createOpcClassicMocks();
+  const createLoaderMocks = () => ({
+    ...nodeRequire('./opc-classic-loader'),
+    loadOpcClassic: mock.fn((): IOpcClassic | null => opcClassicExports)
+  });
+  const loaderExports: typeof OpcClassicLoaderType = createLoaderMocks();
   const latestConnection = () => connections.at(-1)!;
 
   before(() => {
-    mockModule(nodeRequire, '@oibus/opc-classic', opcClassicExports);
+    mockModule(nodeRequire, './opc-classic-loader', loaderExports);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: () => logger },
       default: class {}
@@ -131,6 +136,7 @@ describe('South OPC', () => {
     connections = [];
     southCacheRepository = createMock<SouthCacheRepository>({ getItemsLastValues: () => new Map() });
     Object.assign(opcClassicExports, createOpcClassicMocks());
+    Object.assign(loaderExports, createLoaderMocks());
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = createSouth();
   });
@@ -235,6 +241,24 @@ describe('South OPC', () => {
       throw new Error('Class not registered');
     });
     await assert.rejects(south.testConnection(), new Error('Class not registered'));
+  });
+
+  it('should reject testConnection when the OPC Classic library is not available', async () => {
+    Object.assign(loaderExports, { loadOpcClassic: mock.fn(() => null) });
+    await assert.rejects(
+      south.testConnection(),
+      new Error('OPC Classic library not available: the OPC south connector only runs on Windows')
+    );
+  });
+
+  it('should schedule a reconnection when the OPC Classic library is not available', async () => {
+    Object.assign(loaderExports, { loadOpcClassic: mock.fn(() => null) });
+    await south.connect();
+    assert.ok(
+      logger.error.mock.calls.some(c => String(c.arguments[0]).includes('OPC Classic library not available')),
+      'the missing library is logged'
+    );
+    assert.strictEqual(opcClassicExports.OpcConnection.connect.mock.calls.length, 0);
   });
 
   it('should throw from historyQuery when not connected', async () => {
