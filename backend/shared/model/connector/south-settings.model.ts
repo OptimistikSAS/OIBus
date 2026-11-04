@@ -528,12 +528,12 @@ export interface SouthOIAnalyticsSettings {
 }
 
 export interface SouthOLEDBSettings {
-  agentUrl: string;
   connectionTimeout: number;
   retryInterval: number;
   requestTimeout: number;
   connectionString: string;
   password: string | null;
+  maxParallelRun: number;
 }
 
 export interface SouthOPCSettings {

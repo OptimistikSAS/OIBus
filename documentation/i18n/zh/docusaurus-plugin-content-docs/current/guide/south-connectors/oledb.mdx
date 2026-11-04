@@ -6,14 +6,22 @@ import ItemSettings from './_south-record-list-item-settings.mdx';
 
 # OLEDB
 
-通过远程 [OIBus Agent](../oibus-agent/oledb.md) 连接到 OLEDB 数据源。特别适用于 OSIsoft PI System™
-等系统以及其他兼容 OLEDB 的应用程序。
+通过安装在 OIBus 计算机上的 OLE DB 提供程序连接到 OLEDB 数据源。特别适用于 OSIsoft PI System™
+等系统以及其他兼容 OLEDB 的应用程序。OIBus 通过随其一起提供的小型 Windows 辅助进程直接与提供程序通信：无需 OIBus Agent。
 
 :::info 兼容性说明
 
-- 需要在目标计算机上安装 OIBus Agent
 - 支持所有兼容 OLEDB 的数据源
 - 针对 OSIsoft PI System™ 连接进行了优化
+
+:::
+
+:::caution 系统要求
+
+- 使用此连接器时，OIBus **必须**运行在 Windows x64 上。
+- 连接字符串中指定的 OLE DB 提供程序（`Provider=...`）**必须**以 **64 位**版本安装在 OIBus 计算机上。OIBus
+  不附带任何提供程序：请安装您的数据源对应的提供程序（例如 Microsoft OLE DB Driver for SQL Server，或您的历史数据库自带的提供程序）。
+  仅有 32 位版本的提供程序（例如 `Microsoft.Jet.OLEDB.4.0`）无法使用：请使用其 64 位后继版本（`Microsoft.ACE.OLEDB.12.0` 或 `16.0`）。
 
 :::
 
@@ -21,12 +29,19 @@ import ItemSettings from './_south-record-list-item-settings.mdx';
 
 | 设置           | 描述                                                                                                                                              | 示例值                                      |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| 远程 Agent URL | Agent 端点 URL。所有连接均为必填项。                                                                                                              | `http://192.168.1.100:2224`                 |
+| 连接字符串     | 特定于提供程序格式的 OLEDB 连接字符串。                                                                                                           | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
+| 密码           | 身份验证密码（安全存储）。始终以 `Password=<password>;` 的形式附加——如果连接字符串已包含自己的 `Password=` 项，请从此处或字符串中删除以避免重复。 | `••••••••`                                  |
 | 连接超时       | 建立连接的最长时间（毫秒）。默认：`15000`。                                                                                                       | `15000`                                     |
 | 重试间隔       | 重试连接前等待的时间（毫秒）。默认：`10000`。                                                                                                     | `10000`                                     |
 | 请求超时       | 单个查询的最长执行时间（毫秒）。默认：`15000`。                                                                                                   | `15000`                                     |
-| 连接字符串     | 特定于提供程序格式的 OLEDB 连接字符串。                                                                                                           | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
-| 密码           | 身份验证密码（安全存储）。始终以 `Password=<password>;` 的形式附加——如果连接字符串已包含自己的 `Password=` 项，请从此处或字符串中删除以避免重复。 | `••••••••`                                  |
+| 最大并行查询数 | 同时查询的项目或组的最大数量，从 `1`（顺序执行）到 `8`。默认：`1`。                                                                               | `2`                                         |
+
+:::note 连接与并行查询
+连接器启动时，OIBus 会打开第一个连接，并每隔一个**重试间隔**重试，直至成功。每个并行运行的查询使用自己的连接，该连接在两次运行之间保持打开，
+并会增加数据源的负载。查询失败时会关闭其连接：下一次运行会打开一个新连接。
+
+提供程序支持时由其应用请求超时，OIBus 也会取消运行时间更长的查询。
+:::
 
 <ItemSettings />
 
@@ -40,10 +55,12 @@ import ItemSettings from './_south-record-list-item-settings.mdx';
 | UNIX 纪元（秒）   | 以秒为单位的 Unix 时间戳                           |
 | UNIX 纪元（毫秒） | 以毫秒为单位的 Unix 时间戳                         |
 
+提供程序作为日期时间返回的列不带时区：无论其类型和格式如何，都按日期时间字段的**时区**读取（对于没有时区的类型则为 UTC）。
+类型和格式仅适用于文本列和数字列。
 :::
 
-:::info 通过 OIBus Agent
-Agent 以文本形式返回各行：跟踪字段为 UTC 时间的 ISO 8601 字符串（例如 `2024-01-15T10:30:00.000Z`），其他每一列按数据库
-驱动程序呈现的形式返回，空值或 null 值返回为 `null`。请使用记录列表转换器在下游对其进行格式化
-（例如[文件](../engine/transformers.mdx#file-from-records)转换器）。
+:::info 值
+跟踪字段为 UTC 时间的 ISO 8601 字符串（例如 `2024-01-15T10:30:00.000Z`）。其他列保留其类型：数字和布尔值保持不变，文本为字符串，
+日期时间为不带时区的 ISO 8601 字符串（例如 `2024-01-15T10:30:00.000`），二进制数据为 base64，null 值为 `null`。
+请使用记录列表转换器在下游对其进行格式化（例如[文件](../engine/transformers.mdx#file-from-records)转换器）。
 :::

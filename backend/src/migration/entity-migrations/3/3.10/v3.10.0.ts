@@ -48,6 +48,7 @@ import {
   toFileTransformerOptions,
   toFileWriterFileToFileOptions,
   toGroupedOIAnalyticsOptions,
+  toLocalOleDbSettings,
   toNewSqlItemSettings,
   toNoneResamplingItemSettings,
   toOIAnalyticsItemFileOptions,
@@ -120,7 +121,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   addDatabaseConnectionSettings,
   convertFieldProcessesToOperations,
   removeOdbcAgentSettings,
-  removeOpcAgentSettings
+  removeOpcAgentSettings,
+  useLocalOleDbDriver
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -1816,6 +1818,25 @@ export async function removeOpcAgentSettings(knex: Knex): Promise<void> {
       table,
       settingsColumn,
       rows.map(row => ({ id: row.id, settings: JSON.stringify(withoutOpcAgentSettings(JSON.parse(row.settings))) }))
+    );
+  }
+}
+
+/** See `toLocalOleDbSettings`, for the connectors and the history queries */
+export async function useLocalOleDbDriver(knex: Knex): Promise<void> {
+  const targets = [
+    { table: SOUTH_CONNECTORS_TABLE, typeColumn: 'type', settingsColumn: 'settings' },
+    { table: HISTORY_QUERIES_TABLE, typeColumn: 'south_type', settingsColumn: 'south_settings' }
+  ];
+  for (const { table, typeColumn, settingsColumn } of targets) {
+    const rows: Array<{ id: string; settings: string }> = await knex(table)
+      .select('id', `${settingsColumn} as settings`)
+      .where(typeColumn, 'oledb');
+    await bulkUpdateSettings(
+      knex,
+      table,
+      settingsColumn,
+      rows.map(row => ({ id: row.id, settings: JSON.stringify(toLocalOleDbSettings(JSON.parse(row.settings))) }))
     );
   }
 }

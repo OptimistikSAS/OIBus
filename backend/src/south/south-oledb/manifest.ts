@@ -21,23 +21,6 @@ const manifest: SouthConnectorManifest = {
     validators: [],
     attributes: [
       {
-        type: 'string',
-        key: 'agentUrl',
-        translationKey: 'configuration.oibus.manifest.south.oledb.agent-url',
-        defaultValue: 'http://ip-adress-or-host:2224',
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 12,
-          displayInViewMode: false
-        }
-      },
-      {
         type: 'number',
         key: 'connectionTimeout',
         translationKey: 'configuration.oibus.manifest.south.oledb.connection-timeout',
@@ -127,7 +110,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 0,
           columns: 9,
           displayInViewMode: true
         }
@@ -138,9 +121,35 @@ const manifest: SouthConnectorManifest = {
         translationKey: 'configuration.oibus.manifest.south.oledb.password',
         validators: [],
         displayProperties: {
-          row: 2,
+          row: 0,
           columns: 3,
           displayInViewMode: false
+        }
+      },
+      {
+        type: 'number',
+        key: 'maxParallelRun',
+        translationKey: 'configuration.oibus.manifest.south.oledb.max-parallel-run',
+        unit: null,
+        defaultValue: 1,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['8']
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
         }
       }
     ]
