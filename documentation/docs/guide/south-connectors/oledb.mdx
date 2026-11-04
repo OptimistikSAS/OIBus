@@ -64,8 +64,8 @@ columns.
 :::
 
 :::info Values
-The tracked field comes as an ISO 8601 string in UTC (e.g. `2024-01-15T10:30:00.000Z`). The other columns keep their
-type: numbers and booleans as such, text as strings, date times as ISO 8601 strings without time zone (e.g.
-`2024-01-15T10:30:00.000`), binary data in base64, and null values as `null`. Use a record-list transformer to format
-them downstream (e.g. the [File](../engine/transformers.mdx#file-from-records) transformer).
+The rows are sent as the provider returns them, the tracked field included: numbers and booleans as such, text as
+strings, date times as ISO 8601 strings without time zone (e.g. `2024-01-15T10:30:00.000`), binary data in base64, and
+null values as `null`. Use a record-list transformer to format them downstream (e.g. the
+[File](../engine/transformers.mdx#file-from-records) transformer).
 :::
