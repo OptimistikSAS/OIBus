@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import type { OIBusContent } from '../../../shared/model/common/content.model';
+import type { OIBusContent, OIBusRecordListContent } from '../../../shared/model/common/content.model';
 import type { SouthItemSettings, SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/connector/south-settings.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -350,7 +350,7 @@ describe('SouthOLEDB', () => {
         { timeout: 2000 }
       ]);
       assert.deepStrictEqual(result, {
-        result: { type: 'record-list', content: [{ timestamp: '2020-03-15T09:00:00.000Z', value: 0 }] },
+        result: { type: 'record-list', content: [{ timestamp: '2020-03-15 10:00:00.000', value: 0 }] },
         connectionDuration: 0,
         queryDuration: 0
       });
@@ -400,9 +400,10 @@ describe('SouthOLEDB', () => {
         'SELECT * FROM logs WHERE timestamp > 2020-03-15 01:00:00.000 AND timestamp <= 2020-03-20 01:00:00.000',
         { timeout: 2000 }
       ]);
+      // Sent as the provider returned them: formatting them is the job of the transformers
       const content = [
-        { timestamp: '2020-03-15T09:00:00.000Z', value: 0 },
-        { timestamp: '2020-03-16T09:00:00.000Z', value: 1 }
+        { timestamp: '2020-03-15T10:00:00.000', value: 0 },
+        { timestamp: '2020-03-16 10:00:00.000', value: 1 }
       ];
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments.slice(0, 4), [
         configuration.id,
@@ -528,15 +529,15 @@ describe('SouthOLEDB', () => {
       nextQuery = async () => result;
       return south.historyQuery([item], startTime, endTime);
     };
-    const sentTimestamps = () =>
-      (addContentCallback.mock.calls[0].arguments[1].content as Array<Record<string, unknown>>).map(record => record.timestamp);
+    const sentContent = () => (addContentCallback.mock.calls[0].arguments[1] as OIBusRecordListContent).content;
 
     it('should read a date time column without offset in the timezone of the item, ignoring its format', async () => {
-      const result = await runWith(
-        { type: 'string', timezone: 'Europe/Paris', format: 'dd/MM/yyyy', locale: 'en-US' },
-        queryResult('datetime', ['2020-03-15T10:00:00.000', '2020-03-14T10:00:00.000'])
-      );
-      assert.deepStrictEqual(sentTimestamps(), ['2020-03-15T09:00:00.000Z', '2020-03-14T09:00:00.000Z']);
+      const query = queryResult('datetime', ['2020-03-15T10:00:00.000', '2020-03-14T10:00:00.000']);
+      const result = await runWith({ type: 'string', timezone: 'Europe/Paris', format: 'dd/MM/yyyy', locale: 'en-US' }, query);
+      assert.deepStrictEqual(sentContent(), [
+        { timestamp: '2020-03-15T10:00:00.000', value: 0 },
+        { timestamp: '2020-03-14T10:00:00.000', value: 1 }
+      ]);
       assert.strictEqual(result.trackedInstant, '2020-03-15T09:00:00.000Z');
     });
 
@@ -555,11 +556,15 @@ describe('SouthOLEDB', () => {
 
     it('should convert the other columns according to the date time input of the item', async () => {
       const result = await runWith({ type: 'unix-epoch-ms' }, queryResult('number', [1584266400000, null, '']));
-      assert.deepStrictEqual(sentTimestamps(), ['2020-03-15T10:00:00.000Z', null, '']);
+      assert.deepStrictEqual(sentContent(), [
+        { timestamp: 1584266400000, value: 0 },
+        { timestamp: null, value: 1 },
+        { timestamp: '', value: 2 }
+      ]);
       assert.strictEqual(result.trackedInstant, '2020-03-15T10:00:00.000Z');
     });
 
-    it('should replace a value that cannot be converted by null and warn once', async () => {
+    it('should not track a value that cannot be converted, keep it in the records and warn once', async () => {
       const result = await runWith(
         { type: 'iso-string' },
         {
@@ -571,7 +576,10 @@ describe('SouthOLEDB', () => {
           ]
         }
       );
-      assert.deepStrictEqual(sentTimestamps(), [null, null, '2020-03-15T10:00:00.000Z']);
+      assert.deepStrictEqual(
+        sentContent().map(record => record.timestamp),
+        ['not a date', true, '2020-03-15T10:00:00.000']
+      );
       assert.strictEqual(result.trackedInstant, '2020-03-15T10:00:00.000Z');
       assert.strictEqual(logger.warn.mock.calls.length, 1);
       assert.ok(

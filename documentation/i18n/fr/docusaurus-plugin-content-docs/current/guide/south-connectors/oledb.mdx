@@ -68,9 +68,8 @@ et le format ne s'appliquent qu'aux colonnes de texte et de nombres.
 :::
 
 :::info Valeurs
-Le champ suivi arrive comme une chaîne ISO 8601 en UTC (par ex. `2024-01-15T10:30:00.000Z`). Les autres colonnes gardent
-leur type : nombres et booléens tels quels, texte en chaînes, dates/heures en chaînes ISO 8601 sans fuseau horaire (par
-ex. `2024-01-15T10:30:00.000`), données binaires en base64, et valeurs nulles comme `null`. Utilisez un transformateur de
-liste d'enregistrements pour les formater en aval (par ex. le transformateur
-[Fichier](../engine/transformers.mdx#file-from-records)).
+Les lignes sont envoyées telles que le fournisseur les renvoie, champ suivi compris : nombres et booléens tels quels,
+texte en chaînes, dates/heures en chaînes ISO 8601 sans fuseau horaire (par ex. `2024-01-15T10:30:00.000`), données
+binaires en base64, et valeurs nulles comme `null`. Utilisez un transformateur de liste d'enregistrements pour les
+formater en aval (par ex. le transformateur [Fichier](../engine/transformers.mdx#file-from-records)).
 :::

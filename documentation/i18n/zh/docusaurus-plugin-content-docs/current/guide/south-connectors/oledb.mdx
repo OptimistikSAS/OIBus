@@ -60,7 +60,7 @@ import ItemSettings from './_south-record-list-item-settings.mdx';
 :::
 
 :::info 值
-跟踪字段为 UTC 时间的 ISO 8601 字符串（例如 `2024-01-15T10:30:00.000Z`）。其他列保留其类型：数字和布尔值保持不变，文本为字符串，
+各行按提供程序返回的原样发送（包括跟踪字段）：数字和布尔值保持不变，文本为字符串，
 日期时间为不带时区的 ISO 8601 字符串（例如 `2024-01-15T10:30:00.000`），二进制数据为 base64，null 值为 `null`。
 请使用记录列表转换器在下游对其进行格式化（例如[文件](../engine/transformers.mdx#file-from-records)转换器）。
 :::
