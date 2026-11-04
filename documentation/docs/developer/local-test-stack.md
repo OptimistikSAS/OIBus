@@ -80,7 +80,7 @@ OIBus running outside Docker (i.e. `npm start` in the `backend/` directory) can 
 
 ## Services {#services}
 
-### OPC UA Server — `opcua-server` {#opc-ua-server--opcua-server}
+### OPC UA® Server — `opcua-server` {#opc-ua-server--opcua-server}
 
 | Property    | Value                                                               |
 | ----------- | ------------------------------------------------------------------- |

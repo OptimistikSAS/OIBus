@@ -1,6 +1,6 @@
-# OPC UA™
+# OPC UA®
 
-The **OPC UA™ North Connector** enables OIBus to **write data to OPC UA servers**, allowing seamless integration with
+The **OPC UA® North Connector** enables OIBus to **write data to OPC UA servers**, allowing seamless integration with
 industrial systems, PLCs, and other OPC UA-compatible devices. Unlike
 the [OPC UA South Connector](../south-connectors/opcua.mdx) which reads data from OPC UA servers, this North connector
 **sends data** from OIBus to OPC UA servers.

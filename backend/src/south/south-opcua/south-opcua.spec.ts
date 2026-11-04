@@ -328,7 +328,7 @@ describe('SouthOPCUA', () => {
     ]);
     assert.ok(
       logger.info.mock.calls.some(
-        c => typeof c.arguments[0] === 'string' && c.arguments[0].startsWith(`Connected to OPCUA server ${configuration.settings.url}`)
+        c => typeof c.arguments[0] === 'string' && c.arguments[0].startsWith(`Connected to OPC UA server ${configuration.settings.url}`)
       )
     );
   });
@@ -340,7 +340,7 @@ describe('SouthOPCUA', () => {
     const disconnect = mock.method(south, 'disconnect', async () => undefined);
     south['disconnecting'] = true;
     await south.connect();
-    assert.strictEqual(loggedErrors('Error while connecting to the OPCUA server: get session error'), 1);
+    assert.strictEqual(loggedErrors('Error while connecting to the OPC UA server: get session error'), 1);
     assert.strictEqual(disconnect.mock.calls.length, 1);
   });
 
@@ -351,7 +351,7 @@ describe('SouthOPCUA', () => {
     const disconnect = mock.method(south, 'disconnect', async () => undefined);
     south['disconnecting'] = false;
     await south.connect();
-    assert.strictEqual(loggedErrors('Error while connecting to the OPCUA server: get session error'), 1);
+    assert.strictEqual(loggedErrors('Error while connecting to the OPC UA server: get session error'), 1);
     assert.strictEqual(disconnect.mock.calls.length, 1);
   });
 
@@ -1342,7 +1342,7 @@ describe('SouthOPCUA', () => {
 
     await south.connect();
 
-    assert.strictEqual(loggedErrors('Error while connecting to the OPCUA server: connect session error'), 1);
+    assert.strictEqual(loggedErrors('Error while connecting to the OPC UA server: connect session error'), 1);
     assert.strictEqual(loggedErrors('Error while disconnecting after failed connect: disconnect error'), 1);
     assert.notStrictEqual(south['reconnectTimeout'], null);
   });
@@ -1527,7 +1527,7 @@ describe('SouthOPCUA', () => {
     await flushPromises();
 
     assert.strictEqual(disconnect.mock.calls.length, 1);
-    assert.strictEqual(loggedErrors('OPC-UA subscription terminated by server. Triggering reconnect'), 1);
+    assert.strictEqual(loggedErrors('OPC UA subscription terminated by server. Triggering reconnect'), 1);
   });
 
   it('should not trigger reconnect on terminated event when already disconnecting', async () => {
@@ -1562,7 +1562,7 @@ describe('SouthOPCUA', () => {
 
     subscription.emit('status_changed', StatusCodes.BadTimeout);
 
-    assert.ok(logger.warn.mock.calls.some(c => c.arguments[0].includes('OPC-UA subscription status changed')));
+    assert.ok(logger.warn.mock.calls.some(c => c.arguments[0].includes('OPC UA subscription status changed')));
   });
 
   it('should reset watchdog when a changed event is received on a monitored item', async () => {

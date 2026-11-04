@@ -21,8 +21,8 @@ Seuls les connecteurs South disposant de capacités d'historisation prennent en 
 | [ODBC](./south-connectors/odbc.mdx)                     |
 | [OIAnalytics®](./south-connectors/oianalytics.mdx)      |
 | [OLEDB](./south-connectors/oledb.mdx)                   |
-| [OPC Classic™ (mode HDA)](./south-connectors/opc.mdx)   |
-| [OPC UA™ (mode HA)](./south-connectors/opcua.mdx)       |
+| [OPC Classic (mode HDA)](./south-connectors/opc.mdx)   |
+| [OPC UA® (mode HA)](./south-connectors/opcua.mdx)       |
 | [Oracle Database™](./south-connectors/oracle.mdx)       |
 | [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx) |
 | [PostgreSQL](./south-connectors/postgresql.mdx)         |

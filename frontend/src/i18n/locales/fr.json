@@ -332,13 +332,13 @@
             "file-to-modbus": "Valeurs Modbus",
             "file-to-mqtt": "Charges utiles MQTT",
             "file-to-oianalytics": "Charge utile OIAnalytics",
-            "file-to-opcua": "Valeurs OPCUA",
+            "file-to-opcua": "Valeurs OPC UA",
             "file-to-record-list": "Enregistrements",
             "record-list-to-file": "Fichier",
             "record-list-to-modbus": "Valeurs Modbus",
             "record-list-to-mqtt": "Charges utiles MQTT",
             "record-list-to-oianalytics": "Charge utile OIAnalytics",
-            "record-list-to-opcua": "Valeurs OPCUA"
+            "record-list-to-opcua": "Valeurs OPC UA"
           },
           "standard-description": {
             "file-to-file": "Envoie les fichiers tels quels, renommés ou compressés, ou convertit un fichier CSV ou JSON en un autre fichier CSV ou JSON.",
@@ -621,7 +621,7 @@
             "mapping": {
               "title": "Table de mappage",
               "point-id": "ID du point (Référence)",
-              "node-id": "ID de nœud OPCUA",
+              "node-id": "ID de nœud OPC UA",
               "data-type": {
                 "title": "Type de données",
                 "boolean": "Booléen",
@@ -2623,7 +2623,7 @@
     "internal-scope-ids": {
       "engine": "Moteur",
       "web-server": "Serveur Web",
-      "node-opcua": "Node OPC-UA"
+      "node-opcua": "node-opcua"
     },
     "categories": {
       "api": "API",
@@ -2727,7 +2727,7 @@
       "mqtt": "MQTT",
       "modbus": "Modbus",
       "oianalytics": "Valeurs temporelles OIAnalytics",
-      "opcua": "OPCUA",
+      "opcua": "OPC UA",
       "record-list": "Enregistrements"
     },
     "oibus-transformer-language": {
@@ -2750,7 +2750,7 @@
       "modbus": "Modbus",
       "mqtt": "MQTT",
       "oianalytics": "OIAnalytics®",
-      "opcua": "OPC UA™",
+      "opcua": "OPC UA®",
       "rest": "API REST",
       "sftp": "SFTP"
     },
@@ -2763,7 +2763,7 @@
       "modbus": "Écrire dans des registres Modbus sur un automate",
       "mqtt": "Publier sur les topics d'un broker MQTT",
       "oianalytics": "Envoyer des fichiers et des valeurs à OIAnalytics®",
-      "opcua": "Écrire des données sur un serveur OPC UA™",
+      "opcua": "Écrire des données sur un serveur OPC UA®",
       "rest": "Envoyer des données vers un point de terminaison REST",
       "sftp": "Envoyer des fichiers et des données vers un serveur SFTP"
     },
@@ -2787,8 +2787,8 @@
       "odbc": "ODBC",
       "oianalytics": "OIAnalytics®",
       "oledb": "OLEDB",
-      "opc": "OPC Classic™",
-      "opcua": "OPC UA™",
+      "opc": "OPC Classic",
+      "opcua": "OPC UA®",
       "oracle": "Oracle Database™",
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
@@ -2811,8 +2811,8 @@
       "odbc": "Interroger des bases de données SQL avec un pilote ODBC",
       "oianalytics": "Interroger des valeurs temporelles depuis OIAnalytics®",
       "oledb": "Interroger des bases de données SQL avec OLEDB",
-      "opc": "Récupérer des données depuis un serveur OPC Classic™ (HDA/DA)",
-      "opcua": "Interroger des données depuis un serveur OPC UA™ (HA/DA)",
+      "opc": "Récupérer des données depuis un serveur OPC Classic (HDA/DA)",
+      "opcua": "Interroger des données depuis un serveur OPC UA® (HA/DA)",
       "oracle": "Interroger des données depuis une base de données Oracle Database™",
       "osisoft-pi": "Établir une connexion avec un agent OIBus pour accéder aux données d'un PI System™",
       "postgresql": "Interroger des bases de données PostgreSQL",

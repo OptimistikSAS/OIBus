@@ -414,7 +414,7 @@ sources and destinations specifically to make this kind of work approachable:
 
 | Container                    | Profile     | Purpose                                                                                          |
 | ---------------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
-| `opcua-server`               | _(default)_ | asyncua OPC UA server — 8 simulated nodes with units, ranges and persisted history               |
+| `opcua-server`               | _(default)_ | asyncua OPC UA® server — 8 simulated nodes with units, ranges and persisted history               |
 | `modbus-server`              | _(default)_ | `oitc/modbus-server` — Modbus TCP server                                                         |
 | `simulator`                  | _(default)_ | Python script writing sinusoidal values to both Modbus and MQTT                                  |
 | `mqtt-broker`                | _(default)_ | Eclipse Mosquitto broker (authenticated, WebSocket on port 9001)                                 |

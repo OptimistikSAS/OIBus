@@ -204,7 +204,7 @@
     "internal-scope-ids": {
       "engine": "Engine",
       "web-server": "Web Server",
-      "node-opcua": "Node OPC-UA"
+      "node-opcua": "node-opcua"
     },
     "categories": {
       "api": "API",
@@ -308,7 +308,7 @@
       "mqtt": "MQTT",
       "modbus": "Modbus",
       "oianalytics": "OIAnalytics time values",
-      "opcua": "OPCUA",
+      "opcua": "OPC UA",
       "record-list": "Records"
     },
     "oibus-transformer-language": {
@@ -331,7 +331,7 @@
       "modbus": "Modbus",
       "mqtt": "MQTT",
       "oianalytics": "OIAnalytics®",
-      "opcua": "OPC UA™",
+      "opcua": "OPC UA®",
       "rest": "REST API",
       "sftp": "SFTP"
     },
@@ -344,7 +344,7 @@
       "modbus": "Write in Modbus registers on a PLC",
       "mqtt": "Publish to MQTT broker topics",
       "oianalytics": "Send files and values to OIAnalytics®",
-      "opcua": "Write data into OPC UA™ server",
+      "opcua": "Write data into OPC UA® server",
       "rest": "Upload data to a REST endpoint",
       "sftp": "Upload files and data to an SFTP server"
     },
@@ -368,8 +368,8 @@
       "odbc": "ODBC",
       "oianalytics": "OIAnalytics®",
       "oledb": "OLEDB",
-      "opc": "OPC Classic™",
-      "opcua": "OPC UA™",
+      "opc": "OPC Classic",
+      "opcua": "OPC UA®",
       "oracle": "Oracle Database™",
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
@@ -392,8 +392,8 @@
       "odbc": "Query SQL databases with an ODBC driver",
       "oianalytics": "Query time values from OIAnalytics®",
       "oledb": "Query SQL databases with OLEDB",
-      "opc": "Retrieve data from OPC Classic™ (HDA/DA) server",
-      "opcua": "Query data from OPC UA™ server (HA/DA)",
+      "opc": "Retrieve data from OPC Classic (HDA/DA) server",
+      "opcua": "Query data from OPC UA® server (HA/DA)",
       "oracle": "Query data from an Oracle Database™",
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
@@ -1327,13 +1327,13 @@
             "file-to-modbus": "Modbus values",
             "file-to-mqtt": "MQTT payloads",
             "file-to-oianalytics": "OIAnalytics payload",
-            "file-to-opcua": "OPCUA values",
+            "file-to-opcua": "OPC UA values",
             "file-to-record-list": "Records",
             "record-list-to-file": "File",
             "record-list-to-modbus": "Modbus values",
             "record-list-to-mqtt": "MQTT payloads",
             "record-list-to-oianalytics": "OIAnalytics payload",
-            "record-list-to-opcua": "OPCUA values"
+            "record-list-to-opcua": "OPC UA values"
           },
           "standard-description": {
             "file-to-file": "Sends the files as they are, renamed or compressed, or converts a CSV or JSON file into another CSV or JSON file.",
@@ -1616,7 +1616,7 @@
             "mapping": {
               "title": "Mapping table",
               "point-id": "Point ID (Reference)",
-              "node-id": "OPCUA Node ID",
+              "node-id": "OPC UA Node ID",
               "data-type": {
                 "title": "Data type",
                 "boolean": "Boolean",

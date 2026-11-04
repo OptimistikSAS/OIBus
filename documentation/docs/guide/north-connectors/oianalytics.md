@@ -4,7 +4,7 @@ The **OIAnalytics® North Connector** sends files and values to the **OIAnalytic
 
 OIAnalytics® can process:
 
-- **JSON values payloads**: Values built by the OIAnalytics transformers from the records of South connectors (e.g., OPC UA, Modbus, SQL).
+- **JSON values payloads**: Values built by the OIAnalytics transformers from the records of South connectors (e.g., OPC UA®, Modbus, SQL).
 - **Files**: Transmitted as-is (compressed or uncompressed). Supported formats include CSV, TXT, and XLSX.
 
 OIAnalytics® includes **built-in file parsers**, eliminating the need for pre-processing. Parsing is configured directly in the SaaS application.

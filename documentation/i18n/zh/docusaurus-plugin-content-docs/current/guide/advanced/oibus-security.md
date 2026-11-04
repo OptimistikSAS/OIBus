@@ -101,7 +101,7 @@ OIAnalytics 输入的机密信息都必须重新输入，因为旧的密文将�
 
 此外，OIBus 在启动时会生成自己的 4096 位 RSA 证书/密钥对（`private.pem` /
 `public.pem` / `cert.pem`）——正是它对上文所述的 JWT 进行签名，也用于自签名
-用于 OPC UA 连接所出示的证书。这与用于
+用于 OPC UA® 连接所出示的证书。这与用于
 OIAnalytics 机密信息交换的密钥对是不同的一对密钥。
 
 ## 网络安全 {#network-security}

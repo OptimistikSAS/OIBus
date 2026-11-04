@@ -7,7 +7,7 @@ sidebar_position: 1
 
 Les connecteurs OIBus sont écrits en [TypeScript](https://www.typescriptlang.org/). Les connecteurs **South**
 _récupèrent_ des données depuis une source (automate, système de fichiers, base de données, broker MQTT, etc.) ;
-les connecteurs **North** les _livrent_ à une destination (fichier, OIAnalytics, serveur OPC UA, S3, etc.).
+les connecteurs **North** les _livrent_ à une destination (fichier, OIAnalytics, serveur OPC UA®, S3, etc.).
 
 Ce guide passe en revue l'organisation des fichiers, le modèle mental, et les étapes de câblage nécessaires pour
 enregistrer un nouveau connecteur auprès du moteur.

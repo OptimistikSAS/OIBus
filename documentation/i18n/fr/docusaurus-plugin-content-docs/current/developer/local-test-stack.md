@@ -84,7 +84,7 @@ Tous les services partagent le réseau bridge interne `oibus-network`. Les ports
 
 ## Services {#services}
 
-### Serveur OPC UA — `opcua-server` {#opc-ua-server--opcua-server}
+### Serveur OPC UA® — `opcua-server` {#opc-ua-server--opcua-server}
 
 | Propriété      | Valeur                                                                |
 | -------------- | --------------------------------------------------------------------- |

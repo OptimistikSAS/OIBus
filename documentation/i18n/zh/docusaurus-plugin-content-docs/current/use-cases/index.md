@@ -11,7 +11,7 @@ sidebar_position: 1
 
 | 使用案例                                                      | 南向连接器                     | 北向连接器         |
 | ------------------------------------------------------------- | ------------------------------ | ------------------ |
-| [OPC UA → OIAnalytics](./use-case-opcua)                      | OPC UA                         | OIAnalytics        |
+| [OPC UA® → OIAnalytics](./use-case-opcua)                      | OPC UA                         | OIAnalytics        |
 | [Microsoft SQL Server → Azure Blob Storage](./use-case-mssql) | MSSQL                          | Azure Blob Storage |
 | [ADS / TwinCAT → OIAnalytics](./use-case-ads)                 | ADS                            | OIAnalytics        |
 | [Modbus → File Writer](./use-case-modbus)                     | Modbus                         | File Writer        |

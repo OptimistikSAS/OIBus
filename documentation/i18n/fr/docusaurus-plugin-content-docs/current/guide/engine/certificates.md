@@ -51,7 +51,7 @@ openssl pkcs12 -in bundle.pfx -nocerts -nodes -out private-key.pem
 
 Le bouton **télécharger** sur une ligne de certificat ouvre une boîte de dialogue proposant :
 
-- **Format** — **PEM** (`.pem`) ou **DER** (`.cer`). DER est le format attendu par les serveurs OPC UA tels que
+- **Format** — **PEM** (`.pem`) ou **DER** (`.cer`). DER est le format attendu par les serveurs OPC UA® tels que
   Kepware, il peut donc être fourni directement sans passer par une conversion `openssl`.
 - **Inclure la chaîne CA** — ajoute la chaîne stockée au fichier exporté. Disponible uniquement avec PEM, car un
   fichier DER ne contient qu'un seul certificat.

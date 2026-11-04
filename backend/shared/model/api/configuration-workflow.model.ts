@@ -21,7 +21,7 @@ import { ScanModeDTO } from './scan-mode.model';
 export interface ConfigurationWorkflowDTO extends BaseEntity {
   /**
    * Unique per south connector.
-   * @example "Reactor OPC-UA discovery"
+   * @example "Reactor OPC UA discovery"
    */
   name: string;
 
@@ -38,7 +38,7 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
   southId: string;
 
   /**
-   * What to (re-)discover — connector-specific (e.g. `{ rootNodeId: "ns=1;s=Root" }` for OPC-UA,
+   * What to (re-)discover — connector-specific (e.g. `{ rootNodeId: "ns=1;s=Root" }` for OPC UA,
    * `{ query: "SELECT ..." }` for SQL).
    */
   discoveryScope: Record<string, unknown>;

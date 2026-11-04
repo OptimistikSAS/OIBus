@@ -6,7 +6,7 @@ sidebar_position: 1
 
 本页详细说明如何使用 `最大读取间隔`、`读取延迟`、`起始时间偏移`、`结束时间偏移` 以及 `恢复策略` 和 `未找到数据时`
 这些字段。
-它们仅出现在访问具有历史存储的数据源的连接器上：SQL 连接器、HA 模式下的 OPC UA、HDA 模式下的 OPC Classic、
+它们仅出现在访问具有历史存储的数据源的连接器上：SQL 连接器、HA 模式下的 OPC UA®、HDA 模式下的 OPC Classic、
 OSIsoft PI、OIAnalytics、REST、InfluxDB——完整列表参见
 [历史查询](../history-queries.md#compatible-south-connectors)。这些设置在
 [通用设置](../south-connectors/common-settings.md)中有介绍。

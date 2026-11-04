@@ -84,7 +84,7 @@ vous informant que cela se produit.
 
 Certains types de connecteurs peuvent exécuter en toute sécurité plus d'une requête à la fois, selon le comportement
 de leur modèle de connexion sous-jacent, et exposent cela sous forme d'un paramètre **Nombre maximum de requêtes
-parallèles** dans leur propre configuration — voir la documentation de ce connecteur (par exemple [OPC UA](./opcua.mdx#parallel-queries))
+parallèles** dans leur propre configuration — voir la documentation de ce connecteur (par exemple [OPC UA®](./opcua.mdx#parallel-queries))
 pour plus de détails. Pour tous les autres types de connecteurs, l'exécution reste entièrement séquentielle et n'est
 pas configurable.
 

@@ -87,18 +87,18 @@ export interface SouthConnectorItemQueryResult {
 
 /**
  * A single entry returned while exploring/discovering a South connector's data source.
- * Represents an OPC-UA node or a file-system entry. Kept intentionally generic and
+ * Represents an OPC UA node or a file-system entry. Kept intentionally generic and
  * extensible so item creation and item synchronisation can build on it later.
  */
 export interface SouthConnectorExploreEntry {
   /**
    * Stable identifier of the entry, passed back to expand it.
-   * OPC-UA node id (e.g. "ns=1;s=Temperature") or a folder-relative path.
+   * OPC UA node id (e.g. "ns=1;s=Temperature") or a folder-relative path.
    */
   id: string;
 
   /**
-   * Human-readable label (OPC-UA display name or file/folder name).
+   * Human-readable label (OPC UA display name or file/folder name).
    */
   name: string;
 

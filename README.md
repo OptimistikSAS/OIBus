@@ -15,7 +15,7 @@ sources and transmits it to enterprise applications.
 
 | Feature                    | Description                                                       |
 |----------------------------|-------------------------------------------------------------------|
-| **Multi-protocol Support** | OPC UA, OPC Classic, Modbus, MQTT, SQL, Folder Scanning, and more |
+| **Multi-protocol Support** | OPC UA®, OPC Classic, Modbus, MQTT, SQL, Folder Scanning, and more |
 | **Cross-platform**         | Runs on Windows, Linux, and macOS                                 |
 | **High Performance**       | Handles 10 to 10,000+ data points with second-level sampling      |
 | **No-code Configuration**  | Set up in minutes without development skills                      |

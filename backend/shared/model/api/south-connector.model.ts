@@ -241,7 +241,7 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
   emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy | null;
 
   /**
-   * Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,
+   * Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,
    * S7, MQTT).
    * When null and item is in a group, inherits from group settings.
    *
@@ -395,7 +395,7 @@ export interface SouthItemGroupDTO extends BaseEntity {
 
     /**
      * Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for
-     * IoT-family connectors (OPC UA, Modbus, ADS, OPC classic, S7, MQTT).
+     * IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT).
      *
      * @example "onChange"
      */
@@ -480,7 +480,7 @@ export interface SouthItemGroupCommandDTO {
 
     /**
      * Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for
-     * IoT-family connectors (OPC UA, Modbus, ADS, OPC classic, S7, MQTT).
+     * IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT).
      *
      * @example "onChange"
      */
@@ -803,7 +803,7 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
   emptyIntervalStrategy: SouthHistoryEmptyIntervalStrategy | null;
 
   /**
-   * Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,
+   * Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,
    * S7, MQTT).
    * When null and item is in a group, inherits from group settings.
    *

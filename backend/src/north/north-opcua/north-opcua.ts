@@ -154,10 +154,10 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     }
     try {
       this.client = await this.createSession();
-      this.logger.info(`OPCUA North connector "${this.connector.name}" connected`);
+      this.logger.info(`OPC UA North connector "${this.connector.name}" connected`);
       await super.connect();
     } catch (error: unknown) {
-      this.logger.error(`Error while connecting to the OPCUA server: ${(error as Error).message}`);
+      this.logger.error(`Error while connecting to the OPC UA server: ${(error as Error).message}`);
       await this.triggerReconnect();
     }
   }
@@ -185,7 +185,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       this.connector.settings,
       this.connector.settings.writeTimeout
     );
-    this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
+    this.logger.debug(`Connecting to OPC UA on ${this.connector.settings.url}`);
     return await createOPCUASession(this.connector.settings.url, userIdentity, options, this.connector.settings.connectionTimeout);
   }
 
@@ -198,7 +198,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       let nodeId;
       try {
         if (!this.client) {
-          throw new OIBusError('OPCUA client not set. The connector cannot write values', true);
+          throw new OIBusError('OPC UA client not set. The connector cannot write values', true);
         }
 
         try {
@@ -256,7 +256,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         }
 
         const oibusError = new OIBusError((error as Error).message, true);
-        this.logger.error(`Unexpected OPCUA error: ${oibusError.message}`);
+        this.logger.error(`Unexpected OPC UA error: ${oibusError.message}`);
         await this.triggerReconnect();
         throw oibusError;
       }

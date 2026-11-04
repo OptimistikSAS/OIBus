@@ -79,7 +79,7 @@ current workload doesn't flood the logs while still letting you know it's happen
 
 Some connector types can safely run more than one query at a time, depending on how their underlying
 connection model behaves, and expose this as a **Max parallel queries** setting in
-their own configuration — see that connector's documentation (e.g. [OPC UA](./opcua.mdx#parallel-queries))
+their own configuration — see that connector's documentation (e.g. [OPC UA®](./opcua.mdx#parallel-queries))
 for details. For every other connector type, execution stays fully sequential and isn't configurable.
 
 ---

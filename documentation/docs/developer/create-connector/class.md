@@ -194,7 +194,7 @@ Example: `backend/src/south/south-modbus/south-modbus.ts`.
 
 #### `SouthHistoryQuery` {#southhistoryquery}
 
-For time-windowed reads — e.g. OPC UA HistoryRead, SQL `BETWEEN`, OSIsoft PI archive.
+For time-windowed reads — e.g. OPC UA® HistoryRead, SQL `BETWEEN`, OSIsoft PI archive.
 
 ```typescript
 interface SouthHistoryQuery {

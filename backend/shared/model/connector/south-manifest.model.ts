@@ -55,7 +55,7 @@ export const OIBUS_SOUTH_TYPES = [
 export type OIBusSouthType = (typeof OIBUS_SOUTH_TYPES)[number];
 
 /**
- * South connector types belonging to the "IoT family" (OPC UA, Modbus, ADS, OPC classic, S7, MQTT), for
+ * South connector types belonging to the "IoT family" (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT), for
  * which per-item caching strategy is available.
  */
 export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt', 'bacnet'];
@@ -63,7 +63,7 @@ export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus',
 /**
  * Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:
  * - `tree`: the nodes checked in the Explore modal (`{ nodeIds: Array<string> }`), each point for itself and any other
- *   node for everything under it - or a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA
+ *   node for everything under it - or a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC UA
  * - `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors. Their tables and columns
  *   checked in the Explore modal (`{ nodeIds }`) are discovered too, one record per table, to add as items
  */
@@ -248,7 +248,7 @@ export interface SouthConnectorManifest {
 
   /**
    * Whether this connector type supports the interactive "explore/discovery" feature
-   * (browsing the data source, e.g. expanding OPC-UA nodes or walking a folder tree).
+   * (browsing the data source, e.g. expanding OPC UA nodes or walking a folder tree).
    * UI capability flag — mirrors the connector's structural `hasExplore()`.
    *
    * @example true
