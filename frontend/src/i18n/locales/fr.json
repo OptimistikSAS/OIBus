@@ -1391,7 +1391,8 @@
                 "point-query": "Requête PI"
               },
               "pi-point": "Point PI",
-              "pi-query": "Requête PI"
+              "pi-query": "Requête PI",
+              "value-filter": "Filtre de valeurs (expression PI, vide : toutes les valeurs)"
             },
             "postgresql": {
               "query": "Requête",

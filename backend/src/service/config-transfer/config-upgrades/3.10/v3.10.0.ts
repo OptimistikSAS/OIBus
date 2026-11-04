@@ -621,6 +621,14 @@ export function withoutPiAgentSettings(settings: Record<string, unknown>): Recor
 }
 
 /**
+ * The PI items gain an optional `valueFilter`, a filter expression applied by the PI Data Archive to the values it
+ * returns: null keeps every value, as until now.
+ */
+export function withPiValueFilter(settings: Record<string, unknown>): Record<string, unknown> {
+  return { ...settings, valueFilter: settings.valueFilter ?? null };
+}
+
+/**
  * The setpoints sent by OIAnalytics are records (`{ reference, value }`): the setpoint transformers are replaced by the
  * record-list ones.
  */
@@ -1732,7 +1740,7 @@ function useLocalOleDbDriver(config: JsonObject): void {
   });
 }
 
-/** See `withoutPiAgentSettings`, for the connectors and the history queries */
+/** See `withoutPiAgentSettings` and `withPiValueFilter`, for the connectors, the history queries and their items */
 function removePiAgentSettings(config: JsonObject): void {
   forEachSouth(config, 'osisoft-pi', south => {
     const settings = south.settings as JsonObject;
@@ -1740,6 +1748,12 @@ function removePiAgentSettings(config: JsonObject): void {
   });
   forEachHistoryQuery(config, 'osisoft-pi', settings => {
     if (settings.southSettings) settings.southSettings = withoutPiAgentSettings(settings.southSettings as JsonObject);
+  });
+  forEachSouthItem(config, 'osisoft-pi', item => {
+    if (item.settings) item.settings = withPiValueFilter(item.settings as JsonObject);
+  });
+  forEachHistoryQueryItem(config, 'osisoft-pi', item => {
+    if (item.settings) item.settings = withPiValueFilter(item.settings as JsonObject);
   });
 }
 

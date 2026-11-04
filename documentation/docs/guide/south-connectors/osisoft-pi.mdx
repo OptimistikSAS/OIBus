@@ -54,17 +54,25 @@ edit form.
 
 ### Point Access Methods {#point-access-methods}
 
-| Setting  | Description                                                                                                                                                                                                                                            | Example Value                    |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
-| Type     | Access method: `PI point` (single point by name) or `PI query` (multiple points by query expression)                                                                                                                                                   | `PI point` or `PI query`         |
-| PI point | Exact point name (without server name, not case-sensitive). Used when Type is `PI point`.                                                                                                                                                              | `SINUSOID`                       |
-| PI query | Query selecting several points (see [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). A query without attribute name, such as `sinus*`, searches the point names. Default: `*` (all points). | `tag:=SINUS* AND pointsource:=R` |
+| Setting      | Description                                                                                                                                                                                                                                                                               | Example Value                    |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Type         | Access method: `PI point` (single point by name) or `PI query` (multiple points by query expression)                                                                                                                                                                                      | `PI point` or `PI query`         |
+| PI point     | Exact point name (without server name, not case-sensitive). Used when Type is `PI point`.                                                                                                                                                                                                 | `SINUSOID`                       |
+| PI query     | Query selecting several points (see [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). A query without attribute name, such as `sinus*`, searches the point names. Default: `*` (all points).                                    | `tag:=SINUS* AND pointsource:=R` |
+| Value filter | Optional condition in the [performance equation syntax](https://docs.aveva.com/bundle/af-sdk/page/html/M_OSIsoft_AF_PI_PIPoint_RecordedValues.htm), evaluated by the PI Data Archive: only the values passing it are sent to OIBus. It can name the point it filters. Empty: every value. | `'SINUSOID' > 50`                |
 
 :::info Reference Names
 
 - For `PI point`: Item name serves as reference in JSON payloads
 - For `PI query`: PI name is used as reference
   :::
+
+:::note Value filters
+The PI Data Archive applies a value filter before sending the values, which saves their transfer. It reads the points
+of one bulk call with a single filter: the `PI point` items read together are read in one call per distinct filter (a
+single call when none has a filter), each `PI query` item in its own call. With a `PI query` item, the filter applies
+to every point the query matches.
+:::
 
 :::info Values
 OIBus reads the recorded values between the start and the end of each interval, both included. Each record has the

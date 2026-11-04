@@ -202,6 +202,18 @@ const manifest: SouthConnectorManifest = {
                 columns: 4,
                 displayInViewMode: false
               }
+            },
+            {
+              type: 'string',
+              key: 'valueFilter',
+              translationKey: 'configuration.oibus.manifest.south.items.osisoft-pi.value-filter',
+              defaultValue: null,
+              validators: [],
+              displayProperties: {
+                row: 1,
+                columns: 8,
+                displayInViewMode: false
+              }
             }
           ]
         }

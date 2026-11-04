@@ -12403,10 +12403,15 @@
 					},
 					"piQuery": {
 						"type": "string"
+					},
+					"valueFilter": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
-					"type"
+					"type",
+					"valueFilter"
 				],
 				"type": "object",
 				"additionalProperties": false
