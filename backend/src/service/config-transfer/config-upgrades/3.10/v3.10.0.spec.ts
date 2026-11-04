@@ -321,12 +321,47 @@ describe('3.10.0 config upgrade', () => {
       assert.strictEqual(usesRemoteAgent('mysql', { remoteAgent: true }), false);
     });
 
-    it('only formats the reference field, sent as an ISO string, through the remote agent', () => {
-      assert.deepStrictEqual(fieldInputs(buildRecordListToCsvOptions(oldSettings, true)), [['timestamp', 'iso-string']]);
+    it('only formats the reference field, sent as an ISO string, through the remote agent with ODBC', () => {
+      assert.deepStrictEqual(fieldInputs(buildRecordListToCsvOptions(oldSettings, 'odbc')), [['timestamp', 'iso-string']]);
       assert.deepStrictEqual(fieldInputs(buildRecordListToCsvOptions(oldSettings)), [
         ['timestamp', 'string'],
         ['other', 'unix-epoch']
       ]);
+    });
+
+    it('only formats the reference field of OLEDB items, read as a date time of the provider in its old timezone', () => {
+      const datetimeSettings = (options: Record<string, unknown>) =>
+        (options.fields as Array<JsonObject>).map(field => [field.fieldName, field.datetimeSettings]);
+      const output = { outputType: 'string', outputTimezone: 'UTC', outputFormat: 'yyyy-MM-dd HH:mm' };
+
+      assert.deepStrictEqual(datetimeSettings(buildRecordListToCsvOptions(oldSettings, 'oledb')), [
+        [
+          'timestamp',
+          {
+            inputType: 'string',
+            inputTimezone: 'Europe/Paris',
+            inputFormat: "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            inputLocale: 'en-US',
+            ...output
+          }
+        ]
+      ]);
+      // UTC without old timezone
+      const isoReference = {
+        ...oldSettings,
+        dateTimeFields: [{ fieldName: 'timestamp', useAsReference: true, type: 'iso-string', timezone: null, format: null, locale: null }]
+      };
+      assert.deepStrictEqual(datetimeSettings(buildRecordListToCsvOptions(isoReference, 'oledb')), [
+        ['timestamp', { inputType: 'string', inputTimezone: 'UTC', inputFormat: "yyyy-MM-dd'T'HH:mm:ss.SSS", ...output }]
+      ]);
+      // A UNIX epoch comes as a number
+      const epochReference = {
+        ...oldSettings,
+        dateTimeFields: [
+          { fieldName: 'timestamp', useAsReference: true, type: 'unix-epoch-ms', timezone: null, format: null, locale: null }
+        ]
+      };
+      assert.deepStrictEqual(fieldInputs(buildRecordListToCsvOptions(epochReference, 'oledb')), [['timestamp', 'unix-epoch-ms']]);
     });
 
     it('converts the items of ODBC souths and history queries', () => {
@@ -352,7 +387,8 @@ describe('3.10.0 config upgrade', () => {
       ]);
       const historyQuery = (config.historyQueries as Array<JsonObject>)[0].settings as JsonObject;
       const [historyLink] = historyQuery.northTransformers as Array<JsonObject>;
-      assert.deepStrictEqual(fieldInputs(historyLink.options as JsonObject), [['timestamp', 'iso-string']]);
+      // An OLEDB history query: the date time of the provider, read as a string (see toRemoteAgentReferenceField)
+      assert.deepStrictEqual(fieldInputs(historyLink.options as JsonObject), [['timestamp', 'string']]);
       assert.deepStrictEqual(((historyQuery.items as Array<JsonObject>)[0].settings as JsonObject).trackingInstant, {
         trackInstant: true,
         fieldName: 'timestamp',
