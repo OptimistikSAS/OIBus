@@ -41,7 +41,7 @@ import {
  */
 
 // The SQL-family souths reworked to emit 'record-list' content instead of pre-serialized CSV. With a remote agent
-// (always for OLEDB, optional for ODBC), the agent still builds a CSV, which the connector parses back into records.
+// (always for OLEDB, optional for ODBC), only the reference field was formatted (see `toRemoteAgentReferenceField`).
 export const SQL_SOUTH_TYPES = ['mysql', 'postgresql', 'mssql', 'oracle', 'sqlite', 'odbc', 'oledb'];
 
 /**
@@ -141,18 +141,46 @@ function toStringDateTimeSettings(field: OldDateTimeField, keys: [string, string
 }
 
 /**
+ * The date time format of the `datetime` columns sent by the OLEDB South (`@oibus/oledb` package): ISO strings without
+ * offset, in the time zone of the source.
+ */
+export const OLEDB_DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+
+/**
+ * How the transformer reads the reference field of a south that went through the remote agent, the only field the agent
+ * formatted:
+ * - ODBC: as an ISO string;
+ * - OLEDB: the connector now sends the value of the provider, without the agent. A date time column, the usual case,
+ *   comes as an ISO string without offset: it is read in the old timezone of the field (UTC when it had none), as the
+ *   agent did. A UNIX epoch keeps its type: it comes as a number.
+ */
+function toRemoteAgentReferenceField(southType: string, field: OldDateTimeField): OldDateTimeField {
+  if (southType !== 'oledb') {
+    return { ...field, type: 'iso-string' };
+  }
+  if (field.type === 'unix-epoch' || field.type === 'unix-epoch-ms') {
+    return field;
+  }
+  return { ...field, type: 'string', format: OLEDB_DATE_TIME_FORMAT, timezone: field.timezone ?? 'UTC' };
+}
+
+/**
  * Builds the options for a `record-list-to-csv` transformer that reproduces one SQL item's old CSV
  * output: same filename/delimiter/compression, and every old dateTimeFields entry (not just the
  * reference one — the original code rendered all of them) becomes a `fields` entry with
  * `dataType: 'datetime'`, sharing the item's old `outputTimestampFormat`/`outputTimezone`. Columns
  * with no entry in `fields` pass through unchanged, same as before.
- * Through a remote agent, only the reference field was formatted, and it now comes as an ISO string.
+ * Through a remote agent (`remoteAgentSouthType`, see `usesRemoteAgent`), only the reference field was formatted (see
+ * `toRemoteAgentReferenceField`).
  */
-export function buildRecordListToCsvOptions(oldSettings: OldSqlItemSettings, viaRemoteAgent = false): Record<string, unknown> {
+export function buildRecordListToCsvOptions(
+  oldSettings: OldSqlItemSettings,
+  remoteAgentSouthType: string | null = null
+): Record<string, unknown> {
   const serialization = oldSettings.serialization;
   const dateTimeFields = (oldSettings.dateTimeFields ?? [])
-    .filter(field => !viaRemoteAgent || field.useAsReference)
-    .map(field => (viaRemoteAgent ? { ...field, type: 'iso-string' } : field));
+    .filter(field => !remoteAgentSouthType || field.useAsReference)
+    .map(field => (remoteAgentSouthType ? toRemoteAgentReferenceField(remoteAgentSouthType, field) : field));
   return {
     filename: serialization?.filename ?? '@CurrentDate.csv',
     encoding: 'UTF_8',
@@ -925,7 +953,9 @@ function migrateSqlSouthItems(config: JsonObject, catalog: ReturnType<typeof tra
       };
     });
 
-    const viaRemoteAgent = usesRemoteAgent(south.type as string, (south.settings as JsonObject).settings as JsonObject);
+    const remoteAgentSouthType = usesRemoteAgent(south.type as string, (south.settings as JsonObject).settings as JsonObject)
+      ? (south.type as string)
+      : null;
     for (const item of items) {
       const oldSettings = item.settings as OldSqlItemSettings;
       for (const { north, resolve } of resolutions) {
@@ -936,7 +966,7 @@ function migrateSqlSouthItems(config: JsonObject, catalog: ReturnType<typeof tra
           {
             id: generateRandomId(6),
             transformerId: catalog.recordListToCsvId(),
-            options: buildRecordListToCsvOptions(oldSettings, viaRemoteAgent),
+            options: buildRecordListToCsvOptions(oldSettings, remoteAgentSouthType),
             source: { type: 'south', southId: south.oIBusInternalId, items: [itemLight(item)] }
           }
         ];
@@ -967,7 +997,9 @@ function migrateSqlHistoryQueryItems(config: JsonObject, catalog: ReturnType<typ
       }
     }
 
-    const viaRemoteAgent = usesRemoteAgent(settings.southType as string, settings.southSettings as JsonObject);
+    const remoteAgentSouthType = usesRemoteAgent(settings.southType as string, settings.southSettings as JsonObject)
+      ? (settings.southType as string)
+      : null;
     for (const item of items) {
       const oldSettings = item.settings as OldSqlItemSettings;
       const resolved = itemLevel.get(item.id) ?? historyLevel;
@@ -977,7 +1009,7 @@ function migrateSqlHistoryQueryItems(config: JsonObject, catalog: ReturnType<typ
           {
             id: generateRandomId(6),
             transformerId: catalog.recordListToCsvId(),
-            options: buildRecordListToCsvOptions(oldSettings, viaRemoteAgent),
+            options: buildRecordListToCsvOptions(oldSettings, remoteAgentSouthType),
             items: [itemLight(item)]
           }
         ];
