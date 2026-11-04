@@ -2507,12 +2507,12 @@ const models: TsoaRoute.Models = {
     "SouthOLEDBSettings": {
         "dataType": "refObject",
         "properties": {
-            "agentUrl": {"dataType":"string","required":true},
             "connectionTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
             "requestTimeout": {"dataType":"double","required":true},
             "connectionString": {"dataType":"string","required":true},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "maxParallelRun": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },

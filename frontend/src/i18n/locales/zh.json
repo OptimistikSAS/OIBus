@@ -877,12 +877,12 @@
             }
           },
           "oledb": {
-            "agent-url": "远程代理 URL",
             "connection-timeout": "连接超时",
             "retry-interval": "重试间隔",
             "request-timeout": "请求超时",
             "connection-string": "连接字符串",
-            "password": "密码"
+            "password": "密码",
+            "max-parallel-run": "最大并行查询数"
           },
           "opc": {
             "retry-interval": "重试间隔",

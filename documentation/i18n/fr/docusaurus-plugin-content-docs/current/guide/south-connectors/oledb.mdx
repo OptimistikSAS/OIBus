@@ -6,13 +6,26 @@ import ItemSettings from './_south-record-list-item-settings.mdx';
 
 # OLEDB
 
-Connectez-vous à des sources de données OLEDB via un [OIBus Agent](../oibus-agent/oledb.md) distant. Particulièrement utile pour des systèmes comme OSIsoft PI System™ et d'autres applications compatibles OLEDB.
+Connectez-vous à des sources de données OLEDB via un fournisseur OLE DB installé sur la machine d'OIBus.
+Particulièrement utile pour des systèmes comme OSIsoft PI System™ et d'autres applications compatibles OLEDB. OIBus
+dialogue lui-même avec le fournisseur via un petit processus d'aide Windows livré avec lui : aucun OIBus Agent n'est
+nécessaire.
 
 :::info Notes de compatibilité
 
-- Nécessite l'installation d'OIBus Agent sur la machine cible
 - Prend en charge toutes les sources de données compatibles OLEDB
 - Optimisé pour les connexions OSIsoft PI System™
+
+:::
+
+:::caution Prérequis système
+
+- OIBus **doit** s'exécuter sous Windows x64 pour utiliser ce connecteur.
+- Le fournisseur OLE DB nommé dans la chaîne de connexion (`Provider=...`) **doit** être installé sur la machine
+  d'OIBus, dans sa version **64 bits**. OIBus ne fournit aucun fournisseur : installez celui de votre source de données
+  (par exemple le Microsoft OLE DB Driver for SQL Server, ou le fournisseur de votre historian). Les fournisseurs
+  uniquement 32 bits, comme `Microsoft.Jet.OLEDB.4.0`, ne peuvent pas être utilisés : utilisez leur successeur 64 bits
+  (`Microsoft.ACE.OLEDB.12.0` ou `16.0`).
 
 :::
 
@@ -20,12 +33,22 @@ Connectez-vous à des sources de données OLEDB via un [OIBus Agent](../oibus-ag
 
 | Paramètre                        | Description                                                                                                                                                                                                                                           | Exemple de valeur                           |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| URL de l'agent distant           | URL du point de terminaison de l'agent. Requis pour toutes les connexions.                                                                                                                                                                            | `http://192.168.1.100:2224`                 |
+| Chaîne de connexion              | Chaîne de connexion OLEDB au format propre au fournisseur.                                                                                                                                                                                            | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
+| Mot de passe                     | Mot de passe d'authentification (stocké de manière sécurisée). Toujours ajouté sous la forme `Password=<password>;` — si votre chaîne de connexion contient déjà sa propre entrée `Password=`, retirez-la ici ou de la chaîne pour éviter un doublon. | `••••••••`                                  |
 | Délai de connexion               | Temps maximal en millisecondes pour établir la connexion. Par défaut : `15000`.                                                                                                                                                                       | `15000`                                     |
 | Intervalle de nouvelle tentative | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`.                                                                                                                                                               | `10000`                                     |
 | Délai de requête                 | Temps d'exécution maximal en millisecondes pour chaque requête. Par défaut : `15000`.                                                                                                                                                                 | `15000`                                     |
-| Chaîne de connexion              | Chaîne de connexion OLEDB au format propre au fournisseur.                                                                                                                                                                                            | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
-| Mot de passe                     | Mot de passe d'authentification (stocké de manière sécurisée). Toujours ajouté sous la forme `Password=<password>;` — si votre chaîne de connexion contient déjà sa propre entrée `Password=`, retirez-la ici ou de la chaîne pour éviter un doublon. | `••••••••`                                  |
+| Requêtes parallèles max          | Nombre maximal d'éléments ou de groupes interrogés en même temps, de `1` (séquentiel) à `8`. Par défaut : `1`.                                                                                                                                        | `2`                                         |
+
+:::note Connexions et requêtes parallèles
+OIBus ouvre une première connexion au démarrage du connecteur, et réessaie à chaque **Intervalle de nouvelle
+tentative** jusqu'à y parvenir. Chaque requête exécutée en parallèle utilise sa propre connexion, gardée ouverte entre
+deux exécutions, et ajoute à la charge de la source. Une requête en échec ferme sa connexion : l'exécution suivante en
+ouvre une nouvelle.
+
+Le délai de requête est appliqué par le fournisseur quand il le prend en charge, et OIBus annule aussi une requête qui
+dure plus longtemps.
+:::
 
 <ItemSettings />
 
@@ -39,11 +62,15 @@ Les valeurs de **Type** suivantes sont disponibles pour le champ date/heure de l
 | Époque UNIX (s)  | Horodatage Unix en secondes                                              |
 | Époque UNIX (ms) | Horodatage Unix en millisecondes                                         |
 
+Une colonne que le fournisseur renvoie comme une date/heure n'a pas de fuseau horaire : elle est lue dans le **Fuseau
+horaire** du champ date/heure (UTC pour les types sans fuseau horaire), quels que soient son type et son format. Le type
+et le format ne s'appliquent qu'aux colonnes de texte et de nombres.
 :::
 
-:::info Via l'OIBus Agent
-L'agent renvoie les lignes sous forme de texte : le champ suivi arrive comme une chaîne ISO 8601 en UTC (par ex.
-`2024-01-15T10:30:00.000Z`), toutes les autres colonnes telles que le pilote de la base de données les restitue, et les
-valeurs vides ou nulles comme `null`. Utilisez un transformateur de liste d'enregistrements
-pour les formater en aval (par ex. le transformateur [Fichier](../engine/transformers.mdx#file-from-records)).
+:::info Valeurs
+Le champ suivi arrive comme une chaîne ISO 8601 en UTC (par ex. `2024-01-15T10:30:00.000Z`). Les autres colonnes gardent
+leur type : nombres et booléens tels quels, texte en chaînes, dates/heures en chaînes ISO 8601 sans fuseau horaire (par
+ex. `2024-01-15T10:30:00.000`), données binaires en base64, et valeurs nulles comme `null`. Utilisez un transformateur de
+liste d'enregistrements pour les formater en aval (par ex. le transformateur
+[Fichier](../engine/transformers.mdx#file-from-records)).
 :::

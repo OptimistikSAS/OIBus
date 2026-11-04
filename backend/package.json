@@ -107,6 +107,7 @@
     "yazl": "3.3.1"
   },
   "optionalDependencies": {
+    "@oibus/oledb": "0.1.0",
     "@oibus/opc-classic": "0.2.1",
     "odbc": "2.6.0"
   },
@@ -164,6 +165,7 @@
       "node_modules/isolated-vm/prebuilds/**/*.node",
       "node_modules/isolated-vm/build/Release/*.node",
       "node_modules/odbc/**/*.node",
+      "node_modules/@oibus/oledb/runtimes/win-x64/**/*",
       "node_modules/@oibus/opc-classic/runtimes/win-x64/**/*",
       "node_modules/luxon/build/global/luxon.min.js",
       "node_modules/jsonpath-plus/dist/index-browser-umd.min.cjs",

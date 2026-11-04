@@ -38,7 +38,8 @@ import {
   replaceRawResampling,
   replaceTimeValuesByRecordLists,
   STEPS,
-  up
+  up,
+  useLocalOleDbDriver
 } from './v3.10.0';
 
 const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
@@ -4686,7 +4687,8 @@ describe('Entity migration v3.10.0: removeOdbcAgentSettings', () => {
     await runStepsFrom(removeOdbcAgentSettings, db);
 
     assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'odbc'), { connectionString: 'c', maxParallelRun: 1 });
-    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'oledb'), { agentUrl: 'u', retryInterval: 1000 });
+    // Only the URL of the OIBus Agent is removed, by a later step (useLocalOleDbDriver)
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'oledb'), { retryInterval: 1000, maxParallelRun: 1 });
     assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-odbc'), { connectionString: 'c', maxParallelRun: 2 });
   });
 });
@@ -4729,7 +4731,75 @@ describe('Entity migration v3.10.0: removeOpcAgentSettings', () => {
     await runStepsFrom(removeOpcAgentSettings, db);
 
     assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'opc'), opcSettings);
-    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'oledb'), { agentUrl: 'u', retryInterval: 1000 });
+    // Only the URL of the OIBus Agent is removed, by a later step (useLocalOleDbDriver)
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'oledb'), { retryInterval: 1000, maxParallelRun: 1 });
     assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-opc'), opcSettings);
+  });
+});
+
+describe('Entity migration v3.10.0: useLocalOleDbDriver', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(useLocalOleDbDriver, db)
+  });
+  let db: Knex;
+  const settingsOf = async (table: string, column: string, id: string) =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+  const oledbSettings = {
+    connectionTimeout: 15000,
+    retryInterval: 10000,
+    requestTimeout: 15000,
+    connectionString: 'Provider=MSOLEDBSQL;Data Source=localhost',
+    password: null
+  };
+
+  before(() => harness.before());
+  after(() => harness.after());
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should remove the URL of the OIBus Agent from the OLEDB connectors and history queries only, and keep their queries sequential', async () => {
+    await db('south_connectors').insert([
+      { id: 'oledb', name: 'OLEDB', type: 'oledb', enabled: true, settings: JSON.stringify({ agentUrl: 'u', ...oledbSettings }) },
+      { id: 'opc', name: 'OPC', type: 'opc', enabled: true, settings: JSON.stringify({ agentUrl: 'u', retryInterval: 1000 }) }
+    ]);
+    await db('history_queries').insert([
+      {
+        ...caching,
+        id: 'hq-oledb',
+        name: 'hq-oledb',
+        start_time: NOW,
+        end_time: NOW,
+        south_type: 'oledb',
+        north_type: 'console',
+        south_settings: JSON.stringify({ agentUrl: 'u', ...oledbSettings }),
+        north_settings: '{}'
+      },
+      {
+        ...caching,
+        id: 'hq-oledb-parallel',
+        name: 'hq-oledb-parallel',
+        start_time: NOW,
+        end_time: NOW,
+        south_type: 'oledb',
+        north_type: 'console',
+        // Already without agent and with a max parallel run (3.10.0 pre-release): kept as is
+        south_settings: JSON.stringify({ ...oledbSettings, maxParallelRun: 4 }),
+        north_settings: '{}'
+      }
+    ]);
+
+    await runStepsFrom(useLocalOleDbDriver, db);
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'oledb'), { ...oledbSettings, maxParallelRun: 1 });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'opc'), { agentUrl: 'u', retryInterval: 1000 });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-oledb'), { ...oledbSettings, maxParallelRun: 1 });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-oledb-parallel'), {
+      ...oledbSettings,
+      maxParallelRun: 4
+    });
   });
 });

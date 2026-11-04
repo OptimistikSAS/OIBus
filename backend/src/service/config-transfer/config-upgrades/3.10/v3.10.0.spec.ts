@@ -11,6 +11,7 @@ import {
   FILE_AS_IS_OPTIONS,
   keepsResolvedTransformer,
   toFieldProcessOperations,
+  toLocalOleDbSettings,
   toNewSqlItemSettings,
   toNoneResamplingItemSettings,
   toOIAnalyticsItemFileOptions,
@@ -714,7 +715,8 @@ describe('3.10.0 config upgrade', () => {
           { connectionSettings: { host: 'h', port: 3306, idleTimeout: 30_000 }, maxParallelRun: 1 },
           { connectionSettings: { host: 'h', idleTimeout: 30_000 }, maxParallelRun: 1 },
           { maxParallelRun: 4 },
-          { agentUrl: 'u' }
+          // Without the OIBus Agent (see toLocalOleDbSettings)
+          { maxParallelRun: 1 }
         ]
       );
       assert.deepStrictEqual(
@@ -758,7 +760,8 @@ describe('3.10.0 config upgrade', () => {
         (config.southConnectors as Array<JsonObject>).map(south => (south.settings as JsonObject).settings),
         [
           { connectionString: 'c', maxParallelRun: 1 },
-          { agentUrl: 'u', retryInterval: 1000, requestTimeout: 2000 }
+          // Only the URL of the OIBus Agent is removed (see toLocalOleDbSettings)
+          { retryInterval: 1000, requestTimeout: 2000, maxParallelRun: 1 }
         ]
       );
       assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).southSettings, {
@@ -790,13 +793,48 @@ describe('3.10.0 config upgrade', () => {
 
       assert.deepStrictEqual(
         (config.southConnectors as Array<JsonObject>).map(south => (south.settings as JsonObject).settings),
-        [opcSettings, { agentUrl: 'u', retryInterval: 1000, requestTimeout: 2000 }]
+        [opcSettings, { retryInterval: 1000, requestTimeout: 2000, maxParallelRun: 1 }]
       );
       assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).southSettings, opcSettings);
     });
 
     it('leaves settings without the agent URL untouched', () => {
       assert.deepStrictEqual(withoutOpcAgentSettings({ retryInterval: 1000, host: 'h' }), { retryInterval: 1000, host: 'h' });
+    });
+  });
+
+  describe('OLEDB agent settings', () => {
+    const oledbSettings = {
+      connectionTimeout: 15000,
+      retryInterval: 10000,
+      requestTimeout: 15000,
+      connectionString: 'Provider=MSOLEDBSQL;Data Source=localhost',
+      password: null
+    };
+
+    it('removes the URL of the OIBus Agent from the OLEDB souths and history queries only, keeping their queries sequential', () => {
+      const config = upgrade.apply({
+        southConnectors: [
+          { type: 'oledb', settings: { name: 'OLEDB', settings: { agentUrl: 'u', ...oledbSettings } } },
+          { type: 'opc', settings: { name: 'OPC', settings: { agentUrl: 'u', retryInterval: 1000 } } }
+        ],
+        historyQueries: [
+          { settings: { southType: 'oledb', northType: 'console', southSettings: { agentUrl: 'u', ...oledbSettings }, northSettings: {} } }
+        ]
+      });
+
+      assert.deepStrictEqual(
+        (config.southConnectors as Array<JsonObject>).map(south => (south.settings as JsonObject).settings),
+        [{ ...oledbSettings, maxParallelRun: 1 }, { retryInterval: 1000 }]
+      );
+      assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).southSettings, {
+        ...oledbSettings,
+        maxParallelRun: 1
+      });
+    });
+
+    it('keeps the max parallel run already set', () => {
+      assert.deepStrictEqual(toLocalOleDbSettings({ ...oledbSettings, maxParallelRun: 4 }), { ...oledbSettings, maxParallelRun: 4 });
     });
   });
 

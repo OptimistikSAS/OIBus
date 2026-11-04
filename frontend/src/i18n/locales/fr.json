@@ -877,12 +877,12 @@
             }
           },
           "oledb": {
-            "agent-url": "URL de l'agent distant",
             "connection-timeout": "Délai de connexion",
             "retry-interval": "Intervalle de nouvelle tentative",
             "request-timeout": "Délai de requête",
             "connection-string": "Chaîne de connexion",
-            "password": "Mot de passe"
+            "password": "Mot de passe",
+            "max-parallel-run": "Requêtes parallèles max"
           },
           "opc": {
             "retry-interval": "Intervalle de nouvelle tentative",

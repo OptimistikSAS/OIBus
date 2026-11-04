@@ -6,26 +6,45 @@ import ItemSettings from './_south-record-list-item-settings.mdx';
 
 # OLEDB
 
-Connect to OLEDB data sources through a remote [OIBus Agent](../oibus-agent/oledb.md). Particularly useful for systems like OSIsoft PI System™ and other OLEDB-compatible applications.
+Connect to OLEDB data sources through an OLE DB provider installed on the OIBus machine. Particularly useful for
+systems like OSIsoft PI System™ and other OLEDB-compatible applications. OIBus talks to the provider itself through a
+small Windows helper process shipped with it: no OIBus Agent is needed.
 
 :::info Compatibility Notes
 
-- Requires OIBus Agent installation on target machine
 - Supports all OLEDB-compatible data sources
 - Optimized for OSIsoft PI System™ connections
 
 :::
 
+:::caution System Requirements
+
+- OIBus **must** run on Windows x64 to use this connector.
+- The OLE DB provider named in the connection string (`Provider=...`) **must** be installed on the OIBus machine, in
+  its **64-bit** version. OIBus does not ship any provider: install the one of your data source (for instance the
+  Microsoft OLE DB Driver for SQL Server, or your historian's own provider). 32-bit-only providers, such as
+  `Microsoft.Jet.OLEDB.4.0`, cannot be used: use their 64-bit successor (`Microsoft.ACE.OLEDB.12.0` or `16.0`).
+
+:::
+
 ## Specific Settings {#specific-settings}
 
-| Setting            | Description                                                                                                                                                                                                          | Example Value                               |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| Remote agent URL   | Agent endpoint URL. Required for all connections.                                                                                                                                                                    | `http://192.168.1.100:2224`                 |
-| Connection timeout | Maximum time in milliseconds to establish connection. Default: `15000`.                                                                                                                                              | `15000`                                     |
-| Retry interval     | Time in milliseconds to wait before retrying the connection. Default: `10000`.                                                                                                                                       | `10000`                                     |
-| Request timeout    | Maximum execution time in milliseconds for individual queries. Default: `15000`.                                                                                                                                     | `15000`                                     |
-| Connection string  | OLEDB connection string in provider-specific format.                                                                                                                                                                 | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
-| Password           | Authentication password (stored securely). Always appended as `Password=<password>;` — if your connection string already includes its own `Password=` entry, remove it here or from the string to avoid a duplicate. | `••••••••`                                  |
+| Setting              | Description                                                                                                                                                                                                          | Example Value                               |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Connection string    | OLEDB connection string in provider-specific format.                                                                                                                                                                 | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
+| Password             | Authentication password (stored securely). Always appended as `Password=<password>;` — if your connection string already includes its own `Password=` entry, remove it here or from the string to avoid a duplicate. | `••••••••`                                  |
+| Connection timeout   | Maximum time in milliseconds to establish connection. Default: `15000`.                                                                                                                                              | `15000`                                     |
+| Retry interval       | Time in milliseconds to wait before retrying the connection. Default: `10000`.                                                                                                                                       | `10000`                                     |
+| Request timeout      | Maximum execution time in milliseconds for individual queries. Default: `15000`.                                                                                                                                     | `15000`                                     |
+| Max parallel queries | Maximum number of items or groups queried at the same time, from `1` (sequential) to `8`. Default: `1`.                                                                                                              | `2`                                         |
+
+:::note Connections and parallel queries
+OIBus opens a first connection when the connector starts, and retries every **Retry interval** until it succeeds.
+Each query running in parallel uses its own connection, kept open between runs, and adds to the load of the source. A
+query that fails closes its connection: the next run opens a new one.
+
+The request timeout is applied by the provider when it supports it, and OIBus also cancels a query running longer.
+:::
 
 <ItemSettings />
 
@@ -39,11 +58,14 @@ The following **Type** values are available for the tracking instant's datetime 
 | UNIX epoch (s)  | Unix timestamp in seconds                         |
 | UNIX epoch (ms) | Unix timestamp in milliseconds                    |
 
+A column the provider returns as a date time has no time zone: it is read in the **Timezone** of the datetime field
+(UTC for the types without timezone), whatever its type and format. The type and format only apply to text and number
+columns.
 :::
 
-:::info Through the OIBus Agent
-The agent returns the rows as text: the tracked field comes as an ISO 8601 string in UTC (e.g.
-`2024-01-15T10:30:00.000Z`), every other column as the database driver renders it, and empty or null values as
-`null`. Use a record-list transformer to format them downstream (e.g. the
-[File](../engine/transformers.mdx#file-from-records) transformer).
+:::info Values
+The tracked field comes as an ISO 8601 string in UTC (e.g. `2024-01-15T10:30:00.000Z`). The other columns keep their
+type: numbers and booleans as such, text as strings, date times as ISO 8601 strings without time zone (e.g.
+`2024-01-15T10:30:00.000`), binary data in base64, and null values as `null`. Use a record-list transformer to format
+them downstream (e.g. the [File](../engine/transformers.mdx#file-from-records) transformer).
 :::
