@@ -19,6 +19,7 @@ import {
   usesRemoteAgent,
   withoutOdbcAgentSettings,
   withoutOpcAgentSettings,
+  withoutPiAgentSettings,
   withPrefixAndSuffix
 } from './v3.10.0';
 
@@ -871,6 +872,43 @@ describe('3.10.0 config upgrade', () => {
 
     it('keeps the max parallel run already set', () => {
       assert.deepStrictEqual(toLocalOleDbSettings({ ...oledbSettings, maxParallelRun: 4 }), { ...oledbSettings, maxParallelRun: 4 });
+    });
+  });
+
+  describe('PI agent settings', () => {
+    it('replaces the URL of the OIBus Agent by the default PI server in the PI souths and history queries only', () => {
+      const config = upgrade.apply({
+        southConnectors: [
+          { type: 'osisoft-pi', settings: { name: 'PI', settings: { agentUrl: 'u', retryInterval: 10000 } } },
+          { type: 'opc', settings: { name: 'OPC', settings: { agentUrl: 'u', retryInterval: 1000 } } }
+        ],
+        historyQueries: [
+          {
+            settings: {
+              southType: 'osisoft-pi',
+              northType: 'console',
+              southSettings: { agentUrl: 'u', retryInterval: 10000 },
+              northSettings: {}
+            }
+          }
+        ]
+      });
+
+      assert.deepStrictEqual(
+        (config.southConnectors as Array<JsonObject>).map(south => (south.settings as JsonObject).settings),
+        [{ retryInterval: 10000, serverName: null }, { retryInterval: 1000 }]
+      );
+      assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).southSettings, {
+        retryInterval: 10000,
+        serverName: null
+      });
+    });
+
+    it('keeps the server name already set', () => {
+      assert.deepStrictEqual(withoutPiAgentSettings({ serverName: 'PISRV1', retryInterval: 10000 }), {
+        serverName: 'PISRV1',
+        retryInterval: 10000
+      });
     });
   });
 

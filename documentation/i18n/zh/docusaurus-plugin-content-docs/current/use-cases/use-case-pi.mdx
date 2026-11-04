@@ -13,7 +13,7 @@ OSIsoft PI System™ 是一个实时数据管理平台，广泛应用于制造�
 
 有关完整的配置详情，请参见[北向 OIAnalytics](../guide/north-connectors/oianalytics)和[南向 OSIsoft PI](../guide/south-connectors/osisoft-pi)连接器页面。
 
-本使用案例需要一个 [OIBus Agent](../guide/oibus-agent/installation)。可以将其安装在 PI 服务器本身上，也可以安装在安装了 OSIsoft PI SDK 的另一台机器上——详情请参见 [OSIsoft PI SDK 配置](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration)。以下示例使用了如下虚构网络。
+本使用案例要求 OIBus 运行在安装了 PI AF Client 的 Windows x64 计算机上，可以是 PI 服务器本身，也可以是另一台计算机——详情请参见 [PI AF Client 配置](../guide/south-connectors/osisoft-pi#pi-af-client-configuration)。以下示例使用了如下虚构网络。
 
 <div style={{ textAlign: 'center' }}>
 
@@ -23,7 +23,7 @@ OSIsoft PI System™ 是一个实时数据管理平台，广泛应用于制造�
 
 ## 南向 PI {#south-pi}
 
-输入**远程 Agent URL**。在此示例中为：`http://localhost:2224`。
+输入 PI AF Client 已知服务器表中的 **PI Data Archive** 名称，或留空以使用其默认服务器。
 
 <div style={{ textAlign: 'center' }}>
 
@@ -40,7 +40,7 @@ OSIsoft PI System™ 是一个实时数据管理平台，广泛应用于制造�
 PI 项目可以是以下两种类型之一：
 
 - **PI 点位** —— 检索单个 PI 点位的时间序列数值。
-- **PI 查询** —— 检索所有匹配类正则表达式的 PI 点位的时间序列数值。项目名称仅用于日志记录；数据会以实际的 PI 点位引用作为标签。
+- **PI 查询** —— 检索所有匹配 PI 点查询（如 `tag:=SINUS*`）的 PI 点位的时间序列数值。项目名称仅用于日志记录；数据会以实际的 PI 点位引用作为标签。
 
 #### PI 点位 {#pi-point}
 

@@ -610,6 +610,17 @@ export function toLocalOleDbSettings(settings: Record<string, unknown>): Record<
 }
 
 /**
+ * The PI South no longer goes through the OIBus Agent: it starts its own local helper process from the `@oibus/pi`
+ * package, which reads through the PI AF Client installed on the OIBus machine. The URL of the agent is removed; the
+ * reconnection interval is kept for the helper. It gains a `serverName`, null keeping the default PI Data Archive of
+ * the known servers table, as the agent did.
+ */
+export function withoutPiAgentSettings(settings: Record<string, unknown>): Record<string, unknown> {
+  const { agentUrl: _agentUrl, ...rest } = settings;
+  return { ...rest, serverName: rest.serverName ?? null };
+}
+
+/**
  * The setpoints sent by OIAnalytics are records (`{ reference, value }`): the setpoint transformers are replaced by the
  * record-list ones.
  */
@@ -1721,6 +1732,17 @@ function useLocalOleDbDriver(config: JsonObject): void {
   });
 }
 
+/** See `withoutPiAgentSettings`, for the connectors and the history queries */
+function removePiAgentSettings(config: JsonObject): void {
+  forEachSouth(config, 'osisoft-pi', south => {
+    const settings = south.settings as JsonObject;
+    if (settings.settings) settings.settings = withoutPiAgentSettings(settings.settings as JsonObject);
+  });
+  forEachHistoryQuery(config, 'osisoft-pi', settings => {
+    if (settings.southSettings) settings.southSettings = withoutPiAgentSettings(settings.southSettings as JsonObject);
+  });
+}
+
 /** See `toFieldProcessOperations`, on the links of the north connectors and of the history queries */
 function convertFieldProcessesToOperations(config: JsonObject): void {
   const transformerIds = asObjects(config.transformers)
@@ -1881,6 +1903,7 @@ export const upgrade: ConfigUpgrade = {
     removeOdbcAgentSettings(config);
     removeOpcAgentSettings(config);
     useLocalOleDbDriver(config);
+    removePiAgentSettings(config);
 
     return config;
   }

@@ -13,7 +13,7 @@ OSIsoft PI System™ is a real-time data management platform widely used in manu
 
 See the [North OIAnalytics](../guide/north-connectors/oianalytics) and [South OSIsoft PI](../guide/south-connectors/osisoft-pi) connector pages for full configuration details.
 
-This use case requires an [OIBus Agent](../guide/oibus-agent/installation). Install it either on the PI server itself or on another machine where the OSIsoft PI SDK is installed — see [OSIsoft PI SDK configuration](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration) for details. The example uses the following fictional network.
+This use case requires OIBus to run on a Windows x64 machine where PI AF Client is installed, either the PI server itself or another machine — see [PI AF Client configuration](../guide/south-connectors/osisoft-pi#pi-af-client-configuration) for details. The example uses the following fictional network.
 
 <div style={{ textAlign: 'center' }}>
 
@@ -23,7 +23,7 @@ This use case requires an [OIBus Agent](../guide/oibus-agent/installation). Inst
 
 ## South PI {#south-pi}
 
-Enter the **Remote agent URL**. In this example: `http://localhost:2224`.
+Enter the name of the **PI Data Archive** in the known servers table of PI AF Client, or leave it empty to use its default server.
 
 <div style={{ textAlign: 'center' }}>
 
@@ -40,7 +40,7 @@ Click **Test settings** to verify the connection before saving.
 PI items can be of two types:
 
 - **PI point** — retrieve time-series values for a single PI point.
-- **PI query** — retrieve time-series values for all PI points matching a regex-like expression. The item name is used only for logging; the data is labelled with the actual PI point references.
+- **PI query** — retrieve time-series values for all PI points matching a PI point query, such as `tag:=SINUS*`. The item name is used only for logging; the data is labelled with the actual PI point references.
 
 #### PI point {#pi-point}
 

@@ -30,6 +30,7 @@ import {
   moveSqlSerializationToTransformers,
   removeOdbcAgentSettings,
   removeOpcAgentSettings,
+  removePiAgentSettings,
   renameAnyDataType,
   replaceCsvAndJsonReaders,
   replaceCsvAndJsonWriters,
@@ -4815,6 +4816,66 @@ describe('Entity migration v3.10.0: useLocalOleDbDriver', () => {
     assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-oledb-parallel'), {
       ...oledbSettings,
       maxParallelRun: 4
+    });
+  });
+});
+
+describe('Entity migration v3.10.0: removePiAgentSettings', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(removePiAgentSettings, db)
+  });
+  let db: Knex;
+  const settingsOf = async (table: string, column: string, id: string) =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+
+  before(() => harness.before());
+  after(() => harness.after());
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert([{ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' }]);
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should replace the URL of the OIBus Agent by the default PI server in the PI connectors and history queries only', async () => {
+    await db('south_connectors').insert([
+      { id: 'pi', name: 'PI', type: 'osisoft-pi', enabled: true, settings: JSON.stringify({ agentUrl: 'u', retryInterval: 10000 }) },
+      { id: 'opc', name: 'OPC', type: 'opc', enabled: true, settings: JSON.stringify({ agentUrl: 'u', retryInterval: 1000 }) }
+    ]);
+    await db('history_queries').insert([
+      {
+        ...caching,
+        id: 'hq-pi',
+        name: 'hq-pi',
+        start_time: NOW,
+        end_time: NOW,
+        south_type: 'osisoft-pi',
+        north_type: 'console',
+        south_settings: JSON.stringify({ agentUrl: 'u', retryInterval: 10000 }),
+        north_settings: '{}'
+      },
+      {
+        ...caching,
+        id: 'hq-pi-named',
+        name: 'hq-pi-named',
+        start_time: NOW,
+        end_time: NOW,
+        south_type: 'osisoft-pi',
+        north_type: 'console',
+        // Already without agent and with a server name (3.10.0 pre-release): kept as is
+        south_settings: JSON.stringify({ serverName: 'PISRV1', retryInterval: 10000 }),
+        north_settings: '{}'
+      }
+    ]);
+
+    await runStepsFrom(removePiAgentSettings, db);
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'pi'), { retryInterval: 10000, serverName: null });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'settings', 'opc'), { agentUrl: 'u', retryInterval: 1000 });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-pi'), { retryInterval: 10000, serverName: null });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'south_settings', 'hq-pi-named'), {
+      serverName: 'PISRV1',
+      retryInterval: 10000
     });
   });
 });
