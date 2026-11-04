@@ -6,21 +6,33 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OSIsoft PI System™
 
-Connectez-vous à OSIsoft PI System™ pour la collecte et la visualisation de données industrielles avec OIBus, grâce au pilote PI intégré dans [OIBus Agent](../oibus-agent/installation.mdx).
+Lire les valeurs enregistrées d'un PI Data Archive. OIBus y accède via le PI AF Client installé sur la machine OIBus,
+grâce à un petit processus auxiliaire Windows livré avec OIBus : aucun OIBus Agent n'est nécessaire.
 
 :::caution Prérequis système
 
-- OIBus Agent **doit** être installé sur une machine Windows
-- Peut être installé sur la machine du serveur PI ou sur une machine distincte avec [PI SDK configuré](#osisoft-pi-sdk-configuration)
+- OIBus **doit** s'exécuter sous Windows x64 pour utiliser ce connecteur.
+- **PI AF Client** **doit** être installé sur la machine OIBus. Il installe l'AF SDK que charge OIBus, et contient la
+  table des serveurs connus : les PI Data Archives auxquels OIBus peut se connecter, et celui par défaut. OIBus ne livre
+  aucun logiciel AVEVA : installez PI AF Client depuis AVEVA, dans le cadre de votre propre contrat avec AVEVA.
+- Le compte Windows qui exécute OIBus **doit** avoir un accès en lecture au PI Data Archive, via un
+  [mapping ou une confiance](#pi-af-client-configuration).
+- AVEVA exige une licence **PI System Access (PSA)** pour tout programme non AVEVA qui lit des données PI, OIBus compris.
 
 :::
 
 ## Paramètres de connexion {#connection-settings}
 
-| Paramètre                        | Description                                                                             | Exemple de valeur           |
-| -------------------------------- | --------------------------------------------------------------------------------------- | --------------------------- |
-| URL de l'agent distant           | URL du point de terminaison de l'agent. Requis pour toutes les connexions.              | `http://192.168.1.100:2224` |
-| Intervalle de nouvelle tentative | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`. | `10000`                     |
+| Paramètre                        | Description                                                                                                                    | Exemple de valeur |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| PI Data Archive                  | Nom du PI Data Archive dans la table des serveurs connus de PI AF Client. Vide : le PI Data Archive par défaut de cette table. | `MYPISERVER`      |
+| Intervalle de nouvelle tentative | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`.                                        | `10000`           |
+
+:::note Connexion
+OIBus se connecte au démarrage du connecteur, et réessaie toutes les **Intervalle de nouvelle tentative** millisecondes
+jusqu'à y parvenir. Quand la connexion au PI Data Archive est perdue, la lecture en cours échoue et la suivante se
+reconnecte.
+:::
 
 ## Paramètres de groupe {#group-settings}
 
@@ -43,11 +55,11 @@ dans le formulaire d'édition de l'élément.
 
 ### Méthodes d'accès aux points {#point-access-methods}
 
-| Paramètre  | Description                                                                                                                                                                                                                              | Exemple de valeur        |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| Type       | Méthode d'accès : `PI point` (point unique par ID) ou `PI query` (plusieurs points via une expression de requête)                                                                                                                        | `PI point` ou `PI query` |
-| Point PI   | Nom du point (sans le nom du serveur). Utilisé lorsque le Type est `PI point`.                                                                                                                                                           | `SINUSOID`               |
-| Requête PI | Sélecteur de requête pour plusieurs points (voir [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Utilisé lorsque le Type est `PI query`. Par défaut : `*` (tous les points). | `Name:='SINUSOID'`       |
+| Paramètre  | Description                                                                                                                                                                                                                                                                     | Exemple de valeur                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Type       | Méthode d'accès : `PI point` (point unique par nom) ou `PI query` (plusieurs points via une expression de requête)                                                                                                                                                              | `PI point` ou `PI query`         |
+| Point PI   | Nom exact du point (sans le nom du serveur, insensible à la casse). Utilisé lorsque le Type est `PI point`.                                                                                                                                                                     | `SINUSOID`                       |
+| Requête PI | Requête sélectionnant plusieurs points (voir [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Une requête sans nom d'attribut, comme `sinus*`, cherche dans les noms des points. Par défaut : `*` (tous les points). | `tag:=SINUS* AND pointsource:=R` |
 
 :::info Noms de référence
 
@@ -55,24 +67,31 @@ dans le formulaire d'édition de l'élément.
 - Pour `PI query` : le nom PI est utilisé comme référence
   :::
 
-## Configuration du SDK OSIsoft PI {#osisoft-pi-sdk-configuration}
+:::info Valeurs
+OIBus lit les valeurs enregistrées entre le début et la fin de chaque intervalle, bornes incluses. Chaque
+enregistrement contient le point (`pointId`), l'horodatage (chaîne ISO 8601 UTC) et la valeur : un nombre pour les
+points numériques, le nom de l'état pour les états digitaux (états système compris, comme `I/O Timeout`), une chaîne
+sinon. L'intervalle suivant commence juste après la dernière valeur lue. Un point introuvable ou une requête en échec
+est journalisé en avertissement, et les autres éléments sont tout de même lus.
+:::
 
-### Prérequis d'installation {#installation-requirements}
+## Configuration de PI AF Client {#pi-af-client-configuration}
 
-1. Installer PI SDK sur la machine de l'agent
-2. Pendant l'installation, spécifier le serveur de données par défaut
-3. En cas d'installation à distance :
+### Table des serveurs connus {#known-servers-table}
 
-- PI SDK doit être correctement configuré
-- PI System Access (PSA) doit être installé
+Ajoutez le PI Data Archive à la table des serveurs connus de PI AF Client sur la machine OIBus (par exemple avec PI
+System Explorer, **File** → **Connections**), et définissez-le comme serveur par défaut si le paramètre
+**PI Data Archive** du connecteur est laissé vide.
 
 ### Configuration de l'utilisateur {#user-configuration}
+
+OIBus se connecte avec le compte Windows qui l'exécute (son compte de service), jamais avec une invite de connexion :
 
 1. Créer un compte utilisateur de domaine (accessible depuis les deux machines)
 
 - Si le domaine n'existe pas, créer des utilisateurs locaux identiques avec le même mot de passe
 
-2. Configurer le service OIBus Agent pour qu'il s'exécute en tant que cet utilisateur
+2. Exécuter le service OIBus avec cet utilisateur
 
 ### Configuration de la confiance (Trust) {#trust-configuration}
 
@@ -80,7 +99,7 @@ dans le formulaire d'édition de l'élément.
 2. Naviguer vers `Mapping & Trusts` → onglet `Trusts`
 3. Créer une nouvelle confiance avec :
 
-- L'adresse IP et le masque de sous-réseau de la machine OIBus Agent
+- L'adresse IP et le masque de sous-réseau de la machine OIBus
 - Le domaine (le cas échéant)
 - L'identité PI à laquelle se connecter
 
@@ -90,7 +109,7 @@ dans le formulaire d'édition de l'élément.
 2. Naviguer vers `Mapping & Trusts` → onglet `Mappings`
 3. Créer un nouveau mapping avec :
 
-- L'utilisateur du service OIBus Agent
+- L'utilisateur du service OIBus
 - L'identité PI issue de la configuration de la confiance
 
 :::tip Accès aux journaux
@@ -100,22 +119,27 @@ Consultez les journaux système dans PI System Management Tools :
 
 ### Captures d'écran de configuration {#configuration-screenshots}
 
-**1. Installation du SDK** — Spécifier le serveur de données par défaut pendant l'installation
+**1. Configuration de la confiance** — Configurer la confiance pour la machine OIBus
 
-![Installation du SDK PI](@site/static/img/guide/south/osisoft-pi/0-installation.png)
+![Ajout de confiance PI](@site/static/img/guide/south/osisoft-pi/1-add-trust.png)
 
-**2. Configuration de la confiance** — Configurer la confiance pour la machine de l'agent
+**2. Liste des confiances** — Configuration de confiance vérifiée
 
-![Ajout de confiance SDK PI](@site/static/img/guide/south/osisoft-pi/1-add-trust.png)
+![Liste des confiances PI](@site/static/img/guide/south/osisoft-pi/2-trust-list.png)
 
-**3. Liste des confiances** — Configuration de confiance vérifiée
+**3. Création du mapping** — Associer l'utilisateur du service OIBus à une identité PI
 
-![Liste des confiances SDK PI](@site/static/img/guide/south/osisoft-pi/2-trust-list.png)
+![Ajout de mapping PI](@site/static/img/guide/south/osisoft-pi/3-add-mapping.png)
 
-**4. Création du mapping** — Associer l'utilisateur de l'agent à l'identité PI
+**4. Liste des mappings** — Mapping utilisateur vérifié
 
-![Ajout de mapping SDK PI](@site/static/img/guide/south/osisoft-pi/3-add-mapping.png)
+![Liste des mappings PI](@site/static/img/guide/south/osisoft-pi/4-mapping-list.png)
 
-**5. Liste des mappings** — Mapping utilisateur vérifié
+## Composants tiers {#third-party-components}
 
-![Liste des confiances SDK PI](@site/static/img/guide/south/osisoft-pi/4-mapping-list.png)
+Le processus auxiliaire Windows est le paquet [`@oibus/pi`](https://github.com/OptimistikSAS/oibus-pi), sous licence
+Apache 2.0. Il ne contient aucun logiciel AVEVA : il charge, à l'exécution, l'AF SDK du PI AF Client installé sur la
+machine OIBus, qui reste régi par votre propre contrat avec AVEVA.
+
+AVEVA, PI System, PI AF et PI Data Archive sont des marques d'AVEVA Group Limited ou de ses filiales. OIBus n'est ni
+affilié à AVEVA, ni parrainé ou approuvé par AVEVA ; ces noms ne servent qu'à décrire ce à quoi OIBus se connecte.

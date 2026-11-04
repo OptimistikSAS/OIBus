@@ -8,11 +8,16 @@ import DownloadButton from '@site/src/components/DownloadButton';
 
 The OIBus Agent is a lightweight Windows service that enables protocol-specific data collection for technologies that require native Windows integration.
 
+:::info OIBus 3.10 and later
+OIBus no longer uses the OIBus Agent: the OPC Classic, OLEDB, ODBC and OSIsoft PI™ connectors run their own helper on
+the OIBus machine. The agent is only needed by earlier OIBus versions.
+:::
+
 ## Key Features {#key-features}
 
 | Feature               | Supported Protocols     | Benefits                                     |
 | --------------------- | ----------------------- | -------------------------------------------- |
-| Windows-native access | OSIsoft PI™             | Direct integration with Windows technologies |
+| Windows-native access | None since OIBus 3.10   | Direct integration with Windows technologies |
 | Service integration   | Windows Service Manager | Reliable background operation                |
 | Cross-architecture    | x64, x86, ARM64         | Supports all modern Windows systems          |
 

@@ -12608,8 +12608,9 @@
 			},
 			"SouthPISettings": {
 				"properties": {
-					"agentUrl": {
-						"type": "string"
+					"serverName": {
+						"type": "string",
+						"nullable": true
 					},
 					"retryInterval": {
 						"type": "number",
@@ -12617,7 +12618,7 @@
 					}
 				},
 				"required": [
-					"agentUrl",
+					"serverName",
 					"retryInterval"
 				],
 				"type": "object",

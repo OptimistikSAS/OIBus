@@ -13,7 +13,7 @@ OSIsoft PI System™ est une plateforme de gestion de données en temps réel la
 
 Consultez les pages des connecteurs [North OIAnalytics](../guide/north-connectors/oianalytics) et [South OSIsoft PI](../guide/south-connectors/osisoft-pi) pour tous les détails de configuration.
 
-Ce cas d'usage nécessite un [OIBus Agent](../guide/oibus-agent/installation). Installez-le soit sur le serveur PI lui-même, soit sur une autre machine sur laquelle le SDK OSIsoft PI est installé — voir [configuration du SDK OSIsoft PI](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration) pour plus de détails. L'exemple utilise le réseau fictif suivant.
+Ce cas d'usage nécessite qu'OIBus s'exécute sur une machine Windows x64 sur laquelle PI AF Client est installé, soit le serveur PI lui-même, soit une autre machine — voir [configuration de PI AF Client](../guide/south-connectors/osisoft-pi#pi-af-client-configuration) pour plus de détails. L'exemple utilise le réseau fictif suivant.
 
 <div style={{ textAlign: 'center' }}>
 
@@ -23,7 +23,7 @@ Ce cas d'usage nécessite un [OIBus Agent](../guide/oibus-agent/installation). I
 
 ## South PI {#south-pi}
 
-Saisissez l'**URL de l'agent distant**. Dans cet exemple : `http://localhost:2224`.
+Saisissez le nom du **PI Data Archive** dans la table des serveurs connus de PI AF Client, ou laissez-le vide pour utiliser son serveur par défaut.
 
 <div style={{ textAlign: 'center' }}>
 
@@ -40,7 +40,7 @@ Cliquez sur **Tester les paramètres** pour vérifier la connexion avant d'enreg
 Les éléments PI peuvent être de deux types :
 
 - **Point PI** — récupère les valeurs temporelles d'un seul point PI.
-- **Requête PI** — récupère les valeurs temporelles de tous les points PI correspondant à une expression de type regex. Le nom de l'élément n'est utilisé qu'à des fins de journalisation ; les données sont étiquetées avec les références réelles des points PI.
+- **Requête PI** — récupère les valeurs temporelles de tous les points PI correspondant à une requête de point PI, comme `tag:=SINUS*`. Le nom de l'élément n'est utilisé qu'à des fins de journalisation ; les données sont étiquetées avec les références réelles des points PI.
 
 #### Point PI {#pi-point}
 

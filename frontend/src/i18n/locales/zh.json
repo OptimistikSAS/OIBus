@@ -955,7 +955,7 @@
             "max-parallel-run": "最大并行查询数"
           },
           "osisoft-pi": {
-            "agent-url": "远程代理 URL",
+            "server-name": "PI Data Archive（留空：默认服务器）",
             "retry-interval": "重试间隔"
           },
           "postgresql": {
@@ -2814,7 +2814,7 @@
       "opc": "从 OPC Classic（HDA/DA）服务器获取数据",
       "opcua": "从 OPC UA® 服务器（HA/DA）查询数据",
       "oracle": "从 Oracle Database™ 查询数据",
-      "osisoft-pi": "与 OIBus Agent 建立连接以访问 PI System™ 数据",
+      "osisoft-pi": "通过 PI AF Client 读取 PI Data Archive 的记录值（Windows）",
       "postgresql": "查询 PostgreSQL 数据库",
       "rest": "从 REST API 端点采集数据",
       "s7": "通过 ISO-on-TCP 访问 Siemens® S7 PLC 数据",
