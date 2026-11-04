@@ -3051,7 +3051,7 @@ const models: TsoaRoute.Models = {
     "SouthPISettings": {
         "dataType": "refObject",
         "properties": {
-            "agentUrl": {"dataType":"string","required":true},
+            "serverName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "retryInterval": {"dataType":"double","required":true},
         },
         "additionalProperties": false,

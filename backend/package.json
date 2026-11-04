@@ -108,6 +108,7 @@
   "optionalDependencies": {
     "@oibus/oledb": "0.1.1",
     "@oibus/opc-classic": "0.2.1",
+    "@oibus/pi": "0.1.2",
     "odbc": "2.6.0"
   },
   "devDependencies": {
@@ -166,6 +167,7 @@
       "node_modules/odbc/**/*.node",
       "node_modules/@oibus/oledb/runtimes/win-x64/**/*",
       "node_modules/@oibus/opc-classic/runtimes/win-x64/**/*",
+      "node_modules/@oibus/pi/runtimes/win-x64/**/*",
       "node_modules/luxon/build/global/luxon.min.js",
       "node_modules/jsonpath-plus/dist/index-browser-umd.min.cjs",
       "node_modules/papaparse/papaparse.min.js"

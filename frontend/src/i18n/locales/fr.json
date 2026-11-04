@@ -955,7 +955,7 @@
             "max-parallel-run": "Requêtes parallèles max"
           },
           "osisoft-pi": {
-            "agent-url": "URL de l'agent distant",
+            "server-name": "PI Data Archive (vide : serveur par défaut)",
             "retry-interval": "Intervalle de nouvelle tentative"
           },
           "postgresql": {
@@ -2814,7 +2814,7 @@
       "opc": "Récupérer des données depuis un serveur OPC Classic (HDA/DA)",
       "opcua": "Interroger des données depuis un serveur OPC UA® (HA/DA)",
       "oracle": "Interroger des données depuis une base de données Oracle Database™",
-      "osisoft-pi": "Établir une connexion avec un agent OIBus pour accéder aux données d'un PI System™",
+      "osisoft-pi": "Lire les valeurs enregistrées d'un PI Data Archive via PI AF Client (Windows)",
       "postgresql": "Interroger des bases de données PostgreSQL",
       "rest": "Collecter des données depuis des points de terminaison d'API REST",
       "s7": "Accéder aux données d'un automate Siemens® S7 via ISO-on-TCP",

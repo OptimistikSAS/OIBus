@@ -562,7 +562,7 @@ export interface SouthOracleSettings {
 }
 
 export interface SouthPISettings {
-  agentUrl: string;
+  serverName: string | null;
   retryInterval: number;
 }
 

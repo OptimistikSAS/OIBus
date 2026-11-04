@@ -60,6 +60,7 @@ import {
   withItemRequestTimeout,
   withoutOdbcAgentSettings,
   withoutOpcAgentSettings,
+  withoutPiAgentSettings,
   withPrefixAndSuffix
 } from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
 import { generateRandomId } from '../../../../service/utils';
@@ -122,7 +123,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   convertFieldProcessesToOperations,
   removeOdbcAgentSettings,
   removeOpcAgentSettings,
-  useLocalOleDbDriver
+  useLocalOleDbDriver,
+  removePiAgentSettings
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -1838,6 +1840,25 @@ export async function useLocalOleDbDriver(knex: Knex): Promise<void> {
       table,
       settingsColumn,
       rows.map(row => ({ id: row.id, settings: JSON.stringify(toLocalOleDbSettings(JSON.parse(row.settings))) }))
+    );
+  }
+}
+
+/** See `withoutPiAgentSettings`, for the connectors and the history queries */
+export async function removePiAgentSettings(knex: Knex): Promise<void> {
+  const targets = [
+    { table: SOUTH_CONNECTORS_TABLE, typeColumn: 'type', settingsColumn: 'settings' },
+    { table: HISTORY_QUERIES_TABLE, typeColumn: 'south_type', settingsColumn: 'south_settings' }
+  ];
+  for (const { table, typeColumn, settingsColumn } of targets) {
+    const rows: Array<{ id: string; settings: string }> = await knex(table)
+      .select('id', `${settingsColumn} as settings`)
+      .where(typeColumn, 'osisoft-pi');
+    await bulkUpdateSettings(
+      knex,
+      table,
+      settingsColumn,
+      rows.map(row => ({ id: row.id, settings: JSON.stringify(withoutPiAgentSettings(JSON.parse(row.settings))) }))
     );
   }
 }

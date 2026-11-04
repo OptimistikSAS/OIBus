@@ -22,15 +22,10 @@ const manifest: SouthConnectorManifest = {
     attributes: [
       {
         type: 'string',
-        key: 'agentUrl',
-        translationKey: 'configuration.oibus.manifest.south.osisoft-pi.agent-url',
-        defaultValue: 'http://ip-adress-or-host:2224',
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
+        key: 'serverName',
+        translationKey: 'configuration.oibus.manifest.south.osisoft-pi.server-name',
+        defaultValue: null,
+        validators: [],
         displayProperties: {
           row: 0,
           columns: 8,
