@@ -107,7 +107,7 @@
     "yazl": "3.3.1"
   },
   "optionalDependencies": {
-    "@oibus/oledb": "0.1.0",
+    "@oibus/oledb": "0.1.1",
     "@oibus/opc-classic": "0.2.1",
     "odbc": "2.6.0"
   },
