@@ -7,7 +7,7 @@ sidebar_position: 1
 
 OIBus 连接器使用 [TypeScript](https://www.typescriptlang.org/) 编写。**南向**连接器 _从_
 数据源（PLC、文件系统、数据库、MQTT broker 等）_获取_数据；**北向**连接器则将数据 _投递_到
-目的地（文件、OIAnalytics、OPC UA 服务器、S3 等）。
+目的地（文件、OIAnalytics、OPC UA® 服务器、S3 等）。
 
 本指南将带您了解文件布局、思维模型，以及向引擎注册新连接器所需的接入步骤。
 

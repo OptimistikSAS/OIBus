@@ -78,7 +78,7 @@ sidebar_position: 0
 
 某些连接器类型可以根据其底层连接模型的表现安全地同时运行多个查询，并在其自身配置中
 以 **Max parallel queries** 设置的形式暴露此功能——详情请参阅该连接器的文档
-（例如 [OPC UA](./opcua.mdx#parallel-queries)）。对于其他所有连接器类型，执行始终
+（例如 [OPC UA®](./opcua.mdx#parallel-queries)）。对于其他所有连接器类型，执行始终
 保持完全顺序化，且不可配置。
 
 ---

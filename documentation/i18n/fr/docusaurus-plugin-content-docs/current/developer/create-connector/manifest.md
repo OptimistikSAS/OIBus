@@ -264,7 +264,7 @@ items: {
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `'POLL'`                  | Périodique uniquement (par défaut pour la plupart des connecteurs South)                                                |
 | `'SUBSCRIPTION'`          | Piloté par événements uniquement — à utiliser quand le connecteur ne prend en charge QUE les abonnements (par ex. MQTT) |
-| `'SUBSCRIPTION_AND_POLL'` | Les deux sont valides par élément (OPC UA : certains éléments scrutés, d'autres abonnés)                                |
+| `'SUBSCRIPTION_AND_POLL'` | Les deux sont valides par élément (OPC UA® : certains éléments scrutés, d'autres abonnés)                                |
 
 Un exemple réel complet se trouve dans `backend/src/south/south-folder-scanner/manifest.ts`.
 

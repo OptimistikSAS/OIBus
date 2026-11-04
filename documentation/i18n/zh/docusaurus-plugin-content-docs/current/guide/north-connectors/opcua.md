@@ -1,6 +1,6 @@
-# OPC UA™
+# OPC UA®
 
-**OPC UA™ 北向连接器**使 OIBus 能够**向 OPC UA 服务器写入数据**，从而实现与工业系统、PLC 以及其他兼容 OPC UA
+**OPC UA® 北向连接器**使 OIBus 能够**向 OPC UA 服务器写入数据**，从而实现与工业系统、PLC 以及其他兼容 OPC UA
 的设备的无缝集成。与从 OPC UA 服务器读取数据的 [OPC UA 南向连接器](../south-connectors/opcua.mdx)不同，此北向
 连接器**将数据从** OIBus **发送到** OPC UA 服务器。
 

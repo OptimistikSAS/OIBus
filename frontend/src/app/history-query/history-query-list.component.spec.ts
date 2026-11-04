@@ -156,7 +156,7 @@ describe('HistoryQueryListComponent', () => {
   test('should filter the list by south type', async () => {
     const tester = new HistoryQueryListComponentTester();
 
-    await tester.root.getByRole('button', { name: 'OPC UA™' }).click();
+    await tester.root.getByRole('button', { name: 'OPC UA®' }).click();
     await tester.expectNames('Another query');
 
     await tester.clearButton.click();

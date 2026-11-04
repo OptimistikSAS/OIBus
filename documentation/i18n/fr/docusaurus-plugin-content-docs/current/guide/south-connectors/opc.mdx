@@ -4,14 +4,14 @@ sidebar_position: 10
 
 import ThrottlingSettings from './_throttling-settings.mdx';
 
-# OPC Classic™
+# OPC Classic
 
-Connectez OIBus à des serveurs OPC Classic™ (DA et HDA). OIBus dialogue lui-même avec le serveur via un petit processus
+Connectez OIBus à des serveurs OPC Classic (DA et HDA). OIBus dialogue lui-même avec le serveur via un petit processus
 Windows livré avec lui : l'agent OIBus n'est plus nécessaire.
 
 :::info Contexte technologique
 
-- Protocole de communication industriel de l'[OPC Foundation](https://opcfoundation.org/)
+- Protocole de communication industriel de l'[OPC Foundation®](https://opcfoundation.org/)
 - Prend en charge les modes HDA et DA
 - OIBus doit s'exécuter sous Windows
 - Pour OPC UA, voir le [connecteur OPC UA](./opcua.mdx)
@@ -30,7 +30,7 @@ Windows livré avec lui : l'agent OIBus n'est plus nécessaire.
 
 ## OPC Classic vs OPC UA {#opc-classic-vs-opc-ua}
 
-|                            | OPC Classic™                                                                                                                   | OPC UA                                                                                             |
+|                            | OPC Classic                                                                                                                   | OPC UA                                                                                             |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
 | **Standard**               | Trois spécifications distinctes : **DA** (valeurs en direct), **HDA** (données historiques), **AE** (alarmes &amp; événements) | Norme unifiée unique : **DA** (valeurs en direct) + **HA** (accès historique) + alarmes            |
 | **Nom du mode historique** | **HDA** — Historical Data Access                                                                                               | **HA** — Historical Access (OPC UA Part 11). Même concept, nom différent — voir la note ci-dessous |
@@ -173,5 +173,8 @@ formulaire d'édition de l'élément.
 ## Composants tiers {#third-party-components}
 
 Le processus Windows utilise l'API .NET OPC Classic de l'OPC Foundation, sous licence OPC Foundation MIT. Les OPC Core
-Components ne sont pas livrés avec OIBus. OIBus n'est ni affilié à l'OPC Foundation ni approuvé par elle ; OPC Classic™
-et les noms de l'OPC Foundation sont des marques de leur propriétaire.
+Components ne sont pas livrés avec OIBus.
+
+OPC Foundation® et OPC UA® sont des marques déposées de l'OPC Foundation. OIBus n'est ni affilié à l'OPC Foundation ni
+approuvé par elle ; OPC Classic, OPC DA et OPC HDA sont utilisés uniquement pour décrire les protocoles avec lesquels
+OIBus communique.

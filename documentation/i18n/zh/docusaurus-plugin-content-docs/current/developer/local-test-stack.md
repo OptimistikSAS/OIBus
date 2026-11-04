@@ -79,7 +79,7 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 
 ## 服务 {#services}
 
-### OPC UA 服务器 — `opcua-server` {#opc-ua-server--opcua-server}
+### OPC UA® 服务器 — `opcua-server` {#opc-ua-server--opcua-server}
 
 | 属性         | 值                                                                  |
 | ------------ | ------------------------------------------------------------------- |

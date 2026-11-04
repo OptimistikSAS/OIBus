@@ -6,7 +6,7 @@ en charge à la fois les **charges utiles JSON** et les **données basées sur d
 OIAnalytics® peut traiter :
 
 - **Charges utiles JSON de valeurs** : valeurs construites par les transformateurs OIAnalytics à partir des
-  enregistrements des connecteurs South (par exemple, OPC UA, Modbus, SQL).
+  enregistrements des connecteurs South (par exemple, OPC UA®, Modbus, SQL).
 - **Fichiers** : transmis tels quels (compressés ou non compressés). Les formats pris en charge incluent CSV, TXT et
   XLSX.
 

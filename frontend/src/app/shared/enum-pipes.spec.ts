@@ -89,7 +89,7 @@ const ENUM_PIPES: Array<EnumPipeCase> = [
   ]),
   enumPipeCase(OibusOutputDataTypeEnumPipe, OUTPUT_TYPES, [
     ['oianalytics', 'OIAnalytics time values'],
-    ['opcua', 'OPCUA']
+    ['opcua', 'OPC UA']
   ]),
   enumPipeCase(OIBusNorthCategoryEnumPipe, OIBUS_NORTH_CATEGORIES, [['debug', 'Debug']]),
   enumPipeCase(OIBusNorthTypeEnumPipe, OIBUS_NORTH_TYPES, [['aws-s3', 'Amazon S3™']]),

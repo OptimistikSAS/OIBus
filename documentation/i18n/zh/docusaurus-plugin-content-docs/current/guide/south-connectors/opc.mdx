@@ -4,13 +4,13 @@ sidebar_position: 10
 
 import ThrottlingSettings from './_throttling-settings.mdx';
 
-# OPC Classic™
+# OPC Classic
 
-将 OIBus 连接到 OPC Classic™ 服务器（DA 和 HDA）。OIBus 通过随附的一个小型 Windows 辅助进程直接与服务器通信：不再需要 OIBus Agent。
+将 OIBus 连接到 OPC Classic 服务器（DA 和 HDA）。OIBus 通过随附的一个小型 Windows 辅助进程直接与服务器通信：不再需要 OIBus Agent。
 
 :::info 技术背景
 
-- 由 [OPC Foundation](https://opcfoundation.org/) 制定的工业通信协议
+- 由 [OPC Foundation®](https://opcfoundation.org/) 制定的工业通信协议
 - 同时支持 HDA 和 DA 模式
 - OIBus 必须运行在 Windows 上
 - 关于 OPC UA，请参见 [OPC UA 连接器](./opcua.mdx)
@@ -29,7 +29,7 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 
 ## OPC Classic 与 OPC UA 对比 {#opc-classic-vs-opc-ua}
 
-|                  | OPC Classic™                                                                | OPC UA                                                                 |
+|                  | OPC Classic                                                                | OPC UA                                                                 |
 | ---------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | **标准**         | 三个独立规范：**DA**（实时数据）、**HDA**（历史数据）、**AE**（报警与事件） | 统一标准：**DA**（实时数据）+ **HA**（历史访问）+ 报警                 |
 | **历史模式名称** | **HDA** —— 历史数据访问                                                     | **HA** —— 历史访问（OPC UA Part 11）。概念相同，名称不同 —— 见下方说明 |
@@ -168,4 +168,7 @@ OIBus 运行在 Windows 上，最好与 OPC 服务器位于同一主机。
 ## 第三方组件 {#third-party-components}
 
 Windows 辅助进程使用 OPC Foundation 的 OPC Classic .NET API，遵循 OPC Foundation MIT 许可证。OIBus 不随附 OPC Core
-Components。OIBus 与 OPC Foundation 无关联，也未获其认可；OPC Classic™ 及 OPC Foundation 的名称是其所有者的商标。
+Components。
+
+OPC Foundation® 和 OPC UA® 是 OPC Foundation 的注册商标。OIBus 与 OPC Foundation 无关联，也未获其认可；OPC Classic、OPC DA
+和 OPC HDA 仅用于描述 OIBus 所通信的协议。

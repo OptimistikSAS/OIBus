@@ -6,7 +6,7 @@ sidebar_position: 1
 
 This page explains in detail how to use the `Max read interval`, `Read delay`, `Start time offset`, `End time offset` —
 plus `Recovery strategy` and `When no data is found` — fields. These are found only on connectors that access data sources with historical storage:
-SQL connectors, OPC UA in HA mode, OPC Classic in HDA mode, OSIsoft PI, OIAnalytics, REST, InfluxDB — see the full list
+SQL connectors, OPC UA® in HA mode, OPC Classic in HDA mode, OSIsoft PI, OIAnalytics, REST, InfluxDB — see the full list
 in [History Queries](../history-queries.md#compatible-south-connectors). These settings are introduced in
 [Common Settings](../south-connectors/common-settings.md).
 

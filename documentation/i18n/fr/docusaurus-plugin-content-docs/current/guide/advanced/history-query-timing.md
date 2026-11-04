@@ -8,7 +8,7 @@ Cette page explique en détail comment utiliser les champs `Intervalle de lectur
 `Décalage de l'heure de début`, `Décalage de l'heure de fin` — ainsi que `Stratégie de récupération` et
 `Si aucune donnée n'est trouvée`. Ils ne se trouvent
 que sur les connecteurs qui accèdent à des sources de données disposant d'un stockage historique : connecteurs SQL,
-OPC UA en mode HA, OPC Classic en mode HDA, OSIsoft PI, OIAnalytics, REST, InfluxDB — voir la liste complète dans
+OPC UA® en mode HA, OPC Classic en mode HDA, OSIsoft PI, OIAnalytics, REST, InfluxDB — voir la liste complète dans
 [Requêtes d'historique](../history-queries.md#compatible-south-connectors). Ces paramètres sont présentés dans
 [Paramètres communs](../south-connectors/common-settings.md).
 

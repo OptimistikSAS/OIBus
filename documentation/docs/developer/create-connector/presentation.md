@@ -7,7 +7,7 @@ sidebar_position: 1
 
 OIBus connectors are written in [TypeScript](https://www.typescriptlang.org/). **South** connectors _retrieve_
 data from a source (PLC, file system, database, MQTT broker, etc.); **North** connectors _deliver_ it to a
-destination (file, OIAnalytics, OPC UA server, S3, etc.).
+destination (file, OIAnalytics, OPC UA® server, S3, etc.).
 
 This guide walks through the file layout, the mental model, and the wiring steps required to register a new
 connector with the engine.

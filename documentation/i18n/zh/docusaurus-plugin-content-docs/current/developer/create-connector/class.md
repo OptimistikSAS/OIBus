@@ -194,7 +194,7 @@ interface SouthDirectQuery {
 
 #### `SouthHistoryQuery` {#southhistoryquery}
 
-用于时间窗口读取——例如 OPC UA HistoryRead、SQL `BETWEEN`、OSIsoft PI 归档。
+用于时间窗口读取——例如 OPC UA® HistoryRead、SQL `BETWEEN`、OSIsoft PI 归档。
 
 ```typescript
 interface SouthHistoryQuery {

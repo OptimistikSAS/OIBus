@@ -21,8 +21,8 @@ Only South connectors with historian capabilities support history queries:
 | [ODBC](./south-connectors/odbc.mdx)                     |
 | [OIAnalytics®](./south-connectors/oianalytics.mdx)      |
 | [OLEDB](./south-connectors/oledb.mdx)                   |
-| [OPC Classic™ (HDA mode)](./south-connectors/opc.mdx)   |
-| [OPC UA™ (HA mode)](./south-connectors/opcua.mdx)       |
+| [OPC Classic (HDA mode)](./south-connectors/opc.mdx)   |
+| [OPC UA® (HA mode)](./south-connectors/opcua.mdx)       |
 | [Oracle Database™](./south-connectors/oracle.mdx)       |
 | [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx) |
 | [PostgreSQL](./south-connectors/postgresql.mdx)         |

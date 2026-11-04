@@ -2174,7 +2174,7 @@
 					"tree",
 					"query"
 				],
-				"description": "Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:\n- `tree`: the nodes checked in the Explore modal (`{ nodeIds: Array<string> }`), each point for itself and any other\n  node for everything under it - or a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC-UA\n- `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors. Their tables and columns\n  checked in the Explore modal (`{ nodeIds }`) are discovered too, one record per table, to add as items"
+				"description": "Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:\n- `tree`: the nodes checked in the Explore modal (`{ nodeIds: Array<string> }`), each point for itself and any other\n  node for everything under it - or a root node to walk the data source from (`{ rootNodeId?: string }`) - e.g. OPC UA\n- `query`: a dedicated SQL metadata query (`{ query: string }`) - the SQL-family connectors. Their tables and columns\n  checked in the Explore modal (`{ nodeIds }`) are discovered too, one record per table, to add as items"
 			},
 			"SouthDiscoveryTemplate": {
 				"description": "A ready-made metadata query of a known data source (e.g. the tags of a Wonderware Historian on MSSQL), offered to start\nthe query of a Configuration Workflow from. Its title and description are translated under\n`configuration.oibus.manifest.south.<connector id>.discovery.templates.<id>`.",
@@ -2325,7 +2325,7 @@
 					},
 					"explore": {
 						"type": "boolean",
-						"description": "Whether this connector type supports the interactive \"explore/discovery\" feature\n(browsing the data source, e.g. expanding OPC-UA nodes or walking a folder tree).\nUI capability flag — mirrors the connector's structural `hasExplore()`.",
+						"description": "Whether this connector type supports the interactive \"explore/discovery\" feature\n(browsing the data source, e.g. expanding OPC UA nodes or walking a folder tree).\nUI capability flag — mirrors the connector's structural `hasExplore()`.",
 						"example": true
 					},
 					"discovery": {
@@ -2741,7 +2741,7 @@
 									}
 								],
 								"nullable": true,
-								"description": "Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for\nIoT-family connectors (OPC UA, Modbus, ADS, OPC classic, S7, MQTT).",
+								"description": "Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for\nIoT-family connectors (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT).",
 								"example": "onChange"
 							},
 							"emptyIntervalStrategy": {
@@ -2949,7 +2949,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -3238,7 +3238,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -3594,7 +3594,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -3894,7 +3894,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -4213,7 +4213,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -4431,7 +4431,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -4754,7 +4754,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -4989,7 +4989,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -5287,7 +5287,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -5559,7 +5559,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -5908,7 +5908,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -6177,7 +6177,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -6552,7 +6552,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -6773,7 +6773,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -7066,7 +7066,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -7351,7 +7351,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -7716,7 +7716,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -7981,7 +7981,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -8342,7 +8342,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -8594,7 +8594,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -8949,7 +8949,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -9170,7 +9170,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -9486,7 +9486,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -9770,7 +9770,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -10125,7 +10125,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -10355,7 +10355,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -10697,7 +10697,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -10923,7 +10923,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -11278,7 +11278,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -11608,7 +11608,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -11969,7 +11969,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -12228,7 +12228,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -12534,7 +12534,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -12745,7 +12745,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -13107,7 +13107,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -13363,7 +13363,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -13947,7 +13947,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -14279,7 +14279,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -14572,7 +14572,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -14820,7 +14820,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -15143,7 +15143,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -15385,7 +15385,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -15740,7 +15740,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -15946,7 +15946,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -16337,7 +16337,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -16526,7 +16526,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -16639,7 +16639,7 @@
 									}
 								],
 								"nullable": true,
-								"description": "Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for\nIoT-family connectors (OPC UA, Modbus, ADS, OPC classic, S7, MQTT).",
+								"description": "Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for\nIoT-family connectors (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT).",
 								"example": "onChange"
 							},
 							"emptyIntervalStrategy": {
@@ -17493,7 +17493,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -17682,7 +17682,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -17871,7 +17871,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -18060,7 +18060,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -18249,7 +18249,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -18438,7 +18438,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -18627,7 +18627,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -18816,7 +18816,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -19005,7 +19005,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -19194,7 +19194,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -19383,7 +19383,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -19572,7 +19572,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -19761,7 +19761,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -19950,7 +19950,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -20139,7 +20139,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -20328,7 +20328,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -20517,7 +20517,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -20706,7 +20706,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -20895,7 +20895,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -21084,7 +21084,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -21273,7 +21273,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -21462,7 +21462,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -21665,15 +21665,15 @@
 				"description": "Make all properties in T optional"
 			},
 			"SouthConnectorExploreEntry": {
-				"description": "A single entry returned while exploring/discovering a South connector's data source.\nRepresents an OPC-UA node or a file-system entry. Kept intentionally generic and\nextensible so item creation and item synchronisation can build on it later.",
+				"description": "A single entry returned while exploring/discovering a South connector's data source.\nRepresents an OPC UA node or a file-system entry. Kept intentionally generic and\nextensible so item creation and item synchronisation can build on it later.",
 				"properties": {
 					"id": {
 						"type": "string",
-						"description": "Stable identifier of the entry, passed back to expand it.\nOPC-UA node id (e.g. \"ns=1;s=Temperature\") or a folder-relative path."
+						"description": "Stable identifier of the entry, passed back to expand it.\nOPC UA node id (e.g. \"ns=1;s=Temperature\") or a folder-relative path."
 					},
 					"name": {
 						"type": "string",
-						"description": "Human-readable label (OPC-UA display name or file/folder name)."
+						"description": "Human-readable label (OPC UA display name or file/folder name)."
 					},
 					"metadata": {
 						"$ref": "#/components/schemas/Record_string.string-or-number_",
@@ -24858,7 +24858,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -25112,7 +25112,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -25366,7 +25366,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -25620,7 +25620,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -25874,7 +25874,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -26128,7 +26128,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -26382,7 +26382,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -26636,7 +26636,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -26890,7 +26890,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -27144,7 +27144,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -27398,7 +27398,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -27652,7 +27652,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -27906,7 +27906,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -28160,7 +28160,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -28414,7 +28414,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -28668,7 +28668,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -28922,7 +28922,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -29176,7 +29176,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -29430,7 +29430,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -29684,7 +29684,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -29938,7 +29938,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -30192,7 +30192,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
 						"example": "onChange"
 					},
 					"thresholdType": {
@@ -47520,7 +47520,7 @@
 					"name": {
 						"type": "string",
 						"description": "Unique per south connector.",
-						"example": "Reactor OPC-UA discovery"
+						"example": "Reactor OPC UA discovery"
 					},
 					"description": {
 						"type": "string",
@@ -47535,7 +47535,7 @@
 					},
 					"discoveryScope": {
 						"$ref": "#/components/schemas/Record_string.unknown_",
-						"description": "What to (re-)discover — connector-specific (e.g. `{ rootNodeId: \"ns=1;s=Root\" }` for OPC-UA,\n`{ query: \"SELECT ...\" }` for SQL)."
+						"description": "What to (re-)discover — connector-specific (e.g. `{ rootNodeId: \"ns=1;s=Root\" }` for OPC UA,\n`{ query: \"SELECT ...\" }` for SQL)."
 					},
 					"identityKeyFields": {
 						"items": {

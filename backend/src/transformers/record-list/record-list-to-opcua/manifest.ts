@@ -2,7 +2,7 @@ import { OIBusAttribute } from '../../../../shared/model/connector/form.model';
 import { TransformerManifest } from '../../../../shared/model/connector/transformer-manifest.model';
 
 /**
- * The OPCUA values are written for the points mapped to a node: each point and its value are read from
+ * The OPC UA values are written for the points mapped to a node: each point and its value are read from
  * columns of the records. Shared with the file-to-opcua transformer.
  */
 export const opcuaMappingAttributes: Array<OIBusAttribute> = [
