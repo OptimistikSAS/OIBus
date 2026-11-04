@@ -10198,9 +10198,6 @@
 			},
 			"SouthOLEDBSettings": {
 				"properties": {
-					"agentUrl": {
-						"type": "string"
-					},
 					"connectionTimeout": {
 						"type": "number",
 						"format": "double"
@@ -10219,15 +10216,19 @@
 					"password": {
 						"type": "string",
 						"nullable": true
+					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
-					"agentUrl",
 					"connectionTimeout",
 					"retryInterval",
 					"requestTimeout",
 					"connectionString",
-					"password"
+					"password",
+					"maxParallelRun"
 				],
 				"type": "object",
 				"additionalProperties": false

@@ -571,6 +571,17 @@ export function withoutOdbcAgentSettings(settings: Record<string, unknown>): Rec
 }
 
 /**
+ * The OLEDB South no longer goes through the OIBus Agent: it starts its own local helper process from the
+ * `@oibus/oledb` package. The URL of the agent is removed; the timeouts and the reconnection interval are kept for the
+ * helper. Its queries can now run in parallel, each on its own connection: it gains a `maxParallelRun`, 1 keeping them
+ * sequential as until now.
+ */
+export function toLocalOleDbSettings(settings: Record<string, unknown>): Record<string, unknown> {
+  const { agentUrl: _agentUrl, ...rest } = settings;
+  return { ...rest, maxParallelRun: rest.maxParallelRun ?? 1 };
+}
+
+/**
  * The setpoints sent by OIAnalytics are records (`{ reference, value }`): the setpoint transformers are replaced by the
  * record-list ones.
  */
@@ -1667,6 +1678,17 @@ function removeOpcAgentSettings(config: JsonObject): void {
   });
 }
 
+/** See `toLocalOleDbSettings`, for the connectors and the history queries */
+function useLocalOleDbDriver(config: JsonObject): void {
+  forEachSouth(config, 'oledb', south => {
+    const settings = south.settings as JsonObject;
+    if (settings.settings) settings.settings = toLocalOleDbSettings(settings.settings as JsonObject);
+  });
+  forEachHistoryQuery(config, 'oledb', settings => {
+    if (settings.southSettings) settings.southSettings = toLocalOleDbSettings(settings.southSettings as JsonObject);
+  });
+}
+
 /** See `toFieldProcessOperations`, on the links of the north connectors and of the history queries */
 function convertFieldProcessesToOperations(config: JsonObject): void {
   const transformerIds = asObjects(config.transformers)
@@ -1826,6 +1848,7 @@ export const upgrade: ConfigUpgrade = {
     convertFieldProcessesToOperations(config);
     removeOdbcAgentSettings(config);
     removeOpcAgentSettings(config);
+    useLocalOleDbDriver(config);
 
     return config;
   }
