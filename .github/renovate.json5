@@ -130,6 +130,20 @@
     {
       "matchUpdateTypes": ["major"],
       "schedule": ["at any time"]
+    },
+
+    // ── OIBus packages ────────────────────────────────────────────────────
+    // Our own Windows drivers (@oibus/opc-classic, @oibus/oledb), released by
+    // us for OIBus: no release age to wait, and their own PR as soon as they
+    // are published, kept out of the weekly batch. Last, so that it overrides
+    // the group and schedule of the rules above. Still 0.x, where a minor
+    // update can change the API: every update type is included.
+    {
+      "matchPackageNames": ["@oibus/**"],
+      "groupName": "OIBus packages",
+      "groupSlug": "oibus-packages",
+      "minimumReleaseAge": null,
+      "schedule": ["at any time"]
     }
   ]
 }
