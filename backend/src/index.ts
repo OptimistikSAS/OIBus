@@ -48,6 +48,11 @@ const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'logs.db';
 const METRICS_DB_NAME = 'metrics.db';
 const CERT_FOLDER = 'certs';
+const HELPERS_FOLDER = 'helpers';
+// The Windows drivers (@oibus/oledb, @oibus/opc-classic, @oibus/pi) copy their helper executable out of the OIBus binary
+// before running it, and check its SHA-256 first. They copy it into the data folder rather than the temporary folder of
+// the operating system, which other users can write to. A variable already set is kept.
+const HELPER_EXTRACT_DIR_VARIABLES = ['OIBUS_OLEDB_EXTRACT_DIR', 'OIBUS_OPC_CLASSIC_EXTRACT_DIR', 'OIBUS_PI_EXTRACT_DIR'];
 
 export async function bootstrap(): Promise<void> {
   const { configFile, version, ignoreIpFilters, ignoreRemoteUpdate, launcherVersion } = getCommandLineArguments();
@@ -63,6 +68,10 @@ export async function bootstrap(): Promise<void> {
   // Create the base cache folder
   await createFolder(CACHE_FOLDER);
   await createFolder(LOG_FOLDER_NAME);
+  await createFolder(HELPERS_FOLDER);
+  for (const variable of HELPER_EXTRACT_DIR_VARIABLES) {
+    process.env[variable] ||= path.resolve(HELPERS_FOLDER);
+  }
 
   // run migrations
   await migrateDataFolder(path.resolve(CONFIG_DATABASE));
