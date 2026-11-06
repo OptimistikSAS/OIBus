@@ -7,7 +7,7 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 # OPC Classic
 
 Connect OIBus to OPC Classic servers (DA and HDA). OIBus talks to the server itself through a small Windows helper
-process shipped with it: no OIBus Agent is needed.
+process shipped with it.
 
 :::info Technology Context
 
@@ -38,7 +38,7 @@ process shipped with it: no OIBus Agent is needed.
 | **Platform**             | Windows only                                                                                        | Cross-platform: Windows, Linux, macOS, embedded                                            |
 | **Security**             | Relies on Windows domain/DCOM security                                                              | Built-in: message signing, encryption, certificate-based auth                              |
 | **Introduced**           | 1996                                                                                                | 2006                                                                                       |
-| **OIBus requirement**    | OIBus running on Windows, with the OPC Core Components installed                                    | Connects directly from OIBus — no agent needed                                             |
+| **OIBus requirement**    | OIBus running on Windows, with the OPC Core Components installed                                    | Connects directly from OIBus                                                               |
 
 :::note HDA vs HA — the naming confusion
 Users coming from an OPC Classic background often look for **HDA** in OPC UA and cannot find it.

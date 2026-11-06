@@ -43,10 +43,6 @@ Algolia, since an offline instance can't reach Algolia's cloud service. It also 
 running this one command is enough to make the "Documentation" link work locally, and it's also all that
 `.github/workflows/build.yml`'s `build-documentation` job runs before the backend is packaged.
 
-Both build commands also run `update-agent-version.js` afterwards, which fetches the latest
-[OIBus Agent](https://github.com/OptimistikSAS/OIBusAgentRelease) release tag and substitutes it into the
-built pages wherever a version placeholder is used.
-
 ### Deployment
 
 Using SSH:
