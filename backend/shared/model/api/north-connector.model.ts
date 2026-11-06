@@ -113,7 +113,7 @@ export interface NorthConnectorTypedDTO<T extends OIBusNorthType, S> extends Bas
        */
       runMinDelay: number;
       /**
-       * The maximum size (in bytes) of the cache before sending.
+       * The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.
        *
        * @example 1048576
        */
@@ -147,6 +147,12 @@ export interface NorthConnectorTypedDTO<T extends OIBusNorthType, S> extends Bas
        * @example 86400000
        */
       retentionDuration: number;
+      /**
+       * The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.
+       *
+       * @example 0
+       */
+      maxSize: number;
     };
     /**
      * The archive configuration for caching.
@@ -164,6 +170,12 @@ export interface NorthConnectorTypedDTO<T extends OIBusNorthType, S> extends Bas
        * @example 0
        */
       retentionDuration: number;
+      /**
+       * The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.
+       *
+       * @example 0
+       */
+      maxSize: number;
     };
   };
   /**
@@ -286,7 +298,7 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
        */
       runMinDelay: number;
       /**
-       * The maximum size (in bytes) of the cache before sending.
+       * The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.
        *
        * @example 1048576
        */
@@ -320,6 +332,13 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
        * @example 86400000
        */
       retentionDuration: number;
+      /**
+       * The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.
+       * Defaults to `throttling.maxSize` when not set.
+       *
+       * @example 0
+       */
+      maxSize?: number;
     };
     /**
      * The archive configuration for caching.
@@ -337,6 +356,13 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
        * @example 0
        */
       retentionDuration: number;
+      /**
+       * The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.
+       * Defaults to `throttling.maxSize` when not set.
+       *
+       * @example 0
+       */
+      maxSize?: number;
     };
   };
   /**

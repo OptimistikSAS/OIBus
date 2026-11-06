@@ -299,7 +299,7 @@ describe('CacheService', () => {
     const result = await service.getCacheContentToSend(maxGroupCount);
 
     assert.ok(waitCacheUpdateTasks.mock.calls.length > 0);
-    assert.deepStrictEqual(compactQueue.mock.calls[0].arguments, [maxGroupCount, 'record-list']);
+    assert.deepStrictEqual(compactQueue.mock.calls[0].arguments, [maxGroupCount, 'record-list', null]);
     assert.deepStrictEqual(result, item);
   });
 
@@ -314,18 +314,11 @@ describe('CacheService', () => {
   it('should test if cache is full ', () => {
     assert.strictEqual(service.cacheIsFull(0), false);
 
-    mock.method(
-      service,
-      'getCacheSize',
-      seq(
-        () => 1024 * 1024,
-        () => 1024 * 1024 * 3,
-        () => 1024 * 1024 * 3
-      )
-    );
-
+    // Only the cache folder counts: the error and archive folders have their own limits
+    service['cacheSize'] = { cache: 1024 * 1024, error: 1024 * 1024 * 10, archive: 1024 * 1024 * 10 };
     assert.strictEqual(service.cacheIsFull(2), false);
     assert.strictEqual(service['cacheSizeWarningDebounceTimeout'], null);
+    service['cacheSize'] = { cache: 1024 * 1024 * 3, error: 0, archive: 0 };
     assert.strictEqual(service.cacheIsFull(2), true);
     assert.notStrictEqual(service['cacheSizeWarningDebounceTimeout'], null);
     assert.strictEqual(service.cacheIsFull(2), true);
@@ -333,6 +326,35 @@ describe('CacheService', () => {
     assert.ok(service['cacheSizeWarningDebounceFlag']);
     mock.timers.tick(60_000);
     assert.ok(!service['cacheSizeWarningDebounceFlag']);
+  });
+
+  it('should not scan a folder under its max size', async () => {
+    service['cacheSize'] = { cache: 0, error: 1024 * 1024, archive: 0 };
+    const readMetadata = mock.method(service as never, 'readCacheMetadataFiles', async () => []);
+    await service.enforceFolderMaxSize('error', 0);
+    await service.enforceFolderMaxSize('error', 2);
+    assert.strictEqual(readMetadata.mock.calls.length, 0);
+  });
+
+  it('should remove the oldest files of a folder over its max size', async () => {
+    service['cacheSize'] = { cache: 0, error: 0, archive: 1024 * 1024 * 3 };
+    const files = [
+      { filename: 'newest', metadata: { createdAt: '2020-01-03T00:00:00.000Z', contentSize: 1024 * 1024 } },
+      { filename: 'oldest', metadata: { createdAt: '2020-01-01T00:00:00.000Z', contentSize: 1024 * 1024 } },
+      { filename: 'middle', metadata: { createdAt: '2020-01-02T00:00:00.000Z', contentSize: 1024 * 1024 } }
+    ];
+    mock.method(service as never, 'readCacheMetadataFiles', async () => files);
+    const removed: Array<string> = [];
+    mock.method(service as never, 'removeContent', async (folder: 'archive', filename: string) => {
+      removed.push(filename);
+      service['cacheSize'][folder] -= 1024 * 1024;
+    });
+
+    await service.enforceFolderMaxSize('archive', 1);
+
+    assert.deepStrictEqual(removed, ['oldest', 'middle']);
+    assert.strictEqual(service['cacheSize'].archive, 1024 * 1024);
+    assert.strictEqual(service['updateCache$'], null);
   });
 
   it('should be properly initialized without files in cache', async () => {
@@ -952,6 +974,25 @@ describe('CacheService', () => {
       resolveCompact!();
       await waitCall;
       assert.strictEqual(isFinished, true);
+    });
+
+    it('should only compact the files of the requested data source', async () => {
+      const south1 = { id: 'south1', name: 'South 1' };
+      const south2 = { id: 'south2', name: 'South 2' };
+      const item1 = { filename: '1.json', metadata: { contentType: 'typeA', contentSize: 10, dataSource: south1 } as CacheMetadata };
+      const item2 = { filename: '2.json', metadata: { contentType: 'typeA', contentSize: 10, dataSource: south2 } as CacheMetadata };
+      const item3 = { filename: '3.json', metadata: { contentType: 'typeA', contentSize: 10, dataSource: south1 } as CacheMetadata };
+      const item4 = { filename: '4.json', metadata: { contentType: 'typeA', contentSize: 10 } as CacheMetadata };
+      service['queue'] = [item1, item2, item3, item4];
+      const accumulateContent = mock.fn(async () => ({ newListOfContent: [], remainder: [], compactedFiles: [] }));
+      service['accumulateContent'] = accumulateContent;
+
+      await service.compactQueue(100, 'typeA', 'south1');
+      assert.deepStrictEqual(accumulateContent.mock.calls[0].arguments[0], [item1, item3]);
+
+      // Content without data source (cached before 3.10 or from OIAnalytics setpoints) is only merged together
+      await service.compactQueue(100, 'typeA', null);
+      assert.strictEqual(accumulateContent.mock.calls.length, 1); // a single file: nothing to compact
     });
 
     it('should orchestrate accumulation, writing, and cleanup', async () => {

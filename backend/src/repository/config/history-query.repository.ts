@@ -50,8 +50,8 @@ export default class HistoryQueryRepository {
       `throttling_max_read_interval, throttling_read_delay, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
-      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by, created_at, updated_at ` +
+      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
+      `caching_archive_enabled, caching_archive_retention_duration, caching_archive_max_size, created_by, updated_by, created_at, updated_at ` +
       `FROM ${HISTORY_QUERIES_TABLE};`;
     const result = this.database.prepare(query).all();
 
@@ -65,8 +65,8 @@ export default class HistoryQueryRepository {
       `throttling_max_read_interval, throttling_read_delay, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
-      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by, created_at, updated_at ` +
+      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
+      `caching_archive_enabled, caching_archive_retention_duration, caching_archive_max_size, created_by, updated_by, created_at, updated_at ` +
       `FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) {
@@ -101,9 +101,9 @@ export default class HistoryQueryRepository {
           `throttling_max_read_interval, throttling_read_delay, ` +
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
-          `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-          `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by, created_at, updated_at) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))`;
+          `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
+          `caching_archive_enabled, caching_archive_retention_duration, caching_archive_max_size, created_by, updated_by, created_at, updated_at) ` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))`;
         this.database.prepare(insertQuery).run(
           history.id,
           history.name,
@@ -126,8 +126,10 @@ export default class HistoryQueryRepository {
           history.caching.error.retryInterval,
           history.caching.error.retryCount,
           history.caching.error.retentionDuration,
+          history.caching.error.maxSize,
           +history.caching.archive.enabled,
           history.caching.archive.retentionDuration,
+          history.caching.archive.maxSize,
           history.createdBy,
           history.updatedBy
         );
@@ -138,8 +140,8 @@ export default class HistoryQueryRepository {
           `throttling_max_read_interval = ?, throttling_read_delay = ?, ` +
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
-          `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
-          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+          `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, caching_error_max_size = ?, ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, caching_archive_max_size = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -163,8 +165,10 @@ export default class HistoryQueryRepository {
             history.caching.error.retryInterval,
             history.caching.error.retryCount,
             history.caching.error.retentionDuration,
+            history.caching.error.maxSize,
             +history.caching.archive.enabled,
             history.caching.archive.retentionDuration,
+            history.caching.archive.maxSize,
             history.updatedBy,
             history.id
           );
@@ -803,11 +807,13 @@ export default class HistoryQueryRepository {
         error: {
           retryInterval: result.caching_error_retry_interval as number,
           retryCount: result.caching_error_retry_count as number,
-          retentionDuration: result.caching_error_retention_duration as number
+          retentionDuration: result.caching_error_retention_duration as number,
+          maxSize: result.caching_error_max_size as number
         },
         archive: {
           enabled: Boolean(result.caching_archive_enabled),
-          retentionDuration: result.caching_archive_retention_duration as number
+          retentionDuration: result.caching_archive_retention_duration as number,
+          maxSize: result.caching_archive_max_size as number
         }
       },
       items: this.findAllItemsForHistory(result.id as string),

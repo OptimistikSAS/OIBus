@@ -213,11 +213,14 @@ const cachingSchema = Joi.object({
   error: Joi.object({
     retryInterval: Joi.number().required(),
     retryCount: Joi.number().required(),
-    retentionDuration: Joi.number().required()
+    retentionDuration: Joi.number().required(),
+    // Absent from configurations exported before the per-folder sizes: defaults to throttling.maxSize on import
+    maxSize: Joi.number()
   }).required(),
   archive: Joi.object({
     enabled: Joi.boolean().required(),
-    retentionDuration: Joi.number().required()
+    retentionDuration: Joi.number().required(),
+    maxSize: Joi.number()
   }).required()
 }).required();
 

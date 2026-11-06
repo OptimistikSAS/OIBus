@@ -3209,7 +3209,7 @@
       "throttling": {
         "title": "限流",
         "run-min-delay": "两次发送之间的最小延迟",
-        "max-size": "最大存储大小（缓存 + 错误 + 归档）",
+        "max-size": "缓存最大大小（0 = 无限制）",
         "max-number-of-elements": "最大元素数量",
         "value": "最小运行延迟：{{ runMinDelay }} 毫秒 / 最大缓存大小：{{ maxSize }} MB / 最大元素数量：{{ maxNumberOfElements }}"
       },
@@ -3218,12 +3218,14 @@
         "retry-interval": "出错后重试前的等待延迟",
         "retry-count": "重试次数",
         "retention-duration": "错误数据的保留时长",
+        "max-size": "错误数据最大大小（0 = 无限制）",
         "value": "重试间隔：{{ retryInterval }} 毫秒 / 重试次数：{{ retryCount }} / 保留时长：{{ retentionDuration }} 小时"
       },
       "archive": {
         "title": "归档",
         "enabled": "已启用",
         "retention-duration": "归档数据的保留时长",
+        "max-size": "归档数据最大大小（0 = 无限制）",
         "value": "已启用：{{ enabled }} / 保留时长：{{ retentionDuration }} 小时"
       },
       "explore-cache": "浏览缓存"

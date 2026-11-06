@@ -42,8 +42,8 @@ import { getOIBusInfo } from '../utils';
 interface CachingEntity {
   trigger: { scanMode: { id: string }; numberOfElements: number; numberOfFiles: number };
   throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
-  error: { retryInterval: number; retryCount: number; retentionDuration: number };
-  archive: { enabled: boolean; retentionDuration: number };
+  error: { retryInterval: number; retryCount: number; retentionDuration: number; maxSize: number };
+  archive: { enabled: boolean; retentionDuration: number; maxSize: number };
 }
 
 /**
@@ -314,8 +314,8 @@ export default class ConfigTransferBuilderService {
   private buildCachingCommand(caching: CachingEntity): {
     trigger: { scanModeId: string; scanModeName: null; numberOfElements: number; numberOfFiles: number };
     throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
-    error: { retryInterval: number; retryCount: number; retentionDuration: number };
-    archive: { enabled: boolean; retentionDuration: number };
+    error: { retryInterval: number; retryCount: number; retentionDuration: number; maxSize: number };
+    archive: { enabled: boolean; retentionDuration: number; maxSize: number };
   } {
     return {
       trigger: {
