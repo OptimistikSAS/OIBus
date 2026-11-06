@@ -267,8 +267,8 @@ describe('EditNorthComponent', () => {
           caching: {
             trigger: { scanModeId: 'scanModeId1', scanModeName: null, numberOfElements: 1000, numberOfFiles: 1 },
             throttling: { runMinDelay: 200, maxSize: 0, maxNumberOfElements: 10000 },
-            error: { retryInterval: 5000, retryCount: 3, retentionDuration: 0 },
-            archive: { enabled: false, retentionDuration: 72 }
+            error: { retryInterval: 5000, retryCount: 3, retentionDuration: 0, maxSize: 0 },
+            archive: { enabled: false, retentionDuration: 72, maxSize: 0 }
           },
           transformers: []
         },

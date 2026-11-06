@@ -33,10 +33,12 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
       retryInterval: number;
       retryCount: number;
       retentionDuration: number;
+      maxSize: number;
     };
     archive: {
       enabled: boolean;
       retentionDuration: number;
+      maxSize: number;
     };
   };
   transformers: Array<NorthTransformerWithOptions>;

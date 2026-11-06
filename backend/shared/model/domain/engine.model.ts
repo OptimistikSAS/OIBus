@@ -909,6 +909,25 @@ export interface CacheMetadata {
    * @example "record-list"
    */
   contentType: string;
+
+  /**
+   * The South connector the content comes from. Content from different South connectors is never merged together, so
+   * that the receiver can know where each batch comes from.
+   * Absent for content cached before 3.10, or not coming from a South connector (history queries, OIBus API,
+   * OIAnalytics setpoints).
+   */
+  dataSource?: CacheMetadataDataSource | null;
+}
+
+export interface CacheMetadataDataSource {
+  /**
+   * @example "southId1"
+   */
+  id: string;
+  /**
+   * @example "My South"
+   */
+  name: string;
 }
 
 /**

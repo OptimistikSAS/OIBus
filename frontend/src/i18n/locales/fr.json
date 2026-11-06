@@ -3209,7 +3209,7 @@
       "throttling": {
         "title": "Limitation",
         "run-min-delay": "Délai minimum entre deux transmissions",
-        "max-size": "Taille maximale de stockage (cache + erreur + archive)",
+        "max-size": "Taille maximale du cache (0 = sans limite)",
         "max-number-of-elements": "Nombre maximal d'éléments",
         "value": "Délai min. d'exécution : {{ runMinDelay }} ms / Taille max. du cache : {{ maxSize }} Mo / Nombre max. d'éléments : {{ maxNumberOfElements }}"
       },
@@ -3218,12 +3218,14 @@
         "retry-interval": "Délai d'attente avant nouvelle tentative après erreur",
         "retry-count": "Nombre de tentatives",
         "retention-duration": "Durée de rétention des données en erreur",
+        "max-size": "Taille maximale des données en erreur (0 = sans limite)",
         "value": "Intervalle de nouvelle tentative : {{ retryInterval }} ms / Nombre de tentatives : {{ retryCount }} / Durée de rétention : {{ retentionDuration }} h"
       },
       "archive": {
         "title": "Archive",
         "enabled": "Activé",
         "retention-duration": "Durée de rétention des données archivées",
+        "max-size": "Taille maximale des données archivées (0 = sans limite)",
         "value": "Activé : {{ enabled }} / Durée de rétention : {{ retentionDuration }} h"
       },
       "explore-cache": "Explorer le cache"

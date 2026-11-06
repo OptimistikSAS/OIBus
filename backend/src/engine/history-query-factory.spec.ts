@@ -165,6 +165,7 @@ describe('HistoryQueryFactory', () => {
         { type: 'data' },
         {
           source: 'south',
+          historyQuery: true,
           southId: settings.id,
           southName: settings.name,
           queryTime: '2023-01-01',
@@ -185,6 +186,7 @@ describe('HistoryQueryFactory', () => {
         { type: 'data' },
         {
           source: 'south',
+          historyQuery: true,
           southId: settings.id,
           southName: settings.name,
           queryTime: '2023-01-01',

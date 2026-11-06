@@ -150,6 +150,9 @@ export class EditNorthComponent implements CanComponentDeactivate {
   readonly transformers = signal<Array<TransformerDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
   readonly manifest = signal<NorthConnectorManifest | null>(null);
+  // Raw files are counted by the files trigger, every other content type by the elements trigger
+  readonly handlesFiles = computed(() => this.manifest()?.types.includes('file') ?? true);
+  readonly handlesElements = computed(() => this.manifest()?.types.some(type => type !== 'file') ?? true);
   readonly existingNorthConnectors = signal<Array<NorthConnectorLightDTO>>([]);
 
   // built once, right before `manifest` is set
@@ -172,10 +175,12 @@ export class EditNorthComponent implements CanComponentDeactivate {
         retryInterval: FormControl<number>;
         retryCount: FormControl<number>;
         retentionDuration: FormControl<number>;
+        maxSize: FormControl<number>;
       }>;
       archive: FormGroup<{
         enabled: FormControl<boolean>;
         retentionDuration: FormControl<number>;
+        maxSize: FormControl<number>;
       }>;
     }>;
     settings: FormGroup;
@@ -393,17 +398,19 @@ export class EditNorthComponent implements CanComponentDeactivate {
         }),
         throttling: this.fb.group({
           runMinDelay: [200, Validators.required],
-          maxSize: [0, Validators.required],
+          maxSize: [0, [Validators.required, Validators.min(0)]],
           maxNumberOfElements: [10_000, Validators.required]
         }),
         error: this.fb.group({
           retryInterval: [5_000, Validators.required],
           retryCount: [3, Validators.required],
-          retentionDuration: [0, Validators.required]
+          retentionDuration: [0, Validators.required],
+          maxSize: [0, [Validators.required, Validators.min(0)]]
         }),
         archive: this.fb.group({
           enabled: [false, Validators.required],
-          retentionDuration: [72, Validators.required]
+          retentionDuration: [72, Validators.required],
+          maxSize: [0, [Validators.required, Validators.min(0)]]
         })
       })
     });
@@ -605,11 +612,13 @@ export class EditNorthComponent implements CanComponentDeactivate {
         error: {
           retryInterval: formValue.caching!.error!.retryInterval!,
           retryCount: formValue.caching!.error!.retryCount!,
-          retentionDuration: formValue.caching!.error!.retentionDuration!
+          retentionDuration: formValue.caching!.error!.retentionDuration!,
+          maxSize: formValue.caching!.error!.maxSize!
         },
         archive: {
           enabled: formValue.caching!.archive!.enabled!,
-          retentionDuration: formValue.caching!.archive!.retentionDuration!
+          retentionDuration: formValue.caching!.archive!.retentionDuration!,
+          maxSize: formValue.caching!.archive!.maxSize!
         }
       },
       transformers: this.inMemoryTransformersWithOptions().map(element => ({

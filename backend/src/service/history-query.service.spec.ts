@@ -1106,11 +1106,13 @@ describe('History Query service', () => {
         error: {
           retryInterval: historyQuery.caching.error.retryInterval,
           retryCount: historyQuery.caching.error.retryCount,
-          retentionDuration: historyQuery.caching.error.retentionDuration
+          retentionDuration: historyQuery.caching.error.retentionDuration,
+          maxSize: historyQuery.caching.error.maxSize
         },
         archive: {
           enabled: historyQuery.caching.archive.enabled,
-          retentionDuration: historyQuery.caching.archive.retentionDuration
+          retentionDuration: historyQuery.caching.archive.retentionDuration,
+          maxSize: historyQuery.caching.archive.maxSize
         }
       },
       items: historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, getUserInfo)),

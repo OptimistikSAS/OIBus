@@ -231,11 +231,13 @@ export default class NorthService {
         error: {
           retryInterval: 0,
           retryCount: 0,
-          retentionDuration: 0
+          retentionDuration: 0,
+          maxSize: 0
         },
         archive: {
           enabled: false,
-          retentionDuration: 0
+          retentionDuration: 0,
+          maxSize: 0
         }
       }
     };
@@ -401,11 +403,13 @@ export const toNorthConnectorDTO = (
       error: {
         retryInterval: northEntity.caching.error.retryInterval,
         retryCount: northEntity.caching.error.retryCount,
-        retentionDuration: northEntity.caching.error.retentionDuration
+        retentionDuration: northEntity.caching.error.retentionDuration,
+        maxSize: northEntity.caching.error.maxSize
       },
       archive: {
         enabled: northEntity.caching.archive.enabled,
-        retentionDuration: northEntity.caching.archive.retentionDuration
+        retentionDuration: northEntity.caching.archive.retentionDuration,
+        maxSize: northEntity.caching.archive.maxSize
       }
     },
     transformers: northEntity.transformers.map(transformerWithOptions => ({
@@ -466,11 +470,13 @@ export const copyNorthConnectorCommandToNorthEntity = async (
     error: {
       retryInterval: command.caching.error.retryInterval,
       retryCount: command.caching.error.retryCount,
-      retentionDuration: command.caching.error.retentionDuration
+      retentionDuration: command.caching.error.retentionDuration,
+      maxSize: command.caching.error.maxSize ?? command.caching.throttling.maxSize
     },
     archive: {
       enabled: command.caching.archive.enabled,
-      retentionDuration: command.caching.archive.retentionDuration
+      retentionDuration: command.caching.archive.retentionDuration,
+      maxSize: command.caching.archive.maxSize ?? command.caching.throttling.maxSize
     }
   };
 };

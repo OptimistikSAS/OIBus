@@ -213,11 +213,13 @@ const cachingSchema = Joi.object({
   error: Joi.object({
     retryInterval: Joi.number().required(),
     retryCount: Joi.number().required(),
-    retentionDuration: Joi.number().required()
+    retentionDuration: Joi.number().required(),
+    maxSize: Joi.number().required()
   }).required(),
   archive: Joi.object({
     enabled: Joi.boolean().required(),
-    retentionDuration: Joi.number().required()
+    retentionDuration: Joi.number().required(),
+    maxSize: Joi.number().required()
   }).required()
 }).required();
 

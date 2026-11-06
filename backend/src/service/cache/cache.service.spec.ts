@@ -6,7 +6,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/domain/engine.model';
+import { CacheContentUpdateCommand, CacheMetadata, DataFolderType } from '../../../shared/model/domain/engine.model';
 
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -159,7 +159,7 @@ describe('CacheService', () => {
     // Check initial queue sort based on date
     const expectedQueueLength = 2; // Only valid files in 'cache' folder
     assert.strictEqual(service['queue'].length, expectedQueueLength);
-    assert.ok(service.getCacheSize() > 0);
+    assert.ok(service.getCacheContentSizes().cache > 0);
     // The freshly-scanned folder sizes must be published so the metrics services
     // reflect pre-existing backlog immediately after startup.
     const startEmit = emitEventMock.mock.calls.find(c => c.arguments[0] === 'cache-size');
@@ -299,7 +299,7 @@ describe('CacheService', () => {
     const result = await service.getCacheContentToSend(maxGroupCount);
 
     assert.ok(waitCacheUpdateTasks.mock.calls.length > 0);
-    assert.deepStrictEqual(compactQueue.mock.calls[0].arguments, [maxGroupCount, 'record-list']);
+    assert.deepStrictEqual(compactQueue.mock.calls[0].arguments, [maxGroupCount, 'record-list', null]);
     assert.deepStrictEqual(result, item);
   });
 
@@ -307,25 +307,14 @@ describe('CacheService', () => {
     assert.strictEqual(service.cacheIsEmpty(), true);
   });
 
-  it('should get cache size', () => {
-    assert.strictEqual(service.getCacheSize(), 0);
-  });
-
   it('should test if cache is full ', () => {
     assert.strictEqual(service.cacheIsFull(0), false);
 
-    mock.method(
-      service,
-      'getCacheSize',
-      seq(
-        () => 1024 * 1024,
-        () => 1024 * 1024 * 3,
-        () => 1024 * 1024 * 3
-      )
-    );
-
+    // Only the cache folder counts: the error and archive folders have their own limits
+    service['cacheSize'] = { cache: 1024 * 1024, error: 1024 * 1024 * 10, archive: 1024 * 1024 * 10 };
     assert.strictEqual(service.cacheIsFull(2), false);
     assert.strictEqual(service['cacheSizeWarningDebounceTimeout'], null);
+    service['cacheSize'] = { cache: 1024 * 1024 * 3, error: 0, archive: 0 };
     assert.strictEqual(service.cacheIsFull(2), true);
     assert.notStrictEqual(service['cacheSizeWarningDebounceTimeout'], null);
     assert.strictEqual(service.cacheIsFull(2), true);
@@ -333,6 +322,38 @@ describe('CacheService', () => {
     assert.ok(service['cacheSizeWarningDebounceFlag']);
     mock.timers.tick(60_000);
     assert.ok(!service['cacheSizeWarningDebounceFlag']);
+  });
+
+  it('should not scan a folder under its max size', async () => {
+    service['cacheSize'] = { cache: 0, error: 1024 * 1024, archive: 0 };
+    const readMetadata = mock.fn(async () => []);
+    service['readCacheMetadataFiles'] = readMetadata;
+    await service.enforceFolderMaxSize('error', 0);
+    await service.enforceFolderMaxSize('error', 2);
+    assert.strictEqual(readMetadata.mock.calls.length, 0);
+  });
+
+  it('should remove the oldest files of a folder over its max size, down to 90% of it', async () => {
+    service['cacheSize'] = { cache: 0, error: 0, archive: 1024 * 1024 * 3 };
+    const files = [
+      { filename: 'newest', metadata: { createdAt: '2020-01-03T00:00:00.000Z', contentSize: 1024 * 1024 } },
+      { filename: 'oldest', metadata: { createdAt: '2020-01-01T00:00:00.000Z', contentSize: 1024 * 1024 } },
+      { filename: 'middle', metadata: { createdAt: '2020-01-02T00:00:00.000Z', contentSize: 1024 * 1024 } }
+    ];
+    service['readCacheMetadataFiles'] = mock.fn(async () => files as Array<{ filename: string; metadata: CacheMetadata }>);
+    const removed: Array<string> = [];
+    service['removeContent'] = mock.fn(async (folder: DataFolderType, filename: string) => {
+      removed.push(filename);
+      service['cacheSize'][folder] -= 1024 * 1024;
+    });
+
+    // 3 MB over a 2 MB limit: removing the oldest file is enough to reach the limit, but the folder is reduced to 90%
+    // of it (1.8 MB) so that it isn't rescanned on the next file moved into it
+    await service.enforceFolderMaxSize('archive', 2);
+
+    assert.deepStrictEqual(removed, ['oldest', 'middle']);
+    assert.strictEqual(service['cacheSize'].archive, 1024 * 1024);
+    assert.strictEqual(service['updateCache$'], null);
   });
 
   it('should be properly initialized without files in cache', async () => {
@@ -670,19 +691,21 @@ describe('CacheService', () => {
 
   it('should get number of raw files', () => {
     service['queue'] = [
-      { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 0 } },
-      { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
-      { filename: 'f3.json', metadata: { ...fileList[2].metadata, numberOfElement: 1 } }
+      { filename: 'f1.json', metadata: { ...fileList[0].metadata, contentType: 'file', numberOfElement: 0 } },
+      // A file made of elements (e.g. time values transformed into CSV) is still counted as a file
+      { filename: 'f2.json', metadata: { ...fileList[1].metadata, contentType: 'file', numberOfElement: 3 } },
+      { filename: 'f3.json', metadata: { ...fileList[2].metadata, contentType: 'record-list', numberOfElement: 1 } }
     ];
     service['recomputeQueueCounters']();
     assert.strictEqual(service.getNumberOfRawFilesInQueue(), 2);
+    assert.strictEqual(service.getNumberOfElementsInQueue(), 1);
   });
 
   it('should get number of elements', () => {
     service['queue'] = [
-      { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 5 } },
-      { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
-      { filename: 'f3.json', metadata: { ...fileList[2].metadata, numberOfElement: 7 } }
+      { filename: 'f1.json', metadata: { ...fileList[0].metadata, contentType: 'record-list', numberOfElement: 5 } },
+      { filename: 'f2.json', metadata: { ...fileList[1].metadata, contentType: 'file', numberOfElement: 0 } },
+      { filename: 'f3.json', metadata: { ...fileList[2].metadata, contentType: 'record-list', numberOfElement: 7 } }
     ];
     service['recomputeQueueCounters']();
     assert.strictEqual(service.getNumberOfElementsInQueue(), 12);
@@ -952,6 +975,25 @@ describe('CacheService', () => {
       resolveCompact!();
       await waitCall;
       assert.strictEqual(isFinished, true);
+    });
+
+    it('should only compact the files of the requested data source', async () => {
+      const south1 = { id: 'south1', name: 'South 1' };
+      const south2 = { id: 'south2', name: 'South 2' };
+      const item1 = { filename: '1.json', metadata: { contentType: 'typeA', contentSize: 10, dataSource: south1 } as CacheMetadata };
+      const item2 = { filename: '2.json', metadata: { contentType: 'typeA', contentSize: 10, dataSource: south2 } as CacheMetadata };
+      const item3 = { filename: '3.json', metadata: { contentType: 'typeA', contentSize: 10, dataSource: south1 } as CacheMetadata };
+      const item4 = { filename: '4.json', metadata: { contentType: 'typeA', contentSize: 10 } as CacheMetadata };
+      service['queue'] = [item1, item2, item3, item4];
+      const accumulateContent = mock.fn(async () => ({ newListOfContent: [], remainder: [], compactedFiles: [] }));
+      service['accumulateContent'] = accumulateContent;
+
+      await service.compactQueue(100, 'typeA', 'south1');
+      assert.deepStrictEqual((accumulateContent.mock.calls[0].arguments as Array<unknown>)[0], [item1, item3]);
+
+      // Content without data source (cached before 3.10 or from OIAnalytics setpoints) is only merged together
+      await service.compactQueue(100, 'typeA', null);
+      assert.strictEqual(accumulateContent.mock.calls.length, 1); // a single file: nothing to compact
     });
 
     it('should orchestrate accumulation, writing, and cleanup', async () => {

@@ -556,7 +556,8 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: metadata.contentType,
       contentFilename: metadata.contentFile,
-      numberOfElement: metadata.numberOfElement
+      numberOfElement: metadata.numberOfElement,
+      dataSource: { id: southSource.southId, name: southSource.southName }
     });
   });
 
@@ -741,7 +742,8 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: metadata.contentType,
       contentFilename: metadata.contentFile,
-      numberOfElement: metadata.numberOfElement
+      numberOfElement: metadata.numberOfElement,
+      dataSource: { id: southSource.southId, name: southSource.southName }
     });
   });
 
@@ -770,7 +772,8 @@ describe('NorthConnector', () => {
     assert.strictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], readStream);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'file',
-      contentFilename: 'file_copy.csv' // basename — full path is never leaked into cache metadata
+      contentFilename: 'file_copy.csv', // basename — full path is never leaked into cache metadata
+      dataSource: null
     });
   });
 
@@ -783,7 +786,8 @@ describe('NorthConnector', () => {
 
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'file',
-      contentFilename: path.join('sub', 'file.csv')
+      contentFilename: path.join('sub', 'file.csv'),
+      dataSource: null
     });
   });
 
@@ -798,7 +802,8 @@ describe('NorthConnector', () => {
     assert.strictEqual(cached, '{}');
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'file',
-      contentFilename: '1234567890.json'
+      contentFilename: '1234567890.json',
+      dataSource: null
     });
   });
 
@@ -816,7 +821,8 @@ describe('NorthConnector', () => {
     assert.strictEqual(zlib.gunzipSync(cached).toString(), 'content');
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'file',
-      contentFilename: 'file.csv.gz'
+      contentFilename: 'file.csv.gz',
+      dataSource: null
     });
   });
 
@@ -976,7 +982,8 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'opcua',
       contentFilename: '',
-      numberOfElement: 1
+      numberOfElement: 1,
+      dataSource: null
     });
   });
 
@@ -1001,7 +1008,8 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'opcua',
       contentFilename: '',
-      numberOfElement: 1
+      numberOfElement: 1,
+      dataSource: null
     });
   });
 
@@ -1142,5 +1150,23 @@ describe('NorthConnector', () => {
     );
     // Split between the south level transformer (point-1) and the group one (point-2)
     assert.strictEqual(oiBusTransformer.transformInMemory.mock.calls.length, 2);
+  });
+
+  describe('toCacheDataSource', () => {
+    // Loaded after the mocks of the main before() hook (a top level require would load the real services)
+    let toCacheDataSource: (typeof import('./north-connector'))['toCacheDataSource'];
+    before(() => {
+      toCacheDataSource = nodeRequire('./north-connector').toCacheDataSource;
+    });
+
+    it('should identify the South connector at the source of the content', () => {
+      assert.deepStrictEqual(toCacheDataSource(southSource), { id: southSource.southId, name: southSource.southName });
+    });
+
+    it('should not identify content not coming from a South connector', () => {
+      assert.strictEqual(toCacheDataSource({ ...southSource, historyQuery: true }), null);
+      assert.strictEqual(toCacheDataSource({ source: 'oibus-api', dataSourceId: 'ds1' }), null);
+      assert.strictEqual(toCacheDataSource({ source: 'oianalytics-setpoints' }), null);
+    });
   });
 });
