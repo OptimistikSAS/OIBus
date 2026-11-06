@@ -213,11 +213,13 @@ export const buildNorthEntity = <T extends NorthSettings>(type: OIBusNorthType, 
     error: {
       retryInterval: 1_000,
       retryCount: 3,
-      retentionDuration: 24
+      retentionDuration: 24,
+      maxSize: 0
     },
     archive: {
       enabled: false,
-      retentionDuration: 72
+      retentionDuration: 72,
+      maxSize: 0
     }
   },
   transformers: []

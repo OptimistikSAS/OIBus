@@ -909,6 +909,24 @@ export interface CacheMetadata {
    * @example "record-list"
    */
   contentType: string;
+
+  /**
+   * The data source (south connector, or OIBus API data source) the content comes from. Content from different data
+   * sources is never merged together, so that the receiver can know where each batch comes from.
+   * Absent for content cached before 3.11 or without identified source (OIAnalytics setpoints, tests).
+   */
+  dataSource?: CacheMetadataDataSource | null;
+}
+
+export interface CacheMetadataDataSource {
+  /**
+   * @example "southId1"
+   */
+  id: string;
+  /**
+   * @example "My South"
+   */
+  name: string;
 }
 
 /**

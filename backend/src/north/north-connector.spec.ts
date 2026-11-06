@@ -556,7 +556,8 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: metadata.contentType,
       contentFilename: metadata.contentFile,
-      numberOfElement: metadata.numberOfElement
+      numberOfElement: metadata.numberOfElement,
+      dataSource: { id: southSource.southId, name: southSource.southName }
     });
   });
 
@@ -741,7 +742,8 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: metadata.contentType,
       contentFilename: metadata.contentFile,
-      numberOfElement: metadata.numberOfElement
+      numberOfElement: metadata.numberOfElement,
+      dataSource: { id: southSource.southId, name: southSource.southName }
     });
   });
 
@@ -770,7 +772,8 @@ describe('NorthConnector', () => {
     assert.strictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], readStream);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'file',
-      contentFilename: 'file_copy.csv' // basename — full path is never leaked into cache metadata
+      contentFilename: 'file_copy.csv', // basename — full path is never leaked into cache metadata
+      dataSource: null
     });
   });
 
@@ -783,7 +786,8 @@ describe('NorthConnector', () => {
 
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'file',
-      contentFilename: path.join('sub', 'file.csv')
+      contentFilename: path.join('sub', 'file.csv'),
+      dataSource: null
     });
   });
 
@@ -798,7 +802,8 @@ describe('NorthConnector', () => {
     assert.strictEqual(cached, '{}');
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'file',
-      contentFilename: '1234567890.json'
+      contentFilename: '1234567890.json',
+      dataSource: null
     });
   });
 
@@ -816,7 +821,8 @@ describe('NorthConnector', () => {
     assert.strictEqual(zlib.gunzipSync(cached).toString(), 'content');
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'file',
-      contentFilename: 'file.csv.gz'
+      contentFilename: 'file.csv.gz',
+      dataSource: null
     });
   });
 
@@ -976,7 +982,8 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'opcua',
       contentFilename: '',
-      numberOfElement: 1
+      numberOfElement: 1,
+      dataSource: null
     });
   });
 
@@ -1001,7 +1008,8 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'opcua',
       contentFilename: '',
-      numberOfElement: 1
+      numberOfElement: 1,
+      dataSource: null
     });
   });
 

@@ -3181,7 +3181,7 @@
       "throttling": {
         "title": "Throttling",
         "run-min-delay": "Minimum delay between two transmissions",
-        "max-size": "Maximum storage size (cache + error + archive)",
+        "max-size": "Maximum cache size (0 = no limit)",
         "max-number-of-elements": "Maximum number of elements",
         "value": "Run min delay: {{ runMinDelay }} ms / Max cache size: {{ maxSize }} MB / Max number of elements: {{ maxNumberOfElements }}"
       },
@@ -3190,12 +3190,14 @@
         "retry-interval": "Delay to wait before retry after error",
         "retry-count": "Number of retry",
         "retention-duration": "Retention duration for errored data",
+        "max-size": "Maximum size of errored data (0 = no limit)",
         "value": "Retry interval: {{ retryInterval }} ms / Number of retry: {{ retryCount }} / Retention duration: {{ retentionDuration }} hr"
       },
       "archive": {
         "title": "Archive",
         "enabled": "Enabled",
         "retention-duration": "Retention duration for archived data",
+        "max-size": "Maximum size of archived data (0 = no limit)",
         "value": "Enabled: {{ enabled }} / Retention duration: {{ retentionDuration }} hr"
       },
       "explore-cache": "Explore cache"

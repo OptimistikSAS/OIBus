@@ -10,8 +10,8 @@ import { SettingSummary } from '../shared/form/oibus-settings-summary/settings-s
 export interface CachingFormValue {
   trigger: { scanMode: ScanModeDTO | null; numberOfElements: number; numberOfFiles: number };
   throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
-  error: { retryInterval: number; retryCount: number; retentionDuration: number };
-  archive: { enabled: boolean; retentionDuration: number };
+  error: { retryInterval: number; retryCount: number; retentionDuration: number; maxSize: number };
+  archive: { enabled: boolean; retentionDuration: number; maxSize: number };
 }
 
 /**
@@ -60,7 +60,8 @@ export function summarizeCaching(
       settings: [
         number(error.retryInterval, 'north.caching.error.retry-interval', ['error', 'retryInterval'], 'common.unit.ms'),
         number(error.retryCount, 'north.caching.error.retry-count', ['error', 'retryCount']),
-        number(error.retentionDuration, 'north.caching.error.retention-duration', ['error', 'retentionDuration'], 'common.unit.hr')
+        number(error.retentionDuration, 'north.caching.error.retention-duration', ['error', 'retentionDuration'], 'common.unit.hr'),
+        number(error.maxSize, 'north.caching.error.max-size', ['error', 'maxSize'], 'common.unit.MB')
       ]
     },
     {
@@ -68,7 +69,8 @@ export function summarizeCaching(
       labelKey: 'north.caching.archive.title',
       settings: [
         { kind: 'boolean', labelKey: 'north.caching.archive.enabled', value: archive.enabled },
-        number(archive.retentionDuration, 'north.caching.archive.retention-duration', ['archive', 'retentionDuration'], 'common.unit.hr')
+        number(archive.retentionDuration, 'north.caching.archive.retention-duration', ['archive', 'retentionDuration'], 'common.unit.hr'),
+        number(archive.maxSize, 'north.caching.archive.max-size', ['archive', 'maxSize'], 'common.unit.MB')
       ]
     }
   ];

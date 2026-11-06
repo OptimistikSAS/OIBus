@@ -146,10 +146,12 @@ type HistoryQueryForm = FormGroup<{
       retryInterval: FormControl<number>;
       retryCount: FormControl<number>;
       retentionDuration: FormControl<number>;
+      maxSize: FormControl<number>;
     }>;
     archive: FormGroup<{
       enabled: FormControl<boolean>;
       retentionDuration: FormControl<number>;
+      maxSize: FormControl<number>;
     }>;
   }>;
   northSettings: FormGroup;
@@ -230,6 +232,9 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   readonly transformers = signal<Array<TransformerDTO>>([]);
   readonly certificates = signal<Array<CertificateDTO>>([]);
   readonly northManifest = signal<NorthConnectorManifest | null>(null);
+  // Raw files are counted by the files trigger, every other content type by the elements trigger
+  readonly handlesFiles = computed(() => this.northManifest()?.types.includes('file') ?? true);
+  readonly handlesElements = computed(() => this.northManifest()?.types.some(type => type !== 'file') ?? true);
   readonly southManifest = signal<SouthConnectorManifest | null>(null);
   private existingHistoryQueries: Array<HistoryQueryLightDTO> = [];
 
@@ -572,11 +577,13 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         error: this.fb.group({
           retryInterval: [5_000, Validators.required],
           retryCount: [3, Validators.required],
-          retentionDuration: [0, Validators.required]
+          retentionDuration: [0, Validators.required],
+          maxSize: [0, Validators.required]
         }),
         archive: this.fb.group({
           enabled: [false, Validators.required],
-          retentionDuration: [72, Validators.required]
+          retentionDuration: [72, Validators.required],
+          maxSize: [0, Validators.required]
         })
       }),
       northSettings: this.fb.group({}),
@@ -838,11 +845,13 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         error: {
           retryInterval: formValue.caching!.error!.retryInterval!,
           retryCount: formValue.caching!.error!.retryCount!,
-          retentionDuration: formValue.caching!.error!.retentionDuration!
+          retentionDuration: formValue.caching!.error!.retentionDuration!,
+          maxSize: formValue.caching!.error!.maxSize!
         },
         archive: {
           enabled: formValue.caching!.archive!.enabled!,
-          retentionDuration: formValue.caching!.archive!.retentionDuration!
+          retentionDuration: formValue.caching!.archive!.retentionDuration!,
+          maxSize: formValue.caching!.archive!.maxSize!
         }
       },
       items: this.inMemoryItems(),

@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
+  CacheMetadataDataSource,
   CacheSearchParam,
   CacheSearchResult,
   DataFolderType,
@@ -333,7 +334,7 @@ export default class CacheService {
       const numberOfElement = head.metadata.numberOfElement ?? 0;
       const shouldCompact = head.metadata.contentType !== 'file' && (maxGroupCount === 0 || numberOfElement < maxGroupCount);
       if (shouldCompact) {
-        await this.compactQueue(maxGroupCount, head.metadata.contentType);
+        await this.compactQueue(maxGroupCount, head.metadata.contentType, head.metadata.dataSource?.id ?? null);
       }
 
       const contentToSend = this.queue[0];
@@ -415,7 +416,11 @@ export default class CacheService {
     }
   }
 
-  async compactQueue(maxGroupCount: number, contentType: string): Promise<void> {
+  /**
+   * Merge queued files of the same content type and coming from the same data source (see `CacheMetadata.dataSource`).
+   * Files from different data sources are never merged, so that each sent batch has a single source.
+   */
+  async compactQueue(maxGroupCount: number, contentType: string, dataSourceId: string | null = null): Promise<void> {
     if (this.updateCache$) {
       // Return existing promise if running
       return this.updateCache$.promise;
@@ -424,7 +429,9 @@ export default class CacheService {
     this.updateCache$ = new DeferredPromise();
     try {
       // 1. Filter Queue
-      const copiedQueue = this.queue.filter(el => el.metadata.contentType === contentType);
+      const copiedQueue = this.queue.filter(
+        el => el.metadata.contentType === contentType && (el.metadata.dataSource?.id ?? null) === dataSourceId
+      );
       if (copiedQueue.length <= 1) {
         return; // Nothing to compact
       }
@@ -486,7 +493,8 @@ export default class CacheService {
     if (maxSize === 0) {
       return false;
     }
-    const totalSize = this.getCacheSize();
+    // Only the cache folder counts: the error and archive folders have their own limits (see enforceFolderMaxSize)
+    const totalSize = this.cacheSize.cache;
     const full = totalSize >= maxSize * 1024 * 1024;
     if (full && !this.cacheSizeWarningDebounceFlag) {
       const sizeMB = Math.floor((totalSize / 1024 / 1024) * 100) / 100;
@@ -554,6 +562,15 @@ export default class CacheService {
     return results;
   }
 
+  private async readCacheMetadataFiles(folder: DataFolderType): Promise<Array<{ filename: string; metadata: CacheMetadata }>> {
+    const filenames = await fs.readdir(path.join(this.getFolder(folder), METADATA_FOLDER));
+    const metadataList = await parallelMap(filenames, STARTUP_SCAN_CONCURRENCY, filename => this.readCacheMetadataFile(folder, filename));
+    return filenames.flatMap((filename, index) => {
+      const metadata = metadataList[index];
+      return metadata ? [{ filename, metadata }] : [];
+    });
+  }
+
   async getFileFromCache(folder: DataFolderType, filename: string): Promise<FileCacheContent> {
     const contentPath = path.resolve(this.getFolder(folder), CONTENT_FOLDER, filename);
     const metadataPath = path.resolve(this.getFolder(folder), METADATA_FOLDER, filename);
@@ -613,6 +630,7 @@ export default class CacheService {
       contentFilename?: string;
       numberOfElement?: number;
       contentType: string;
+      dataSource?: CacheMetadataDataSource | null;
     }
   ): Promise<void> {
     const filename = generateRandomId(12);
@@ -647,7 +665,8 @@ export default class CacheService {
         // we used to fetch via fs.stat — but without the syscall.
         createdAt: DateTime.now().toUTC().toISO()!,
         numberOfElement: details.numberOfElement || 0,
-        contentType: details.contentType
+        contentType: details.contentType,
+        dataSource: details.dataSource ?? null
       };
       await fs.writeFile(path.join(this.cacheFolder, METADATA_FOLDER, filename), JSON.stringify(metadata), {
         encoding: 'utf-8',
@@ -666,6 +685,37 @@ export default class CacheService {
     this.cacheSizeEventEmitter.emit('cache-content-size', contentSize);
     this.logger.trace(`File "${filename}" added to cache`);
     this.logCacheState(metadata);
+  }
+
+  /**
+   * Remove the oldest files of the error or archive folder until it is back under `maxSize` (in MB, 0 means no limit).
+   * The folder is only scanned when its tracked size exceeds the limit.
+   */
+  async enforceFolderMaxSize(folder: 'error' | 'archive', maxSize: number): Promise<void> {
+    const limit = maxSize * 1024 * 1024;
+    if (maxSize <= 0 || this.cacheSize[folder] <= limit) {
+      return;
+    }
+    await this.waitCacheUpdateTasks();
+    this.updateCache$ = new DeferredPromise();
+    try {
+      const files = (await this.readCacheMetadataFiles(folder)).sort((a, b) => a.metadata.createdAt.localeCompare(b.metadata.createdAt));
+      let removed = 0;
+      for (const file of files) {
+        if (this.cacheSize[folder] <= limit) {
+          break;
+        }
+        await this.removeContent(folder, file.filename);
+        removed++;
+      }
+      if (removed > 0) {
+        this.logger.warn(`${removed} file(s) removed from the ${folder} folder to keep it under ${maxSize} MB`);
+        this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+      }
+    } finally {
+      this.updateCache$.resolve();
+      this.updateCache$ = null;
+    }
   }
 
   private async moveContent(from: DataFolderType, to: DataFolderType, filename: string): Promise<void> {

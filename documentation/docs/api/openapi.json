@@ -31087,6 +31087,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -31108,6 +31114,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -31146,7 +31158,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -31343,6 +31355,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -31364,6 +31382,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -31402,7 +31426,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -31601,6 +31625,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -31622,6 +31652,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -31660,7 +31696,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -31791,6 +31827,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -31812,6 +31854,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -31850,7 +31898,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -31993,6 +32041,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -32014,6 +32068,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -32052,7 +32112,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -32233,6 +32293,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -32254,6 +32320,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -32292,7 +32364,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -32492,6 +32564,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -32513,6 +32591,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -32551,7 +32635,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -32768,6 +32852,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -32789,6 +32879,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -32827,7 +32923,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -33045,6 +33141,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -33066,6 +33168,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -33104,7 +33212,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -33439,6 +33547,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -33460,6 +33574,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -33498,7 +33618,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -33664,6 +33784,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -33685,6 +33811,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -33723,7 +33855,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -34362,6 +34494,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double"
@@ -34378,6 +34516,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double"
@@ -39480,6 +39624,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -39493,6 +39643,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -39501,6 +39652,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -39521,6 +39678,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -39539,7 +39697,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -39677,6 +39835,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -39690,6 +39854,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -39698,6 +39863,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -39718,6 +39889,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -39736,7 +39908,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -39874,6 +40046,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -39887,6 +40065,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -39895,6 +40074,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -39915,6 +40100,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -39933,7 +40119,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -40071,6 +40257,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40084,6 +40276,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -40092,6 +40285,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40112,6 +40311,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -40130,7 +40330,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -40268,6 +40468,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40281,6 +40487,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -40289,6 +40496,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40309,6 +40522,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -40327,7 +40541,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -40465,6 +40679,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40478,6 +40698,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -40486,6 +40707,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40506,6 +40733,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -40524,7 +40752,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -40662,6 +40890,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40675,6 +40909,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -40683,6 +40918,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40703,6 +40944,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -40721,7 +40963,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -40859,6 +41101,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40872,6 +41120,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -40880,6 +41129,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -40900,6 +41155,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -40918,7 +41174,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -41056,6 +41312,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -41069,6 +41331,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -41077,6 +41340,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -41097,6 +41366,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -41115,7 +41385,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -41253,6 +41523,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -41266,6 +41542,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -41274,6 +41551,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -41294,6 +41577,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -41312,7 +41596,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -41450,6 +41734,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -41463,6 +41753,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -41471,6 +41762,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -41491,6 +41788,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -41509,7 +41807,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in bytes) of the cache before sending.",
+										"description": "The maximum size (in MB) of the cache folder. When reached, new content is discarded. 0 means no limit.",
 										"example": 1048576
 									},
 									"runMinDelay": {
@@ -41765,6 +42063,24 @@
 					}
 				]
 			},
+			"CacheMetadataDataSource": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"example": "southId1"
+					},
+					"name": {
+						"type": "string",
+						"example": "My South"
+					}
+				},
+				"required": [
+					"id",
+					"name"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"CacheMetadata": {
 				"description": "Metadata for cached content.",
 				"properties": {
@@ -41794,6 +42110,15 @@
 						"type": "string",
 						"description": "The type of the content.",
 						"example": "record-list"
+					},
+					"dataSource": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/CacheMetadataDataSource"
+							}
+						],
+						"nullable": true,
+						"description": "The data source (south connector, or OIBus API data source) the content comes from. Content from different data\nsources is never merged together, so that the receiver can know where each batch comes from.\nAbsent for content cached before 3.11 or without identified source (OIAnalytics setpoints, tests)."
 					}
 				},
 				"required": [
@@ -42454,6 +42779,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -42467,6 +42798,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -42475,6 +42807,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double",
@@ -42495,6 +42833,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -46097,6 +46436,12 @@
 						"properties": {
 							"archive": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double"
@@ -46113,6 +46458,12 @@
 							},
 							"error": {
 								"properties": {
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"example": 0
+									},
 									"retentionDuration": {
 										"type": "number",
 										"format": "double"

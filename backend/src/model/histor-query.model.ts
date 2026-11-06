@@ -47,10 +47,12 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
       retryInterval: number;
       retryCount: number;
       retentionDuration: number;
+      maxSize: number;
     };
     archive: {
       enabled: boolean;
       retentionDuration: number;
+      maxSize: number;
     };
   };
   items: Array<HistoryQueryItemEntity<I>>;

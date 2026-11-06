@@ -163,6 +163,24 @@ describe('NorthOIAnalytics', () => {
       assert.strictEqual(options.query, undefined);
     });
 
+    it('should send the data source of the values', async () => {
+      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), {
+        ...timeValuesMetadata,
+        dataSource: { id: 'southId', name: 'My South' }
+      });
+
+      const { url } = sentRequest();
+      assert.strictEqual(url.searchParams.get('dataSourceId'), 'southId');
+      assert.strictEqual(url.searchParams.get('dataSourceName'), 'My South');
+    });
+
+    it('should not send any data source when the content has none', async () => {
+      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), { ...timeValuesMetadata, dataSource: null });
+
+      const { url } = sentRequest();
+      assert.strictEqual(url.search, '');
+    });
+
     it('should stream compact oianalytics content as is', async () => {
       const content = `  ${JSON.stringify(compactTimeValues)}`;
       const compactFileStream = fileStreamOf(content);
@@ -296,6 +314,15 @@ describe('NorthOIAnalytics', () => {
       assert.strictEqual(url.pathname, '/api/oianalytics/oibus/file');
       assert.strictEqual(options.query, undefined);
       assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
+    });
+
+    it('should send the data source of the file', async () => {
+      await north.handleContent(fileStream, { ...metadata, dataSource: { id: 'southId', name: 'My South' } });
+
+      const { url } = sentRequest();
+      assert.strictEqual(url.pathname, '/api/oianalytics/oibus/file');
+      assert.strictEqual(url.searchParams.get('dataSourceId'), 'southId');
+      assert.strictEqual(url.searchParams.get('dataSourceName'), 'My South');
     });
 
     it('should compress file if enabled and not .gz', async () => {

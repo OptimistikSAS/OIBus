@@ -1016,11 +1016,13 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
       error: {
         retryInterval: 1_000,
         retryCount: 3,
-        retentionDuration: 24
+        retentionDuration: 24,
+        maxSize: 0
       },
       archive: {
         enabled: false,
-        retentionDuration: 72
+        retentionDuration: 72,
+        maxSize: 0
       }
     },
     transformers: [
@@ -1128,11 +1130,13 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
       error: {
         retryInterval: 1_000,
         retryCount: 1,
-        retentionDuration: 24
+        retentionDuration: 24,
+        maxSize: 0
       },
       archive: {
         enabled: false,
-        retentionDuration: 72
+        retentionDuration: 72,
+        maxSize: 0
       }
     },
     transformers: []
@@ -1164,11 +1168,13 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
     error: {
       retryInterval: 1_000,
       retryCount: 3,
-      retentionDuration: 24
+      retentionDuration: 24,
+      maxSize: 0
     },
     archive: {
       enabled: false,
-      retentionDuration: 0
+      retentionDuration: 0,
+      maxSize: 0
     }
   },
   transformers: [
@@ -1252,11 +1258,13 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       error: {
         retryInterval: 1_000,
         retryCount: 3,
-        retentionDuration: 24
+        retentionDuration: 24,
+        maxSize: 0
       },
       archive: {
         enabled: true,
-        retentionDuration: 1_000
+        retentionDuration: 1_000,
+        maxSize: 0
       }
     },
     items: [
@@ -1367,11 +1375,13 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       error: {
         retryInterval: 1_000,
         retryCount: 3,
-        retentionDuration: 24
+        retentionDuration: 24,
+        maxSize: 0
       },
       archive: {
         enabled: true,
-        retentionDuration: 1_000
+        retentionDuration: 1_000,
+        maxSize: 0
       }
     },
     items: [
@@ -1457,11 +1467,13 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
     error: {
       retryInterval: 1_000,
       retryCount: 3,
-      retentionDuration: 24
+      retentionDuration: 24,
+      maxSize: 0
     },
     archive: {
       enabled: false,
-      retentionDuration: 0
+      retentionDuration: 0,
+      maxSize: 0
     }
   },
   items: [
