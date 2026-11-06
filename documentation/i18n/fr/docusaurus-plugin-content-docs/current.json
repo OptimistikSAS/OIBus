@@ -43,14 +43,6 @@
     "message": "Découvrez quelques concepts avancés d'OIBus.",
     "description": "The generated-index page description for category 'Advanced' in sidebar 'guideSidebar'"
   },
-  "sidebar.guideSidebar.category.OIBus Agent": {
-    "message": "Agent OIBus",
-    "description": "The label for category 'OIBus Agent' in sidebar 'guideSidebar'"
-  },
-  "sidebar.guideSidebar.category.OIBus Agent.link.generated-index.description": {
-    "message": "Apprenez à installer l'agent OIBus et à communiquer avec lui.",
-    "description": "The generated-index page description for category 'OIBus Agent' in sidebar 'guideSidebar'"
-  },
   "sidebar.developerSidebar.category.Create a connector": {
     "message": "Créer un connecteur",
     "description": "The label for category 'Create a connector' in sidebar 'developerSidebar'"

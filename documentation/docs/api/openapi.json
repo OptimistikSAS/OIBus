@@ -2330,7 +2330,7 @@
 					},
 					"discovery": {
 						"$ref": "#/components/schemas/SouthConnectorDiscovery",
-						"description": "Whether this connector type can feed Configuration Workflows, the shape of their discovery scope and the\nstarting values of a new one. Absent when the connector has no discovery.\nUI capability flag — mirrors the connector's structural `hasConfigurationDiscovery()`. ODBC and OLEDB\nare SQL-family too but route through a separate agent process, so they don't have discovery yet."
+						"description": "Whether this connector type can feed Configuration Workflows, the shape of their discovery scope and the\nstarting values of a new one. Absent when the connector has no discovery.\nUI capability flag — mirrors the connector's structural `hasConfigurationDiscovery()`. ODBC and OLEDB\nare SQL-family too but don't have discovery yet."
 					},
 					"settings": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
