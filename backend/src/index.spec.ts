@@ -5,6 +5,7 @@
  */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import LoggerMock from './tests/__mocks__/service/logger/logger.mock';
@@ -338,6 +339,41 @@ describe('index.ts bootstrap()', () => {
     assert.equal(oibusServiceMock.start.mock.calls.length, 1);
     assert.equal(oianalyticsCommandServiceMock.start.mock.calls.length, 1);
     assert.equal(cleanupServiceMock.start.mock.calls.length, 1);
+  });
+
+  describe('helper extract folders', () => {
+    const variables = ['OIBUS_OLEDB_EXTRACT_DIR', 'OIBUS_OPC_CLASSIC_EXTRACT_DIR', 'OIBUS_PI_EXTRACT_DIR'];
+    const saved: Record<string, string | undefined> = {};
+
+    beforeEach(() => {
+      for (const variable of variables) {
+        saved[variable] = process.env[variable];
+        delete process.env[variable];
+      }
+    });
+
+    afterEach(() => {
+      for (const variable of variables) {
+        if (saved[variable] === undefined) delete process.env[variable];
+        else process.env[variable] = saved[variable];
+      }
+    });
+
+    it('points the Windows drivers to the helpers folder of the data folder', async () => {
+      setupMocks(fakeEngineSettings, fakeCryptoSettings);
+      await indexMod.bootstrap();
+      for (const variable of variables) {
+        assert.equal(process.env[variable], path.resolve('helpers'), variable);
+      }
+    });
+
+    it('keeps a folder already set', async () => {
+      process.env.OIBUS_PI_EXTRACT_DIR = 'C:\\OIBus\\helpers';
+      setupMocks(fakeEngineSettings, fakeCryptoSettings);
+      await indexMod.bootstrap();
+      assert.equal(process.env.OIBUS_PI_EXTRACT_DIR, 'C:\\OIBus\\helpers');
+      assert.equal(process.env.OIBUS_OLEDB_EXTRACT_DIR, path.resolve('helpers'));
+    });
   });
 
   it('SIGINT handler stops all services', async () => {
