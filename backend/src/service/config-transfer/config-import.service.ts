@@ -957,13 +957,13 @@ export default class ConfigImportService {
   private buildCachingEntity(caching: {
     trigger: { scanModeId: string; numberOfElements: number; numberOfFiles: number };
     throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
-    error: { retryInterval: number; retryCount: number; retentionDuration: number };
-    archive: { enabled: boolean; retentionDuration: number };
+    error: { retryInterval: number; retryCount: number; retentionDuration: number; maxSize?: number };
+    archive: { enabled: boolean; retentionDuration: number; maxSize?: number };
   }): {
     trigger: { scanMode: ScanMode; numberOfElements: number; numberOfFiles: number };
     throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
-    error: { retryInterval: number; retryCount: number; retentionDuration: number };
-    archive: { enabled: boolean; retentionDuration: number };
+    error: { retryInterval: number; retryCount: number; retentionDuration: number; maxSize: number };
+    archive: { enabled: boolean; retentionDuration: number; maxSize: number };
   } {
     return {
       trigger: {
@@ -972,8 +972,9 @@ export default class ConfigImportService {
         numberOfFiles: caching.trigger.numberOfFiles
       },
       throttling: { ...caching.throttling },
-      error: { ...caching.error },
-      archive: { ...caching.archive }
+      // Configurations exported before the per-folder sizes only have the cache size: the folders start with the same
+      error: { ...caching.error, maxSize: caching.error.maxSize ?? caching.throttling.maxSize },
+      archive: { ...caching.archive, maxSize: caching.archive.maxSize ?? caching.throttling.maxSize }
     };
   }
 

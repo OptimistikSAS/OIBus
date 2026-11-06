@@ -713,11 +713,13 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async (
     error: {
       retryInterval: command.caching.error.retryInterval,
       retryCount: command.caching.error.retryCount,
-      retentionDuration: command.caching.error.retentionDuration
+      retentionDuration: command.caching.error.retentionDuration,
+      maxSize: command.caching.error.maxSize ?? command.caching.throttling.maxSize
     },
     archive: {
       enabled: command.caching.archive.enabled,
-      retentionDuration: command.caching.archive.retentionDuration
+      retentionDuration: command.caching.archive.retentionDuration,
+      maxSize: command.caching.archive.maxSize ?? command.caching.throttling.maxSize
     }
   };
   const currentItems = new Map((currentSettings?.items ?? []).map(item => [item.id, item]));
@@ -822,11 +824,13 @@ export const toHistoryQueryDTO = (
       error: {
         retryInterval: historyQuery.caching.error.retryInterval,
         retryCount: historyQuery.caching.error.retryCount,
-        retentionDuration: historyQuery.caching.error.retentionDuration
+        retentionDuration: historyQuery.caching.error.retentionDuration,
+        maxSize: historyQuery.caching.error.maxSize
       },
       archive: {
         enabled: historyQuery.caching.archive.enabled,
-        retentionDuration: historyQuery.caching.archive.retentionDuration
+        retentionDuration: historyQuery.caching.archive.retentionDuration,
+        maxSize: historyQuery.caching.archive.maxSize
       }
     },
     items,

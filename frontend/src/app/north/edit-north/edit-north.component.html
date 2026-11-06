@@ -90,22 +90,26 @@
                         <oib-oibus-scan-mode-form-control [allScanModes]="scanModes()" [scanModeAttribute]="scanModeAttribute" />
                       </div>
                     </div>
-                    <!-- Number of elements -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="number-of-elements" translate="north.caching.trigger.number-of-elements"></label>
-                        <input type="number" formControlName="numberOfElements" id="number-of-elements" class="form-control" />
-                        <val-errors controlName="numberOfElements" />
+                    <!-- Number of elements: only for the content types made of elements (all but raw files) -->
+                    @if (handlesElements()) {
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label class="form-label" for="number-of-elements" translate="north.caching.trigger.number-of-elements"></label>
+                          <input type="number" formControlName="numberOfElements" id="number-of-elements" class="form-control" />
+                          <val-errors controlName="numberOfElements" />
+                        </div>
                       </div>
-                    </div>
-                    <!-- Number of files -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="number-of-files" translate="north.caching.trigger.number-of-files"></label>
-                        <input type="number" formControlName="numberOfFiles" id="number-of-files" class="form-control" />
-                        <val-errors controlName="numberOfFiles" />
+                    }
+                    <!-- Number of files: only when the connector handles raw files -->
+                    @if (handlesFiles()) {
+                      <div class="col-4">
+                        <div class="form-group">
+                          <label class="form-label" for="number-of-files" translate="north.caching.trigger.number-of-files"></label>
+                          <input type="number" formControlName="numberOfFiles" id="number-of-files" class="form-control" />
+                          <val-errors controlName="numberOfFiles" />
+                        </div>
                       </div>
-                    </div>
+                    }
                   </div>
                   <h6 class="oib-group-title" translate="north.caching.throttling.title"></h6>
                   <div formGroupName="throttling" class="row">
@@ -175,6 +179,17 @@
                         </div>
                       </div>
                     </div>
+                    <!-- Max size -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="error-max-size" translate="north.caching.error.max-size"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="maxSize" id="error-max-size" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.MB"></span>
+                        </div>
+                        <val-errors controlName="maxSize" />
+                      </div>
+                    </div>
                   </div>
                   <h6 class="oib-group-title" translate="north.caching.archive.title"></h6>
                   <div formGroupName="archive" class="row">
@@ -199,6 +214,17 @@
                           <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
                           <span class="input-group-text" translate="common.unit.hr"></span>
                         </div>
+                      </div>
+                    </div>
+                    <!-- Max size -->
+                    <div class="col-4">
+                      <div class="form-group">
+                        <label class="form-label" for="archive-max-size" translate="north.caching.archive.max-size"></label>
+                        <div class="input-group">
+                          <input type="number" formControlName="maxSize" id="archive-max-size" class="form-control" />
+                          <span class="input-group-text" translate="common.unit.MB"></span>
+                        </div>
+                        <val-errors controlName="maxSize" />
                       </div>
                     </div>
                   </div>

@@ -248,8 +248,8 @@
         "oIBusInternalId": "southId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.426Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.426Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.873Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.873Z",
         "type": "folder-scanner",
         "settings": {
           "type": "folder-scanner",
@@ -267,8 +267,8 @@
               "id": "southItemId1",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": "fixture",
-              "oIBusCreatedAt": "2026-10-30T13:22:59.426Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.874Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07Z",
               "name": "item1",
               "description": null,
               "enabled": false,
@@ -297,8 +297,8 @@
               "id": "southItemId2",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.427Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.427Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.875Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.875Z",
               "name": "item2",
               "description": null,
               "enabled": true,
@@ -354,7 +354,16 @@
               "fieldProcesses": [
                 {
                   "field": "name",
-                  "operations": [{ "type": "lowercase" }, { "type": "add-to-string", "prefix": "plant1.", "suffix": "" }]
+                  "operations": [
+                    {
+                      "type": "lowercase"
+                    },
+                    {
+                      "type": "add-to-string",
+                      "prefix": "plant1.",
+                      "suffix": ""
+                    }
+                  ]
                 }
               ],
               "eligibilityFilter": [
@@ -379,8 +388,8 @@
         "oIBusInternalId": "southId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.428Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.428Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.876Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.876Z",
         "type": "mssql",
         "settings": {
           "type": "mssql",
@@ -407,8 +416,8 @@
               "id": "southItemId3",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.429Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.429Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.877Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.877Z",
               "name": "item3",
               "description": "Temperature of the reactor inlet",
               "enabled": true,
@@ -443,8 +452,8 @@
               "id": "southItemId4",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.430Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.430Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.877Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.877Z",
               "name": "item4",
               "description": null,
               "enabled": true,
@@ -500,8 +509,8 @@
         "oIBusInternalId": "southId3",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.430Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.430Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.878Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.878Z",
         "type": "opcua",
         "settings": {
           "type": "opcua",
@@ -533,8 +542,8 @@
               "id": "southItemId7",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.433Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.433Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.881Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.881Z",
               "name": "opcua da",
               "description": null,
               "enabled": true,
@@ -565,8 +574,8 @@
               "id": "southItemId5",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.431Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.431Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.879Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.879Z",
               "name": "opcua ha",
               "description": null,
               "enabled": true,
@@ -597,8 +606,8 @@
               "id": "southItemId8",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.434Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.434Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.881Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.881Z",
               "name": "opcua ha 2",
               "description": null,
               "enabled": true,
@@ -629,8 +638,8 @@
               "id": "southItemId6",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.432Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.432Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.880Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.880Z",
               "name": "opcua sub",
               "description": null,
               "enabled": true,
@@ -668,8 +677,8 @@
         "oIBusInternalId": "northId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.434Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.434Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.882Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.882Z",
         "type": "file-writer",
         "settings": {
           "type": "file-writer",
@@ -697,11 +706,13 @@
             "error": {
               "retryInterval": 1000,
               "retryCount": 3,
-              "retentionDuration": 24
+              "retentionDuration": 24,
+              "maxSize": 0
             },
             "archive": {
               "enabled": false,
-              "retentionDuration": 72
+              "retentionDuration": 72,
+              "maxSize": 0
             }
           },
           "transformers": [
@@ -754,8 +765,8 @@
         "oIBusInternalId": "northId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.439Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.439Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.886Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.886Z",
         "type": "oianalytics",
         "settings": {
           "type": "oianalytics",
@@ -782,11 +793,13 @@
             "error": {
               "retryInterval": 1000,
               "retryCount": 1,
-              "retentionDuration": 24
+              "retentionDuration": 24,
+              "maxSize": 0
             },
             "archive": {
               "enabled": false,
-              "retentionDuration": 72
+              "retentionDuration": 72,
+              "maxSize": 0
             }
           },
           "transformers": []
@@ -827,7 +840,7 @@
     ],
     "transformers": [
       {
-        "oIBusInternalId": "3BDGIP",
+        "oIBusInternalId": "ypvBcR",
         "type": "standard",
         "settings": {
           "functionName": "file-to-mqtt",
@@ -894,7 +907,7 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1095,7 +1108,7 @@
         }
       },
       {
-        "oIBusInternalId": "rgvFld",
+        "oIBusInternalId": "ChzWnq",
         "type": "standard",
         "settings": {
           "functionName": "file-to-record-list",
@@ -1162,7 +1175,7 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1221,7 +1234,7 @@
         }
       },
       {
-        "oIBusInternalId": "zu4vam",
+        "oIBusInternalId": "YKbEso",
         "type": "standard",
         "settings": {
           "functionName": "file-to-file",
@@ -1288,7 +1301,7 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1459,7 +1472,7 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.delimiter",
                   "defaultValue": "COMMA",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1688,7 +1701,7 @@
         }
       },
       {
-        "oIBusInternalId": "TXECgt",
+        "oIBusInternalId": "JbLWhZ",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-modbus",
@@ -1822,7 +1835,7 @@
         }
       },
       {
-        "oIBusInternalId": "Hh1xX1",
+        "oIBusInternalId": "mYUKt1",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-mqtt",
@@ -1962,7 +1975,7 @@
         }
       },
       {
-        "oIBusInternalId": "1roUbL",
+        "oIBusInternalId": "RG2Afd",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-oianalytics",
@@ -2125,7 +2138,7 @@
         }
       },
       {
-        "oIBusInternalId": "F7D7IG",
+        "oIBusInternalId": "I5Nex4",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-opcua",
@@ -2241,7 +2254,7 @@
         }
       },
       {
-        "oIBusInternalId": "hCBi9V",
+        "oIBusInternalId": "kl2ORz",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-file",
@@ -2375,7 +2388,7 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.delimiter",
                   "defaultValue": "COMMA",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2569,8 +2582,8 @@
         "oIBusInternalId": "transformerId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.424Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.424Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.870Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.870Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 1",
@@ -2598,8 +2611,8 @@
         "oIBusInternalId": "transformerId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.425Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.425Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.872Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.872Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 2",
@@ -2627,8 +2640,8 @@
         "oIBusInternalId": "transformerId3",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.425Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.425Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.872Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.872Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 3",
@@ -2653,7 +2666,7 @@
         }
       },
       {
-        "oIBusInternalId": "bEMf9G",
+        "oIBusInternalId": "6bWcX8",
         "type": "standard",
         "settings": {
           "functionName": "file-to-modbus",
@@ -2720,7 +2733,7 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2891,7 +2904,7 @@
         }
       },
       {
-        "oIBusInternalId": "M1unOC",
+        "oIBusInternalId": "FnGaQV",
         "type": "standard",
         "settings": {
           "functionName": "file-to-opcua",
@@ -2958,7 +2971,7 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -3111,7 +3124,7 @@
         }
       },
       {
-        "oIBusInternalId": "ZtADaX",
+        "oIBusInternalId": "N6ZD3Z",
         "type": "standard",
         "settings": {
           "functionName": "file-to-oianalytics",
@@ -3178,7 +3191,7 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "NON_BREAKING_SPACE", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -3383,8 +3396,8 @@
         "oIBusInternalId": "historyId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.440Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.440Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.887Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.887Z",
         "settings": {
           "name": "my first History Query",
           "description": "description",
@@ -3432,11 +3445,13 @@
             "error": {
               "retryInterval": 1000,
               "retryCount": 3,
-              "retentionDuration": 24
+              "retentionDuration": 24,
+              "maxSize": 0
             },
             "archive": {
               "enabled": true,
-              "retentionDuration": 1000
+              "retentionDuration": 1000,
+              "maxSize": 0
             }
           },
           "items": [
@@ -3444,8 +3459,8 @@
               "id": "historyQueryItem1",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.441Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.441Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.888Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.888Z",
               "name": "item1",
               "description": null,
               "enabled": true,
@@ -3461,8 +3476,8 @@
               "id": "historyQueryItem2",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.442Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.442Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.888Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.888Z",
               "name": "item2",
               "description": null,
               "enabled": true,
@@ -3487,8 +3502,8 @@
                   "enabled": true,
                   "createdBy": null,
                   "updatedBy": null,
-                  "createdAt": "2026-10-30T13:22:59.442Z",
-                  "updatedAt": "2026-10-30T13:22:59.442Z"
+                  "createdAt": "2026-11-06T14:53:07.888Z",
+                  "updatedAt": "2026-11-06T14:53:07.888Z"
                 }
               ]
             },
@@ -3505,8 +3520,8 @@
         "oIBusInternalId": "historyId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-10-30T13:22:59.445Z",
-        "oIBusUpdatedAt": "2026-10-30T13:22:59.445Z",
+        "oIBusCreatedAt": "2026-11-06T14:53:07.891Z",
+        "oIBusUpdatedAt": "2026-11-06T14:53:07.891Z",
         "settings": {
           "name": "My second History Query",
           "description": "description",
@@ -3555,11 +3570,13 @@
             "error": {
               "retryInterval": 1000,
               "retryCount": 3,
-              "retentionDuration": 24
+              "retentionDuration": 24,
+              "maxSize": 0
             },
             "archive": {
               "enabled": true,
-              "retentionDuration": 1000
+              "retentionDuration": 1000,
+              "maxSize": 0
             }
           },
           "items": [
@@ -3567,8 +3584,8 @@
               "id": "historyQueryItem3",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-10-30T13:22:59.445Z",
-              "oIBusUpdatedAt": "2026-10-30T13:22:59.445Z",
+              "oIBusCreatedAt": "2026-11-06T14:53:07.891Z",
+              "oIBusUpdatedAt": "2026-11-06T14:53:07.891Z",
               "name": "item3",
               "description": "Flow of the reactor outlet",
               "enabled": true,

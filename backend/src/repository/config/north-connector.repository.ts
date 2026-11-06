@@ -46,8 +46,8 @@ export default class NorthConnectorRepository {
       `SELECT id, name, type, description, enabled, settings, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
-      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by, created_at, updated_at ` +
+      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
+      `caching_archive_enabled, caching_archive_retention_duration, caching_archive_max_size, created_by, updated_by, created_at, updated_at ` +
       `FROM ${NORTH_CONNECTORS_TABLE};`;
     return this.database
       .prepare(query)
@@ -60,8 +60,8 @@ export default class NorthConnectorRepository {
       `SELECT id, name, type, description, enabled, settings, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
-      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by, created_at, updated_at ` +
+      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
+      `caching_archive_enabled, caching_archive_retention_duration, caching_archive_max_size, created_by, updated_by, created_at, updated_at ` +
       `FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) return null;
@@ -92,9 +92,9 @@ export default class NorthConnectorRepository {
           `INSERT INTO ${NORTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, ` +
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
-          `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-          `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by, created_at, updated_at) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+          `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
+          `caching_archive_enabled, caching_archive_retention_duration, caching_archive_max_size, created_by, updated_by, created_at, updated_at) ` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
         this.database
           .prepare(insertQuery)
           .run(
@@ -113,8 +113,10 @@ export default class NorthConnectorRepository {
             north.caching.error.retryInterval,
             north.caching.error.retryCount,
             north.caching.error.retentionDuration,
+            north.caching.error.maxSize,
             +north.caching.archive.enabled,
             north.caching.archive.retentionDuration,
+            north.caching.archive.maxSize,
             north.createdBy,
             north.updatedBy
           );
@@ -123,8 +125,8 @@ export default class NorthConnectorRepository {
           `UPDATE ${NORTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, ` +
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
-          `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
-          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+          `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, caching_error_max_size = ?, ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, caching_archive_max_size = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -142,8 +144,10 @@ export default class NorthConnectorRepository {
             north.caching.error.retryInterval,
             north.caching.error.retryCount,
             north.caching.error.retentionDuration,
+            north.caching.error.maxSize,
             +north.caching.archive.enabled,
             north.caching.archive.retentionDuration,
+            north.caching.archive.maxSize,
             north.updatedBy,
             north.id
           );
@@ -513,11 +517,13 @@ export default class NorthConnectorRepository {
         error: {
           retryInterval: result.caching_error_retry_interval as number,
           retryCount: result.caching_error_retry_count as number,
-          retentionDuration: result.caching_error_retention_duration as number
+          retentionDuration: result.caching_error_retention_duration as number,
+          maxSize: result.caching_error_max_size as number
         },
         archive: {
           enabled: Boolean(result.caching_archive_enabled),
-          retentionDuration: result.caching_archive_retention_duration as number
+          retentionDuration: result.caching_archive_retention_duration as number,
+          maxSize: result.caching_archive_max_size as number
         }
       },
       transformers: this.findTransformersForNorth(result.id as string),

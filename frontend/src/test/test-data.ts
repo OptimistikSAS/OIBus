@@ -922,11 +922,13 @@ const northList: Array<NorthConnectorDTO> = [
       error: {
         retryInterval: 1000,
         retryCount: 3,
-        retentionDuration: 24
+        retentionDuration: 24,
+        maxSize: 0
       },
       archive: {
         enabled: false,
-        retentionDuration: 72
+        retentionDuration: 72,
+        maxSize: 0
       }
     },
     transformers: [
@@ -1159,11 +1161,13 @@ const northList: Array<NorthConnectorDTO> = [
       error: {
         retryInterval: 1000,
         retryCount: 1,
-        retentionDuration: 24
+        retentionDuration: 24,
+        maxSize: 0
       },
       archive: {
         enabled: false,
-        retentionDuration: 72
+        retentionDuration: 72,
+        maxSize: 0
       }
     },
     transformers: [],
@@ -1243,11 +1247,13 @@ const northCommand: NorthConnectorCommandDTO = {
     error: {
       retryInterval: 1000,
       retryCount: 3,
-      retentionDuration: 24
+      retentionDuration: 24,
+      maxSize: 0
     },
     archive: {
       enabled: false,
-      retentionDuration: 0
+      retentionDuration: 0,
+      maxSize: 0
     }
   },
   transformers: [
@@ -1361,11 +1367,13 @@ const historyQueryList: Array<HistoryQueryDTO> = [
       error: {
         retryInterval: 1000,
         retryCount: 3,
-        retentionDuration: 24
+        retentionDuration: 24,
+        maxSize: 0
       },
       archive: {
         enabled: true,
-        retentionDuration: 1000
+        retentionDuration: 1000,
+        maxSize: 0
       }
     },
     items: [
@@ -1588,11 +1596,13 @@ const historyQueryList: Array<HistoryQueryDTO> = [
       error: {
         retryInterval: 1000,
         retryCount: 3,
-        retentionDuration: 24
+        retentionDuration: 24,
+        maxSize: 0
       },
       archive: {
         enabled: true,
-        retentionDuration: 1000
+        retentionDuration: 1000,
+        maxSize: 0
       }
     },
     items: [
@@ -1724,11 +1734,13 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
     error: {
       retryInterval: 1000,
       retryCount: 3,
-      retentionDuration: 24
+      retentionDuration: 24,
+      maxSize: 0
     },
     archive: {
       enabled: false,
-      retentionDuration: 0
+      retentionDuration: 0,
+      maxSize: 0
     }
   },
   items: [
@@ -2599,11 +2611,13 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
         error: {
           retryInterval: 1000,
           retryCount: 3,
-          retentionDuration: 24
+          retentionDuration: 24,
+          maxSize: 0
         },
         archive: {
           enabled: false,
-          retentionDuration: 0
+          retentionDuration: 0,
+          maxSize: 0
         }
       },
       transformers: [
@@ -2781,11 +2795,13 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
         error: {
           retryInterval: 1000,
           retryCount: 3,
-          retentionDuration: 24
+          retentionDuration: 24,
+          maxSize: 0
         },
         archive: {
           enabled: false,
-          retentionDuration: 0
+          retentionDuration: 0,
+          maxSize: 0
         }
       },
       transformers: [

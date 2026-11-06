@@ -157,6 +157,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );
+    addDataSourceParams(url, cacheMetadata);
     // Stream the body directly (or through async gzip) instead of gzipping synchronously on the event loop.
     httpOptions.body = this.connector.settings.compress ? gzipStream(body, this.logger) : body;
 
@@ -220,6 +221,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );
+    addDataSourceParams(url, cacheMetadata);
     httpOptions.body = Readable.from(multipartStream(boundary, filename, readStream));
     httpOptions.headers = { ...httpOptions.headers, 'content-type': `multipart/form-data; boundary=${boundary}` };
     let response: ReqResponse;
@@ -238,3 +240,14 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     await response.body.dump();
   }
 }
+
+/**
+ * Tell OIAnalytics which data source (south connector) the content comes from, so it can track the last communication
+ * of each south connector. Content is never merged across data sources (see `CacheService.compactQueue`).
+ */
+const addDataSourceParams = (url: URL, cacheMetadata: CacheMetadata): void => {
+  if (cacheMetadata.dataSource) {
+    url.searchParams.set('dataSourceId', cacheMetadata.dataSource.id);
+    url.searchParams.set('dataSourceName', cacheMetadata.dataSource.name);
+  }
+};

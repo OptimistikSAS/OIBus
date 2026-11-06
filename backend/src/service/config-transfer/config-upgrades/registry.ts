@@ -1,5 +1,6 @@
 import { upgrade as v3_9_2 } from './3.9/v3.9.2';
 import { upgrade as v3_10_0 } from './3.10/v3.10.0';
+import { upgrade as v3_10_0_beta_5 } from './3.10/v3.10.0-beta-5';
 import { ConfigUpgrade } from './config-upgrade';
 import { compareVersions } from './version-compare';
 
@@ -8,7 +9,7 @@ import { compareVersions } from './version-compare';
  * an import accepts comes from OIBus 3.9.0 (see `MINIMUM_SUPPORTED_VERSION`), so changes from earlier
  * versions are handled by their entity migrations alone and have no step here.
  */
-export const CONFIG_UPGRADES: Array<ConfigUpgrade> = [v3_9_2, v3_10_0];
+export const CONFIG_UPGRADES: Array<ConfigUpgrade> = [v3_9_2, v3_10_0, v3_10_0_beta_5];
 
 /**
  * Returns the steps that bring a configuration exported by `fromVersion` to the shape of `toVersion`:

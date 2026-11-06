@@ -535,11 +535,13 @@ describe('North Service', () => {
         error: {
           retryInterval: northEntity.caching.error.retryInterval,
           retryCount: northEntity.caching.error.retryCount,
-          retentionDuration: northEntity.caching.error.retentionDuration
+          retentionDuration: northEntity.caching.error.retentionDuration,
+          maxSize: northEntity.caching.error.maxSize
         },
         archive: {
           enabled: northEntity.caching.archive.enabled,
-          retentionDuration: northEntity.caching.archive.retentionDuration
+          retentionDuration: northEntity.caching.archive.retentionDuration,
+          maxSize: northEntity.caching.archive.maxSize
         }
       },
       transformers: northEntity.transformers.map(transformerWithOptions => ({

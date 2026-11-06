@@ -13,6 +13,7 @@ import { TransformerFileToFileSettings } from '../../shared/model/connector/tran
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
+  CacheMetadataDataSource,
   CacheSearchParam,
   CacheSearchResult,
   DataFolderType,
@@ -395,7 +396,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       await this.handleContent(fileStream, contentToSend.metadata);
       fileStream.close();
       if (this.connector.caching.archive.enabled) {
-        await this.cacheService.updateCacheContent({
+        await this.updateCacheAndEnforceSizes({
           cache: {
             remove: [],
             move: [{ to: 'archive', filename: contentToSend.filename }]
@@ -409,7 +410,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           action: 'archived'
         });
       } else {
-        await this.cacheService.updateCacheContent({
+        await this.updateCacheAndEnforceSizes({
           cache: { remove: [contentToSend.filename], move: [] },
           archive: { remove: [], move: [] },
           error: { remove: [], move: [] }
@@ -443,7 +444,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   private async manageErrorContent(content: { filename: string; metadata: CacheMetadata }) {
-    await this.cacheService.updateCacheContent({
+    await this.updateCacheAndEnforceSizes({
       cache: {
         remove: [],
         move: [{ to: 'error', filename: content.filename }]
@@ -664,7 +665,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       await this.cacheService.addCacheContent(output, {
         contentType: metadata.contentType,
         contentFilename: metadata.contentFile,
-        numberOfElement: metadata.numberOfElement
+        numberOfElement: metadata.numberOfElement,
+        dataSource: toCacheDataSource(source)
       });
     }
   }
@@ -687,8 +689,16 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
     await this.cacheService.addCacheContent(output, {
       contentType: 'file',
-      contentFilename: otherFileName(options, source, sourceFilename)
+      contentFilename: otherFileName(options, source, sourceFilename),
+      dataSource: toCacheDataSource(source)
     });
+  }
+
+  /** Apply a cache update, then keep the error and archive folders under their maximum sizes. */
+  private async updateCacheAndEnforceSizes(updateCommand: CacheContentUpdateCommand): Promise<void> {
+    await this.cacheService.updateCacheContent(updateCommand);
+    await this.cacheService.enforceFolderMaxSize('error', this.connector.caching.error.maxSize);
+    await this.cacheService.enforceFolderMaxSize('archive', this.connector.caching.archive.maxSize);
   }
 
   isCacheEmpty(): boolean {
@@ -704,7 +714,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   async updateCacheContent(updateCommand: CacheContentUpdateCommand): Promise<void> {
-    await this.cacheService.updateCacheContent(updateCommand);
+    await this.updateCacheAndEnforceSizes(updateCommand);
   }
 
   /**
@@ -831,3 +841,18 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     return this.cacheService.cacheFolder;
   }
 }
+
+/**
+ * Identify the data source of cached content, so that content from different sources is never merged together and
+ * the receiver can know where it comes from.
+ */
+export const toCacheDataSource = (source: CacheMetadataSource): CacheMetadataDataSource | null => {
+  switch (source.source) {
+    case 'south':
+      return { id: source.southId, name: source.southName };
+    case 'oibus-api':
+      return { id: source.dataSourceId, name: source.dataSourceId };
+    default:
+      return null;
+  }
+};
