@@ -843,16 +843,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 }
 
 /**
- * Identify the data source of cached content, so that content from different sources is never merged together and
- * the receiver can know where it comes from.
+ * Identify the South connector at the source of cached content, so that content from different South connectors is
+ * never merged together and the receiver can know where it comes from. Null for content not coming from a South
+ * connector: history queries (one per cache anyway), OIBus API, OIAnalytics setpoints.
  */
-export const toCacheDataSource = (source: CacheMetadataSource): CacheMetadataDataSource | null => {
-  switch (source.source) {
-    case 'south':
-      return { id: source.southId, name: source.southName };
-    case 'oibus-api':
-      return { id: source.dataSourceId, name: source.dataSourceId };
-    default:
-      return null;
-  }
-};
+export const toCacheDataSource = (source: CacheMetadataSource): CacheMetadataDataSource | null =>
+  source.source === 'south' && !source.historyQuery ? { id: source.southId, name: source.southName } : null;

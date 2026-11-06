@@ -911,9 +911,10 @@ export interface CacheMetadata {
   contentType: string;
 
   /**
-   * The data source (south connector, or OIBus API data source) the content comes from. Content from different data
-   * sources is never merged together, so that the receiver can know where each batch comes from.
-   * Absent for content cached before 3.11 or without identified source (OIAnalytics setpoints, tests).
+   * The South connector the content comes from. Content from different South connectors is never merged together, so
+   * that the receiver can know where each batch comes from.
+   * Absent for content cached before 3.10, or not coming from a South connector (history queries, OIBus API,
+   * OIAnalytics setpoints).
    */
   dataSource?: CacheMetadataDataSource | null;
 }

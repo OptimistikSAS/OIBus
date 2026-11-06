@@ -972,7 +972,8 @@ export default class ConfigImportService {
         numberOfFiles: caching.trigger.numberOfFiles
       },
       throttling: { ...caching.throttling },
-      // Configurations exported before the per-folder sizes only have the cache size: the folders start with the same
+      // Always set on import (required by CONFIG_SCHEMA, filled by the 3.10.0-beta-5 upgrade for older exports): the
+      // fallback is only there because the command type keeps them optional for OIAnalytics commands
       error: { ...caching.error, maxSize: caching.error.maxSize ?? caching.throttling.maxSize },
       archive: { ...caching.archive, maxSize: caching.archive.maxSize ?? caching.throttling.maxSize }
     };
