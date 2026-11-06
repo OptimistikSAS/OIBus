@@ -1,4 +1,3 @@
-import { S7Endpoint, S7ItemGroup } from '@st-one-io/nodes7';
 import { DateTime } from 'luxon';
 
 import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
@@ -14,20 +13,27 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { Instant } from '../../model/types';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { getErrorMessage } from '../../service/utils';
 import SouthConnector from '../south-connector';
 import { SouthDirectQuery } from '../south-interface';
+import { parseS7Address, S7Address } from './s7-client/s7-address';
+import S7Client from './s7-client/s7-client';
+import { remoteTSAP } from './s7-client/s7-protocol';
+import { formatS7Value } from './s7-client/s7-values';
 
-const CONNECTION_TYPE_SRC_TSAP: Record<SouthS7SettingsConnectionType, number> = {
-  PG: 0x0100,
-  OP: 0x0200,
-  S7Basic: 0x0300
+// The connection resource of the remote TSAP, high byte of the TSAP the PLC is addressed with
+const CONNECTION_RESOURCES: Record<SouthS7SettingsConnectionType, number> = {
+  PG: 0x01,
+  OP: 0x02,
+  S7Basic: 0x03
 };
+const LOCAL_TSAP = 0x0100;
 
 /**
  * Class SouthS7 - Provides instruction for Siemens S7 PLC connection using ISO-on-TCP
  */
 export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7ItemSettings> implements SouthDirectQuery {
-  private endpoint: S7Endpoint | null = null;
+  private client: S7Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
@@ -45,41 +51,16 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
-  private getSrcTSAP(connectionType: SouthS7SettingsConnectionType): number {
-    return CONNECTION_TYPE_SRC_TSAP[connectionType];
-  }
-
-  private createEndpoint(): S7Endpoint {
-    return new S7Endpoint({
-      host: this.connector.settings.host,
-      port: this.connector.settings.port,
-      rack: this.connector.settings.rack,
-      slot: this.connector.settings.slot,
-      srcTSAP: this.getSrcTSAP(this.connector.settings.connectionType),
-      autoReconnect: 0,
-      s7ConnOpts: { timeout: this.connector.settings.requestTimeout }
+  private createClient(): S7Client {
+    const settings = this.connector.settings;
+    return new S7Client({
+      host: settings.host,
+      port: settings.port,
+      localTSAP: LOCAL_TSAP,
+      remoteTSAP: remoteTSAP(CONNECTION_RESOURCES[settings.connectionType], settings.rack, settings.slot),
+      connectTimeout: settings.connectTimeout,
+      requestTimeout: settings.requestTimeout
     });
-  }
-
-  /**
-   * nodes7 has no connection timeout option (only a fixed 10 s one on the transport), so the connection is raced
-   * against the connector's own timeout.
-   */
-  private async connectEndpoint(endpoint: S7Endpoint): Promise<void> {
-    let timeout: NodeJS.Timeout | undefined;
-    try {
-      await Promise.race([
-        endpoint.connect(),
-        new Promise<never>((_resolve, reject) => {
-          timeout = setTimeout(
-            () => reject(new Error(`Connection timeout after ${this.connector.settings.connectTimeout} ms`)),
-            this.connector.settings.connectTimeout
-          );
-        })
-      ]);
-    } finally {
-      clearTimeout(timeout);
-    }
   }
 
   override async connect(): Promise<void> {
@@ -88,26 +69,26 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
       this.reconnectTimeout = null;
     }
     try {
-      this.logger.debug(`Connecting S7 endpoint into ${this.connector.settings.host}:${this.connector.settings.port}`);
-      this.endpoint = this.createEndpoint();
-      await this.connectEndpoint(this.endpoint);
+      this.logger.debug(`Connecting S7 client to ${this.connector.settings.host}:${this.connector.settings.port}`);
+      this.client = this.createClient();
+      await this.client.connect();
       // Detect unexpected disconnections between scan cycles (server-side
       // timeout, network interruption, etc.) and reconnect immediately so the
-      // next scan cycle does not fail on a dead endpoint.
-      const onUnexpectedDisconnect = async () => {
+      // next scan cycle does not fail on a dead connection.
+      this.client.once('disconnect', async (error: Error) => {
         if (this.disconnecting) return;
-        this.logger.warn(`S7 endpoint disconnected unexpectedly. Reconnecting in ${this.connector.settings.retryInterval} ms`);
+        this.logger.warn(`S7 connection lost (${error.message}). Reconnecting in ${this.connector.settings.retryInterval} ms`);
         await this.disconnect();
         if (this.connector.enabled) {
           this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
         }
-      };
-      this.endpoint.once('disconnect', onUnexpectedDisconnect);
-      this.endpoint.once('error', onUnexpectedDisconnect);
-      this.logger.info(`S7 endpoint connected to ${this.connector.settings.host}:${this.connector.settings.port}`);
+      });
+      this.logger.info(
+        `S7 client connected to ${this.connector.settings.host}:${this.connector.settings.port} (PDU size ${this.client.pduSize})`
+      );
       await super.connect();
     } catch (error: unknown) {
-      this.logger.error(`S7 endpoint error: ${(error as Error).message}`);
+      this.logger.error(`S7 connection error: ${getErrorMessage(error)}`);
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -121,59 +102,70 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
-    if (this.endpoint) {
-      this.endpoint.removeAllListeners();
+    if (this.client) {
+      this.client.removeAllListeners();
       try {
-        await this.endpoint.disconnect();
+        await this.client.disconnect();
       } catch (error: unknown) {
-        this.logger.error(`Error while disconnecting S7 endpoint: ${(error as Error).message}`);
+        this.logger.error(`Error while disconnecting S7 client: ${getErrorMessage(error)}`);
       }
-      this.endpoint = null;
+      this.client = null;
     }
     await super.disconnect();
     this.disconnecting = false;
   }
 
-  override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const endpoint = this.createEndpoint();
+  /**
+   * Connects a temporary client, for the connection and item tests
+   */
+  private async connectTestClient(): Promise<S7Client> {
+    const client = this.createClient();
     try {
-      await this.connectEndpoint(endpoint);
-      return {
-        items: [{ key: 'RemoteAddress', value: `${this.connector.settings.host}:${this.connector.settings.port}` }]
-      };
+      await client.connect();
+      return client;
     } catch (error: unknown) {
-      switch ((error as { code: string; message: string }).code) {
+      switch ((error as { code?: string }).code) {
         case 'ENOTFOUND':
         case 'ECONNREFUSED':
-          throw new Error(`Please check host and port: ${(error as Error).message}`);
+          throw new Error(`Please check host and port: ${getErrorMessage(error)}`);
         default:
-          throw new Error(`Unable to connect: ${(error as Error).message}`);
+          throw new Error(`Unable to connect: ${getErrorMessage(error)}`);
       }
-    } finally {
-      await endpoint.disconnect().catch(() => undefined);
     }
+  }
+
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
+    const client = await this.connectTestClient();
+    const pduSize = client.pduSize;
+    await client.disconnect().catch(() => undefined);
+    return {
+      items: [
+        { key: 'RemoteAddress', value: `${this.connector.settings.host}:${this.connector.settings.port}` },
+        { key: 'PDU size', value: String(pduSize) }
+      ]
+    };
   }
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthS7ItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
-    const endpoint = this.createEndpoint();
+    const address = parseS7Address(item.settings.address);
+    const connectStart = DateTime.now().toMillis();
+    const client = await this.connectTestClient();
     try {
-      const connectStart = DateTime.now().toMillis();
-      await this.connectEndpoint(endpoint);
       const connectionDuration = DateTime.now().toMillis() - connectStart;
       const queryStart = DateTime.now().toMillis();
-      const group = new S7ItemGroup(endpoint);
-      group.setTranslationCB(() => item.settings.address);
-      group.addItems([item.name]);
-      const values = await group.readAllItems();
+      const [result] = await client.read([address]);
       const queryDuration = DateTime.now().toMillis() - queryStart;
+      if ('error' in result) {
+        throw new Error(`Could not read address "${item.settings.address}": ${result.error}`);
+      }
       const dataValues: Array<OIBusPointRecord> = [
         {
           pointId: item.name,
-          timestamp: DateTime.now().toUTC().toISO(),
-          value: String(values[item.name])
+          timestamp: DateTime.now().toUTC().toISO()!,
+          value: formatS7Value(result.value)
         }
       ];
       return {
@@ -184,49 +176,29 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
         connectionDuration,
         queryDuration
       };
-    } catch (error: unknown) {
-      switch ((error as { code: string; message: string }).code) {
-        case 'ENOTFOUND':
-        case 'ECONNREFUSED':
-          throw new Error(`Please check host and port: ${(error as Error).message}`);
-        default:
-          throw new Error(`Unable to connect: ${(error as Error).message}`);
-      }
     } finally {
-      await endpoint.disconnect().catch(() => undefined);
+      await client.disconnect().catch(() => undefined);
     }
   }
 
   async directQuery(items: Array<SouthConnectorItemEntity<SouthS7ItemSettings>>): Promise<OIBusPointRecord | null> {
-    if (!this.endpoint || !this.endpoint.isConnected) {
+    if (!this.client || !this.client.isConnected) {
       throw new Error('Could not read address: S7 client not set');
     }
-    const dataValues: Array<OIBusPointRecord> = [];
-    try {
-      const startRequest = DateTime.now();
-      const timestamp = startRequest.toUTC().toISO();
-      const group = new S7ItemGroup(this.endpoint);
-      const addressByName = new Map<string, string>(items.map(item => [item.name, item.settings.address]));
-      group.setTranslationCB(name => addressByName.get(name));
-      group.addItems(items.map(item => item.name));
-      const values = await group.readAllItems();
-      group.destroy();
-
-      const readEntries = items.map(item => ({ item, value: String(values[item.name]) }));
-      const cachedItems = this.applyCachingStrategy(readEntries, entry => ({
-        item: entry.item,
-        value: entry.value,
-        timestamp: timestamp!
-      }));
-      for (const { item, value } of cachedItems) {
-        dataValues.push({ pointId: item.name, timestamp, value });
+    const toRead: Array<{ item: SouthConnectorItemEntity<SouthS7ItemSettings>; address: S7Address }> = [];
+    for (const item of items) {
+      try {
+        toRead.push({ item, address: parseS7Address(item.settings.address) });
+      } catch (error: unknown) {
+        this.logger.error(`Item "${item.name}" skipped: ${getErrorMessage(error)}`);
       }
+    }
 
-      await this.addContent(
-        { type: 'record-list', content: dataValues },
-        startRequest.toUTC().toISO(),
-        cachedItems.map(entry => entry.item)
-      );
+    const startRequest = DateTime.now();
+    const timestamp = startRequest.toUTC().toISO()!;
+    let results: Awaited<ReturnType<S7Client['read']>>;
+    try {
+      results = await this.client.read(toRead.map(entry => entry.address));
     } catch (error: unknown) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
@@ -234,6 +206,23 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
       }
       throw error;
     }
+
+    const readEntries: Array<{ item: SouthConnectorItemEntity<SouthS7ItemSettings>; value: string }> = [];
+    results.forEach((result, index) => {
+      const { item } = toRead[index];
+      if ('error' in result) {
+        this.logger.error(`Could not read item "${item.name}" at address "${item.settings.address}": ${result.error}`);
+      } else {
+        readEntries.push({ item, value: formatS7Value(result.value) });
+      }
+    });
+    const cachedItems = this.applyCachingStrategy(readEntries, entry => ({ item: entry.item, value: entry.value, timestamp }));
+    const dataValues: Array<OIBusPointRecord> = cachedItems.map(({ item, value }) => ({ pointId: item.name, timestamp, value }));
+    await this.addContent(
+      { type: 'record-list', content: dataValues },
+      timestamp,
+      cachedItems.map(entry => entry.item)
+    );
     return dataValues.length > 0 ? dataValues[dataValues.length - 1] : null;
   }
 }
