@@ -304,6 +304,7 @@ end;
 
 const
   ServiceStopTimeoutSec = 60;
+  ServiceStartTimeoutSec = 60;
   ProcessKillTimeoutSec = 15;
 
 function GetWmi(): Variant;
@@ -390,6 +391,28 @@ begin
   end;
   Log('Service "' + ServiceName + '" did not stop in ' + IntToStr(ServiceStopTimeoutSec) + 's (state: ' + State + ')');
   Result := False;
+end;
+
+// Waits until the service is running: "nssm start" gives up while the service is still
+// "Start Pending" (exit code 1), which happens on a busy machine even though the service
+// starts fine a few seconds later. Returns as soon as the service is running or has
+// stopped; only a service still starting waits for the whole timeout. State is the last
+// state seen ('' if the service does not exist).
+function WaitForServiceRunning(const ServiceName: String; var State: String): Boolean;
+var
+  Wmi: Variant;
+  I: Integer;
+begin
+  Wmi := GetWmi();
+  for I := 0 to ServiceStartTimeoutSec * 2 do
+  begin
+    if I > 0 then Sleep(500);
+    State := GetServiceState(Wmi, ServiceName);
+    if (State = 'Running') or (State = '') or (State = 'Stopped') then Break;
+  end;
+  Result := State = 'Running';
+  if not Result then
+    Log('Service "' + ServiceName + '" is not running (state: ' + State + ')');
 end;
 
 // Counts the ImageName processes running from AppDir, killing them (with their children) if Kill is set.
@@ -761,7 +784,7 @@ end;
 
 function InstallProgram(): Boolean;
 var
-  LogPath, AppDir, NssmPath, LauncherPath, ErrorMsg: string;
+  LogPath, AppDir, NssmPath, LauncherPath, ErrorMsg, State: string;
 begin
   Result := False;
   AppDir := ExpandConstant('{app}');
@@ -788,10 +811,13 @@ begin
 
   ExecCmd(NssmPath, 'set "' + FinalServiceName + '" AppNoConsole 1', AppDir);
 
-  // 3. Start Service
-  if not RunCmd(NssmPath, 'start "' + FinalServiceName + '"', AppDir, ErrorMsg) then
+  // 3. Start Service. The nssm exit code is not trusted (see WaitForServiceRunning): only
+  // the actual service state decides whether to warn.
+  RunCmd(NssmPath, 'start "' + FinalServiceName + '"', AppDir, ErrorMsg);
+  if not WaitForServiceRunning(FinalServiceName, State) then
   begin
-     SuppressibleMsgBox('Warning: The OIBus service failed to start automatically (' + ErrorMsg + '). Please try starting it from Windows Services.', mbError, MB_OK, IDOK);
+    if State = '' then State := 'not found';
+    SuppressibleMsgBox('Warning: The OIBus service failed to start automatically (state: ' + State + '). Please try starting it from Windows Services.', mbError, MB_OK, IDOK);
   end;
 
   Result := True;
