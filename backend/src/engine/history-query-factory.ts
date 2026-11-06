@@ -100,6 +100,7 @@ export const buildHistoryQuery = (
     ) =>
       await north.cacheContent(data, {
         source: 'south',
+        historyQuery: true,
         southId: settings.id,
         southName: settings.name,
         queryTime,

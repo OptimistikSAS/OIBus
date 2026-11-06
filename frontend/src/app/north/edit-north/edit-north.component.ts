@@ -398,19 +398,19 @@ export class EditNorthComponent implements CanComponentDeactivate {
         }),
         throttling: this.fb.group({
           runMinDelay: [200, Validators.required],
-          maxSize: [0, Validators.required],
+          maxSize: [0, [Validators.required, Validators.min(0)]],
           maxNumberOfElements: [10_000, Validators.required]
         }),
         error: this.fb.group({
           retryInterval: [5_000, Validators.required],
           retryCount: [3, Validators.required],
           retentionDuration: [0, Validators.required],
-          maxSize: [0, Validators.required]
+          maxSize: [0, [Validators.required, Validators.min(0)]]
         }),
         archive: this.fb.group({
           enabled: [false, Validators.required],
           retentionDuration: [72, Validators.required],
-          maxSize: [0, Validators.required]
+          maxSize: [0, [Validators.required, Validators.min(0)]]
         })
       })
     });
