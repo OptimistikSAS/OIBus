@@ -8,7 +8,8 @@ The S7 south connector reads data directly from Siemens® S7-200/300/400/1200/15
 (RFC1006), using the Siemens S7 Communication protocol. It queries PLC memory (data blocks, inputs, outputs,
 markers, timers, counters) on each scan mode tick, without going through an OPC server or a separate agent.
 
-OIBus uses the [nodes7](https://github.com/st-one-io/nodes7) library to communicate with the PLC.
+OIBus talks to the PLC with its own S7 client, derived from the MIT-licensed [nodeS7](https://github.com/plcpeople/nodeS7)
+library: there is no driver to install.
 
 ## Specific Settings {#specific-settings}
 
@@ -32,43 +33,76 @@ placement; consult your PLC's documentation if the defaults don't work.
 
 ## Item Settings {#item-settings}
 
-Each item has a single **Address** setting, using nodes7's address syntax:
+Each item has a single **Address** setting:
 
-| Setting     | Description                                                            | Example Value |
-| ----------- | ---------------------------------------------------------------------- | ------------- |
-| **Address** | The PLC memory address to read, using nodes7's address syntax (below). | `DB1,REAL0`   |
+| Setting     | Description                                             | Example Value |
+| ----------- | ------------------------------------------------------- | ------------- |
+| **Address** | The PLC memory address to read, using the syntax below. | `DB1,REAL0`   |
 
 ### Address Syntax {#address-syntax}
 
-An address has the form `[DB<n>,]<type><offset>[.<bitOrArrayLength>][.<arrayLength>]`:
+Inside a data block, an address has the form `DB<n>,<type><offset>[.<bit or length>][.<array length>]`:
 
-- **`DB<n>,`** — prefix required to address a data block (e.g. `DB1,`); omit it to address a PLC-wide memory
-  area instead (see below).
-- **`<type>`** — the data type to read at that offset. Common types: `X` (single bit — requires a bit offset),
-  `BYTE`/`B`, `INT`/`I`, `DINT`/`DI`, `WORD`/`W`, `DWORD`/`D`, `REAL`/`R`, `CHAR`/`C`, `STRING`/`S`.
-- **`<offset>`** — the byte offset within the data block or memory area.
-- **`.<bitOrArrayLength>`** — for `X`, the bit offset (`0`–`7`); for other types, an optional array length to
-  read several consecutive values as an array.
+- **`DB<n>,`** — the data block number (e.g. `DB1,`).
+- **`<type>`** — the data type to read at that offset (see the table below).
+- **`<offset>`** — the byte offset within the data block.
+- **`.<bit or length>`** — for `X`, the bit offset (`0`–`7`); for `STRING`, its maximum length as declared in the
+  PLC (`20` for a `STRING[20]`); for the other types, an optional array length to read several consecutive values.
+- **`.<array length>`** — for `X` and `STRING` only, an optional array length.
 
-Outside a data block, the same `<type><offset>` syntax applies to PLC memory areas, identified by their own
-leading letter: `M`/`MB`/`MW`/`MD`/`MR` (Merker/memory bits, bytes, words, double words, reals), `I`/`E`
-(inputs), `Q`/`A` (outputs), `T` (timers), `C` (counters).
+| Type           | Aliases            | Size (bytes)       | Value                                                                 |
+| -------------- | ------------------ | ------------------ | --------------------------------------------------------------------- |
+| `X`            | `BOOL`             | 1 bit              | `true` or `false`                                                     |
+| `BYTE`         | `B`, `USINT`       | 1                  | 0 to 255                                                              |
+| `SINT`         |                    | 1                  | -128 to 127                                                           |
+| `CHAR`         | `C`                | 1                  | One character. An array of characters is read as one text             |
+| `WORD`         | `W`, `UINT`        | 2                  | 0 to 65,535                                                           |
+| `INT`          | `I`                | 2                  | -32,768 to 32,767                                                     |
+| `DWORD`        | `D`, `DW`, `UDINT` | 4                  | Unsigned 32-bit integer                                               |
+| `DINT`         | `DI`               | 4                  | Signed 32-bit integer                                                 |
+| `REAL`         | `R`                | 4                  | 32-bit floating point number                                          |
+| `LREAL`        | `LR`               | 8                  | 64-bit floating point number                                          |
+| `LINT`         | `LI`               | 8                  | Signed 64-bit integer                                                 |
+| `ULINT`        | `LWORD`            | 8                  | Unsigned 64-bit integer                                               |
+| `STRING`       | `S`                | maximum length + 2 | Text                                                                  |
+| `DT` / `DTZ`   |                    | 8                  | `DATE_AND_TIME`, read in the local time of the OIBus machine / in UTC |
+| `DTL` / `DTLZ` |                    | 12                 | `DTL`, read in the local time of the OIBus machine / in UTC           |
+
+Outside data blocks, an address has the form `<area><type><offset>[.<bit or array length>][.<array length>]`:
+
+- **`<area>`** — `M` (merkers), `I`/`E` (inputs), `Q`/`A` (outputs), `PI`/`PE`/`PQ`/`PA` (peripheral inputs and
+  outputs, read from the modules instead of the process image).
+- **`<type>`** — nothing for a single bit, which requires its bit offset (`M32.2`), or `B` (`BYTE`), `C` (`CHAR`),
+  `W` (`WORD`), `I` (`INT`), `D`/`DW` (`DWORD`), `DI` (`DINT`), `R` (`REAL`), `LR` (`LREAL`), `LI` (`LINT`).
+
+Timers and counters are addressed by number: `T<n>` and `C<n>`, with an optional array length (`C0.4` reads counters
+0 to 3). Their raw 16-bit word is returned. Addresses are case insensitive.
 
 | Address        | Meaning                                                   |
 | -------------- | --------------------------------------------------------- |
 | `DB1,REAL0`    | A single `REAL` (float) at byte offset 0 of data block 1. |
 | `DB1,INT2`     | A single `INT` at byte offset 2 of data block 1.          |
 | `DB1,X4.0`     | A single bit at byte offset 4, bit 0, of data block 1.    |
+| `DB1,X4.0.8`   | The 8 bits of byte 4 of data block 1.                     |
 | `DB1,REAL0.20` | An array of 20 `REAL` values starting at byte offset 0.   |
+| `DB1,S10.20`   | A `STRING[20]` at byte offset 10 of data block 1.         |
 | `M32.2`        | A single bit at byte offset 32, bit 2, of Merker memory.  |
 | `MR4`          | A single `REAL` at byte offset 4 of Merker memory.        |
-
-See the [nodes7 README](https://github.com/st-one-io/nodes7#usage-example) for the full address grammar,
-including timers, counters, and string types.
+| `IW2`          | The input word at byte offset 2.                          |
+| `PIW256`       | The peripheral input word at byte offset 256.             |
+| `T3`           | Timer 3.                                                  |
 
 :::note Values are read as text
-Regardless of the PLC data type, OIBus reports every S7 item's value as a string (e.g. `"3.14"`, `"true"`).
+Regardless of the PLC data type, OIBus reports every S7 item's value as a string (e.g. `"3.14"`, `"true"`). Arrays
+are reported as comma separated values (`"1.5,2.5,3.5"`), dates in ISO 8601 UTC (`"2024-03-15T11:34:56.789Z"`).
 Account for this when configuring transformers or North connectors downstream.
+:::
+
+:::tip Grouped reads
+OIBus reads all the items of a scan mode in as few requests as possible: items of the same area at most 5 bytes apart
+are read as one block, and each request is sized to the PDU size negotiated with the PLC (240 bytes for most S7-300,
+up to 960 bytes for S7-1500), shown by the connection test. An item the PLC cannot read (missing data block, address
+out of range) is logged and skipped, without affecting the other items.
 :::
 
 ## Caching Strategy {#caching-strategy}

@@ -9,7 +9,8 @@ Le connecteur South S7 lit directement les données des automates Siemens® S7-2
 l'automate (blocs de données, entrées, sorties, mémentos, temporisateurs, compteurs) à chaque déclenchement du
 mode de scan, sans passer par un serveur OPC ni un agent séparé.
 
-OIBus utilise la bibliothèque [nodes7](https://github.com/st-one-io/nodes7) pour communiquer avec l'automate.
+OIBus communique avec l'automate grâce à son propre client S7, dérivé de la bibliothèque
+[nodeS7](https://github.com/plcpeople/nodeS7) sous licence MIT : aucun pilote n'est à installer.
 
 ## Paramètres spécifiques {#specific-settings}
 
@@ -34,44 +35,81 @@ défaut ne fonctionnent pas.
 
 ## Paramètres des éléments {#item-settings}
 
-Chaque élément possède un unique paramètre **Adresse**, utilisant la syntaxe d'adressage de nodes7 :
+Chaque élément possède un unique paramètre **Adresse** :
 
-| Paramètre   | Description                                                                                      | Exemple de valeur |
-| ----------- | ------------------------------------------------------------------------------------------------ | ----------------- |
-| **Adresse** | L'adresse mémoire de l'automate à lire, utilisant la syntaxe d'adressage de nodes7 (ci-dessous). | `DB1,REAL0`       |
+| Paramètre   | Description                                                                  | Exemple de valeur |
+| ----------- | ---------------------------------------------------------------------------- | ----------------- |
+| **Adresse** | L'adresse mémoire de l'automate à lire, selon la syntaxe décrite ci-dessous. | `DB1,REAL0`       |
 
 ### Syntaxe d'adressage {#address-syntax}
 
-Une adresse a la forme `[DB<n>,]<type><offset>[.<bitOrArrayLength>][.<arrayLength>]` :
+Dans un bloc de données, une adresse a la forme `DB<n>,<type><offset>[.<bit ou longueur>][.<longueur de tableau>]` :
 
-- **`DB<n>,`** — préfixe requis pour adresser un bloc de données (par exemple `DB1,`) ; omettez-le pour adresser
-  à la place une zone de mémoire globale de l'automate (voir ci-dessous).
-- **`<type>`** — le type de donnée à lire à cet offset. Types courants : `X` (bit unique — nécessite un offset de
-  bit), `BYTE`/`B`, `INT`/`I`, `DINT`/`DI`, `WORD`/`W`, `DWORD`/`D`, `REAL`/`R`, `CHAR`/`C`, `STRING`/`S`.
-- **`<offset>`** — l'offset en octets au sein du bloc de données ou de la zone de mémoire.
-- **`.<bitOrArrayLength>`** — pour `X`, l'offset de bit (`0`–`7`) ; pour les autres types, une longueur de
-  tableau optionnelle pour lire plusieurs valeurs consécutives sous forme de tableau.
+- **`DB<n>,`** — le numéro du bloc de données (par exemple `DB1,`).
+- **`<type>`** — le type de donnée à lire à cet offset (voir le tableau ci-dessous).
+- **`<offset>`** — l'offset en octets au sein du bloc de données.
+- **`.<bit ou longueur>`** — pour `X`, l'offset de bit (`0`–`7`) ; pour `STRING`, sa longueur maximale telle que
+  déclarée dans l'automate (`20` pour un `STRING[20]`) ; pour les autres types, une longueur de tableau optionnelle
+  pour lire plusieurs valeurs consécutives.
+- **`.<longueur de tableau>`** — pour `X` et `STRING` uniquement, une longueur de tableau optionnelle.
 
-En dehors d'un bloc de données, la même syntaxe `<type><offset>` s'applique aux zones de mémoire de l'automate,
-identifiées par leur propre lettre initiale : `M`/`MB`/`MW`/`MD`/`MR` (mémentos — bits, octets, mots, doubles
-mots, réels), `I`/`E` (entrées), `Q`/`A` (sorties), `T` (temporisateurs), `C` (compteurs).
+| Type           | Alias              | Taille (octets)       | Valeur                                                               |
+| -------------- | ------------------ | --------------------- | -------------------------------------------------------------------- |
+| `X`            | `BOOL`             | 1 bit                 | `true` ou `false`                                                    |
+| `BYTE`         | `B`, `USINT`       | 1                     | 0 à 255                                                              |
+| `SINT`         |                    | 1                     | -128 à 127                                                           |
+| `CHAR`         | `C`                | 1                     | Un caractère. Un tableau de caractères est lu comme un seul texte    |
+| `WORD`         | `W`, `UINT`        | 2                     | 0 à 65 535                                                           |
+| `INT`          | `I`                | 2                     | -32 768 à 32 767                                                     |
+| `DWORD`        | `D`, `DW`, `UDINT` | 4                     | Entier non signé sur 32 bits                                         |
+| `DINT`         | `DI`               | 4                     | Entier signé sur 32 bits                                             |
+| `REAL`         | `R`                | 4                     | Nombre à virgule flottante sur 32 bits                               |
+| `LREAL`        | `LR`               | 8                     | Nombre à virgule flottante sur 64 bits                               |
+| `LINT`         | `LI`               | 8                     | Entier signé sur 64 bits                                             |
+| `ULINT`        | `LWORD`            | 8                     | Entier non signé sur 64 bits                                         |
+| `STRING`       | `S`                | longueur maximale + 2 | Texte                                                                |
+| `DT` / `DTZ`   |                    | 8                     | `DATE_AND_TIME`, lu dans l'heure locale de la machine OIBus / en UTC |
+| `DTL` / `DTLZ` |                    | 12                    | `DTL`, lu dans l'heure locale de la machine OIBus / en UTC           |
+
+En dehors des blocs de données, une adresse a la forme
+`<zone><type><offset>[.<bit ou longueur de tableau>][.<longueur de tableau>]` :
+
+- **`<zone>`** — `M` (mémentos), `I`/`E` (entrées), `Q`/`A` (sorties), `PI`/`PE`/`PQ`/`PA` (entrées et sorties
+  périphériques, lues sur les modules plutôt que dans la mémoire image).
+- **`<type>`** — rien pour un bit unique, qui nécessite son offset de bit (`M32.2`), ou `B` (`BYTE`), `C` (`CHAR`),
+  `W` (`WORD`), `I` (`INT`), `D`/`DW` (`DWORD`), `DI` (`DINT`), `R` (`REAL`), `LR` (`LREAL`), `LI` (`LINT`).
+
+Les temporisateurs et les compteurs sont adressés par leur numéro : `T<n>` et `C<n>`, avec une longueur de tableau
+optionnelle (`C0.4` lit les compteurs 0 à 3). Leur mot brut de 16 bits est renvoyé. Les adresses ne sont pas
+sensibles à la casse.
 
 | Adresse        | Signification                                                           |
 | -------------- | ----------------------------------------------------------------------- |
 | `DB1,REAL0`    | Un unique `REAL` (flottant) à l'offset d'octet 0 du bloc de données 1.  |
 | `DB1,INT2`     | Un unique `INT` à l'offset d'octet 2 du bloc de données 1.              |
 | `DB1,X4.0`     | Un unique bit à l'offset d'octet 4, bit 0, du bloc de données 1.        |
+| `DB1,X4.0.8`   | Les 8 bits de l'octet 4 du bloc de données 1.                           |
 | `DB1,REAL0.20` | Un tableau de 20 valeurs `REAL` démarrant à l'offset d'octet 0.         |
+| `DB1,S10.20`   | Un `STRING[20]` à l'offset d'octet 10 du bloc de données 1.             |
 | `M32.2`        | Un unique bit à l'offset d'octet 32, bit 2, de la mémoire des mémentos. |
 | `MR4`          | Un unique `REAL` à l'offset d'octet 4 de la mémoire des mémentos.       |
-
-Consultez le [README de nodes7](https://github.com/st-one-io/nodes7#usage-example) pour la grammaire d'adressage
-complète, incluant les temporisateurs, les compteurs et les types chaîne.
+| `IW2`          | Le mot d'entrée à l'offset d'octet 2.                                   |
+| `PIW256`       | Le mot d'entrée périphérique à l'offset d'octet 256.                    |
+| `T3`           | Le temporisateur 3.                                                     |
 
 :::note Les valeurs sont lues sous forme de texte
 Quel que soit le type de donnée de l'automate, OIBus rapporte la valeur de chaque élément S7 sous forme de
-chaîne de caractères (par exemple `"3.14"`, `"true"`). Tenez-en compte lors de la configuration des
-transformateurs ou des connecteurs North en aval.
+chaîne de caractères (par exemple `"3.14"`, `"true"`). Les tableaux sont rapportés sous forme de valeurs séparées par
+des virgules (`"1.5,2.5,3.5"`), les dates en ISO 8601 UTC (`"2024-03-15T11:34:56.789Z"`). Tenez-en compte lors de
+la configuration des transformateurs ou des connecteurs North en aval.
+:::
+
+:::tip Lectures groupées
+OIBus lit tous les éléments d'un mode de scan en aussi peu de requêtes que possible : les éléments d'une même zone
+distants d'au plus 5 octets sont lus comme un seul bloc, et chaque requête est dimensionnée selon la taille de PDU
+négociée avec l'automate (240 octets pour la plupart des S7-300, jusqu'à 960 octets pour les S7-1500), affichée par
+le test de connexion. Un élément que l'automate ne peut pas lire (bloc de données absent, adresse hors limites) est
+journalisé et ignoré, sans affecter les autres éléments.
 :::
 
 ## Stratégie de mise en cache {#caching-strategy}
