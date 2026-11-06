@@ -13,7 +13,6 @@ export function createCacheServiceMock(): Mocked<CacheService> {
     getNumberOfRawFilesInQueue: () => 0,
     cacheIsEmpty: () => true,
     cacheIsFull: () => false,
-    getCacheSize: () => 0,
     getCacheContentSizes: () => ({ cache: 0, error: 0, archive: 0 }),
     searchCacheContent: async () => ({ searchDate: '', error: [], archive: [], cache: [] }),
     errorFolder: 'error',

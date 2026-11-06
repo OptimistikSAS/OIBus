@@ -1151,4 +1151,22 @@ describe('NorthConnector', () => {
     // Split between the south level transformer (point-1) and the group one (point-2)
     assert.strictEqual(oiBusTransformer.transformInMemory.mock.calls.length, 2);
   });
+
+  describe('toCacheDataSource', () => {
+    // Loaded after the mocks of the main before() hook (a top level require would load the real services)
+    let toCacheDataSource: (typeof import('./north-connector'))['toCacheDataSource'];
+    before(() => {
+      toCacheDataSource = nodeRequire('./north-connector').toCacheDataSource;
+    });
+
+    it('should identify the South connector at the source of the content', () => {
+      assert.deepStrictEqual(toCacheDataSource(southSource), { id: southSource.southId, name: southSource.southName });
+    });
+
+    it('should not identify content not coming from a South connector', () => {
+      assert.strictEqual(toCacheDataSource({ ...southSource, historyQuery: true }), null);
+      assert.strictEqual(toCacheDataSource({ source: 'oibus-api', dataSourceId: 'ds1' }), null);
+      assert.strictEqual(toCacheDataSource({ source: 'oianalytics-setpoints' }), null);
+    });
+  });
 });

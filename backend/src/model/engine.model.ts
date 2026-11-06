@@ -114,6 +114,11 @@ export interface CacheMetadataSourceOriginSouth {
   source: 'south';
 
   /**
+   * True for content retrieved by a history query: `southId` and `southName` are then the ones of the history query
+   */
+  historyQuery?: boolean;
+
+  /**
    * Datetime in iso format when the query has been triggered
    * @example "2023-01-01T00:00:00Z"
    */

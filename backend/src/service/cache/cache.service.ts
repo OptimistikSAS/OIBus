@@ -71,6 +71,9 @@ const parallelMap = async <T, R>(items: ReadonlyArray<T>, limit: number, fn: (it
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
+/** Share of its maximum size a full error or archive folder is reduced to (see `CacheService.enforceFolderMaxSize`) */
+const FOLDER_CLEANUP_TARGET_RATIO = 0.9;
+
 export default class CacheService {
   private logger: ILogger;
   private readonly _cacheFolder: string;
@@ -390,7 +393,7 @@ export default class CacheService {
     let elements = 0;
     let rawFiles = 0;
     for (const entry of this.queue) {
-      if (entry.metadata.numberOfElement === 0) {
+      if (isRawFile(entry.metadata)) {
         rawFiles++;
       } else {
         elements += entry.metadata.numberOfElement;
@@ -401,7 +404,7 @@ export default class CacheService {
   }
 
   private incrementQueueCounters(metadata: CacheMetadata): void {
-    if (metadata.numberOfElement === 0) {
+    if (isRawFile(metadata)) {
       this._queuedRawFilesCount++;
     } else {
       this._queuedElementsCount += metadata.numberOfElement;
@@ -409,7 +412,7 @@ export default class CacheService {
   }
 
   private decrementQueueCounters(metadata: CacheMetadata): void {
-    if (metadata.numberOfElement === 0) {
+    if (isRawFile(metadata)) {
       this._queuedRawFilesCount--;
     } else {
       this._queuedElementsCount -= metadata.numberOfElement;
@@ -511,10 +514,6 @@ export default class CacheService {
       }, DEBOUNCED_SIZE_WARNING_S);
     }
     return full;
-  }
-
-  getCacheSize(): number {
-    return this.cacheSize.cache + this.cacheSize.error + this.cacheSize.archive;
   }
 
   async searchCacheContent(searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> {
@@ -688,21 +687,22 @@ export default class CacheService {
   }
 
   /**
-   * Remove the oldest files of the error or archive folder until it is back under `maxSize` (in MB, 0 means no limit).
-   * The folder is only scanned when its tracked size exceeds the limit.
+   * When the error or archive folder exceeds `maxSize` (in MB, 0 means no limit), remove its oldest files until it is
+   * back under {@link FOLDER_CLEANUP_TARGET_RATIO} of the limit. Freeing more than strictly needed avoids rescanning the
+   * whole folder on every file moved into a full folder.
    */
   async enforceFolderMaxSize(folder: 'error' | 'archive', maxSize: number): Promise<void> {
-    const limit = maxSize * 1024 * 1024;
-    if (maxSize <= 0 || this.cacheSize[folder] <= limit) {
+    if (maxSize <= 0 || this.cacheSize[folder] <= maxSize * 1024 * 1024) {
       return;
     }
+    const target = maxSize * 1024 * 1024 * FOLDER_CLEANUP_TARGET_RATIO;
     await this.waitCacheUpdateTasks();
     this.updateCache$ = new DeferredPromise();
     try {
       const files = (await this.readCacheMetadataFiles(folder)).sort((a, b) => a.metadata.createdAt.localeCompare(b.metadata.createdAt));
       let removed = 0;
       for (const file of files) {
-        if (this.cacheSize[folder] <= limit) {
+        if (this.cacheSize[folder] <= target) {
           break;
         }
         await this.removeContent(folder, file.filename);
@@ -1011,3 +1011,9 @@ export default class CacheService {
     }
   }
 }
+
+/**
+ * Files (whatever they contain, even values transformed into a CSV file) are counted by the number of files trigger,
+ * every other content type by the number of elements trigger.
+ */
+const isRawFile = (metadata: CacheMetadata): boolean => metadata.contentType === 'file';
