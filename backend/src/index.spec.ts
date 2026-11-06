@@ -271,6 +271,14 @@ describe('index.ts bootstrap()', () => {
     });
 
     const cleanMock = cleanupServiceMock;
+    mockModule(nodeRequire, './service/audit-cleanup.service', {
+      __esModule: true,
+      default: class FakeAuditCleanupService {
+        start = async () => undefined;
+        stop = async () => undefined;
+      }
+    });
+
     mockModule(nodeRequire, './service/cache/cleanup.service', {
       __esModule: true,
       default: class FakeCleanupService {
@@ -337,6 +345,9 @@ describe('index.ts bootstrap()', () => {
 
     const processOnMock = mock.fn();
     mock.method(process, 'on', processOnMock as never);
+    // The handler ends with process.exit(): the real one would end the test process, and every test with it
+    const exitMock = mock.fn();
+    mock.method(process, 'exit', exitMock as never);
 
     await indexMod.bootstrap();
 
@@ -353,6 +364,7 @@ describe('index.ts bootstrap()', () => {
     assert.equal(cleanupServiceMock.stop.mock.calls.length, 1);
     assert.equal(oianalyticsRegistrationServiceMock.stop.mock.calls.length, 1);
     assert.equal(loggerServiceMock.stop.mock.calls.length, 1);
+    assert.equal(exitMock.mock.calls.length, 1);
   });
 
   it('SIGINT handler is guarded against concurrent invocations (stopping=true)', async () => {
@@ -360,6 +372,9 @@ describe('index.ts bootstrap()', () => {
 
     const processOnMock = mock.fn();
     mock.method(process, 'on', processOnMock as never);
+    // The handler ends with process.exit(): the real one would end the test process, and every test with it
+    const exitMock = mock.fn();
+    mock.method(process, 'exit', exitMock as never);
 
     await indexMod.bootstrap();
 
