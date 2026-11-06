@@ -43,14 +43,6 @@
     "message": "了解一些 OIBus 的高级概念。",
     "description": "The generated-index page description for category 'Advanced' in sidebar 'guideSidebar'"
   },
-  "sidebar.guideSidebar.category.OIBus Agent": {
-    "message": "OIBus Agent",
-    "description": "The label for category 'OIBus Agent' in sidebar 'guideSidebar'"
-  },
-  "sidebar.guideSidebar.category.OIBus Agent.link.generated-index.description": {
-    "message": "了解如何安装 OIBus Agent 并与其通信。",
-    "description": "The generated-index page description for category 'OIBus Agent' in sidebar 'guideSidebar'"
-  },
   "sidebar.developerSidebar.category.Create a connector": {
     "message": "创建连接器",
     "description": "The label for category 'Create a connector' in sidebar 'developerSidebar'"

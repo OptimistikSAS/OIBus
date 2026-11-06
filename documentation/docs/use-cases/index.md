@@ -16,7 +16,7 @@ Each use case covers a specific South → North pairing. Before following a use 
 | [ADS / TwinCAT → OIAnalytics](./use-case-ads)                 | ADS                          | OIAnalytics        |
 | [Modbus → File Writer](./use-case-modbus)                     | Modbus                       | File Writer        |
 | [Aspen IP21 → Amazon S3](./use-case-ip21)                     | ODBC                         | Amazon S3          |
-| [OSIsoft PI → OIAnalytics](./use-case-pi)                     | OSIsoft PI (via OIBus Agent) | OIAnalytics        |
+| [OSIsoft PI → OIAnalytics](./use-case-pi)                     | OSIsoft PI                   | OIAnalytics        |
 | [Advanced multi-network setup](./use-case-advanced)           | Multiple                     | Multiple           |
 
 :::tip New to OIBus?

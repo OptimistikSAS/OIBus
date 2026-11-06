@@ -259,7 +259,7 @@ export interface SouthConnectorManifest {
    * Whether this connector type can feed Configuration Workflows, the shape of their discovery scope and the
    * starting values of a new one. Absent when the connector has no discovery.
    * UI capability flag — mirrors the connector's structural `hasConfigurationDiscovery()`. ODBC and OLEDB
-   * are SQL-family too but route through a separate agent process, so they don't have discovery yet.
+   * are SQL-family too but don't have discovery yet.
    */
   discovery?: SouthConnectorDiscovery;
 

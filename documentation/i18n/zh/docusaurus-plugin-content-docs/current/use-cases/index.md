@@ -16,7 +16,7 @@ sidebar_position: 1
 | [ADS / TwinCAT → OIAnalytics](./use-case-ads)                 | ADS                            | OIAnalytics        |
 | [Modbus → File Writer](./use-case-modbus)                     | Modbus                         | File Writer        |
 | [Aspen IP21 → Amazon S3](./use-case-ip21)                     | ODBC                           | Amazon S3          |
-| [OSIsoft PI → OIAnalytics](./use-case-pi)                     | OSIsoft PI（通过 OIBus Agent） | OIAnalytics        |
+| [OSIsoft PI → OIAnalytics](./use-case-pi)                     | OSIsoft PI                 | OIAnalytics        |
 | [高级多网络配置](./use-case-advanced)                         | 多种                           | 多种               |
 
 :::tip 初次使用 OIBus？
