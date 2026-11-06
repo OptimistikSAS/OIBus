@@ -69,6 +69,24 @@ services:
     restart: unless-stopped
     profiles: [ "iot" ]
 
+  s7-server:
+    # Simulated Siemens S7 PLC (docker/s7/s7_server.py), the Snap7 server through python-snap7 (rack 0, any slot).
+    image: python:3.14-slim
+    container_name: oibus_s7-server
+    hostname: s7-server
+    ports:
+      - "102:102"
+    volumes:
+      - ./docker/s7/s7_server.py:/app/s7_server.py
+    working_dir: /app
+    command: >
+      sh -c "pip install --quiet --root-user-action=ignore 'python-snap7==2.0.2'
+      && python -u s7_server.py"
+    networks:
+      - oibus-network
+    restart: unless-stopped
+    profiles: [ "iot" ]
+
   syslog-server:
     image: python:3.14-slim
     container_name: oibus_syslog-server
