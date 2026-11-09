@@ -275,7 +275,6 @@ INSERT INTO "migrations" ("id", "name", "batch", "migration_time") VALUES (27, '
 INSERT INTO "migrations" ("id", "name", "batch", "migration_time") VALUES (28, 'v3.9.2.ts', 1, 1793976787827);
 INSERT INTO "migrations" ("id", "name", "batch", "migration_time") VALUES (29, 'v3.9.5.ts', 1, 1793976787827);
 INSERT INTO "migrations" ("id", "name", "batch", "migration_time") VALUES (30, 'v3.10.0.ts', 1, 1793976787846);
-INSERT INTO "migrations" ("id", "name", "batch", "migration_time") VALUES (31, 'v3.10.0_1.ts', 1, 1793976787847);
 INSERT INTO "migrations_lock" ("index", "is_locked") VALUES (1, 0);
 INSERT INTO "scan_modes" ("id", "name", "description", "cron", "created_at", "updated_at", "created_by", "updated_by", "type", "interval", "activation_window") VALUES ('scanModeId1', 'scanMode1', 'my first scanMode', '* * * * * *', '', '', '', '', NULL, NULL, NULL);
 INSERT INTO "scan_modes" ("id", "name", "description", "cron", "created_at", "updated_at", "created_by", "updated_by", "type", "interval", "activation_window") VALUES ('scanModeId2', 'scanMode2', 'my second scanMode', '0 * * * * *', '', '', '', '', NULL, NULL, NULL);
