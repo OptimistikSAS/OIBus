@@ -19,6 +19,7 @@ import {
   forEachSouthItem,
   JsonObject
 } from '../config-upgrade';
+import { expressionToOperations } from './expression-operations';
 import {
   FILE_PASSTHROUGH,
   IGNORE_FUNCTION_NAME,
@@ -759,9 +760,20 @@ export const FIELD_PROCESS_FUNCTION_NAMES = [
 
 type JsonRecord = Record<string, unknown>;
 
-/** A JS expression as the operations of a field process: a single `expression` operation, none without expression */
-const toOperations = (process: unknown): Array<unknown> =>
-  Array.isArray(process) ? process : typeof process === 'string' && process.trim() ? [{ type: 'expression', expression: process }] : [];
+/**
+ * A JS expression as the operations of a field process doing the same (see `expressionToOperations`), none without
+ * expression. An expression doing something no operation does is removed, with a warning: its field is then kept as it is.
+ */
+function toOperations(process: unknown): Array<unknown> {
+  if (Array.isArray(process)) return process;
+  if (typeof process !== 'string') return [];
+  const operations = expressionToOperations(process);
+  if (operations === null) {
+    console.warn(`The field process expression "${process}" does nothing an operation does: it is removed, the field is kept as it is`);
+    return [];
+  }
+  return operations;
+}
 
 /** The date time conversion of datetime settings (`inputType`, `inputTimezone`...), their format only for a string */
 function toDatetimeOperation(settings: JsonRecord | null | undefined): JsonRecord {
@@ -821,7 +833,7 @@ function toProcessedField(field: JsonRecord, textOutput: boolean): JsonRecord {
 
 /**
  * The options of a transformer (of `FIELD_PROCESS_FUNCTION_NAMES`) only process their fields with operations:
- *  - a JS expression (of a field, a reference or a value) becomes a single `expression` operation;
+ *  - a JS expression (of a field, a reference or a value) becomes the operations doing the same;
  *  - the data type and datetime settings of a file field, and of an MQTT payload or object field, become the operations
  *    doing the same (a conversion, a date time conversion), first;
  *  - the source type of an OIAnalytics timestamp (with its timezone, format and locale) becomes a date time conversion to
@@ -1850,6 +1862,8 @@ export const upgrade: ConfigUpgrade = {
     forEachSouth(config, null, south => {
       const settings = south.settings as JsonObject;
       setMissing(settings, 'configurationWorkflows', []);
+      // The workflows of a 3.10.0 pre-release add no field to their records
+      asObjects(settings.configurationWorkflows).forEach(workflow => setMissing(workflow, 'addedFields', []));
       const defaultCachingStrategy = IOT_FAMILY_SOUTH_TYPES.includes(south.type as string) ? 'allValues' : null;
       const defaultEmptyIntervalStrategy = HISTORY_SOUTH_TYPES.includes(south.type as string) ? 'keep' : null;
       for (const item of asObjects(settings.items)) {

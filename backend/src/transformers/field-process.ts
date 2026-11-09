@@ -1,5 +1,3 @@
-import vm from 'node:vm';
-
 import { DateTime, DateTimeUnit } from 'luxon';
 
 import { Instant, Timezone } from '../../shared/model/common/types';
@@ -15,61 +13,8 @@ import type { ILogger } from '../model/logger.model';
 import { convertDateTimeToInstant, formatInstant, stringToBoolean } from '../service/utils';
 
 /**
- * Whitelisted standard globals accessible inside the expression of an `expression` operation.
- *
- * Node.js-specific APIs (require, process, global, Buffer, __dirname, __filename,
- * setTimeout, setInterval, fetch, …) are intentionally omitted so the expression
- * cannot reach the host environment.
- *
- * `Function` and `eval` are also excluded to prevent dynamic code generation
- * inside an expression.
- */
-const SANDBOX_GLOBALS: Record<string, unknown> = Object.freeze({
-  // Numeric helpers
-  Math,
-  parseInt,
-  parseFloat,
-  isNaN,
-  isFinite,
-  Infinity,
-  NaN,
-  // Type constructors / coercions
-  String,
-  Number,
-  Boolean,
-  BigInt,
-  Symbol,
-  // Collection types
-  Array,
-  Object,
-  Map,
-  Set,
-  WeakMap,
-  WeakSet,
-  // Structured data
-  JSON,
-  // Date / time
-  Date,
-  // Regular expressions
-  RegExp,
-  // URI helpers
-  encodeURIComponent,
-  decodeURIComponent,
-  encodeURI,
-  decodeURI,
-  // Error constructors (useful for instanceof checks in expressions)
-  Error,
-  TypeError,
-  RangeError,
-  SyntaxError,
-  ReferenceError,
-  // Explicit undefined so expressions can test/return it
-  undefined: undefined
-});
-
-/**
  * Applies the operations of a field process to a value, in order, each on the result of the previous one. A missing or
- * empty value has nothing to process and is returned as is, as is the null an expression may return. Throws when an
+ * empty value has nothing to process and is returned as is. Throws when an
  * operation can't apply to its value (e.g. a text for a number operation): see `createFieldProcess` to skip it instead.
  *
  * @example
@@ -138,15 +83,12 @@ function applyFieldOperation(operand: unknown, operation: FieldOperation): unkno
     return convertFieldDatetime(operand, operation);
   }
   const value = operand instanceof Date ? operand.toISOString() : operand;
-  if (operation.type === 'expression') {
-    return evaluateExpression(value, operation.expression) ?? null;
-  }
   if (operation.type === 'convert') {
     return convert(value, operation.to);
   }
   if (typeof value === 'object') {
     // Objects and arrays (of the JSON files) have no text nor number to process
-    throw new Error(`${JSON.stringify(value)} is an object or an array: only an expression can process it`);
+    throw new Error(`${JSON.stringify(value)} is an object or an array: only a conversion can process it`);
   }
   const scalar = value as string | number | boolean;
   switch (operation.type) {
@@ -277,63 +219,6 @@ function roundDownInstant(instant: Instant, precision: FieldDatetimePrecision, t
     .startOf(PRECISION_UNITS[precision])
     .toUTC()
     .toISO()!;
-}
-
-/**
- * Compiled vm.Script cache — avoids re-parsing the same expression for every row
- * when a dataset has many records.
- */
-const scriptCache = new Map<string, vm.Script>();
-
-/**
- * Evaluates the expression of an `expression` operation against a value inside a restricted vm.Context that contains
- * only standard JavaScript built-ins.
- *
- * Security properties:
- *  - `require`, `process`, `global`, `Buffer` → ReferenceError (not in context)
- *  - `Function`, `eval` → ReferenceError (not in context)
- *  - Execution is time-bounded (500 ms) to prevent runaway expressions.
- *
- * `value` is bound to the field value inside the expression. Throws when the expression calls a method the value does
- * not have (`value.toFixed(2)` on a text...), or fails.
- *
- * @example
- *   evaluateExpression('hello', 'value.toUpperCase()')           // → 'HELLO'
- *   evaluateExpression(3.14159, 'Math.round(value * 100) / 100') // → 3.14
- */
-export function evaluateExpression(value: unknown, expression: string): unknown {
-  if (!expression.trim()) return value;
-  const incompatibility = findIncompatibleMethod(value, expression);
-  if (incompatibility) {
-    throw new Error(incompatibility);
-  }
-  try {
-    let script = scriptCache.get(expression);
-    if (!script) {
-      script = new vm.Script(`(${expression})`);
-      scriptCache.set(expression, script);
-    }
-    const context = vm.createContext({ ...SANDBOX_GLOBALS, value });
-    return script.runInContext(context, { timeout: 500 });
-  } catch (e) {
-    throw new Error(`Expression "${expression}" failed: ${(e as Error).message}`);
-  }
-}
-
-/**
- * Find a method called on `value` in the expression (`value.toUpperCase()`, `value.toFixed(2)`, …) that does not exist on
- * the type of the value (string, number, …), to tell why the value can't be processed instead of failing on
- * "value.toFixed is not a function". Returns the message, or null when the expression is compatible.
- */
-function findIncompatibleMethod(value: unknown, expression: string): string | null {
-  const type = Array.isArray(value) ? 'array' : typeof value;
-  for (const match of expression.matchAll(/\bvalue\s*\??\.\s*([A-Za-z_$][\w$]*)\s*\(/g)) {
-    const method = match[1];
-    if (typeof (value as Record<string, unknown>)[method] !== 'function') {
-      return `method "${method}" of expression "${expression}" is not available on a value of type ${type}`;
-    }
-  }
-  return null;
 }
 
 /** The warnings already logged by each logger, a field process being applied to many values of a batch */

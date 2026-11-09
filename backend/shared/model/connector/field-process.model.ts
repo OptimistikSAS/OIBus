@@ -10,8 +10,7 @@ export const FIELD_OPERATION_TYPES = [
   'replace',
   'number-operation',
   'round',
-  'datetime',
-  'expression'
+  'datetime'
 ] as const;
 /**
  * What one operation of a field process does to the value of a discovered record's field.
@@ -118,13 +117,6 @@ export interface FieldDatetimeOperation {
   precision?: FieldDatetimePrecision;
 }
 
-/** Any other processing, as a JavaScript expression on `value`. */
-export interface FieldExpressionOperation {
-  type: 'expression';
-  /** @example "value.split('.').pop()" */
-  expression: string;
-}
-
 export type FieldOperation =
   | FieldConvertOperation
   | FieldCaseOperation
@@ -133,8 +125,7 @@ export type FieldOperation =
   | FieldReplaceOperation
   | FieldNumberOperation
   | FieldRoundOperation
-  | FieldDatetimeOperation
-  | FieldExpressionOperation;
+  | FieldDatetimeOperation;
 
 /** The value of a field of a record (a discovered record, a row of a transformed content...). */
 export type RecordFieldValue = string | number | boolean | null;

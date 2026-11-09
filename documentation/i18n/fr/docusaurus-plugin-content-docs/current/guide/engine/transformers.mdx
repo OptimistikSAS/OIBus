@@ -194,7 +194,7 @@ attendant des fichiers.
 
 Chaque champ d'un enregistrement est écrit automatiquement — il n'est pas nécessaire de déclarer un champ simplement
 pour qu'il apparaisse dans la sortie. Déclarer un champ (via **Champs**) n'est nécessaire que lorsqu'il doit être
-renommé, converti vers un type spécifique, reformaté (dates) ou passé par une expression JavaScript. Lorsque
+renommé, converti vers un type spécifique, reformaté (dates) ou traité. Lorsque
 **Conserver les autres champs** est désactivé, seuls les champs configurés sont écrits, dans leur ordre de
 configuration.
 
@@ -240,8 +240,7 @@ référence**, le **Traitement de l'horodatage** et le **Traitement de la valeur
 des listes d'opérations appliquées dans l'ordre, chacune au résultat de la précédente : conversion (en texte, en
 nombre, en booléen, ou en l'objet ou le tableau d'un texte JSON), majuscules ou minuscules, suppression des espaces,
 sous-chaîne, ajout de texte, remplacement de texte, opération numérique, arrondi, conversion de date (éventuellement
-arrondie à la valeur inférieure selon une **Précision** : seconde, minute, heure ou jour), ou une **Expression**
-JavaScript sur `value` pour tout le reste — les mêmes opérations que le
+arrondie à la valeur inférieure selon une **Précision** : seconde, minute, heure ou jour) — les mêmes opérations que le
 [traitement des champs des synchronisations d'éléments](../south-connectors/common-settings.md#field-processing). Les
 paramètres affichent les opérations dans l'ordre ; **Configurer…** les ouvre dans une fenêtre, pour les ajouter, les
 modifier, les réordonner ou les supprimer.
@@ -255,19 +254,21 @@ Les opérations ne s'appliquent qu'à une valeur pouvant être traitée :
 
 - une valeur absente (`null`) est laissée telle quelle : elle n'est pas traitée. Dans un fichier CSV, elle est écrite
   avec la **Valeur nulle** ; dans une charge utile OIAnalytics, l'enregistrement est ignoré ;
-- une valeur sur laquelle une opération échoue (par exemple un texte dans une opération numérique, ou une expression
-  appelant une méthode que la valeur ne possède pas) est ignorée avec un avertissement dans les journaux, une fois par
+- une valeur sur laquelle une opération échoue (par exemple un texte dans une opération numérique) est ignorée avec un avertissement dans les journaux, une fois par
   champ. Le champ est écrit vide dans un fichier, l'enregistrement est ignoré dans une charge utile OIAnalytics, et une
   référence est conservée telle quelle. Convertissez d'abord le champ (par exemple **Convertir** en nombre avant une
   opération numérique) ;
-- un objet ou un tableau (d'un fichier JSON) peut uniquement être converti, ou traité par une expression ;
+- un objet ou un tableau (d'un fichier JSON) peut uniquement être converti ;
 - un champ sans opération est écrit tel qu'il est lu : un texte d'un fichier CSV reste un texte dans un fichier JSON,
   sauf s'il est converti.
 
 Avant la 3.10, les traitements étaient des expressions JavaScript, et les champs avaient un type de données et des
 paramètres de date/heure : la mise à jour les transforme en opérations équivalentes — une **Conversion** pour le type
-de données, une **Conversion de date** pour les paramètres de date/heure, puis une unique opération **Expression** pour
-l'expression.
+de données, une **Conversion de date** pour les paramètres de date/heure, puis les opérations de l'expression :
+`value.trim().toUpperCase()` devient **Supprimer les espaces** puis **Majuscules**, `Math.round(value * 100) / 100` un
+**Arrondi** à 2 décimales, `'plant.' + value` un **Ajout de texte**... Une expression faisant ce qu'aucune opération ne
+fait (par exemple `value.split('/').pop()`) est supprimée, avec un avertissement dans les journaux : vérifiez le
+traitement du champ après la mise à jour.
 
 ##### Exemple — Enregistrements de points dans un fichier CSV {#example}
 
@@ -281,7 +282,7 @@ l'expression.
 ```
 
 Avec le type de fichier `CSV`, le délimiteur `SEMI_COLON`, **Conserver les autres champs** désactivé, et trois champs :
-`pointId` (nom écrit `Reference`, traitement du champ : une expression `value.split('/').pop()`), `timestamp` (nom écrit
+`pointId` (nom écrit `Reference`, traitement du champ : un remplacement de `plant/` par rien), `timestamp` (nom écrit
 `Timestamp`, traitement du champ : une conversion de date de `iso-string` vers `string` avec le format
 `yyyy-MM-dd HH:mm:ss` et le fuseau horaire `Europe/Paris`) et `value` (nom écrit `Value`) :
 

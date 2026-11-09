@@ -558,10 +558,11 @@ dans l'ordre, chacune au résultat de la précédente :
 | **Opération numérique**   | Ajoute, soustrait, multiplie ou divise un nombre (ou un texte qui en contient un) par une opérande.                                                                                                                                                           | Multiplier par `0.001` : `1500` → `1.5`   |
 | **Arrondir**              | Arrondit un nombre à un nombre de décimales.                                                                                                                                                                                                                  | 2 décimales : `3.14159` → `3.14`          |
 | **Conversion de date**    | Convertit une date d'un type à un autre : chaîne ISO, epoch Unix (s ou ms), ou chaîne avec un format, un fuseau et une locale ; sa **Précision** l'arrondit à la seconde, minute, heure ou jour inférieur (en UTC, ou dans le fuseau de sortie d'une chaîne). | Epoch Unix (ms) → chaîne ISO              |
-| **Expression**            | Tout autre traitement, sous forme d'expression JavaScript sur `value` — comme le traitement de champ des transformateurs.                                                                                                                                     | `value.split('/').pop()`                  |
+
+Pour construire une valeur à partir de plusieurs champs, ajoutez plutôt un champ (voir [Champs ajoutés](#added-fields)).
 
 **Tester** applique les opérations aux cinq premières valeurs découvertes pour le champ (telles que découvertes, avant
-tout traitement) et affiche chaque résultat, ou pourquoi une opération échoue sur une valeur. Une valeur absente ou vide
+tout traitement ; pour un champ ajouté, telles qu'ajoutées) et affiche chaque résultat, ou pourquoi une opération échoue sur une valeur. Une valeur absente ou vide
 est laissée telle quelle. Lors d'une exécution, une valeur sur laquelle une opération échoue devient vide, et un
 avertissement est journalisé une fois par champ. Enregistrer le traitement d'un champ découvre à nouveau les
 enregistrements, traités et filtrés.
@@ -571,17 +572,35 @@ Traiter un champ utilisé comme clé d'identité change les clés : les points d
 comme manquants, et de nouveaux sont créés.
 :::
 
+##### Champs ajoutés {#added-fields}
+
+**Champs ajoutés** ajoute des champs à chaque enregistrement découvert, après le traitement des champs découverts.
+Saisissez le nom du champ et sa valeur, puis cliquez sur **+** :
+
+- une constante, écrite telle quelle : `Lyon` ;
+- une combinaison de champs de l'enregistrement, chacun écrit `{{field}}` : `{{plant}}.{{name}}`. **Insérer un champ**
+  ajoute l'un des champs des enregistrements de l'aperçu. Les champs sont lus avec leurs valeurs traitées, et un champ
+  peut utiliser ceux ajoutés avant lui. Un champ absent donne un texte vide ; une valeur qui est un seul champ
+  (`{{max}}`) garde le type de sa valeur (un nombre reste un nombre).
+
+Sinon, un champ ajouté est un texte : traitez-le comme tout autre champ — il a une colonne dans le tableau des
+enregistrements, avec son bouton baguette — par exemple pour le convertir en nombre. Son traitement s'applique une fois
+le champ ajouté. Un champ ajouté portant le nom d'un champ découvert le remplace. Modifiez ou supprimez un champ ajouté
+avec ses icônes crayon et corbeille : un champ renommé garde son traitement, un champ supprimé le perd. Le filtre
+d'éligibilité, les clés d'identité, la correspondance des points et l'envoi à OIAnalytics voient les champs ajoutés comme
+les champs découverts.
+
 ##### Filtre d'éligibilité {#eligibility-filter}
 
 Le **Filtre d'éligibilité** liste les conditions qu'un enregistrement découvert doit **toutes** satisfaire (ET
 logique) pour être traité — laissez-le vide pour rendre tous les enregistrements éligibles. Il compare les valeurs
-traitées. Chaque condition possède :
+traitées, et lit les champs ajoutés. Chaque condition possède :
 
-| Paramètre     | Description                                                                                           | Exemple de valeur |
-| ------------- | ----------------------------------------------------------------------------------------------------- | ----------------- |
-| **Champ**     | Un champ de l'enregistrement découvert. Les champs des enregistrements de l'aperçu sont suggérés.     | `type`            |
-| **Opérateur** | `égal à`, `différent de`, `contient`, `correspond à (regex)`, `existe`, `supérieur à`, `inférieur à`. | `égal à`          |
-| **Valeur**    | La valeur de comparaison — non utilisée pour `existe`.                                                | `Variable`        |
+| Paramètre     | Description                                                                                                                             | Exemple de valeur |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Champ**     | Un champ de l'enregistrement découvert. Les champs des enregistrements de l'aperçu sont suggérés.                                       | `type`            |
+| **Opérateur** | `égal à`, `différent de`, `contient`, `commence par`, `se termine par`, `correspond à (regex)`, `existe`, `supérieur à`, `inférieur à`. | `égal à`          |
+| **Valeur**    | La valeur de comparaison — non utilisée pour `existe`.                                                                                  | `Variable`        |
 
 Ajoutez une condition avec les champs sous le tableau ; modifiez-en ou supprimez-en une avec ses icônes crayon et
 corbeille.
@@ -706,8 +725,8 @@ En mode local, un rappel indique que lorsqu'un point n'est plus trouvé, l'élé
 
 #### Vérification {#review}
 
-L'étape Vérification récapitule la synchronisation (nom, périmètre de découverte, nombre de conditions, mode,
-planification) et prévisualise ce que ferait une exécution — l'ouverture de l'étape lance l'aperçu, **Actualiser
+L'étape Vérification récapitule la synchronisation (nom, périmètre de découverte, champs traités et ajoutés, nombre de
+conditions, mode, planification) et prévisualise ce que ferait une exécution — l'ouverture de l'étape lance l'aperçu, **Actualiser
 l'aperçu** le relance. Tant que quelque chose l'empêche (un nom ou une requête manquants, aucun champ de clé
 d'identité, un champ d'élément obligatoire non associé…), l'étape liste ce qu'il faut corriger, chacun avec un bouton
 vers l'étape où le corriger, et aucun aperçu ne s'exécute :
@@ -716,16 +735,16 @@ vers l'étape où le corriger, et aucun aperçu ne s'exécute :
   précédente comme **Nouveau**, **Modifié**, **Inchangé**, **Réactivé** ou **Manquant**, avec sa clé d'identité et ses
   champs. Un enregistrement modifié met en évidence les champs qui diffèrent, avec la valeur précédente au survol ; un
   enregistrement manquant affiche les valeurs de l'exécution précédente, estompées.
-- **Envoyer à OIAnalytics** : les enregistrements qui seraient envoyés, exactement tels que découverts.
+- **Envoyer à OIAnalytics** : les enregistrements qui seraient envoyés, traités et complétés par les champs ajoutés.
 
 Une zone de recherche au-dessus du tableau cherche un texte dans la clé d'identité, le statut et les valeurs des lignes
 (en mémoire, sur tout l'aperçu), et le tableau est paginé. **Exporter en CSV** télécharge toutes les lignes de
-l'aperçu, quelle que soit la recherche. Un aperçu n'écrit rien.
+l'aperçu, quelle que soit la recherche, dans un fichier UTF-8 que les tableurs lisent comme tel. Un aperçu n'écrit rien.
 
 ### Exécuter une synchronisation des points {#running-an-items-synchronisation}
 
 Une exécution découvre toujours la source de données (telle que définie par le périmètre de découverte), traite les
-champs des enregistrements et conserve les éligibles, puis agit selon le mode :
+champs des enregistrements, ajoute les champs ajoutés et conserve les éligibles, puis agit selon le mode :
 
 - **Créer/mettre à jour les points localement** rapproche les enregistrements éligibles de l'exécution précédente par
   clé d'identité : elle crée ou met à jour un élément pour chaque enregistrement nouveau, modifié ou réactivé, ignore

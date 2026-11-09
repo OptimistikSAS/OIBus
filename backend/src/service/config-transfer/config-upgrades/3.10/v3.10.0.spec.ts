@@ -1566,7 +1566,8 @@ describe('3.10.0 config upgrade', () => {
                   fields: [
                     { field: 'id', fieldProcess: 'value.toUpperCase()' },
                     { field: 'v', fieldProcess: null },
-                    { field: 'w', fieldProcess: '  ' }
+                    { field: 'w', fieldProcess: '  ' },
+                    { field: 'x', fieldProcess: "value.split('/').pop()" }
                   ]
                 }
               }
@@ -1612,10 +1613,7 @@ describe('3.10.0 config upgrade', () => {
       };
 
       assert.deepStrictEqual(operations('json'), [
-        [
-          { type: 'convert', to: 'string' },
-          { type: 'expression', expression: 'value.trim()' }
-        ],
+        [{ type: 'convert', to: 'string' }, { type: 'trim' }],
         [{ type: 'convert', to: 'number' }],
         [{ type: 'convert', to: 'boolean' }],
         [{ type: 'convert', to: 'json' }],
@@ -1623,7 +1621,7 @@ describe('3.10.0 config upgrade', () => {
       ]);
       // texts need no conversion to be written in a CSV file
       assert.deepStrictEqual(operations('csv'), [
-        [{ type: 'expression', expression: 'value.trim()' }],
+        [{ type: 'trim' }],
         [{ type: 'convert', to: 'number' }],
         [{ type: 'convert', to: 'boolean' }],
         [],
@@ -1707,24 +1705,36 @@ describe('3.10.0 config upgrade', () => {
       assert.deepStrictEqual(timestampOf(converted), converted);
     });
 
-    it('turns the expressions into an expression operation, and no expression into no operation', () => {
+    it('turns the expressions into the operations doing the same, and no expression into no operation', t => {
+      const warn = t.mock.method(console, 'warn', () => undefined);
       const config = upgrade.apply(buildConfig());
 
       const [l1] = ((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).transformers as Array<JsonObject>;
       assert.deepStrictEqual((l1.options as JsonObject).fields, [
-        { field: 'id', fieldProcess: [{ type: 'expression', expression: 'value.toUpperCase()' }] },
+        { field: 'id', fieldProcess: [{ type: 'uppercase' }] },
         { field: 'v', fieldProcess: [] },
-        { field: 'w', fieldProcess: [] }
+        { field: 'w', fieldProcess: [] },
+        // no operation does what it did: removed, with a warning
+        { field: 'x', fieldProcess: [] }
       ]);
+      assert.deepStrictEqual(
+        warn.mock.calls.map(call => call.arguments),
+        [
+          [
+            `The field process expression "value.split('/').pop()" does nothing an operation does: it is removed, the field is kept as it is`
+          ]
+        ]
+      );
       const [h1] = ((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).northTransformers as Array<JsonObject>;
       assert.deepStrictEqual((h1.options as JsonObject).reference, {
         referenceField: 'pointId',
-        referenceProcess: [{ type: 'expression', expression: 'value.trim()' }]
+        referenceProcess: [{ type: 'trim' }]
       });
       assert.deepStrictEqual((h1.options as JsonObject).value, { valueField: 'value', valueProcess: [] });
     });
 
-    it('is safe to run twice', () => {
+    it('is safe to run twice', t => {
+      t.mock.method(console, 'warn', () => undefined);
       const once = upgrade.apply(buildConfig());
 
       assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);

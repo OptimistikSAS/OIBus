@@ -4634,10 +4634,7 @@ describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
       fields: [
         {
           field: 'id',
-          fieldProcess: [
-            { type: 'convert', to: 'string' },
-            { type: 'expression', expression: 'value.trim()' }
-          ]
+          fieldProcess: [{ type: 'convert', to: 'string' }, { type: 'trim' }]
         },
         { field: 'v', fieldProcess: [{ type: 'convert', to: 'number' }] }
       ]
@@ -4655,7 +4652,7 @@ describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
         timestampField: 't',
         timestampProcess: [{ type: 'datetime', inputType: 'unix-epoch-ms', outputType: 'iso-string', precision: 's' }]
       },
-      value: { valueField: 'v', valueProcess: [{ type: 'expression', expression: 'value * 2' }] }
+      value: { valueField: 'v', valueProcess: [{ type: 'number-operation', operator: 'multiply', operand: 2 }] }
     });
   });
 });

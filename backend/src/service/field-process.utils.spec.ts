@@ -12,10 +12,6 @@ describe('field-process.utils', () => {
         { value: null, result: null, error: null }
       ]);
     });
-
-    it('should tell why an expression fails', () => {
-      assert.match(testFieldOperations([{ type: 'expression', expression: 'value.(' }], ['a'])[0].error!, /Expression "value.\(" failed/);
-    });
   });
 
   describe('toRecordFieldValue', () => {
@@ -41,8 +37,7 @@ describe('field-process.utils', () => {
           { type: 'replace', search: '/', replacement: '.' },
           { type: 'number-operation', operator: 'multiply', operand: 2 },
           { type: 'round', decimals: 2 },
-          { type: 'datetime', inputType: 'iso-string', outputType: 'string', outputFormat: 'yyyy', outputTimezone: 'UTC' },
-          { type: 'expression', expression: 'value' }
+          { type: 'datetime', inputType: 'iso-string', outputType: 'string', outputFormat: 'yyyy', outputTimezone: 'UTC' }
         ]),
         null
       );
@@ -50,6 +45,7 @@ describe('field-process.utils', () => {
 
     it('should reject an unknown operation, a missing setting or one of another type', () => {
       assert.match(errorOf([{ type: 'nope' }])!, /"\[0\].type" must be one of/);
+      assert.match(errorOf([{ type: 'expression', expression: 'value' }])!, /"\[0\].type" must be one of/);
       assert.match(errorOf([{ type: 'convert', to: 'date' }])!, /"\[0\].to" must be one of/);
       assert.match(errorOf([{ type: 'substring', start: 0 }])!, /"\[0\].end" is required/);
       assert.match(errorOf([{ type: 'uppercase', start: 1 }])!, /"\[0\].start" is not allowed/);

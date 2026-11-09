@@ -36,6 +36,7 @@ import { SouthConnectorManifest, SouthDiscoveryTemplate } from '@oibus/shared/co
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import {
   RECORD_FILTER_OPERATORS,
+  RecordAddedField,
   RecordFieldProcess,
   RecordFilterCondition,
   RecordFilterOperator
@@ -174,12 +175,19 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly reviewPreview = signal<PreviewState | null>(null);
   /** Every record the eligibility filter keeps */
   readonly previewResultRecords = computed(() => this.filterPreview()?.result?.records ?? []);
-  /** The fields of the discovered records, suggested when writing a condition or an identity key, or processing a field */
+  /**
+   * The fields of the discovered records and the ones added to them, suggested when writing a condition or an identity key,
+   * processing a field or adding one
+   */
   readonly recordFields = computed(() => {
     const result = this.filterPreview()?.result;
     const records = result?.records ?? [];
     return Array.from(
-      new Set([...Object.keys(result?.samples ?? {}), ...records.slice(0, PREVIEW_RECORD_LIMIT).flatMap(record => Object.keys(record))])
+      new Set([
+        ...Object.keys(result?.samples ?? {}),
+        ...records.slice(0, PREVIEW_RECORD_LIMIT).flatMap(record => Object.keys(record)),
+        ...this.addedFields().map(added => added.field)
+      ])
     );
   });
   private filterPreviewKey: string | null = null;
@@ -310,6 +318,24 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly fieldProcesses = signal<Array<RecordFieldProcess>>([]);
   readonly processedFields = computed(() => this.fieldProcesses().map(process => process.field));
   readonly newProcessedField = signal('');
+  /** The fields added to the discovered records, after the processing of the discovered ones */
+  readonly addedFields = signal<Array<RecordAddedField>>([]);
+  /** The field being added, or edited when `editingAddedFieldIndex` is set */
+  readonly newAddedField = signal('');
+  readonly newAddedFieldValue = signal('');
+  readonly addedFieldNames = computed(() =>
+    this.addedFields()
+      .map(added => added.field)
+      .join(', ')
+  );
+  /** Index of the added field being edited, or null when a new one is being added */
+  readonly editingAddedFieldIndex = signal<number | null>(null);
+  /** Why the field being added can't be: its name is taken by another added field */
+  readonly addedFieldDuplicate = computed(() => {
+    const field = this.newAddedField().trim();
+    const editingIndex = this.editingAddedFieldIndex();
+    return !!field && this.addedFields().some((added, index) => added.field === field && index !== editingIndex);
+  });
   readonly eligibilityFilter = signal<Array<RecordFilterCondition>>([]);
 
   readonly formError = signal<string | null>(null);
@@ -556,6 +582,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.itemFieldMappingValues.set(itemFieldMapping);
     this.identityKeyFields.set([...(startingValues?.identityKeyFields ?? [])]);
     this.fieldProcesses.set(workflow ? structuredClone(workflow.fieldProcesses) : []);
+    this.addedFields.set(workflow ? workflow.addedFields.map(added => ({ ...added })) : []);
+    this.cancelEditAddedField();
     this.eligibilityFilter.set(workflow ? workflow.eligibilityFilter.map(condition => ({ ...condition })) : []);
     this.refreshRegistrationStatus();
     this.initForm(prefill?.name ?? '');
@@ -700,6 +728,60 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   removeFieldProcess(field: string) {
     this.fieldProcesses.update(processes => processes.filter(process => process.field !== field));
     this.previewFilter();
+  }
+
+  /**
+   * Adds a field to the discovered records, or saves the one edited in place - a renamed field keeps its processing. The
+   * records are then discovered again, with it.
+   */
+  saveAddedField() {
+    const field = this.newAddedField().trim();
+    if (!field || this.addedFieldDuplicate()) {
+      return;
+    }
+    const addedField: RecordAddedField = { field, value: this.newAddedFieldValue() };
+    const editingIndex = this.editingAddedFieldIndex();
+    if (editingIndex === null) {
+      this.addedFields.update(fields => [...fields, addedField]);
+    } else {
+      const previousField = this.addedFields()[editingIndex].field;
+      this.addedFields.update(fields => fields.map((existing, index) => (index === editingIndex ? addedField : existing)));
+      if (previousField !== field) {
+        this.fieldProcesses.update(processes =>
+          processes.map(process => (process.field === previousField ? { ...process, field } : process))
+        );
+      }
+    }
+    this.cancelEditAddedField();
+    this.previewFilter();
+  }
+
+  /** Edits an added field in the fields under the list, in place of a new one */
+  startEditAddedField(index: number) {
+    const addedField = this.addedFields()[index];
+    this.editingAddedFieldIndex.set(index);
+    this.newAddedField.set(addedField.field);
+    this.newAddedFieldValue.set(addedField.value);
+  }
+
+  cancelEditAddedField() {
+    this.editingAddedFieldIndex.set(null);
+    this.newAddedField.set('');
+    this.newAddedFieldValue.set('');
+  }
+
+  /** Removes an added field, with its processing */
+  removeAddedField(index: number) {
+    const field = this.addedFields()[index].field;
+    this.addedFields.update(fields => fields.filter((_, fieldIndex) => fieldIndex !== index));
+    this.fieldProcesses.update(processes => processes.filter(process => process.field !== field));
+    this.cancelEditAddedField();
+    this.previewFilter();
+  }
+
+  /** Adds a field of the records to the value of the field being added, to combine it with others */
+  insertRecordField(field: string) {
+    this.newAddedFieldValue.update(value => `${value}{{${field}}}`);
   }
 
   /** Leave inline edit mode without saving any change. */
@@ -852,7 +934,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   /** What the records depend on: where they are discovered from, how they are processed and the filter */
   private currentFilterPreviewKey(): string {
-    return JSON.stringify([this.currentDiscoveryScope(), this.fieldProcesses(), this.eligibilityFilter()]);
+    return JSON.stringify([this.currentDiscoveryScope(), this.fieldProcesses(), this.addedFields(), this.eligibilityFilter()]);
   }
 
   /** The Items step shows the records too: they are not discovered again when they were, for the same scope and filter. */
@@ -884,6 +966,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       discoveryScope: this.currentDiscoveryScope(),
       identityKeyFields: [],
       fieldProcesses: this.fieldProcesses(),
+      addedFields: this.addedFields(),
       eligibilityFilter: this.eligibilityFilter(),
       itemFieldMapping: null,
       pushToOIAnalytics: true,
@@ -1042,6 +1125,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       discoveryScope,
       identityKeyFields: pushToOIAnalytics ? [] : this.identityKeyFields(),
       fieldProcesses: this.fieldProcesses(),
+      addedFields: this.addedFields(),
       eligibilityFilter: this.eligibilityFilter(),
       itemFieldMapping,
       pushToOIAnalytics,

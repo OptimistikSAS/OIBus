@@ -34,6 +34,7 @@ describe('Configuration Workflow Repository', () => {
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
       fieldProcesses: [],
+      addedFields: [{ field: 'reference', value: 'plant1.{{nodeId}}' }],
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
       pushToOIAnalytics: false,
@@ -53,6 +54,7 @@ describe('Configuration Workflow Repository', () => {
       assert.strictEqual(created.description, 'Creates an item for each variable');
       assert.deepStrictEqual(created.discoveryScope, { rootNodeId: 'ns=1;s=Root' });
       assert.deepStrictEqual(created.identityKeyFields, ['nodeId']);
+      assert.deepStrictEqual(created.addedFields, [{ field: 'reference', value: 'plant1.{{nodeId}}' }]);
       assert.deepStrictEqual(created.eligibilityFilter, [{ field: 'type', operator: 'equals', value: 'Variable' }]);
       assert.deepStrictEqual(created.itemFieldMapping, { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' });
       assert.strictEqual(created.pushToOIAnalytics, false);
@@ -76,6 +78,7 @@ describe('Configuration Workflow Repository', () => {
         discoveryScope: { query: 'SELECT tag_name, unit, min, max FROM metadata_table' },
         identityKeyFields: ['tagName'],
         fieldProcesses: [],
+        addedFields: [],
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
@@ -139,6 +142,7 @@ describe('Configuration Workflow Repository', () => {
           discoveryScope: { rootNodeId: 'ns=1;s=Updated' },
           identityKeyFields: ['nodeId', 'parentPath'],
           fieldProcesses: [],
+          addedFields: [],
           eligibilityFilter: [],
           itemFieldMapping: { name: '{{name}}' },
           pushToOIAnalytics: false,

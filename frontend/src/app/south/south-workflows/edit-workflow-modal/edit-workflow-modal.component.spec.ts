@@ -187,6 +187,12 @@ class EditWorkflowModalComponentTester {
   readonly fieldProcessRows = this.root.getByCss('#field-processes-table tbody tr');
   readonly newProcessedField = this.root.getByCss('#new-processed-field');
   readonly addFieldProcessButton = this.root.getByCss('#add-field-process');
+  // added fields
+  readonly addedFieldRows = this.root.getByCss('#added-fields-table tbody tr');
+  readonly newAddedField = this.root.getByCss('#new-added-field');
+  readonly newAddedFieldValue = this.root.getByCss('#new-added-field-value');
+  readonly insertRecordFieldButton = this.root.getByCss('#insert-record-field');
+  readonly saveAddedFieldButton = this.root.getByCss('#save-added-field');
   // item field mapping
   readonly mappingTable = this.root.getByCss('#item-field-mapping-general');
   readonly enabledSwitch = this.root.getByCss('#workflow-enabled');
@@ -486,6 +492,7 @@ describe('EditWorkflowModalComponent', () => {
         discoveryScope: { nodeIds: ['ns=1;s=Root'] },
         identityKeyFields: ['nodeId'],
         fieldProcesses: [],
+        addedFields: [],
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id, ...withoutMaxReadInterval },
         pushToOIAnalytics: false,
@@ -1332,6 +1339,83 @@ describe('EditWorkflowModalComponent', () => {
       expect(activeModal.close.mock.lastCall![0].fieldProcesses).toEqual([
         { field: 'path', operations: [{ type: 'substring', start: 0, end: 7 }] }
       ]);
+    });
+
+    test('should add fields to the records, combining fields of the records, edit, remove and save them', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const workflow: ConfigurationWorkflowCommandDTO = {
+        ...existingWorkflow,
+        identityKeyFields: [],
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        addedFields: [{ field: 'site', value: 'Lyon' }]
+      };
+      const tester = create({ mode: 'edit', workflow, existingWorkflows: [workflow] });
+      await tester.goToStep('filter');
+      await expect.element(tester.addedFieldRows).toHaveLength(1);
+      await expect.element(tester.addedFieldRows.nth(0)).toMatchTextContent(/site\s*Lyon/);
+
+      // a combination of fields, picked from the fields of the records
+      configurationWorkflowService.previewCommand.mockClear();
+      await tester.newAddedField.fill('reference');
+      await tester.newAddedFieldValue.fill('plant1.');
+      await tester.insertRecordFieldButton.click();
+      await tester.root.getByRole('button', { name: 'path', exact: true }).click();
+      await expect.element(tester.newAddedFieldValue).toHaveValue('plant1.{{path}}');
+      await tester.saveAddedFieldButton.click();
+      await expect.element(tester.addedFieldRows).toHaveLength(2);
+      await expect.element(tester.newAddedField).toHaveValue('');
+      expect(configurationWorkflowService.previewCommand).toHaveBeenCalledTimes(1);
+      expect(configurationWorkflowService.previewCommand.mock.lastCall![4].addedFields).toEqual([
+        { field: 'site', value: 'Lyon' },
+        { field: 'reference', value: 'plant1.{{path}}' }
+      ]);
+
+      // a field can't be added twice
+      await tester.newAddedField.fill('site');
+      await expect.element(tester.root.getByCss('#added-field-duplicate')).toHaveTextContent('This field is already added');
+      await expect.element(tester.saveAddedFieldButton).toBeDisabled();
+
+      // an added field can be processed: renamed, it keeps its processing
+      const fieldProcessModal = createMock(FieldProcessModalComponent);
+      modalService.mockClosedModal(fieldProcessModal, [{ type: 'uppercase' }]);
+      await tester.newProcessedField.fill('reference');
+      await tester.addFieldProcessButton.click();
+      await tester.addedFieldRows.nth(1).getByRole('button', { name: 'Edit' }).click();
+      await expect.element(tester.newAddedField).toHaveValue('reference');
+      await expect.element(tester.newAddedFieldValue).toHaveValue('plant1.{{path}}');
+      await tester.newAddedField.fill('ref');
+      await tester.saveAddedFieldButton.click();
+      await expect.element(tester.fieldProcessRows.nth(0)).toMatchTextContent(/ref\s*Upper case/);
+
+      // removed, it loses its processing
+      await tester.addedFieldRows.nth(0).getByRole('button', { name: 'Delete' }).click();
+      await expect.element(tester.addedFieldRows).toHaveLength(1);
+
+      await tester.goToStep('review');
+      await expect.element(tester.root.getByCss('#review-added-fields')).toHaveTextContent('ref');
+      await tester.saveButton.click();
+      expect(activeModal.close.mock.lastCall![0].addedFields).toEqual([{ field: 'ref', value: 'plant1.{{path}}' }]);
+      expect(activeModal.close.mock.lastCall![0].fieldProcesses).toEqual([{ field: 'ref', operations: [{ type: 'uppercase' }] }]);
+    });
+
+    test('should remove the processing of an added field with it', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
+      const workflow: ConfigurationWorkflowCommandDTO = {
+        ...existingWorkflow,
+        identityKeyFields: [],
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        fieldProcesses: [{ field: 'site', operations: [{ type: 'lowercase' }] }],
+        addedFields: [{ field: 'site', value: 'Lyon' }]
+      };
+      const tester = create({ mode: 'edit', workflow, existingWorkflows: [workflow] });
+      await tester.goToStep('filter');
+
+      await tester.addedFieldRows.nth(0).getByRole('button', { name: 'Delete' }).click();
+
+      await expect.element(tester.root.getByCss('#added-fields-none')).toHaveTextContent('No added field');
+      await expect.element(tester.fieldProcessRows).toHaveLength(0);
     });
 
     test('should show the records, with the values of their fields, on the Items step too', async () => {

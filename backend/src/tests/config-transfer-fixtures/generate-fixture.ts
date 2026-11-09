@@ -60,6 +60,7 @@ function seedMissingEntities(database: Database): void {
           operations: [{ type: 'lowercase' }, { type: 'add-to-string', prefix: 'plant1.', suffix: '' }]
         }
       ],
+      addedFields: [{ field: 'reference', value: 'plant1.{{nodeId}}' }],
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
       pushToOIAnalytics: false,
@@ -80,6 +81,7 @@ function seedMissingEntities(database: Database): void {
       discoveryScope: { query: 'SELECT tag_name, unit FROM tags' },
       identityKeyFields: [],
       fieldProcesses: [],
+      addedFields: [],
       eligibilityFilter: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true,

@@ -66,7 +66,7 @@ import LogRepository from '../repository/logs/log.repository';
 import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
 import { buildSouth } from '../south/south-connector-factory';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
+import { checkAddedFields, checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
@@ -245,6 +245,7 @@ export default class SouthService {
     const names = new Set<string>();
     return command.configurationWorkflows.map(workflow => {
       checkWorkflowMode(workflow);
+      checkAddedFields(workflow);
       if (names.has(workflow.name)) {
         throw new OIBusValidationError(`A configuration workflow with name "${workflow.name}" already exists for this south connector`);
       }
@@ -262,6 +263,7 @@ export default class SouthService {
         discoveryScope: workflow.discoveryScope,
         identityKeyFields: resolveIdentityKeyFields(workflow),
         fieldProcesses: workflow.fieldProcesses,
+        addedFields: workflow.addedFields,
         eligibilityFilter: workflow.eligibilityFilter,
         itemFieldMapping: workflow.itemFieldMapping,
         pushToOIAnalytics: workflow.pushToOIAnalytics,

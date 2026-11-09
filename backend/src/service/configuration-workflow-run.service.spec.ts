@@ -36,6 +36,7 @@ const baseWorkflow: ConfigurationWorkflowEntity = {
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   fieldProcesses: [],
+  addedFields: [],
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
   itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
   pushToOIAnalytics: false,
@@ -480,6 +481,7 @@ describe('Configuration Workflow Run Service', () => {
       ...baseWorkflow,
       identityKeyFields: [],
       fieldProcesses: [],
+      addedFields: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true
     };
@@ -725,6 +727,7 @@ describe('Configuration Workflow Run Service', () => {
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
       fieldProcesses: [],
+      addedFields: [],
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}' },
       pushToOIAnalytics: false,

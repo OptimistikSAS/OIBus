@@ -966,6 +966,7 @@ describe('DataStreamEngine', () => {
       discoveryScope: {},
       identityKeyFields: [],
       fieldProcesses: [],
+      addedFields: [],
       eligibilityFilter: [],
       itemFieldMapping: { name: '{{name}}' },
       pushToOIAnalytics: false,
