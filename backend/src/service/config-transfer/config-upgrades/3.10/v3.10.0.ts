@@ -1786,6 +1786,19 @@ function usesOIBusApi(config: JsonObject): boolean {
   return used;
 }
 
+/**
+ * The error and archive folders get their own maximum size, starting with the cache one: before, the cache maximum size
+ * limited the three folders together. A size already set is kept. Mirrors `addErrorAndArchiveMaxSizes` in the entity
+ * migration of the same version.
+ */
+export function addFolderMaxSizes(caching: JsonObject | undefined): void {
+  const throttling = caching?.throttling as JsonObject | undefined;
+  if (!throttling) return;
+  for (const folder of [caching!.error, caching!.archive] as Array<JsonObject | undefined>) {
+    if (folder) setMissing(folder, 'maxSize', throttling.maxSize);
+  }
+}
+
 export const upgrade: ConfigUpgrade = {
   version: '3.10.0',
   description:
@@ -1808,7 +1821,8 @@ export const upgrade: ConfigUpgrade = {
     'add the max parallel runs of the InfluxDB, MSSQL, MySQL, ODBC, Oracle and PostgreSQL souths, keeping their queries sequential, ' +
     'and group the connection settings of the InfluxDB, MSSQL, MySQL, Oracle and PostgreSQL souths, with the idle timeout of their connection pool; ' +
     'move the request timeout of the MSSQL and PostgreSQL souths to their items; ' +
-    'add the setting enabling the content endpoints of the web server, enabled when a North transformer applies to the OIBus API',
+    'add the setting enabling the content endpoints of the web server, enabled when a North transformer applies to the OIBus API; ' +
+    'give the error and archive folders of the North connectors and history queries their own maximum size',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1918,6 +1932,8 @@ export const upgrade: ConfigUpgrade = {
     removeOpcAgentSettings(config);
     useLocalOleDbDriver(config);
     removePiAgentSettings(config);
+    forEachNorth(config, null, north => addFolderMaxSizes((north.settings as JsonObject).caching as JsonObject | undefined));
+    forEachHistoryQuery(config, null, settings => addFolderMaxSizes(settings.caching as JsonObject | undefined));
 
     return config;
   }

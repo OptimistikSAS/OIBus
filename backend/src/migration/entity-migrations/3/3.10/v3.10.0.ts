@@ -125,7 +125,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   removeOdbcAgentSettings,
   removeOpcAgentSettings,
   useLocalOleDbDriver,
-  removePiAgentSettings
+  removePiAgentSettings,
+  addErrorAndArchiveMaxSizes
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -146,6 +147,9 @@ export async function up(knex: Knex): Promise<void> {
  * is enabled.
  */
 export async function down(knex: Knex): Promise<void> {
+  for (const table of [NORTH_CONNECTORS_TABLE, HISTORY_QUERIES_TABLE]) {
+    await dropColumns(knex, table, ['caching_error_max_size', 'caching_archive_max_size']);
+  }
   await dropColumns(knex, SOUTH_ITEM_GROUPS_TABLE, ['empty_interval_strategy']);
   await dropColumns(knex, SOUTH_ITEMS_TABLE, ['empty_interval_strategy']);
   await dropColumns(knex, SOUTH_ITEMS_TABLE, ['description']);
@@ -1885,5 +1889,23 @@ export async function removePiAgentSettings(knex: Knex): Promise<void> {
       'settings',
       items.map(item => ({ id: item.id, settings: JSON.stringify(withPiValueFilter(JSON.parse(item.settings))) }))
     );
+  }
+}
+
+/**
+ * The cache, error and archive folders of the North connectors and history queries each get their own maximum size.
+ * Before, the single `caching_throttling_cache_max_size` limited the three folders together: the error and archive
+ * folders start with that same limit (see `addFolderMaxSizes` in the config upgrade of the same version).
+ */
+export async function addErrorAndArchiveMaxSizes(knex: Knex): Promise<void> {
+  for (const table of [NORTH_CONNECTORS_TABLE, HISTORY_QUERIES_TABLE]) {
+    await knex.schema.alterTable(table, builder => {
+      builder.integer('caching_error_max_size').notNullable().defaultTo(0);
+      builder.integer('caching_archive_max_size').notNullable().defaultTo(0);
+    });
+    await knex(table).update({
+      caching_error_max_size: knex.ref('caching_throttling_cache_max_size'),
+      caching_archive_max_size: knex.ref('caching_throttling_cache_max_size')
+    });
   }
 }

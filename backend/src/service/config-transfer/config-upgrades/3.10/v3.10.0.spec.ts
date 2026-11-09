@@ -6,6 +6,7 @@ import { describe, it } from 'node:test';
 import { CONFIG_TRANSFER_FIXTURES_DIR } from '../../../../tests/config-transfer-fixtures/config-transfer-fixture';
 import { JsonObject } from '../config-upgrade';
 import {
+  addFolderMaxSizes,
   buildRecordListToCsvOptions,
   COMPRESSED_FILE_OPTIONS,
   FILE_AS_IS_OPTIONS,
@@ -212,6 +213,28 @@ describe('3.10.0 config upgrade', () => {
     assert.strictEqual(((influxdb.groups as Array<JsonObject>)[0].historySettings as JsonObject).emptyIntervalStrategy, 'keep');
     assert.strictEqual((mqtt.items as Array<JsonObject>)[0].emptyIntervalStrategy, null);
     assert.strictEqual(((mqtt.groups as Array<JsonObject>)[0].historySettings as JsonObject).emptyIntervalStrategy, null);
+  });
+
+  it('gives the error and archive folders of the norths and history queries the max size of the cache', () => {
+    const caching = (): JsonObject => ({ throttling: { maxSize: 30 }, error: {}, archive: {} });
+    const config: JsonObject = {
+      northConnectors: [{ type: 'console', settings: { caching: caching() } }],
+      historyQueries: [{ settings: { southType: 'mqtt', caching: caching() } }]
+    };
+
+    upgrade.apply(config);
+
+    const expected = { throttling: { maxSize: 30 }, error: { maxSize: 30 }, archive: { maxSize: 30 } };
+    assert.deepStrictEqual(((config.northConnectors as Array<JsonObject>)[0].settings as JsonObject).caching, expected);
+    assert.deepStrictEqual(((config.historyQueries as Array<JsonObject>)[0].settings as JsonObject).caching, expected);
+  });
+
+  it('keeps the error and archive max sizes already set', () => {
+    const caching: JsonObject = { throttling: { maxSize: 30 }, error: { maxSize: 10 }, archive: { maxSize: 0 } };
+
+    addFolderMaxSizes(caching);
+
+    assert.deepStrictEqual(caching, { throttling: { maxSize: 30 }, error: { maxSize: 10 }, archive: { maxSize: 0 } });
   });
 
   it('leaves the other resamplings untouched', () => {
