@@ -31090,7 +31090,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -31106,6 +31106,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -31117,7 +31118,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -31140,6 +31141,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -31358,7 +31360,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -31374,6 +31376,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -31385,7 +31388,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -31408,6 +31411,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -31628,7 +31632,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -31644,6 +31648,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -31655,7 +31660,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -31678,6 +31683,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -31830,7 +31836,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -31846,6 +31852,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -31857,7 +31864,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -31880,6 +31887,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -32044,7 +32052,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -32060,6 +32068,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -32071,7 +32080,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -32094,6 +32103,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -32296,7 +32306,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -32312,6 +32322,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -32323,7 +32334,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -32346,6 +32357,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -32567,7 +32579,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -32583,6 +32595,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -32594,7 +32607,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -32617,6 +32630,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -32855,7 +32869,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -32871,6 +32885,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -32882,7 +32897,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -32905,6 +32920,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -33144,7 +33160,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -33160,6 +33176,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -33171,7 +33188,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -33194,6 +33211,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -33550,7 +33568,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -33566,6 +33584,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -33577,7 +33596,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -33600,6 +33619,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -33787,7 +33807,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -33803,6 +33823,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -33814,7 +33835,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -33837,6 +33858,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -34497,7 +34519,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -34509,6 +34531,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -34519,7 +34542,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -34536,6 +34559,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"
@@ -42118,7 +42142,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "The data source (south connector, or OIBus API data source) the content comes from. Content from different data\nsources is never merged together, so that the receiver can know where each batch comes from.\nAbsent for content cached before 3.11 or without identified source (OIAnalytics setpoints, tests)."
+						"description": "The South connector the content comes from. Content from different South connectors is never merged together, so\nthat the receiver can know where each batch comes from.\nAbsent for content cached before 3.10, or not coming from a South connector (history queries, OIBus API,\nOIAnalytics setpoints)."
 					}
 				},
 				"required": [
@@ -46439,7 +46463,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -46451,6 +46475,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"enabled"
 								],
@@ -46461,7 +46486,7 @@
 									"maxSize": {
 										"type": "number",
 										"format": "double",
-										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.\nDefaults to `throttling.maxSize` when not set.",
+										"description": "The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.",
 										"example": 0
 									},
 									"retentionDuration": {
@@ -46478,6 +46503,7 @@
 									}
 								},
 								"required": [
+									"maxSize",
 									"retentionDuration",
 									"retryCount",
 									"retryInterval"

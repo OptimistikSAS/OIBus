@@ -334,11 +334,10 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
       retentionDuration: number;
       /**
        * The maximum size (in MB) of the error folder. When reached, the oldest error files are removed. 0 means no limit.
-       * Defaults to `throttling.maxSize` when not set.
        *
        * @example 0
        */
-      maxSize?: number;
+      maxSize: number;
     };
     /**
      * The archive configuration for caching.
@@ -358,11 +357,10 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
       retentionDuration: number;
       /**
        * The maximum size (in MB) of the archive folder. When reached, the oldest archive files are removed. 0 means no limit.
-       * Defaults to `throttling.maxSize` when not set.
        *
        * @example 0
        */
-      maxSize?: number;
+      maxSize: number;
     };
   };
   /**
