@@ -957,8 +957,8 @@ export default class ConfigImportService {
   private buildCachingEntity(caching: {
     trigger: { scanModeId: string; numberOfElements: number; numberOfFiles: number };
     throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
-    error: { retryInterval: number; retryCount: number; retentionDuration: number; maxSize?: number };
-    archive: { enabled: boolean; retentionDuration: number; maxSize?: number };
+    error: { retryInterval: number; retryCount: number; retentionDuration: number; maxSize: number };
+    archive: { enabled: boolean; retentionDuration: number; maxSize: number };
   }): {
     trigger: { scanMode: ScanMode; numberOfElements: number; numberOfFiles: number };
     throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
@@ -972,10 +972,8 @@ export default class ConfigImportService {
         numberOfFiles: caching.trigger.numberOfFiles
       },
       throttling: { ...caching.throttling },
-      // Always set on import (required by CONFIG_SCHEMA, filled by the 3.10.0-beta-5 upgrade for older exports): the
-      // fallback is only there because the command type keeps them optional for OIAnalytics commands
-      error: { ...caching.error, maxSize: caching.error.maxSize ?? caching.throttling.maxSize },
-      archive: { ...caching.archive, maxSize: caching.archive.maxSize ?? caching.throttling.maxSize }
+      error: { ...caching.error },
+      archive: { ...caching.archive }
     };
   }
 
