@@ -199,7 +199,7 @@ describe('Config Import Service', () => {
       assert.strictEqual(result.fromVersion, '3.9.0');
       assert.deepStrictEqual(
         result.appliedUpgrades.map(upgrade => upgrade.version),
-        ['3.9.2', '3.10.0-beta-5', '3.10.0']
+        ['3.9.2', '3.10.0']
       );
     });
 
@@ -452,7 +452,7 @@ describe('Config Import Service', () => {
       assert.strictEqual(result.toVersion, CURRENT_VERSION);
       assert.deepStrictEqual(
         result.appliedUpgrades.map(upgrade => upgrade.version),
-        ['3.9.2', '3.10.0-beta-5', '3.10.0']
+        ['3.9.2', '3.10.0']
       );
       assert.ok(result.appliedUpgrades.every(upgrade => Object.keys(upgrade).sort().join() === 'description,version'));
       assert.strictEqual(result.config.southConnectors.length, 1);

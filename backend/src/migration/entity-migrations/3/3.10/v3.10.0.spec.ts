@@ -14,6 +14,7 @@ import {
   addContentEndpointSetting,
   addDatabaseConnectionSettings,
   addEmptyIntervalStrategies,
+  addErrorAndArchiveMaxSizes,
   addHttpsSettings,
   addItemAndWorkflowDescriptions,
   addOIAnalyticsReferenceProcess,
@@ -4917,5 +4918,68 @@ describe('Entity migration v3.10.0: removePiAgentSettings', () => {
       serverName: 'PISRV1',
       retryInterval: 10000
     });
+  });
+});
+
+describe('Entity migration v3.10.0: addErrorAndArchiveMaxSizes', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addErrorAndArchiveMaxSizes, db)
+  });
+  const TABLES = ['north_connectors', 'history_queries'];
+  let db: Knex;
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert({ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' });
+    await db('north_connectors').insert({
+      id: 'north1',
+      name: 'North',
+      type: 'console',
+      description: '',
+      enabled: true,
+      settings: '{}',
+      ...caching,
+      caching_throttling_cache_max_size: 30
+    });
+    await db('history_queries').insert({
+      id: 'hq1',
+      status: 'PENDING',
+      name: 'History',
+      description: '',
+      start_time: NOW,
+      end_time: NOW,
+      south_type: 'folder-scanner',
+      north_type: 'console',
+      south_settings: '{}',
+      north_settings: '{}',
+      ...caching,
+      caching_throttling_cache_max_size: 30
+    });
+  });
+
+  afterEach(() => harness.afterEach());
+
+  it('should give the error and archive folders the max size of the cache', async () => {
+    await runStepsFrom(addErrorAndArchiveMaxSizes, db);
+
+    for (const table of TABLES) {
+      const row = await db(table).first('caching_error_max_size', 'caching_archive_max_size');
+      assert.deepStrictEqual({ ...row }, { caching_error_max_size: 30, caching_archive_max_size: 30 });
+    }
+  });
+
+  it('should drop the max size columns on down', async () => {
+    await runStepsFrom(addErrorAndArchiveMaxSizes, db);
+    await down(db);
+
+    for (const table of TABLES) {
+      const columns = await columnNames(db, table);
+      assert.ok(!columns.includes('caching_error_max_size'), `${table}.caching_error_max_size removed`);
+      assert.ok(!columns.includes('caching_archive_max_size'), `${table}.caching_archive_max_size removed`);
+    }
   });
 });
