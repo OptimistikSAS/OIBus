@@ -1,40 +1,40 @@
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it } from 'node:test';
+import Module, { createRequire } from 'node:module';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { reloadModule } from '../../tests/utils/test-utils';
 import type * as OdbcLoaderType from './odbc-loader';
 
 const nodeRequire = createRequire(import.meta.url);
 
+interface ModuleWithLoad {
+  _load: (request: string, ...args: Array<unknown>) => unknown;
+}
+
 describe('odbc-loader', () => {
   let odbcLoader: typeof OdbcLoaderType;
-  let cacheEntry: NodeJS.Module;
+  // What require('odbc') does: returns the module, or throws (not installed, or native module failing to load)
+  let requireOdbc: () => unknown;
 
   const fakeOdbc = { connect: async () => ({ query: async () => [], close: async () => undefined }) };
-
-  // Makes requiring 'odbc' throw, as when the native module fails to load
-  const makeOdbcRequireThrow = (message: string) =>
-    Object.defineProperty(cacheEntry, 'exports', {
-      configurable: true,
-      get() {
-        throw new Error(message);
-      }
-    });
-
-  before(() => {
-    mockModule(nodeRequire, 'odbc', null);
-    cacheEntry = nodeRequire.cache[nodeRequire.resolve('odbc')]!;
-  });
+  const notInstalled = () => {
+    throw new Error("Cannot find module 'odbc'");
+  };
 
   beforeEach(() => {
+    requireOdbc = notInstalled;
+    // Intercept require('odbc') so the tests do not depend on the optional native module being installed
+    const moduleLoader = Module as unknown as ModuleWithLoad;
+    const originalLoad = moduleLoader._load;
+    mock.method(moduleLoader, '_load', function (this: unknown, request: string, ...args: Array<unknown>) {
+      return request === 'odbc' ? requireOdbc() : originalLoad.call(this, request, ...args);
+    });
     // A fresh loader, with nothing cached yet
     odbcLoader = reloadModule<typeof OdbcLoaderType>(nodeRequire, './odbc-loader');
   });
 
   afterEach(() => {
-    // Back to a missing odbc module, so tests / files are not impacted by each other
-    Object.defineProperty(cacheEntry, 'exports', { configurable: true, writable: true, value: null });
+    mock.restoreAll();
   });
 
   it('should return null when odbc module is not installed', () => {
@@ -44,24 +44,28 @@ describe('odbc-loader', () => {
   it('should not cache a null result and import odbc again on the next load', () => {
     assert.strictEqual(odbcLoader.loadOdbc(), null);
 
-    cacheEntry.exports = fakeOdbc;
+    requireOdbc = () => fakeOdbc;
 
     assert.strictEqual(odbcLoader.loadOdbc(), fakeOdbc);
   });
 
   it('should return null when requiring odbc throws', () => {
-    makeOdbcRequireThrow('boom');
+    requireOdbc = () => {
+      throw new Error('boom');
+    };
 
     assert.strictEqual(odbcLoader.importOdbc(), null);
   });
 
   it('should cache the loaded odbc module and not re-import on subsequent calls', () => {
-    cacheEntry.exports = fakeOdbc;
+    requireOdbc = () => fakeOdbc;
 
     assert.strictEqual(odbcLoader.loadOdbc(), fakeOdbc);
 
     // If loadOdbc() re-imported, this would surface as null
-    makeOdbcRequireThrow('should not be called again');
+    requireOdbc = () => {
+      throw new Error('should not be called again');
+    };
 
     assert.strictEqual(odbcLoader.loadOdbc(), fakeOdbc);
   });
