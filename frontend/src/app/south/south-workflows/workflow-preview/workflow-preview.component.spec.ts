@@ -236,6 +236,27 @@ describe('WorkflowPreviewComponent', () => {
     expect((await exportedContent()).split('\r\n')).toEqual(['key,status,nodeId,unit', 'nodeId=a,new,a,C']);
   });
 
+  test('should export a UTF-8 CSV that spreadsheets read as such, with the identity keys as shown', async () => {
+    const tester = new WorkflowPreviewComponentTester(
+      result({
+        entries: [
+          entry(`nodeId=a${String.fromCharCode(1)}unit=°C`, { record: { nodeId: 'a', unit: '°C', name: 'Température, réacteur "1"' } })
+        ]
+      })
+    );
+
+    await tester.exportButton.click();
+
+    const blob = downloadService.downloadFile.mock.lastCall![0].blob;
+    expect(blob.type).toBe('text/csv;charset=utf-8');
+    // the UTF-8 byte order mark, before the content
+    expect(Array.from(new Uint8Array(await blob.arrayBuffer()).slice(0, 3))).toEqual([0xef, 0xbb, 0xbf]);
+    expect((await exportedContent()).split('\r\n')).toEqual([
+      'key,status,nodeId,unit,name',
+      `"nodeId=a, unit=°C",new,a,°C,"Température, réacteur ""1"""`
+    ]);
+  });
+
   test('should still export the full entries list to CSV even after paginating past the first page', async () => {
     const tester = new WorkflowPreviewComponentTester(result({ entries: Array.from({ length: 22 }, (_, i) => entry(`nodeId=${i}`)) }));
     await tester.root.getByRole('link', { name: '2' }).click();

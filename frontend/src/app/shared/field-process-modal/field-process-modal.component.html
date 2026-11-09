@@ -220,14 +220,6 @@
                 </div>
               }
             }
-            @case ('expression') {
-              <div class="mt-1">
-                <label class="form-label" [for]="'expression-' + index" translate="field-process.expression"></label>
-                <input class="form-control form-control-sm font-monospace" [id]="'expression-' + index" formControlName="expression" />
-                <val-errors controlName="expression" />
-                <div class="form-text" translate="field-process.expression-hint"></div>
-              </div>
-            }
             @default {
               <!-- A change of case, or a trim, has no setting -->
             }

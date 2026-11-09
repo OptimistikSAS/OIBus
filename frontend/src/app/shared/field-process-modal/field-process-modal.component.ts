@@ -53,7 +53,6 @@ type OperationForm = FormGroup<{
   outputTimezone: FormControl<string>;
   outputLocale: FormControl<string>;
   precision: FormControl<FieldDatetimePrecision | 'unchanged'>;
-  expression: FormControl<string>;
 }>;
 
 type OperationSetting = Exclude<keyof OperationForm['controls'], 'type'>;
@@ -72,8 +71,7 @@ const OPERATION_SETTINGS: Record<FieldOperationType, ReadonlyArray<OperationSett
   replace: ['search', 'replacement'],
   'number-operation': ['operator', 'operand'],
   round: ['decimals'],
-  datetime: ['inputType', 'outputType', 'precision'],
-  expression: ['expression']
+  datetime: ['inputType', 'outputType', 'precision']
 };
 
 /**
@@ -239,8 +237,7 @@ export class FieldProcessModalComponent {
       outputLocale: this.fb.control(text('outputLocale', 'en-En')),
       precision: this.fb.control<FieldDatetimePrecision | 'unchanged'>(
         (value.precision as FieldDatetimePrecision | undefined) ?? 'unchanged'
-      ),
-      expression: this.fb.control(text('expression'), Validators.required)
+      )
     });
     this.syncSettings(form);
     return form;
@@ -291,7 +288,5 @@ function toOperation(operation: OperationForm): FieldOperation {
           : {}),
         ...(value.precision !== 'unchanged' ? { precision: value.precision } : {})
       };
-    case 'expression':
-      return { type: value.type, expression: value.expression };
   }
 }

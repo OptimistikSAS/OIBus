@@ -2,7 +2,7 @@ import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configur
 import { OIBusRecord } from '../../shared/model/common/content.model';
 import { RecordFieldValue } from '../../shared/model/connector/field-process.model';
 
-import { RecordFieldProcess, RecordFilterCondition } from '../model/configuration-workflow.model';
+import { RecordAddedField, RecordFieldProcess, RecordFilterCondition } from '../model/configuration-workflow.model';
 import type { ILogger } from '../model/logger.model';
 import { OIBusValidationError } from '../model/types';
 import { applyFieldOperations } from '../transformers/field-process';
@@ -22,6 +22,23 @@ export function checkWorkflowMode(command: ConfigurationWorkflowCommandDTO): voi
   }
   if (!command.pushToOIAnalytics && command.identityKeyFields.length === 0) {
     throw new OIBusValidationError('A configuration workflow creating/updating items requires at least one identity key field');
+  }
+}
+
+/**
+ * The fields a workflow adds to its records must each have a key of its own: a field added twice would be computed twice,
+ * the second time replacing the first.
+ */
+export function checkAddedFields(command: ConfigurationWorkflowCommandDTO): void {
+  const fields = new Set<string>();
+  for (const { field } of command.addedFields) {
+    if (!field.trim()) {
+      throw new OIBusValidationError('A field added by a configuration workflow requires a name');
+    }
+    if (fields.has(field)) {
+      throw new OIBusValidationError(`The field "${field}" is added twice by the configuration workflow`);
+    }
+    fields.add(field);
   }
 }
 
@@ -71,11 +88,64 @@ export function processRecords(
   });
 }
 
-/** The first non-empty values of each field of the discovered records - what a field process is tested on. */
-export function sampleFieldValues(records: Array<OIBusRecord>): Record<string, Array<RecordFieldValue>> {
+/**
+ * Adds the fields of a workflow to every record, in order: each is computed from the record with the fields added
+ * before - see `RecordAddedField` and `resolveFieldMapping`. A constant, or a combination of fields, is a text; a single
+ * `{{field}}` keeps the value of the field, null when it is missing.
+ */
+export function addFields(records: Array<OIBusRecord>, addedFields: Array<RecordAddedField>): Array<OIBusRecord> {
+  if (addedFields.length === 0) {
+    return records;
+  }
+  return records.map(record => {
+    const added: OIBusRecord = { ...record };
+    for (const { field, value } of addedFields) {
+      added[field] = toRecordFieldValue(resolveTemplate(added, value));
+    }
+    return added;
+  });
+}
+
+/**
+ * Decide's processing of the discovered records, before the eligibility filter: the discovered fields are processed,
+ * then the added fields computed from them, then processed themselves. Also returns the first values of each field to
+ * test a field process on: as discovered, and as added.
+ */
+export function prepareRecords(
+  records: Array<OIBusRecord>,
+  workflow: { fieldProcesses: Array<RecordFieldProcess>; addedFields: Array<RecordAddedField> },
+  logger?: ILogger
+): { records: Array<OIBusRecord>; samples: Record<string, Array<RecordFieldValue>> } {
+  const addedFields = new Set(workflow.addedFields.map(({ field }) => field));
+  const withAddedFields = addFields(
+    processRecords(
+      records,
+      workflow.fieldProcesses.filter(({ field }) => !addedFields.has(field)),
+      logger
+    ),
+    workflow.addedFields
+  );
+  return {
+    records: processRecords(
+      withAddedFields,
+      workflow.fieldProcesses.filter(({ field }) => addedFields.has(field)),
+      logger
+    ),
+    samples: { ...sampleFieldValues(records), ...sampleFieldValues(withAddedFields, addedFields) }
+  };
+}
+
+/**
+ * The first non-empty values of each field of the records - of the fields given only, when given: what a field process
+ * is tested on.
+ */
+export function sampleFieldValues(records: Array<OIBusRecord>, fields?: Set<string>): Record<string, Array<RecordFieldValue>> {
   const samples: Record<string, Array<RecordFieldValue>> = {};
   for (const record of records) {
     for (const [field, value] of Object.entries(record)) {
+      if (fields && !fields.has(field)) {
+        continue;
+      }
       samples[field] ??= [];
       if (value !== null && value !== undefined && samples[field].length < FIELD_SAMPLE_SIZE) {
         samples[field].push(value);
@@ -115,6 +185,10 @@ function evaluateCondition(record: OIBusRecord, condition: RecordFilterCondition
       return String(fieldValue) !== condition.value;
     case 'contains':
       return String(fieldValue).includes(condition.value ?? '');
+    case 'startsWith':
+      return String(fieldValue).startsWith(condition.value ?? '');
+    case 'endsWith':
+      return String(fieldValue).endsWith(condition.value ?? '');
     case 'matches':
       try {
         return new RegExp(condition.value ?? '').test(String(fieldValue));
@@ -150,8 +224,9 @@ export function computeIdentityKey(record: OIBusRecord, identityKeyFields: Array
 }
 
 // Matches a template that is *exactly* one placeholder, with nothing else around it.
-const EXACT_PLACEHOLDER_REGEX = /^\{\{\s*([\w.]+)\s*\}\}$/;
-const PLACEHOLDER_REGEX = /\{\{\s*([\w.]+)\s*\}\}/g;
+// A field is any text without space nor brace (`{{node-id}}`, `{{metadata.unit}}`...)
+const EXACT_PLACEHOLDER_REGEX = /^\{\{\s*([^{}\s]+)\s*\}\}$/;
+const PLACEHOLDER_REGEX = /\{\{\s*([^{}\s]+)\s*\}\}/g;
 
 /**
  * Resolves every value of a workflow's `itemFieldMapping` against the discovered record it was matched

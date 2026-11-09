@@ -62,9 +62,6 @@ const fieldOperation = Joi.object({
       outputLocale: Joi.string(),
       precision: Joi.string().valid(...FIELD_DATETIME_PRECISIONS)
     })
-  })
-  .when(Joi.object({ type: 'expression' }).unknown(), {
-    then: Joi.object({ expression: Joi.string().required() })
   });
 
 /** The operations of a field process, as a transformer setting or a field process of a configuration workflow. */

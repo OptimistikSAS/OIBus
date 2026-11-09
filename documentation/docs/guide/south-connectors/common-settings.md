@@ -507,10 +507,11 @@ list of operations, applied in order, each on the result of the previous one:
 | **Number operation**     | Adds, subtracts, multiplies or divides a number (or a text holding one) by an operand.                                                                                                                                                           | Multiply by `0.001`: `1500` → `1.5`     |
 | **Round**                | Rounds a number to a number of decimals.                                                                                                                                                                                                         | 2 decimals: `3.14159` → `3.14`          |
 | **Date time conversion** | Converts a date time from a type to another: ISO string, Unix epoch (s or ms), or a string with a format, timezone, locale; its **Precision** rounds it down to the second, minute, hour or day (in UTC, or in the output timezone of a string). | Unix epoch (ms) → ISO string            |
-| **Expression**           | Any other processing, as a JavaScript expression on `value` — the same as the field process of the transformers.                                                                                                                                 | `value.split('/').pop()`                |
+
+To build a value from several fields, add a field instead (see [Added fields](#added-fields)).
 
 **Test** applies the operations to the first five values discovered for the field (as discovered, before any
-processing) and shows each result, or why an operation fails on a value. A missing or empty value is left as is. In a
+processing; for an added field, as added) and shows each result, or why an operation fails on a value. A missing or empty value is left as is. In a
 run, a value an operation fails on becomes empty, and a warning is logged once per field. Saving the processing of a
 field discovers the records again, processed and filtered.
 
@@ -519,16 +520,33 @@ Processing a field used as an identity key changes the keys: the items of the pr
 and new ones are created.
 :::
 
+##### Added fields {#added-fields}
+
+**Added fields** adds fields to every discovered record, after the processing of the discovered fields. Type the name of
+the field and its value, then click **+**:
+
+- a constant, written as is: `Lyon`;
+- a combination of fields of the record, each written `{{field}}`: `{{plant}}.{{name}}`. **Insert a field** adds one of
+  the fields of the previewed records. The fields are read with their processed values, and a field can use the ones
+  added before it. A missing field gives an empty text; a value that is a single field (`{{max}}`) keeps the type of its
+  value (a number stays a number).
+
+An added field is a text otherwise: process it like any other field — it gets a column in the records table, with its wand
+button — e.g. to convert it into a number. Its processing applies once it is added. An added field with the name of a
+discovered field replaces it. Edit or remove an added field with its pencil and trash icons: a renamed field keeps its
+processing, a removed one loses it. The eligibility filter, the identity keys, the item mapping and the push to
+OIAnalytics see the added fields like the discovered ones.
+
 ##### Eligibility filter {#eligibility-filter}
 
 The **Eligibility filter** lists the conditions a discovered record must **all** satisfy (logical AND) to be acted
-on — leave it empty to make every record eligible. It compares the processed values. Each condition has:
+on — leave it empty to make every record eligible. It compares the processed values, and reads the added fields. Each condition has:
 
-| Setting      | Description                                                                                   | Example Value |
-| ------------ | --------------------------------------------------------------------------------------------- | ------------- |
-| **Field**    | A field of the discovered record. The fields of the previewed records are suggested.          | `type`        |
-| **Operator** | `equals`, `not equals`, `contains`, `matches (regex)`, `exists`, `greater than`, `less than`. | `equals`      |
-| **Value**    | The value to compare against — not used for `exists`.                                         | `Variable`    |
+| Setting      | Description                                                                                                               | Example Value |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| **Field**    | A field of the discovered record. The fields of the previewed records are suggested.                                      | `type`        |
+| **Operator** | `equals`, `not equals`, `contains`, `starts with`, `ends with`, `matches (regex)`, `exists`, `greater than`, `less than`. | `equals`      |
+| **Value**    | The value to compare against — not used for `exists`.                                                                     | `Variable`    |
 
 Add a condition with the fields below the table; edit or remove one with its pencil and trash icons.
 
@@ -641,24 +659,24 @@ In local mode, a reminder states that when a point is no longer found, the item 
 
 #### Review {#review}
 
-The Review step sums up the synchronisation (name, discovery scope, number of conditions, mode, schedule) and previews
-what a run would do — opening the step runs the preview, **Refresh preview** runs it again. While something prevents it
+The Review step sums up the synchronisation (name, discovery scope, processed and added fields, number of conditions,
+mode, schedule) and previews what a run would do — opening the step runs the preview, **Refresh preview** runs it again. While something prevents it
 (a missing name or query, no identity key field, a mandatory item field not mapped…), the step lists what to fix, each
 with a button to the step where to fix it, and no preview runs:
 
 - **Create/update items locally**: each record is classified against the previous run as **New**, **Changed**,
   **Unchanged**, **Reactivated** or **Missing**, with its identity key and fields. A changed record highlights the
   fields that differ, with the previous value on hover; a missing one shows the previous run's values, dimmed.
-- **Push to OIAnalytics**: the records that would be pushed, exactly as discovered.
+- **Push to OIAnalytics**: the records that would be pushed, as processed and completed by the added fields.
 
 A search box above the table looks for a text in the identity key, the status and the values of the rows (in memory, over
-the whole preview), and the table is paginated. **Export CSV** downloads all the previewed rows, whatever the search.
-Nothing is written by a preview.
+the whole preview), and the table is paginated. **Export CSV** downloads all the previewed rows, whatever the search, in a
+UTF-8 file spreadsheets read as such. Nothing is written by a preview.
 
 ### Running an Items Synchronisation {#running-an-items-synchronisation}
 
-A run always discovers the data source (as the discovery scope defines it), processes the fields of the records and keeps
-the eligible ones, then acts depending on the mode:
+A run always discovers the data source (as the discovery scope defines it), processes the fields of the records, adds
+the added fields and keeps the eligible ones, then acts depending on the mode:
 
 - **Create/update items locally** matches the eligible records by identity key against the previous run: it creates
   or updates an item for each new, changed or reactivated record, skips the unchanged ones, and disables — never
