@@ -471,12 +471,12 @@ export const copyNorthConnectorCommandToNorthEntity = async (
       retryInterval: command.caching.error.retryInterval,
       retryCount: command.caching.error.retryCount,
       retentionDuration: command.caching.error.retentionDuration,
-      maxSize: command.caching.error.maxSize ?? command.caching.throttling.maxSize
+      maxSize: command.caching.error.maxSize
     },
     archive: {
       enabled: command.caching.archive.enabled,
       retentionDuration: command.caching.archive.retentionDuration,
-      maxSize: command.caching.archive.maxSize ?? command.caching.throttling.maxSize
+      maxSize: command.caching.archive.maxSize
     }
   };
 };
