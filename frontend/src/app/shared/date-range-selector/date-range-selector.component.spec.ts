@@ -106,6 +106,8 @@ describe('DateRangeSelectorComponent', () => {
     tester = new DateRangeSelectorComponentTester();
     tester.host.defaultRange.set('last-day');
     await expect.element(tester.rangeType).toBeVisible();
+    // with fake timers, each retry of expect.element advances the clock by its polling interval: back to NOW for the ranges
+    vi.setSystemTime(NOW);
 
     await tester.rangeType.selectOptions(label === 'Last day' ? 'Last minute' : 'Last day');
     await tester.rangeType.selectOptions(label);
