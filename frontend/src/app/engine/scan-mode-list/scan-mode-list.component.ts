@@ -17,6 +17,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../shared/resizable-columns.directive';
 import { isScanModeWindowExpired, ScanModeSchedulePipe } from '../../shared/scan-mode-schedule.pipe';
 import { EditScanModeModalComponent } from './edit-scan-mode-modal/edit-scan-mode-modal.component';
 
@@ -27,7 +28,16 @@ const PAGE_SIZE = 20;
 
 @Component({
   selector: 'oib-scan-mode-list',
-  imports: [TranslateDirective, OibHelpComponent, NgbTooltip, TranslatePipe, PaginationComponent, AuditInfoComponent, ScanModeSchedulePipe],
+  imports: [
+    ResizableColumnsDirective,
+    TranslateDirective,
+    OibHelpComponent,
+    NgbTooltip,
+    TranslatePipe,
+    PaginationComponent,
+    AuditInfoComponent,
+    ScanModeSchedulePipe
+  ],
   templateUrl: './scan-mode-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './scan-mode-list.component.scss'

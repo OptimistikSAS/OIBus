@@ -71,10 +71,10 @@
     </div>
   </div>
 
-  <table class="mb-2 table table-sm table-hover oib-table">
+  <table class="mb-2 table table-sm table-hover oib-table" [oibResizableColumns]="translationPrefix()">
     <thead class="light">
       <tr>
-        <th class="selection-column"></th>
+        <th class="selection-column oib-fixed-column"></th>
         <th class="status-column">
           <button type="button" class="sort-button text-nowrap" (click)="toggleSort('enabled')">
             <span [translate]="label('status')" class="me-2"></span>

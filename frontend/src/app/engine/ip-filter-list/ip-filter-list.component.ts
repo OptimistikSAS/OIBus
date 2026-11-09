@@ -18,6 +18,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../shared/resizable-columns.directive';
 import { EditIpFilterModalComponent } from './edit-ip-filter-modal/edit-ip-filter-modal.component';
 
 type IpFilterSortField = 'address' | 'createdAt' | 'updatedAt' | null;
@@ -27,7 +28,15 @@ const PAGE_SIZE = 20;
 
 @Component({
   selector: 'oib-ip-filter-list',
-  imports: [TranslateDirective, OibHelpComponent, NgbTooltip, TranslatePipe, PaginationComponent, AuditInfoComponent],
+  imports: [
+    ResizableColumnsDirective,
+    TranslateDirective,
+    OibHelpComponent,
+    NgbTooltip,
+    TranslatePipe,
+    PaginationComponent,
+    AuditInfoComponent
+  ],
   templateUrl: './ip-filter-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './ip-filter-list.component.scss'

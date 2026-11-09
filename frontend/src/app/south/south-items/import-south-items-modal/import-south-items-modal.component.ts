@@ -13,6 +13,7 @@ import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.m
 import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builder';
 import { CsvValidationError, MqttTopicValidationError, validateCsvHeaders, validateCsvMqttTopics } from '../../../shared/form/validators';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../../shared/resizable-columns.directive';
 import { convertCsvDelimiter } from '../../../shared/utils/csv.utils';
 import { emptyPage } from '../../../shared/utils/page.utils';
 
@@ -28,7 +29,7 @@ export interface SouthItemsCheckResult {
   templateUrl: './import-south-items-modal.component.html',
   styleUrl: './import-south-items-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, PaginationComponent, TranslatePipe, NgbTooltip, ReactiveFormsModule]
+  imports: [ResizableColumnsDirective, TranslateDirective, PaginationComponent, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })
 export class ImportSouthItemsModalComponent {
   private modal = inject(NgbActiveModal);

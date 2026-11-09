@@ -22,11 +22,13 @@ import { DocsUrlService } from '../../shared/docs-url.service';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { ResizableColumnsDirective } from '../../shared/resizable-columns.directive';
 import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-transformer-modal/edit-history-query-transformer-modal.component';
 
 @Component({
   selector: 'oib-history-query-transformers',
   imports: [
+    ResizableColumnsDirective,
     NgTemplateOutlet,
     TranslateDirective,
     BoxComponent,
