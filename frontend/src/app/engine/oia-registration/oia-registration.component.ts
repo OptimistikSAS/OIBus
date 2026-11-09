@@ -30,6 +30,7 @@ import { OibusCommandTypeEnumPipe } from '../../shared/oibus-command-type-enum.p
 import { PageLoader } from '../../shared/page-loader.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { visibleTimer } from '../../shared/polling';
+import { ResizableColumnsDirective } from '../../shared/resizable-columns.directive';
 import { emptyPage } from '../../shared/utils/page.utils';
 import { OiaCommandDetailsModalComponent } from './oibus-command-details-modal/oia-command-details-modal.component';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
@@ -39,6 +40,7 @@ const REGISTRATION_CHECK_DURATION = 3000;
 @Component({
   selector: 'oib-oia-module',
   imports: [
+    ResizableColumnsDirective,
     ReactiveFormsModule,
     TranslateDirective,
     DatetimePipe,

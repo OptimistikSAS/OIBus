@@ -1,5 +1,6 @@
 {
   "common": {
+    "resize-column": "Resize column",
     "yes": "Yes",
     "no": "No",
     "beta": "Beta",

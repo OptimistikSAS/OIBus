@@ -23,6 +23,7 @@ import { ascendingDates } from '../shared/form/validators';
 import { ModalService } from '../shared/modal.service';
 import { PageLoader } from '../shared/page-loader.service';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../shared/resizable-columns.directive';
 import { emptyPage } from '../shared/utils/page.utils';
 
 /**
@@ -83,6 +84,7 @@ const AUDIT_ACTION_ICONS: Record<AuditAction, string> = {
 @Component({
   selector: 'oib-audit-list',
   imports: [
+    ResizableColumnsDirective,
     ReactiveFormsModule,
     TranslateDirective,
     TranslatePipe,

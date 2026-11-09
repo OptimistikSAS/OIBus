@@ -481,7 +481,7 @@
     @if (isExpanded('scan-modes')) {
       <div class="preview-content">
         @if (cfg.scanModes.length > 0) {
-          <table class="table table-sm oib-table preview-table mb-0">
+          <table class="table table-sm oib-table preview-table mb-0" oibResizableColumns>
             <thead class="light">
               <tr>
                 <th translate="engine.config-transfer.import.preview.name"></th>
@@ -517,7 +517,7 @@
     @if (isExpanded('ip-filters')) {
       <div class="preview-content">
         @if (cfg.ipFilters.length > 0) {
-          <table class="table table-sm oib-table preview-table mb-0">
+          <table class="table table-sm oib-table preview-table mb-0" oibResizableColumns>
             <thead class="light">
               <tr>
                 <th translate="engine.config-transfer.import.preview.address"></th>
@@ -555,7 +555,7 @@
     @if (isExpanded('certificates')) {
       <div class="preview-content">
         @if (cfg.certificates.length > 0) {
-          <table class="table table-sm oib-table preview-table mb-0">
+          <table class="table table-sm oib-table preview-table mb-0" oibResizableColumns>
             <thead class="light">
               <tr>
                 <th translate="engine.config-transfer.import.preview.name"></th>
@@ -642,7 +642,7 @@
     @if (isExpanded('users')) {
       <div class="preview-content">
         @if (cfg.users.length > 0) {
-          <table class="table table-sm oib-table preview-table mb-0">
+          <table class="table table-sm oib-table preview-table mb-0" oibResizableColumns>
             <thead class="light">
               <tr>
                 <th translate="engine.config-transfer.import.preview.login"></th>

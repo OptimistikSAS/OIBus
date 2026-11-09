@@ -16,6 +16,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../shared/resizable-columns.directive';
 import { emptyPage } from '../../shared/utils/page.utils';
 import { EditTransformerModalComponent } from './edit-transformer-modal/edit-transformer-modal.component';
 
@@ -26,7 +27,15 @@ const PAGE_SIZE = 20;
 
 @Component({
   selector: 'oib-transformer-list',
-  imports: [TranslateDirective, OibHelpComponent, NgbTooltip, TranslatePipe, PaginationComponent, AuditInfoComponent],
+  imports: [
+    ResizableColumnsDirective,
+    TranslateDirective,
+    OibHelpComponent,
+    NgbTooltip,
+    TranslatePipe,
+    PaginationComponent,
+    AuditInfoComponent
+  ],
   templateUrl: './transformer-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './transformer-list.component.scss'

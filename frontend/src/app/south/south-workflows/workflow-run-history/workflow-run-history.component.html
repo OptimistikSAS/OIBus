@@ -89,10 +89,10 @@
         <oib-pagination [page]="runs()" [navigate]="true" />
       </div>
       <div class="table-container">
-        <table class="table table-sm table-hover oib-table">
+        <table class="table table-sm table-hover oib-table" oibResizableColumns="workflow-run-history">
           <thead>
             <tr>
-              <th translate="south.workflows.run-status-label"></th>
+              <th class="oib-fixed-column" translate="south.workflows.run-status-label"></th>
               <th translate="south.workflows.run-trigger-type"></th>
               <th translate="south.workflows.run-started-at"></th>
               <th translate="south.workflows.run-completed-at"></th>

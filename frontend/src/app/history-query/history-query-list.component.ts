@@ -26,6 +26,7 @@ import { NotificationService } from '../shared/notification.service';
 import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../shared/resizable-columns.directive';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { HISTORY_QUERY_STATUS_ICONS } from './history-query-status';
 
@@ -37,6 +38,7 @@ const PAGE_SIZE = 15;
 @Component({
   selector: 'oib-history-query-list',
   imports: [
+    ResizableColumnsDirective,
     TranslateDirective,
     RouterLink,
     PaginationComponent,

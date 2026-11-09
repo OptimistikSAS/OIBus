@@ -52,10 +52,10 @@
        per discovered field. A "missing" entry shows the previous run's snapshot, dimmed; a "changed"
        one highlights the cells that differ from it, with the previous value as a tooltip. -->
   <div class="table-responsive preview-table-container">
-    <table class="table table-sm table-hover oib-table preview-table" id="preview-entries-table">
+    <table class="table table-sm table-hover oib-table preview-table" id="preview-entries-table" oibResizableColumns>
       <thead class="light">
         <tr>
-          <th translate="south.workflows.preview-status-column"></th>
+          <th class="oib-fixed-column" translate="south.workflows.preview-status-column"></th>
           <th translate="south.workflows.preview-key-column"></th>
           @for (column of columns(); track column) {
             <th>{{ column }}</th>

@@ -11,13 +11,24 @@ import { HistoryQueryMetrics } from '@oibus/shared/domain/engine.model';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
+import { ResizableColumnsDirective } from '../../../shared/resizable-columns.directive';
 import { ProgressbarComponent } from './progressbar/progressbar.component';
 
 @Component({
   selector: 'oib-history-metrics',
   templateUrl: './history-metrics.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, DatetimePipe, DurationPipe, JsonPipe, ProgressbarComponent, FileSizePipe, DecimalPipe, NgTemplateOutlet]
+  imports: [
+    ResizableColumnsDirective,
+    TranslateDirective,
+    DatetimePipe,
+    DurationPipe,
+    JsonPipe,
+    ProgressbarComponent,
+    FileSizePipe,
+    DecimalPipe,
+    NgTemplateOutlet
+  ]
 })
 export class HistoryMetricsComponent {
   readonly historyQuery = input.required<HistoryQueryDTO>();

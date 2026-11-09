@@ -23,6 +23,7 @@ import { createPageFromArray } from '@oibus/shared/common/types';
 import { AuditInfoComponent } from '../audit-info/audit-info.component';
 import { DescribedNameComponent } from '../described-name/described-name.component';
 import { PaginationComponent } from '../pagination/pagination.component';
+import { ResizableColumnsDirective } from '../resizable-columns.directive';
 import {
   builtInSortValue,
   filterItems,
@@ -61,6 +62,7 @@ const PAGE_SIZE = 20;
   styleUrl: './item-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ResizableColumnsDirective,
     ReactiveFormsModule,
     NgTemplateOutlet,
     TranslateDirective,

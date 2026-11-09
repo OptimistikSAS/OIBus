@@ -30,15 +30,15 @@
   @let displayed = displayedCertificates();
   @if (displayed.content.length !== 0) {
     <div>
-      <table class="mb-2 table table-sm table-hover oib-table">
+      <table class="mb-2 table table-sm table-hover oib-table" oibResizableColumns="certificates">
         <thead class="light">
           <tr>
             <th class="first-column" translate="engine.certificate.name"></th>
             <th translate="engine.certificate.description"></th>
             <th translate="engine.certificate.public-key"></th>
-            <th class="copy-column"></th>
+            <th class="copy-column oib-fixed-column"></th>
             <th translate="engine.certificate.certificate"></th>
-            <th class="certificate-actions-column"></th>
+            <th class="certificate-actions-column oib-fixed-column"></th>
             <th translate="engine.certificate.expiry"></th>
             <th>
               <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">

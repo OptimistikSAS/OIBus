@@ -107,13 +107,13 @@
           <ng-container>
             @if (commandPage.totalElements !== 0) {
               <div class="table-container">
-                <table class="table table-sm table-hover oib-table">
+                <table class="table table-sm table-hover oib-table" oibResizableColumns>
                   <thead>
                     <tr>
-                      <th></th>
+                      <th class="oib-fixed-column"></th>
                       <th translate="oia-module.commands.creation-date"></th>
                       <th translate="oia-module.commands.command"></th>
-                      <th translate="oia-module.commands.status"></th>
+                      <th class="oib-fixed-column" translate="oia-module.commands.status"></th>
                       <th translate="oia-module.commands.completion-date"></th>
                       <th class="oib-actions-column-2"></th>
                     </tr>

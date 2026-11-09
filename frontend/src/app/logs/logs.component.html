@@ -253,18 +253,18 @@
       }
       @if (logs().totalElements !== 0) {
         <div class="table-container">
-          <table class="table table-sm table-hover oib-table-logs">
+          <table class="table table-sm table-hover oib-table-logs" oibResizableColumns="logs">
             <thead>
               <tr>
-                <th class="level-column"><span class="visually-hidden" translate="logs.level"></span></th>
-                <th translate="logs.date"></th>
+                <th class="level-column oib-fixed-column"><span class="visually-hidden" translate="logs.level"></span></th>
+                <th class="date-column" translate="logs.date"></th>
                 @if (standalone()) {
                   <th class="scope-type-column" translate="logs.scope-type"></th>
                   <th class="scope-column" translate="logs.scope"></th>
                 }
                 <th class="item-column" translate="logs.item"></th>
                 <th class="group-column" translate="logs.group"></th>
-                <th [class.w-50]="scopeId() && scopeType()" translate="logs.message"></th>
+                <th class="message-column" [class.wide]="scopeId() && scopeType()" translate="logs.message"></th>
               </tr>
             </thead>
             <tbody>

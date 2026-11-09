@@ -3547,6 +3547,7 @@
     }
   },
   "common": {
+    "resize-column": "Redimensionner la colonne",
     "yes": "Oui",
     "no": "Non",
     "beta": "Bêta",

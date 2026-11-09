@@ -15,6 +15,7 @@ import { SouthHistoryEmptyIntervalStrategy, SouthHistoryRecoveryStrategy } from 
 
 import { DownloadService } from '../../../services/download.service';
 import { ModalService } from '../../../shared/modal.service';
+import { ResizableColumnsDirective } from '../../../shared/resizable-columns.directive';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
 
 interface GroupImportError {
@@ -41,7 +42,7 @@ const SORT_ICONS: Record<ColumnSortState, string> = {
   templateUrl: './manage-groups-modal.component.html',
   styleUrl: './manage-groups-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule]
+  imports: [ResizableColumnsDirective, TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })
 export default class ManageGroupsModalComponent {
   private modal = inject(NgbActiveModal);
