@@ -608,6 +608,64 @@ $oib-max-action-count: 6;
   }
 }
 
+// Tables whose columns the user can resize (ResizableColumnsDirective): a handle sits on the right border of the headers,
+// shown as a thin separator that turns yellow when hovered, focused or dragged
+.oib-resizable-columns {
+  table-layout: fixed;
+
+  thead th {
+    position: relative;
+  }
+
+  // a narrowed column cuts its content rather than letting it spill over the next one
+  tbody td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .oib-column-resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -4px;
+    z-index: 1;
+    width: 8px;
+    cursor: col-resize;
+    touch-action: none;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 25%;
+      bottom: 25%;
+      left: 3px;
+      width: 2px;
+      border-radius: 1px;
+      background-color: currentColor;
+      opacity: 0.25;
+    }
+
+    &:hover::after,
+    &:focus-visible::after,
+    &.active::after {
+      top: 0;
+      bottom: 0;
+      background-color: $yellow;
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+}
+
+// while a column is resized, the pointer keeps its shape and the drag does not select text
+body.oib-column-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
 // darkGrey container for title
 .oib-box-title {
   background-color: $darkGrey;

@@ -3547,6 +3547,7 @@
     }
   },
   "common": {
+    "resize-column": "调整列宽",
     "yes": "是",
     "no": "否",
     "beta": "测试版",

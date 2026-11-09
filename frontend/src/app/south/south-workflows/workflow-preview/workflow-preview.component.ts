@@ -10,6 +10,7 @@ import { createPageFromArray } from '@oibus/shared/common/types';
 
 import { DownloadService } from '../../../services/download.service';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../../shared/resizable-columns.directive';
 import { flattenPlainObject } from '../../../shared/utils/csv.utils';
 import { WorkflowRecordsPreviewComponent } from '../workflow-records-preview/workflow-records-preview.component';
 
@@ -49,7 +50,7 @@ export interface PreviewEntryRow {
   templateUrl: './workflow-preview.component.html',
   styleUrl: './workflow-preview.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, TranslatePipe, PaginationComponent, WorkflowRecordsPreviewComponent]
+  imports: [ResizableColumnsDirective, TranslateDirective, TranslatePipe, PaginationComponent, WorkflowRecordsPreviewComponent]
 })
 export class WorkflowPreviewComponent {
   private downloadService = inject(DownloadService);

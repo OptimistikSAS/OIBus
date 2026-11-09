@@ -16,6 +16,7 @@ import { LogLevelsEnumPipe } from '../../../shared/log-levels-enum.pipe';
 import { OIBusNorthTypeEnumPipe } from '../../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../../shared/resizable-columns.directive';
 import { ScanModeSchedulePipe } from '../../../shared/scan-mode-schedule.pipe';
 
 type SouthEntry = OIBusConfigurationDTO['southConnectors'][number];
@@ -39,6 +40,7 @@ const LOGGER_OUTPUTS = ['console', 'file', 'database', 'loki', 'oia', 'syslog'] 
   styleUrl: './config-import-preview.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ResizableColumnsDirective,
     TranslateDirective,
     TranslatePipe,
     JsonPipe,

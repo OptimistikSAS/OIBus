@@ -13,6 +13,7 @@ import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.m
 import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builder';
 import { CsvValidationError, validateCsvHeaders } from '../../../shared/form/validators';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../../shared/resizable-columns.directive';
 import { ObservableState } from '../../../shared/save-button/save-button.component';
 import { convertCsvDelimiter } from '../../../shared/utils/csv.utils';
 import { emptyPage } from '../../../shared/utils/page.utils';
@@ -29,7 +30,7 @@ export interface HistoryQueryItemsCheckResult {
   templateUrl: './import-history-query-items-modal.component.html',
   styleUrl: './import-history-query-items-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, PaginationComponent, TranslatePipe, NgbTooltip, ReactiveFormsModule]
+  imports: [ResizableColumnsDirective, TranslateDirective, PaginationComponent, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })
 export class ImportHistoryQueryItemsModalComponent {
   private readonly modal = inject(NgbActiveModal);

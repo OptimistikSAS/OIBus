@@ -12,6 +12,7 @@ import { CacheMetadata, DataFolderType } from '@oibus/shared/domain/engine.model
 import { DatetimePipe } from '../../datetime.pipe';
 import { FileSizePipe } from '../../file-size.pipe';
 import { PaginationComponent } from '../../pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../resizable-columns.directive';
 import { ObservableState } from '../../save-button/save-button.component';
 
 const PAGE_SIZE = 15;
@@ -28,6 +29,7 @@ const enum ColumnSortState {
   styleUrl: './cache-content.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ResizableColumnsDirective,
     TranslateDirective,
     TranslatePipe,
     FileSizePipe,

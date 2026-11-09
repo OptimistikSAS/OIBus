@@ -19,6 +19,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../shared/resizable-columns.directive';
 import { emptyPage } from '../../shared/utils/page.utils';
 import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
 import { ExportCertificateModalComponent } from './export-certificate-modal/export-certificate-modal.component';
@@ -32,6 +33,7 @@ const PAGE_SIZE = 20;
 @Component({
   selector: 'oib-certificate-list',
   imports: [
+    ResizableColumnsDirective,
     TranslateDirective,
     DatetimePipe,
     ClipboardCopyDirective,

@@ -109,23 +109,27 @@
     // first case of the first line
     th:first-child {
       border-top-left-radius: 1rem;
-      width: 11rem;
     }
     // last case of the first line
     th:last-child {
       border-top-right-radius: 1rem;
     }
-    // column widths (declared after th:first-child, which has the same specificity, to override its width)
+    // column widths: the table has a fixed layout (its columns can be resized), the message takes the remaining space
     th.level-column {
-      width: 1%;
+      width: 2.5rem;
+    }
+    th.date-column {
+      width: 13rem;
     }
     th.scope-type-column,
+    th.scope-column,
     th.item-column,
     th.group-column {
-      width: 8%;
+      width: 9rem;
     }
-    th.scope-column {
-      width: 4%;
+    // the message takes half of the table when the logs are those of one connector
+    th.message-column.wide {
+      width: 50%;
     }
     // alternative case if oib-box-title is on top of table
     .light {

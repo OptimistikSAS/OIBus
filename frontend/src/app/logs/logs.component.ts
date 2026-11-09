@@ -35,6 +35,7 @@ import { LogLevelsEnumPipe } from '../shared/log-levels-enum.pipe';
 import { PageLoader } from '../shared/page-loader.service';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { visibleTimer } from '../shared/polling';
+import { ResizableColumnsDirective } from '../shared/resizable-columns.directive';
 import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
 import { emptyPage } from '../shared/utils/page.utils';
 
@@ -44,6 +45,7 @@ import { emptyPage } from '../shared/utils/page.utils';
     '(document:keydown.escape)': 'closeContextMenu()'
   },
   imports: [
+    ResizableColumnsDirective,
     ReactiveFormsModule,
     TranslateDirective,
     TranslatePipe,

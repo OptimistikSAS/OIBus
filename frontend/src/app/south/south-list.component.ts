@@ -20,6 +20,7 @@ import { ModalService } from '../shared/modal.service';
 import { NotificationService } from '../shared/notification.service';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../shared/resizable-columns.directive';
 
 type SouthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -28,6 +29,7 @@ const PAGE_SIZE = 15;
 @Component({
   selector: 'oib-south-list',
   imports: [
+    ResizableColumnsDirective,
     TranslateDirective,
     RouterLink,
     LoadingSpinnerComponent,

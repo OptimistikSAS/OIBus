@@ -21,6 +21,7 @@ import { ModalService } from '../shared/modal.service';
 import { NotificationService } from '../shared/notification.service';
 import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
+import { ResizableColumnsDirective } from '../shared/resizable-columns.directive';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { emptyPage } from '../shared/utils/page.utils';
 
@@ -32,6 +33,7 @@ const PAGE_SIZE = 15;
 @Component({
   selector: 'oib-north-list',
   imports: [
+    ResizableColumnsDirective,
     ReactiveFormsModule,
     TranslateDirective,
     RouterLink,

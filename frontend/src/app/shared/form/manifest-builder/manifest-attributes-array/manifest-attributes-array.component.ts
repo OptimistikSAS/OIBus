@@ -11,6 +11,7 @@ import type { Modal } from '../../../modal.service';
 import { ModalService } from '../../../modal.service';
 import { ArrayPage } from '../../../pagination/array-page';
 import { PaginationComponent } from '../../../pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../../resizable-columns.directive';
 import { trackControl } from '../../tracked-control';
 import type { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
 
@@ -25,7 +26,16 @@ import type { ManifestAttributeEditorModalComponent } from '../manifest-attribut
     }
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, TranslateDirective, BoxComponent, BoxTitleDirective, PaginationComponent, NgbTooltip]
+  imports: [
+    ResizableColumnsDirective,
+    ReactiveFormsModule,
+    TranslatePipe,
+    TranslateDirective,
+    BoxComponent,
+    BoxTitleDirective,
+    PaginationComponent,
+    NgbTooltip
+  ]
 })
 export class ManifestAttributesArrayComponent {
   private readonly modalService = inject(ModalService);

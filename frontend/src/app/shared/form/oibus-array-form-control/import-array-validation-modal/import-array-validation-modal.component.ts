@@ -7,6 +7,7 @@ import { createPageFromArray, Page } from '@oibus/shared/common/types';
 import { OIBusArrayAttribute } from '@oibus/shared/connector/form.model';
 
 import { PaginationComponent } from '../../../pagination/pagination.component';
+import { ResizableColumnsDirective } from '../../../resizable-columns.directive';
 import { getElementName } from '../../../utils/csv.utils';
 import { emptyPage } from '../../../utils/page.utils';
 const PAGE_SIZE = 20;
@@ -16,7 +17,7 @@ const PAGE_SIZE = 20;
   templateUrl: './import-array-validation-modal.component.html',
   styleUrl: './import-array-validation-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, PaginationComponent, NgbTooltip]
+  imports: [ResizableColumnsDirective, TranslateDirective, PaginationComponent, NgbTooltip]
 })
 export class ImportArrayValidationModalComponent {
   private readonly modal = inject(NgbActiveModal);

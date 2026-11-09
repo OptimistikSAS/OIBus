@@ -18,6 +18,7 @@ import { DescribedNameComponent } from '../../../shared/described-name/described
 import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { ModalService } from '../../../shared/modal.service';
 import { NotificationService } from '../../../shared/notification.service';
+import { ResizableColumnsDirective } from '../../../shared/resizable-columns.directive';
 import { SouthItemGroups } from '../../south-items/south-item-groups';
 import EditWorkflowModalComponent, { openExploreWizard } from '../edit-workflow-modal/edit-workflow-modal.component';
 import { ExploreWizardOptions, ExploreWizardResult, workflowNodeIds } from '../edit-workflow-modal/explore-wizard';
@@ -46,7 +47,7 @@ export type ExploreAndSyncResult = Extract<ExploreWizardResult, { kind: 'items' 
   templateUrl: './manage-workflows-modal.component.html',
   styleUrl: './manage-workflows-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule, DescribedNameComponent]
+  imports: [ResizableColumnsDirective, TranslateDirective, TranslatePipe, NgbTooltip, ReactiveFormsModule, DescribedNameComponent]
 })
 export default class ManageWorkflowsModalComponent {
   private modal = inject(NgbActiveModal);
