@@ -8,9 +8,12 @@ import { RecordFilterCondition } from '../model/configuration-workflow.model';
 import { OIBusValidationError } from '../model/types';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import {
+  addFields,
+  checkAddedFields,
   checkWorkflowMode,
   computeIdentityKey,
   isEligible,
+  prepareRecords,
   processRecords,
   resolveFieldMapping,
   resolveIdentityKeyFields,
@@ -25,6 +28,7 @@ describe('configuration-workflow.utils', () => {
     discoveryScope: {},
     identityKeyFields: ['nodeId'],
     fieldProcesses: [],
+    addedFields: [],
     eligibilityFilter: [],
     itemFieldMapping: { name: '{{name}}' },
     pushToOIAnalytics: false,
@@ -51,6 +55,37 @@ describe('configuration-workflow.utils', () => {
       assert.throws(
         () => checkWorkflowMode({ ...localCommand, identityKeyFields: [] }),
         new OIBusValidationError('A configuration workflow creating/updating items requires at least one identity key field')
+      );
+    });
+  });
+
+  describe('checkAddedFields', () => {
+    it('should accept fields added each with a key of its own', () => {
+      checkAddedFields(localCommand);
+      checkAddedFields({
+        ...localCommand,
+        addedFields: [
+          { field: 'a', value: '1' },
+          { field: 'b', value: '{{a}}' }
+        ]
+      });
+    });
+
+    it('should reject a field added without a key, or twice', () => {
+      assert.throws(
+        () => checkAddedFields({ ...localCommand, addedFields: [{ field: ' ', value: '1' }] }),
+        new OIBusValidationError('A field added by a configuration workflow requires a name')
+      );
+      assert.throws(
+        () =>
+          checkAddedFields({
+            ...localCommand,
+            addedFields: [
+              { field: 'a', value: '1' },
+              { field: 'a', value: '2' }
+            ]
+          }),
+        new OIBusValidationError('The field "a" is added twice by the configuration workflow')
       );
     });
   });
@@ -94,6 +129,22 @@ describe('configuration-workflow.utils', () => {
       it('should match a substring', () => {
         assert.strictEqual(isEligible({ name: 'Reactor Temperature' }, [{ field: 'name', operator: 'contains', value: 'Temp' }]), true);
         assert.strictEqual(isEligible({ name: 'Reactor Pressure' }, [{ field: 'name', operator: 'contains', value: 'Temp' }]), false);
+      });
+    });
+
+    describe('startsWith', () => {
+      it('should match the start of the value', () => {
+        assert.strictEqual(isEligible({ path: 'Plant/Reactor/T1' }, [{ field: 'path', operator: 'startsWith', value: 'Plant/' }]), true);
+        assert.strictEqual(isEligible({ path: 'Site/Plant/T1' }, [{ field: 'path', operator: 'startsWith', value: 'Plant/' }]), false);
+        assert.strictEqual(isEligible({ id: 1234 }, [{ field: 'id', operator: 'startsWith', value: '12' }]), true);
+      });
+    });
+
+    describe('endsWith', () => {
+      it('should match the end of the value', () => {
+        assert.strictEqual(isEligible({ name: 'Reactor.PV' }, [{ field: 'name', operator: 'endsWith', value: '.PV' }]), true);
+        assert.strictEqual(isEligible({ name: 'Reactor.PV.Alarm' }, [{ field: 'name', operator: 'endsWith', value: '.PV' }]), false);
+        assert.strictEqual(isEligible({}, [{ field: 'name', operator: 'endsWith', value: '.PV' }]), false);
       });
     });
 
@@ -259,12 +310,76 @@ describe('configuration-workflow.utils', () => {
     });
   });
 
+  describe('addFields', () => {
+    it('should add constants and combinations of the fields, in order, keeping the type of a single field', () => {
+      const records: Array<OIBusRecord> = [
+        { plant: 'P1', name: 'T1', max: 120 },
+        { plant: 'P2', max: null }
+      ];
+
+      const added = addFields(records, [
+        { field: 'site', value: 'Lyon' },
+        { field: 'node-id', value: 'n{{ name }}' },
+        { field: 'reference', value: '{{site}}.{{plant}}.{{name}}' },
+        { field: 'id', value: '{{node-id}}' },
+        { field: 'limit', value: '{{max}}' },
+        { field: 'plant', value: '{{plant}}-old' }
+      ]);
+
+      assert.deepStrictEqual(added, [
+        { plant: 'P1-old', name: 'T1', max: 120, site: 'Lyon', 'node-id': 'nT1', reference: 'Lyon.P1.T1', id: 'nT1', limit: 120 },
+        { plant: 'P2-old', max: null, site: 'Lyon', 'node-id': 'n', reference: 'Lyon.P2.', id: 'n', limit: null }
+      ]);
+      // The discovered records are left untouched
+      assert.deepStrictEqual(records[0], { plant: 'P1', name: 'T1', max: 120 });
+      assert.strictEqual(addFields(records, []), records);
+    });
+  });
+
+  describe('prepareRecords', () => {
+    it('should process the discovered fields, add fields from them, then process the added fields', () => {
+      const logger = new LoggerMock();
+
+      const prepared = prepareRecords(
+        [
+          { name: ' t1 ', value: '12' },
+          { name: 't2', value: '7' }
+        ],
+        {
+          fieldProcesses: [
+            { field: 'reference', operations: [{ type: 'uppercase' }] },
+            { field: 'name', operations: [{ type: 'trim' }] }
+          ],
+          addedFields: [
+            { field: 'reference', value: 'plant1.{{name}}' },
+            { field: 'unit', value: '°C' }
+          ]
+        },
+        logger
+      );
+
+      assert.deepStrictEqual(prepared.records, [
+        { name: 't1', value: '12', reference: 'PLANT1.T1', unit: '°C' },
+        { name: 't2', value: '7', reference: 'PLANT1.T2', unit: '°C' }
+      ]);
+      // The values of the discovered fields as discovered, and of the added fields as added
+      assert.deepStrictEqual(prepared.samples, {
+        name: [' t1 ', 't2'],
+        value: ['12', '7'],
+        reference: ['plant1.t1', 'plant1.t2'],
+        unit: ['°C', '°C']
+      });
+      assert.strictEqual(logger.warn.mock.calls.length, 0);
+    });
+  });
+
   describe('sampleFieldValues', () => {
     it('should keep the first five non-empty values of each field', () => {
       const records = Array.from({ length: 7 }, (_, index) => ({ name: `T${index}`, unit: index < 6 ? null : 'bar' }));
 
       assert.deepStrictEqual(sampleFieldValues(records), { name: ['T0', 'T1', 'T2', 'T3', 'T4'], unit: ['bar'] });
       assert.deepStrictEqual(sampleFieldValues([]), {});
+      assert.deepStrictEqual(sampleFieldValues(records, new Set(['unit'])), { unit: ['bar'] });
     });
   });
 });

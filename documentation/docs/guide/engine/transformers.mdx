@@ -177,8 +177,8 @@ SFTP, REST, File Writer...). With its default settings, the records are written 
 transformer preselected for the record lists sent to a North connector expecting files.
 
 Every field of a record is written automatically — there's no need to declare a field just to have it appear in the
-output. Declaring a field (via **Fields**) is only needed when it must be renamed, cast to a specific type, reformatted
-(dates), or passed through a JavaScript expression. With **Keep the other fields** off, only the configured fields are
+output. Declaring a field (via **Fields**) is only needed when it must be renamed, converted to a specific type, reformatted
+(dates), or processed. With **Keep the other fields** off, only the configured fields are
 written, in their configured order.
 
 Before 3.10, the CSV and JSON files had their own transformers (CSV and JSON): upgrading replaces them by this one,
@@ -221,9 +221,8 @@ Each entry in **Fields** targets one field, by its name in the records:
 The **Field processing** of the file fields and of the MQTT payloads, and the **Reference processing**, **Timestamp
 processing** and **Value processing** of the OIAnalytics payload, are lists of operations applied in order, each on the
 result of the previous one: convert (to a text, a number, a boolean, or the object or array of a JSON text), upper or
-lower case, trim, substring, add text, replace text, number operation, round, date time conversion (possibly rounded down
-to a **Precision**: second, minute, hour or day), or a JavaScript
-**Expression** on `value` for anything else — the same operations as the
+lower case, trim, substring, add text, replace text, number operation, round, and date time conversion (possibly rounded
+down to a **Precision**: second, minute, hour or day) — the same operations as the
 [field processing of the items synchronisations](../south-connectors/common-settings.md#field-processing). The settings
 show the operations in order; **Set up…** opens them in a modal, to add, change, reorder or remove them.
 
@@ -235,16 +234,18 @@ The operations only apply to a value that can be processed:
 
 - a missing value (`null`) is left as it is: it is not processed. In a CSV file, it is written with the **Null value**;
   in an OIAnalytics payload, the record is skipped;
-- a value an operation fails on (e.g. a text in a number operation, or an expression calling a method the value does not
-  have) is skipped with a warning in the logs, once per field. The field is written empty in a file, the record is
+- a value an operation fails on (e.g. a text in a number operation) is skipped with a warning in the logs, once per field. The field is written empty in a file, the record is
   skipped in an OIAnalytics payload, and a reference is kept as it is. Convert the field first (e.g. **Convert** to a
   number before a number operation);
-- an object or an array (of a JSON file) can only be converted, or processed by an expression;
+- an object or an array (of a JSON file) can only be converted;
 - a field without operation is written as it is read: a text of a CSV file stays a text in a JSON file, unless converted.
 
 Before 3.10, the processes were JavaScript expressions, and the fields had a data type and datetime settings: upgrading
 turns them into the operations doing the same — a **Convert** for the data type, a **Date time conversion** for the
-datetime settings, then a single **Expression** operation for the expression.
+datetime settings, then the operations of the expression: `value.trim().toUpperCase()` becomes **Trim spaces** then
+**Upper case**, `Math.round(value * 100) / 100` a **Round** to 2 decimals, `'plant.' + value` an **Add text**... An
+expression doing something no operation does (e.g. `value.split('/').pop()`) is removed, with a warning in the logs:
+check the processing of the field after the upgrade.
 
 ##### Example — Point records in a CSV file {#example}
 
@@ -258,7 +259,7 @@ datetime settings, then a single **Expression** operation for the expression.
 ```
 
 With File type `CSV`, Delimiter `SEMI_COLON`, **Keep the other fields** off, and three fields: `pointId` (written
-name `Reference`, field processing: an expression `value.split('/').pop()`), `timestamp` (written name `Timestamp`, field
+name `Reference`, field processing: a replacement of `plant/` by nothing), `timestamp` (written name `Timestamp`, field
 processing: a date time conversion from `iso-string` to `string` with format `yyyy-MM-dd HH:mm:ss` and timezone
 `Europe/Paris`) and `value` (written name `Value`):
 

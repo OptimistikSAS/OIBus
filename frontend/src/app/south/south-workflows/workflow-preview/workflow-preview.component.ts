@@ -27,6 +27,8 @@ export type WorkflowPreviewContext = 'preview' | 'run-payload';
  *  server-side pagination to defer to), so a large discovered list is paginated only for display. */
 const PAGE_SIZE = 20;
 
+const UTF8_BOM = '﻿';
+
 // Mirrors the backend's IDENTITY_KEY_FIELD_SEPARATOR (configuration-workflow.utils.ts).
 const IDENTITY_KEY_FIELD_SEPARATOR = String.fromCharCode(1);
 
@@ -134,20 +136,23 @@ export class WorkflowPreviewComponent {
    * Exports the whole list as a flattened CSV, one row per entry (local/diffed workflow) or raw record
    * (remote/push-to-OIAnalytics workflow) - never both, since only one is ever non-empty. Each row's nested payload
    * fields are flattened into their own underscore-joined columns via flattenPlainObject, since this discovered data
-   * has no OIBusAttribute form schema of its own to flatten against the way south item CSV export does.
+   * has no OIBusAttribute form schema of its own to flatten against the way south item CSV export does. The identity key
+   * is written as shown in the table: its segments separated by a comma, not by a control character.
    */
   exportCsv(): void {
     const entryRows = this.entryRows();
     const isEntries = entryRows.length > 0;
     const rows: Array<Record<string, string>> = isEntries
-      ? entryRows.map(row => ({ key: row.entry.key, status: row.entry.status, ...row.values }))
+      ? entryRows.map(row => ({ key: this.displayKey(row.entry.key), status: row.entry.status, ...row.values }))
       : this.recordRows();
     const columns = isEntries
       ? ['key', 'status', ...this.columns().filter(column => column !== 'key' && column !== 'status')]
       : this.columns();
 
     const content = csv.unparse(rows, { columns, delimiter: ',' });
-    const blob = new Blob([content], { type: 'text/csv' });
+    // The byte order mark tells spreadsheets (Excel...) the file is UTF-8 encoded: without it, they read its accented and
+    // other non-ASCII characters in the encoding of the system
+    const blob = new Blob([UTF8_BOM, content], { type: 'text/csv;charset=utf-8' });
     const namePrefix = this.context() === 'run-payload' ? 'run-payload' : 'preview';
     const workflowSlug = this.workflowName().replace(/[^a-zA-Z0-9-_]+/g, '_');
     const filename = `${namePrefix}_${workflowSlug}_${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;

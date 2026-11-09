@@ -182,6 +182,120 @@
         </div>
       </div>
 
+      <!-- Added fields: computed from the processed discovered fields, before the eligibility filter -->
+      <div class="form-group" id="added-fields">
+        <div class="form-label" translate="south.workflows.added-fields"></div>
+        <div class="form-text" translate="south.workflows.added-fields-hint"></div>
+        @if (addedFields().length === 0) {
+          <div class="text-muted small mb-2" id="added-fields-none" translate="south.workflows.added-fields-none"></div>
+        } @else {
+          <table class="table table-sm" id="added-fields-table">
+            <thead>
+              <tr>
+                <th translate="south.workflows.added-fields-field"></th>
+                <th translate="south.workflows.added-fields-value"></th>
+                <th class="oib-actions-column-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (addedField of addedFields(); track $index) {
+                <tr [class.table-active]="editingAddedFieldIndex() === $index">
+                  <td>{{ addedField.field }}</td>
+                  <td>
+                    <code>{{ addedField.value }}</code>
+                  </td>
+                  <td class="oib-actions">
+                    <button
+                      type="button"
+                      class="btn btn-link edit-added-field"
+                      [attr.aria-label]="'common.edit' | translate"
+                      (click)="startEditAddedField($index)"
+                    >
+                      <span class="fa-solid fa-pencil" aria-hidden="true"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-link remove-added-field"
+                      [attr.aria-label]="'common.delete' | translate"
+                      (click)="removeAddedField($index)"
+                    >
+                      <span class="fa-solid fa-trash-can" aria-hidden="true"></span>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        <div class="d-flex gap-1 align-items-center">
+          <input
+            class="form-control form-control-sm"
+            id="new-added-field"
+            [class.is-invalid]="addedFieldDuplicate()"
+            [(ngModel)]="newAddedField"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'south.workflows.added-fields-field' | translate"
+            [attr.aria-label]="'south.workflows.added-fields-field' | translate"
+            (keydown.enter)="$event.preventDefault(); saveAddedField()"
+          />
+          <div class="input-group input-group-sm">
+            <input
+              class="form-control form-control-sm font-monospace"
+              id="new-added-field-value"
+              [(ngModel)]="newAddedFieldValue"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'south.workflows.added-fields-value-placeholder' | translate"
+              [attr.aria-label]="'south.workflows.added-fields-value' | translate"
+              (keydown.enter)="$event.preventDefault(); saveAddedField()"
+            />
+            <div ngbDropdown placement="bottom-end">
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                id="insert-record-field"
+                ngbDropdownToggle
+                [disabled]="recordFields().length === 0"
+                translate="south.workflows.added-fields-insert"
+              ></button>
+              <div ngbDropdownMenu class="insert-record-field-menu">
+                @for (field of recordFields(); track field) {
+                  <button type="button" ngbDropdownItem (click)="insertRecordField(field)">{{ field }}</button>
+                }
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            id="save-added-field"
+            [disabled]="!newAddedField().trim() || addedFieldDuplicate()"
+            [attr.aria-label]="(editingAddedFieldIndex() === null ? 'common.add' : 'common.save') | translate"
+            (click)="saveAddedField()"
+          >
+            <span
+              class="fa-solid"
+              [class.fa-plus]="editingAddedFieldIndex() === null"
+              [class.fa-check]="editingAddedFieldIndex() !== null"
+              aria-hidden="true"
+            ></span>
+          </button>
+          @if (editingAddedFieldIndex() !== null) {
+            <button
+              type="button"
+              class="btn btn-link btn-sm"
+              id="cancel-added-field"
+              [attr.aria-label]="'common.cancel' | translate"
+              (click)="cancelEditAddedField()"
+            >
+              <span class="fa-solid fa-times" aria-hidden="true"></span>
+            </button>
+          }
+        </div>
+        @if (addedFieldDuplicate()) {
+          <div class="invalid-feedback d-block" id="added-field-duplicate" translate="south.workflows.added-fields-duplicate"></div>
+        }
+      </div>
+
       <!-- Eligibility filter -->
       <div class="form-group">
         <div class="form-label" translate="south.workflows.eligibility-filter"></div>
@@ -513,6 +627,14 @@
         <dd class="col-sm-9" id="review-field-processes">
           @if (fieldProcesses().length > 0) {
             {{ processedFields().join(', ') }}
+          } @else {
+            <span translate="south.workflows.field-processes-none-short"></span>
+          }
+        </dd>
+        <dt class="col-sm-3" translate="south.workflows.added-fields"></dt>
+        <dd class="col-sm-9" id="review-added-fields">
+          @if (addedFields().length > 0) {
+            {{ addedFieldNames() }}
           } @else {
             <span translate="south.workflows.field-processes-none-short"></span>
           }

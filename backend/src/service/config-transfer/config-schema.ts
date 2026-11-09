@@ -155,6 +155,9 @@ const configurationWorkflowEntry = Joi.object({
   fieldProcesses: Joi.array()
     .items(Joi.object({ field: Joi.string().required(), operations: FIELD_OPERATIONS_SCHEMA.required() }))
     .required(),
+  addedFields: Joi.array()
+    .items(Joi.object({ field: Joi.string().required(), value: Joi.string().allow('').required() }))
+    .required(),
   eligibilityFilter: Joi.array()
     .items(
       Joi.object({

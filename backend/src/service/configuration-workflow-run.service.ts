@@ -24,13 +24,13 @@ import SouthConnectorRepository from '../repository/config/south-connector.repos
 import WorkflowRunRepository from '../repository/config/workflow-run.repository';
 import type ConfigurationWorkflowService from './configuration-workflow.service';
 import {
+  checkAddedFields,
   checkWorkflowMode,
   computeIdentityKey,
   isEligible,
-  processRecords,
+  prepareRecords,
   resolveFieldMapping,
-  resolveIdentityKeyFields,
-  sampleFieldValues
+  resolveIdentityKeyFields
 } from './configuration-workflow.utils';
 import { OIBusConfigurationWorkflowResultCommandDTO } from './oia/oianalytics.model';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
@@ -236,6 +236,7 @@ export default class ConfigurationWorkflowRunService {
     command: ConfigurationWorkflowCommandDTO
   ): Promise<WorkflowPreviewResultDTO> {
     checkWorkflowMode(command);
+    checkAddedFields(command);
     if (workflowId !== null) {
       this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
     }
@@ -666,20 +667,19 @@ interface RetrievedRecords {
   /** The processed records the eligibility filter keeps */
   eligible: Array<OIBusRecord>;
   discoveredCount: number;
-  /** The first values of each field, as discovered: what a field process is tested on */
+  /** The first values of each field, as discovered or added: what a field process is tested on */
   samples: Record<string, Array<RecordFieldValue>>;
 }
 
-/** Decide's first part: the discovered records are processed, then filtered on their processed values. */
+/** Decide's first part: the discovered records are processed and completed, then filtered on their processed values. */
 function decide(
   records: Array<OIBusRecord>,
-  workflow: Pick<ConfigurationWorkflowEntity, 'fieldProcesses' | 'eligibilityFilter'>,
+  workflow: Pick<ConfigurationWorkflowEntity, 'fieldProcesses' | 'addedFields' | 'eligibilityFilter'>,
   logger?: ILogger
 ): RetrievedRecords {
-  const eligible = processRecords(records, workflow.fieldProcesses, logger).filter(record =>
-    isEligible(record, workflow.eligibilityFilter)
-  );
-  return { eligible, discoveredCount: records.length, samples: sampleFieldValues(records) };
+  const prepared = prepareRecords(records, workflow, logger);
+  const eligible = prepared.records.filter(record => isEligible(record, workflow.eligibilityFilter));
+  return { eligible, discoveredCount: records.length, samples: prepared.samples };
 }
 
 /**

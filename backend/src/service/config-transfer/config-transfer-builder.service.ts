@@ -421,6 +421,7 @@ export default class ConfigTransferBuilderService {
       discoveryScope: workflow.discoveryScope,
       identityKeyFields: workflow.identityKeyFields,
       fieldProcesses: workflow.fieldProcesses,
+      addedFields: workflow.addedFields,
       eligibilityFilter: workflow.eligibilityFilter,
       itemFieldMapping: workflow.itemFieldMapping,
       pushToOIAnalytics: workflow.pushToOIAnalytics,

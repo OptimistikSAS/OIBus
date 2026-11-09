@@ -5,130 +5,7 @@ import { FieldDatetimePrecision, FieldOperation } from '../../shared/model/conne
 
 import type { ILogger } from '../model/logger.model';
 import { createMock } from '../tests/utils/test-utils';
-import { applyFieldOperations, createFieldProcess, createStringFieldProcess, evaluateExpression } from './field-process';
-
-describe('evaluateExpression', () => {
-  it('should return the value unchanged when the expression is empty', () => {
-    assert.strictEqual(evaluateExpression('hello', '   '), 'hello');
-  });
-
-  // ─── Standard String operations ──────────────────────────────────────────────
-
-  it('should apply value.toUpperCase()', () => {
-    assert.strictEqual(evaluateExpression('hello world', 'value.toUpperCase()'), 'HELLO WORLD');
-  });
-
-  it('should apply value.trim()', () => {
-    assert.strictEqual(evaluateExpression('  spaces  ', 'value.trim()'), 'spaces');
-  });
-
-  it('should apply value.replace()', () => {
-    assert.strictEqual(evaluateExpression('3.14', 'value.replace(".", ",")'), '3,14');
-  });
-
-  it('should apply String() constructor from the whitelist', () => {
-    assert.strictEqual(evaluateExpression(123, 'String(value)'), '123');
-  });
-
-  it('should apply chained String methods', () => {
-    assert.strictEqual(evaluateExpression('  hello  ', 'value.trim().toUpperCase()'), 'HELLO');
-  });
-
-  // ─── Standard Math / Number operations ──────────────────────────────────────
-
-  it('should apply Math.round()', () => {
-    assert.strictEqual(evaluateExpression(3.14159, 'Math.round(value * 100) / 100'), 3.14);
-  });
-
-  it('should apply Math.abs()', () => {
-    assert.strictEqual(evaluateExpression(-5, 'Math.abs(value)'), 5);
-  });
-
-  it('should apply Number() from the whitelist', () => {
-    assert.strictEqual(evaluateExpression('42', 'Number(value)'), 42);
-  });
-
-  it('should apply parseInt from the whitelist', () => {
-    assert.strictEqual(evaluateExpression('42.9', 'parseInt(value, 10)'), 42);
-  });
-
-  it('should apply parseFloat from the whitelist', () => {
-    const result = evaluateExpression('3.14', 'parseFloat(value)') as number;
-    assert.ok(Math.abs(result - 3.14) < 0.001);
-  });
-
-  // ─── JSON / structured data ──────────────────────────────────────────────────
-
-  it('should apply JSON.parse()', () => {
-    assert.strictEqual(evaluateExpression('{"x":1}', 'JSON.parse(value).x'), 1);
-  });
-
-  it('should apply JSON.stringify()', () => {
-    assert.strictEqual(evaluateExpression({ a: 1 }, 'JSON.stringify(value)'), '{"a":1}');
-  });
-
-  // ─── Security: Node.js globals are NOT accessible ───────────────────────────
-
-  it('should throw when the expression references "require"', () => {
-    assert.throws(() => evaluateExpression('x', 'require("fs")'), /failed/);
-  });
-
-  it('should throw when the expression references "process"', () => {
-    assert.throws(() => evaluateExpression('x', 'process.env.HOME'), /failed/);
-  });
-
-  it('should throw when the expression references "global"', () => {
-    assert.throws(() => evaluateExpression('x', 'global.process'), /failed/);
-  });
-
-  it('should throw when the expression references "Buffer"', () => {
-    assert.throws(() => evaluateExpression('x', 'Buffer.from("hi")'), /failed/);
-  });
-
-  it('should throw when the expression references "Function"', () => {
-    assert.throws(() => evaluateExpression('x', 'Function("return process")()'), /failed/);
-  });
-
-  it('should not allow eval to reach Node.js globals (eval is sandboxed to the vm context)', () => {
-    assert.strictEqual(evaluateExpression(0, 'eval("1 + 1")'), 2);
-    assert.throws(() => evaluateExpression('x', 'eval("require(\'fs\')")'), /failed/);
-  });
-
-  // ─── Error propagation ───────────────────────────────────────────────────────
-
-  it('should tell when the expression calls a method the value does not have', () => {
-    assert.throws(() => evaluateExpression('hello', 'value.nonExistentMethod()'), /method "nonExistentMethod"/);
-    assert.throws(
-      () => evaluateExpression(12, 'value.toUpperCase()'),
-      /method "toUpperCase" of expression "value.toUpperCase\(\)" is not available on a value of type number/
-    );
-    assert.throws(() => evaluateExpression('12', 'value.toFixed(2)'), /method "toFixed"/);
-  });
-
-  it('should throw a descriptive error when the expression calls a non-existent function', () => {
-    assert.throws(() => evaluateExpression('hello', 'nonExistentFunction(value)'), /Expression "nonExistentFunction\(value\)" failed/);
-  });
-
-  it('should apply a number method on a number', () => {
-    assert.strictEqual(evaluateExpression(3.14159, 'value.toFixed(2)'), '3.14');
-  });
-
-  it('should throw a descriptive error when the expression has a syntax error', () => {
-    assert.throws(() => evaluateExpression('hello', '((('), /failed/);
-  });
-
-  it('should throw a descriptive error when the expression times out', () => {
-    assert.throws(() => evaluateExpression(0, 'while(true){}'), /failed/);
-  });
-
-  // ─── Script caching ──────────────────────────────────────────────────────────
-
-  it('should produce the same result when called multiple times with the same expression', () => {
-    assert.strictEqual(evaluateExpression('a', 'value.toUpperCase()'), 'A');
-    assert.strictEqual(evaluateExpression('b', 'value.toUpperCase()'), 'B');
-    assert.strictEqual(evaluateExpression('c', 'value.toUpperCase()'), 'C');
-  });
-});
+import { applyFieldOperations, createFieldProcess, createStringFieldProcess } from './field-process';
 
 describe('applyFieldOperations', () => {
   const apply = (value: unknown, ...operations: Array<FieldOperation>) => applyFieldOperations(value, operations);
@@ -263,20 +140,12 @@ describe('applyFieldOperations', () => {
     );
   });
 
-  it('should evaluate an expression, on any value', () => {
-    assert.strictEqual(apply('Plant/Reactor/T1', { type: 'expression', expression: "value.split('/').pop()" }), 'T1');
-    // built in the sandbox, with its own Object prototype
-    assert.strictEqual(JSON.stringify(apply({ a: 1 }, { type: 'expression', expression: '({ ...value, b: 2 })' })), '{"a":1,"b":2}');
-    assert.strictEqual(apply('a', { type: 'expression', expression: 'undefined' }), null);
-  });
-
-  it('should only process an object or an array with an expression', () => {
-    assert.throws(() => apply({ a: 1 }, { type: 'uppercase' }), /\{"a":1\} is an object or an array: only an expression can process it/);
+  it('should only process an object or an array with a conversion', () => {
+    assert.throws(() => apply({ a: 1 }, { type: 'uppercase' }), /\{"a":1\} is an object or an array: only a conversion can process it/);
   });
 
   it('should apply the operations in order, and stop on an empty value', () => {
     assert.strictEqual(apply(' a ', { type: 'trim' }, { type: 'uppercase' }, { type: 'add-to-string', prefix: '[', suffix: ']' }), '[A]');
-    assert.strictEqual(apply('a', { type: 'expression', expression: 'null' }, { type: 'uppercase' }), null);
     assert.strictEqual(apply(null, { type: 'uppercase' }), null);
     assert.strictEqual(apply(undefined, { type: 'uppercase' }), undefined);
   });
@@ -309,24 +178,16 @@ describe('createStringFieldProcess', () => {
   });
 
   it('should apply the operations and convert the result into a string', () => {
-    const process = createStringFieldProcess([{ type: 'expression', expression: "value.replace('plant/', '').length" }], 'reference');
-    assert.strictEqual(process('plant/temp'), '4');
-  });
-
-  it('should memoize results per value', () => {
-    const process = createStringFieldProcess([{ type: 'expression', expression: 'value + Math.random()' }], 'reference');
-    const first = process('ref1');
-    assert.strictEqual(process('ref1'), first);
-    assert.notStrictEqual(process('ref2'), first);
+    const process = createStringFieldProcess([{ type: 'number-operation', operator: 'multiply', operand: 2 }], 'reference');
+    assert.strictEqual(process('21'), '42');
+    // memoized per value
+    assert.strictEqual(process('21'), '42');
+    assert.strictEqual(process('4'), '8');
   });
 
   it('should keep the reference as is, with a warning, when the operations fail on it', () => {
     const logger = createMock<ILogger>();
-    assert.strictEqual(
-      createStringFieldProcess([{ type: 'expression', expression: 'value.toFixed(2)' }], 'reference', logger)('ref'),
-      'ref'
-    );
-    assert.strictEqual(createStringFieldProcess([{ type: 'expression', expression: 'null' }], 'reference', logger)('ref'), 'ref');
+    assert.strictEqual(createStringFieldProcess([{ type: 'round', decimals: 2 }], 'reference', logger)('ref'), 'ref');
     assert.strictEqual(logger.warn.mock.calls.length, 1);
   });
 });

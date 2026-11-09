@@ -97,8 +97,8 @@ describe('FieldProcessModalComponent', () => {
     await tester.addOperation('Replace text');
     await tester.operation(3).getByLabelText('Text to replace').fill('.');
     await tester.operation(3).getByLabelText('Replacement').fill(',');
-    await tester.addOperation('Expression');
-    await tester.operation(4).getByLabelText('Expression').fill("value + ' bar'");
+    await tester.addOperation('Add text');
+    await tester.operation(4).getByLabelText('Suffix').fill(' bar');
     // the trim goes down and back up, then last
     await tester.operation(0).getByRole('button', { name: 'Move down' }).click();
     await tester.operation(1).getByRole('button', { name: 'Move up' }).click();
@@ -113,7 +113,7 @@ describe('FieldProcessModalComponent', () => {
       { type: 'number-operation', operator: 'divide', operand: 10 },
       { type: 'round', decimals: 1 },
       { type: 'replace', search: '.', replacement: ',' },
-      { type: 'expression', expression: "value + ' bar'" },
+      { type: 'add-to-string', prefix: '', suffix: ' bar' },
       { type: 'trim' }
     ]);
   });

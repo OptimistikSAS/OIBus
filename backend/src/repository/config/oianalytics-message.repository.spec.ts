@@ -131,6 +131,7 @@ describe('OIAnalyticsMessageRepository', () => {
         discoveryScope: { query: 'SELECT tag_name FROM metadata_table' },
         identityKeyFields: ['tagName'],
         fieldProcesses: [],
+        addedFields: [],
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,

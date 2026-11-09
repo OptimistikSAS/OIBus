@@ -1,4 +1,4 @@
-import { RecordFieldProcess, RecordFilterCondition } from '../../shared/model/domain/configuration-workflow.model';
+import { RecordAddedField, RecordFieldProcess, RecordFilterCondition } from '../../shared/model/domain/configuration-workflow.model';
 
 import { ScanMode } from './scan-mode.model';
 import { BaseEntity } from './types';
@@ -8,6 +8,7 @@ import { BaseEntity } from './types';
 // most entities here (which typically resolve shared DTO ids into full backend objects).
 export {
   RECORD_FILTER_OPERATORS,
+  RecordAddedField,
   RecordFieldProcess,
   RecordFilterCondition,
   RecordFilterOperator
@@ -25,7 +26,8 @@ export {
  *     query — distinct from the item's own operational query, and producing nothing OIBus itself ever
  *     reads, only metadata about points (e.g. `tag_name, unit, min, max, description`).
  *  3. Decide — `fieldProcesses` process the fields of the retrieved records (e.g. upper case a name,
- *     convert a date time), then `eligibilityFilter` narrows them to the ones that matter (e.g. "only
+ *     convert a date time), `addedFields` add fields to them (e.g. a reference combining a plant and a name), then
+ *     `eligibilityFilter` narrows them to the ones that matter (e.g. "only
  *     Variables", redundant for SQL if the query already selects precisely, essential for tree-shaped
  *     sources that can't). For a local workflow, each surviving record is then classified
  *     new/changed/unchanged/missing by comparing its `identityKeyFields`-derived key against the
@@ -67,6 +69,12 @@ export interface ConfigurationWorkflowEntity extends BaseEntity {
   fieldProcesses: Array<RecordFieldProcess>;
 
   /**
+   * The fields added to every retrieved record, in order: computed from the record once its discovered fields are
+   * processed, then processed themselves by the `fieldProcesses` of their key. Empty adds none.
+   */
+  addedFields: Array<RecordAddedField>;
+
+  /**
    * Conditions a discovered record must all satisfy (AND-ed) to be eligible for action at all — empty
    * means every retrieved record is eligible. Evaluated before identity matching, so an ineligible
    * record is treated as though it was never retrieved.
@@ -98,6 +106,7 @@ export interface ConfigurationWorkflowCommand {
   discoveryScope: Record<string, unknown>;
   identityKeyFields: Array<string>;
   fieldProcesses: Array<RecordFieldProcess>;
+  addedFields: Array<RecordAddedField>;
   eligibilityFilter: Array<RecordFilterCondition>;
   itemFieldMapping: Record<string, string> | null;
   pushToOIAnalytics: boolean;

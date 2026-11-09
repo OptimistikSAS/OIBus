@@ -1,6 +1,7 @@
 import { OIBusRecord } from '../common/content.model';
 import { BaseEntity } from '../common/types';
 import {
+  RecordAddedField,
   RecordFieldProcess,
   RecordFieldValues,
   RecordFilterCondition,
@@ -57,6 +58,12 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
    */
   fieldProcesses: Array<RecordFieldProcess>;
 
+  /**
+   * The fields added to every discovered record, in order, after the processing of the discovered fields and before
+   * their own processing (see `fieldProcesses`) and the eligibility filter - empty adds none.
+   */
+  addedFields: Array<RecordAddedField>;
+
   /** Conditions a discovered record must all satisfy to be eligible for action — empty means every record is eligible. */
   eligibilityFilter: Array<RecordFilterCondition>;
 
@@ -104,6 +111,7 @@ export interface ConfigurationWorkflowCommandDTO {
    */
   identityKeyFields: Array<string>;
   fieldProcesses: Array<RecordFieldProcess>;
+  addedFields: Array<RecordAddedField>;
   eligibilityFilter: Array<RecordFilterCondition>;
   itemFieldMapping: Record<string, string> | null;
   pushToOIAnalytics: boolean;
@@ -147,7 +155,8 @@ export interface WorkflowPreviewResultDTO {
   records: Array<OIBusRecord>;
   /**
    * The first values of each field of the discovered records, as discovered - before the field processes and the
-   * eligibility filter: what a field process is tested on.
+   * eligibility filter: what a field process is tested on. The values of an added field are the ones it is added with,
+   * before its own processing.
    * @example { "path": ["Plant/Reactor/Temperature", "Plant/Reactor/Pressure"] }
    */
   samples: Record<string, RecordFieldValues>;

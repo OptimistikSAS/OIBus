@@ -1850,28 +1850,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"FieldExpressionOperation": {
-				"description": "Any other processing, as a JavaScript expression on `value`.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"expression"
-						],
-						"nullable": false
-					},
-					"expression": {
-						"type": "string",
-						"example": "value.split('.').pop()"
-					}
-				},
-				"required": [
-					"type",
-					"expression"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"FieldOperation": {
 				"anyOf": [
 					{
@@ -1897,9 +1875,6 @@
 					},
 					{
 						"$ref": "#/components/schemas/FieldDatetimeOperation"
-					},
-					{
-						"$ref": "#/components/schemas/FieldExpressionOperation"
 					}
 				]
 			},
@@ -16740,12 +16715,35 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"RecordAddedField": {
+				"description": "A field a Configuration Workflow adds to every discovered record, after the processing of the discovered fields: a\nconstant, or a combination of other fields of the record.",
+				"properties": {
+					"field": {
+						"type": "string",
+						"description": "The key of the field added to the record - an added field replaces a discovered field of the same key.",
+						"example": "reference"
+					},
+					"value": {
+						"type": "string",
+						"description": "A constant, or a template combining fields of the record as `{{field}}`: the discovered fields as processed, and\nthe fields added before. A template that is a single `{{field}}` keeps the type of its value (a number stays a\nnumber), and a missing field gives an empty value.",
+						"example": "{{plant}}.{{name}}"
+					}
+				},
+				"required": [
+					"field",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"RecordFilterOperator": {
 				"type": "string",
 				"enum": [
 					"equals",
 					"notEquals",
 					"contains",
+					"startsWith",
+					"endsWith",
 					"matches",
 					"exists",
 					"greaterThan",
@@ -16814,6 +16812,12 @@
 						},
 						"type": "array"
 					},
+					"addedFields": {
+						"items": {
+							"$ref": "#/components/schemas/RecordAddedField"
+						},
+						"type": "array"
+					},
 					"eligibilityFilter": {
 						"items": {
 							"$ref": "#/components/schemas/RecordFilterCondition"
@@ -16848,6 +16852,7 @@
 					"discoveryScope",
 					"identityKeyFields",
 					"fieldProcesses",
+					"addedFields",
 					"eligibilityFilter",
 					"itemFieldMapping",
 					"pushToOIAnalytics",
@@ -17344,7 +17349,7 @@
 					},
 					"samples": {
 						"$ref": "#/components/schemas/Record_string.RecordFieldValues_",
-						"description": "The first values of each field of the discovered records, as discovered - before the field processes and the\neligibility filter: what a field process is tested on.",
+						"description": "The first values of each field of the discovered records, as discovered - before the field processes and the\neligibility filter: what a field process is tested on. The values of an added field are the ones it is added with,\nbefore its own processing.",
 						"example": {
 							"path": [
 								"Plant/Reactor/Temperature",
@@ -47938,6 +47943,13 @@
 						"type": "array",
 						"description": "How fields of every discovered record are processed (upper case, substring, date time conversion...) before the\neligibility filter - empty means the records are kept as discovered."
 					},
+					"addedFields": {
+						"items": {
+							"$ref": "#/components/schemas/RecordAddedField"
+						},
+						"type": "array",
+						"description": "The fields added to every discovered record, in order, after the processing of the discovered fields and before\ntheir own processing (see `fieldProcesses`) and the eligibility filter - empty adds none."
+					},
 					"eligibilityFilter": {
 						"items": {
 							"$ref": "#/components/schemas/RecordFilterCondition"
@@ -47987,6 +47999,7 @@
 					"discoveryScope",
 					"identityKeyFields",
 					"fieldProcesses",
+					"addedFields",
 					"eligibilityFilter",
 					"itemFieldMapping",
 					"pushToOIAnalytics",

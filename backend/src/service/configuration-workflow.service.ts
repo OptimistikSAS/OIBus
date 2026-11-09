@@ -7,7 +7,7 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
+import { checkAddedFields, checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
 import type OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import { checkScanMode } from './utils';
 
@@ -55,6 +55,7 @@ export default class ConfigurationWorkflowService {
       discoveryScope: command.discoveryScope,
       identityKeyFields: resolveIdentityKeyFields(command),
       fieldProcesses: command.fieldProcesses,
+      addedFields: command.addedFields,
       eligibilityFilter: command.eligibilityFilter,
       itemFieldMapping: command.itemFieldMapping,
       pushToOIAnalytics: command.pushToOIAnalytics,
@@ -80,6 +81,7 @@ export default class ConfigurationWorkflowService {
         discoveryScope: command.discoveryScope,
         identityKeyFields: resolveIdentityKeyFields(command),
         fieldProcesses: command.fieldProcesses,
+        addedFields: command.addedFields,
         eligibilityFilter: command.eligibilityFilter,
         itemFieldMapping: command.itemFieldMapping,
         pushToOIAnalytics: command.pushToOIAnalytics,
@@ -115,6 +117,7 @@ export default class ConfigurationWorkflowService {
    *  actually push anything yet, so that case is logged as a warning rather than rejected outright. */
   private checkMode(command: ConfigurationWorkflowCommandDTO): void {
     checkWorkflowMode(command);
+    checkAddedFields(command);
     if (command.pushToOIAnalytics && this.oIAnalyticsRegistrationService.getRegistrationSettings()?.status !== 'REGISTERED') {
       this.engine.logger.warn(
         `Configuration workflow "${command.name}" is set to push to OIAnalytics, but OIBus is not registered with OIAnalytics - ` +

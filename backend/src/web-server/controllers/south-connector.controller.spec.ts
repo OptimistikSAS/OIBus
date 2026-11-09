@@ -375,6 +375,7 @@ describe('SouthConnectorController', () => {
         discoveryScope: {},
         identityKeyFields: [],
         fieldProcesses: [],
+        addedFields: [],
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,

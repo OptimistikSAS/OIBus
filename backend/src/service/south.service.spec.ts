@@ -187,6 +187,7 @@ const localWorkflowCommand: ConfigurationWorkflowCommandDTO = {
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   fieldProcesses: [],
+  addedFields: [],
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
   pushToOIAnalytics: false,
@@ -366,6 +367,7 @@ describe('South Service', () => {
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],
         fieldProcesses: [],
+        addedFields: [],
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}' },
         pushToOIAnalytics: false,
@@ -484,6 +486,7 @@ describe('South Service', () => {
       name: 'remote',
       identityKeyFields: ['discarded for a remote workflow'],
       fieldProcesses: [],
+      addedFields: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true,
       scanModeId: null

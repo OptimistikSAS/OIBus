@@ -588,18 +588,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "FieldExpressionOperation": {
-        "dataType": "refObject",
-        "properties": {
-            "type": {"dataType":"enum","enums":["expression"],"required":true},
-            "expression": {"dataType":"string","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "FieldOperation": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"FieldConvertOperation"},{"ref":"FieldCaseOperation"},{"ref":"FieldSubstringOperation"},{"ref":"FieldAddToStringOperation"},{"ref":"FieldReplaceOperation"},{"ref":"FieldNumberOperation"},{"ref":"FieldRoundOperation"},{"ref":"FieldDatetimeOperation"},{"ref":"FieldExpressionOperation"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"FieldConvertOperation"},{"ref":"FieldCaseOperation"},{"ref":"FieldSubstringOperation"},{"ref":"FieldAddToStringOperation"},{"ref":"FieldReplaceOperation"},{"ref":"FieldNumberOperation"},{"ref":"FieldRoundOperation"},{"ref":"FieldDatetimeOperation"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "FieldProcessTestCommandDTO": {
@@ -3972,9 +3963,18 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RecordAddedField": {
+        "dataType": "refObject",
+        "properties": {
+            "field": {"dataType":"string","required":true},
+            "value": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "RecordFilterOperator": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["equals"]},{"dataType":"enum","enums":["notEquals"]},{"dataType":"enum","enums":["contains"]},{"dataType":"enum","enums":["matches"]},{"dataType":"enum","enums":["exists"]},{"dataType":"enum","enums":["greaterThan"]},{"dataType":"enum","enums":["lessThan"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["equals"]},{"dataType":"enum","enums":["notEquals"]},{"dataType":"enum","enums":["contains"]},{"dataType":"enum","enums":["startsWith"]},{"dataType":"enum","enums":["endsWith"]},{"dataType":"enum","enums":["matches"]},{"dataType":"enum","enums":["exists"]},{"dataType":"enum","enums":["greaterThan"]},{"dataType":"enum","enums":["lessThan"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "RecordFilterCondition": {
@@ -3996,6 +3996,7 @@ const models: TsoaRoute.Models = {
             "discoveryScope": {"ref":"Record_string.unknown_","required":true},
             "identityKeyFields": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "fieldProcesses": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFieldProcess"},"required":true},
+            "addedFields": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordAddedField"},"required":true},
             "eligibilityFilter": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFilterCondition"},"required":true},
             "itemFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
             "pushToOIAnalytics": {"dataType":"boolean","required":true},
@@ -10308,6 +10309,7 @@ const models: TsoaRoute.Models = {
             "discoveryScope": {"ref":"Record_string.unknown_","required":true},
             "identityKeyFields": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "fieldProcesses": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFieldProcess"},"required":true},
+            "addedFields": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordAddedField"},"required":true},
             "eligibilityFilter": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFilterCondition"},"required":true},
             "itemFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
             "pushToOIAnalytics": {"dataType":"boolean","required":true},
