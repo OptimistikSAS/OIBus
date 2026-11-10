@@ -219,12 +219,13 @@ tiennent aussi les éléments à jour : voir [Explorer et synchroniser](#explore
 **Explorer la source de données** : une arborescence de ce que contient la source de données, chargée niveau par niveau
 au fil du dépliage des nœuds.
 
-| Connecteur                                                | Ce que montre l'arborescence                                                                                 | Actions sur les nœuds sélectionnés                          |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| [OPC UA](./opcua.mdx#node-metadata)                       | L'espace d'adressage du serveur, avec les métadonnées des nœuds (ID du nœud, type, description, unité…)      | **Ajouter comme points**, **Synchroniser…**                 |
-| [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | Les appareils, puis les objets de chaque appareil                                                            | **Ajouter comme points**, **Synchroniser…**                 |
-| MSSQL, MySQL, PostgreSQL, Oracle, SQLite                  | Les tables (avec leur nombre de colonnes et de lignes lorsque disponible), puis les colonnes de chaque table | **Ajouter dans un point**, **Synchroniser les métadonnées** |
-| [Folder Scanner](./folder-scanner.mdx)                    | Les dossiers et fichiers du dossier d'entrée, avec leur taille et leurs dates                                | — (navigation uniquement)                                   |
+| Connecteur                                                | Ce que montre l'arborescence                                                                                  | Actions sur les nœuds sélectionnés                          |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [OPC UA](./opcua.mdx#node-metadata)                       | L'espace d'adressage du serveur, avec les métadonnées des nœuds (ID du nœud, type, description, unité…)       | **Ajouter comme points**, **Synchroniser…**                 |
+| [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | Les appareils, puis les objets de chaque appareil                                                             | **Ajouter comme points**, **Synchroniser…**                 |
+| [EtherNet/IP](./ethernet-ip.mdx#exploring-the-tags)       | Les programmes et les tags de portée contrôleur, puis les tags de chaque programme, avec leur type de données | **Ajouter comme points**, **Synchroniser…**                 |
+| MSSQL, MySQL, PostgreSQL, Oracle, SQLite                  | Les tables (avec leur nombre de colonnes et de lignes lorsque disponible), puis les colonnes de chaque table  | **Ajouter dans un point**, **Synchroniser les métadonnées** |
+| [Folder Scanner](./folder-scanner.mdx)                    | Les dossiers et fichiers du dossier d'entrée, avec leur taille et leurs dates                                 | — (navigation uniquement)                                   |
 
 Cliquez sur un nœud pour afficher ses détails (les métadonnées que la source de données fournit pour lui) dans un
 panneau latéral, chaque valeur avec un bouton de copie. L'exploration utilise les paramètres tels qu'ils sont en cours
@@ -331,7 +332,7 @@ colonnes.
 
 ## Stratégie de mise en cache {#caching-strategy}
 
-Pour les **connecteurs de la famille IoT** (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT, BACnet/IP), chaque élément peut filtrer
+Pour les **connecteurs de la famille IoT** (OPC UA, Modbus, ADS, OPC Classic, S7, EtherNet/IP, MQTT, BACnet/IP), chaque élément peut filtrer
 les valeurs collectées qui sont effectivement mises en cache et transmises aux connecteurs North, au lieu de mettre
 en cache chaque valeur lue ou reçue. Cela réduit la taille du cache et la charge sur le connecteur North pour les
 points stables ou qui évoluent lentement.

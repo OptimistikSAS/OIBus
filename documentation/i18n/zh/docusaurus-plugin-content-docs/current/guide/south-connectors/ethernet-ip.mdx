@@ -1,0 +1,68 @@
+---
+sidebar_position: 23
+---
+
+# Rockwell® EtherNet/IP™
+
+EtherNet/IP 南向连接器通过 **EtherNet/IP™**（CIP）按标签名称读取 Rockwell® Logix PLC（ControlLogix® 和 CompactLogix®）的标签，
+在每次扫描模式触发时读取，无需经过 OPC 服务器、FactoryTalk® Linx 或单独的代理。
+
+OIBus 使用 MIT 许可的 [ethernet-ip](https://github.com/cmseaton42/node-ethernet-ip) 库：无需安装任何驱动程序。
+
+:::caution 仅支持 Logix 控制器
+标签通过 Logix 符号服务（Read Tag）读取，只有 Rockwell Logix 控制器实现了这些服务。不支持 Micro800®、MicroLogix™、SLC™ 500 和
+PLC-5® 控制器，也不支持其他厂商以适配器方式支持 EtherNet/IP 的 PLC（例如 Schneider Electric® Modicon®）：请改用它们的 Modbus TCP
+或 OPC UA 服务器。
+:::
+
+## 特定设置 {#specific-settings}
+
+| 设置         | 描述                                                                                                                                                              | 示例值         |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| **主机**     | PLC 的 IP 地址或主机名，或 ControlLogix 机架中以太网模块（1756-ENxT）的地址。OIBus 连接 EtherNet/IP 端口 `44818`。                                                | `192.168.1.10` |
+| **插槽**     | 控制器在机架中的插槽：CompactLogix 为 `0`，ControlLogix 为 CPU 所在的插槽。                                                                                       | `0`            |
+| **连接消息** | 打开一个 CIP 连接（Forward Open）来读取标签，数据包比非连接消息更大，因此每次扫描的请求更少。若控制器拒绝连接或已无可用连接（例如负载较高的 PLC），请禁用此选项。 | 启用           |
+| **超时**     | 建立连接和等待请求响应的最长时间（毫秒）。                                                                                                                        | `10000`        |
+| **重试间隔** | 连接失败或意外断开后重新连接前的等待时间（毫秒）。                                                                                                                | `10000`        |
+
+## 项目设置 {#item-settings}
+
+| 设置         | 描述                                                            | 示例值        |
+| ------------ | --------------------------------------------------------------- | ------------- |
+| **标签名称** | 要读取的标签名称，与 Studio 5000 Logix Designer® 中声明的一致。 | `Temperature` |
+
+| 标签名称                      | 含义                                               |
+| ----------------------------- | -------------------------------------------------- |
+| `Temperature`                 | 控制器范围的标签。                                 |
+| `Program:MainProgram.Counter` | 程序 `MainProgram` 的 `Counter` 标签（程序范围）。 |
+| `Recipe.Speed`                | 结构（UDT）标签 `Recipe` 的 `Speed` 成员。         |
+| `Levels[3]`                   | 数组标签 `Levels` 的第四个元素。                   |
+| `Status.2`                    | 整数标签 `Status` 的第 2 位。                      |
+
+标签名称不区分大小写。在 PLC 中外部访问设置为 **None** 的标签无法读取。
+
+:::note 值
+数字以数字形式上报，`BOOL` 标签为 `1` 或 `0`，`LINT` 标签为文本（64 位整数可能超出数字范围），`STRING` 标签为文本。结构以 JSON 上报
+（`{"Speed":1.5,"Running":true}`）：将其成员作为单独的项目读取以获得数字。不带索引读取的数组标签（`Levels`）只返回其第一个元素：
+请将每个元素作为单独的项目读取（`Levels[3]`）。
+:::
+
+:::tip 批量读取
+OIBus 以尽可能少的请求（CIP Multiple Service Packet）读取一个扫描模式的所有项目。当某个标签无法读取（未知标签、无外部访问）时，
+该次扫描的项目会改为逐个读取：出错的项目会被记录并跳过，不影响其他项目。
+:::
+
+## 浏览标签 {#exploring-the-tags}
+
+**浏览并同步**按钮列出 PLC 的标签：根级别为程序和控制器范围的标签，然后是每个程序的标签，并显示其数据类型（结构为 UDT 名称）和数组维度。
+选择标签或程序以**添加为项**（每个标签一个项目，以标签命名；对于数组标签，请编辑项目以读取其元素）或通过
+[配置工作流](./common-settings.md#items-synchronisation)**保持同步…**。系统标签（以 `__` 开头的名称、`Local:1:I` 等模块 I/O 标签）
+不会列出。
+
+## 缓存策略 {#caching-strategy}
+
+与其他 IoT 系列连接器一样，EtherNet/IP 项目支持按项目配置[缓存策略](./common-settings.md#caching-strategy)
+（`所有值`、`变化时`、`阈值`），以过滤实际被缓存并转发的读取值。
+
+_Rockwell、Allen-Bradley、ControlLogix、CompactLogix、Micro800、MicroLogix、SLC、PLC-5、FactoryTalk 和 Studio 5000 Logix Designer
+是 Rockwell Automation, Inc. 的商标。EtherNet/IP 是 ODVA, Inc. 的商标。OIBus 与 Rockwell Automation 或 ODVA 无关联，也未经其认证。_

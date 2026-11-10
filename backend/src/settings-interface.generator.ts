@@ -389,6 +389,8 @@ export function buildSouthInterfaceName(connectorId: string, itemInterface: bool
       return `SouthADS${prefix}Settings`;
     case 'bacnet':
       return `SouthBACnet${prefix}Settings`;
+    case 'ethernet-ip':
+      return `SouthEtherNetIP${prefix}Settings`;
     case 'folder-scanner':
       return `SouthFolderScanner${prefix}Settings`;
     case 'ftp':

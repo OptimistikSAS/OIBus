@@ -25,6 +25,7 @@ export type OIBusSouthCategory = (typeof OIBUS_SOUTH_CATEGORIES)[number];
 export const OIBUS_SOUTH_TYPES = [
   'ads', // Beckhoff ADS protocol
   'bacnet', // BACnet/IP building automation protocol
+  'ethernet-ip', // EtherNet/IP (CIP) protocol of the Rockwell Logix PLCs
   'folder-scanner', // File system folder scanning
   'ftp', // FTP file transfer protocol
   'influxdb', // InfluxDB time series database
@@ -58,7 +59,7 @@ export type OIBusSouthType = (typeof OIBUS_SOUTH_TYPES)[number];
  * South connector types belonging to the "IoT family" (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT), for
  * which per-item caching strategy is available.
  */
-export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt', 'bacnet'];
+export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus', 'ads', 'opc', 's7', 'ethernet-ip', 'mqtt', 'bacnet'];
 
 /**
  * Shape of a Configuration Workflow's `discoveryScope` for a connector type that supports discovery:

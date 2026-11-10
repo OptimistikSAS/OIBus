@@ -17,7 +17,8 @@ describe('shared south-connector model constants', () => {
     assert.ok(OIBUS_SOUTH_TYPES.includes('opcua'));
     assert.ok(OIBUS_SOUTH_TYPES.includes('folder-scanner'));
     assert.ok(OIBUS_SOUTH_TYPES.includes('bacnet'));
-    assert.equal(OIBUS_SOUTH_TYPES.length, 22);
+    assert.ok(OIBUS_SOUTH_TYPES.includes('ethernet-ip'));
+    assert.equal(OIBUS_SOUTH_TYPES.length, 23);
   });
 
   it('SOUTH_SINGLE_ITEMS only references known south types', () => {

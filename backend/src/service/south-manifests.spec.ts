@@ -7,6 +7,7 @@ import { OIBusSouthType } from '../../shared/model/connector/south-manifest.mode
 
 import SouthADS from '../south/south-ads/south-ads';
 import SouthBACnet from '../south/south-bacnet/south-bacnet';
+import SouthEtherNetIP from '../south/south-ethernet-ip/south-ethernet-ip';
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthInfluxDB from '../south/south-influxdb/south-influxdb';
@@ -67,6 +68,7 @@ before(() => {
   connectorClasses = {
     ads: SouthADS,
     bacnet: SouthBACnet,
+    'ethernet-ip': SouthEtherNetIP,
     'folder-scanner': SouthFolderScanner,
     ftp: SouthFTP,
     influxdb: SouthInfluxDB,
@@ -96,7 +98,7 @@ describe('southManifestList', () => {
   });
 
   it('contains one manifest per registered south connector', () => {
-    assert.equal(southManifestList.length, 22);
+    assert.equal(southManifestList.length, 23);
   });
 
   it('contains only manifests with a non-empty unique id', () => {
@@ -124,6 +126,7 @@ describe('southManifestList', () => {
       'sqlite',
       'ads',
       'bacnet',
+      'ethernet-ip',
       'modbus',
       'oianalytics',
       'osisoft-pi',

@@ -1,0 +1,78 @@
+---
+sidebar_position: 23
+---
+
+# Rockwell® EtherNet/IP™
+
+Le connecteur South EtherNet/IP lit les tags des automates Rockwell® Logix (ControlLogix® et CompactLogix®) via
+**EtherNet/IP™** (CIP), par nom de tag, à chaque déclenchement du mode de scan, sans passer par un serveur OPC,
+FactoryTalk® Linx ni un agent séparé.
+
+OIBus utilise la bibliothèque [ethernet-ip](https://github.com/cmseaton42/node-ethernet-ip) sous licence MIT : aucun
+pilote n'est à installer.
+
+:::caution Automates Logix uniquement
+Les tags sont lus avec les services symboliques Logix (Read Tag), que seuls les automates Rockwell Logix implémentent.
+Les automates Micro800®, MicroLogix™, SLC™ 500 et PLC-5®, ainsi que les automates d'autres constructeurs qui supportent
+EtherNet/IP en tant qu'adaptateur (par exemple Schneider Electric® Modicon®), ne sont pas supportés : utilisez leur
+serveur Modbus TCP ou OPC UA.
+:::
+
+## Paramètres spécifiques {#specific-settings}
+
+| Paramètre                            | Description                                                                                                                                                                                                                                                                             | Exemple de valeur |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Hôte**                             | Adresse IP ou nom d'hôte de l'automate, ou du module Ethernet (1756-ENxT) d'un châssis ControlLogix. OIBus se connecte sur le port EtherNet/IP `44818`.                                                                                                                                 | `192.168.1.10`    |
+| **Slot**                             | Emplacement du contrôleur dans son châssis : `0` pour un CompactLogix, l'emplacement de la CPU pour un ControlLogix.                                                                                                                                                                    | `0`               |
+| **Messagerie connectée**             | Ouvre une connexion CIP (Forward Open) pour lire les tags, avec des paquets plus grands qu'en messagerie non connectée, donc moins de requêtes par scan. Désactivez-la pour un contrôleur qui refuse la connexion ou n'a plus de connexion disponible (par exemple un automate chargé). | Activée           |
+| **Délai d'attente**                  | Temps maximal (en millisecondes) d'attente de la connexion et de la réponse à une requête.                                                                                                                                                                                              | `10000`           |
+| **Intervalle de nouvelle tentative** | Temps d'attente (en millisecondes) avant de se reconnecter après un échec de connexion ou une déconnexion inattendue.                                                                                                                                                                   | `10000`           |
+
+## Paramètres des éléments {#item-settings}
+
+| Paramètre      | Description                                                             | Exemple de valeur |
+| -------------- | ----------------------------------------------------------------------- | ----------------- |
+| **Nom du tag** | Le nom du tag à lire, tel que déclaré dans Studio 5000 Logix Designer®. | `Temperature`     |
+
+| Nom du tag                    | Signification                                                   |
+| ----------------------------- | --------------------------------------------------------------- |
+| `Temperature`                 | Un tag de portée contrôleur.                                    |
+| `Program:MainProgram.Counter` | Le tag `Counter` du programme `MainProgram` (portée programme). |
+| `Recipe.Speed`                | Le membre `Speed` du tag structure (UDT) `Recipe`.              |
+| `Levels[3]`                   | Le quatrième élément du tag tableau `Levels`.                   |
+| `Status.2`                    | Le bit 2 du tag entier `Status`.                                |
+
+Les noms de tags sont insensibles à la casse. Un tag dont l'accès externe est **None** dans l'automate ne peut pas être
+lu.
+
+:::note Valeurs
+Les nombres sont remontés comme des nombres, les tags `BOOL` comme `1` ou `0`, les tags `LINT` comme du texte (un
+entier 64 bits peut ne pas tenir dans un nombre), les tags `STRING` comme du texte. Une structure est remontée en JSON
+(`{"Speed":1.5,"Running":true}`) : lisez ses membres comme des éléments séparés pour obtenir des nombres. Un tag tableau
+lu sans indice (`Levels`) ne donne que son premier élément : lisez chaque élément comme un élément séparé (`Levels[3]`).
+:::
+
+:::tip Lectures groupées
+OIBus lit tous les éléments d'un mode de scan en aussi peu de requêtes que possible (CIP Multiple Service Packet).
+Quand un tag ne peut pas être lu (tag inconnu, pas d'accès externe), les éléments du scan sont lus un par un à la
+place : l'élément en erreur est journalisé et ignoré, sans affecter les autres éléments.
+:::
+
+## Explorer les tags {#exploring-the-tags}
+
+Le bouton **Explorer et synchroniser** liste les tags de l'automate : les programmes et les tags de portée contrôleur à
+la racine, puis les tags de chaque programme, avec leur type de données (le nom de l'UDT pour une structure) et les
+dimensions des tableaux. Sélectionnez des tags ou des programmes pour les **Ajouter comme points** (un élément par tag,
+nommé d'après le tag ; modifiez les éléments des tags tableaux pour lire leurs éléments) ou les **Synchroniser…** avec un
+[workflow de configuration](./common-settings.md#items-synchronisation). Les tags système (noms commençant par `__`,
+tags d'E/S des modules comme `Local:1:I`) ne sont pas listés.
+
+## Stratégie de mise en cache {#caching-strategy}
+
+Comme les autres connecteurs de la famille IoT, les éléments EtherNet/IP prennent en charge une
+[stratégie de mise en cache](./common-settings.md#caching-strategy) par élément (`Toutes les valeurs`, `Sur changement`,
+`Seuil`) pour filtrer les lectures effectivement mises en cache et transmises.
+
+_Rockwell, Allen-Bradley, ControlLogix, CompactLogix, Micro800, MicroLogix, SLC, PLC-5, FactoryTalk et Studio 5000
+Logix Designer sont des marques de Rockwell Automation, Inc. EtherNet/IP est une marque d'ODVA, Inc. OIBus n'est ni
+affilié à Rockwell Automation ou à ODVA, ni certifié par eux._

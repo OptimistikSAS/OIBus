@@ -449,6 +449,14 @@ export interface SouthBACnetSettings {
   bbmd: SouthBACnetSettingsBbmd;
 }
 
+export interface SouthEtherNetIPSettings {
+  host: string;
+  slot: number;
+  connectedMessaging: boolean;
+  timeout: number;
+  retryInterval: number;
+}
+
 export interface SouthFolderScannerSettings {
   inputFolder: string;
   username?: string | null;
@@ -609,6 +617,7 @@ export interface SouthSQLiteSettings {
 export type SouthSettings =
   | SouthADSSettings
   | SouthBACnetSettings
+  | SouthEtherNetIPSettings
   | SouthFolderScannerSettings
   | SouthFTPSettings
   | SouthInfluxDBSettings
@@ -814,6 +823,10 @@ export interface SouthBACnetItemSettings {
   macAddress?: string;
 }
 
+export interface SouthEtherNetIPItemSettings {
+  tagName: string;
+}
+
 export interface SouthFolderScannerItemSettings {
   regex: string;
   minAge: number;
@@ -950,6 +963,7 @@ export interface SouthSQLiteItemSettings {
 export type SouthItemSettings =
   | SouthADSItemSettings
   | SouthBACnetItemSettings
+  | SouthEtherNetIPItemSettings
   | SouthFolderScannerItemSettings
   | SouthFTPItemSettings
   | SouthInfluxDBItemSettings
