@@ -81,6 +81,13 @@ export const OIANALYTICS_TRANSFORMER_FUNCTION_NAMES = ['time-values-to-oianalyti
 
 export const RECORD_LIST_TO_CSV_FUNCTION_NAME = 'record-list-to-csv';
 
+/**
+ * The CSV delimiter of the converted options, the default one when missing. The non-breaking space is no longer a CSV
+ * delimiter: the pipe replaces it.
+ */
+export const toCsvDelimiter = (delimiter: unknown, defaultDelimiter: string): unknown =>
+  delimiter === 'NON_BREAKING_SPACE' ? 'PIPE' : (delimiter ?? defaultDelimiter);
+
 interface OldDateTimeField {
   fieldName: string;
   useAsReference: boolean;
@@ -187,7 +194,7 @@ export function buildRecordListToCsvOptions(
     encoding: 'UTF_8',
     header: true,
     compression: serialization?.compression ?? false,
-    delimiter: serialization?.delimiter ?? 'COMMA',
+    delimiter: toCsvDelimiter(serialization?.delimiter, 'COMMA'),
     newline: 'LF',
     quoteChar: 'NONE',
     escapeChar: 'DOUBLE_QUOTE',
@@ -276,7 +283,7 @@ export const FILE_TRANSFORMER_REPLACEMENTS: Record<string, string> = {
  */
 export function toFileTransformerOptions(oldFunctionName: string, options: Record<string, unknown>): Record<string, unknown> {
   if (options.input !== undefined) return options;
-  const csvInput = { fileType: 'csv', delimiter: options.delimiter ?? 'SEMI_COLON', hasHeader: options.hasHeader ?? true };
+  const csvInput = { fileType: 'csv', delimiter: toCsvDelimiter(options.delimiter, 'SEMI_COLON'), hasHeader: options.hasHeader ?? true };
   switch (oldFunctionName) {
     case 'csv-to-mqtt': {
       const converted: Record<string, unknown> = {
@@ -350,7 +357,7 @@ export function toFileOutputTransformerOptions(oldFunctionName: string, options:
       encoding: options.encoding ?? 'UTF_8',
       compression: options.compression ?? false,
       header: options.header ?? true,
-      delimiter: options.delimiter ?? 'COMMA',
+      delimiter: toCsvDelimiter(options.delimiter, 'COMMA'),
       newline: options.newline ?? 'LF',
       quoteChar: options.quoteChar ?? 'NONE',
       escapeChar: options.escapeChar ?? 'DOUBLE_QUOTE',
@@ -405,7 +412,7 @@ export function toOIAnalyticsItemFileOptions(serialization: Record<string, unkno
       encoding: 'UTF_8',
       compression: serialization.compression ?? false,
       header: true,
-      delimiter: serialization.delimiter ?? 'COMMA',
+      delimiter: toCsvDelimiter(serialization.delimiter, 'COMMA'),
       newline: 'CRLF',
       quoteChar: 'NONE',
       escapeChar: 'DOUBLE_QUOTE',
@@ -687,7 +694,7 @@ export function toRecordListTransformerOptions(oldFunctionName: string, options:
         encoding: options.encoding ?? 'UTF_8',
         header: options.header ?? true,
         compression: false,
-        delimiter: options.delimiter ?? 'COMMA',
+        delimiter: toCsvDelimiter(options.delimiter, 'COMMA'),
         newline: options.newline ?? 'LF',
         quoteChar: options.quoteChar ?? 'NONE',
         escapeChar: options.escapeChar ?? 'DOUBLE_QUOTE',
