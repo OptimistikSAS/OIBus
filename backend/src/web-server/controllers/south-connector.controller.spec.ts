@@ -17,7 +17,7 @@ import { OIBusContent } from '../../../shared/model/common/content.model';
 import { SouthConnectorItemSearchParam } from '../../../shared/model/domain/south-connector.model';
 
 import type { SouthItemGroupEntity } from '../../model/south-connector.model';
-import { OIBusTestingError } from '../../model/types';
+import { OIBusExploreError, OIBusTestingError } from '../../model/types';
 import type ConfigurationWorkflowRunService from '../../service/configuration-workflow-run.service';
 import type OIBusService from '../../service/oibus.service';
 import type ScanModeService from '../../service/scan-mode.service';
@@ -528,6 +528,36 @@ describe('SouthConnectorController', () => {
       assert.ok(error instanceof OIBusTestingError);
       assert.strictEqual((error as OIBusTestingError).message, 'Explore browse failure');
     }
+  });
+
+  it('should keep why a south explore session could not browse', async () => {
+    const exploreError = new OIBusExploreError('denied', 'permission');
+    southService.browseExplore.mock.mockImplementation(async () => {
+      throw exploreError;
+    });
+
+    await assert.rejects(
+      () => controller.browseExplore(testData.south.list[0].id, 'sessionId', { parentId: null }, mockRequest as CustomExpressRequest),
+      error => error === exploreError
+    );
+  });
+
+  it('should keep why a south explore session could not start', async () => {
+    const exploreError = new OIBusExploreError('refused', 'connection');
+    southService.startExplore.mock.mockImplementation(async () => {
+      throw exploreError;
+    });
+
+    await assert.rejects(
+      () =>
+        controller.startExplore(
+          testData.south.list[0].id,
+          testData.south.command.type,
+          testData.south.command.settings,
+          mockRequest as CustomExpressRequest
+        ),
+      error => error === exploreError
+    );
   });
 
   it('should close a south explore session', async () => {

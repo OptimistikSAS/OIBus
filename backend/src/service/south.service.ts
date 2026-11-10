@@ -64,6 +64,7 @@ import SouthConnectorRepository from '../repository/config/south-connector.repos
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import LogRepository from '../repository/logs/log.repository';
 import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
+import { toExploreError } from '../south/explore-error';
 import { buildSouth } from '../south/south-connector-factory';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { checkAddedFields, checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
@@ -432,7 +433,8 @@ export default class SouthService {
    * Start an interactive explore session: build a connector, connect it, and return the
    * root-level entries plus a session id used for subsequent browse/close calls. A running connector
    * with these exact settings is explored through its live instance (see `findRunningSouth`), which is
-   * already connected and must keep running once the session is closed.
+   * already connected and must keep running once the session is closed. When the data source can't be explored, the error
+   * tells why when it can (see `toExploreError()`).
    */
   async startExplore(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<SouthExploreStartResult> {
     const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
@@ -446,7 +448,7 @@ export default class SouthService {
       } catch (error) {
         // connect() failed before the session was registered — release the connector so it doesn't leak.
         await south.stop();
-        throw error;
+        throw toExploreError(error, 'connection');
       }
     }
     const sessionId = await this.exploreSessionManager.start(south, !isLiveInstance);
@@ -455,16 +457,21 @@ export default class SouthService {
       return { sessionId, entries };
     } catch (error) {
       await this.exploreSessionManager.close(sessionId);
-      throw error;
+      throw toExploreError(error);
     }
   }
 
   /**
-   * Browse (expand) an entry within an existing explore session.
+   * Browse (expand) an entry within an existing explore session - the error telling why it failed when it can (see
+   * `toExploreError()`).
    */
   async browseExplore(sessionId: string, parentId: string | null): Promise<SouthExploreBrowseResult> {
-    const entries = await this.exploreSessionManager.browse(sessionId, parentId);
-    return { entries };
+    try {
+      const entries = await this.exploreSessionManager.browse(sessionId, parentId);
+      return { entries };
+    } catch (error) {
+      throw toExploreError(error);
+    }
   }
 
   /**

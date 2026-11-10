@@ -6,7 +6,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, OnDestroy,
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
-import { SouthExploreBrowseResult, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
+import { SouthExploreBrowseResult, SouthExploreErrorResponse, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import { SouthConnectorExploreEntry, SouthConnectorExploreFieldKind } from '@oibus/shared/domain/south-connector.model';
@@ -23,7 +23,7 @@ interface ExploreTreeNode {
   readonly expanded: boolean;
   readonly loading: boolean;
   readonly loaded: boolean;
-  readonly error: string | null;
+  readonly error: SouthExploreErrorResponse | null;
   readonly children: ReadonlyArray<ExploreTreeNode>;
 }
 
@@ -67,8 +67,10 @@ const TRANSLATED_METADATA_KEYS = new Set([
 /** The metadata fields shown next to the node name in the tree, the first one an entry has. */
 const SUMMARY_METADATA_KEYS = ['type', 'objectType'];
 
-function errorMessage(httpError: HttpErrorResponse): string {
-  return httpError.error?.message ?? httpError.message;
+/** The error of an explore request, with why the data source could not be explored when the backend tells it */
+function exploreError(httpError: HttpErrorResponse): SouthExploreErrorResponse {
+  const body: Partial<SouthExploreErrorResponse> | null = httpError.error;
+  return { message: body?.message ?? httpError.message, kind: body?.kind ?? null };
 }
 
 /** `deviceInstance` -> `Device instance`: the fallback label of a metadata field with no translation. */
@@ -156,7 +158,8 @@ export class ExploreTreeComponent implements OnDestroy {
   /** Ids of the checked nodes: a point stands for itself, any other node for everything under it */
   readonly checkedIds = signal<ReadonlySet<string>>(new Set());
   readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
+  /** Why the session could not start: a warning when the data source was reached but may not be listed, an error otherwise */
+  readonly error = signal<SouthExploreErrorResponse | null>(null);
   private sessionId: string | null = null;
   /** The tree is immutable: a node change replaces the node and its ancestors */
   readonly nodes = signal<ReadonlyArray<ExploreTreeNode>>([]);
@@ -228,7 +231,7 @@ export class ExploreTreeComponent implements OnDestroy {
     this.loading.set(true);
     this.api.start(settingsToExplore, southType).subscribe({
       error: (httpError: HttpErrorResponse) => {
-        this.error.set(errorMessage(httpError));
+        this.error.set(exploreError(httpError));
         this.loading.set(false);
       },
       next: result => {
@@ -273,7 +276,7 @@ export class ExploreTreeComponent implements OnDestroy {
     this.updateNode(node.path, current => ({ ...current, loading: true, error: null }));
     this.api!.browse(this.sessionId, node.entry.id).subscribe({
       error: (httpError: HttpErrorResponse) => {
-        this.updateNode(node.path, current => ({ ...current, error: errorMessage(httpError), loading: false }));
+        this.updateNode(node.path, current => ({ ...current, error: exploreError(httpError), loading: false }));
       },
       next: result => {
         const children = result.entries.map(entry => this.createNode(entry, node.path));
