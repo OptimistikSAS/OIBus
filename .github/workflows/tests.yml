@@ -26,13 +26,16 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
+              - 'pnpm-workspace.yaml'
               - '.github/workflows/tests.yml'
             frontend:
               - 'frontend/**'
               - 'backend/shared/**'
+              - 'pnpm-workspace.yaml'
               - '.github/workflows/tests.yml'
             launcher:
               - 'launcher/**'
+              - 'pnpm-workspace.yaml'
               - '.github/workflows/tests.yml'
 
   test-backend:
@@ -52,6 +55,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: backend/package.json
+
       - name: Use Node.js
         uses: actions/setup-node@v7
         with:
@@ -62,40 +70,40 @@ jobs:
         uses: actions/cache@v6
         with:
           path: backend/node_modules
-          key: backend-deps-${{ matrix.platform }}-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('backend/package-lock.json') }}
+          key: backend-deps-${{ matrix.platform }}-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('backend/pnpm-lock.yaml', 'pnpm-workspace.yaml') }}
 
       - name: Install backend dependencies
         if: steps.cache-backend.outputs.cache-hit != 'true'
         working-directory: backend
         shell: bash
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Cache backend ESLint results
         uses: actions/cache@v6
         with:
           path: backend/.eslintcache
-          key: eslint-backend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('backend/eslint.config.mjs', 'backend/package-lock.json') }}
+          key: eslint-backend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('backend/eslint.config.mjs', 'backend/pnpm-lock.yaml') }}
           restore-keys: eslint-backend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-
 
       - name: Run backend linting
         shell: bash
         working-directory: backend
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Build backend
         shell: bash
         working-directory: backend
-        run: npm run build
+        run: pnpm run build
 
       - name: Type-check backend, specs included
         shell: bash
         working-directory: backend
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: Run backend unit tests
         shell: bash
         working-directory: backend
-        run: npm test
+        run: pnpm test
 
   test-frontend:
     name: Test frontend on ubuntu-24.04
@@ -107,6 +115,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
       - name: Use Node.js
         uses: actions/setup-node@v7
         with:
@@ -117,47 +130,47 @@ jobs:
         uses: actions/cache@v6
         with:
           path: frontend/node_modules
-          key: frontend-deps-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/package-lock.json') }}
+          key: frontend-deps-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'pnpm-workspace.yaml') }}
 
       - name: Install frontend dependencies
         if: steps.cache-frontend.outputs.cache-hit != 'true'
         working-directory: frontend
         shell: bash
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Cache Playwright browser
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/package-lock.json') }}
+          key: playwright-chromium-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
           restore-keys: playwright-chromium-${{ secrets.GH_ACTIONS_CACHE_KEY }}-
 
       - name: Cache frontend ESLint results
         uses: actions/cache@v6
         with:
           path: frontend/.eslintcache
-          key: eslint-frontend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/eslint.config.js', 'frontend/package-lock.json') }}
+          key: eslint-frontend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/eslint.config.js', 'frontend/pnpm-lock.yaml') }}
           restore-keys: eslint-frontend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-
 
       - name: Run frontend linting
         shell: bash
         working-directory: frontend
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Build frontend
         shell: bash
         working-directory: frontend
-        run: npm run build
+        run: pnpm run build
 
       - name: Install Playwright browser
         shell: bash
         working-directory: frontend
-        run: npx playwright install chromium
+        run: pnpm exec playwright install chromium
 
       - name: Run frontend unit tests
         shell: bash
         working-directory: frontend
-        run: npm test
+        run: pnpm test
 
   test-launcher:
     name: Test launcher on ${{ matrix.os }}
@@ -176,6 +189,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: launcher/package.json
+
       - name: Use Node.js
         uses: actions/setup-node@v7
         with:
@@ -186,37 +204,37 @@ jobs:
         uses: actions/cache@v6
         with:
           path: launcher/node_modules
-          key: launcher-deps-${{ matrix.platform }}-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('launcher/package-lock.json') }}
+          key: launcher-deps-${{ matrix.platform }}-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('launcher/pnpm-lock.yaml', 'pnpm-workspace.yaml') }}
 
       - name: Install launcher dependencies
         if: steps.cache-launcher.outputs.cache-hit != 'true'
         working-directory: launcher
         shell: bash
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Cache launcher ESLint results
         uses: actions/cache@v6
         with:
           path: launcher/.eslintcache
-          key: eslint-launcher-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('launcher/eslint.config.mjs', 'launcher/package-lock.json') }}
+          key: eslint-launcher-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('launcher/eslint.config.mjs', 'launcher/pnpm-lock.yaml') }}
           restore-keys: eslint-launcher-${{ secrets.GH_ACTIONS_CACHE_KEY }}-
 
       - name: Run launcher linting
         shell: bash
         working-directory: launcher
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Build launcher
         shell: bash
         working-directory: launcher
-        run: npm run build
+        run: pnpm run build
 
       - name: Type-check launcher, specs included
         shell: bash
         working-directory: launcher
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: Run launcher unit tests
         shell: bash
         working-directory: launcher
-        run: npm test
+        run: pnpm test

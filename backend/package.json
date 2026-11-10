@@ -6,9 +6,9 @@
   "homepage": "https://oibus.optimistik.com/",
   "license": "EUPL",
   "engines": {
-    "node": "26.12.1",
-    "npm": "11.20.0"
+    "node": "26.12.1"
   },
+  "packageManager": "pnpm@12.16.1",
   "scripts": {
     "start:macos-x64": "../build/bin/macos-x64/binaries/oibus --config ../data-folder",
     "start:macos-arm64": "../build/bin/macos-arm64/binaries/oibus --config ../data-folder",
@@ -16,24 +16,22 @@
     "start:linux-x64": "../build/bin/linux-x64/binaries/oibus --config ../data-folder",
     "start:linux-arm64": "../build/bin/linux-arm64/binaries/oibus --config ../data-folder",
     "build:win-setup-x64": "rimraf ../build/bin/win-x64/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"../build/deps/win-x64/setup.iss\" \"/dEnableSigning=true\" \"/DMyAppVersion=\"%npm_package_version% \"/SKMSSign=cmd /c %SIGN_TOOL_PATH% $f\"",
-    "build:win-x64": "npm run internal:build:lib && rimraf ../build/bin/win-x64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/binaries/oibus --target node26-win-x64 && ncp ../build/deps/win-x64/nssm.exe ../build/bin/win-x64/nssm.exe && ncp ../LICENSE ../build/bin/win-x64/LICENSE && ncp ../build/deps/win-x64/install.bat ../build/bin/win-x64/install.bat && ncp ../build/deps/win-x64/uninstall.bat ../build/bin/win-x64/uninstall.bat",
-    "build:macos-arm64": "npm run internal:build:lib && rimraf ../build/bin/macos-arm64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/binaries/oibus --target node26-macos-arm64",
-    "build:linux-x64": "npm run internal:build:lib && rimraf ../build/bin/linux-x64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/binaries/oibus --target node26-linux-x64 && ncp ../build/deps/linux-x64 ../build/bin/linux-x64",
-    "build:linux-arm64": "npm run internal:build:lib && rimraf ../build/bin/linux-arm64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/binaries/oibus --target node26-linux-arm64 && ncp ../build/deps/linux-arm64 ../build/bin/linux-arm64",
-    "build:macos-x64": "npm run internal:build:lib-macos-x64 && rimraf ../build/bin/macos-x64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/binaries/oibus --target node26-macos-x64",
-    "start": "rimraf ./dist/backend/src/migration && tsc --sourceMap --project tsconfig.app.json && npm run start:backend",
+    "build:win-x64": "rimraf ../build/bin/win-x64/binaries && pnpm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/binaries/oibus --target node26-win-x64 && ncp ../build/deps/win-x64/nssm.exe ../build/bin/win-x64/nssm.exe && ncp ../LICENSE ../build/bin/win-x64/LICENSE && ncp ../build/deps/win-x64/install.bat ../build/bin/win-x64/install.bat && ncp ../build/deps/win-x64/uninstall.bat ../build/bin/win-x64/uninstall.bat",
+    "build:macos-arm64": "rimraf ../build/bin/macos-arm64/binaries && pnpm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/binaries/oibus --target node26-macos-arm64",
+    "build:linux-x64": "rimraf ../build/bin/linux-x64/binaries && pnpm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/binaries/oibus --target node26-linux-x64 && ncp ../build/deps/linux-x64 ../build/bin/linux-x64",
+    "build:linux-arm64": "rimraf ../build/bin/linux-arm64/binaries && pnpm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/binaries/oibus --target node26-linux-arm64 && ncp ../build/deps/linux-arm64 ../build/bin/linux-arm64",
+    "build:macos-x64": "rimraf ../build/bin/macos-x64/binaries && pnpm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/binaries/oibus --target node26-macos-x64",
+    "start": "rimraf ./dist/backend/src/migration && tsc --sourceMap --project tsconfig.app.json && pnpm run start:backend",
     "start:backend": "node ./dist/backend/src/index.js --config ../data-folder",
     "generate:config-transfer-fixture": "tsx src/tests/config-transfer-fixtures/generate-fixture.ts",
     "generate:openapi": "tsoa spec-and-routes && eslint shared/model/ src/web-server/routes.ts --cache --fix && prettier --write shared/model/",
-    "generate:settings-interface": "tsc -p tsconfig.generator.json && node dist/interface-generator/src/settings-interface.generator.js && npm run generate:openapi",
+    "generate:settings-interface": "tsc -p tsconfig.generator.json && node dist/interface-generator/src/settings-interface.generator.js && pnpm run generate:openapi",
     "migrate": "tsc -p tsconfig.generator.json && node dist/backend/src/settings-interface.generator.js",
     "test": "c8 node scripts/run-tests.mjs",
     "lint": "eslint src/ shared/model/ --cache && prettier --check \"src/**/*.ts\" \"shared/model/**/*.ts\"",
     "lint:fix": "eslint src/ shared/model/ --cache --fix && prettier --write \"src/**/*.ts\" \"shared/model/**/*.ts\"",
     "build": "tsc --project tsconfig.app.json",
     "typecheck": "tsc --noEmit --project tsconfig.json",
-    "internal:build:lib": "npm run --prefix node_modules/argon2 install",
-    "internal:build:lib-macos-x64": "npm run --prefix node_modules/argon2 install && npm run --prefix node_modules/isolated-vm install",
     "docker:iot": "docker compose -f ../docker-compose.yml --profile iot up -d",
     "docker:simulator": "docker compose -f ../docker-compose.yml --profile iot --profile database --profile simulator up -d",
     "docker:database": "docker compose -f ../docker-compose.yml --profile database up -d",
@@ -173,17 +171,5 @@
       "node_modules/jsonpath-plus/dist/index-browser-umd.min.cjs",
       "node_modules/papaparse/papaparse.min.js"
     ]
-  },
-  "allowScripts": {
-    "fsevents@2.3.3": true,
-    "ssh2@1.17.0": true,
-    "argon2@0.45.1": true,
-    "cpu-features@0.0.10": true,
-    "better-sqlite3@13.0.3": true,
-    "esbuild@0.28.2": true,
-    "isolated-vm@7.0.1": true,
-    "protobufjs@7.6.6": true,
-    "odbc@2.6.0": true,
-    "oracledb@26.0.0": true
   }
 }

@@ -25,9 +25,16 @@ documentation/  Docusaurus site
 build/      Platform build scripts and Windows installer (Inno Setup)
 ```
 
-Everything that ships runs on the Node/npm version pinned in each subproject's `package.json` `engines`
-field (`backend/`, `frontend/`, `launcher/`) — check there rather than assuming a version here, since it changes
-independently of this file.
+Everything that ships runs on the Node version pinned in each subproject's `package.json` `engines` field and the
+pnpm version in its `packageManager` field (`backend/`, `frontend/`, `launcher/`) — check there rather than assuming a
+version here, since it changes independently of this file.
+
+Dependencies are managed with **pnpm**. `pnpm-workspace.yaml` at the root lists the subprojects, but each keeps its own
+`pnpm-lock.yaml` and a flat, npm-style `node_modules` (`nodeLinker: hoisted`, `sharedWorkspaceLockfile: false`): pkg
+bundles files through paths relative to the subproject, and the backend imports packages it does not declare. Run
+`pnpm install` in a subproject to install it alone, or `pnpm -r install` at the root for all of them. A dependency
+runs its install scripts only when `allowBuilds` in `pnpm-workspace.yaml` sets it to `true`: add any new dependency
+with install scripts there (`true` only when its native binary is not shipped in the package).
 
 ---
 
@@ -39,58 +46,58 @@ All commands must be run from the relevant subdirectory (`backend/`, `frontend/`
 
 ```bash
 # Run all unit tests
-npm test
+pnpm test
 
 # Run a single spec file
 node --experimental-config-file=test.config.json --test src/path/to/file.spec.ts
 
 # Lint
-npm run lint
-npm run lint:fix
+pnpm run lint
+pnpm run lint:fix
 
 # TypeScript compile of the app
-npm run build
+pnpm run build
 
 # Type-check everything, specs and mocks included (the tests run without type checking)
-npm run typecheck
+pnpm run typecheck
 
 # Generate OpenAPI spec from tsoa decorators (required after changing controllers)
-npm run generate:openapi
+pnpm run generate:openapi
 
 # Start a local multi-service test stack (OPC-UA servers, MQTT broker, SQL DBs, FTP)
-npm run docker:dev
+pnpm run docker:dev
 ```
 
 ### Frontend
 
 ```bash
-# Run all tests (requires Chromium — install once with: npx playwright install chromium)
-npm test
+# Run all tests (requires Chromium — install once with: pnpm exec playwright install chromium)
+pnpm test
 
 # Lint
-npm run lint
+pnpm run lint
 
 # Production build (outputs to ../backend/dist/frontend)
-npm run build
+pnpm run build
 
 # Development watch mode
-npm start
+pnpm start
 ```
 
 ### Launcher
 
 ```bash
-npm test      # same single-file pattern as backend
-npm run lint
-npm run build
-npm run typecheck
+pnpm test      # same single-file pattern as backend
+pnpm run lint
+pnpm run build
+pnpm run typecheck
 ```
 
 ### Documentation
 
 ```bash
-npm start    # local dev server
-npm run build
+pnpm start    # local dev server
+pnpm run build
 ```
 
 ---
@@ -136,7 +143,7 @@ Each transformer has a `manifest.ts` that declares its input/output types.
 ### Web server & API
 
 The Express 5 server (`backend/src/web-server/`) uses **tsoa** for contract-first REST. Controllers in
-`web-server/controllers/` are decorated with tsoa annotations; `npm run generate:openapi` regenerates `routes.ts` and
+`web-server/controllers/` are decorated with tsoa annotations; `pnpm run generate:openapi` regenerates `routes.ts` and
 `swagger.json`. Do not hand-edit `routes.ts`.
 
 ### Shared model
@@ -147,7 +154,7 @@ The Express 5 server (`backend/src/web-server/`) uses **tsoa** for contract-firs
   (`OIBusContent`, `OIBusPointRecord`, `OIBusSetpoint`, …)
 - `connector/` — connector/transformer type catalogs and manifests (`OIBUS_SOUTH_TYPES`, `SouthConnectorManifest`, …),
   the form model, and the `*-settings.model.ts` files generated from the manifests
-  (`npm run generate:settings-interface`, do not edit by hand)
+  (`pnpm run generate:settings-interface`, do not edit by hand)
 - `domain/` — vocabulary and read models shared by the backend internals and the API: enum-like types (`LogLevel`,
   `HistoryQueryStatus`, `SouthCachingStrategy`, …), metrics, cache types, connector results, search params
 - `api/` — REST request/response DTOs and commands exposed by the tsoa controllers
@@ -216,7 +223,7 @@ for the whole file — change their functions per test with `Object.assign`.
 ### Frontend (Vitest + Playwright)
 
 The frontend uses Vitest in browser mode (Chromium via Playwright). Tests import Angular components and test them via
-the DOM. Chromium must be installed before the first run: `npx playwright install chromium`.
+the DOM. Chromium must be installed before the first run: `pnpm exec playwright install chromium`.
 
 Test fixtures live in `frontend/src/test/test-data.ts`, typed with the DTOs the API returns — never cast a fixture
 (`as unknown as …`), and never import the backend test data.
@@ -236,7 +243,7 @@ coverage improves.
 - **ESLint**: TypeScript ESLint recommended + stylistic; `@typescript-eslint/no-deprecated` enforced; `console.log` is
   banned (use `console.info/warn/error`); no `fdescribe`/`fit` in tests.
 - Unused variables must be prefixed with `_` to suppress the lint error.
-- **Imports** are sorted by `eslint-plugin-simple-import-sort` (fix with `npm run lint:fix`, don't order them by hand):
+- **Imports** are sorted by `eslint-plugin-simple-import-sort` (fix with `pnpm run lint:fix`, don't order them by hand):
   groups separated by a blank line — side-effect imports, Node built-ins (backend/launcher) or `@angular/*` (frontend),
   npm packages, the shared model (`../shared/model/…` / `@oibus/shared/…`), then relative imports — alphabetical
   within each group, names inside braces too. One import statement per module (`no-duplicate-imports`; a separate

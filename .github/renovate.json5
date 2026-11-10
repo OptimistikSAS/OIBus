@@ -113,15 +113,16 @@
       "schedule": ["before 3am on Monday"]
     },
 
-    // ── Node.js / npm runtime ─────────────────────────────────────────────
-    // Exact versions are pinned in .nvmrc and in the `engines` field of every
-    // package.json (also read by actions/setup-node in CI). Renovate tracks all
+    // ── Node.js / pnpm runtime ────────────────────────────────────────────
+    // Exact versions are pinned in .nvmrc, in the `engines` field (Node) and in the
+    // `packageManager` field (pnpm) of every package.json (also read by
+    // actions/setup-node and pnpm/action-setup in CI). Renovate tracks all
     // of them and opens a single dedicated PR so the runtime bump is reviewed on
     // its own. Declared after the generic minor/patch rule so its group wins.
     // Note: the `node26` pkg targets in the build scripts only carry the major
     // version and are bumped by hand on a Node major upgrade.
     {
-      "matchPackageNames": ["node", "npm"],
+      "matchPackageNames": ["node", "pnpm"],
       "matchFileNames": [".nvmrc", "**/package.json"],
       "groupName": "Node.js runtime",
       "groupSlug": "node-runtime",
