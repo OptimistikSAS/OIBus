@@ -60,7 +60,7 @@ test OIBus connectors without access to real industrial equipment.
 ```bash
 # Start the recommended development stack (IoT servers + simulator + database)
 cd backend
-npm run docker:dev
+pnpm run docker:dev
 ```
 
 For the full reference — services, register maps, MQTT topics, profiles, and credentials — see the

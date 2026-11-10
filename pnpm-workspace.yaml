@@ -1,0 +1,39 @@
+packages:
+  - backend
+  - frontend
+  - launcher
+  - documentation
+
+# Each project keeps its own pnpm-lock.yaml and node_modules, laid out flat like npm's:
+# - pkg bundles native modules and worker scripts through paths relative to the project
+#   (`node_modules/argon2/**/*.node`, `node_modules/thread-stream/lib/worker.js` in backend/package.json),
+#   which a single lockfile would hoist to the repository root
+# - the backend still imports packages it does not declare (express types, node-opcua-* sub-packages, …),
+#   which pnpm's default isolated layout does not expose
+nodeLinker: hoisted
+sharedWorkspaceLockfile: false
+
+# `pnpm install` in a project installs that project only, like npm; `pnpm -r install` installs them all
+recursiveInstall: false
+
+# Dependencies allowed to run their install scripts; any other is skipped
+allowBuilds:
+  # native modules bundled into the binaries: use the prebuilt binary, or compile it when there is none
+  # (argon2 and isolated-vm on macOS x64)
+  argon2: true
+  isolated-vm: true
+  # downloads (or compiles) its native binding, which the package does not ship
+  odbc: true
+  # ship their binaries in the package; their scripts only check them or print a message
+  '@parcel/watcher': false
+  better-sqlite3: false
+  core-js: false
+  esbuild: false
+  fsevents: false
+  lmdb: false
+  msgpackr-extract: false
+  oracledb: false
+  protobufjs: false
+  # optional native speedups: ssh2 falls back to pure JavaScript
+  cpu-features: false
+  ssh2: false

@@ -5,13 +5,13 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 ### Installation
 
 ```
-$ npm i
+$ pnpm install
 ```
 
 ### Local Development
 
 ```
-$ npm start
+$ pnpm start
 ```
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the
@@ -22,15 +22,15 @@ server.
 This site has two build variants, controlled by the `DOCS_BUILD_TARGET` environment variable:
 
 ```
-$ npm run build
+$ pnpm run build
 ```
 
 The default (**public**) build generates static content into the `build` directory, served at
-`https://oibus.optimistik.com/` (base URL `/`), with Algolia-hosted search. This is what `npm run deploy`
+`https://oibus.optimistik.com/` (base URL `/`), with Algolia-hosted search. This is what `pnpm run deploy`
 below publishes.
 
 ```
-$ npm run build:embedded
+$ pnpm run build:embedded
 ```
 
 The **embedded** build (`DOCS_BUILD_TARGET=embedded`) is what the OIBus backend actually bundles and
@@ -48,13 +48,13 @@ running this one command is enough to make the "Documentation" link work locally
 Using SSH:
 
 ```
-$ USE_SSH=true npm run deploy
+$ USE_SSH=true pnpm run deploy
 ```
 
 Not using SSH:
 
 ```
-$ GIT_USER=<Your GitHub username> npm run deploy
+$ GIT_USER=<Your GitHub username> pnpm run deploy
 ```
 
 If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.

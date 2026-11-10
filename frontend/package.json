@@ -6,9 +6,9 @@
   "license": "EUPL",
   "description": "OIBus frontend",
   "engines": {
-    "node": "=v26",
-    "npm": "=11"
+    "node": "=v26"
   },
+  "packageManager": "pnpm@12.16.1",
   "scripts": {
     "ng": "ng",
     "start": "ng build --watch --configuration development",
@@ -65,13 +65,5 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.1",
     "vitest": "5.1.0"
-  },
-  "allowScripts": {
-    "fsevents@2.3.2": true,
-    "fsevents@2.3.3": true,
-    "msgpackr-extract@3.0.4": true,
-    "@parcel/watcher@2.6.0": true,
-    "lmdb@3.5.6": true,
-    "esbuild@0.28.2": true
   }
 }
