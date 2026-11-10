@@ -100,7 +100,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     await expect.element(tester.startTimeOffset).toHaveValue(0);
     await expect.element(tester.endTimeOffset).toHaveValue(0);
     await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From oldest to newest');
-    await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Keep the tracked instant');
+    await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Query the same period again next time');
   });
 
   test('should populate the form with the edited group', async () => {
@@ -123,7 +123,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     await expect.element(tester.startTimeOffset).toHaveValue(-100);
     await expect.element(tester.endTimeOffset).toHaveValue(100);
     await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From newest to oldest');
-    await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Advance the tracked instant');
+    await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Skip this period next time');
   });
 
   test('should close with a create command', async () => {
@@ -132,7 +132,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     await tester.name.fill('GroupC');
     await tester.scanMode.selectOptions(scanModes[0].name);
     await tester.maxReadInterval.fill('60');
-    await tester.emptyIntervalStrategy.selectOptions('Advance the tracked instant');
+    await tester.emptyIntervalStrategy.selectOptions('Skip this period next time');
     await tester.saveButton.click();
 
     expect(activeModal.close).toHaveBeenCalledWith({

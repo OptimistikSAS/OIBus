@@ -33,7 +33,7 @@ Every time a history-capable item or group runs, OIBus goes through the same fou
    last tracked instant retrieved. With `From newest to oldest`, the tracked instant only moves once _every_ sub-interval
    has completed. In case of a crash, data will be queried again for the full interval since the tracked instant has not
    advanced yet. A sub-interval without new data leaves the tracked instant where it is, unless `When no data is found`
-   is set to `Advance the tracked instant` (see [below](#when-no-data-is-found-sparse-sources)).
+   is set to `Skip this period next time` (see [below](#when-no-data-is-found-sparse-sources)).
 
 :::info Tracked Instant
 The tracked instant denotes the most recent timestamp retrieved from the last successful query.
@@ -285,14 +285,14 @@ than how quickly "now" appears — which is the right choice for most unattended
 
 ## When no data is found: sparse sources {#when-no-data-is-found-sparse-sources}
 
-By default (`Keep the tracked instant`), the tracked instant only moves when a query returns data. Nothing is ever
+By default (`Query the same period again next time`), the tracked instant only moves when a query returns data. Nothing is ever
 skipped, but a source that has had no new data for a long time is queried again from its last data point on every run:
 the effective window keeps growing with time, and so does the number of sub-intervals. For example, an item whose last
 value is 25 days old, with a `Max read interval` of 2 hours, issues about 300 queries on every run, 12 more each day.
 On a connector running its items one at a time (SQL connectors), this catch-up delays every other item, and the faster
 scan modes log that the previous run was still running.
 
-With `Advance the tracked instant`, a sub-interval that is fully queried without returning new data moves the tracked
+With `Skip this period next time`, a sub-interval that is fully queried without returning new data moves the tracked
 instant to its end, so the next run only covers what is new:
 
 - With `From oldest to newest`, the tracked instant moves after each empty sub-interval, like it does after a
@@ -304,7 +304,7 @@ instant to its end, so the next run only covers what is new:
 
 Data arriving later with a timestamp older than the tracked instant is then only read if it falls within a negative
 `Start time offset`. Keep the default when late data may arrive further back than that; pick
-`Advance the tracked instant` for sparse sources whose data, when it comes, is timestamped close to its arrival.
+`Skip this period next time` for sparse sources whose data, when it comes, is timestamped close to its arrival.
 
 ## Putting it together: a real-life example {#putting-it-together-a-real-life-example}
 

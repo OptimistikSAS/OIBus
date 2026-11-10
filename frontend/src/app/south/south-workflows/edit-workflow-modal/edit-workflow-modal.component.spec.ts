@@ -1108,7 +1108,7 @@ describe('EditWorkflowModalComponent', () => {
         .element(tester.mappingField('recoveryStrategy').getByRole('option', { name: 'From oldest to newest' }))
         .toBeInTheDocument();
       await expect
-        .element(tester.mappingField('emptyIntervalStrategy').getByRole('option', { name: 'Advance the tracked instant' }))
+        .element(tester.mappingField('emptyIntervalStrategy').getByRole('option', { name: 'Skip this period next time' }))
         .toBeInTheDocument();
       await expect.element(tester.mappingField('name')).toHaveRole('textbox');
     });
@@ -1710,7 +1710,7 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingField('maxReadInterval')).toHaveValue('3600');
       await expect.element(tester.mappingField('readDelay')).toHaveValue('200');
       await expect.element(tester.mappingField('recoveryStrategy')).toHaveDisplayValue('From oldest to newest');
-      await expect.element(tester.mappingField('emptyIntervalStrategy')).toHaveDisplayValue('Keep the tracked instant');
+      await expect.element(tester.mappingField('emptyIntervalStrategy')).toHaveDisplayValue('Query the same period again next time');
       await expect.element(tester.mappingField('startTimeOffset')).toHaveValue('0');
       await expect.element(tester.mappingField('endTimeOffset')).toHaveValue('0');
     });

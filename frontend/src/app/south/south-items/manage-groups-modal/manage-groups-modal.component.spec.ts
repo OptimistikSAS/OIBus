@@ -82,7 +82,7 @@ describe('ManageGroupsModalComponent', () => {
     await expect.element(alpha.getByRole('cell').nth(4)).toHaveTextContent('3600s');
     await expect.element(alpha.getByRole('cell').nth(5)).toHaveTextContent('200ms');
     await expect.element(alpha.getByRole('cell').nth(6)).toHaveTextContent('From oldest to newest');
-    await expect.element(alpha.getByRole('cell').nth(7)).toHaveTextContent('Keep the tracked instant');
+    await expect.element(alpha.getByRole('cell').nth(7)).toHaveTextContent('Query the same period again next time');
     await expect.element(alpha.getByRole('cell').nth(8)).toHaveTextContent('5');
     await expect.element(tester.row(1).getByRole('cell').nth(8)).toHaveTextContent('1');
   });
