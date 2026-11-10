@@ -1,6 +1,6 @@
 import knex, { Knex } from 'knex';
 import path from 'node:path';
-import { readdirSync } from 'node:fs';
+import { existsSync, readdirSync, renameSync } from 'node:fs';
 
 /**
  * Recursively finds all leaf directories under `base` (i.e. directories that
@@ -63,7 +63,16 @@ export function specFilteredMigrationSource(base: string): Knex.MigrationSource<
   };
 }
 
-export async function migrateEntities(dbPath: string): Promise<void> {
+/**
+ * Run every pending migration of `migrationsDir` against the SQLite db at `dbPath`.
+ *
+ * knex guards a batch with a row in `<tableName>_lock`. When a batch contains a migration declared with
+ * `config.transaction = false` (e.g. logs v3.8.0, which VACUUMs), the lock is committed on its own before the
+ * migrations run. If the process dies mid-batch (machine reboot during a long migration), the lock stays set and
+ * every following start fails with "Migration table is already locked". A data folder is only ever owned by a
+ * single OIBus process, so any lock found at startup is stale and can safely be released.
+ */
+async function runMigrations(dbPath: string, tableName: string, migrationsDir: string): Promise<void> {
   const knexConfig = knex({
     client: 'better-sqlite3',
     connection: {
@@ -71,91 +80,56 @@ export async function migrateEntities(dbPath: string): Promise<void> {
     },
     useNullAsDefault: true,
     migrations: {
-      tableName: 'migrations',
-      migrationSource: specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'))
+      tableName,
+      migrationSource: specFilteredMigrationSource(path.resolve(__dirname, migrationsDir))
     }
   });
-  await knexConfig.migrate.latest();
-  await knexConfig.destroy();
+  try {
+    await knexConfig.migrate.forceFreeMigrationsLock();
+    await knexConfig.migrate.latest();
+  } finally {
+    // Always release the connection, so the db file can be moved away if the migration failed
+    await knexConfig.destroy();
+  }
 }
 
+export async function migrateEntities(dbPath: string): Promise<void> {
+  await runMigrations(dbPath, 'migrations', 'entity-migrations');
+}
+
+/**
+ * Logs are not critical: a logs database that cannot be migrated (too large, corrupted, disk full...) must not
+ * prevent OIBus from starting. In that case, the database is moved aside and a fresh one is created.
+ */
 export async function migrateLogs(dbPath: string): Promise<void> {
-  const knexConfig = knex({
-    client: 'better-sqlite3',
-    connection: {
-      filename: dbPath
-    },
-    useNullAsDefault: true,
-    migrations: {
-      tableName: 'migrations',
-      migrationSource: specFilteredMigrationSource(path.resolve(__dirname, 'logs-migrations'))
+  try {
+    await runMigrations(dbPath, 'migrations', 'logs-migrations');
+  } catch (error: unknown) {
+    const backupPath = `${dbPath}-${Date.now()}.bak`;
+    console.error(
+      `Error while migrating logs database ${dbPath}: ${(error as Error).message}. Moving it to ${backupPath} and starting with an empty logs database`
+    );
+    for (const suffix of ['', '-wal', '-shm']) {
+      if (existsSync(`${dbPath}${suffix}`)) {
+        renameSync(`${dbPath}${suffix}`, `${backupPath}${suffix}`);
+      }
     }
-  });
-  await knexConfig.migrate.latest();
-  await knexConfig.destroy();
+    await runMigrations(dbPath, 'migrations', 'logs-migrations');
+  }
 }
 
 export async function migrateMetrics(dbPath: string): Promise<void> {
-  const knexConfig = knex({
-    client: 'better-sqlite3',
-    connection: {
-      filename: dbPath
-    },
-    useNullAsDefault: true,
-    migrations: {
-      tableName: 'migrations',
-      migrationSource: specFilteredMigrationSource(path.resolve(__dirname, 'metrics-migrations'))
-    }
-  });
-  await knexConfig.migrate.latest();
-  await knexConfig.destroy();
+  await runMigrations(dbPath, 'migrations', 'metrics-migrations');
 }
 
 export async function migrateCrypto(dbPath: string): Promise<void> {
-  const knexConfig = knex({
-    client: 'better-sqlite3',
-    connection: {
-      filename: dbPath
-    },
-    useNullAsDefault: true,
-    migrations: {
-      tableName: 'migrations',
-      migrationSource: specFilteredMigrationSource(path.resolve(__dirname, 'crypto-migrations'))
-    }
-  });
-  await knexConfig.migrate.latest();
-  await knexConfig.destroy();
+  await runMigrations(dbPath, 'migrations', 'crypto-migrations');
 }
 
 export async function migrateSouthCache(dbPath: string): Promise<void> {
-  const knexConfig = knex({
-    client: 'better-sqlite3',
-    connection: {
-      filename: dbPath
-    },
-    useNullAsDefault: true,
-    migrations: {
-      tableName: 'migrations',
-      migrationSource: specFilteredMigrationSource(path.resolve(__dirname, 'south-cache-migrations'))
-    }
-  });
-  await knexConfig.migrate.latest();
-  await knexConfig.destroy();
+  await runMigrations(dbPath, 'migrations', 'south-cache-migrations');
 }
 
 export async function migrateDataFolder(dbPath: string): Promise<void> {
-  const knexConfig = knex({
-    client: 'better-sqlite3',
-    connection: {
-      filename: dbPath
-    },
-    useNullAsDefault: true,
-    migrations: {
-      tableName: 'data-folder-migrations',
-      migrationSource: specFilteredMigrationSource(path.resolve(__dirname, 'data-folder-migrations'))
-    }
-  });
-
-  await knexConfig.migrate.latest();
-  await knexConfig.destroy();
+  await runMigrations(dbPath, 'data-folder-migrations', 'data-folder-migrations');
 }

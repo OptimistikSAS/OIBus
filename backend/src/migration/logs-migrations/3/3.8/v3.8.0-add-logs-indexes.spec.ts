@@ -1,10 +1,10 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
+import { describe, it, before, after, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import knex, { Knex } from 'knex';
-import { config, down, up } from './v3.8.0-add-logs-indexes';
+import { config, down, up, MAX_DB_SIZE_TO_VACUUM } from './v3.8.0-add-logs-indexes';
 
 /**
  * Create the logs table as it exists immediately before this migration runs
@@ -107,6 +107,33 @@ describe('Logs migration v3.8.0 (add-logs-indexes)', () => {
 
     const [row] = (await db.raw('PRAGMA auto_vacuum;')) as Array<{ auto_vacuum: number }>;
     assert.strictEqual(row.auto_vacuum, 1, 'auto_vacuum should be FULL (1) after migration');
+  });
+
+  it('skips auto_vacuum switch and VACUUM when the database is too large', async () => {
+    const executed: Array<string> = [];
+    const originalRaw = db.raw.bind(db);
+    mock.method(db, 'raw', (sql: string, ...args: Array<unknown>) => {
+      executed.push(sql);
+      if (sql === 'PRAGMA page_count;') {
+        return Promise.resolve([{ page_count: MAX_DB_SIZE_TO_VACUUM }]); // * page_size (>= 512) > threshold
+      }
+      return (originalRaw as (...a: Array<unknown>) => unknown)(sql, ...args);
+    });
+    const infoMock = mock.method(console, 'info', () => undefined);
+
+    try {
+      await up(db);
+    } finally {
+      mock.restoreAll();
+    }
+
+    assert.ok(!executed.includes('VACUUM;'), 'VACUUM must not run on a large database');
+    assert.ok(!executed.includes('PRAGMA auto_vacuum = FULL;'));
+    assert.equal(await indexExists(db, 'idx_logs_timestamp'), true, 'indexes must still be created');
+    assert.equal(await indexExists(db, 'idx_logs_scope'), true, 'indexes must still be created');
+    const [row] = (await db.raw('PRAGMA auto_vacuum;')) as Array<{ auto_vacuum: number }>;
+    assert.strictEqual(row.auto_vacuum, 0, 'auto_vacuum should be left untouched');
+    assert.strictEqual(infoMock.mock.callCount(), 1);
   });
 
   it('works on an empty logs table', async () => {
