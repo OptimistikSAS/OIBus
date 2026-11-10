@@ -314,7 +314,8 @@ export class HistoryQueryController extends Controller {
     try {
       return await historyQueryService.startExplore(historyId, southType, fromSouth, command);
     } catch (error: unknown) {
-      throw new OIBusTestingError((error as Error).message);
+      // Keeps why the data source could not be explored
+      throw error instanceof OIBusTestingError ? error : new OIBusTestingError((error as Error).message);
     }
   }
 
@@ -364,7 +365,8 @@ export class HistoryQueryController extends Controller {
     try {
       return await southService.browseExplore(sessionId, command.parentId);
     } catch (error: unknown) {
-      throw new OIBusTestingError((error as Error).message);
+      // Keeps why the data source could not be explored
+      throw error instanceof OIBusTestingError ? error : new OIBusTestingError((error as Error).message);
     }
   }
 

@@ -12,7 +12,7 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/connecto
 import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/domain/engine.model';
 import { HistoryQueryItemSearchParam } from '../../../shared/model/domain/history-query.model';
 
-import { OIBusTestingError } from '../../model/types';
+import { OIBusExploreError, OIBusTestingError } from '../../model/types';
 import type ConfigurationWorkflowRunService from '../../service/configuration-workflow-run.service';
 import type HistoryQueryService from '../../service/history-query.service';
 import type OIBusService from '../../service/oibus.service';
@@ -298,6 +298,25 @@ describe('HistoryQueryController', () => {
     }
   });
 
+  it('should keep why an explore session could not start', async () => {
+    const exploreError = new OIBusExploreError('refused', 'connection');
+    historyQueryService.startExplore.mock.mockImplementation(async () => {
+      throw exploreError;
+    });
+
+    await assert.rejects(
+      () =>
+        controller.startExplore(
+          testData.historyQueries.list[0].id,
+          testData.south.command.type,
+          undefined,
+          testData.south.command.settings,
+          mockRequest as CustomExpressRequest
+        ),
+      error => error === exploreError
+    );
+  });
+
   it('should map the records discovered against the south settings to new items', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const southType = testData.south.command.type;
@@ -373,6 +392,19 @@ describe('HistoryQueryController', () => {
       assert.ok(error instanceof OIBusTestingError);
       assert.strictEqual((error as OIBusTestingError).message, 'Browse failure');
     }
+  });
+
+  it('should keep why an explore session could not browse', async () => {
+    const exploreError = new OIBusExploreError('denied', 'permission');
+    southService.browseExplore.mock.mockImplementation(async () => {
+      throw exploreError;
+    });
+
+    await assert.rejects(
+      () =>
+        controller.browseExplore(testData.historyQueries.list[0].id, 'sessionId', { parentId: null }, mockRequest as CustomExpressRequest),
+      error => error === exploreError
+    );
   });
 
   it('should close an explore session', async () => {

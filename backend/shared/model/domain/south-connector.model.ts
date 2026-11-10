@@ -128,6 +128,13 @@ export interface SouthConnectorExploreEntry {
 export type SouthConnectorExploreFieldKind = 'instant' | 'size';
 
 /**
+ * Why a data source could not be explored, when it can be told: `connection` when it could not be reached (host, port,
+ * credentials, database or folder not found...), `permission` when it was reached but its user may not list what it holds
+ * (e.g. the system tables listing the tables of a database).
+ */
+export type SouthExploreErrorKind = 'connection' | 'permission';
+
+/**
  * Last value information for a South connector item.
  * Stores the last received value and metadata per item.
  */

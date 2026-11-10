@@ -2,11 +2,17 @@
   <div class="text-center">
     <div class="spinner-border" id="spinner" role="status"></div>
   </div>
-} @else if (error()) {
-  <div class="alert alert-danger" id="explore-error">
-    <div translate="south.explore.error"></div>
+} @else if (error(); as error) {
+  <!-- A warning when the data source was reached but its user may not list what it holds, an error otherwise -->
+  <div
+    class="alert"
+    [class.alert-warning]="error.kind === 'permission'"
+    [class.alert-danger]="error.kind !== 'permission'"
+    id="explore-error"
+  >
+    <div [translate]="error.kind ? 'south.explore.error-' + error.kind : 'south.explore.error'"></div>
     <hr />
-    <div class="text-break">{{ error() }}</div>
+    <div class="text-break">{{ error.message }}</div>
   </div>
 } @else if (nodes().length === 0) {
   <div class="alert alert-info" id="explore-empty" translate="south.explore.empty"></div>
@@ -125,12 +131,19 @@
       </button>
     }
   </div>
-  @if (node.error) {
-    <div class="d-flex text-danger small explore-node-error">
+  @if (node.error; as error) {
+    @let permission = error.kind === 'permission';
+    <div
+      class="d-flex small explore-node-error"
+      [class.text-warning-emphasis]="permission"
+      [class.text-danger]="!permission"
+      [attr.title]="(error.kind ? 'south.explore.error-' + error.kind : 'south.explore.error') | translate"
+    >
       @for (ancestorId of node.path; track $index) {
         <span class="explore-indent"></span>
       }
-      {{ node.error }}
+      <i class="fa-solid {{ permission ? 'fa-triangle-exclamation' : 'fa-circle-exclamation' }} me-1 mt-1" aria-hidden="true"></i>
+      <span class="text-break">{{ error.message }}</span>
     </div>
   }
   @if (node.expanded) {

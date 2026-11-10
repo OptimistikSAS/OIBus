@@ -52,6 +52,7 @@ import {
   SouthCachingStrategy,
   SouthCachingThresholdType,
   SouthConnectorExploreEntry,
+  SouthExploreErrorKind,
   SouthHistoryEmptyIntervalStrategy,
   SouthHistoryRecoveryStrategy,
   SouthItemLastValue
@@ -1247,6 +1248,21 @@ export interface SouthExploreStartResult {
    * The root-level entries of the data source.
    */
   entries: Array<SouthConnectorExploreEntry>;
+}
+
+/**
+ * Body of the error response of the explore endpoints (start and browse).
+ */
+export interface SouthExploreErrorResponse {
+  /**
+   * The error raised by the data source.
+   */
+  message: string;
+
+  /**
+   * Why the data source could not be explored, null when it can't be told.
+   */
+  kind: SouthExploreErrorKind | null;
 }
 
 /**

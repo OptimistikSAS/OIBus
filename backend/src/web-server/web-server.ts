@@ -13,9 +13,11 @@ import Joi from 'joi';
 import multer from 'multer';
 import { ValidateError } from 'tsoa';
 
+import { SouthExploreErrorResponse } from '../../shared/model/api/south-connector.model';
+
 import { EngineSettings } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
-import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
+import { NotFoundError, OIBusExploreError, OIBusTestingError, OIBusValidationError } from '../model/types';
 import AuditService from '../service/audit.service';
 import CertificateService from '../service/certificate.service';
 import ConfigImportService, { ConfigImportError } from '../service/config-transfer/config-import.service';
@@ -262,6 +264,11 @@ export default class WebServer {
         return res.status(400).json({
           message: err.message
         });
+      }
+      if (err instanceof OIBusExploreError) {
+        // A data source could not be explored, with why when it can be told
+        const body: SouthExploreErrorResponse = { message: err.message, kind: err.kind };
+        return res.status(400).json(body);
       }
       if (err instanceof OIBusTestingError) {
         // Validation Error trigger by OIBus at the service layer

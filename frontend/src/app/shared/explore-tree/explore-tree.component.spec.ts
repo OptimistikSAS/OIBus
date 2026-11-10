@@ -132,13 +132,37 @@ describe('ExploreTreeComponent', () => {
 
   test('should display an empty message when there is nothing to explore', async () => {
     prepareWith([]);
-    await expect.element(tester.empty).toHaveTextContent('Nothing to explore');
+    await expect
+      .element(tester.empty)
+      .toHaveTextContent('Nothing to explore: the data source is empty, or its user is not allowed to see what it holds');
   });
 
   test('should display an error', async () => {
     southConnectorService.startExplore.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'boom' } })));
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
-    await expect.element(tester.error).toMatchTextContent(/boom$/);
+    await expect.element(tester.error).toMatchTextContent(/^Error while exploring the data source.*boom$/);
+    await expect.element(tester.error).toHaveClass('alert-danger');
+  });
+
+  test('should display an error when the data source could not be reached', async () => {
+    southConnectorService.startExplore.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ error: { message: 'connect ECONNREFUSED', kind: 'connection' } }))
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    await expect.element(tester.error).toMatchTextContent(/^Could not connect to the data source.*connect ECONNREFUSED$/);
+    await expect.element(tester.error).toHaveClass('alert-danger');
+  });
+
+  test('should display a warning when the user of the data source may not list what it holds', async () => {
+    southConnectorService.startExplore.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ error: { message: 'SELECT permission denied', kind: 'permission' } }))
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    await expect
+      .element(tester.error)
+      .toMatchTextContent(/^Connected to the data source, but its user is not allowed.*SELECT permission denied$/);
+    await expect.element(tester.error).toHaveClass('alert-warning');
+    await expect.element(tester.error).not.toHaveClass('alert-danger');
   });
 
   describe('details', () => {
@@ -294,6 +318,18 @@ describe('ExploreTreeComponent', () => {
 
       await expect.element(tester.nodeErrors).not.toBeInTheDocument();
       await expect.element(tester.nodes).toHaveLength(3);
+    });
+
+    test('should surface a warning when browsing a node is not allowed', async () => {
+      southConnectorService.browseExplore.mockReturnValueOnce(
+        throwError(() => new HttpErrorResponse({ error: { message: 'access denied', kind: 'permission' } }))
+      );
+
+      await tester.expandButton('Objects').click();
+
+      await expect.element(tester.nodeErrors).toHaveTextContent('access denied');
+      await expect.element(tester.nodeErrors).toHaveClass('text-warning-emphasis');
+      await expect.element(tester.nodeErrors).toHaveAttribute('title', expect.stringMatching(/^Connected to the data source/));
     });
 
     test('should drop the caret but keep the type when an expandable node has no children', async () => {
