@@ -40,7 +40,7 @@ l'ordre :
    l'instant suivi n'avance qu'une fois que _tous_ les sous-intervalles sont terminés. En cas de plantage, les données
    seront de nouveau interrogées pour l'intervalle complet, puisque l'instant suivi n'a pas encore avancé. Un
    sous-intervalle sans nouvelles données laisse l'instant suivi en place, sauf si `Si aucune donnée n'est trouvée` vaut
-   `Avancer l'instant suivi` (voir [plus bas](#when-no-data-is-found-sparse-sources)).
+   `Ignorer cette période la prochaine fois` (voir [plus bas](#when-no-data-is-found-sparse-sources)).
 
 :::info Instant suivi
 L'instant suivi désigne l'horodatage le plus récent récupéré lors de la dernière requête réussie.
@@ -307,7 +307,7 @@ supervisées.
 
 ## Si aucune donnée n'est trouvée : sources clairsemées {#when-no-data-is-found-sparse-sources}
 
-Par défaut (`Conserver l'instant suivi`), l'instant suivi n'avance que lorsqu'une requête renvoie des données. Rien n'est
+Par défaut (`Réinterroger la même période la prochaine fois`), l'instant suivi n'avance que lorsqu'une requête renvoie des données. Rien n'est
 jamais ignoré, mais une source qui n'a pas eu de nouvelles données depuis longtemps est de nouveau interrogée à partir de
 son dernier point de donnée à chaque exécution : la fenêtre effective ne cesse de grandir avec le temps, tout comme le
 nombre de sous-intervalles. Par exemple, un élément dont la dernière valeur date de 25 jours, avec un
@@ -315,7 +315,7 @@ nombre de sous-intervalles. Par exemple, un élément dont la dernière valeur d
 un connecteur qui exécute ses éléments un par un (connecteurs SQL), ce rattrapage retarde tous les autres éléments, et
 les modes de scrutation les plus rapides journalisent que l'exécution précédente était encore en cours.
 
-Avec `Avancer l'instant suivi`, un sous-intervalle entièrement interrogé sans renvoyer de nouvelles données déplace
+Avec `Ignorer cette période la prochaine fois`, un sous-intervalle entièrement interrogé sans renvoyer de nouvelles données déplace
 l'instant suivi à sa fin, de sorte que l'exécution suivante ne couvre que ce qui est nouveau :
 
 - Avec `Du plus ancien au plus récent`, l'instant suivi avance après chaque sous-intervalle vide, comme il le fait après
@@ -329,7 +329,7 @@ l'instant suivi à sa fin, de sorte que l'exécution suivante ne couvre que ce q
 
 Les données arrivant plus tard avec un horodatage antérieur à l'instant suivi ne sont alors lues que si elles tombent
 dans un `Décalage de l'heure de début` négatif. Conservez le comportement par défaut lorsque des données en retard
-peuvent arriver plus loin dans le passé ; choisissez `Avancer l'instant suivi` pour les sources clairsemées dont les
+peuvent arriver plus loin dans le passé ; choisissez `Ignorer cette période la prochaine fois` pour les sources clairsemées dont les
 données, lorsqu'elles arrivent, sont horodatées peu de temps avant leur arrivée.
 
 ## Assembler le tout : un exemple concret {#putting-it-together-a-real-life-example}
