@@ -64,6 +64,7 @@ function seedMissingEntities(database: Database): void {
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
       pushToOIAnalytics: false,
+      pushedFields: [],
       scanMode: testData.scanMode.list[0],
       enabled: true
     },
@@ -85,6 +86,7 @@ function seedMissingEntities(database: Database): void {
       eligibilityFilter: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true,
+      pushedFields: ['tag_name', 'unit'],
       scanMode: null,
       enabled: false
     },

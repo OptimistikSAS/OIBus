@@ -444,8 +444,8 @@ Chaque synchronisation appartient à un connecteur South et s'exécute dans l'un
 
 - **Créer/mettre à jour les points localement** — la synchronisation possède les éléments qu'elle crée, les met à
   jour lors des exécutions suivantes, et désactive (sans jamais les supprimer) ceux dont le point n'est plus trouvé.
-- **Envoyer à OIAnalytics** — chaque exécution transmet les enregistrements découverts à OIAnalytics tels quels, sans
-  correspondance de champs, sans élément local, et sans comparaison avec une exécution précédente. C'est le seul mode
+- **Envoyer à OIAnalytics** — chaque exécution transmet les enregistrements découverts à OIAnalytics — tous leurs
+  champs, ou seulement ceux que vous choisissez — sans correspondance de champs, sans élément local, et sans comparaison avec une exécution précédente. C'est le seul mode
   des connecteurs SQL (voir [Mode](#mode)).
 
 Connecteurs pris en charge, et ce à partir de quoi ils découvrent :
@@ -627,6 +627,11 @@ efface ce qui avait été configuré pour l'autre.
   L'enregistrement et l'exécution ne sont jamais bloqués par le statut d'enregistrement, mais l'envoi n'a lieu qu'une
   fois OIBus [enregistré auprès d'OIAnalytics](../installation/oianalytics.mdx) : d'ici là, un avertissement est
   affiché dans l'assistant, et chaque exécution journalise un avertissement et n'envoie rien.
+
+  **Champs à envoyer** liste les champs des enregistrements découverts (et ceux ajoutés) : cochez ceux à envoyer à
+  OIAnalytics, envoyés dans l'ordre de la liste. Si aucun n'est coché, tous les champs sont envoyés. Un champ coché qui
+  n'est plus découvert reste listé, et un enregistrement sans l'un des champs cochés est envoyé sans lui.
+
 - **Créer/mettre à jour les points localement** affiche la **Correspondance des champs des points** ci-dessous.
 
 :::note Les connecteurs SQL envoient uniquement à OIAnalytics
@@ -705,10 +710,10 @@ Les connecteurs dont les enregistrements découverts ont toujours la même forme
 défaut de découverte : une nouvelle synchronisation (et [Ajouter comme points](#adding-explored-nodes-as-items))
 démarre avec ces champs de clé d'identité et cette correspondance, qui peuvent ensuite être modifiés.
 
-| Connecteur | Clé d'identité | Correspondance des champs d'élément                                                                                                                                                                                                      |
-| ---------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OPC UA     | `id`           | Nom `{{path}}` (les noms d'affichage depuis la racine de découverte, joints par `/`), ID du nœud `{{nodeId}}`, mode `HA` avec l'agrégat `Raw`, origine de l'horodatage `OIBus`. Voir [Métadonnées des nœuds](./opcua.mdx#node-metadata). |
-| BACnet/IP  | `id`           | Nom `{{deviceName}} - {{name}}`, adresse et instance de l'appareil, type et instance de l'objet, routage (`{{routed}}`, numéro de réseau, adresse MAC) issus de l'enregistrement ; propriété `present-value`, fuseau horaire `UTC`.      |
+| Connecteur | Clé d'identité | Correspondance des champs d'élément                                                                                                                                                                                                   |
+| ---------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OPC UA     | `id`           | Nom `{{path}}` (les noms d'affichage depuis le dossier `Objects`, joints par `/`), ID du nœud `{{nodeId}}`, mode `HA` avec l'agrégat `Raw`, origine de l'horodatage `OIBus`. Voir [Métadonnées des nœuds](./opcua.mdx#node-metadata). |
+| BACnet/IP  | `id`           | Nom `{{deviceName}} - {{name}}`, adresse et instance de l'appareil, type et instance de l'objet, routage (`{{routed}}`, numéro de réseau, adresse MAC) issus de l'enregistrement ; propriété `present-value`, fuseau horaire `UTC`.   |
 
 #### Nom et planification {#schedule}
 
@@ -736,7 +741,8 @@ vers l'étape où le corriger, et aucun aperçu ne s'exécute :
   précédente comme **Nouveau**, **Modifié**, **Inchangé**, **Réactivé** ou **Manquant**, avec sa clé d'identité et ses
   champs. Un enregistrement modifié met en évidence les champs qui diffèrent, avec la valeur précédente au survol ; un
   enregistrement manquant affiche les valeurs de l'exécution précédente, estompées.
-- **Envoyer à OIAnalytics** : les enregistrements qui seraient envoyés, traités et complétés par les champs ajoutés.
+- **Envoyer à OIAnalytics** : les enregistrements qui seraient envoyés, traités et complétés par les champs ajoutés,
+  avec seulement les champs à envoyer.
 
 Une zone de recherche au-dessus du tableau cherche un texte dans la clé d'identité, le statut et les valeurs des lignes
 (en mémoire, sur tout l'aperçu), et le tableau est paginé. **Exporter en CSV** télécharge toutes les lignes de
@@ -752,7 +758,8 @@ champs des enregistrements, ajoute les champs ajoutés et conserve les éligible
   les inchangés, et désactive — sans jamais le supprimer — l'élément de chaque enregistrement manquant, avec le motif
   "Configuration workflow no longer discovers this entry". Un nouvel élément reçoit la valeur par défaut habituelle de
   chaque champ que la correspondance ne couvre pas, lorsqu'elle s'applique.
-- **Envoyer à OIAnalytics** transmet les enregistrements éligibles, tels que traités, à OIAnalytics, sous la forme d'un message
+- **Envoyer à OIAnalytics** transmet les enregistrements éligibles, tels que traités et avec seulement les champs à
+  envoyer, à OIAnalytics, sous la forme d'un message
   par exécution. Rien n'est créé, mis à jour ni désactivé.
 
 :::tip Exécuter maintenant fonctionne sur un connecteur désactivé

@@ -38,6 +38,7 @@ describe('Configuration Workflow Repository', () => {
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
       pushToOIAnalytics: false,
+      pushedFields: [],
       scanMode: testData.scanMode.list[0],
       enabled: true
     };
@@ -82,6 +83,7 @@ describe('Configuration Workflow Repository', () => {
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
+        pushedFields: ['tag_name', 'unit'],
         scanMode: null,
         enabled: true
       };
@@ -90,11 +92,13 @@ describe('Configuration Workflow Repository', () => {
 
       assert.strictEqual(created.itemFieldMapping, null);
       assert.strictEqual(created.pushToOIAnalytics, true);
+      assert.deepStrictEqual(created.pushedFields, ['tag_name', 'unit']);
       assert.strictEqual(created.scanMode, null);
 
       const found = repository.findById(created.id);
       assert.strictEqual(found!.itemFieldMapping, null);
       assert.strictEqual(found!.pushToOIAnalytics, true);
+      assert.deepStrictEqual(found!.pushedFields, ['tag_name', 'unit']);
     });
 
     it('should return null when finding a non-existing workflow', () => {
@@ -146,6 +150,7 @@ describe('Configuration Workflow Repository', () => {
           eligibilityFilter: [],
           itemFieldMapping: { name: '{{name}}' },
           pushToOIAnalytics: false,
+          pushedFields: [],
           scanMode: testData.scanMode.list[1],
           enabled: false
         },

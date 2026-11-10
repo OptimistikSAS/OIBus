@@ -402,8 +402,8 @@ Each synchronisation belongs to one South connector and runs in one of two modes
 
 - **Create/update items locally** — the synchronisation owns the items it creates, updates them on later runs, and
   disables (never deletes) the ones whose point is no longer found.
-- **Push to OIAnalytics** — every run forwards the discovered records to OIAnalytics as-is, with no field mapping,
-  no local item, and no comparison with a previous run. This is the only mode of the SQL connectors (see
+- **Push to OIAnalytics** — every run forwards the discovered records to OIAnalytics — all their fields, or only the
+  ones you pick — with no field mapping, no local item, and no comparison with a previous run. This is the only mode of the SQL connectors (see
   [Mode](#mode)).
 
 Which connectors support it, and what they discover from:
@@ -571,6 +571,11 @@ for the other.
   blocked by the registration status, but the push only happens once OIBus is
   [registered with OIAnalytics](../installation/oianalytics.mdx): until then, a warning is shown in the wizard, and
   each run logs a warning and sends nothing.
+
+  **Fields to push** lists the fields of the discovered records (and the added ones): check the ones to send to
+  OIAnalytics, sent in the order listed. When none is checked, every field is sent. A checked field no longer
+  discovered stays listed, and a record without one of the checked fields is sent without it.
+
 - **Create/update items locally** shows the **Item field mapping** below.
 
 :::note SQL connectors only push to OIAnalytics
@@ -641,10 +646,10 @@ Connectors whose discovered records always have the same shape come with discove
 (and [Add as items](#adding-explored-nodes-as-items)) starts with these identity key fields and this mapping, which
 can then be changed.
 
-| Connector | Identity key | Item field mapping                                                                                                                                                                                              |
-| --------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OPC UA    | `id`         | Name `{{path}}` (the display names from the discovery root, joined by `/`), Node ID `{{nodeId}}`, mode `HA` with the `Raw` aggregate, timestamp origin `OIBus`. See [Node Metadata](./opcua.mdx#node-metadata). |
-| BACnet/IP | `id`         | Name `{{deviceName}} - {{name}}`, device address and instance, object type and instance, routing (`{{routed}}`, network number, MAC address) from the record; property `present-value`, timezone `UTC`.         |
+| Connector | Identity key | Item field mapping                                                                                                                                                                                                      |
+| --------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OPC UA    | `id`         | Name `{{path}}` (the display names from under the `Objects` folder, joined by `/`), Node ID `{{nodeId}}`, mode `HA` with the `Raw` aggregate, timestamp origin `OIBus`. See [Node Metadata](./opcua.mdx#node-metadata). |
+| BACnet/IP | `id`         | Name `{{deviceName}} - {{name}}`, device address and instance, object type and instance, routing (`{{routed}}`, network number, MAC address) from the record; property `present-value`, timezone `UTC`.                 |
 
 #### Name & Schedule {#schedule}
 
@@ -668,7 +673,8 @@ with a button to the step where to fix it, and no preview runs:
 - **Create/update items locally**: each record is classified against the previous run as **New**, **Changed**,
   **Unchanged**, **Reactivated** or **Missing**, with its identity key and fields. A changed record highlights the
   fields that differ, with the previous value on hover; a missing one shows the previous run's values, dimmed.
-- **Push to OIAnalytics**: the records that would be pushed, as processed and completed by the added fields.
+- **Push to OIAnalytics**: the records that would be pushed, as processed and completed by the added fields, with only
+  the fields to push.
 
 A search box above the table looks for a text in the identity key, the status and the values of the rows (in memory, over
 the whole preview), and the table is paginated. **Export CSV** downloads all the previewed rows, whatever the search, in a
@@ -683,7 +689,8 @@ the added fields and keeps the eligible ones, then acts depending on the mode:
   or updates an item for each new, changed or reactivated record, skips the unchanged ones, and disables — never
   deletes — the item of each missing record, with the reason "Configuration workflow no longer discovers this entry".
   A new item gets the usual default value of every field the mapping leaves out, where it applies.
-- **Push to OIAnalytics** forwards the eligible records, as processed, to OIAnalytics, as one message per run. Nothing is
+- **Push to OIAnalytics** forwards the eligible records, as processed and with only the fields to push, to OIAnalytics,
+  as one message per run. Nothing is
   created, updated or disabled.
 
 :::tip Run now works on a disabled connector

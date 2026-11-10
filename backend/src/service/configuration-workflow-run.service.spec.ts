@@ -40,6 +40,7 @@ const baseWorkflow: ConfigurationWorkflowEntity = {
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
   itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
   pushToOIAnalytics: false,
+  pushedFields: [],
   scanMode: null,
   enabled: true,
   createdBy: 'userTest',
@@ -530,6 +531,23 @@ describe('Configuration Workflow Run Service', () => {
       assert.deepStrictEqual(runPayload.records, [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }]);
     });
 
+    it('should forward and record only the fields to push, in their order, a field a record lacks staying missing', async () => {
+      configurationWorkflowService.findById.mock.mockImplementation(() => ({ ...remoteWorkflow, pushedFields: ['unit', 'nodeId'] }));
+      south.discover.mock.mockImplementation(async (): Promise<Array<OIBusRecord>> => [
+        { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' },
+        { nodeId: 'ns=1;s=Count', name: 'Count', type: 'Variable' }
+      ]);
+
+      await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
+
+      const expectedRecords = [{ unit: '°C', nodeId: 'ns=1;s=Temperature' }, { nodeId: 'ns=1;s=Count' }];
+      const payload = JSON.parse(oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls[0].arguments[1] as string);
+      assert.deepStrictEqual(payload.records, expectedRecords);
+      assert.deepStrictEqual(Object.keys(payload.records[0]), ['unit', 'nodeId']);
+      const runPayload = workflowRunRepository.complete.mock.calls[0].arguments[2] as { records: Array<unknown> };
+      assert.deepStrictEqual(runPayload.records, expectedRecords);
+    });
+
     it('should forward every eligible record without de-duplicating them, having no identity key', async () => {
       configurationWorkflowService.findById.mock.mockImplementation(() => remoteWorkflow);
       south.discover.mock.mockImplementation(async () => [
@@ -731,6 +749,7 @@ describe('Configuration Workflow Run Service', () => {
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}' },
       pushToOIAnalytics: false,
+      pushedFields: [],
       scanModeId: null,
       enabled: true
     };
@@ -823,6 +842,21 @@ describe('Configuration Workflow Run Service', () => {
       ]);
     });
 
+    it('should return the records as pushed for a remote workflow, the samples keeping every field', async () => {
+      southService.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', type: 'Variable' }]);
+
+      const result = await service.previewCommand(SOUTH_ID, 'opcua', southSettings, null, {
+        ...command,
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        pushedFields: ['nodeId'],
+        identityKeyFields: []
+      });
+
+      assert.deepStrictEqual(result.records, [{ nodeId: 'ns=1;s=Temperature' }]);
+      assert.deepStrictEqual(result.samples, { nodeId: ['ns=1;s=Temperature'], type: ['Variable'] });
+    });
+
     it('should return the raw eligible records for a remote workflow', async () => {
       southService.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', type: 'Variable' }]);
 
@@ -830,6 +864,7 @@ describe('Configuration Workflow Run Service', () => {
         ...command,
         itemFieldMapping: null,
         pushToOIAnalytics: true,
+        pushedFields: [],
         identityKeyFields: []
       });
 

@@ -135,6 +135,7 @@ describe('OIAnalyticsMessageRepository', () => {
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
+        pushedFields: [],
         scanMode: null,
         enabled: true
       },

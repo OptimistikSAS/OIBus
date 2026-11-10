@@ -110,6 +110,7 @@ describe('Config Transfer Builder Service', () => {
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}' },
       pushToOIAnalytics: false,
+      pushedFields: [],
       scanMode: testData.scanMode.list[0],
       enabled: true,
       createdBy: 'creator',
@@ -126,6 +127,7 @@ describe('Config Transfer Builder Service', () => {
         description: null,
         itemFieldMapping: null,
         pushToOIAnalytics: true,
+        pushedFields: [],
         scanMode: null
       },
       { ...baseWorkflow, id: 'workflow3', southId: 'another south' }
@@ -145,6 +147,7 @@ describe('Config Transfer Builder Service', () => {
         eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
         itemFieldMapping: { name: '{{name}}' },
         pushToOIAnalytics: false,
+        pushedFields: [],
         scanModeId: testData.scanMode.list[0].id,
         enabled: true
       },
@@ -159,6 +162,7 @@ describe('Config Transfer Builder Service', () => {
         eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
+        pushedFields: [],
         scanModeId: null,
         enabled: true
       }

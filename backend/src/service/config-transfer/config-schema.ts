@@ -171,6 +171,7 @@ const configurationWorkflowEntry = Joi.object({
     .required(),
   itemFieldMapping: Joi.object().pattern(Joi.string(), Joi.string().allow('')).allow(null).required(),
   pushToOIAnalytics: Joi.boolean().required(),
+  pushedFields: Joi.array().items(Joi.string()).required(),
   scanModeId: Joi.string().allow(null).required(),
   enabled: Joi.boolean().required()
 }).custom((workflow: { itemFieldMapping: object | null; pushToOIAnalytics: boolean; identityKeyFields: Array<string> }, helpers) => {

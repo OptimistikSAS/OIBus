@@ -513,6 +513,26 @@
         }
       </div>
 
+      <!-- The fields of the records pushed to OIAnalytics - remote mode only -->
+      @if (pushToOIAnalytics()) {
+        <div class="form-group" id="pushed-fields">
+          <div class="form-label" translate="south.workflows.pushed-fields"></div>
+          <div class="form-text" translate="south.workflows.pushed-fields-hint"></div>
+          @for (field of pushableFields(); track field) {
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input pushed-field"
+                type="checkbox"
+                [id]="'pushed-field-' + $index"
+                [checked]="pushedFields().includes(field)"
+                (change)="togglePushedField(field)"
+              />
+              <label class="form-check-label" [for]="'pushed-field-' + $index">{{ field }}</label>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Item field mapping - local mode only. Never rendered for a SQL-family connector (always
              remote, see buildForm()'s own comment) or while "Push to OIAnalytics" is picked - that mode is
              already explained by the mode section above, so nothing needs to be shown here in that case. -->
@@ -647,6 +667,16 @@
         ></dd>
         <dt class="col-sm-3" translate="south.workflows.mode"></dt>
         <dd class="col-sm-9" [translate]="pushToOIAnalytics() ? 'south.workflows.mode-remote' : 'south.workflows.mode-local'"></dd>
+        @if (pushToOIAnalytics()) {
+          <dt class="col-sm-3" translate="south.workflows.pushed-fields"></dt>
+          <dd class="col-sm-9" id="review-pushed-fields">
+            @if (pushedFields().length > 0) {
+              {{ pushedFields().join(', ') }}
+            } @else {
+              <span translate="south.workflows.pushed-fields-all"></span>
+            }
+          </dd>
+        }
         <dt class="col-sm-3" translate="south.workflows.scan-mode"></dt>
         <dd class="col-sm-9">
           @if (form.controls.scanModeId.value; as scanModeId) {

@@ -615,6 +615,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
         eligibilityFilter: [{ field: 'name', operator: 'contains', value: 'csv' }],
         itemFieldMapping: { name: '{{name}}' },
         pushToOIAnalytics: false,
+        pushedFields: [],
         scanModeId: south.settings.items[0].scanModeId,
         enabled: true
       },
@@ -629,6 +630,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
+        pushedFields: [],
         scanModeId: null,
         enabled: true
       }
@@ -647,6 +649,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
+        pushedFields: [],
         scanMode: null,
         enabled: true
       },

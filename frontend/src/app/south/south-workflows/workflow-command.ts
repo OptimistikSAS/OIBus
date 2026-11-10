@@ -17,6 +17,7 @@ export function toConfigurationWorkflowCommand(workflow: ConfigurationWorkflowDT
     eligibilityFilter: workflow.eligibilityFilter,
     itemFieldMapping: workflow.itemFieldMapping,
     pushToOIAnalytics: workflow.pushToOIAnalytics,
+    pushedFields: workflow.pushedFields,
     scanModeId: workflow.scanMode?.id ?? null,
     enabled: workflow.enabled
   };

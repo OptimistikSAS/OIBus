@@ -7,7 +7,8 @@ import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 import { DateTime } from 'luxon';
 import type { ClientMonitoredItem, ClientSession, ClientSubscription, OPCUAClientOptions } from 'node-opcua';
 // The values come from the node-opcua sub-packages: loading the whole node-opcua costs ~0.7 s
-import { AttributeIds, NodeClass } from 'node-opcua-data-model';
+import { DataTypeIds, ReferenceTypeIds } from 'node-opcua-constants';
+import { accessLevelFlagToString, AttributeIds, BrowseDirection, NodeClass } from 'node-opcua-data-model';
 import { NodeId } from 'node-opcua-nodeid';
 import { TimestampsToReturn } from 'node-opcua-service-read';
 import { StatusCodes } from 'node-opcua-status-code';
@@ -171,8 +172,31 @@ const goodTimeValue = (pointId: string, value: unknown): OIBusPointRecord => ({
 const lastValues = (...entries: Array<[itemId: string, value: unknown]>) =>
   new Map(entries.map(([itemId, value]) => [itemId, { value, trackedInstant: testData.constants.dates.DATE_1 }]));
 
-/** A one-level address space of `variableCount` Variables (`ns=1;s=V<i>`), each with an EngineeringUnits
- *  and an EURange property, answering every read with a description/unit/range and counting requests. */
+/** A reference of a browse result: `HasTypeDefinition` to the given type, or a hierarchical one. */
+const typeDefinitionReference = (name: string) => ({
+  nodeId: `ns=0;s=${name}`,
+  referenceTypeId: { namespace: 0, value: ReferenceTypeIds.HasTypeDefinition },
+  browseName: { name },
+  nodeClass: NodeClass.VariableType
+});
+
+/** The node id of a standard data type, as the DataType attribute gives it. */
+const dataTypeNodeId = (dataType: number) => ({ namespace: 0, value: dataType, toString: () => `ns=0;i=${dataType}` });
+
+/** The metadata `mockAddressSpace` gives every Variable, its value aside. */
+const MOCK_VARIABLE_METADATA = {
+  unit: 'bar',
+  min: 0,
+  max: 10,
+  dataType: 'Double',
+  typeDefinition: 'AnalogItemType',
+  accessLevel: 'CurrentRead | HistoryRead',
+  historizing: true,
+  minimumSamplingInterval: 100
+};
+
+/** A one-level address space of `variableCount` Variables (`ns=1;s=V<i>`) under the Objects folder, each an AnalogItemType
+ *  with an EngineeringUnits and an EURange property, answering every read with its metadata and counting requests. */
 function mockAddressSpace(variableCount: number) {
   const variableIds = Array.from({ length: variableCount }, (_, i) => `ns=1;s=V${i}`);
   const browse = mock.fn(async (arg: unknown) => {
@@ -187,20 +211,36 @@ function mockAddressSpace(variableCount: number) {
         continuationPoint: null
       };
     }
-    return (arg as Array<string>).map(nodeId => ({
-      references: [
-        { nodeId: `${nodeId}.EU`, browseName: { name: 'EngineeringUnits' }, nodeClass: NodeClass.Variable },
-        { nodeId: `${nodeId}.Range`, browseName: { name: 'EURange' }, nodeClass: NodeClass.Variable }
-      ]
-    }));
+    return (arg as Array<{ nodeId: string; browseDirection: BrowseDirection }>).map(({ nodeId, browseDirection }) =>
+      browseDirection === BrowseDirection.Inverse
+        ? { references: [{ nodeId: 'ns=0;i=85', displayName: { text: 'Objects' }, nodeClass: NodeClass.Object }] }
+        : {
+            references: [
+              typeDefinitionReference('AnalogItemType'),
+              { nodeId: `${nodeId}.EU`, browseName: { name: 'EngineeringUnits' }, nodeClass: NodeClass.Variable },
+              { nodeId: `${nodeId}.Range`, browseName: { name: 'EURange' }, nodeClass: NodeClass.Variable }
+            ]
+          }
+    );
   });
   const answerRead = (arg: unknown): Array<unknown> =>
     (arg as Array<{ nodeId: string; attributeId: number }>).map(({ nodeId, attributeId }) => {
       if (nodeId.endsWith('.EU')) return { statusCode: { value: 0 }, value: { value: { displayName: { text: 'bar' } } } };
       if (nodeId.endsWith('.Range')) return { statusCode: { value: 0 }, value: { value: { low: 0, high: 10 } } };
-      if (attributeId === AttributeIds.Description)
-        return { statusCode: { value: 0 }, value: { value: { text: `${nodeId} description` } } };
-      return { statusCode: { value: 0 }, value: { value: 1, dataType: DataType.Double } };
+      switch (attributeId) {
+        case AttributeIds.Description:
+          return { statusCode: { value: 0 }, value: { value: { text: `${nodeId} description` } } };
+        case AttributeIds.DataType:
+          return { statusCode: { value: 0 }, value: { value: dataTypeNodeId(DataTypeIds.Double) } };
+        case AttributeIds.AccessLevel:
+          return { statusCode: { value: 0 }, value: { value: 5 } };
+        case AttributeIds.Historizing:
+          return { statusCode: { value: 0 }, value: { value: true } };
+        case AttributeIds.MinimumSamplingInterval:
+          return { statusCode: { value: 0 }, value: { value: 100 } };
+        default:
+          return { statusCode: { value: 0 }, value: { value: 1, dataType: DataType.Double } };
+      }
     });
   const read = mock.fn(async (arg: unknown): Promise<Array<unknown>> => answerRead(arg));
   const session = createMock<ClientSession>({ browse, read });
@@ -231,9 +271,13 @@ describe('SouthOPCUA', () => {
   });
   const opcuaExports = {
     __esModule: true,
+    accessLevelFlagToString,
     AttributeIds,
+    BrowseDirection,
+    DataTypeIds,
     MessageSecurityMode,
     NodeClass,
+    ReferenceTypeIds,
     StatusCodes,
     TimestampsToReturn,
     UserTokenType,
@@ -1768,7 +1812,7 @@ describe('SouthOPCUA', () => {
     await assert.rejects(() => south.explore(null), { message: 'some other error' });
   });
 
-  it('explore should attach current value, description, unit and range for variables that expose them', async () => {
+  it('explore should attach current value, description, unit, range, data type, access level... for variables that expose them', async () => {
     const browse = mock.fn(async (arg: unknown) => {
       if (typeof arg === 'string') {
         return {
@@ -1785,10 +1829,11 @@ describe('SouthOPCUA', () => {
         };
       }
       // batched property-discovery browse: one BrowseResult per requested variable, same order
-      return (arg as Array<string>).map(nodeId =>
+      return (arg as Array<{ nodeId: string }>).map(({ nodeId }) =>
         nodeId === 'ns=1;s=Temperature'
           ? {
               references: [
+                typeDefinitionReference('AnalogItemType'),
                 { nodeId: 'ns=1;s=Temperature.EU', browseName: { name: 'EngineeringUnits' }, nodeClass: NodeClass.Variable },
                 { nodeId: 'ns=1;s=Temperature.Range', browseName: { name: 'EURange' }, nodeClass: NodeClass.Variable }
               ]
@@ -1800,6 +1845,15 @@ describe('SouthOPCUA', () => {
       const valuesByNodeIdAndAttribute: Record<string, unknown> = {
         [`ns=1;s=Temperature|${AttributeIds.Value}`]: { statusCode: { value: 0 }, value: { value: 21.5, dataType: DataType.Double } },
         [`ns=1;s=Temperature|${AttributeIds.Description}`]: { statusCode: { value: 0 }, value: { value: { text: 'Reactor temperature' } } },
+        [`ns=1;s=Temperature|${AttributeIds.DataType}`]: { statusCode: { value: 0 }, value: { value: dataTypeNodeId(DataTypeIds.Double) } },
+        [`ns=1;s=Temperature|${AttributeIds.AccessLevel}`]: { statusCode: { value: 0 }, value: { value: 5 } },
+        [`ns=1;s=Temperature|${AttributeIds.Historizing}`]: { statusCode: { value: 0 }, value: { value: false } },
+        [`ns=1;s=Temperature|${AttributeIds.MinimumSamplingInterval}`]: { statusCode: { value: 0 }, value: { value: 250 } },
+        // A data type the server defines: named by its node id
+        [`ns=1;s=Flag|${AttributeIds.DataType}`]: {
+          statusCode: { value: 0 },
+          value: { value: { namespace: 2, value: 3001, toString: () => 'ns=2;i=3001' } }
+        },
         [`ns=1;s=Flag|${AttributeIds.Value}`]: { statusCode: { value: 0 }, value: { value: true, dataType: DataType.Boolean } },
         // No description exposed for Flag - left out rather than set to an empty string
         [`ns=1;s=Flag|${AttributeIds.Description}`]: { statusCode: { value: StatusCodes.BadAttributeIdInvalid.value }, value: {} },
@@ -1835,22 +1889,62 @@ describe('SouthOPCUA', () => {
           description: 'Reactor temperature',
           unit: '°C',
           min: -20,
-          max: 120
+          max: 120,
+          dataType: 'Double',
+          typeDefinition: 'AnalogItemType',
+          accessLevel: 'CurrentRead | HistoryRead',
+          historizing: false,
+          minimumSamplingInterval: 250
         },
         hasChildren: true
       },
       {
         id: 'ns=1;s=Flag',
         name: 'Flag',
-        metadata: { nodeId: 'ns=1;s=Flag', type: 'Variable', value: 'true' },
+        metadata: { nodeId: 'ns=1;s=Flag', type: 'Variable', value: 'true', dataType: 'ns=2;i=3001' },
         hasChildren: true
       }
     ]);
+    // In the order the explore tree shows them
+    assert.deepStrictEqual(Object.keys(entries[0].metadata), [
+      'nodeId',
+      'type',
+      'value',
+      'description',
+      'unit',
+      'min',
+      'max',
+      'dataType',
+      'typeDefinition',
+      'accessLevel',
+      'historizing',
+      'minimumSamplingInterval'
+    ]);
     // 1 top-level browse + 1 batched property-discovery browse (never one browse per variable)
     assert.strictEqual(browse.mock.calls.length, 2);
-    // 1 batched description+value read + 1 batched property-value read (never one read per variable)
+    // 1 batched attribute read (5 metadata attributes + the value, per variable) + 1 batched property-value read (never
+    // one read per variable)
     assert.strictEqual(read.mock.calls.length, 2);
-    assert.strictEqual((read.mock.calls[0].arguments[0] as Array<unknown>).length, 4);
+    assert.strictEqual((read.mock.calls[0].arguments[0] as Array<unknown>).length, 12);
+    // Every forward reference is browsed, for the type definition
+    assert.deepStrictEqual(browse.mock.calls[1].arguments[0], [
+      {
+        nodeId: 'ns=1;s=Temperature',
+        browseDirection: BrowseDirection.Forward,
+        referenceTypeId: null,
+        includeSubtypes: true,
+        nodeClassMask: 0,
+        resultMask: 63
+      },
+      {
+        nodeId: 'ns=1;s=Flag',
+        browseDirection: BrowseDirection.Forward,
+        referenceTypeId: null,
+        includeSubtypes: true,
+        nodeClassMask: 0,
+        resultMask: 63
+      }
+    ]);
   });
 
   it('explore should skip value/unit reads entirely when the browsed level has no variables', async () => {
@@ -2154,7 +2248,7 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(browseForDiscovery.mock.calls.length, 2);
   });
 
-  it('discover should record a picked Variable itself and walk a picked folder, paths starting with its name', async () => {
+  it('discover should record a picked Variable itself and walk a picked folder, paths starting with the names of their parents', async () => {
     const readNodesForDiscovery = mock.method(south, 'readNodesForDiscovery', async (): Promise<Array<SouthConnectorExploreEntry>> => [
       { id: 'ns=1;s=Flow', name: 'Flow', metadata: { nodeId: 'ns=1;s=Flow', type: 'Variable', unit: 'L/min' }, hasChildren: true },
       { id: 'ns=1;s=Pumps', name: 'Pumps', metadata: { nodeId: 'ns=1;s=Pumps', type: 'Object' }, hasChildren: true }
@@ -2164,15 +2258,95 @@ describe('SouthOPCUA', () => {
       // picked as well: recorded once
       { id: 'ns=1;s=Flow', name: 'Flow', metadata: { nodeId: 'ns=1;s=Flow', type: 'Variable', unit: 'L/min' }, hasChildren: true }
     ]);
+    const readParentPaths = mock.method(
+      south,
+      'readParentPaths',
+      async () =>
+        new Map([
+          ['ns=1;s=Flow', 'Plant/Line 1'],
+          ['ns=1;s=Pumps', 'Plant']
+        ])
+    );
 
     const records = await south.discover({ nodeIds: ['ns=1;s=Flow', 'ns=1;s=Pumps'], rootNodeId: 'ignored' });
 
     assert.deepStrictEqual(readNodesForDiscovery.mock.calls[0].arguments, [['ns=1;s=Flow', 'ns=1;s=Pumps']]);
+    assert.deepStrictEqual(readParentPaths.mock.calls[0].arguments, [['ns=1;s=Flow', 'ns=1;s=Pumps']]);
     assert.deepStrictEqual(browseForDiscovery.mock.calls[0].arguments, ['ns=1;s=Pumps']);
     assert.deepStrictEqual(records, [
-      { id: 'ns=1;s=Flow', name: 'Flow', path: 'Flow', nodeId: 'ns=1;s=Flow', type: 'Variable', unit: 'L/min' },
-      { id: 'ns=1;s=Pumps.Speed', name: 'Speed', path: 'Pumps/Speed', nodeId: 'ns=1;s=Pumps.Speed', type: 'Variable' }
+      { id: 'ns=1;s=Flow', name: 'Flow', path: 'Plant/Line 1/Flow', nodeId: 'ns=1;s=Flow', type: 'Variable', unit: 'L/min' },
+      { id: 'ns=1;s=Pumps.Speed', name: 'Speed', path: 'Plant/Pumps/Speed', nodeId: 'ns=1;s=Pumps.Speed', type: 'Variable' }
     ]);
+  });
+
+  it('readParentPaths should browse the parents up to the Objects folder, one level at a time for all the nodes', async () => {
+    // Objects > Plant > Line > (Flow, Speed); Objects > Pump; Loop1 <-> Loop2; Orphan has no parent
+    const parents: Record<string, { nodeId: string; name: string }> = {
+      'ns=1;s=Flow': { nodeId: 'ns=1;s=Line', name: 'Line' },
+      'ns=1;s=Speed': { nodeId: 'ns=1;s=Line', name: 'Line' },
+      'ns=1;s=Line': { nodeId: 'ns=1;s=Plant', name: 'Plant' },
+      'ns=1;s=Plant': { nodeId: 'ns=0;i=85', name: 'Objects' },
+      'ns=1;s=Pump': { nodeId: 'ns=0;i=85', name: 'Objects' },
+      'ns=1;s=Loop1': { nodeId: 'ns=1;s=Loop2', name: 'Loop 2' },
+      'ns=1;s=Loop2': { nodeId: 'ns=1;s=Loop1', name: 'Loop 1' }
+    };
+    const browse = mock.fn(async (arg: unknown) =>
+      (arg as Array<{ nodeId: string }>).map(({ nodeId }) => ({
+        references: parents[nodeId] ? [{ nodeId: parents[nodeId].nodeId, displayName: { text: parents[nodeId].name } }] : []
+      }))
+    );
+    mock.method(south, 'createSession', async () => createMock<ClientSession>({ browse }));
+    await south.connect();
+
+    const paths = await south.readParentPaths(['ns=1;s=Flow', 'ns=1;s=Speed', 'ns=1;s=Pump', 'ns=1;s=Loop1', 'ns=1;s=Orphan']);
+
+    assert.deepStrictEqual(
+      paths,
+      new Map([
+        ['ns=1;s=Flow', 'Plant/Line'],
+        ['ns=1;s=Speed', 'Plant/Line'],
+        ['ns=1;s=Pump', ''],
+        ['ns=1;s=Loop1', 'Loop 2'],
+        ['ns=1;s=Orphan', '']
+      ])
+    );
+    // Each level browsed once for all the nodes, a parent shared by two nodes browsed once
+    assert.deepStrictEqual(
+      browse.mock.calls.map(call => (call.arguments[0] as Array<{ nodeId: string }>).map(description => description.nodeId)),
+      [['ns=1;s=Flow', 'ns=1;s=Speed', 'ns=1;s=Pump', 'ns=1;s=Loop1', 'ns=1;s=Orphan'], ['ns=1;s=Line', 'ns=1;s=Loop2'], ['ns=1;s=Plant']]
+    );
+    assert.deepStrictEqual(browse.mock.calls[0].arguments[0], [
+      ...['ns=1;s=Flow', 'ns=1;s=Speed', 'ns=1;s=Pump', 'ns=1;s=Loop1', 'ns=1;s=Orphan'].map(nodeId => ({
+        nodeId,
+        browseDirection: BrowseDirection.Inverse,
+        referenceTypeId: 'HierarchicalReferences',
+        includeSubtypes: true,
+        nodeClassMask: NodeClass.Object | NodeClass.Variable,
+        resultMask: 63
+      }))
+    ]);
+  });
+
+  it('readParentPaths should not connect for no node', async () => {
+    const createSession = mock.method(south, 'createSession');
+
+    assert.deepStrictEqual(await south.readParentPaths([]), new Map());
+    assert.strictEqual(createSession.mock.calls.length, 0);
+  });
+
+  it('readParentPaths should rethrow a session-expired error with a clear message', async () => {
+    mock.method(south, 'createSession', async () =>
+      createMock<ClientSession>({
+        browse: async () => {
+          throw new Error('BadSessionClosed');
+        }
+      })
+    );
+    mock.method(south, 'disconnect', async () => undefined);
+
+    await assert.rejects(south.readParentPaths(['ns=1;s=Flow']), {
+      message: 'OPC UA discovery session expired, please restart the configuration workflow run: BadSessionClosed'
+    });
   });
 
   it('readNodesForDiscovery should read the picked nodes name and class, and the static metadata of the Variables', async () => {
@@ -2197,7 +2371,7 @@ describe('SouthOPCUA', () => {
       {
         id: 'ns=1;s=V0',
         name: 'ns=1;s=V0 name',
-        metadata: { nodeId: 'ns=1;s=V0', type: 'Variable', description: 'ns=1;s=V0 description', unit: 'bar', min: 0, max: 10 },
+        metadata: { nodeId: 'ns=1;s=V0', type: 'Variable', description: 'ns=1;s=V0 description', ...MOCK_VARIABLE_METADATA },
         hasChildren: true
       },
       { id: 'ns=1;s=Folder', name: 'ns=1;s=Folder name', metadata: { nodeId: 'ns=1;s=Folder', type: 'Object' }, hasChildren: true }
@@ -2223,18 +2397,27 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(browseForDiscovery.mock.calls[0].arguments[0], null);
   });
 
-  it('discover should start from the configured rootNodeId', async () => {
-    const browseForDiscovery = mock.method(south, 'browseForDiscovery', async () => []);
+  it('discover should start from the configured rootNodeId, as a picked node', async () => {
+    mock.method(south, 'readNodesForDiscovery', async (): Promise<Array<SouthConnectorExploreEntry>> => [
+      { id: 'ns=1;s=CustomRoot', name: 'Custom root', metadata: { nodeId: 'ns=1;s=CustomRoot', type: 'Object' }, hasChildren: true }
+    ]);
+    mock.method(south, 'readParentPaths', async () => new Map([['ns=1;s=CustomRoot', 'Plant']]));
+    const browseForDiscovery = mock.method(south, 'browseForDiscovery', async (): Promise<Array<SouthConnectorExploreEntry>> => [
+      { id: 'ns=1;s=Level', name: 'Level', metadata: { nodeId: 'ns=1;s=Level', type: 'Variable' }, hasChildren: true }
+    ]);
 
-    await south.discover({ rootNodeId: 'ns=1;s=CustomRoot' });
+    const records = await south.discover({ rootNodeId: 'ns=1;s=CustomRoot' });
 
     assert.strictEqual(browseForDiscovery.mock.calls[0].arguments[0], 'ns=1;s=CustomRoot');
+    assert.deepStrictEqual(records, [
+      { id: 'ns=1;s=Level', name: 'Level', path: 'Plant/Custom root/Level', nodeId: 'ns=1;s=Level', type: 'Variable' }
+    ]);
   });
 
   it('discover should return an empty array for an empty subtree', async () => {
     mock.method(south, 'browseForDiscovery', async () => []);
 
-    const records = await south.discover({ rootNodeId: 'ns=1;s=Empty' });
+    const records = await south.discover({});
 
     assert.deepStrictEqual(records, []);
   });
@@ -2244,7 +2427,7 @@ describe('SouthOPCUA', () => {
     mock.method(south, 'createSession', async () => session);
     await south.connect();
 
-    const records = await south.discover({ rootNodeId: 'ns=1;s=Folder' });
+    const records = await south.discover({});
 
     // No `value` - a monitored node's identity in the diff never depends on its live value, which would
     // otherwise change on every single run. Static metadata, on the other hand, is exactly what the diff
@@ -2257,14 +2440,14 @@ describe('SouthOPCUA', () => {
         nodeId: 'ns=1;s=V0',
         type: 'Variable',
         description: 'ns=1;s=V0 description',
-        unit: 'bar',
-        min: 0,
-        max: 10
+        ...MOCK_VARIABLE_METADATA
       }
     ]);
+    // The fields the manifest tells the user about
+    assert.ok(records.every(record => Object.keys(record).every(field => manifest.discovery!.recordFields!.includes(field))));
     const readAttributes = read.mock.calls.flatMap(call => call.arguments[0] as Array<{ nodeId: string; attributeId: number }>);
     assert.ok(!readAttributes.some(node => node.nodeId === 'ns=1;s=V0' && node.attributeId === AttributeIds.Value));
-    // 1 folder browse + 1 batched property browse; the Variable itself is never walked into.
+    // 1 Objects folder browse + 1 batched property browse; the Variable itself is never walked into.
     assert.strictEqual(browse.mock.calls.length, 2);
   });
 
@@ -2293,11 +2476,11 @@ describe('SouthOPCUA', () => {
     }
     const propertyBrowses = browse.mock.calls.filter(call => Array.isArray(call.arguments[0]));
     assert.deepStrictEqual(
-      propertyBrowses.map(call => (call.arguments[0] as Array<string>).length),
+      propertyBrowses.map(call => (call.arguments[0] as Array<unknown>).length),
       [2, 2, 1]
     );
-    // 5 variables x (description + value) = 10 attributes in chunks of 4, then 10 properties in chunks of 4
-    assert.strictEqual(read.mock.calls.length, 6);
+    // 5 variables x (5 metadata attributes + value) = 30 attributes in chunks of 4, then 10 properties in chunks of 4
+    assert.strictEqual(read.mock.calls.length, 11);
     // ...and the results are still stitched back to the right variable, in order.
     assert.deepStrictEqual(
       entries.map(entry => [entry.id, entry.metadata.description, entry.metadata.unit, entry.metadata.max]),
@@ -2332,10 +2515,10 @@ describe('SouthOPCUA', () => {
 
       await south.explore('ns=1;s=Folder');
 
-      // 1200 description+value attributes -> 2 chunks of at most 1000; then 1200 properties -> 2 chunks
+      // 3600 attributes (5 metadata attributes + value) -> 4 chunks of at most 1000; then 1200 properties -> 2 chunks
       assert.deepStrictEqual(
         read.mock.calls.map(call => (call.arguments[0] as Array<unknown>).length),
-        [1000, 200, 1000, 200]
+        [1000, 1000, 1000, 600, 1000, 200]
       );
       assert.strictEqual(browse.mock.calls.filter(call => Array.isArray(call.arguments[0])).length, 1);
     }

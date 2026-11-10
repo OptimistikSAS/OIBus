@@ -61,7 +61,12 @@ const TRANSLATED_METADATA_KEYS = new Set([
   'macAddress',
   'objectType',
   'objectInstance',
-  'select'
+  'select',
+  'dataType',
+  'typeDefinition',
+  'accessLevel',
+  'historizing',
+  'minimumSamplingInterval'
 ]);
 
 /** The metadata fields shown next to the node name in the tree, the first one an entry has. */
@@ -191,7 +196,8 @@ export class ExploreTreeComponent implements OnDestroy {
       key,
       labelKey: TRANSLATED_METADATA_KEYS.has(key) ? `south.explore.metadata.${key}` : null,
       humanLabel: humanize(key),
-      value,
+      // A flag shows as written in a filter condition or a mapping: true or false
+      value: typeof value === 'boolean' ? String(value) : value,
       kind: entry.metadataKinds?.[key]
     }));
   });
@@ -303,7 +309,7 @@ export class ExploreTreeComponent implements OnDestroy {
   }
 
   /** The type shown next to the node name, if the connector sends one. */
-  summary(entry: SouthConnectorExploreEntry): string | number | null {
+  summary(entry: SouthConnectorExploreEntry): string | number | boolean | null {
     const key = SUMMARY_METADATA_KEYS.find(candidate => entry.metadata[candidate] !== undefined);
     return key ? entry.metadata[key] : null;
   }
