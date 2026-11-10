@@ -105,7 +105,7 @@ export interface SouthConnectorExploreEntry {
   /**
    * Additional data linked to the entry
    */
-  metadata: Record<string, string | number>;
+  metadata: Record<string, string | number | boolean>;
 
   /**
    * Optional per-field rendering hint for {@link metadata} — a `metadata` key listed here should be

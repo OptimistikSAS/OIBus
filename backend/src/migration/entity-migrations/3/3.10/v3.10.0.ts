@@ -559,7 +559,8 @@ export async function addConfigurationWorkflows(knex: Knex): Promise<void> {
   // built from) — there's no "targets one pre-existing item" case: local mode only ever creates/updates its own items,
   // and remote mode has no local item at all.
   //
-  // `discovery_scope`, `identity_key_fields`, `field_processes`, `added_fields`, `eligibility_filter` and `item_field_mapping` are stored as JSON text
+  // `discovery_scope`, `identity_key_fields`, `field_processes`, `added_fields`, `eligibility_filter`, `item_field_mapping` and
+  // `pushed_fields` are stored as JSON text
   // rather than normalized columns: they're connector-specific and open-ended (an OPC-UA root node id, a folder subtree,
   // a dedicated SQL metadata query, ...), the same way `south_items.settings` already stores connector-specific item
   // configuration as JSON.
@@ -567,7 +568,8 @@ export async function addConfigurationWorkflows(knex: Knex): Promise<void> {
   // A workflow is exactly one of two modes, enforced at the service layer (no CHECK constraints are used anywhere in
   // this schema for that kind of invariant): `item_field_mapping` set and `push_to_oi_analytics` false (local —
   // create/update items from what's discovered), or `item_field_mapping` null and `push_to_oi_analytics` true (remote —
-  // forward the raw eligible records to OIAnalytics on each run, requiring OIBus to be registered).
+  // forward the eligible records to OIAnalytics on each run - only their `pushed_fields`, every field when empty - requiring
+  // OIBus to be registered).
   await knex.schema.createTable(CONFIGURATION_WORKFLOWS_TABLE, table => {
     table.string('id', 36).primary();
     table.datetime('created_at').notNullable();
@@ -583,6 +585,7 @@ export async function addConfigurationWorkflows(knex: Knex): Promise<void> {
     table.text('eligibility_filter').notNullable();
     table.text('item_field_mapping').nullable();
     table.boolean('push_to_oi_analytics').notNullable().defaultTo(false);
+    table.text('pushed_fields').notNullable().defaultTo('[]');
     table.string('scan_mode_id', 36).nullable().references('id').inTable(SCAN_MODES_TABLE).onDelete('SET NULL');
     table.boolean('enabled').notNullable().defaultTo(true);
     table.unique(['south_id', 'name']);

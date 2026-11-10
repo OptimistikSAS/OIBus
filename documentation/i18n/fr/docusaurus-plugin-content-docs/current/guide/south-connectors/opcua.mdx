@@ -19,7 +19,7 @@ Protocole OPC Unified Architecture (OPC UA) pour un accès sécurisé aux donné
 
 ## OPC Classic vs OPC UA {#opc-classic-vs-opc-ua}
 
-|                            | OPC Classic                                                                                                                   | OPC UA                                                                                             |
+|                            | OPC Classic                                                                                                                    | OPC UA                                                                                             |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
 | **Standard**               | Trois spécifications distinctes : **DA** (valeurs en direct), **HDA** (données historiques), **AE** (alarmes &amp; événements) | Norme unifiée unique : **DA** (valeurs en direct) + **HA** (accès historique) + alarmes            |
 | **Nom du mode historique** | **HDA** — Historical Data Access                                                                                               | **HA** — Historical Access (OPC UA Part 11). Même concept, nom différent — voir la note ci-dessous |
@@ -201,24 +201,31 @@ Lors de la navigation dans le serveur — avec [**Explorer**](./common-settings.
 de l'exécution d'une [synchronisation des points](./common-settings.md#items-synchronisation) — OIBus lit les champs
 suivants pour chaque nœud Variable, lorsque le serveur les expose :
 
-| Champ         | Source dans l'espace d'adressage OPC UA                                                                    | Explorer | Synchronisation des points |
-| ------------- | ---------------------------------------------------------------------------------------------------------- | :------: | :------------------------: |
-| `id`          | L'identifiant du nœud, qui identifie l'enregistrement d'une exécution à l'autre                            |          |             ✓              |
-| `nodeId`      | L'identifiant du nœud                                                                                      |    ✓     |             ✓              |
-| `name`        | Le nom d'affichage du nœud                                                                                 |    ✓     |             ✓              |
-| `path`        | Les noms d'affichage depuis la racine de découverte jusqu'au nœud, joints par `/`                          |          |             ✓              |
-| `type`        | La classe du nœud (`Variable`, `Object`, …)                                                                |    ✓     |             ✓              |
-| `description` | L'attribut `Description` du nœud                                                                           |    ✓     |             ✓              |
-| `unit`        | Nom d'affichage de la propriété `EngineeringUnits` (éléments analogiques)                                  |    ✓     |             ✓              |
-| `min` / `max` | Bornes basse / haute de la propriété `EURange` — la plage de fonctionnement normale (éléments analogiques) |    ✓     |             ✓              |
-| `value`       | La valeur actuelle                                                                                         |    ✓     |                            |
+| Champ                     | Source dans l'espace d'adressage OPC UA                                                                                            | Explorer | Synchronisation des points |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | :------: | :------------------------: |
+| `id`                      | L'identifiant du nœud, qui identifie l'enregistrement d'une exécution à l'autre                                                    |          |             ✓              |
+| `nodeId`                  | L'identifiant du nœud                                                                                                              |    ✓     |             ✓              |
+| `name`                    | Le nom d'affichage du nœud                                                                                                         |    ✓     |             ✓              |
+| `path`                    | Les noms d'affichage depuis le dossier `Objects` jusqu'au nœud, joints par `/`                                                     |          |             ✓              |
+| `type`                    | La classe du nœud (`Variable`, `Object`, …)                                                                                        |    ✓     |             ✓              |
+| `description`             | L'attribut `Description` du nœud                                                                                                   |    ✓     |             ✓              |
+| `unit`                    | Nom d'affichage de la propriété `EngineeringUnits` (éléments analogiques)                                                          |    ✓     |             ✓              |
+| `min` / `max`             | Bornes basse / haute de la propriété `EURange` — la plage de fonctionnement normale (éléments analogiques)                         |    ✓     |             ✓              |
+| `dataType`                | L'attribut `DataType` — le nom d'un type standard (`Double`, `Boolean`…), ou l'identifiant du nœud d'un type défini par le serveur |    ✓     |             ✓              |
+| `typeDefinition`          | Nom de navigation de la définition de type du nœud (`AnalogItemType`, `BaseDataVariableType`…)                                     |    ✓     |             ✓              |
+| `accessLevel`             | L'attribut `AccessLevel`, sous forme d'indicateurs (`CurrentRead \| CurrentWrite \| HistoryRead`…)                                 |    ✓     |             ✓              |
+| `historizing`             | L'attribut `Historizing` — si le serveur archive actuellement l'historique de la valeur                                            |    ✓     |             ✓              |
+| `minimumSamplingInterval` | L'attribut `MinimumSamplingInterval`, en ms (`0` : continu, `-1` : inconnu)                                                        |    ✓     |             ✓              |
+| `value`                   | La valeur actuelle                                                                                                                 |    ✓     |                            |
 
 Un champ que le serveur n'expose pas pour un nœud est simplement omis. La valeur actuelle n'est jamais lue par une
 synchronisation : elle change à chaque exécution, ce qui ferait paraître chaque nœud comme modifié. Dans une
 synchronisation, ces champs peuvent être utilisés dans le filtre d'éligibilité et dans les expressions de
 correspondance des champs d'élément (par ex. `{{unit}}`). Les
 [valeurs par défaut de découverte](./common-settings.md#discovery-defaults) nomment chaque élément d'après son `path`,
-qui reste unique d'un dossier à l'autre, contrairement au seul nom d'affichage.
+qui reste unique d'un dossier à l'autre, contrairement au seul nom d'affichage. Le `path` commence toujours sous le
+dossier `Objects`, quel que soit le nœud sélectionné : une variable sélectionnée seule est nommée avec les noms de tous
+ses nœuds parents.
 
 Les nœuds sélectionnés peuvent être ajoutés comme éléments, ou synchronisés, directement depuis la fenêtre
 **Explorer la source de données** — voir [Sélectionner des nœuds](./common-settings.md#selecting-nodes).

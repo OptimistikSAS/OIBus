@@ -7,7 +7,7 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { checkAddedFields, checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
+import { checkAddedFields, checkWorkflowMode, resolveIdentityKeyFields, resolvePushedFields } from './configuration-workflow.utils';
 import type OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import { checkScanMode } from './utils';
 
@@ -59,6 +59,7 @@ export default class ConfigurationWorkflowService {
       eligibilityFilter: command.eligibilityFilter,
       itemFieldMapping: command.itemFieldMapping,
       pushToOIAnalytics: command.pushToOIAnalytics,
+      pushedFields: resolvePushedFields(command),
       scanMode,
       enabled: command.enabled
     };
@@ -85,6 +86,7 @@ export default class ConfigurationWorkflowService {
         eligibilityFilter: command.eligibilityFilter,
         itemFieldMapping: command.itemFieldMapping,
         pushToOIAnalytics: command.pushToOIAnalytics,
+        pushedFields: resolvePushedFields(command),
         scanMode,
         enabled: command.enabled
       },

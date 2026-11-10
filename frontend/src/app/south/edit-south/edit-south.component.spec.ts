@@ -537,6 +537,7 @@ describe('EditSouthComponent', () => {
             eligibilityFilter: [],
             itemFieldMapping: { name: '{{name}}' },
             pushToOIAnalytics: false,
+            pushedFields: [],
             scanModeId: scanModes[0].id,
             enabled: true
           }
@@ -1229,6 +1230,7 @@ function buildWorkflowCommandFor(id: string): ConfigurationWorkflowCommandDTO {
     eligibilityFilter: [],
     itemFieldMapping: null,
     pushToOIAnalytics: true,
+    pushedFields: [],
     scanModeId: null,
     enabled: true
   };

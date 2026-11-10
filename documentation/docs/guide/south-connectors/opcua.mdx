@@ -19,7 +19,7 @@ OPC Unified Architecture (OPC UA) protocol for secure industrial data access in 
 
 ## OPC Classic vs OPC UA {#opc-classic-vs-opc-ua}
 
-|                          | OPC Classic                                                                                        | OPC UA                                                                                     |
+|                          | OPC Classic                                                                                         | OPC UA                                                                                     |
 | ------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | **Standard**             | Three separate specs: **DA** (live values), **HDA** (historical data), **AE** (alarms &amp; events) | Single unified standard: **DA** (live values) + **HA** (historical access) + alarms        |
 | **Historical mode name** | **HDA** — Historical Data Access                                                                    | **HA** — Historical Access (OPC UA Part 11). Same concept, different name — see note below |
@@ -199,23 +199,29 @@ When browsing the server — with [**Explore**](./common-settings.md#exploring-t
 [items synchronisation](./common-settings.md#items-synchronisation) run — OIBus reads the following fields for every
 Variable node, when the server exposes them:
 
-| Field         | Source in the OPC UA address space                                                      | Explore | Items synchronisation |
-| ------------- | --------------------------------------------------------------------------------------- | :-----: | :-------------------: |
-| `id`          | The node identifier, identifying the record across runs                                 |         |           ✓           |
-| `nodeId`      | The node identifier                                                                     |    ✓    |           ✓           |
-| `name`        | The node's display name                                                                 |    ✓    |           ✓           |
-| `path`        | The display names from the discovery root down to the node, joined by `/`               |         |           ✓           |
-| `type`        | The node class (`Variable`, `Object`, …)                                                |    ✓    |           ✓           |
-| `description` | The node's `Description` attribute                                                      |    ✓    |           ✓           |
-| `unit`        | Display name of the `EngineeringUnits` property (analog items)                          |    ✓    |           ✓           |
-| `min` / `max` | Low / high bounds of the `EURange` property — the normal operating range (analog items) |    ✓    |           ✓           |
-| `value`       | The current value                                                                       |    ✓    |                       |
+| Field                     | Source in the OPC UA address space                                                                              | Explore | Items synchronisation |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------- | :-----: | :-------------------: |
+| `id`                      | The node identifier, identifying the record across runs                                                         |         |           ✓           |
+| `nodeId`                  | The node identifier                                                                                             |    ✓    |           ✓           |
+| `name`                    | The node's display name                                                                                         |    ✓    |           ✓           |
+| `path`                    | The display names from under the `Objects` folder down to the node, joined by `/`                               |         |           ✓           |
+| `type`                    | The node class (`Variable`, `Object`, …)                                                                        |    ✓    |           ✓           |
+| `description`             | The node's `Description` attribute                                                                              |    ✓    |           ✓           |
+| `unit`                    | Display name of the `EngineeringUnits` property (analog items)                                                  |    ✓    |           ✓           |
+| `min` / `max`             | Low / high bounds of the `EURange` property — the normal operating range (analog items)                         |    ✓    |           ✓           |
+| `dataType`                | The `DataType` attribute — a standard type name (`Double`, `Boolean`…), or the node ID of a server-defined type |    ✓    |           ✓           |
+| `typeDefinition`          | Browse name of the node's type definition (`AnalogItemType`, `BaseDataVariableType`…)                           |    ✓    |           ✓           |
+| `accessLevel`             | The `AccessLevel` attribute, as flags (`CurrentRead \| CurrentWrite \| HistoryRead`…)                           |    ✓    |           ✓           |
+| `historizing`             | The `Historizing` attribute — whether the server currently archives the value's history                         |    ✓    |           ✓           |
+| `minimumSamplingInterval` | The `MinimumSamplingInterval` attribute, in ms (`0`: continuous, `-1`: unknown)                                 |    ✓    |           ✓           |
+| `value`                   | The current value                                                                                               |    ✓    |                       |
 
 A field the server doesn't expose for a node is simply left out. The current value is never read by a
 synchronisation: it changes on every run, which would make every node look changed. In a synchronisation, these
 fields can be used in the eligibility filter and in item field mapping expressions (e.g. `{{unit}}`). The
 [discovery defaults](./common-settings.md#discovery-defaults) name each item after its `path`, which stays unique
-across folders, unlike the display name alone.
+across folders, unlike the display name alone. The `path` always starts under the `Objects` folder, whatever node is
+selected: a variable selected on its own is named with the names of all its parent nodes.
 
 Selected nodes can be added as items, or kept in sync, straight from the Explore modal — see
 [Selecting Nodes](./common-settings.md#selecting-nodes).

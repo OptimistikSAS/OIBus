@@ -17357,6 +17357,18 @@
 					"pushToOIAnalytics": {
 						"type": "boolean"
 					},
+					"pushedFields": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "Remote mode: the fields of the eligible records sent to OIAnalytics, in this order - empty sends every field. Local\nmode: ignored, and stored empty — send `[]`.",
+						"example": [
+							"nodeId",
+							"path",
+							"unit"
+						]
+					},
 					"scanModeId": {
 						"type": "string",
 						"nullable": true,
@@ -17378,6 +17390,7 @@
 					"eligibilityFilter",
 					"itemFieldMapping",
 					"pushToOIAnalytics",
+					"pushedFields",
 					"scanModeId",
 					"enabled"
 				],
@@ -22364,7 +22377,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"Record_string.string-or-number_": {
+			"Record_string.string-or-number-or-boolean_": {
 				"properties": {},
 				"additionalProperties": {
 					"anyOf": [
@@ -22374,6 +22387,9 @@
 						{
 							"type": "number",
 							"format": "double"
+						},
+						{
+							"type": "boolean"
 						}
 					]
 				},
@@ -22408,7 +22424,7 @@
 						"description": "Human-readable label (OPC UA display name or file/folder name)."
 					},
 					"metadata": {
-						"$ref": "#/components/schemas/Record_string.string-or-number_",
+						"$ref": "#/components/schemas/Record_string.string-or-number-or-boolean_",
 						"description": "Additional data linked to the entry"
 					},
 					"metadataKinds": {
@@ -49049,6 +49065,18 @@
 						"type": "boolean",
 						"description": "Remote mode: forward every run's raw eligible records to OIAnalytics as-is (no mapping, no local\nitem, no per-record diffing) instead of creating/updating items locally. Requires OIBus to be\nregistered with OIAnalytics."
 					},
+					"pushedFields": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "Remote mode: the fields of the eligible records sent to OIAnalytics, in this order - empty sends every field. Always\nempty for a local workflow.",
+						"example": [
+							"nodeId",
+							"path",
+							"unit"
+						]
+					},
 					"scanMode": {
 						"allOf": [
 							{
@@ -49078,6 +49106,7 @@
 					"eligibilityFilter",
 					"itemFieldMapping",
 					"pushToOIAnalytics",
+					"pushedFields",
 					"scanMode",
 					"enabled"
 				],

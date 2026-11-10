@@ -42,6 +42,7 @@ const workflowEntity: ConfigurationWorkflowEntity = {
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
   pushToOIAnalytics: false,
+  pushedFields: [],
   scanMode: null,
   enabled: true,
   createdBy: 'userTest',
@@ -61,6 +62,7 @@ const command: ConfigurationWorkflowCommandDTO = {
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
   pushToOIAnalytics: false,
+  pushedFields: [],
   scanModeId: null,
   enabled: true
 };

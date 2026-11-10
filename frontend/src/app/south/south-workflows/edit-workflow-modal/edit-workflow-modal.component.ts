@@ -300,6 +300,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   readonly itemFieldMappingValues = signal<Record<string, string>>({});
 
   readonly identityKeyFields = signal<Array<string>>([]);
+  /** The fields of the records pushed to OIAnalytics (remote mode) - none pushes every field */
+  readonly pushedFields = signal<Array<string>>([]);
+  /** The fields that can be pushed: those of the discovered records and the ones added to them, and the ones already picked */
+  readonly pushableFields = computed(() => Array.from(new Set([...this.recordFields(), ...this.pushedFields()])));
   /**
    * The fields the mapping form shows: all of them, but the schedule of the items of a connector that only subscribes - it is
    * the subscription, nothing to map (see `itemFieldMappingToSend`).
@@ -581,6 +585,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     }
     this.itemFieldMappingValues.set(itemFieldMapping);
     this.identityKeyFields.set([...(startingValues?.identityKeyFields ?? [])]);
+    this.pushedFields.set([...(workflow?.pushedFields ?? [])]);
     this.fieldProcesses.set(workflow ? structuredClone(workflow.fieldProcesses) : []);
     this.addedFields.set(workflow ? workflow.addedFields.map(added => ({ ...added })) : []);
     this.cancelEditAddedField();
@@ -639,6 +644,17 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   removeIdentityKeyField(field: string) {
     this.identityKeyFields.update(fields => fields.filter(existing => existing !== field));
+  }
+
+  /** Picks or unpicks a field to push, the picked ones kept in the order the fields are listed */
+  togglePushedField(field: string) {
+    const picked = new Set(this.pushedFields());
+    if (picked.has(field)) {
+      picked.delete(field);
+    } else {
+      picked.add(field);
+    }
+    this.pushedFields.set(this.pushableFields().filter(pushable => picked.has(pushable)));
   }
 
   addEligibilityCondition() {
@@ -970,6 +986,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       eligibilityFilter: this.eligibilityFilter(),
       itemFieldMapping: null,
       pushToOIAnalytics: true,
+      // Every field: the records are those the processing, the filter and the mapping read
+      pushedFields: [],
       scanModeId: null,
       enabled: true
     };
@@ -1129,6 +1147,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       eligibilityFilter: this.eligibilityFilter(),
       itemFieldMapping,
       pushToOIAnalytics,
+      pushedFields: pushToOIAnalytics ? this.pushedFields() : [],
       scanModeId: formValue.scanModeId || null,
       enabled: formValue.enabled
     };

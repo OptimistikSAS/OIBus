@@ -138,6 +138,7 @@ describe('Config Import Service', () => {
     eligibilityFilter: [],
     itemFieldMapping: { name: '{{name}}' },
     pushToOIAnalytics: false,
+    pushedFields: [],
     scanModeId: null,
     enabled: true
   });

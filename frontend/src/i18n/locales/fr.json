@@ -1587,7 +1587,12 @@
         "networkNumber": "Numéro de réseau",
         "macAddress": "Adresse MAC",
         "objectType": "Type d'objet",
-        "objectInstance": "Instance de l'objet"
+        "objectInstance": "Instance de l'objet",
+        "dataType": "Type de données",
+        "typeDefinition": "Définition de type",
+        "accessLevel": "Niveau d'accès",
+        "historizing": "Historisé",
+        "minimumSamplingInterval": "Intervalle d'échantillonnage minimal (ms)"
       },
       "check": "Sélectionner {{name}}",
       "check-children": "Sélectionner tous les sous-nœuds de {{name}}",
@@ -2015,6 +2020,9 @@
       "mode-remote": "Envoyer à OIAnalytics",
       "mode-sql-fixed": "Ce connecteur ne prend en charge que l'envoi à OIAnalytics - une requête pouvant retourner plusieurs points distincts, aucun point n'est jamais créé ou mis à jour par une synchronisation ici.",
       "mode-remote-not-registered": "OIBus n'est pas enregistré auprès d'OIAnalytics - rien ne sera envoyé tant qu'il ne l'est pas",
+      "pushed-fields": "Champs à envoyer",
+      "pushed-fields-hint": "Les champs des enregistrements envoyés à OIAnalytics. Si aucun n'est coché, tous les champs sont envoyés.",
+      "pushed-fields-all": "Tous les champs",
       "enabled": "Activé",
       "confirm-deletion": "Êtes-vous sûr de vouloir supprimer la synchronisation des points \"{{name}}\" ?",
       "created": "Synchronisation des points créée",

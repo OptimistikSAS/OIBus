@@ -1,9 +1,12 @@
 import { DateTime } from 'luxon';
 import {
+  accessLevelFlagToString,
   AttributeIds,
+  BrowseDirection,
   ClientMonitoredItem,
   ClientSession,
   ClientSubscription,
+  DataTypeIds,
   DataValue,
   LocalizedText,
   MessageSecurityMode,
@@ -12,6 +15,7 @@ import {
   OPCUAClient,
   readOperationLimits,
   ReferenceDescription,
+  ReferenceTypeIds,
   resolveNodeId,
   StatusCode,
   StatusCodes,
@@ -111,8 +115,11 @@ interface OperationLimits {
   maxNodesPerBrowse: number;
 }
 
-/** Static (and, for explore, live) metadata read for one Variable - every field optional, since servers
- *  only expose what their information model declares (e.g. no unit/range on a plain BaseDataVariable). */
+// The nodes a path stops at: the display names of a node's path start under the Objects folder, like the explore tree
+const ADDRESS_SPACE_ROOTS = new Set(['ns=0;i=84', 'ns=0;i=85']);
+// How many parents are looked up at most for a node's path - a guard against a server with an endless hierarchy
+const MAX_PATH_DEPTH = 64;
+
 /** A Variable node whose metadata is read: by its node id, and its display name for logs. */
 interface VariableNode {
   nodeId: string;
@@ -125,12 +132,50 @@ function toVariableNodes(references: Array<ReferenceDescription>): Array<Variabl
     .map(reference => ({ nodeId: reference.nodeId.toString(), displayName: reference.displayName?.text ?? reference.nodeId.toString() }));
 }
 
+/** Static (and, for explore, live) metadata read for one Variable - every field optional, since servers
+ *  only expose what their information model declares (e.g. no unit/range on a plain BaseDataVariable).
+ *  In the order the explore tree shows them. */
 interface VariableMetadata {
   value?: string;
   description?: string;
   unit?: string;
   min?: number;
   max?: number;
+  dataType?: string;
+  typeDefinition?: string;
+  accessLevel?: string;
+  historizing?: boolean;
+  minimumSamplingInterval?: number;
+}
+
+const VARIABLE_METADATA_KEYS: Array<keyof VariableMetadata> = [
+  'value',
+  'description',
+  'unit',
+  'min',
+  'max',
+  'dataType',
+  'typeDefinition',
+  'accessLevel',
+  'historizing',
+  'minimumSamplingInterval'
+];
+
+/** The name of a standard data type (`Double`, `UtcTime`...), the node id of one a server defines. */
+function toDataTypeName(dataType: NodeId): string {
+  // DataTypeIds is a numeric enum: indexed by a value, it gives its name
+  return (dataType.namespace === 0 && typeof dataType.value === 'number' && DataTypeIds[dataType.value]) || dataType.toString();
+}
+
+const DISCOVERY_SESSION_EXPIRED = 'OPC UA discovery session expired, please restart the configuration workflow run';
+
+function isReferenceType(referenceTypeId: NodeId | undefined, id: number): boolean {
+  return referenceTypeId?.namespace === 0 && referenceTypeId.value === id;
+}
+
+/** A node's path, from its parents' path and its name */
+function joinPath(parentPath: string, name: string): string {
+  return parentPath ? `${parentPath}/${name}` : name;
 }
 
 /**
@@ -487,14 +532,7 @@ export default class SouthOPCUA
    * @param parentId - the node id to expand, or null to browse the Objects folder root (ns=0;i=85)
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
-    // connect() swallows connection errors to drive the streaming reconnect loop. For the
-    // interactive explore we (re)establish the session lazily so the real connection failure
-    // is surfaced to the user instead of a generic "not connected" message.
-    if (this.session === null) {
-      this.session = await this.createSession();
-    }
-    const session = this.session;
-    try {
+    return await this.withSession('OPC UA explore session expired, please restart the exploration', async session => {
       const references = await this.browseReferences(session, parentId);
       const variables = toVariableNodes(references);
       let metadata = new Map<string, VariableMetadata>();
@@ -505,21 +543,13 @@ export default class SouthOPCUA
         this.logger.debug(`Could not read variable metadata while exploring: ${getErrorMessage(error)}`);
       }
       return this.mapReferencesToEntries(references, metadata);
-    } catch (error) {
-      if (isSessionError(error)) {
-        // The session is dead: release it so a later browse reconnects instead of
-        // repeatedly hitting a broken client (and free the socket immediately).
-        await this.disconnect();
-        throw new Error(`OPC UA explore session expired, please restart the exploration: ${(error as Error).message}`);
-      }
-      throw error;
-    }
+    });
   }
 
   /**
    * Browse the OPC-UA address space one level at a time for the Configuration Workflow's `discover()` -
    * structure (NodeId, DisplayName, NodeClass/"type") plus each Variable's static metadata (description,
-   * unit, range - see `readVariableMetadata()`), deliberately never reading live values, unlike
+   * unit, range, data type... - see `readVariableMetadata()`), deliberately never reading live values, unlike
    * `explore()`. `discover()`'s result feeds an identity-key diff against the *previous* run: a
    * Variable's live value changes constantly, so reading it here would make every discovered entry look
    * "changed" on every single run, even when nothing about the tag itself actually changed - whereas a
@@ -531,20 +561,30 @@ export default class SouthOPCUA
    * @param parentId - the node id to expand, or null to browse the Objects folder root (ns=0;i=85)
    */
   async browseForDiscovery(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
-    // Same lazy-connect rationale as explore() - discover() runs against the engine's live south
-    // instance, which may not have an open session yet (e.g. right after a scheduled tick starts).
-    if (this.session === null) {
-      this.session = await this.createSession();
-    }
-    const session = this.session;
-    try {
+    return await this.withSession(DISCOVERY_SESSION_EXPIRED, async session => {
       const references = await this.browseReferences(session, parentId);
       const variables = toVariableNodes(references);
       return this.mapReferencesToEntries(references, await this.readVariableMetadata(session, variables, false));
+    });
+  }
+
+  /**
+   * Runs `request` on the connector's session - created lazily, since connect() swallows connection errors to drive the
+   * streaming reconnect loop, and explore/discovery must surface the real connection failure instead of a generic "not
+   * connected" one (they also run against a disabled connector, or right after a scheduled tick starts). A session error
+   * releases the dead session, so that a later request reconnects instead of repeatedly hitting a broken client, and is
+   * rethrown with `expiredMessage`.
+   */
+  private async withSession<T>(expiredMessage: string, request: (session: ClientSession) => Promise<T>): Promise<T> {
+    if (this.session === null) {
+      this.session = await this.createSession();
+    }
+    try {
+      return await request(this.session);
     } catch (error) {
       if (isSessionError(error)) {
         await this.disconnect();
-        throw new Error(`OPC UA discovery session expired, please restart the configuration workflow run: ${(error as Error).message}`);
+        throw new Error(`${expiredMessage}: ${(error as Error).message}`);
       }
       throw error;
     }
@@ -591,10 +631,18 @@ export default class SouthOPCUA
    *  - `description`: the node's own Description attribute (OPC-UA Part 3), a LocalizedText.
    *  - `unit`: the display name of the `EngineeringUnits` Property (an EUInformation, Part 8 DataAccess).
    *  - `min`/`max`: the `EURange` Property (a Range, Part 8) - the variable's normal operating range.
-   * Units/ranges are not plain node attributes: they only exist as child Property nodes on servers that
-   * model the variable as an analog item, so finding them costs one extra browse before they can be read.
+   *  - `dataType`: the DataType attribute - the name of a standard type (`Double`, `Boolean`...), the node id of a
+   *    server-defined one.
+   *  - `typeDefinition`: the browse name of its VariableType (`AnalogItemType`, `BaseDataVariableType`...).
+   *  - `accessLevel`: the AccessLevel attribute, as its flags (`CurrentRead | HistoryRead`...) - whether the value can
+   *    be read, written, or its history read.
+   *  - `historizing`: the Historizing attribute - whether the server is currently archiving the value.
+   *  - `minimumSamplingInterval`: the MinimumSamplingInterval attribute, in ms - how fast the server can sample the
+   *    value (0: continuously, -1: unknown).
+   * Units/ranges/type definitions are not plain node attributes: they only exist as child Property nodes (or a
+   * HasTypeDefinition reference), so finding them costs one extra browse before they can be read.
    * Regardless of how many variables are in the level, this is 3 logical requests (1 attribute read + 1
-   * property browse, run in parallel, then 1 property-value read) — never a per-node round trip — each
+   * reference browse, run in parallel, then 1 property-value read) — never a per-node round trip — each
    * split into chunks within the server's own operation limits (see `getOperationLimits()`).
    *
    * A per-node bad status (e.g. a Description the server doesn't expose) just leaves that field out; a
@@ -612,25 +660,58 @@ export default class SouthOPCUA
     const variableNodeIds = variables.map(variable => variable.nodeId);
     const limits = await this.getOperationLimits(session);
 
-    const attributeIds = includeValue ? [AttributeIds.Description, AttributeIds.Value] : [AttributeIds.Description];
+    const attributeIds = [
+      AttributeIds.Description,
+      AttributeIds.DataType,
+      AttributeIds.AccessLevel,
+      AttributeIds.Historizing,
+      AttributeIds.MinimumSamplingInterval,
+      ...(includeValue ? [AttributeIds.Value] : [])
+    ];
     const attributesToRead = variableNodeIds.flatMap(nodeId => attributeIds.map(attributeId => ({ nodeId, attributeId })));
-    const [attributeDataValues, propertyBrowseResults] = await Promise.all([
+    // Every forward reference, not only the hierarchical ones: the HasTypeDefinition one too
+    const referencesToBrowse = variableNodeIds.map(nodeId => ({
+      nodeId,
+      browseDirection: BrowseDirection.Forward,
+      referenceTypeId: null,
+      includeSubtypes: true,
+      nodeClassMask: 0,
+      resultMask: 63
+    }));
+    const [attributeDataValues, referenceBrowseResults] = await Promise.all([
       requestInChunks(attributesToRead, limits.maxNodesPerRead, chunk => session.read(chunk)),
-      requestInChunks(variableNodeIds, limits.maxNodesPerBrowse, chunk => session.browse(chunk))
+      requestInChunks(referencesToBrowse, limits.maxNodesPerBrowse, chunk => session.browse(chunk))
     ]);
 
     variables.forEach((variable, index) => {
       const entry: VariableMetadata = {};
-      const descriptionDataValue = attributeDataValues[index * attributeIds.length];
-      if (isGood(descriptionDataValue)) {
-        const description = (descriptionDataValue.value.value as LocalizedText).text;
-        if (description) {
-          entry.description = description;
-        }
+      const attributeValue = (attributeId: AttributeIds): DataValue | null => {
+        const dataValue = attributeDataValues[index * attributeIds.length + attributeIds.indexOf(attributeId)];
+        return isGood(dataValue) ? dataValue : null;
+      };
+      const description = (attributeValue(AttributeIds.Description)?.value.value as LocalizedText | undefined)?.text;
+      if (description) {
+        entry.description = description;
+      }
+      const dataType = attributeValue(AttributeIds.DataType)?.value.value as NodeId | undefined;
+      if (dataType) {
+        entry.dataType = toDataTypeName(dataType);
+      }
+      const accessLevel = attributeValue(AttributeIds.AccessLevel)?.value.value;
+      if (typeof accessLevel === 'number') {
+        entry.accessLevel = accessLevelFlagToString(accessLevel);
+      }
+      const historizing = attributeValue(AttributeIds.Historizing)?.value.value;
+      if (typeof historizing === 'boolean') {
+        entry.historizing = historizing;
+      }
+      const minimumSamplingInterval = attributeValue(AttributeIds.MinimumSamplingInterval)?.value.value;
+      if (typeof minimumSamplingInterval === 'number') {
+        entry.minimumSamplingInterval = minimumSamplingInterval;
       }
       if (includeValue) {
-        const valueDataValue = attributeDataValues[index * attributeIds.length + 1];
-        if (isGood(valueDataValue)) {
+        const valueDataValue = attributeValue(AttributeIds.Value);
+        if (valueDataValue) {
           const parsedValue = parseOPCUAValue(variable.displayName, valueDataValue.value, this.logger);
           if (parsedValue) {
             entry.value = parsedValue;
@@ -643,44 +724,58 @@ export default class SouthOPCUA
     // EngineeringUnits/EURange live as child Property nodes (HasProperty), not as attributes of the
     // variable itself — locate them per variable from the batched browse above before they can be read.
     const propertyLookups: Array<{ variableNodeId: string; kind: 'unit' | 'range'; propertyNodeId: string }> = [];
-    propertyBrowseResults.forEach((propertyBrowseResult, index) => {
-      for (const propertyReference of propertyBrowseResult.references ?? []) {
-        const propertyName = propertyReference.browseName?.name;
+    referenceBrowseResults.forEach((referenceBrowseResult, index) => {
+      for (const reference of referenceBrowseResult.references ?? []) {
+        if (isReferenceType(reference.referenceTypeId, ReferenceTypeIds.HasTypeDefinition)) {
+          const typeDefinition = reference.browseName?.name || reference.displayName?.text;
+          if (typeDefinition) {
+            result.get(variableNodeIds[index])!.typeDefinition = typeDefinition;
+          }
+          continue;
+        }
+        const propertyName = reference.browseName?.name;
         if (propertyName === 'EngineeringUnits' || propertyName === 'EURange') {
           propertyLookups.push({
             variableNodeId: variableNodeIds[index],
             kind: propertyName === 'EngineeringUnits' ? 'unit' : 'range',
-            propertyNodeId: propertyReference.nodeId.toString()
+            propertyNodeId: reference.nodeId.toString()
           });
         }
       }
     });
-    if (propertyLookups.length === 0) {
-      return result;
+
+    if (propertyLookups.length > 0) {
+      const propertyDataValues = await requestInChunks(
+        propertyLookups.map(lookup => ({ nodeId: lookup.propertyNodeId, attributeId: AttributeIds.Value })),
+        limits.maxNodesPerRead,
+        chunk => session.read(chunk)
+      );
+      propertyLookups.forEach((lookup, index) => {
+        const dataValue = propertyDataValues[index];
+        if (!isGood(dataValue)) {
+          return;
+        }
+        const entry = result.get(lookup.variableNodeId)!;
+        if (lookup.kind === 'unit') {
+          const euInformation = dataValue.value.value as EUInformation;
+          if (euInformation.displayName?.text) {
+            entry.unit = euInformation.displayName.text;
+          }
+        } else {
+          const range = dataValue.value.value as Range;
+          entry.min = range.low;
+          entry.max = range.high;
+        }
+      });
     }
 
-    const propertyDataValues = await requestInChunks(
-      propertyLookups.map(lookup => ({ nodeId: lookup.propertyNodeId, attributeId: AttributeIds.Value })),
-      limits.maxNodesPerRead,
-      chunk => session.read(chunk)
-    );
-    propertyLookups.forEach((lookup, index) => {
-      const dataValue = propertyDataValues[index];
-      if (!isGood(dataValue)) {
-        return;
-      }
-      const entry = result.get(lookup.variableNodeId)!;
-      if (lookup.kind === 'unit') {
-        const euInformation = dataValue.value.value as EUInformation;
-        if (euInformation.displayName?.text) {
-          entry.unit = euInformation.displayName.text;
-        }
-      } else {
-        const range = dataValue.value.value as Range;
-        entry.min = range.low;
-        entry.max = range.high;
-      }
-    });
+    // In the order the explore tree shows them
+    for (const [nodeId, entry] of result) {
+      result.set(
+        nodeId,
+        Object.fromEntries(VARIABLE_METADATA_KEYS.filter(key => entry[key] !== undefined).map(key => [key, entry[key]])) as VariableMetadata
+      );
+    }
     return result;
   }
 
@@ -708,42 +803,48 @@ export default class SouthOPCUA
 
   /**
    * Retrieve step of a Configuration Workflow run: a full recursive walk of the address space under
-   * `scope.rootNodeId` (or the Objects folder root, matching `explore()`'s own default, if omitted),
-   * flattened into one record per Variable node — Object/folder nodes are walked into, never recorded
-   * themselves. Structure plus static metadata only (NodeId/DisplayName/NodeClass, description, unit,
-   * min/max), via `browseForDiscovery()` rather than `explore()` itself - a Variable's live value changes
-   * on every run, so reading it here would make the node look "changed" against the previous run's
-   * identity-key diff every single time, even though nothing about the monitored node itself changed. This assumes `rootNodeId`
-   * names a folder/Object, not a Variable directly — pointing it at a leaf Variable would walk into
-   * that Variable's own EngineeringUnits/EURange properties as if they were data points.
+   * the nodes of `scope.nodeIds` (picked in the Explore modal) - or under `scope.rootNodeId`, or the Objects folder
+   * root, matching `explore()`'s own default - flattened into one record per Variable node: a picked Variable is
+   * recorded itself, any other node walked into, never recorded itself. Structure plus static metadata only
+   * (NodeId/DisplayName/NodeClass, description, unit, min/max...), via `browseForDiscovery()` rather than `explore()`
+   * itself - a Variable's live value changes on every run, so reading it here would make the node look "changed"
+   * against the previous run's identity-key diff every single time, even though nothing about the monitored node
+   * itself changed.
    *
-   * `scope.nodeIds` (nodes picked in the Explore modal) takes precedence over `rootNodeId`: a picked Variable
-   * is recorded itself, any other picked node walked like a root.
+   * Each record's `path` is the display names of the nodes from under the Objects folder down to the Variable, joined
+   * by "/" - the parents of a picked node included, whatever node is picked: the path tells apart the records of two
+   * folders, and names the Variable as the explore tree shows it.
    */
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
     const records: Array<OIBusRecord> = [];
-    if (Array.isArray(scope.nodeIds)) {
-      // Nodes picked one by one: a Variable is recorded itself, any other node walked into. Each path starts with
-      // the picked node's own name, which tells apart the records of two picked folders.
-      for (const node of await this.readNodesForDiscovery(scope.nodeIds.filter(nodeId => typeof nodeId === 'string'))) {
-        if (node.metadata.type === 'Variable') {
-          records.push({ id: node.id, name: node.name, path: node.name, ...node.metadata });
-        } else {
-          await this.walkForDiscovery(node.id, node.name, records);
-        }
-      }
-      // A Variable picked along with a folder holding it is recorded once, as picked
-      const uniqueRecords = new Map<OIBusRecord[string], OIBusRecord>();
-      for (const record of records) {
-        if (!uniqueRecords.has(record.id)) {
-          uniqueRecords.set(record.id, record);
-        }
-      }
-      return Array.from(uniqueRecords.values());
+    const nodeIds = Array.isArray(scope.nodeIds)
+      ? scope.nodeIds.filter(nodeId => typeof nodeId === 'string')
+      : typeof scope.rootNodeId === 'string' && scope.rootNodeId
+        ? [scope.rootNodeId]
+        : null;
+    if (nodeIds === null) {
+      await this.walkForDiscovery(null, '', records);
+      return records;
     }
-    const rootNodeId = (scope.rootNodeId as string | undefined) ?? null;
-    await this.walkForDiscovery(rootNodeId, '', records);
-    return records;
+
+    const nodes = await this.readNodesForDiscovery(nodeIds);
+    const parentPaths = await this.readParentPaths(nodeIds);
+    for (const node of nodes) {
+      const path = joinPath(parentPaths.get(node.id) ?? '', node.name);
+      if (node.metadata.type === 'Variable') {
+        records.push({ id: node.id, name: node.name, path, ...node.metadata });
+      } else {
+        await this.walkForDiscovery(node.id, path, records);
+      }
+    }
+    // A Variable picked along with a folder holding it is recorded once, as picked
+    const uniqueRecords = new Map<OIBusRecord[string], OIBusRecord>();
+    for (const record of records) {
+      if (!uniqueRecords.has(record.id)) {
+        uniqueRecords.set(record.id, record);
+      }
+    }
+    return Array.from(uniqueRecords.values());
   }
 
   /**
@@ -755,11 +856,7 @@ export default class SouthOPCUA
     if (nodeIds.length === 0) {
       return [];
     }
-    if (this.session === null) {
-      this.session = await this.createSession();
-    }
-    const session = this.session;
-    try {
+    return await this.withSession(DISCOVERY_SESSION_EXPIRED, async session => {
       const limits = await this.getOperationLimits(session);
       const attributesToRead = nodeIds.flatMap(nodeId => [
         { nodeId, attributeId: AttributeIds.DisplayName },
@@ -786,21 +883,73 @@ export default class SouthOPCUA
         metadata: { nodeId: node.nodeId, type: NodeClass[node.nodeClass] ?? String(node.nodeClass), ...metadata.get(node.nodeId) },
         hasChildren: node.nodeClass === NodeClass.Object || node.nodeClass === NodeClass.Variable
       }));
-    } catch (error) {
-      if (isSessionError(error)) {
-        await this.disconnect();
-        throw new Error(`OPC UA discovery session expired, please restart the configuration workflow run: ${(error as Error).message}`);
-      }
-      throw error;
-    }
+    });
   }
 
-  /** `parentPath` is the display names from the discovery root down to `parentId`, joined by "/": each record's
+  /**
+   * The path of the parents of each node: the display names of its ancestors from under the Objects folder, joined by
+   * "/" - empty for a node right under the Objects folder. The parents are browsed up one level at a time, for all the
+   * nodes at once (each ancestor once, however many nodes it holds). A node with several parents (a node organized in
+   * two folders) takes the first one the server returns; a node out of the Objects folder has the path of its
+   * ancestors up to the top of its hierarchy.
+   */
+  async readParentPaths(nodeIds: Array<string>): Promise<Map<string, string>> {
+    if (nodeIds.length === 0) {
+      return new Map();
+    }
+    return await this.withSession(DISCOVERY_SESSION_EXPIRED, async session => {
+      const limits = await this.getOperationLimits(session);
+      const parents = new Map<string, { nodeId: string; name: string } | null>();
+      let toBrowse = Array.from(new Set(nodeIds));
+      for (let depth = 0; toBrowse.length > 0 && depth < MAX_PATH_DEPTH; depth++) {
+        const browseResults = await requestInChunks(
+          toBrowse.map(nodeId => ({
+            nodeId,
+            browseDirection: BrowseDirection.Inverse,
+            referenceTypeId: 'HierarchicalReferences',
+            includeSubtypes: true,
+            nodeClassMask: NodeClass.Object | NodeClass.Variable,
+            resultMask: 63
+          })),
+          limits.maxNodesPerBrowse,
+          chunk => session.browse(chunk)
+        );
+        toBrowse.forEach((nodeId, index) => {
+          const reference = browseResults[index]?.references?.[0];
+          const parentId = reference?.nodeId.toString();
+          if (!reference || !parentId || ADDRESS_SPACE_ROOTS.has(parentId)) {
+            parents.set(nodeId, null);
+            return;
+          }
+          parents.set(nodeId, { nodeId: parentId, name: reference.displayName?.text || reference.browseName?.name || parentId });
+        });
+        toBrowse = Array.from(new Set(Array.from(parents.values(), parent => parent?.nodeId))).filter(
+          (parentId): parentId is string => !!parentId && !parents.has(parentId)
+        );
+      }
+
+      return new Map(
+        nodeIds.map(nodeId => {
+          const names: Array<string> = [];
+          const visited = new Set([nodeId]);
+          let parent = parents.get(nodeId);
+          while (parent && !visited.has(parent.nodeId)) {
+            names.unshift(parent.name);
+            visited.add(parent.nodeId);
+            parent = parents.get(parent.nodeId);
+          }
+          return [nodeId, names.join('/')];
+        })
+      );
+    });
+  }
+
+  /** `parentPath` is the display names from under the Objects folder down to `parentId`, joined by "/": each record's
    *  `path` makes a readable item name that, unlike its display name alone, is unique across folders. */
   private async walkForDiscovery(parentId: string | null, parentPath: string, records: Array<OIBusRecord>): Promise<void> {
     const entries = await this.browseForDiscovery(parentId);
     for (const entry of entries) {
-      const path = parentPath ? `${parentPath}/${entry.name}` : entry.name;
+      const path = joinPath(parentPath, entry.name);
       if (entry.metadata.type === 'Variable') {
         records.push({ id: entry.id, name: entry.name, path, ...entry.metadata });
       } else if (entry.hasChildren) {

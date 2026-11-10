@@ -191,6 +191,7 @@ const localWorkflowCommand: ConfigurationWorkflowCommandDTO = {
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
   pushToOIAnalytics: false,
+  pushedFields: [],
   scanModeId: testData.scanMode.list[0].id,
   enabled: true
 };
@@ -371,6 +372,7 @@ describe('South Service', () => {
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}' },
         pushToOIAnalytics: false,
+        pushedFields: [],
         scanMode: testData.scanMode.list[0],
         enabled: true
       }
@@ -489,6 +491,7 @@ describe('South Service', () => {
       addedFields: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true,
+      pushedFields: [],
       scanModeId: null
     };
 

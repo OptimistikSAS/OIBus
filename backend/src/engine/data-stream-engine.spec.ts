@@ -970,6 +970,7 @@ describe('DataStreamEngine', () => {
       eligibilityFilter: [],
       itemFieldMapping: { name: '{{name}}' },
       pushToOIAnalytics: false,
+      pushedFields: [],
       scanMode: testData.scanMode.list[0],
       enabled: true,
       createdBy: '',

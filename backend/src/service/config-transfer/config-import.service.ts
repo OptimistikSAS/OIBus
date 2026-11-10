@@ -750,6 +750,7 @@ export default class ConfigImportService {
           eligibilityFilter: workflow.eligibilityFilter,
           itemFieldMapping: workflow.itemFieldMapping,
           pushToOIAnalytics: workflow.pushToOIAnalytics,
+          pushedFields: workflow.pushToOIAnalytics ? workflow.pushedFields : [],
           scanMode: workflow.scanModeId ? ({ id: workflow.scanModeId } as ScanMode) : null,
           enabled: false
         },

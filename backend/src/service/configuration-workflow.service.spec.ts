@@ -33,6 +33,7 @@ const localCommand: ConfigurationWorkflowCommandDTO = {
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
   itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
   pushToOIAnalytics: false,
+  pushedFields: [],
   scanModeId: null,
   enabled: true
 };
@@ -49,6 +50,7 @@ const existingWorkflow: ConfigurationWorkflowEntity = {
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
   pushToOIAnalytics: false,
+  pushedFields: [],
   scanMode: null,
   enabled: true,
   createdBy: 'userTest',
@@ -165,6 +167,18 @@ describe('Configuration Workflow Service', () => {
       assert.deepStrictEqual((createCall.arguments[0] as ConfigurationWorkflowEntity).identityKeyFields, []);
     });
 
+    it('should store the fields to push of a remote workflow, and none for a local one', () => {
+      service.create(
+        testData.south.list[0].id,
+        { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true, pushedFields: ['nodeId', 'unit'] },
+        'userTest'
+      );
+      service.create(testData.south.list[0].id, { ...localCommand, pushedFields: ['nodeId'] }, 'userTest');
+      const [remoteCall, localCall] = configurationWorkflowRepository.create.mock.calls;
+      assert.deepStrictEqual((remoteCall.arguments[0] as ConfigurationWorkflowEntity).pushedFields, ['nodeId', 'unit']);
+      assert.deepStrictEqual((localCall.arguments[0] as ConfigurationWorkflowEntity).pushedFields, []);
+    });
+
     it('should allow a remote workflow without any identity key field', () => {
       service.create(
         testData.south.list[0].id,
@@ -273,6 +287,17 @@ describe('Configuration Workflow Service', () => {
       );
       const updateCall = configurationWorkflowRepository.update.mock.calls[0];
       assert.deepStrictEqual((updateCall.arguments[1] as { identityKeyFields: Array<string> }).identityKeyFields, []);
+    });
+
+    it('should update the fields to push of a remote workflow', () => {
+      service.update(
+        testData.south.list[0].id,
+        existingWorkflow.id,
+        { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true, pushedFields: ['path'] },
+        'updateUser'
+      );
+      const updateCall = configurationWorkflowRepository.update.mock.calls[0];
+      assert.deepStrictEqual((updateCall.arguments[1] as { pushedFields: Array<string> }).pushedFields, ['path']);
     });
 
     it('should update and return the refreshed workflow', () => {

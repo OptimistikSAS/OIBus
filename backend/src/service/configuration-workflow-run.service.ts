@@ -30,7 +30,9 @@ import {
   isEligible,
   prepareRecords,
   resolveFieldMapping,
-  resolveIdentityKeyFields
+  resolveIdentityKeyFields,
+  resolvePushedFields,
+  selectPushedFields
 } from './configuration-workflow.utils';
 import { OIBusConfigurationWorkflowResultCommandDTO } from './oia/oianalytics.model';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
@@ -80,7 +82,8 @@ const HISTORIAN_ITEM_FIELD_KINDS: Record<string, ItemFieldKind> = {
  * effects (real item creation) make an about-to-vanish connection the wrong model, and reusing the live
  * instance is required for any connector that only opens a session once (e.g. OPC-UA).
  *
- * Remote mode (`pushToOIAnalytics` true): forwards every eligible record, raw, as one message queued
+ * Remote mode (`pushToOIAnalytics` true): forwards every eligible record - only its `pushedFields`, every field when
+ * none - as one message queued
  * onto OIAnalyticsMessageService's own retry/registration-aware delivery - no local item, no per-record
  * diffing, no `item_point_metadata` involvement at all.
  */
@@ -169,7 +172,7 @@ export default class ConfigurationWorkflowRunService {
       counts.discoveredCount = retrieved.discoveredCount;
 
       if (workflow.pushToOIAnalytics) {
-        records = retrieved.eligible;
+        records = selectPushedFields(retrieved.eligible, workflow.pushedFields);
         counts.eligibleCount = records.length;
         this.actRemote(southId, workflow, run.id, records, counts);
       } else {
@@ -242,7 +245,11 @@ export default class ConfigurationWorkflowRunService {
     }
     const records = await this.southService.discover(southId, southType, southSettings, command.discoveryScope);
     return this.classifyForPreview(
-      { pushToOIAnalytics: command.pushToOIAnalytics, identityKeyFields: resolveIdentityKeyFields(command) },
+      {
+        pushToOIAnalytics: command.pushToOIAnalytics,
+        identityKeyFields: resolveIdentityKeyFields(command),
+        pushedFields: resolvePushedFields(command)
+      },
       workflowId,
       decide(records, command)
     );
@@ -283,7 +290,7 @@ export default class ConfigurationWorkflowRunService {
 
   /** Decide without Act - shared by `preview` and `previewCommand`. */
   private classifyForPreview(
-    workflow: Pick<ConfigurationWorkflowEntity, 'pushToOIAnalytics' | 'identityKeyFields'>,
+    workflow: Pick<ConfigurationWorkflowEntity, 'pushToOIAnalytics' | 'identityKeyFields' | 'pushedFields'>,
     workflowId: string | null,
     retrieved: RetrievedRecords
   ): WorkflowPreviewResultDTO {
@@ -292,7 +299,8 @@ export default class ConfigurationWorkflowRunService {
         discoveredCount: retrieved.discoveredCount,
         eligibleCount: retrieved.eligible.length,
         entries: [],
-        records: retrieved.eligible,
+        // As pushed to OIAnalytics: the samples keep every field, for the field processes and filter to be tested on
+        records: selectPushedFields(retrieved.eligible, workflow.pushedFields),
         samples: retrieved.samples
       };
     }
@@ -357,8 +365,8 @@ export default class ConfigurationWorkflowRunService {
   }
 
   /**
-   * Remote Act: forward every eligible record, raw, as one message. Registration is checked again
-   * here (not just at save time in ConfigurationWorkflowService) since it could have been revoked
+   * Remote Act: forward every eligible record (already reduced to the workflow's `pushedFields`) as one message.
+   * Registration is checked again here (not just at save time in ConfigurationWorkflowService) since it could have been revoked
    * since - but unlike the save-time check, an unregistered OIBus no longer fails the run: discovery
    * and eligibility filtering still succeeded, so the run still completes (with pushedCount left at
    * 0), just with a warning logged that this run's result was never actually sent.

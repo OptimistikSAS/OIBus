@@ -156,6 +156,12 @@ class EditWorkflowModalComponentTester {
   readonly localMode = this.root.getByLabelText('Create/update items locally');
   readonly remoteMode = this.root.getByLabelText('Push to OIAnalytics');
   readonly notRegisteredWarning = this.root.getByCss('#mode-remote-not-registered');
+  readonly pushedFields = this.root.getByCss('#pushed-fields');
+  readonly reviewPushedFields = this.root.getByCss('#review-pushed-fields');
+
+  pushedField(field: string) {
+    return this.pushedFields.getByLabelText(field, { exact: true });
+  }
   readonly sqlFixedMode = this.root.getByText('This connector only supports pushing to OIAnalytics', { exact: false });
   readonly formError = this.root.getByCss('#form-error');
   readonly mustBeUnique = this.root.getByText('Must be unique');
@@ -496,6 +502,7 @@ describe('EditWorkflowModalComponent', () => {
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id, ...withoutMaxReadInterval },
         pushToOIAnalytics: false,
+        pushedFields: [],
         scanModeId: scanModes[0].id,
         enabled: true
       });
@@ -840,6 +847,74 @@ describe('EditWorkflowModalComponent', () => {
 
       // Identity keys only apply to local mode - never sent for a remote workflow, even if some were typed before switching.
       expect(savedCommand()).toEqual(expect.objectContaining({ pushToOIAnalytics: true, itemFieldMapping: null, identityKeyFields: [] }));
+    });
+  });
+
+  describe('fields to push', () => {
+    beforeEach(() => {
+      // The records are discovered on the way to the Items step
+      startStep = 'filter';
+      configurationWorkflowService.previewCommand.mockReturnValue(
+        of({
+          discoveredCount: 1,
+          eligibleCount: 1,
+          entries: [],
+          records: [{ id: 'ns=1;s=T', path: 'Reactor/Temperature', unit: '°C' }],
+          samples: { id: ['ns=1;s=T'], path: ['Reactor/Temperature'], unit: ['°C'] }
+        })
+      );
+    });
+
+    test('should only offer the fields to push in remote mode, every field being pushed when none is picked', async () => {
+      const tester = create({ mode: 'edit' });
+      await tester.goToStep('items');
+      await expect.element(tester.pushedFields).not.toBeInTheDocument();
+
+      await tester.remoteMode.click();
+
+      await expect.element(tester.pushedField('id')).not.toBeChecked();
+      await expect.element(tester.pushedField('path')).toBeInTheDocument();
+      await expect.element(tester.pushedField('unit')).toBeInTheDocument();
+      await tester.goToStep('review');
+      await expect.element(tester.reviewPushedFields).toHaveTextContent('Every field');
+      await tester.save();
+      expect(savedCommand().pushedFields).toEqual([]);
+    });
+
+    test('should push the picked fields, in the order of the records, and show them in the review', async () => {
+      const tester = create({ mode: 'edit' });
+      await tester.goToStep('items');
+      await tester.remoteMode.click();
+
+      await tester.pushedField('unit').click();
+      await tester.pushedField('id').click();
+      await tester.pushedField('path').click();
+      await tester.pushedField('path').click();
+
+      await tester.goToStep('review');
+      await expect.element(tester.reviewPushedFields).toHaveTextContent('id, unit');
+      await tester.save();
+      expect(savedCommand()).toEqual(expect.objectContaining({ pushToOIAnalytics: true, pushedFields: ['id', 'unit'] }));
+      // The records previewed to pick the fields keep every field
+      expect(configurationWorkflowService.previewCommand.mock.calls[0][4].pushedFields).toEqual([]);
+    });
+
+    test('should keep the picked fields of a workflow that are not discovered anymore, and send none in local mode', async () => {
+      const tester = create({
+        mode: 'edit',
+        // The mapping is kept for the switch to local mode
+        workflow: { ...existingWorkflow, pushToOIAnalytics: true, pushedFields: ['unit', 'gone'] }
+      });
+      await tester.goToStep('items');
+
+      await expect.element(tester.pushedField('unit')).toBeChecked();
+      await expect.element(tester.pushedField('gone')).toBeChecked();
+      await expect.element(tester.pushedField('id')).not.toBeChecked();
+
+      await tester.localMode.click();
+      await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+      await tester.save();
+      expect(savedCommand()).toEqual(expect.objectContaining({ pushToOIAnalytics: false, pushedFields: [] }));
     });
   });
 
