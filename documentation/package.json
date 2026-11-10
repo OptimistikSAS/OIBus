@@ -3,9 +3,9 @@
   "version": "3.9.6",
   "private": true,
   "engines": {
-    "node": "=v26",
-    "npm": "=11"
+    "node": "=v26"
   },
+  "packageManager": "pnpm@12.16.1",
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
@@ -18,7 +18,7 @@
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "lint": "eslint . --ext .js,.jsx,.md,.mdx",
-    "lint:fix": "npm run lint -- --fix"
+    "lint:fix": "pnpm run lint --fix"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
@@ -56,9 +56,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "allowScripts": {
-    "fsevents@2.3.3": true,
-    "core-js@3.51.0": true
   }
 }

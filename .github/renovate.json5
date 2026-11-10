@@ -19,10 +19,10 @@
 
   "packageRules": [
     // ── Engine constraints ────────────────────────────────────────────────
-    // Node and npm versions are pinned in package.json `engines`; let Renovate
+    // Node and pnpm versions are pinned in package.json `engines` and `packageManager`; let Renovate
     // open dedicated PRs for those so they are reviewed intentionally.
     {
-      "matchPackageNames": ["node", "npm"],
+      "matchPackageNames": ["node", "pnpm"],
       "enabled": false
     },
 

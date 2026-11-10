@@ -9,16 +9,16 @@ Specs are run by the Angular `@angular/build:unit-test` builder (`ng test`), con
 
 ```bash
 # Once: install the browser
-npx playwright install chromium
+pnpm exec playwright install chromium
 
 # All the specs, with coverage (watch mode outside of CI)
-npm test
+pnpm test
 
 # A single run, no watch
-npx ng test --watch=false
+pnpm exec ng test --watch=false
 
 # Only some specs
-npx ng test --watch=false --include src/app/engine/engine-detail.component.spec.ts
+pnpm exec ng test --watch=false --include src/app/engine/engine-detail.component.spec.ts
 ```
 
 The coverage report is written to `coverage/frontend` (open `index.html`). Test helpers (`test-utils.ts`, `*-testing.ts`,
