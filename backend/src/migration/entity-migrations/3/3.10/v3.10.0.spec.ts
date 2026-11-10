@@ -3327,6 +3327,17 @@ describe('Entity migration v3.10.0: replaceCsvAndJsonReaders', () => {
     });
   });
 
+  it('should replace the non-breaking space delimiter by the pipe', async () => {
+    await db('north_transformers').insert(northLink('records', 'records', { delimiter: 'NON_BREAKING_SPACE', hasHeader: true }));
+
+    await replaceCsvAndJsonReaders(db);
+
+    assert.deepStrictEqual(await linkOf('north_transformers', 'records'), {
+      transformerId: 'existing',
+      options: { input: { fileType: 'csv', delimiter: 'PIPE', hasHeader: true } }
+    });
+  });
+
   it('should keep the options already converted, and do nothing without CSV or JSON transformer', async () => {
     const converted = {
       input: { fileType: 'csv', delimiter: 'COMMA', hasHeader: true },
