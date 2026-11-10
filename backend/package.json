@@ -67,6 +67,7 @@
     "cron": "4.4.0",
     "cron-parser": "5.10.3",
     "cronstrue": "3.38.0",
+    "ethernet-ip": "2.0.0",
     "express": "5.3.0",
     "express-rate-limit": "8.7.3",
     "helmet": "8.3.0",

@@ -21,6 +21,7 @@ describe('utils', () => {
       expect(getAssociatedInputType('ads')).toBe('record-list');
       expect(getAssociatedInputType('s7')).toBe('record-list');
       expect(getAssociatedInputType('bacnet')).toBe('record-list');
+      expect(getAssociatedInputType('ethernet-ip')).toBe('record-list');
       expect(getAssociatedInputType('sqlite')).toBe('record-list');
       expect(getAssociatedInputType('mysql')).toBe('record-list');
       expect(getAssociatedInputType('odbc')).toBe('record-list');

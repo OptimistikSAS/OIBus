@@ -749,6 +749,13 @@
             "request-timeout": "请求超时",
             "retry-interval": "重试间隔"
           },
+          "ethernet-ip": {
+            "host": "主机",
+            "slot": "插槽",
+            "connected-messaging": "连接消息",
+            "timeout": "超时",
+            "retry-interval": "重试间隔"
+          },
           "mqtt": {
             "url": "URL",
             "qos": {
@@ -1132,6 +1139,9 @@
             },
             "s7": {
               "address": "地址"
+            },
+            "ethernet-ip": {
+              "tag-name": "标签名称"
             },
             "mqtt": {
               "topic": "主题"
@@ -2804,6 +2814,7 @@
       "postgresql": "PostgreSQL",
       "rest": "REST API",
       "s7": "Siemens® S7",
+      "ethernet-ip": "Rockwell® EtherNet/IP™",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -2828,6 +2839,7 @@
       "postgresql": "查询 PostgreSQL 数据库",
       "rest": "从 REST API 端点采集数据",
       "s7": "通过 ISO-on-TCP 访问 Siemens® S7 PLC 数据",
+      "ethernet-ip": "通过 EtherNet/IP™ 读取 Rockwell® ControlLogix® 和 CompactLogix® PLC 的标签",
       "sftp": "从远程 SFTP 服务器读取文件",
       "sqlite": "查询 SQLite™ 数据库"
     }

@@ -2,6 +2,7 @@ import { SouthConnectorManifest } from '../../shared/model/connector/south-manif
 
 import adsManifest from '../south/south-ads/manifest';
 import bacnetManifest from '../south/south-bacnet/manifest';
+import ethernetIpManifest from '../south/south-ethernet-ip/manifest';
 import folderScannerManifest from '../south/south-folder-scanner/manifest';
 import ftpManifest from '../south/south-ftp/manifest';
 import influxdbManifest from '../south/south-influxdb/manifest';
@@ -32,6 +33,7 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   modbusManifest,
   adsManifest,
   s7Manifest,
+  ethernetIpManifest,
   bacnetManifest,
   opcManifest,
   mssqlManifest,

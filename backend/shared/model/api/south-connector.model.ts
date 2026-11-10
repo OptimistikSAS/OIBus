@@ -7,6 +7,8 @@ import {
   SouthADSSettings,
   SouthBACnetItemSettings,
   SouthBACnetSettings,
+  SouthEtherNetIPItemSettings,
+  SouthEtherNetIPSettings,
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
@@ -498,6 +500,14 @@ export interface SouthConnectorADSDTO extends SouthConnectorTypedDTO<'ads', Sout
 export interface SouthConnectorBACnetDTO extends SouthConnectorTypedDTO<'bacnet', SouthBACnetSettings, SouthBACnetItemSettings> {
   items: Array<SouthConnectorBACnetItemDTO>;
 }
+/** South connector configuration for EtherNet/IP. */
+export interface SouthConnectorEtherNetIPDTO extends SouthConnectorTypedDTO<
+  'ethernet-ip',
+  SouthEtherNetIPSettings,
+  SouthEtherNetIPItemSettings
+> {
+  items: Array<SouthConnectorEtherNetIPItemDTO>;
+}
 /** South connector configuration for the Folder Scanner. */
 export interface SouthConnectorFolderScannerDTO extends SouthConnectorTypedDTO<
   'folder-scanner',
@@ -598,6 +608,7 @@ export interface SouthConnectorSQLiteDTO extends SouthConnectorTypedDTO<'sqlite'
 export type SouthConnectorDTO =
   | SouthConnectorADSDTO
   | SouthConnectorBACnetDTO
+  | SouthConnectorEtherNetIPDTO
   | SouthConnectorFolderScannerDTO
   | SouthConnectorFTPDTO
   | SouthConnectorInfluxDBDTO
@@ -916,6 +927,14 @@ export interface SouthConnectorBACnetCommandDTO extends SouthConnectorCommandTyp
 > {
   items: Array<SouthConnectorBACnetItemCommandDTO>;
 }
+/** South connector command for EtherNet/IP. */
+export interface SouthConnectorEtherNetIPCommandDTO extends SouthConnectorCommandTypedDTO<
+  'ethernet-ip',
+  SouthEtherNetIPSettings,
+  SouthEtherNetIPItemSettings
+> {
+  items: Array<SouthConnectorEtherNetIPItemCommandDTO>;
+}
 /** South connector command for the Folder Scanner. */
 export interface SouthConnectorFolderScannerCommandDTO extends SouthConnectorCommandTypedDTO<
   'folder-scanner',
@@ -1040,6 +1059,7 @@ export interface SouthConnectorSQLiteCommandDTO extends SouthConnectorCommandTyp
 export type SouthConnectorCommandDTO =
   | SouthConnectorADSCommandDTO
   | SouthConnectorBACnetCommandDTO
+  | SouthConnectorEtherNetIPCommandDTO
   | SouthConnectorFolderScannerCommandDTO
   | SouthConnectorFTPCommandDTO
   | SouthConnectorInfluxDBCommandDTO
@@ -1079,6 +1099,8 @@ export interface SouthConnectorItemCommandBodyDTO extends SouthConnectorItemComm
 export interface SouthConnectorADSItemDTO extends SouthConnectorItemTypedDTO<SouthADSItemSettings> {}
 /** South connector item DTO for BACnet/IP. */
 export interface SouthConnectorBACnetItemDTO extends SouthConnectorItemTypedDTO<SouthBACnetItemSettings> {}
+/** South connector item DTO for EtherNet/IP. */
+export interface SouthConnectorEtherNetIPItemDTO extends SouthConnectorItemTypedDTO<SouthEtherNetIPItemSettings> {}
 /** South connector item DTO for the Folder Scanner. */
 export interface SouthConnectorFolderScannerItemDTO extends SouthConnectorItemTypedDTO<SouthFolderScannerItemSettings> {}
 /** South connector item DTO for FTP file transfer. */
@@ -1127,6 +1149,7 @@ export interface SouthConnectorSQLiteItemDTO extends SouthConnectorItemTypedDTO<
 export type SouthConnectorItemDTO =
   | SouthConnectorADSItemDTO
   | SouthConnectorBACnetItemDTO
+  | SouthConnectorEtherNetIPItemDTO
   | SouthConnectorFolderScannerItemDTO
   | SouthConnectorFTPItemDTO
   | SouthConnectorInfluxDBItemDTO
@@ -1153,6 +1176,8 @@ export type SouthConnectorItemDTO =
 export interface SouthConnectorADSItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthADSItemSettings> {}
 /** South connector item command for BACnet/IP. */
 export interface SouthConnectorBACnetItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthBACnetItemSettings> {}
+/** South connector item command for EtherNet/IP. */
+export interface SouthConnectorEtherNetIPItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthEtherNetIPItemSettings> {}
 /** South connector item command for the Folder Scanner. */
 export interface SouthConnectorFolderScannerItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthFolderScannerItemSettings> {}
 /** South connector item command for FTP file transfer. */
@@ -1201,6 +1226,7 @@ export interface SouthConnectorSQLiteItemCommandDTO extends SouthConnectorItemCo
 export type SouthConnectorItemCommandDTO =
   | SouthConnectorADSItemCommandDTO
   | SouthConnectorBACnetItemCommandDTO
+  | SouthConnectorEtherNetIPItemCommandDTO
   | SouthConnectorFolderScannerItemCommandDTO
   | SouthConnectorFTPItemCommandDTO
   | SouthConnectorInfluxDBItemCommandDTO

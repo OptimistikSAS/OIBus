@@ -20,6 +20,8 @@ import {
   SouthADSSettings,
   SouthBACnetItemSettings,
   SouthBACnetSettings,
+  SouthEtherNetIPItemSettings,
+  SouthEtherNetIPSettings,
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
@@ -339,6 +341,14 @@ export interface HistoryQueryADSSouthDTO extends HistoryQuerySouthTypedDTO<'ads'
 export interface HistoryQueryBACnetSouthDTO extends HistoryQuerySouthTypedDTO<'bacnet', SouthBACnetSettings, SouthBACnetItemSettings> {
   items: Array<HistoryQueryBACnetItemDTO>;
 }
+/** History query south DTO for EtherNet/IP. */
+export interface HistoryQueryEtherNetIPSouthDTO extends HistoryQuerySouthTypedDTO<
+  'ethernet-ip',
+  SouthEtherNetIPSettings,
+  SouthEtherNetIPItemSettings
+> {
+  items: Array<HistoryQueryEtherNetIPItemDTO>;
+}
 /** History query south DTO for the Folder Scanner. */
 export interface HistoryQueryFolderScannerSouthDTO extends HistoryQuerySouthTypedDTO<
   'folder-scanner',
@@ -586,6 +596,14 @@ export interface HistoryQueryBACnetSouthCommandDTO extends HistoryQuerySouthComm
 > {
   items: Array<HistoryQueryBACnetItemCommandDTO>;
 }
+/** History query south command for EtherNet/IP. */
+export interface HistoryQueryEtherNetIPSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
+  'ethernet-ip',
+  SouthEtherNetIPSettings,
+  SouthEtherNetIPItemSettings
+> {
+  items: Array<HistoryQueryEtherNetIPItemCommandDTO>;
+}
 /** History query south command for the Folder Scanner. */
 export interface HistoryQueryFolderScannerSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
   'folder-scanner',
@@ -827,6 +845,8 @@ export interface HistoryQueryItemCommandBodyDTO extends HistoryQueryItemCommandT
 export interface HistoryQueryADSItemDTO extends HistoryQueryItemTypedDTO<SouthADSItemSettings> {}
 /** History query item DTO for BACnet/IP. */
 export interface HistoryQueryBACnetItemDTO extends HistoryQueryItemTypedDTO<SouthBACnetItemSettings> {}
+/** History query item DTO for EtherNet/IP. */
+export interface HistoryQueryEtherNetIPItemDTO extends HistoryQueryItemTypedDTO<SouthEtherNetIPItemSettings> {}
 /** History query item DTO for the Folder Scanner. */
 export interface HistoryQueryFolderScannerItemDTO extends HistoryQueryItemTypedDTO<SouthFolderScannerItemSettings> {}
 /** History query item DTO for FTP file transfer. */
@@ -875,6 +895,7 @@ export interface HistoryQuerySQLiteItemDTO extends HistoryQueryItemTypedDTO<Sout
 export type HistoryQueryItemDTO =
   | HistoryQueryADSItemDTO
   | HistoryQueryBACnetItemDTO
+  | HistoryQueryEtherNetIPItemDTO
   | HistoryQueryFolderScannerItemDTO
   | HistoryQueryFTPItemDTO
   | HistoryQueryInfluxDBItemDTO
@@ -901,6 +922,8 @@ export type HistoryQueryItemDTO =
 export interface HistoryQueryADSItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthADSItemSettings> {}
 /** History query item command for BACnet/IP. */
 export interface HistoryQueryBACnetItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthBACnetItemSettings> {}
+/** History query item command for EtherNet/IP. */
+export interface HistoryQueryEtherNetIPItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthEtherNetIPItemSettings> {}
 /** History query item command for the Folder Scanner. */
 export interface HistoryQueryFolderScannerItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthFolderScannerItemSettings> {}
 /** History query item command for FTP file transfer. */
@@ -949,6 +972,7 @@ export interface HistoryQuerySQLiteItemCommandDTO extends HistoryQueryItemComman
 export type HistoryQueryItemCommandDTO =
   | HistoryQueryADSItemCommandDTO
   | HistoryQueryBACnetItemCommandDTO
+  | HistoryQueryEtherNetIPItemCommandDTO
   | HistoryQueryFolderScannerItemCommandDTO
   | HistoryQueryFTPItemCommandDTO
   | HistoryQueryInfluxDBItemCommandDTO

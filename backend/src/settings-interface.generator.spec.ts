@@ -170,6 +170,8 @@ describe('settings-interface.generator', () => {
       ['postgresql', true, 'SouthPostgreSQLItemSettings'],
       ['rest', false, 'SouthRestSettings'],
       ['rest', true, 'SouthRestItemSettings'],
+      ['ethernet-ip', false, 'SouthEtherNetIPSettings'],
+      ['ethernet-ip', true, 'SouthEtherNetIPItemSettings'],
       ['s7', false, 'SouthS7Settings'],
       ['s7', true, 'SouthS7ItemSettings'],
       ['sqlite', false, 'SouthSQLiteSettings'],

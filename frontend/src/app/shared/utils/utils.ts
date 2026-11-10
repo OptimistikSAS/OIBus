@@ -10,6 +10,7 @@ export const getAssociatedInputType = (southType: OIBusSouthType): InputType => 
   switch (southType) {
     case 'ads':
     case 'bacnet':
+    case 'ethernet-ip':
     case 'modbus':
     case 'oianalytics':
     case 'opc':

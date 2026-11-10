@@ -376,6 +376,7 @@
       "postgresql": "PostgreSQL",
       "rest": "REST API",
       "s7": "Siemens® S7",
+      "ethernet-ip": "Rockwell® EtherNet/IP™",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -400,6 +401,7 @@
       "postgresql": "Query PostgreSQL databases",
       "rest": "Collect data from REST API endpoints",
       "s7": "Access Siemens® S7 PLC data over ISO-on-TCP",
+      "ethernet-ip": "Read the tags of Rockwell® ControlLogix® and CompactLogix® PLCs over EtherNet/IP™",
       "sftp": "Read files from a remote SFTP server",
       "sqlite": "Query  SQLite™ databases"
     }
@@ -1745,6 +1747,13 @@
             "request-timeout": "Request timeout",
             "retry-interval": "Retry interval"
           },
+          "ethernet-ip": {
+            "host": "Host",
+            "slot": "Slot",
+            "connected-messaging": "Connected messaging",
+            "timeout": "Timeout",
+            "retry-interval": "Retry interval"
+          },
           "mqtt": {
             "url": "URL",
             "qos": {
@@ -2128,6 +2137,9 @@
             },
             "s7": {
               "address": "Address"
+            },
+            "ethernet-ip": {
+              "tag-name": "Tag name"
             },
             "mqtt": {
               "topic": "Topic"

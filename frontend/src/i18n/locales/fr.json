@@ -749,6 +749,13 @@
             "request-timeout": "Délai de requête",
             "retry-interval": "Intervalle de nouvelle tentative"
           },
+          "ethernet-ip": {
+            "host": "Hôte",
+            "slot": "Slot",
+            "connected-messaging": "Messagerie connectée",
+            "timeout": "Délai d'attente",
+            "retry-interval": "Intervalle de nouvelle tentative"
+          },
           "mqtt": {
             "url": "URL",
             "qos": {
@@ -1132,6 +1139,9 @@
             },
             "s7": {
               "address": "Adresse"
+            },
+            "ethernet-ip": {
+              "tag-name": "Nom du tag"
             },
             "mqtt": {
               "topic": "Sujet"
@@ -2804,6 +2814,7 @@
       "postgresql": "PostgreSQL",
       "rest": "API REST",
       "s7": "Siemens® S7",
+      "ethernet-ip": "Rockwell® EtherNet/IP™",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -2828,6 +2839,7 @@
       "postgresql": "Interroger des bases de données PostgreSQL",
       "rest": "Collecter des données depuis des points de terminaison d'API REST",
       "s7": "Accéder aux données d'un automate Siemens® S7 via ISO-on-TCP",
+      "ethernet-ip": "Lire les tags des automates Rockwell® ControlLogix® et CompactLogix® via EtherNet/IP™",
       "sftp": "Lire des fichiers depuis un serveur SFTP distant",
       "sqlite": "Interroger des bases de données SQLite™"
     }
