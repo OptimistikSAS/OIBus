@@ -273,7 +273,7 @@ describe('EditSouthItemModalComponent', () => {
     await expect.element(tester.startTimeOffset).toHaveValue(0);
     await expect.element(tester.endTimeOffset).toHaveValue(0);
     await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From oldest to newest');
-    await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Keep the tracked instant');
+    await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Query the same period again next time');
   });
 
   test('should only offer polling schedules to a polling connector', async () => {
@@ -464,7 +464,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.reviewed('Sync with group')).toHaveTextContent('Yes');
       await expect.element(tester.reviewed('Max read interval')).toHaveTextContent('60 s');
       await expect.element(tester.reviewed('Recovery strategy')).toHaveTextContent('From newest to oldest');
-      await expect.element(tester.reviewed('When no data is found')).toHaveTextContent('Advance the tracked instant');
+      await expect.element(tester.reviewed('When no data is found')).toHaveTextContent('Skip this period next time');
       // the connector specific settings
       await expect.element(tester.root.getByCss('#settings-summary')).toBeInTheDocument();
     });
@@ -557,7 +557,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.endTimeOffset).toHaveValue(600);
       await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From newest to oldest');
       await expect.element(tester.emptyIntervalStrategy).toBeDisabled();
-      await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Advance the tracked instant');
+      await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Skip this period next time');
 
       await tester.save();
       // synced with the group: the historian fields are inherited from it
@@ -597,7 +597,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.startTimeOffset).toHaveValue(0);
       await expect.element(tester.endTimeOffset).toHaveValue(0);
       await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From oldest to newest');
-      await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Keep the tracked instant');
+      await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Query the same period again next time');
     });
 
     test('should keep the item own historian values when it is not synced with its group', async () => {
@@ -608,7 +608,7 @@ describe('EditSouthItemModalComponent', () => {
       await tester.syncWithGroup.click();
       await expect.element(tester.maxReadInterval).toBeEnabled();
       await tester.maxReadInterval.fill('120');
-      await tester.emptyIntervalStrategy.selectOptions('Keep the tracked instant');
+      await tester.emptyIntervalStrategy.selectOptions('Query the same period again next time');
       await tester.save();
 
       expect(savedCommand()).toEqual(
@@ -1020,7 +1020,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.startTimeOffset).toHaveValue(10);
       await expect.element(tester.endTimeOffset).toHaveValue(20);
       await expect.element(tester.recoveryStrategy).toHaveDisplayValue('From newest to oldest');
-      await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Advance the tracked instant');
+      await expect.element(tester.emptyIntervalStrategy).toHaveDisplayValue('Skip this period next time');
       await expect.element(tester.cachingStrategy).toHaveDisplayValue('On change');
       await expect.element(tester.maxCachingInterval).toHaveValue(1000);
       // nothing typed yet: no confirmation before dismissing
