@@ -18,7 +18,7 @@ import { SouthItemSettings } from '../../shared/model/connector/south-settings.m
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { SouthConnectorEntityLight, SouthConnectorItemEntity, SouthItemGroupEntity } from '../model/south-connector.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
+import { NotFoundError, OIBusExploreError, OIBusValidationError } from '../model/types';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
 import type CertificateRepository from '../repository/config/certificate.repository';
 import type NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -985,7 +985,7 @@ describe('South Service', () => {
 
     await assert.rejects(
       () => service.startExplore('create', testData.south.command.type, testData.south.command.settings),
-      /connect failed/
+      new OIBusExploreError('connect failed', 'connection')
     );
     assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
   });
@@ -998,9 +998,21 @@ describe('South Service', () => {
 
     await assert.rejects(
       () => service.startExplore('create', testData.south.command.type, testData.south.command.settings),
-      /browse failed/
+      new OIBusExploreError('browse failed', null)
     );
     assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+  });
+
+  it('should tell a permission error when the initial browse is denied', async () => {
+    mock.method(mockedSouth1, 'hasExplore', () => true);
+    mockedSouth1.explore.mock.mockImplementation(async () => {
+      throw Object.assign(new Error("The SELECT permission was denied on the object 'tables'"), { code: 'EREQUEST', number: 229 });
+    });
+
+    await assert.rejects(
+      () => service.startExplore('create', testData.south.command.type, testData.south.command.settings),
+      new OIBusExploreError("The SELECT permission was denied on the object 'tables'", 'permission')
+    );
   });
 
   it('should browse an explore session', async () => {
@@ -1014,6 +1026,19 @@ describe('South Service', () => {
 
     assert.deepStrictEqual(result, { entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }] });
     assert.strictEqual(mockedSouth1.explore.mock.calls[1].arguments[0], 'parent');
+  });
+
+  it('should tell why browsing an explore session failed', async () => {
+    mock.method(mockedSouth1, 'hasExplore', () => true);
+    const { sessionId } = await service.startExplore('create', testData.south.command.type, testData.south.command.settings);
+    mockedSouth1.explore.mock.mockImplementation(async () => {
+      throw Object.assign(new Error('permission denied for table logs'), { code: '42501' });
+    });
+
+    await assert.rejects(
+      () => service.browseExplore(sessionId, 'parent'),
+      new OIBusExploreError('permission denied for table logs', 'permission')
+    );
   });
 
   it('should close an explore session', async () => {

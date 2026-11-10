@@ -1544,8 +1544,10 @@
     "explore": {
       "title": "Explorer la source de données",
       "button": "Explorer",
-      "empty": "Rien à explorer",
+      "empty": "Rien à explorer : la source de données est vide, ou son utilisateur n'est pas autorisé à voir ce qu'elle contient",
       "error": "Erreur lors de l'exploration de la source de données",
+      "error-connection": "Impossible de se connecter à la source de données. Vérifiez les paramètres de connexion, et que la source de données est joignable depuis OIBus.",
+      "error-permission": "Connecté à la source de données, mais son utilisateur n'est pas autorisé à lister ce qu'elle contient. Demandez un accès en lecture (pour une base de données, aux tables système qui listent ses tables et ses colonnes).",
       "expand": "Déplier {{name}}",
       "collapse": "Replier {{name}}",
       "no-selection": "Sélectionnez un nœud pour afficher ses détails",

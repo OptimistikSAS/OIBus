@@ -404,7 +404,8 @@ export class SouthConnectorController extends Controller {
     try {
       return await southService.startExplore(southId, southType, command);
     } catch (error: unknown) {
-      throw new OIBusTestingError((error as Error).message);
+      // Keeps why the data source could not be explored
+      throw error instanceof OIBusTestingError ? error : new OIBusTestingError((error as Error).message);
     }
   }
 
@@ -423,7 +424,8 @@ export class SouthConnectorController extends Controller {
     try {
       return await southService.browseExplore(sessionId, command.parentId);
     } catch (error: unknown) {
-      throw new OIBusTestingError((error as Error).message);
+      // Keeps why the data source could not be explored
+      throw error instanceof OIBusTestingError ? error : new OIBusTestingError((error as Error).message);
     }
   }
 

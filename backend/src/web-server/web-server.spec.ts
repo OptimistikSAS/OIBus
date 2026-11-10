@@ -16,7 +16,7 @@ import * as forge from 'node-forge';
 
 import { WebServerHttpsSettings } from '../../shared/model/domain/engine.model';
 
-import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
+import { NotFoundError, OIBusExploreError, OIBusTestingError, OIBusValidationError } from '../model/types';
 import type AuditService from '../service/audit.service';
 import type CertificateService from '../service/certificate.service';
 import type ConfigImportService from '../service/config-transfer/config-import.service';
@@ -146,6 +146,7 @@ describe('WebServer', () => {
         app.get('/test-notfound', (_req, _res, next) => next(new NotFoundError('test')));
         app.get('/test-oibus-validation', (_req, _res, next) => next(new OIBusValidationError('val')));
         app.get('/test-oibus-testing', (_req, _res, next) => next(new OIBusTestingError('test')));
+        app.get('/test-oibus-explore', (_req, _res, next) => next(new OIBusExploreError('denied', 'permission')));
         app.get('/test-joi-validation', (_req, _res, next) => next(Joi.object({ nodeId: Joi.string() }).validate({ nodeId: 3 }).error));
         app.get('/test-validate-error', (_req, _res, next) => next(new ValidateError({ f: { message: 'b', value: 'x' } }, 'v')));
         app.get('/test-generic-error', (_req, _res, next) => next(new Error('generic')));
@@ -479,6 +480,10 @@ describe('WebServer', () => {
 
       const r3 = await fetch(`${base}/test-oibus-testing`);
       assert.equal(r3.status, 400);
+
+      const r3a = await fetch(`${base}/test-oibus-explore`);
+      assert.equal(r3a.status, 400);
+      assert.deepEqual(await r3a.json(), { message: 'denied', kind: 'permission' });
 
       const r3b = await fetch(`${base}/test-joi-validation`);
       assert.equal(r3b.status, 400);

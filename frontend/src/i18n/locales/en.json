@@ -2540,8 +2540,10 @@
     "explore": {
       "title": "Explore data source",
       "button": "Explore",
-      "empty": "Nothing to explore",
+      "empty": "Nothing to explore: the data source is empty, or its user is not allowed to see what it holds",
       "error": "Error while exploring the data source",
+      "error-connection": "Could not connect to the data source. Check the connection settings, and that the data source can be reached from OIBus.",
+      "error-permission": "Connected to the data source, but its user is not allowed to list what it holds. Ask for read access to it (for a database, to the system tables listing its tables and columns).",
       "expand": "Expand {{name}}",
       "collapse": "Collapse {{name}}",
       "no-selection": "Select a node to see its details",
