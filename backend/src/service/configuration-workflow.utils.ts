@@ -48,6 +48,23 @@ export function resolveIdentityKeyFields(command: ConfigurationWorkflowCommandDT
   return command.pushToOIAnalytics ? [] : command.identityKeyFields;
 }
 
+/** The fields pushed to OIAnalytics only apply to a remote workflow, so whatever a local one was sent with is discarded rather
+ *  than stored as meaningless configuration - and a field listed twice is pushed once. */
+export function resolvePushedFields(command: Pick<ConfigurationWorkflowCommandDTO, 'pushToOIAnalytics' | 'pushedFields'>): Array<string> {
+  return command.pushToOIAnalytics ? Array.from(new Set(command.pushedFields)) : [];
+}
+
+/**
+ * The records as a remote workflow pushes them to OIAnalytics: only their `pushedFields`, in this order - a field a record
+ * does not have stays missing - or every field when none is listed.
+ */
+export function selectPushedFields(records: Array<OIBusRecord>, pushedFields: Array<string>): Array<OIBusRecord> {
+  if (pushedFields.length === 0) {
+    return records;
+  }
+  return records.map(record => Object.fromEntries(pushedFields.filter(field => field in record).map(field => [field, record[field]])));
+}
+
 /** How many values of each field a preview returns, for a field process to be tested on. */
 const FIELD_SAMPLE_SIZE = 5;
 

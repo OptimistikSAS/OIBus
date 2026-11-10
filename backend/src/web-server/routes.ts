@@ -4101,6 +4101,7 @@ const models: TsoaRoute.Models = {
             "eligibilityFilter": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFilterCondition"},"required":true},
             "itemFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
             "pushToOIAnalytics": {"dataType":"boolean","required":true},
+            "pushedFields": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "enabled": {"dataType":"boolean","required":true},
         },
@@ -4936,9 +4937,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Record_string.string-or-number_": {
+    "Record_string.string-or-number-or-boolean_": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}]},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"},{"dataType":"boolean"}]},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorExploreFieldKind": {
@@ -4956,7 +4957,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "id": {"dataType":"string","required":true},
             "name": {"dataType":"string","required":true},
-            "metadata": {"ref":"Record_string.string-or-number_","required":true},
+            "metadata": {"ref":"Record_string.string-or-number-or-boolean_","required":true},
             "metadataKinds": {"ref":"Partial_Record_string.SouthConnectorExploreFieldKind__"},
             "hasChildren": {"dataType":"boolean","required":true},
         },
@@ -10517,6 +10518,7 @@ const models: TsoaRoute.Models = {
             "eligibilityFilter": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFilterCondition"},"required":true},
             "itemFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
             "pushToOIAnalytics": {"dataType":"boolean","required":true},
+            "pushedFields": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "scanMode": {"dataType":"union","subSchemas":[{"ref":"ScanModeDTO"},{"dataType":"enum","enums":[null]}],"required":true},
             "enabled": {"dataType":"boolean","required":true},
         },

@@ -35,6 +35,7 @@ describe('Item Point Metadata Repository', () => {
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}' },
         pushToOIAnalytics: false,
+        pushedFields: [],
         scanMode: null,
         enabled: true
       },

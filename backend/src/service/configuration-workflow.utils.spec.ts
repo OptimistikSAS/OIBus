@@ -17,7 +17,9 @@ import {
   processRecords,
   resolveFieldMapping,
   resolveIdentityKeyFields,
-  sampleFieldValues
+  resolvePushedFields,
+  sampleFieldValues,
+  selectPushedFields
 } from './configuration-workflow.utils';
 
 describe('configuration-workflow.utils', () => {
@@ -32,6 +34,7 @@ describe('configuration-workflow.utils', () => {
     eligibilityFilter: [],
     itemFieldMapping: { name: '{{name}}' },
     pushToOIAnalytics: false,
+    pushedFields: [],
     scanModeId: null,
     enabled: true
   };
@@ -94,6 +97,33 @@ describe('configuration-workflow.utils', () => {
     it('should keep the identity key fields of a local workflow and discard those of a remote one', () => {
       assert.deepStrictEqual(resolveIdentityKeyFields(localCommand), ['nodeId']);
       assert.deepStrictEqual(resolveIdentityKeyFields(remoteCommand), []);
+    });
+  });
+
+  describe('resolvePushedFields', () => {
+    it('should keep the fields to push of a remote workflow, once each, and discard those of a local one', () => {
+      assert.deepStrictEqual(resolvePushedFields({ pushToOIAnalytics: true, pushedFields: ['nodeId', 'unit', 'nodeId'] }), [
+        'nodeId',
+        'unit'
+      ]);
+      assert.deepStrictEqual(resolvePushedFields({ pushToOIAnalytics: false, pushedFields: ['nodeId'] }), []);
+    });
+  });
+
+  describe('selectPushedFields', () => {
+    const records: Array<OIBusRecord> = [
+      { nodeId: 'ns=1;s=Temperature', unit: '°C', min: null },
+      { nodeId: 'ns=1;s=Count', type: 'Variable' }
+    ];
+
+    it('should keep every field when none is listed', () => {
+      assert.strictEqual(selectPushedFields(records, []), records);
+    });
+
+    it('should keep only the listed fields, in their order, a missing one staying missing and a null one kept', () => {
+      const selected = selectPushedFields(records, ['min', 'unit', 'nodeId']);
+      assert.deepStrictEqual(selected, [{ min: null, unit: '°C', nodeId: 'ns=1;s=Temperature' }, { nodeId: 'ns=1;s=Count' }]);
+      assert.deepStrictEqual(Object.keys(selected[0]), ['min', 'unit', 'nodeId']);
     });
   });
 

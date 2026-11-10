@@ -169,6 +169,7 @@ describe('SouthConnectorRepository', () => {
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}' },
         pushToOIAnalytics: false,
+        pushedFields: [],
         scanMode: null,
         enabled: true,
         ...overrides
@@ -256,6 +257,7 @@ describe('SouthConnectorRepository', () => {
       eligibilityFilter: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true,
+      pushedFields: [],
       scanMode: null,
       enabled: true
     };
@@ -289,6 +291,7 @@ describe('SouthConnectorRepository', () => {
       eligibilityFilter: [],
       itemFieldMapping: { name: '{{name}}', groupId: 'temp_1' },
       pushToOIAnalytics: false,
+      pushedFields: [],
       scanMode: null,
       enabled: true
     };

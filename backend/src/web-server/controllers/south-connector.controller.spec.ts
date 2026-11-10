@@ -379,6 +379,7 @@ describe('SouthConnectorController', () => {
         eligibilityFilter: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
+        pushedFields: [],
         scanModeId: null,
         enabled: true
       }

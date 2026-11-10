@@ -67,7 +67,7 @@ import SouthConnectorMetricsRepository from '../repository/metrics/south-connect
 import { toExploreError } from '../south/explore-error';
 import { buildSouth } from '../south/south-connector-factory';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { checkAddedFields, checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
+import { checkAddedFields, checkWorkflowMode, resolveIdentityKeyFields, resolvePushedFields } from './configuration-workflow.utils';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
@@ -268,6 +268,7 @@ export default class SouthService {
         eligibilityFilter: workflow.eligibilityFilter,
         itemFieldMapping: workflow.itemFieldMapping,
         pushToOIAnalytics: workflow.pushToOIAnalytics,
+        pushedFields: resolvePushedFields(workflow),
         scanMode: workflow.scanModeId ? checkScanMode(scanModes, workflow.scanModeId, null) : null,
         enabled: workflow.enabled
       };

@@ -71,6 +71,7 @@ export function buildWorkflow(id: string, name: string, overrides: Partial<Confi
     eligibilityFilter: [],
     itemFieldMapping: { name: '{{name}}' },
     pushToOIAnalytics: false,
+    pushedFields: [],
     scanMode: null,
     enabled: true,
     createdAt: '',
@@ -97,6 +98,7 @@ export function buildWorkflowCommand(
     eligibilityFilter: [],
     itemFieldMapping: { name: '{{name}}' },
     pushToOIAnalytics: false,
+    pushedFields: [],
     scanModeId: null,
     enabled: true,
     ...overrides

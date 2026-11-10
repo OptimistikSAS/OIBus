@@ -2585,7 +2585,12 @@
         "networkNumber": "Network number",
         "macAddress": "MAC address",
         "objectType": "Object type",
-        "objectInstance": "Object instance"
+        "objectInstance": "Object instance",
+        "dataType": "Data type",
+        "typeDefinition": "Type definition",
+        "accessLevel": "Access level",
+        "historizing": "Historizing",
+        "minimumSamplingInterval": "Minimum sampling interval (ms)"
       },
       "check": "Select {{name}}",
       "check-children": "Select all the sub-nodes of {{name}}",
@@ -3013,6 +3018,9 @@
       "mode-remote": "Push to OIAnalytics",
       "mode-sql-fixed": "This connector only supports pushing to OIAnalytics - a query can return several distinct points, so items are never created or updated by a synchronisation here.",
       "mode-remote-not-registered": "OIBus is not registered with OIAnalytics - nothing will be pushed until it is registered",
+      "pushed-fields": "Fields to push",
+      "pushed-fields-hint": "The fields of the records sent to OIAnalytics. When none is checked, every field is sent.",
+      "pushed-fields-all": "Every field",
       "enabled": "Enabled",
       "confirm-deletion": "Are you sure you want to delete the items synchronisation \"{{name}}\"?",
       "created": "Items synchronisation created",

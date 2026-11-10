@@ -1587,7 +1587,12 @@
         "networkNumber": "网络号",
         "macAddress": "MAC 地址",
         "objectType": "对象类型",
-        "objectInstance": "对象实例"
+        "objectInstance": "对象实例",
+        "dataType": "数据类型",
+        "typeDefinition": "类型定义",
+        "accessLevel": "访问级别",
+        "historizing": "历史归档",
+        "minimumSamplingInterval": "最小采样间隔（毫秒）"
       },
       "check": "选择 {{name}}",
       "check-children": "选择 {{name}} 的所有子节点",
@@ -2015,6 +2020,9 @@
       "mode-remote": "推送到 OIAnalytics",
       "mode-sql-fixed": "此连接器仅支持推送到 OIAnalytics - 一个查询可能返回多个不同的点，因此此处的同步永远不会创建或更新项。",
       "mode-remote-not-registered": "OIBus 尚未注册到 OIAnalytics - 注册之前不会推送任何内容",
+      "pushed-fields": "要推送的字段",
+      "pushed-fields-hint": "发送到 OIAnalytics 的记录字段。未勾选任何字段时，将发送所有字段。",
+      "pushed-fields-all": "所有字段",
       "enabled": "已启用",
       "confirm-deletion": "您确定要删除项同步“{{name}}”吗？",
       "created": "项同步已创建",

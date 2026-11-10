@@ -19,7 +19,7 @@ OPC 统一架构（OPC UA）协议，用于以只读模式安全访问工业数�
 
 ## OPC Classic 与 OPC UA 对比 {#opc-classic-vs-opc-ua}
 
-|                  | OPC Classic                                                                | OPC UA                                                                 |
+|                  | OPC Classic                                                                 | OPC UA                                                                 |
 | ---------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | **标准**         | 三个独立规范：**DA**（实时数据）、**HDA**（历史数据）、**AE**（报警与事件） | 统一标准：**DA**（实时数据）+ **HA**（历史访问）+ 报警                 |
 | **历史模式名称** | **HDA** —— 历史数据访问                                                     | **HA** —— 历史访问（OPC UA Part 11）。概念相同，名称不同 —— 见下方说明 |
@@ -27,7 +27,7 @@ OPC 统一架构（OPC UA）协议，用于以只读模式安全访问工业数�
 | **平台**         | 仅限 Windows                                                                | 跨平台：Windows、Linux、macOS、嵌入式设备                              |
 | **安全性**       | 依赖 Windows 域/DCOM 安全机制                                               | 内置：消息签名、加密、基于证书的身份验证                               |
 | **推出时间**     | 1996 年                                                                     | 2006 年                                                                |
-| **OIBus 要求**   | OIBus 运行在 Windows 上，并已安装 OPC Core Components                       | 由 OIBus 直接连接                                                    |
+| **OIBus 要求**   | OIBus 运行在 Windows 上，并已安装 OPC Core Components                       | 由 OIBus 直接连接                                                      |
 
 :::note HDA 与 HA —— 命名上的混淆
 来自 OPC Classic 背景的用户经常在 OPC UA 中寻找 **HDA**，却找不到。
@@ -187,21 +187,27 @@ OIBus 会将其视为已丢失并重新连接。**读取超时**不用于订阅�
 在浏览服务器时——无论是通过[**浏览**](./common-settings.md#exploring-the-data-source)，还是在
 [项同步](./common-settings.md#items-synchronisation)运行中——只要服务器公开了以下字段，OIBus 就会为每个 Variable 节点读取这些字段：
 
-| 字段          | 在 OPC UA 地址空间中的来源                                | 浏览 | 项同步 |
-| ------------- | --------------------------------------------------------- | :--: | :----: |
-| `id`          | 节点标识符，用于在多次运行之间识别该记录                  |      |   ✓    |
-| `nodeId`      | 节点标识符                                                |  ✓   |   ✓    |
-| `name`        | 节点的显示名称                                            |  ✓   |   ✓    |
-| `path`        | 从发现根节点到该节点的各级显示名称，以 `/` 连接           |      |   ✓    |
-| `type`        | 节点类别（`Variable`、`Object`……）                        |  ✓   |   ✓    |
-| `description` | 节点的 `Description` 属性                                 |  ✓   |   ✓    |
-| `unit`        | `EngineeringUnits` 属性的显示名称（模拟量项目）           |  ✓   |   ✓    |
-| `min` / `max` | `EURange` 属性的下限 / 上限——即正常工作范围（模拟量项目） |  ✓   |   ✓    |
-| `value`       | 当前值                                                    |  ✓   |        |
+| 字段                      | 在 OPC UA 地址空间中的来源                                                          | 浏览 | 项同步 |
+| ------------------------- | ----------------------------------------------------------------------------------- | :--: | :----: |
+| `id`                      | 节点标识符，用于在多次运行之间识别该记录                                            |      |   ✓    |
+| `nodeId`                  | 节点标识符                                                                          |  ✓   |   ✓    |
+| `name`                    | 节点的显示名称                                                                      |  ✓   |   ✓    |
+| `path`                    | 从 `Objects` 文件夹下到该节点的各级显示名称，以 `/` 连接                            |      |   ✓    |
+| `type`                    | 节点类别（`Variable`、`Object`……）                                                  |  ✓   |   ✓    |
+| `description`             | 节点的 `Description` 属性                                                           |  ✓   |   ✓    |
+| `unit`                    | `EngineeringUnits` 属性的显示名称（模拟量项目）                                     |  ✓   |   ✓    |
+| `min` / `max`             | `EURange` 属性的下限 / 上限——即正常工作范围（模拟量项目）                           |  ✓   |   ✓    |
+| `dataType`                | `DataType` 属性——标准类型名称（`Double`、`Boolean`……），或服务器自定义类型的节点 ID |  ✓   |   ✓    |
+| `typeDefinition`          | 节点类型定义的浏览名称（`AnalogItemType`、`BaseDataVariableType`……）                |  ✓   |   ✓    |
+| `accessLevel`             | `AccessLevel` 属性，以标志表示（`CurrentRead \| CurrentWrite \| HistoryRead`……）    |  ✓   |   ✓    |
+| `historizing`             | `Historizing` 属性——服务器当前是否归档该值的历史                                    |  ✓   |   ✓    |
+| `minimumSamplingInterval` | `MinimumSamplingInterval` 属性，单位为毫秒（`0`：连续，`-1`：未知）                 |  ✓   |   ✓    |
+| `value`                   | 当前值                                                                              |  ✓   |        |
 
 如果服务器未为某个节点公开某个字段，则直接省略该字段。同步从不读取当前值：当前值每次运行都会变化，会导致每个节点都看起来发生了变化。
 在同步中，这些字段可用于资格筛选以及项目字段映射表达式（例如 `{{unit}}`）。[发现默认值](./common-settings.md#discovery-defaults)
-以 `path` 为每个项目命名：与仅使用显示名称不同，它在不同文件夹之间保持唯一。
+以 `path` 为每个项目命名：与仅使用显示名称不同，它在不同文件夹之间保持唯一。无论选择哪个节点，`path` 始终从 `Objects`
+文件夹下开始：单独选择的变量也会以其所有父节点的名称命名。
 
 所选节点可以直接从浏览弹窗中添加为项目或保持同步——参见[选择节点](./common-settings.md#selecting-nodes)。
 

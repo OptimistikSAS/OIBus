@@ -93,6 +93,12 @@ export interface ConfigurationWorkflowEntity extends BaseEntity {
    */
   pushToOIAnalytics: boolean;
 
+  /**
+   * Remote mode: the fields of the eligible records sent to OIAnalytics, in this order - empty sends every field. Always
+   * empty for a local workflow.
+   */
+  pushedFields: Array<string>;
+
   /** Null means manual-only — the workflow only ever runs when explicitly triggered. */
   scanMode: ScanMode | null;
 
@@ -110,6 +116,7 @@ export interface ConfigurationWorkflowCommand {
   eligibilityFilter: Array<RecordFilterCondition>;
   itemFieldMapping: Record<string, string> | null;
   pushToOIAnalytics: boolean;
+  pushedFields: Array<string>;
   scanMode: ScanMode | null;
   enabled: boolean;
 }

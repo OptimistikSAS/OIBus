@@ -192,10 +192,11 @@ describe('ExploreTreeComponent', () => {
       await expect.element(tester.row('Pressure')).not.toHaveAttribute('aria-current');
     });
 
-    test.each<{ kind: SouthConnectorExploreFieldKind | undefined; value: string | number; expected: string }>([
+    test.each<{ kind: SouthConnectorExploreFieldKind | undefined; value: string | number | boolean; expected: string }>([
       { kind: 'size', value: 512, expected: '512 B' },
       { kind: 'instant', value: '2021-01-12T13:35:07.123Z', expected: '12 Jan 2021, 13:35:07.123' },
-      { kind: undefined, value: 3, expected: '3' }
+      { kind: undefined, value: 3, expected: '3' },
+      { kind: undefined, value: false, expected: 'false' }
     ])('should format a metadata field of kind $kind', async ({ kind, value, expected }) => {
       prepareWith([
         {

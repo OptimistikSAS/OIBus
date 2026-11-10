@@ -81,6 +81,13 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
    */
   pushToOIAnalytics: boolean;
 
+  /**
+   * Remote mode: the fields of the eligible records sent to OIAnalytics, in this order - empty sends every field. Always
+   * empty for a local workflow.
+   * @example ["nodeId", "path", "unit"]
+   */
+  pushedFields: Array<string>;
+
   /** Null means manual-only — the workflow only ever runs when explicitly triggered. */
   scanMode: ScanModeDTO | null;
 
@@ -115,6 +122,13 @@ export interface ConfigurationWorkflowCommandDTO {
   eligibilityFilter: Array<RecordFilterCondition>;
   itemFieldMapping: Record<string, string> | null;
   pushToOIAnalytics: boolean;
+
+  /**
+   * Remote mode: the fields of the eligible records sent to OIAnalytics, in this order - empty sends every field. Local
+   * mode: ignored, and stored empty — send `[]`.
+   * @example ["nodeId", "path", "unit"]
+   */
+  pushedFields: Array<string>;
 
   /**
    * The ID of the scan mode to use for this workflow, or null for manual-only.
