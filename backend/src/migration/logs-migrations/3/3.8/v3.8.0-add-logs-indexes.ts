@@ -25,6 +25,13 @@ import { Knex } from 'knex';
  *        append-heavy, rare bulk deletes — this is the right trade vs the
  *        previous "boot-time multi-second full vacuum" pattern.
  *
+ *    On a large database, VACUUM rewrites the whole file (and, in WAL mode,
+ *    a WAL of the same size): it can take a very long time and a reboot in
+ *    the middle of it used to leave OIBus unable to start. Above
+ *    MAX_DB_SIZE_TO_VACUUM the switch is skipped: the file keeps its size,
+ *    but SQLite reuses the pages freed by the log rotation, so it does not
+ *    grow either.
+ *
  * `CREATE INDEX IF NOT EXISTS` makes the index part idempotent; the
  * auto-vacuum part is naturally idempotent (PRAGMA + VACUUM converges to the
  * same end state regardless of how often it runs).
@@ -43,9 +50,19 @@ const LOG_TABLE = 'logs';
  */
 export const config = { transaction: false };
 
+export const MAX_DB_SIZE_TO_VACUUM = 100 * 1024 * 1024; // 100 MB
+
 export async function up(knex: Knex): Promise<void> {
   await knex.raw(`CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON ${LOG_TABLE} (timestamp);`);
   await knex.raw(`CREATE INDEX IF NOT EXISTS idx_logs_scope ON ${LOG_TABLE} (scope_id, scope_type);`);
+
+  const [{ page_count: pageCount }] = (await knex.raw('PRAGMA page_count;')) as Array<{ page_count: number }>;
+  const [{ page_size: pageSize }] = (await knex.raw('PRAGMA page_size;')) as Array<{ page_size: number }>;
+  const dbSize = pageCount * pageSize;
+  if (dbSize > MAX_DB_SIZE_TO_VACUUM) {
+    console.info(`Logs database is too large (${dbSize} bytes) to be vacuumed during migration. Skipping auto_vacuum switch`);
+    return;
+  }
 
   // Setting auto_vacuum is a no-op on a non-empty DB without a subsequent
   // VACUUM — order matters. Future inserts/deletes will then self-maintain.

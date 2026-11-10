@@ -44,7 +44,8 @@ class SqliteTransport {
       }
       // No vacuum logic here — the v3.8.0 migration switches the DB to
       // `auto_vacuum = FULL`, so SQLite reclaims free pages itself as part
-      // of every transaction that frees them. No manual call needed.
+      // of every transaction that frees them. On DBs too large to be switched,
+      // freed pages are reused by new logs, so the file does not grow either.
     } catch (error: unknown) {
       console.error(`Error while preparing logs database: ${(error as Error).message}`);
     }

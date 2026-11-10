@@ -1,4 +1,4 @@
-import { describe, it, before, after, mock } from 'node:test';
+import { describe, it, before, after, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -51,13 +51,59 @@ describe('migration-service', () => {
     });
   });
 
+  describe('stale migration lock', () => {
+    it('releases a lock left by an interrupted migration instead of failing', async () => {
+      const dbPath = path.join(tmpDir, 'locked.db');
+      await migrateEntities(dbPath);
+      const db = new Database(dbPath);
+      db.prepare('UPDATE migrations_lock SET is_locked = 1').run();
+      db.close();
+
+      await assert.doesNotReject(migrateEntities(dbPath));
+
+      const check = new Database(dbPath, { readonly: true });
+      const rows = check.prepare('SELECT is_locked FROM migrations_lock').all() as Array<{ is_locked: number }>;
+      check.close();
+      assert.deepStrictEqual(rows, [{ is_locked: 0 }]);
+    });
+  });
+
   describe('migrateLogs', () => {
+    afterEach(() => {
+      mock.restoreAll();
+    });
+
     it('runs the real logs migrations against a fresh db', async () => {
       const dbPath = path.join(tmpDir, 'logs.db');
       await assert.doesNotReject(migrateLogs(dbPath));
 
       const applied = appliedMigrationNames(dbPath);
       assert.ok(applied.length > 0, 'expected at least one applied logs migration');
+    });
+
+    it('moves an unusable logs db aside and starts with a fresh one', async () => {
+      const logsDir = await fs.mkdtemp(path.join(tmpDir, 'broken-logs-'));
+      const dbPath = path.join(logsDir, 'logs.db');
+      await fs.writeFile(dbPath, 'this is not a sqlite database, but it is long enough to be read as a header');
+      await fs.writeFile(`${dbPath}-shm`, 'shm');
+      const errorMock = mock.method(console, 'error', () => undefined);
+
+      await assert.doesNotReject(migrateLogs(dbPath));
+
+      assert.strictEqual(errorMock.mock.callCount(), 1);
+      const files = await fs.readdir(logsDir);
+      const backup = files.find(file => /^logs\.db-\d+\.bak$/.test(file));
+      assert.ok(backup, `expected a backup of the broken db, got ${files.join(', ')}`);
+      assert.ok(files.includes(`${backup}-shm`), 'expected the -shm file to be moved along with the db');
+      assert.match(await fs.readFile(path.join(logsDir, backup), 'utf8'), /not a sqlite database/);
+      assert.ok(appliedMigrationNames(dbPath).length > 0, 'expected the fresh logs db to be migrated');
+    });
+
+    it('rejects when the fresh logs db cannot be migrated either', async () => {
+      const dbPath = path.join(tmpDir, 'missing-folder', 'logs.db');
+      mock.method(console, 'error', () => undefined);
+
+      await assert.rejects(migrateLogs(dbPath));
     });
   });
 
