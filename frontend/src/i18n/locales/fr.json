@@ -794,7 +794,7 @@
               "templates": {
                 "wonderware-historian-tags": {
                   "title": "Tags Wonderware Historian",
-                  "description": "Les tags analogiques, discrets et texte d'un Wonderware (AVEVA) Historian, avec leur description, leur unité, leur plage de mesure et leur source d'acquisition. Se connecter à sa base Runtime ; les tags système de l'Historian (Sys...) sont exclus."
+                  "description": "Les tags analogiques, discrets et texte d'un Historian Wonderware (AVEVA) 2020, 2023 ou 2026, avec leur description, leur unité, leur plage de mesure et leur source d'acquisition - et, pour les tags d'un Application Server, leur zone (area), leur équipement, leur sous-équipement et leur nom hiérarchique. Connectez-vous à sa base Runtime ; les tags système de l'Historian (Sys...) sont exclus."
                 }
               }
             }
