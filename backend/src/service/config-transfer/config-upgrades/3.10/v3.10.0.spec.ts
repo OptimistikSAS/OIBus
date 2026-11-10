@@ -11,11 +11,15 @@ import {
   COMPRESSED_FILE_OPTIONS,
   FILE_AS_IS_OPTIONS,
   keepsResolvedTransformer,
+  toCsvDelimiter,
   toFieldProcessOperations,
+  toFileOutputTransformerOptions,
+  toFileTransformerOptions,
   toLocalOleDbSettings,
   toNewSqlItemSettings,
   toNoneResamplingItemSettings,
   toOIAnalyticsItemFileOptions,
+  toRecordListTransformerOptions,
   upgrade,
   usesRemoteAgent,
   withoutOdbcAgentSettings,
@@ -251,6 +255,26 @@ describe('3.10.0 config upgrade', () => {
     assert.strictEqual(keepsResolvedTransformer('json-to-csv'), true);
     // A custom transformer has no function name
     assert.strictEqual(keepsResolvedTransformer(null), true);
+  });
+
+  it('replaces the non-breaking space delimiter by the pipe, keeping the other ones', () => {
+    const delimiter = 'NON_BREAKING_SPACE';
+    const serialization = {
+      type: 'csv' as const,
+      filename: 'file.csv',
+      delimiter,
+      compression: false,
+      outputTimestampFormat: 'yyyy-MM-dd',
+      outputTimezone: 'UTC'
+    };
+
+    assert.equal(buildRecordListToCsvOptions({ serialization }).delimiter, 'PIPE');
+    assert.equal((toFileTransformerOptions('csv-to-mqtt', { delimiter }).input as JsonObject).delimiter, 'PIPE');
+    assert.equal((toFileOutputTransformerOptions('json-to-csv', { delimiter }).output as JsonObject).delimiter, 'PIPE');
+    assert.equal((toOIAnalyticsItemFileOptions(serialization).output as JsonObject).delimiter, 'PIPE');
+    assert.equal(toRecordListTransformerOptions('time-values-to-csv', { delimiter }).delimiter, 'PIPE');
+    assert.equal(toCsvDelimiter('TAB', 'COMMA'), 'TAB');
+    assert.equal(toCsvDelimiter(undefined, 'COMMA'), 'COMMA');
   });
 
   it('converts the date time fields of a SQL item to its tracking instant and CSV transformer options', () => {
