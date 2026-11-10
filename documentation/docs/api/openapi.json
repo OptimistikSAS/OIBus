@@ -2055,6 +2055,7 @@
 					"oianalytics",
 					"ads",
 					"bacnet",
+					"ethernet-ip",
 					"folder-scanner",
 					"ftp",
 					"influxdb",
@@ -3997,6 +3998,524 @@
 					"items": {
 						"items": {
 							"$ref": "#/components/schemas/SouthConnectorBACnetItemDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthEtherNetIPItemSettings": {
+				"properties": {
+					"tagName": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"tagName"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorEtherNetIPItemDTO": {
+				"description": "South connector item DTO for EtherNet/IP.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthEtherNetIPItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
+					"cachingStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"example": "onChange"
+					},
+					"thresholdType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingThresholdType"
+							}
+						],
+						"nullable": true,
+						"description": "The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is\n'threshold'.\nAlways item-local, never inherited from a group.",
+						"example": "absolute"
+					},
+					"threshold": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a\npercentage of the configured range depending on thresholdType.\nAlways item-local, never inherited from a group.",
+						"example": 1
+					},
+					"rangeLow": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Lower bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 0
+					},
+					"rangeHigh": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Upper bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 100
+					},
+					"maxCachingInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
+						"example": 3600000
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"description",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy",
+					"emptyIntervalStrategy",
+					"cachingStrategy",
+					"thresholdType",
+					"threshold",
+					"rangeLow",
+					"rangeHigh",
+					"maxCachingInterval"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthEtherNetIPSettings": {
+				"properties": {
+					"host": {
+						"type": "string"
+					},
+					"slot": {
+						"type": "number",
+						"format": "double"
+					},
+					"connectedMessaging": {
+						"type": "boolean"
+					},
+					"timeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"retryInterval": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"host",
+					"slot",
+					"connectedMessaging",
+					"timeout",
+					"retryInterval"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemTypedDTO_SouthEtherNetIPItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthEtherNetIPItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
+					"cachingStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"example": "onChange"
+					},
+					"thresholdType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingThresholdType"
+							}
+						],
+						"nullable": true,
+						"description": "The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is\n'threshold'.\nAlways item-local, never inherited from a group.",
+						"example": "absolute"
+					},
+					"threshold": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a\npercentage of the configured range depending on thresholdType.\nAlways item-local, never inherited from a group.",
+						"example": 1
+					},
+					"rangeLow": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Lower bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 0
+					},
+					"rangeHigh": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Upper bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 100
+					},
+					"maxCachingInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
+						"example": 3600000
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"description",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy",
+					"emptyIntervalStrategy",
+					"cachingStrategy",
+					"thresholdType",
+					"threshold",
+					"rangeLow",
+					"rangeHigh",
+					"maxCachingInterval"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorEtherNetIPDTO": {
+				"description": "South connector configuration for EtherNet/IP.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"ethernet-ip"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector is enabled and active.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthEtherNetIPSettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorEtherNetIPItemDTO"
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
@@ -16094,6 +16613,9 @@
 						"$ref": "#/components/schemas/SouthConnectorBACnetDTO"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorEtherNetIPDTO"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorFolderScannerDTO"
 					},
 					{
@@ -17044,6 +17566,9 @@
 						"$ref": "#/components/schemas/SouthBACnetSettings"
 					},
 					{
+						"$ref": "#/components/schemas/SouthEtherNetIPSettings"
+					},
+					{
 						"$ref": "#/components/schemas/SouthFolderScannerSettings"
 					},
 					{
@@ -17112,6 +17637,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthBACnetItemSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthEtherNetIPItemSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthFolderScannerItemSettings"
@@ -17608,6 +18136,195 @@
 					},
 					"settings": {
 						"$ref": "#/components/schemas/SouthBACnetItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
+					"cachingStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"example": "onChange"
+					},
+					"thresholdType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingThresholdType"
+							}
+						],
+						"nullable": true,
+						"description": "The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is\n'threshold'.\nAlways item-local, never inherited from a group.",
+						"example": "absolute"
+					},
+					"threshold": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a\npercentage of the configured range depending on thresholdType.\nAlways item-local, never inherited from a group.",
+						"example": 1
+					},
+					"rangeLow": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Lower bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 0
+					},
+					"rangeHigh": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Upper bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 100
+					},
+					"maxCachingInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
+						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"description",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy",
+					"emptyIntervalStrategy",
+					"cachingStrategy",
+					"thresholdType",
+					"threshold",
+					"rangeLow",
+					"rangeHigh",
+					"maxCachingInterval"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorEtherNetIPItemCommandDTO": {
+				"description": "South connector item command for EtherNet/IP.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthEtherNetIPItemSettings",
 						"description": "Item-specific settings for data collection."
 					},
 					"scanModeId": {
@@ -21559,6 +22276,9 @@
 						"$ref": "#/components/schemas/SouthConnectorBACnetItemCommandDTO"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorEtherNetIPItemCommandDTO"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorFolderScannerItemCommandDTO"
 					},
 					{
@@ -21770,6 +22490,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorBACnetItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorEtherNetIPItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorFolderScannerItemDTO"
@@ -25234,6 +25957,260 @@
 					"items": {
 						"items": {
 							"$ref": "#/components/schemas/SouthConnectorBACnetItemCommandDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups",
+					"configurationWorkflows"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemCommandTypedDTO_SouthEtherNetIPItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthEtherNetIPItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					},
+					"emptyIntervalStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryEmptyIntervalStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "What to do with the tracked instant when a queried interval returns no new data: keep it, or advance it\nto the end of the interval.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'keep'.",
+						"example": "keep"
+					},
+					"cachingStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC Classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"example": "onChange"
+					},
+					"thresholdType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingThresholdType"
+							}
+						],
+						"nullable": true,
+						"description": "The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is\n'threshold'.\nAlways item-local, never inherited from a group.",
+						"example": "absolute"
+					},
+					"threshold": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a\npercentage of the configured range depending on thresholdType.\nAlways item-local, never inherited from a group.",
+						"example": 1
+					},
+					"rangeLow": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Lower bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 0
+					},
+					"rangeHigh": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Upper bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 100
+					},
+					"maxCachingInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
+						"example": 3600000
+					},
+					"northTransformers": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemNorthTransformerCommandDTO"
+						},
+						"type": "array",
+						"description": "Transformers to attach to north connectors when the item is saved, so that its data is sent to them. They are saved\nwith the item, in the same transaction, after the transformers the norths already have. Left out, the transformers of\nthe norths are not changed."
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"description",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy",
+					"emptyIntervalStrategy",
+					"cachingStrategy",
+					"thresholdType",
+					"threshold",
+					"rangeLow",
+					"rangeHigh",
+					"maxCachingInterval"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorEtherNetIPCommandDTO": {
+				"description": "South connector command for EtherNet/IP.",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"ethernet-ip"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector should be enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthEtherNetIPSettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorEtherNetIPItemCommandDTO"
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
@@ -30353,6 +31330,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorBACnetCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorEtherNetIPCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorFolderScannerCommandDTO"
@@ -37471,6 +38451,39 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryEtherNetIPItemCommandDTO": {
+				"description": "History query item command for EtherNet/IP.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthEtherNetIPItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"description",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryItemCommandDTO": {
 				"anyOf": [
 					{
@@ -37478,6 +38491,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryBACnetItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryEtherNetIPItemCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryFolderScannerItemCommandDTO"
@@ -46997,6 +48013,62 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryEtherNetIPItemDTO": {
+				"description": "History query item DTO for EtherNet/IP.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the item.",
+						"example": "Temperature of the reactor inlet"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthEtherNetIPItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"description",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryItemDTO": {
 				"anyOf": [
 					{
@@ -47004,6 +48076,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryBACnetItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryEtherNetIPItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryFolderScannerItemDTO"

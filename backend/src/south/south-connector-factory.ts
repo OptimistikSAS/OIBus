@@ -8,6 +8,8 @@ import {
   SouthADSSettings,
   SouthBACnetItemSettings,
   SouthBACnetSettings,
+  SouthEtherNetIPItemSettings,
+  SouthEtherNetIPSettings,
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
@@ -60,6 +62,7 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import { createFolder } from '../service/utils';
 import SouthADS from '../south/south-ads/south-ads';
 import SouthBACnet from '../south/south-bacnet/south-bacnet';
+import SouthEtherNetIP from '../south/south-ethernet-ip/south-ethernet-ip';
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthInfluxDB from '../south/south-influxdb/south-influxdb';
@@ -105,6 +108,13 @@ export const buildSouth = (
     case 'bacnet':
       return new SouthBACnet(
         settings as SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings>,
+        addContent,
+        southCacheRepository,
+        southCacheFolder
+      );
+    case 'ethernet-ip':
+      return new SouthEtherNetIP(
+        settings as SouthConnectorEntity<SouthEtherNetIPSettings, SouthEtherNetIPItemSettings>,
         addContent,
         southCacheRepository,
         southCacheFolder

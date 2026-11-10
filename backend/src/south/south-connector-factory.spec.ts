@@ -20,6 +20,7 @@ const nodeRequire = createRequire(import.meta.url);
 const CONNECTORS: Array<{ type: OIBusSouthType; className: string; modulePath: string }> = [
   { type: 'ads', className: 'SouthADS', modulePath: './south-ads/south-ads' },
   { type: 'bacnet', className: 'SouthBACnet', modulePath: './south-bacnet/south-bacnet' },
+  { type: 'ethernet-ip', className: 'SouthEtherNetIP', modulePath: './south-ethernet-ip/south-ethernet-ip' },
   { type: 'folder-scanner', className: 'SouthFolderScanner', modulePath: './south-folder-scanner/south-folder-scanner' },
   { type: 'modbus', className: 'SouthModbus', modulePath: './south-modbus/south-modbus' },
   { type: 'mongodb', className: 'SouthMongoDB', modulePath: './south-mongodb/south-mongodb' },

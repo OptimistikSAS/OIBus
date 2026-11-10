@@ -199,12 +199,13 @@ sync** for the connectors with [discovery](#items-synchronisation), which also k
 [Explore and Sync](#explore-and-sync)). It opens the **Explore data source** modal: a tree of what the data source
 holds, loaded level by level as nodes are expanded.
 
-| Connector                                                 | What the tree shows                                                                 | Actions on selected nodes             |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------- |
-| [OPC UA](./opcua.mdx#node-metadata)                       | The server's address space, with node metadata (node ID, type, description, unit…)  | **Add as items**, **Keep in sync…**   |
-| [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | Devices, then the objects of each device                                            | **Add as items**, **Keep in sync…**   |
-| MSSQL, MySQL, PostgreSQL, Oracle, SQLite                  | Tables (with column and row counts where available), then the columns of each table | **Add in an item**, **Metadata sync** |
-| [Folder Scanner](./folder-scanner.mdx)                    | Folders and files of the input folder, with size and dates                          | — (browsing only)                     |
+| Connector                                                 | What the tree shows                                                                      | Actions on selected nodes             |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------- |
+| [OPC UA](./opcua.mdx#node-metadata)                       | The server's address space, with node metadata (node ID, type, description, unit…)       | **Add as items**, **Keep in sync…**   |
+| [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | Devices, then the objects of each device                                                 | **Add as items**, **Keep in sync…**   |
+| [EtherNet/IP](./ethernet-ip.mdx#exploring-the-tags)       | Programs and controller-scoped tags, then the tags of each program, with their data type | **Add as items**, **Keep in sync…**   |
+| MSSQL, MySQL, PostgreSQL, Oracle, SQLite                  | Tables (with column and row counts where available), then the columns of each table      | **Add in an item**, **Metadata sync** |
+| [Folder Scanner](./folder-scanner.mdx)                    | Folders and files of the input folder, with size and dates                               | — (browsing only)                     |
 
 Click a node to show its details (the metadata the data source gives for it) in a side panel, each value with a copy
 button. Explore uses the settings as currently edited, so it works from the connector's create/edit page before the
@@ -297,7 +298,7 @@ with a copy button, as the names and types of its columns.
 
 ## Caching Strategy {#caching-strategy}
 
-For **IoT-family connectors** (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT, BACnet/IP), each item can filter which
+For **IoT-family connectors** (OPC UA, Modbus, ADS, OPC Classic, S7, EtherNet/IP, MQTT, BACnet/IP), each item can filter which
 collected values are actually cached and forwarded to North connectors, instead of caching every value
 read or received. This reduces cache size and North connector load for stable or slowly-changing points.
 

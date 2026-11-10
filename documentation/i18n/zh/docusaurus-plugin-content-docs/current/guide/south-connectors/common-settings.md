@@ -185,6 +185,7 @@ sidebar_position: 0
 | --------------------------------------------------------- | --------------------------------------------------------------- | ---------------------------- |
 | [OPC UA](./opcua.mdx#node-metadata)                       | 服务器的地址空间，附带节点元数据（节点 ID、类型、描述、单位……） | **添加为项**、**保持同步…**  |
 | [BACnet/IP](./bacnet.mdx#discovering-devices-and-objects) | 设备，然后是每个设备的对象                                      | **添加为项**、**保持同步…**  |
+| [EtherNet/IP](./ethernet-ip.mdx#exploring-the-tags)       | 程序和控制器范围的标签，然后是每个程序的标签及其数据类型        | **添加为项**、**保持同步…**  |
 | MSSQL、MySQL、PostgreSQL、Oracle、SQLite                  | 表（在可获取时附带列数和行数），然后是每个表的列                | **添加到项**、**元数据同步** |
 | [Folder Scanner](./folder-scanner.mdx)                    | 输入文件夹中的文件夹和文件，附带大小和日期                      | —（仅浏览）                  |
 
@@ -261,7 +262,7 @@ sidebar_position: 0
 
 ## 缓存策略 {#caching-strategy}
 
-对于**IoT 系列连接器**（OPC UA、Modbus、ADS、OPC Classic、S7、MQTT、BACnet/IP），每个项目都可以过滤实际被
+对于**IoT 系列连接器**（OPC UA、Modbus、ADS、OPC Classic、S7、EtherNet/IP、MQTT、BACnet/IP），每个项目都可以过滤实际被
 缓存并转发到 North 连接器的采集值，而不是缓存每一个读取或接收到的值。这可以减小缓存大小，并
 降低对于稳定或缓慢变化的数据点的 North 连接器负载。
 

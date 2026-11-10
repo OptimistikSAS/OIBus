@@ -1,0 +1,75 @@
+---
+sidebar_position: 23
+---
+
+# Rockwell® EtherNet/IP™
+
+The EtherNet/IP south connector reads the tags of Rockwell® Logix PLCs (ControlLogix® and CompactLogix®) over
+**EtherNet/IP™** (CIP), by tag name, on each scan mode tick, without going through an OPC server, FactoryTalk® Linx or
+a separate agent.
+
+OIBus uses the MIT-licensed [ethernet-ip](https://github.com/cmseaton42/node-ethernet-ip) library: there is no driver to
+install.
+
+:::caution Logix controllers only
+Tags are read with the Logix symbolic services (Read Tag), which only Rockwell Logix controllers implement. Micro800®,
+MicroLogix™, SLC™ 500 and PLC-5® controllers, and the PLCs of other vendors that support EtherNet/IP as an adapter
+(e.g. Schneider Electric® Modicon®), are not supported: use their Modbus TCP or OPC UA server instead.
+:::
+
+## Specific Settings {#specific-settings}
+
+| Setting                 | Description                                                                                                                                                                                                                              | Example Value  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| **Host**                | IP address or hostname of the PLC, or of the Ethernet module (1756-ENxT) of a ControlLogix chassis. OIBus connects on the EtherNet/IP port `44818`.                                                                                      | `192.168.1.10` |
+| **Slot**                | Slot of the controller in its chassis: `0` for a CompactLogix, the slot of the CPU for a ControlLogix.                                                                                                                                   | `0`            |
+| **Connected messaging** | Opens a CIP connection (Forward Open) to read the tags, with larger packets than unconnected messaging, so fewer requests per scan. Disable it for a controller that refuses the connection or has no connection left (e.g. a busy PLC). | Enabled        |
+| **Timeout**             | Maximum time (in milliseconds) to wait when connecting and for the response to a request.                                                                                                                                                | `10000`        |
+| **Retry interval**      | Time to wait (in milliseconds) before reconnecting after a connection failure or an unexpected disconnection.                                                                                                                            | `10000`        |
+
+## Item Settings {#item-settings}
+
+| Setting      | Description                                                              | Example Value |
+| ------------ | ------------------------------------------------------------------------ | ------------- |
+| **Tag name** | The name of the tag to read, as declared in Studio 5000 Logix Designer®. | `Temperature` |
+
+| Tag name                      | Meaning                                                         |
+| ----------------------------- | --------------------------------------------------------------- |
+| `Temperature`                 | A controller-scoped tag.                                        |
+| `Program:MainProgram.Counter` | The `Counter` tag of the program `MainProgram` (program scope). |
+| `Recipe.Speed`                | The `Speed` member of the `Recipe` structure (UDT) tag.         |
+| `Levels[3]`                   | The fourth element of the `Levels` array tag.                   |
+| `Status.2`                    | Bit 2 of the `Status` integer tag.                              |
+
+Tag names are case insensitive. An external access set to **None** in the PLC makes a tag unreadable.
+
+:::note Values
+Numbers are reported as numbers, `BOOL` tags as `1` or `0`, `LINT` tags as text (a 64-bit integer may not fit a number),
+`STRING` tags as text. A structure is reported as JSON (`{"Speed":1.5,"Running":true}`): read its members as separate
+items to get numbers. An array tag read without an index (`Levels`) gives its first element only: read each element as
+its own item (`Levels[3]`).
+:::
+
+:::tip Batched reads
+OIBus reads all the items of a scan mode in as few requests as possible (CIP Multiple Service Packet). When a tag can't
+be read (unknown tag, no external access), the items of the scan are read one by one instead: the faulty item is
+logged and skipped, without affecting the other items.
+:::
+
+## Exploring the Tags {#exploring-the-tags}
+
+The **Explore and sync** button lists the tags of the PLC: the programs and the controller-scoped tags at the root, then
+the tags of each program, with their data type (the UDT name for a structure) and array dimensions. Select tags or
+programs to **Add as items** (one item per tag, named after the tag; edit the items of array tags to read their elements) or **Keep in sync…** with a
+[Configuration Workflow](./common-settings.md#items-synchronisation). The system tags (names starting with `__`, module
+I/O tags such as `Local:1:I`) are not listed.
+
+## Caching Strategy {#caching-strategy}
+
+Like the other IoT-family connectors, EtherNet/IP items support a per-item
+[caching strategy](./common-settings.md#caching-strategy) (`All values`, `On change`, `Threshold`) to filter which reads
+are actually cached and forwarded.
+
+_Rockwell, Allen-Bradley, ControlLogix, CompactLogix, Micro800, MicroLogix, SLC, PLC-5, FactoryTalk and Studio 5000
+Logix Designer are trademarks of Rockwell Automation, Inc. EtherNet/IP is a trademark of ODVA, Inc. OIBus is not
+affiliated with or certified by Rockwell Automation or ODVA._
