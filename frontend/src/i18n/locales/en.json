@@ -3019,7 +3019,7 @@
       "mode-sql-fixed": "This connector only supports pushing to OIAnalytics - a query can return several distinct points, so items are never created or updated by a synchronisation here.",
       "mode-remote-not-registered": "OIBus is not registered with OIAnalytics - nothing will be pushed until it is registered",
       "pushed-fields": "Fields to push",
-      "pushed-fields-hint": "The fields of the records sent to OIAnalytics. When none is checked, every field is sent.",
+      "pushed-fields-hint": "The fields of the records sent to OIAnalytics. When none is checked, every field is sent. The identity key fields are always sent.",
       "pushed-fields-all": "Every field",
       "enabled": "Enabled",
       "confirm-deletion": "Are you sure you want to delete the items synchronisation \"{{name}}\"?",

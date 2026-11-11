@@ -7,7 +7,7 @@ import { DateTime } from 'luxon';
 
 import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from '../../../shared/model/oia/oianalytics-configuration.model';
 
-import { OIAnalyticsMessageConfigurationWorkflowResult, OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-message.model';
+import { OIAnalyticsMessageHistoryQueries, OIAnalyticsMessageSyncMetadata } from '../../model/oianalytics-message.model';
 import type OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
 import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
@@ -58,6 +58,8 @@ describe('OIAnalytics Message Service', () => {
     activeLogger = logger;
 
     oIAnalyticsMessageRepository.list.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList);
+
+    oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList);
     oIAnalyticsMessageRepository.create.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList[0]);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
@@ -84,12 +86,7 @@ describe('OIAnalytics Message Service', () => {
     service.run = runMock;
     service.start();
     assert.strictEqual(runMock.mock.calls.length, 1);
-    assert.ok(
-      oIAnalyticsMessageRepository.list.mock.calls.some(
-        c => JSON.stringify(c.arguments[0]) === JSON.stringify({ status: ['PENDING'], types: [], start: undefined, end: undefined })
-      ),
-      'Expected list to have been called with { status: ["PENDING"], types: [], start: undefined, end: undefined }'
-    );
+    assert.strictEqual(oIAnalyticsMessageRepository.listPending.mock.calls.length, 1);
 
     await service.stop();
     service.resolveDeferredPromise();
@@ -223,6 +220,33 @@ describe('OIAnalytics Message Service', () => {
     );
   });
 
+  it('should not resend a message OIAnalytics refuses, for the messages queued behind it to be sent', async () => {
+    oIAnalyticsClient.sendConfiguration = mock.fn(() => {
+      throw new Error('404 - Not Found');
+    });
+
+    service.start();
+    await flushPromises();
+    const [message] = testData.oIAnalytics.messages.oIBusList;
+    assert.strictEqual(oIAnalyticsMessageRepository.markAsErrored.mock.calls[0].arguments[0], message.id);
+    assert.strictEqual(oIAnalyticsMessageRepository.markAsErrored.mock.calls[0].arguments[2], '404 - Not Found');
+    assert.strictEqual(service['retryMessageInterval'], null);
+    assert.ok(!logger.error.mock.calls.some(c => (c.arguments[0] as string).startsWith('Retrying')));
+  });
+
+  for (const error of ['401 - Unauthorized', '429 - Too Many Requests', '500 - Internal Server Error']) {
+    it(`should resend a message failing with "${error}"`, async () => {
+      oIAnalyticsClient.sendConfiguration = mock.fn(() => {
+        throw new Error(error);
+      });
+
+      service.start();
+      await flushPromises();
+      assert.strictEqual(oIAnalyticsMessageRepository.markAsErrored.mock.calls.length, 0);
+      assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).endsWith(`after error: ${error}`)));
+    });
+  }
+
   it('should display proper error message on AggregateError in run', async () => {
     const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
     oIAnalyticsClient.sendConfiguration = mock.fn(async () => {
@@ -291,6 +315,8 @@ describe('OIAnalytics message service without message', () => {
     activeLogger = logger;
 
     oIAnalyticsMessageRepository.list.mock.mockImplementation(() => []);
+
+    oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => []);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     service = new OIAnalyticsMessageService(
@@ -332,6 +358,8 @@ describe('OIAnalytics message service without completed registration', () => {
     activeLogger = logger;
 
     oIAnalyticsMessageRepository.list.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList);
+
+    oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
     service = new OIAnalyticsMessageService(
@@ -355,8 +383,10 @@ describe('OIAnalytics message service without completed registration', () => {
       )
     );
     oIAnalyticsMessageRepository.list.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList);
+    oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => testData.oIAnalytics.messages.oIBusList);
     service.start();
-    assert.strictEqual(oIAnalyticsMessageRepository.list.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageRepository.list.mock.calls.length, 0);
+    assert.strictEqual(oIAnalyticsMessageRepository.listPending.mock.calls.length, 1);
     assert.ok(
       logger.debug.mock.calls.some(c => c.arguments[0] === "OIBus is not registered to OIAnalytics. Full config message won't be created")
     );
@@ -390,6 +420,7 @@ describe('OIAnalytics message service without completed registration', () => {
     };
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
     oIAnalyticsMessageRepository.list.mock.mockImplementation(() => [saveHistoryQueryMessage]);
+    oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => [saveHistoryQueryMessage]);
     service.createFullHistoryQueriesMessageIfNotPending();
     assert.strictEqual(oIAnalyticsMessageRepository.create.mock.calls.length, 0);
   });
@@ -410,6 +441,7 @@ describe('OIAnalytics message service without completed registration', () => {
     configTransferBuilderService.buildHistoryQueriesConfiguration.mock.mockImplementation(() => builtHistoryQueries);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
     oIAnalyticsMessageRepository.list.mock.mockImplementation(() => []);
+    oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => []);
     service.start();
 
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(
@@ -420,6 +452,7 @@ describe('OIAnalytics message service without completed registration', () => {
       )
     );
     oIAnalyticsMessageRepository.list.mock.mockImplementation(() => []);
+    oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => []);
     oIAnalyticsMessageRepository.create.mock.mockImplementation(() => saveHistoryQueryMessage);
     service.createFullHistoryQueriesMessageIfNotPending();
 
@@ -430,39 +463,86 @@ describe('OIAnalytics message service without completed registration', () => {
     assert.deepStrictEqual(sentHistoryQueries, builtHistoryQueries);
   });
 
-  it('should queue and send a configuration-workflow-result message with its own stored payload, unconditionally (no pending dedup)', async () => {
-    const payload = JSON.stringify({ southId: 'south1', workflowId: 'workflow1', records: [{ tagName: 'a' }] });
-    const queuedMessage: OIAnalyticsMessageConfigurationWorkflowResult = {
-      id: 'messageId4',
+  describe('sync-metadata messages', () => {
+    const payload = JSON.stringify({ syncId: 'workflow1', southId: 'south1', records: [{ key: 'tagName=a', fields: { tagName: 'a' } }] });
+    const syncMetadataMessage = (id: string, workflowRunId: string): OIAnalyticsMessageSyncMetadata => ({
+      id,
       status: 'PENDING',
       error: null,
       completedDate: null,
-      type: 'configuration-workflow-result',
-      workflowRunId: 'runId1',
+      type: 'sync-metadata',
+      workflowRunId,
       payload,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
       updatedAt: ''
-    };
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
-    oIAnalyticsMessageRepository.list.mock.mockImplementation(() => []);
-    service.start(); // wires up the 'next' trigger listener run() relies on
+    });
 
-    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
-    oIAnalyticsMessageRepository.create.mock.mockImplementation(() => queuedMessage);
+    it('should queue and send a message with its own stored payload', async () => {
+      oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+      oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => []);
+      oIAnalyticsMessageRepository.findPendingSyncMetadataIds.mock.mockImplementation(() => []);
+      service.start(); // wires up the 'next' trigger listener run() relies on
 
-    service.createConfigurationWorkflowResultMessage('runId1', payload);
+      oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+      oIAnalyticsMessageRepository.create.mock.mockImplementation(() => syncMetadataMessage('messageId4', 'runId1'));
 
-    assert.deepStrictEqual(oIAnalyticsMessageRepository.create.mock.calls[0].arguments, [
-      { type: 'configuration-workflow-result', workflowRunId: 'runId1', payload }
-    ]);
-    await flushPromises();
-    assert.strictEqual(oIAnalyticsClient.sendConfigurationWorkflowResult.mock.calls.length, 1);
-    assert.strictEqual(
-      oIAnalyticsClient.sendConfigurationWorkflowResult.mock.calls[0].arguments[0],
-      testData.oIAnalytics.registration.completed
-    );
-    assert.strictEqual(oIAnalyticsClient.sendConfigurationWorkflowResult.mock.calls[0].arguments[1], payload);
+      service.createSyncMetadataMessage('workflow1', 'runId1', payload);
+
+      assert.deepStrictEqual(oIAnalyticsMessageRepository.findPendingSyncMetadataIds.mock.calls[0].arguments, ['workflow1']);
+      assert.deepStrictEqual(oIAnalyticsMessageRepository.create.mock.calls[0].arguments, [
+        { type: 'sync-metadata', workflowRunId: 'runId1', payload }
+      ]);
+      assert.strictEqual(oIAnalyticsMessageRepository.delete.mock.calls.length, 0);
+      await flushPromises();
+      assert.strictEqual(oIAnalyticsClient.sendSyncMetadata.mock.calls.length, 1);
+      assert.strictEqual(oIAnalyticsClient.sendSyncMetadata.mock.calls[0].arguments[0], testData.oIAnalytics.registration.completed);
+      assert.strictEqual(oIAnalyticsClient.sendSyncMetadata.mock.calls[0].arguments[1], payload);
+    });
+
+    it('should drop the runs of the same synchronisation still waiting to be sent', async () => {
+      // Not registered yet: the messages stay queued
+      oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+      oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => [syncMetadataMessage('previous', 'runId1')]);
+      oIAnalyticsMessageRepository.findPendingSyncMetadataIds.mock.mockImplementation(() => ['previous']);
+      oIAnalyticsMessageRepository.create.mock.mockImplementation(() => syncMetadataMessage('latest', 'runId2'));
+      service.start();
+
+      service.createSyncMetadataMessage('workflow1', 'runId2', payload);
+
+      assert.deepStrictEqual(
+        oIAnalyticsMessageRepository.delete.mock.calls.map(call => call.arguments),
+        [['previous']]
+      );
+      assert.deepStrictEqual(
+        service['messagesQueue'].map(message => message.id),
+        ['latest']
+      );
+    });
+
+    it('should leave the run being sent finish', async () => {
+      oIAnalyticsMessageRepository.listPending.mock.mockImplementation(() => [syncMetadataMessage('sending', 'runId1')]);
+      oIAnalyticsMessageRepository.findPendingSyncMetadataIds.mock.mockImplementation(() => ['sending']);
+      oIAnalyticsMessageRepository.create.mock.mockImplementation(() => syncMetadataMessage('latest', 'runId2'));
+      let release: () => void = () => undefined;
+      oIAnalyticsClient.sendSyncMetadata = mock.fn(
+        seq(
+          () => new Promise<void>(resolve => (release = resolve)),
+          async () => undefined
+        )
+      );
+      service.start();
+
+      service.createSyncMetadataMessage('workflow1', 'runId2', payload);
+
+      assert.strictEqual(oIAnalyticsMessageRepository.delete.mock.calls.length, 0);
+      release();
+      await flushPromises();
+      assert.deepStrictEqual(
+        oIAnalyticsMessageRepository.markAsCompleted.mock.calls.map(call => call.arguments[0]),
+        ['sending', 'latest']
+      );
+    });
   });
 });

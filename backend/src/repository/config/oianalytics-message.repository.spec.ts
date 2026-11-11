@@ -121,7 +121,7 @@ describe('OIAnalyticsMessageRepository', () => {
     });
   });
 
-  it('should create configuration-workflow-result message with its run and payload', () => {
+  it('should create sync-metadata message with its run and payload', () => {
     const workflowRepository = new ConfigurationWorkflowRepository(database, createAuditServiceMock());
     const workflow = workflowRepository.create(
       {
@@ -144,11 +144,11 @@ describe('OIAnalyticsMessageRepository', () => {
     const run = new WorkflowRunRepository(database).start(workflow.id, 'manual', 'userTest');
     const payload = JSON.stringify({ southId: testData.south.list[0].id, workflowId: workflow.id, records: [{ tagName: 'a' }] });
 
-    const created = repository.create({ type: 'configuration-workflow-result', workflowRunId: run.id, payload });
+    const created = repository.create({ type: 'sync-metadata', workflowRunId: run.id, payload });
 
     assert.deepStrictEqual(stripAuditFields(created), {
       id: created.id,
-      type: 'configuration-workflow-result',
+      type: 'sync-metadata',
       status: 'PENDING',
       error: null,
       completedDate: null,
@@ -156,6 +156,18 @@ describe('OIAnalyticsMessageRepository', () => {
       payload
     });
     assert.deepStrictEqual(stripAuditFields(repository.findById(created.id)), stripAuditFields(created));
+
+    // Found by the workflow of its run, as long as it is still to send
+    assert.deepStrictEqual(repository.findPendingSyncMetadataIds(workflow.id), [created.id]);
+    assert.deepStrictEqual(repository.findPendingSyncMetadataIds('another workflow'), []);
+    // The messages to send are listed oldest first: this one comes last
+    const pending = repository.listPending();
+    assert.ok(pending.every(message => message.status === 'PENDING'));
+    assert.strictEqual(pending.at(-1)!.id, created.id);
+
+    repository.markAsCompleted(created.id, testData.constants.dates.FAKE_NOW);
+    assert.deepStrictEqual(repository.findPendingSyncMetadataIds(workflow.id), []);
+    assert.ok(!repository.listPending().some(message => message.id === created.id));
   });
 
   it('should mark a command as COMPLETED', () => {

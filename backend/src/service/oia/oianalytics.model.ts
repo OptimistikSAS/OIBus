@@ -14,25 +14,10 @@ import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connec
 import { ScanModeCommandDTO } from '../../../shared/model/api/scan-mode.model';
 import { SouthConnectorCommandDTO, SouthConnectorItemCommandDTO } from '../../../shared/model/api/south-connector.model';
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/api/transformer.model';
-import { OIBusRecord } from '../../../shared/model/common/content.model';
 import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType } from '../../../shared/model/domain/engine.model';
 import { HistoryQueryStatus } from '../../../shared/model/domain/history-query.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 import { OIBusTestTransformerItemCommandContent } from '../../../shared/model/oia/command.model';
-
-/**
- * A remote (push-to-OIAnalytics) Configuration Workflow run's result: the raw eligible records
- * discovered this run, exactly as retrieved — no mapping, no de-duplication, no diffing against a
- * previous run. Interpreting or correlating the records across runs is entirely OIAnalytics's own
- * concern.
- */
-export interface OIBusConfigurationWorkflowResultCommandDTO {
-  southId: string;
-  southName: string;
-  workflowId: string;
-  workflowName: string;
-  records: Array<OIBusRecord>;
-}
 
 //
 // DTO fetch from OIAnalytics

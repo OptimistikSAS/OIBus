@@ -240,21 +240,21 @@ describe('OIAnalytics Client', () => {
     });
   });
 
-  describe('sendConfigurationWorkflowResult', () => {
+  describe('sendSyncMetadata', () => {
     it('should call PUT endpoint', async () => {
-      await service.sendConfigurationWorkflowResult(testData.oIAnalytics.registration.completed, 'workflow-result-payload');
+      await service.sendSyncMetadata(testData.oIAnalytics.registration.completed, 'sync-metadata-payload');
 
       assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
       const [calledUrl, calledOptions] = sentRequest();
-      assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/configuration/configuration-workflow-result'));
+      assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/sync-metadata'));
       assert.strictEqual(calledOptions.method, 'PUT');
-      assert.strictEqual(calledOptions.body, 'workflow-result-payload');
+      assert.strictEqual(calledOptions.body, 'sync-metadata-payload');
     });
 
     it('should throw on error response', async () => {
       respondWith(400, 'Bad Request');
       await assert.rejects(
-        () => service.sendConfigurationWorkflowResult(testData.oIAnalytics.registration.completed, 'workflow-result-payload'),
+        () => service.sendSyncMetadata(testData.oIAnalytics.registration.completed, 'sync-metadata-payload'),
         /400 - Bad Request/
       );
     });

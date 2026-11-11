@@ -486,7 +486,7 @@ describe('South Service', () => {
       ...localWorkflowCommand,
       id: 'workflowId1',
       name: 'remote',
-      identityKeyFields: ['discarded for a remote workflow'],
+      identityKeyFields: ['tagName'],
       fieldProcesses: [],
       addedFields: [],
       itemFieldMapping: null,
@@ -506,7 +506,7 @@ describe('South Service', () => {
       workflows.map(workflow => ({ id: workflow.id, identityKeyFields: workflow.identityKeyFields, scanMode: workflow.scanMode })),
       [
         { id: null, identityKeyFields: ['nodeId'], scanMode: testData.scanMode.list[0] },
-        { id: 'workflowId1', identityKeyFields: [], scanMode: null }
+        { id: 'workflowId1', identityKeyFields: ['tagName'], scanMode: null }
       ]
     );
     assert.deepStrictEqual(engine.reloadWorkflows.mock.calls[0].arguments, [testData.south.list[0].id]);

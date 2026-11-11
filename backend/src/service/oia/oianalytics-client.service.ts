@@ -20,7 +20,7 @@ const RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/c
 const REGISTRATION_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/registration`;
 const SEND_CONFIGURATION_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration`;
 const HISTORY_QUERY_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration/history-query`;
-const CONFIGURATION_WORKFLOW_RESULT_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration/configuration-workflow-result`;
+const SYNC_METADATA_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/sync-metadata`;
 const DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/upgrade/asset`;
 const CONFIGURATION_FILE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/commands/configuration-file`;
 const COMMAND_FILE_OIANALYTICS_ENDPOINT = (commandId: string) => `/api/oianalytics/oibus/commands/${encodeURIComponent(commandId)}/file`;
@@ -191,8 +191,8 @@ export default class OIAnalyticsClient {
     await response.body.dump();
   }
 
-  async sendConfigurationWorkflowResult(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
-    const url = getUrl(CONFIGURATION_WORKFLOW_RESULT_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+  async sendSyncMetadata(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
+    const url = getUrl(SYNC_METADATA_OIANALYTICS_ENDPOINT, registrationSettings.host, {
       useApiGateway: registrationSettings.useApiGateway,
       apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
     });
@@ -204,6 +204,8 @@ export default class OIAnalyticsClient {
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
   }
 
   async deleteHistoryQuery(registrationSettings: OIAnalyticsRegistration, historyId: string): Promise<void> {

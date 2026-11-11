@@ -37,14 +37,14 @@ export default class OIAnalyticsMessageService {
     this.registrationEventHandler = () => {
       this.createFullConfigMessageIfNotPending();
       this.createFullHistoryQueriesMessageIfNotPending();
-      this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [], start: undefined, end: undefined });
+      this.messagesQueue = this.oIAnalyticsMessageRepository.listPending();
       this.triggerRun.emit('next'); // trigger next if messages are already pending and not trigger by the creation function
     };
     this.oIAnalyticsRegistrationService.registrationEvent.on('updated', this.registrationEventHandler);
 
     this.createFullConfigMessageIfNotPending();
     this.createFullHistoryQueriesMessageIfNotPending();
-    this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [], start: undefined, end: undefined });
+    this.messagesQueue = this.oIAnalyticsMessageRepository.listPending();
 
     this.triggerRun.on('next', async () => {
       if (!this.runProgress$) {
@@ -83,15 +83,15 @@ export default class OIAnalyticsMessageService {
         case 'history-queries':
           await this.sendHistoryQueriesMessage(this.configTransferBuilderService.buildHistoryQueriesConfiguration());
           break;
-        case 'configuration-workflow-result':
-          await this.sendConfigurationWorkflowResult(message.payload);
+        case 'sync-metadata':
+          await this.sendSyncMetadata(message.payload);
           break;
       }
       this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
       this.removeMessageFromQueue(message.id);
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error);
-      if (errorMessage.includes('Bad Request')) {
+      if (isRejected(errorMessage)) {
         this.logger.error(`Error while sending message ${message.id} of type ${message.type}: ${errorMessage}`);
         this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), errorMessage);
         this.removeMessageFromQueue(message.id);
@@ -190,16 +190,20 @@ export default class OIAnalyticsMessageService {
   }
 
   /**
-   * Queue a remote (push-to-OIAnalytics) Configuration Workflow run's result. Unlike
-   * createFullConfigMessageIfNotPending/createFullHistoryQueriesMessageIfNotPending, there's no
-   * "if not pending" dedup here: each run's discovered records are their own one-off snapshot, not a
-   * resync of current state, so every run gets its own message rather than collapsing into whatever's
-   * already queued. The caller (ConfigurationWorkflowRunService) is expected to have already checked
-   * registration before running at all - queuing regardless keeps this symmetrical with the "not
-   * registered" no-op below, which `run()` itself still enforces before ever sending anything.
+   * Queue what a synchronisation run pushing to OIAnalytics discovered. Each run is a whole snapshot and OIAnalytics only
+   * keeps the most recent one, so the runs of the same synchronisation still waiting to be sent are dropped: only the
+   * one being sent right now is left to finish. The caller (ConfigurationWorkflowRunService) is expected to have
+   * already checked the registration, which `run()` itself still enforces before sending anything.
    */
-  createConfigurationWorkflowResultMessage(workflowRunId: string, payload: string): void {
-    const message = this.oIAnalyticsMessageRepository.create({ type: 'configuration-workflow-result', workflowRunId, payload });
+  createSyncMetadataMessage(workflowId: string, workflowRunId: string, payload: string): void {
+    const sending = this.runProgress$ ? this.messagesQueue[0]?.id : undefined;
+    for (const id of this.oIAnalyticsMessageRepository.findPendingSyncMetadataIds(workflowId)) {
+      if (id !== sending) {
+        this.oIAnalyticsMessageRepository.delete(id);
+        this.removeMessageFromQueue(id);
+      }
+    }
+    const message = this.oIAnalyticsMessageRepository.create({ type: 'sync-metadata', workflowRunId, payload });
     this.addMessageToQueue(message);
   }
 
@@ -228,9 +232,25 @@ export default class OIAnalyticsMessageService {
     this.logger.debug(`${list.historyQueries.length} history queries sent to OIAnalytics`);
   }
 
-  private async sendConfigurationWorkflowResult(payload: string): Promise<void> {
+  private async sendSyncMetadata(payload: string): Promise<void> {
     const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
-    await this.oIAnalyticsClient.sendConfigurationWorkflowResult(registrationSettings, payload);
-    this.logger.debug('Configuration workflow result sent to OIAnalytics');
+    await this.oIAnalyticsClient.sendSyncMetadata(registrationSettings, payload);
+    this.logger.debug('Synchronisation metadata sent to OIAnalytics');
   }
+}
+
+/** The client errors that may be gone at the next try: authentication (a token being renewed), proxy, timeout, throttling. */
+const RETRIED_CLIENT_ERRORS = [401, 403, 407, 408, 429];
+
+/**
+ * Whether OIAnalytics refused the message itself (a body it cannot read, an endpoint it does not have...): sending it
+ * again would fail the same way, and keep every message queued behind it from being sent. The OIAnalytics client reports
+ * an HTTP error as `<status code> - <body>`.
+ */
+function isRejected(errorMessage: string): boolean {
+  if (errorMessage.includes('Bad Request')) {
+    return true;
+  }
+  const statusCode = Number(/^(\d{3}) - /.exec(errorMessage)?.[1]);
+  return statusCode >= 400 && statusCode < 500 && !RETRIED_CLIENT_ERRORS.includes(statusCode);
 }

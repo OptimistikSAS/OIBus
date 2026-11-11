@@ -7,10 +7,11 @@ import {
   OIAnalyticsMessageType
 } from '../../../shared/model/oia/oianalytics-message.model';
 
-import { OIAnalyticsMessage, OIAnalyticsMessageConfigurationWorkflowResult } from '../../model/oianalytics-message.model';
+import { OIAnalyticsMessage, OIAnalyticsMessageSyncMetadata } from '../../model/oianalytics-message.model';
 import { generateRandomId } from '../../service/utils';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
+const WORKFLOW_RUNS_TABLE = 'workflow_runs';
 const PAGE_SIZE = 50;
 
 /**
@@ -87,6 +88,24 @@ export default class OIAnalyticsMessageRepository {
       .map(result => this.toMessage(result as Record<string, string>));
   }
 
+  /** The messages still to send, oldest first: the order they are sent in. */
+  listPending(): Array<OIAnalyticsMessage> {
+    const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} WHERE status = 'PENDING' ORDER BY created_at ASC, ROWID ASC;`;
+    return this.database
+      .prepare(query)
+      .all()
+      .map(result => this.toMessage(result as Record<string, string>));
+  }
+
+  /** The ids of the sync-metadata messages still to send that carry a run of the given workflow. */
+  findPendingSyncMetadataIds(workflowId: string): Array<string> {
+    const query = `SELECT m.id FROM ${OIANALYTICS_MESSAGE_TABLE} m
+                   JOIN ${WORKFLOW_RUNS_TABLE} r ON r.id = m.workflow_run_id
+                   WHERE m.type = 'sync-metadata' AND m.status = 'PENDING' AND r.workflow_id = ?
+                   ORDER BY m.created_at ASC, m.ROWID ASC;`;
+    return (this.database.prepare(query).all(workflowId) as Array<{ id: string }>).map(result => result.id);
+  }
+
   findById(id: string): OIAnalyticsMessage | null {
     const query = `SELECT *
                    FROM ${OIANALYTICS_MESSAGE_TABLE}
@@ -96,7 +115,7 @@ export default class OIAnalyticsMessageRepository {
   }
 
   create(
-    message: Pick<OIAnalyticsMessage, 'type'> & Partial<Pick<OIAnalyticsMessageConfigurationWorkflowResult, 'workflowRunId' | 'payload'>>
+    message: Pick<OIAnalyticsMessage, 'type'> & Partial<Pick<OIAnalyticsMessageSyncMetadata, 'workflowRunId' | 'payload'>>
   ): OIAnalyticsMessage {
     const id = generateRandomId();
     const insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE}
@@ -156,14 +175,14 @@ export default class OIAnalyticsMessageRepository {
           error: message.error,
           completedDate: message.completed_date
         };
-      case 'configuration-workflow-result':
+      case 'sync-metadata':
         return {
           id: message.id,
           createdBy: message.created_by,
           updatedBy: message.updated_by,
           createdAt: message.created_at,
           updatedAt: message.updated_at,
-          type: 'configuration-workflow-result',
+          type: 'sync-metadata',
           status: message.status as OIAnalyticsMessageStatus,
           error: message.error,
           completedDate: message.completed_date,

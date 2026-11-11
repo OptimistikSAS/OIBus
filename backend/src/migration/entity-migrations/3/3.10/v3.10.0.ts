@@ -658,7 +658,7 @@ export async function addConfigurationWorkflows(knex: Knex): Promise<void> {
     table.index(['south_item_id']);
   });
 
-  // `oianalytics_messages` columns of a remote workflow run's own message type (`configuration-workflow-result`), both
+  // `oianalytics_messages` columns of a remote workflow run's own message type (`sync-metadata`), both
   // nullable since neither applies to `full-config`/`history-queries` messages:
   //  - `workflow_run_id` — which run this message carries the result of; `ON DELETE CASCADE` since a message with no
   //    run left to report on has nothing meaningful left to send.

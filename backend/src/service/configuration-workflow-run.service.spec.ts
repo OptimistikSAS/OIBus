@@ -480,14 +480,14 @@ describe('Configuration Workflow Run Service', () => {
   describe('remote (push-to-OIAnalytics) mode', () => {
     const remoteWorkflow: ConfigurationWorkflowEntity = {
       ...baseWorkflow,
-      identityKeyFields: [],
+      identityKeyFields: ['nodeId'],
       fieldProcesses: [],
       addedFields: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true
     };
 
-    it('should never touch items, and queue one message with the raw eligible records', async () => {
+    it('should never touch items, and queue one message with the eligible records and their identity key', async () => {
       configurationWorkflowService.findById.mock.mockImplementation(() => remoteWorkflow);
       south.discover.mock.mockImplementation(async (): Promise<Array<OIBusRecord>> => [
         { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' },
@@ -501,14 +501,27 @@ describe('Configuration Workflow Run Service', () => {
       assert.strictEqual(itemPointMetadataRepository.create.mock.calls.length, 0);
       assert.strictEqual(itemPointMetadataRepository.findAllByWorkflow.mock.calls.length, 0);
 
-      assert.strictEqual(oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls.length, 1);
-      const call = oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls[0];
-      assert.strictEqual(call.arguments[0], 'runId1');
-      const payload = JSON.parse(call.arguments[1] as string);
-      assert.strictEqual(payload.southId, SOUTH_ID);
-      assert.strictEqual(payload.workflowId, WORKFLOW_ID);
-      assert.strictEqual(payload.identityKeyFields, undefined);
-      assert.deepStrictEqual(payload.records, [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }]);
+      assert.strictEqual(oIAnalyticsMessageService.createSyncMetadataMessage.mock.calls.length, 1);
+      const call = oIAnalyticsMessageService.createSyncMetadataMessage.mock.calls[0];
+      assert.strictEqual(call.arguments[0], WORKFLOW_ID);
+      assert.strictEqual(call.arguments[1], 'runId1');
+      const { southName, southType, runAt, ...payload } = JSON.parse(call.arguments[2] as string);
+      assert.strictEqual(typeof southName, 'string');
+      assert.strictEqual(typeof southType, 'string');
+      assert.strictEqual(typeof runAt, 'string');
+      assert.deepStrictEqual(payload, {
+        syncId: WORKFLOW_ID,
+        syncName: remoteWorkflow.name,
+        southId: SOUTH_ID,
+        runId: 'runId1',
+        identityKeyFields: ['nodeId'],
+        records: [
+          {
+            key: 'nodeId=ns=1;s=Temperature',
+            fields: { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }
+          }
+        ]
+      });
 
       const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as {
         pushedCount: number;
@@ -531,8 +544,8 @@ describe('Configuration Workflow Run Service', () => {
       assert.deepStrictEqual(runPayload.records, [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }]);
     });
 
-    it('should forward and record only the fields to push, in their order, a field a record lacks staying missing', async () => {
-      configurationWorkflowService.findById.mock.mockImplementation(() => ({ ...remoteWorkflow, pushedFields: ['unit', 'nodeId'] }));
+    it('should forward and record the identity key fields then the fields to push, a field a record lacks staying missing', async () => {
+      configurationWorkflowService.findById.mock.mockImplementation(() => ({ ...remoteWorkflow, pushedFields: ['unit', 'name'] }));
       south.discover.mock.mockImplementation(async (): Promise<Array<OIBusRecord>> => [
         { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' },
         { nodeId: 'ns=1;s=Count', name: 'Count', type: 'Variable' }
@@ -540,31 +553,49 @@ describe('Configuration Workflow Run Service', () => {
 
       await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
 
-      const expectedRecords = [{ unit: '°C', nodeId: 'ns=1;s=Temperature' }, { nodeId: 'ns=1;s=Count' }];
-      const payload = JSON.parse(oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls[0].arguments[1] as string);
-      assert.deepStrictEqual(payload.records, expectedRecords);
-      assert.deepStrictEqual(Object.keys(payload.records[0]), ['unit', 'nodeId']);
+      const expectedRecords = [
+        { nodeId: 'ns=1;s=Temperature', unit: '°C', name: 'Temperature' },
+        { nodeId: 'ns=1;s=Count', name: 'Count' }
+      ];
+      const payload = JSON.parse(oIAnalyticsMessageService.createSyncMetadataMessage.mock.calls[0].arguments[2] as string);
+      assert.deepStrictEqual(payload.records, [
+        { key: 'nodeId=ns=1;s=Temperature', fields: expectedRecords[0] },
+        { key: 'nodeId=ns=1;s=Count', fields: expectedRecords[1] }
+      ]);
+      assert.deepStrictEqual(Object.keys(payload.records[0].fields), ['nodeId', 'unit', 'name']);
       const runPayload = workflowRunRepository.complete.mock.calls[0].arguments[2] as { records: Array<unknown> };
       assert.deepStrictEqual(runPayload.records, expectedRecords);
     });
 
-    it('should forward every eligible record without de-duplicating them, having no identity key', async () => {
+    it('should forward one record per identity key, the last one winning', async () => {
       configurationWorkflowService.findById.mock.mockImplementation(() => remoteWorkflow);
-      south.discover.mock.mockImplementation(async () => [
-        { nodeId: 'ns=1;s=Temperature', type: 'Variable' },
-        { nodeId: 'ns=1;s=Pressure', type: 'Variable' }
+      south.discover.mock.mockImplementation(async (): Promise<Array<OIBusRecord>> => [
+        { nodeId: 'ns=1;s=Temperature', type: 'Variable', unit: '°C' },
+        { nodeId: 'ns=1;s=Pressure', type: 'Variable' },
+        { nodeId: 'ns=1;s=Temperature', type: 'Variable', unit: 'K' }
       ]);
 
       await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
 
-      const payload = JSON.parse(oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls[0].arguments[1] as string);
+      const payload = JSON.parse(oIAnalyticsMessageService.createSyncMetadataMessage.mock.calls[0].arguments[2] as string);
       assert.deepStrictEqual(payload.records, [
-        { nodeId: 'ns=1;s=Temperature', type: 'Variable' },
-        { nodeId: 'ns=1;s=Pressure', type: 'Variable' }
+        { key: 'nodeId=ns=1;s=Temperature', fields: { nodeId: 'ns=1;s=Temperature', type: 'Variable', unit: 'K' } },
+        { key: 'nodeId=ns=1;s=Pressure', fields: { nodeId: 'ns=1;s=Pressure', type: 'Variable' } }
       ]);
       const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as { eligibleCount: number; pushedCount: number };
       assert.strictEqual(counts.eligibleCount, 2);
       assert.strictEqual(counts.pushedCount, 2);
+    });
+
+    it('should fail the run of a workflow saved without identity key field instead of pushing records OIAnalytics cannot tell apart', async () => {
+      configurationWorkflowService.findById.mock.mockImplementation(() => ({ ...remoteWorkflow, identityKeyFields: [] }));
+      south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', type: 'Variable' }]);
+
+      await assert.rejects(() => service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest'), /requires at least one identity key field/);
+
+      assert.strictEqual(oIAnalyticsMessageService.createSyncMetadataMessage.mock.calls.length, 0);
+      assert.strictEqual(workflowRunRepository.fail.mock.calls.length, 1);
+      assert.match(workflowRunRepository.fail.mock.calls[0].arguments[1] as string, /requires at least one identity key field/);
     });
 
     it('should complete the run and log a warning instead of queuing a message when OIBus is no longer registered', async () => {
@@ -574,7 +605,7 @@ describe('Configuration Workflow Run Service', () => {
 
       await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
 
-      assert.strictEqual(oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsMessageService.createSyncMetadataMessage.mock.calls.length, 0);
       assert.strictEqual(workflowRunRepository.fail.mock.calls.length, 0);
       assert.strictEqual(workflowRunRepository.complete.mock.calls.length, 1);
       const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as { pushedCount: number };

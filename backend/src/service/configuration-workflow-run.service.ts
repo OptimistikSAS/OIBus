@@ -11,6 +11,7 @@ import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
+import { OIBusSyncMetadataCommandDTO } from '../../shared/model/oia/oianalytics-sync-metadata.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
@@ -25,6 +26,7 @@ import WorkflowRunRepository from '../repository/config/workflow-run.repository'
 import type ConfigurationWorkflowService from './configuration-workflow.service';
 import {
   checkAddedFields,
+  checkPushedIdentityKeyFields,
   checkWorkflowMode,
   computeIdentityKey,
   isEligible,
@@ -34,7 +36,6 @@ import {
   resolvePushedFields,
   selectPushedFields
 } from './configuration-workflow.utils';
-import { OIBusConfigurationWorkflowResultCommandDTO } from './oia/oianalytics.model';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import type OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import type SouthService from './south.service';
@@ -172,9 +173,15 @@ export default class ConfigurationWorkflowRunService {
       counts.discoveredCount = retrieved.discoveredCount;
 
       if (workflow.pushToOIAnalytics) {
-        records = selectPushedFields(retrieved.eligible, workflow.pushedFields);
+        checkPushedIdentityKeyFields(workflow);
+        // Two records with the same identity key are one for OIAnalytics: the last one wins, as it does locally
+        records = selectPushedFields(
+          Array.from(keyByIdentity(retrieved.eligible, workflow.identityKeyFields).values()),
+          workflow.pushedFields,
+          workflow.identityKeyFields
+        );
         counts.eligibleCount = records.length;
-        this.actRemote(southId, workflow, run.id, records, counts);
+        this.actRemote(southId, workflow, run, records, counts);
       } else {
         const eligibleByKey = keyByIdentity(retrieved.eligible, workflow.identityKeyFields);
         counts.eligibleCount = eligibleByKey.size;
@@ -300,7 +307,7 @@ export default class ConfigurationWorkflowRunService {
         eligibleCount: retrieved.eligible.length,
         entries: [],
         // As pushed to OIAnalytics: the samples keep every field, for the field processes and filter to be tested on
-        records: selectPushedFields(retrieved.eligible, workflow.pushedFields),
+        records: selectPushedFields(retrieved.eligible, workflow.pushedFields, workflow.identityKeyFields),
         samples: retrieved.samples
       };
     }
@@ -374,7 +381,7 @@ export default class ConfigurationWorkflowRunService {
   private actRemote(
     southId: string,
     workflow: ConfigurationWorkflowEntity,
-    runId: string,
+    run: WorkflowRunEntity,
     records: Array<OIBusRecord>,
     counts: WorkflowRunCounts
   ): void {
@@ -386,14 +393,18 @@ export default class ConfigurationWorkflowRunService {
       return;
     }
     const south = this.southConnectorRepository.findSouthById(southId)!;
-    const payload: OIBusConfigurationWorkflowResultCommandDTO = {
+    const payload: OIBusSyncMetadataCommandDTO = {
+      syncId: workflow.id,
+      syncName: workflow.name,
       southId,
       southName: south.name,
-      workflowId: workflow.id,
-      workflowName: workflow.name,
-      records
+      southType: south.type,
+      runId: run.id,
+      runAt: run.startedAt,
+      identityKeyFields: workflow.identityKeyFields,
+      records: records.map(record => ({ key: computeIdentityKey(record, workflow.identityKeyFields), fields: record }))
     };
-    this.oIAnalyticsMessageService.createConfigurationWorkflowResultMessage(runId, JSON.stringify(payload));
+    this.oIAnalyticsMessageService.createSyncMetadataMessage(workflow.id, run.id, JSON.stringify(payload));
     counts.pushedCount = records.length;
   }
 

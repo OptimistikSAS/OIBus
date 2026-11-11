@@ -7,7 +7,13 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { checkAddedFields, checkWorkflowMode, resolveIdentityKeyFields, resolvePushedFields } from './configuration-workflow.utils';
+import {
+  checkAddedFields,
+  checkPushedIdentityKeyFields,
+  checkWorkflowMode,
+  resolveIdentityKeyFields,
+  resolvePushedFields
+} from './configuration-workflow.utils';
 import type OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import { checkScanMode } from './utils';
 
@@ -119,6 +125,7 @@ export default class ConfigurationWorkflowService {
    *  actually push anything yet, so that case is logged as a warning rather than rejected outright. */
   private checkMode(command: ConfigurationWorkflowCommandDTO): void {
     checkWorkflowMode(command);
+    checkPushedIdentityKeyFields(command);
     checkAddedFields(command);
     if (command.pushToOIAnalytics && this.oIAnalyticsRegistrationService.getRegistrationSettings()?.status !== 'REGISTERED') {
       this.engine.logger.warn(
