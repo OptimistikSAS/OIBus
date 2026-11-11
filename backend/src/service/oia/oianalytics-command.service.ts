@@ -322,6 +322,26 @@ export default class OIAnalyticsCommandService {
       this.oIBusService.updateOIBusVersion(version, launcherVersion);
       this.logger.info(`OIBus updated to version ${version}, launcher updated to version ${launcherVersion}`);
     }
+    this.failInterruptedCommands();
+  }
+
+  /**
+   * A command still running at startup was interrupted by a crash or a kill of OIBus (commands that restart OIBus on
+   * purpose are completed beforehand, and the update is handled above). Running it again could crash OIBus again, and
+   * then forever on each restart, blocking every other command: fail it instead, OIAnalytics can send it again.
+   */
+  private failInterruptedCommands(): void {
+    const interruptedCommands = this.oIAnalyticsCommandRepository.list({
+      status: ['RUNNING'],
+      types: [],
+      ack: undefined,
+      start: undefined,
+      end: undefined
+    });
+    for (const command of interruptedCommands) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, 'OIBus stopped unexpectedly while executing this command');
+      this.logger.warn(`Command ${command.id} of type ${command.type} interrupted by an unexpected stop of OIBus: marked as errored`);
+    }
   }
 
   async start(): Promise<void> {

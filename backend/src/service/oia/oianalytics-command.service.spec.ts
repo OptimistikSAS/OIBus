@@ -257,11 +257,38 @@ describe('OIAnalytics Command Service', () => {
 
     oIBusService.getEngineSettings.mock.mockImplementation(() => testData.engine.settings);
     oIAnalyticsCommandRepository.list.mock.mockImplementation(() => testData.oIAnalytics.commands.oIBusList);
+    // Second call of the constructor: no command interrupted by an unexpected stop
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [], 1);
     oIAnalyticsCommandRepository.findById.mock.mockImplementation(() => testData.oIAnalytics.commands.oIBusList[0]);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
     mockUtils.getOIBusInfo.mock.mockImplementation(() => testData.engine.oIBusInfo);
 
     service = makeService();
+  });
+
+  it('should fail the commands interrupted by an unexpected stop at startup', () => {
+    resetAllMocks();
+    oIBusService.getEngineSettings.mock.mockImplementation(() => testData.engine.settings);
+    const interruptedCommand = testData.oIAnalytics.commands.oIBusList.find(command => command.type !== 'update-version')!;
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [interruptedCommand], 1);
+
+    makeService();
+
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.list.mock.calls[1].arguments, [
+      { status: ['RUNNING'], types: [], ack: undefined, start: undefined, end: undefined }
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+      interruptedCommand.id,
+      'OIBus stopped unexpectedly while executing this command'
+    ]);
+    assert.ok(
+      logger.warn.mock.calls.some(
+        c =>
+          c.arguments[0] ===
+          `Command ${interruptedCommand.id} of type ${interruptedCommand.type} interrupted by an unexpected stop of OIBus: marked as errored`
+      )
+    );
   });
 
   afterEach(() => {
