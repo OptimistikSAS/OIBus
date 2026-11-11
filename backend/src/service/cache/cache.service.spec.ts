@@ -439,63 +439,229 @@ describe('CacheService', () => {
     assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 100, error: 0, archive: 0 });
   });
 
-  it('should search cache content', async () => {
-    // start() calls readdir 3 times (cache, error, archive metadata folders)
-    // then searchCacheContent calls readdir 3 times again (cache, error, archive metadata folders)
-    // Setup: cache has 2 valid files + 1 bad; error/archive empty
-    readdirMock.mock.mockImplementation(
-      seq(
-        async () => [fileList[0].filename, fileList[1].filename, 'bad-file'], // start() cache
-        async () => [], // start() error
-        async () => [], // start() archive
-        async () => [fileList[0].filename, fileList[1].filename, 'bad-file'], // searchCacheContent cache
-        async () => [], // searchCacheContent error
-        async () => [] // searchCacheContent archive
-      )
-    );
+  /** Mock a disk where each folder (cache, error, archive) holds the given metadata files, with their content. */
+  const mockDisk = (files: Record<string, Record<string, CacheMetadata | null>>) => {
+    readdirMock.mock.mockImplementation(async (folder: string) => Object.keys(files[path.dirname(folder)] ?? {}));
+    readFileMock.mock.mockImplementation(async (filePath: string) => {
+      const metadata = files[path.dirname(path.dirname(filePath))][path.basename(filePath)];
+      if (!metadata) {
+        throw new Error('read error');
+      }
+      return JSON.stringify(metadata);
+    });
+  };
 
-    readFileMock.mock.mockImplementation(
-      seq(
-        // start() reads file1, file2, bad-file (throws) in cache folder
-        async () => JSON.stringify(fileList[0].metadata),
-        async () => JSON.stringify(fileList[1].metadata),
-        async () => {
-          throw new Error('cache read error');
-        },
-        // searchCacheContent reads file1 (match), file2 (no match or match), bad-file (error)
-        async () => JSON.stringify(fileList[0].metadata),
-        async () => JSON.stringify(fileList[0].metadata),
-        async () => {
-          throw new Error('read error');
-        }
+  it('should sort the queue by creation date at startup, unparsable dates first', async () => {
+    mockDisk({
+      [service.cacheFolder]: {
+        file4: fileList[3].metadata,
+        file2: fileList[1].metadata,
+        invalid: { ...fileList[0].metadata, createdAt: 'not a date' },
+        file1: fileList[0].metadata
+      },
+      [service.errorFolder]: {},
+      [service.archiveFolder]: {}
+    });
+
+    await service.start();
+
+    assert.deepStrictEqual(
+      (priv()['queue'] as Array<{ filename: string }>).map(element => element.filename),
+      ['invalid', 'file1', 'file2', 'file4']
+    );
+  });
+
+  it('should remove the metadata files without content at startup', async () => {
+    const metadataFiles: Record<string, Array<string>> = {
+      // "added" got its content and metadata written between the two listings: it is not an orphan
+      [service.cacheFolder]: ['file1', 'orphan1', 'locked', 'added'],
+      [service.errorFolder]: ['orphan2'],
+      [service.archiveFolder]: []
+    };
+    readdirMock.mock.mockImplementation(async (folder: string) =>
+      path.basename(folder) === CONTENT_FOLDER
+        ? path.dirname(folder) === service.cacheFolder
+          ? ['file1']
+          : []
+        : metadataFiles[path.dirname(folder)]
+    );
+    readFileMock.mock.mockImplementation(async () => JSON.stringify(fileList[0].metadata));
+    statMock.mock.mockImplementation(async (filePath: string) => {
+      if (path.basename(filePath) !== 'added') {
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      }
+      return { mtimeMs: Date.now(), size: 100 };
+    });
+    rmMock.mock.mockImplementation(async (filePath: string) => {
+      if (path.basename(filePath) === 'locked') {
+        throw new Error('EBUSY');
+      }
+    });
+
+    await service.start();
+
+    assert.deepStrictEqual(
+      rmMock.mock.calls.map(c => c.arguments[0]),
+      [
+        path.join(service.cacheFolder, METADATA_FOLDER, 'orphan1'),
+        path.join(service.cacheFolder, METADATA_FOLDER, 'locked'),
+        path.join(service.errorFolder, METADATA_FOLDER, 'orphan2')
+      ]
+    );
+    assert.deepStrictEqual(
+      logger.warn.mock.calls.map(c => c.arguments[0]),
+      [
+        `Could not remove metadata file "${path.join(service.cacheFolder, METADATA_FOLDER, 'locked')}" without content: EBUSY`,
+        '1 metadata file(s) without content removed from cache folder',
+        '1 metadata file(s) without content removed from error folder'
+      ]
+    );
+    // Entries without content are never queued, even when their metadata could not be removed
+    assert.deepStrictEqual(
+      (priv()['queue'] as Array<{ filename: string }>).map(element => element.filename),
+      ['file1', 'added']
+    );
+    assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 200, error: 0, archive: 0 });
+  });
+
+  it('should drop the queued entries whose content is missing instead of sending them', async () => {
+    const missing1 = { filename: 'missing1', metadata: { ...fileList[2].metadata, contentSize: 10 } };
+    const missing2 = { filename: 'missing2', metadata: { ...fileList[4].metadata, contentSize: 20 } };
+    const present = { filename: 'present', metadata: fileList[2].metadata };
+    priv()['queue'] = [missing1, missing2, present];
+    (priv()['recomputeQueueCounters'] as () => void).call(service);
+    priv()['cacheSize'] = { cache: 130, error: 0, archive: 0 };
+    statMock.mock.mockImplementation(async (filePath: string) => {
+      if (path.basename(filePath).startsWith('missing')) {
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      }
+      if (path.basename(filePath) === 'present') {
+        throw Object.assign(new Error('EBUSY'), { code: 'EBUSY' });
+      }
+      return {};
+    });
+    const emitMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
+
+    // A locked content file is left to the send, which reports and retries it
+    assert.deepStrictEqual(await service.getCacheContentToSend(100), present);
+
+    assert.deepStrictEqual(
+      rmMock.mock.calls.map(c => c.arguments[0]),
+      [
+        path.join(service.cacheFolder, CONTENT_FOLDER, 'missing1'),
+        path.join(service.cacheFolder, METADATA_FOLDER, 'missing1'),
+        path.join(service.cacheFolder, CONTENT_FOLDER, 'missing2'),
+        path.join(service.cacheFolder, METADATA_FOLDER, 'missing2')
+      ]
+    );
+    assert.ok(
+      logger.error.mock.calls.some(
+        c =>
+          c.arguments[0] ===
+          `Content file of cache entry "missing1" (${missing1.metadata.contentFile}) not found: removing it from the cache`
       )
     );
+    assert.deepStrictEqual(priv()['queue'], [present]);
+    assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 100, error: 0, archive: 0 });
+    assert.strictEqual(service.getNumberOfRawFilesInQueue(), 1);
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'cache-size'));
+
+    // Once every entry is dropped, there is nothing to send
+    priv()['queue'] = [missing1];
+    assert.strictEqual(await service.getCacheContentToSend(100), null);
+  });
+
+  it('should search the cache folder in the queue once started, oldest first', async () => {
+    mockDisk({
+      [service.cacheFolder]: {
+        file4: fileList[3].metadata,
+        file2: fileList[1].metadata,
+        other: fileList[1].metadata,
+        file1: fileList[0].metadata
+      },
+      [service.errorFolder]: { file3: fileList[2].metadata, bad: null },
+      [service.archiveFolder]: { file5: fileList[4].metadata }
+    });
+    await service.start();
+    readFileMock.mock.resetCalls();
 
     const result = await service.searchCacheContent({
       start: testData.constants.dates.DATE_1,
-      end: testData.constants.dates.DATE_2,
+      end: testData.constants.dates.DATE_3,
+      nameContains: 'FILE',
+      maxNumberOfFilesReturned: 1000
+    });
+
+    assert.deepStrictEqual(
+      result.cache,
+      [fileList[0], fileList[1]].map(({ metadata }, i) => ({ filename: `file${i + 1}`, metadata }))
+    );
+    assert.deepStrictEqual(result.error, [{ filename: 'file3', metadata: fileList[2].metadata }]);
+    assert.deepStrictEqual(result.archive, []);
+    // The cache folder is not read again: only the error and archive metadata files matching the name are
+    assert.deepStrictEqual(readFileMock.mock.calls.map(c => path.basename(c.arguments[0])).sort(), ['file3', 'file5']);
+
+    const limited = await service.searchCacheContent({
+      start: undefined,
+      end: undefined,
+      nameContains: undefined,
+      maxNumberOfFilesReturned: 2
+    });
+    assert.deepStrictEqual(
+      limited.cache.map(element => element.filename),
+      ['file1', 'file2']
+    );
+  });
+
+  it('should search the cache folder on disk when not started', async () => {
+    mockDisk({
+      [service.cacheFolder]: { file1: fileList[0].metadata, file2: fileList[1].metadata, 'bad-file': null },
+      [service.errorFolder]: {},
+      [service.archiveFolder]: {}
+    });
+
+    const result = await service.searchCacheContent({
+      start: testData.constants.dates.DATE_1,
+      end: testData.constants.dates.DATE_1,
       nameContains: 'file',
       maxNumberOfFilesReturned: 1000
     });
 
     assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while reading file')));
-    // Should return files that match date range and name filter
-    assert.ok(result.cache.length > 0);
-    assert.strictEqual(result.cache[0].filename, fileList[0].filename);
-  });
+    assert.deepStrictEqual(result.cache, [{ filename: 'file1', metadata: fileList[0].metadata }]);
 
-  it('should search cache content with minimal filters', async () => {
-    readdirMock.mock.mockImplementation(async () => [fileList[0].filename]);
-    readFileMock.mock.mockImplementation(async () => JSON.stringify(fileList[0].metadata));
-
-    const result = await service.searchCacheContent({
+    const unfiltered = await service.searchCacheContent({
       nameContains: undefined,
       start: undefined,
       end: undefined,
       maxNumberOfFilesReturned: 0
     });
+    assert.deepStrictEqual(
+      unfiltered.cache.map(element => element.filename),
+      ['file1', 'file2']
+    );
+  });
 
-    assert.strictEqual(result.cache.length, 1);
+  it('should stop reading metadata files once enough of them match', async () => {
+    const archived: Record<string, CacheMetadata> = {};
+    for (let i = 0; i < 2_500; i++) {
+      archived[`file${i}`] = fileList[4].metadata;
+    }
+    mockDisk({ [service.cacheFolder]: {}, [service.errorFolder]: {}, [service.archiveFolder]: archived });
+
+    const result = await service.searchCacheContent({
+      nameContains: undefined,
+      start: undefined,
+      end: undefined,
+      maxNumberOfFilesReturned: 10
+    });
+
+    assert.deepStrictEqual(
+      result.archive.map(element => element.filename),
+      Array.from({ length: 10 }, (_, i) => `file${i}`)
+    );
+    // Only the first chunk of metadata files is read
+    assert.strictEqual(readFileMock.mock.calls.length, 1_000);
   });
 
   it('should get cache content file stream', async () => {

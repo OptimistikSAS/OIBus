@@ -32,6 +32,14 @@ const STARTUP_SCAN_CONCURRENCY = 32;
 const ORPHAN_CONTENT_MIN_AGE_MS = 60_000;
 // Retry the removals failing because a file is briefly locked (EBUSY, EPERM...), typically by an antivirus on Windows
 const RM_OPTIONS = { recursive: true, force: true, maxRetries: 5, retryDelay: 100 };
+// Number of metadata files read before checking whether a search already has enough results
+const SEARCH_READ_CHUNK_SIZE = 1_000;
+
+/** Creation time in ms, to sort the queue without parsing dates in the comparator. Unparsable dates sort first. */
+const createdAtMillis = (metadata: CacheMetadata): number => {
+  const millis = Date.parse(metadata.createdAt);
+  return Number.isNaN(millis) ? 0 : millis;
+};
 
 /**
  * Run an async mapper over `items` with at most `limit` operations in flight.
@@ -68,6 +76,8 @@ export default class CacheService {
 
   private updateCache$: DeferredPromise | null = null;
   private queue: Array<{ filename: string; metadata: CacheMetadata }> = [];
+  // Once started, the queue mirrors the cache folder: searches read it instead of every metadata file on disk
+  private started = false;
 
   private _queuedElementsCount = 0;
   private _queuedRawFilesCount = 0;
@@ -116,11 +126,14 @@ export default class CacheService {
       this.scanCacheFolder(this.archiveFolder, 'archive')
     ]);
 
-    // Sort the queue to have the oldest file first
-    this.queue = cacheResult.entries.sort((a, b) =>
-      DateTime.fromISO(a.metadata.createdAt).diff(DateTime.fromISO(b.metadata.createdAt)).toMillis()
-    );
+    // Sort the queue to have the oldest file first. Each date is parsed once: parsing in the comparator blocks the
+    // event loop for minutes when the cache holds millions of files
+    this.queue = cacheResult.entries
+      .map(entry => ({ entry, createdAt: createdAtMillis(entry.metadata) }))
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .map(({ entry }) => entry);
     this.recomputeQueueCounters();
+    this.started = true;
 
     if (this.queue.length > 0) {
       this.logger.info(`${this.queue.length} content in cache`);
@@ -162,8 +175,9 @@ export default class CacheService {
     const contentFolder = path.join(folder, CONTENT_FOLDER);
     // List the content before the metadata, so that content added in between is never taken for an orphan
     const contentFilenames = await fs.readdir(contentFolder);
-    const filenames = await fs.readdir(metadataFolder);
-    await this.removeOrphanContent(contentFolder, contentFilenames, filenames, label);
+    const metadataFilenames = await fs.readdir(metadataFolder);
+    await this.removeOrphanContent(contentFolder, contentFilenames, metadataFilenames, label);
+    const filenames = await this.removeOrphanMetadata(metadataFolder, contentFolder, contentFilenames, metadataFilenames, label);
     if (filenames.length === 0) {
       return { entries: [], size: 0, totalFilenames: 0 };
     }
@@ -191,6 +205,52 @@ export default class CacheService {
       }
     }
     return { entries, size, totalFilenames: filenames.length };
+  }
+
+  /**
+   * Remove the metadata files whose content file is gone, and return the metadata files kept. Such an entry can never
+   * be sent: as the oldest one in the queue, it was retried forever and blocked everything behind it. It is left behind
+   * by a move or a removal interrupted between its content and its metadata (crash, file locked by an antivirus...).
+   */
+  private async removeOrphanMetadata(
+    metadataFolder: string,
+    contentFolder: string,
+    contentFilenames: Array<string>,
+    metadataFilenames: Array<string>,
+    label: DataFolderType
+  ): Promise<Array<string>> {
+    const contentSet = new Set(contentFilenames);
+    const candidates = metadataFilenames.filter(filename => !contentSet.has(filename));
+    if (candidates.length === 0) {
+      return metadataFilenames;
+    }
+
+    // Content listed before the metadata: an entry added in between looks like an orphan. Check the disk again
+    const missingContent = new Set<string>();
+    let removedFiles = 0;
+    await parallelMap(candidates, STARTUP_SCAN_CONCURRENCY, async filename => {
+      try {
+        await fs.stat(path.join(contentFolder, filename));
+        return;
+      } catch (error: unknown) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+          return;
+        }
+      }
+      // Not kept even if it cannot be removed: its content is gone, it must not be sent
+      missingContent.add(filename);
+      const metadataPath = path.join(metadataFolder, filename);
+      try {
+        await fs.rm(metadataPath, RM_OPTIONS);
+        removedFiles++;
+      } catch (error: unknown) {
+        this.logger.warn(`Could not remove metadata file "${metadataPath}" without content: ${(error as Error).message}`);
+      }
+    });
+    if (removedFiles > 0) {
+      this.logger.warn(`${removedFiles} metadata file(s) without content removed from ${label} folder`);
+    }
+    return missingContent.size > 0 ? metadataFilenames.filter(filename => !missingContent.has(filename)) : metadataFilenames;
   }
 
   /**
@@ -235,6 +295,7 @@ export default class CacheService {
   }
 
   stop(): void {
+    this.started = false;
     this.cacheSizeWarningDebounceFlag = false;
     if (this.cacheSizeWarningDebounceTimeout) {
       clearTimeout(this.cacheSizeWarningDebounceTimeout);
@@ -257,26 +318,53 @@ export default class CacheService {
   async getCacheContentToSend(maxGroupCount: number): Promise<{ filename: string; metadata: CacheMetadata } | null> {
     await this.waitCacheUpdateTasks();
 
-    // If there is no file in the queue, return null
-    if (this.queue.length === 0) {
-      return null;
-    }
+    // Return null when there is no file in the queue
+    while (this.queue.length > 0) {
+      // Decide whether to amortize compaction. Compaction reads ALL same-type
+      // queued files and rewrites them; on every send, with a large backlog,
+      // that's a lot of disk + JSON parse churn. Skip it when:
+      //   - the head file is a raw "any" payload (always sent as-is), OR
+      //   - the head file already has enough elements to fill a batch by itself
+      //     (nothing for compaction to add — the send will take this one file).
+      // `?? 0` keeps the previous behaviour for entries lacking numberOfElement.
+      const head = this.queue[0];
+      const numberOfElement = head.metadata.numberOfElement ?? 0;
+      const shouldCompact = head.metadata.contentType !== 'any' && (maxGroupCount === 0 || numberOfElement < maxGroupCount);
+      if (shouldCompact) {
+        await this.compactQueue(maxGroupCount, head.metadata.contentType);
+      }
 
-    // Decide whether to amortize compaction. Compaction reads ALL same-type
-    // queued files and rewrites them; on every send, with a large backlog,
-    // that's a lot of disk + JSON parse churn. Skip it when:
-    //   - the head file is a raw "any" payload (always sent as-is), OR
-    //   - the head file already has enough elements to fill a batch by itself
-    //     (nothing for compaction to add — the send will take this one file).
-    // `?? 0` keeps the previous behaviour for entries lacking numberOfElement.
-    const head = this.queue[0];
-    const numberOfElement = head.metadata.numberOfElement ?? 0;
-    const shouldCompact = head.metadata.contentType !== 'any' && (maxGroupCount === 0 || numberOfElement < maxGroupCount);
-    if (shouldCompact) {
-      await this.compactQueue(maxGroupCount, head.metadata.contentType);
+      const contentToSend = this.queue[0];
+      if (!contentToSend) {
+        return null;
+      }
+      // Sending a missing content file fails like a network error: it would be retried forever, blocking the queue
+      if (await this.contentExists(contentToSend.filename)) {
+        return contentToSend;
+      }
+      this.removeEntryWithoutContent(contentToSend);
+      await this.deleteCacheEntry('cache', contentToSend.filename);
     }
+    return null;
+  }
 
-    return this.queue[0];
+  private async contentExists(filename: string): Promise<boolean> {
+    try {
+      await fs.stat(path.join(this.cacheFolder, CONTENT_FOLDER, filename));
+      return true;
+    } catch (error: unknown) {
+      // Other errors (file locked...) are left to the send, which reports and retries them
+      return (error as NodeJS.ErrnoException).code !== 'ENOENT';
+    }
+  }
+
+  private removeEntryWithoutContent(entry: { filename: string; metadata: CacheMetadata }): void {
+    this.logger.error(
+      `Content file of cache entry "${entry.filename}" (${entry.metadata.contentFile}) not found: removing it from the cache`
+    );
+    this.removeCacheContentFromQueue(entry.filename);
+    this.cacheSize.cache -= entry.metadata.contentSize;
+    this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
   }
 
   removeCacheContentFromQueue(filename: string): void {
@@ -364,16 +452,16 @@ export default class CacheService {
 
       // 5. Cleanup Intermediate Files
       // These are the files in the "middle" that were fully merged
-      for (const element of compactedFiles) {
-        await this.deleteCacheEntry('cache', element.filename);
-      }
+      await parallelMap(compactedFiles, STARTUP_SCAN_CONCURRENCY, element => this.deleteCacheEntry('cache', element.filename));
 
       // 6. Update Queue Reference
       // Remove the deleted files from the main queue and resync counters: this
       // path mutates many entries (filter + in-place numberOfElement updates in
       // overwriteCacheFile) so a single recompute is cheaper than tracking each
-      // delta.
-      this.queue = this.queue.filter(el => !compactedFiles.includes(el));
+      // delta. A Set keeps the filter linear: thousands of merged files against
+      // a queue of millions would otherwise block the event loop for seconds.
+      const mergedFiles = new Set(compactedFiles);
+      this.queue = this.queue.filter(el => !mergedFiles.has(el));
       this.recomputeQueueCounters();
 
       // 7. Resync the cache size: merged files drop their per-file JSON brackets, and unreadable
@@ -421,15 +509,47 @@ export default class CacheService {
 
   async searchCacheContent(searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> {
     await this.waitCacheUpdateTasks();
-    const cacheList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('cache');
-    const errorList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('error');
-    const archiveList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('archive');
+    // The cache folder is mirrored by the in-memory queue (oldest first): no need to read its metadata files again
+    const cache = this.started
+      ? this.filterFile(this.queue, searchParams).map(({ filename, metadata }) => ({ filename, metadata }))
+      : await this.searchMetadataFiles('cache', searchParams);
+    const [error, archive] = await Promise.all([
+      this.searchMetadataFiles('error', searchParams),
+      this.searchMetadataFiles('archive', searchParams)
+    ]);
     return {
       searchDate: DateTime.now().toUTC().toISO(),
-      cache: this.filterFile(cacheList, searchParams),
-      error: this.filterFile(errorList, searchParams),
-      archive: this.filterFile(archiveList, searchParams)
+      cache,
+      error,
+      archive
     };
+  }
+
+  /**
+   * Read the metadata files of a folder in parallel, chunk by chunk, and stop as soon as enough of them match: the
+   * folder may hold millions of files, and reading them all (one at a time) kept a search running for hours.
+   */
+  private async searchMetadataFiles(
+    folder: DataFolderType,
+    searchParams: CacheSearchParam
+  ): Promise<Array<{ filename: string; metadata: CacheMetadata }>> {
+    const maxResults = searchParams.maxNumberOfFilesReturned || Infinity;
+    const filenames = (await fs.readdir(path.join(this.getFolder(folder), METADATA_FOLDER))).filter(filename =>
+      this.matchesFilename(filename, searchParams)
+    );
+
+    const results: Array<{ filename: string; metadata: CacheMetadata }> = [];
+    for (let i = 0; i < filenames.length && results.length < maxResults; i += SEARCH_READ_CHUNK_SIZE) {
+      const chunk = filenames.slice(i, i + SEARCH_READ_CHUNK_SIZE);
+      const metadataList = await parallelMap(chunk, STARTUP_SCAN_CONCURRENCY, filename => this.readCacheMetadataFile(folder, filename));
+      for (let j = 0; j < chunk.length && results.length < maxResults; j++) {
+        const metadata = metadataList[j];
+        if (metadata && this.matchesDates(metadata, searchParams)) {
+          results.push({ filename: chunk[j], metadata });
+        }
+      }
+    }
+    return results;
   }
 
   async getFileFromCache(folder: DataFolderType, filename: string): Promise<FileCacheContent> {
@@ -649,19 +769,6 @@ export default class CacheService {
     return { ...this.cacheSize };
   }
 
-  private async readCacheMetadataFiles(folder: DataFolderType): Promise<Array<{ filename: string; metadata: CacheMetadata }>> {
-    const filenames = await fs.readdir(path.join(this.getFolder(folder), METADATA_FOLDER));
-
-    const cacheMetadataFiles: Array<{ filename: string; metadata: CacheMetadata }> = [];
-    for (const filename of filenames) {
-      const metadata = await this.readCacheMetadataFile(folder, filename);
-      if (metadata) {
-        cacheMetadataFiles.push({ filename, metadata });
-      }
-    }
-    return cacheMetadataFiles;
-  }
-
   private async readCacheMetadataFile(folder: DataFolderType, filename: string): Promise<CacheMetadata | null> {
     const filePath = path.join(this.getFolder(folder), METADATA_FOLDER, filename);
     try {
@@ -688,14 +795,28 @@ export default class CacheService {
     list: Array<{ filename: string; metadata: CacheMetadata }>,
     searchParams: CacheSearchParam
   ): Array<{ filename: string; metadata: CacheMetadata }> {
-    return list
-      .filter(
-        element =>
-          (searchParams.nameContains ? element.filename.toUpperCase().includes(searchParams.nameContains.toUpperCase()) : true) &&
-          (searchParams.start ? element.metadata.createdAt >= searchParams.start : true) &&
-          (searchParams.end ? element.metadata.createdAt <= searchParams.end : true)
-      )
-      .slice(0, searchParams.maxNumberOfFilesReturned || undefined);
+    const maxResults = searchParams.maxNumberOfFilesReturned || Infinity;
+    const results: Array<{ filename: string; metadata: CacheMetadata }> = [];
+    for (const element of list) {
+      if (results.length >= maxResults) {
+        break;
+      }
+      if (this.matchesFilename(element.filename, searchParams) && this.matchesDates(element.metadata, searchParams)) {
+        results.push(element);
+      }
+    }
+    return results;
+  }
+
+  private matchesFilename(filename: string, searchParams: CacheSearchParam): boolean {
+    return searchParams.nameContains ? filename.toUpperCase().includes(searchParams.nameContains.toUpperCase()) : true;
+  }
+
+  private matchesDates(metadata: CacheMetadata, searchParams: CacheSearchParam): boolean {
+    return (
+      (searchParams.start ? metadata.createdAt >= searchParams.start : true) &&
+      (searchParams.end ? metadata.createdAt <= searchParams.end : true)
+    );
   }
 
   private logCacheState(metadata: CacheMetadata): void {
