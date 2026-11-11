@@ -161,10 +161,10 @@ describe('Configuration Workflow Service', () => {
       );
     });
 
-    it('should store no identity key field for a remote workflow, whatever it was sent with', () => {
+    it('should store the identity key fields of a remote workflow too', () => {
       service.create(testData.south.list[0].id, { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true }, 'userTest');
       const createCall = configurationWorkflowRepository.create.mock.calls[0];
-      assert.deepStrictEqual((createCall.arguments[0] as ConfigurationWorkflowEntity).identityKeyFields, []);
+      assert.deepStrictEqual((createCall.arguments[0] as ConfigurationWorkflowEntity).identityKeyFields, localCommand.identityKeyFields);
     });
 
     it('should store the fields to push of a remote workflow, and none for a local one', () => {
@@ -179,13 +179,17 @@ describe('Configuration Workflow Service', () => {
       assert.deepStrictEqual((localCall.arguments[0] as ConfigurationWorkflowEntity).pushedFields, []);
     });
 
-    it('should allow a remote workflow without any identity key field', () => {
-      service.create(
-        testData.south.list[0].id,
-        { ...localCommand, identityKeyFields: [], itemFieldMapping: null, pushToOIAnalytics: true },
-        'userTest'
+    it('should throw for a remote workflow without any identity key field', () => {
+      assert.throws(
+        () =>
+          service.create(
+            testData.south.list[0].id,
+            { ...localCommand, identityKeyFields: [], itemFieldMapping: null, pushToOIAnalytics: true },
+            'userTest'
+          ),
+        new OIBusValidationError('A configuration workflow pushing to OIAnalytics requires at least one identity key field')
       );
-      assert.strictEqual(configurationWorkflowRepository.create.mock.calls.length, 1);
+      assert.strictEqual(configurationWorkflowRepository.create.mock.calls.length, 0);
     });
 
     it('should allow pushToOIAnalytics when OIBus is registered, without logging a warning', () => {
@@ -278,7 +282,7 @@ describe('Configuration Workflow Service', () => {
       );
     });
 
-    it('should clear identity key fields when switching a workflow to remote', () => {
+    it('should keep the identity key fields when switching a workflow to remote', () => {
       service.update(
         testData.south.list[0].id,
         existingWorkflow.id,
@@ -286,7 +290,10 @@ describe('Configuration Workflow Service', () => {
         'updateUser'
       );
       const updateCall = configurationWorkflowRepository.update.mock.calls[0];
-      assert.deepStrictEqual((updateCall.arguments[1] as { identityKeyFields: Array<string> }).identityKeyFields, []);
+      assert.deepStrictEqual(
+        (updateCall.arguments[1] as { identityKeyFields: Array<string> }).identityKeyFields,
+        localCommand.identityKeyFields
+      );
     });
 
     it('should update the fields to push of a remote workflow', () => {

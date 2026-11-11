@@ -1728,14 +1728,14 @@ describe('Entity migration v3.10.0', () => {
     }
 
     describe('up', () => {
-      it('records a configuration-workflow-result message with its run and payload', async () => {
+      it('records a sync-metadata message with its run and payload', async () => {
         await up(db);
         await seedWorkflowAndRun();
 
         const payload = JSON.stringify({ southId: 'south1', workflowId: 'workflow1', records: [{ tagName: 'a', unit: 'C' }] });
         await db('oianalytics_messages').insert({
           id: 'message1',
-          type: 'configuration-workflow-result',
+          type: 'sync-metadata',
           status: 'PENDING',
           created_by: 'system',
           updated_by: 'system',
@@ -1773,7 +1773,7 @@ describe('Entity migration v3.10.0', () => {
         await seedWorkflowAndRun();
         await db('oianalytics_messages').insert({
           id: 'message1',
-          type: 'configuration-workflow-result',
+          type: 'sync-metadata',
           status: 'PENDING',
           created_by: 'system',
           updated_by: 'system',

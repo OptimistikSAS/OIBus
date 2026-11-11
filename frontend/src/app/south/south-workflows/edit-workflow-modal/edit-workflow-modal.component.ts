@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   afterNextRender,
   AfterViewInit,
@@ -117,7 +118,8 @@ const PREVIEW_RECORD_LIMIT = 20;
     ModalStepsComponent,
     ExploreStepComponent,
     AddItemsStepComponent,
-    ItemFieldMappingFormComponent
+    ItemFieldMappingFormComponent,
+    NgTemplateOutlet
   ]
 })
 export default class EditWorkflowModalComponent implements AfterViewInit {
@@ -1088,12 +1090,13 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     if (this.isSqlFamily() && !this.discoveryQuery().trim()) {
       problems.push({ step: 'source', key: 'south.workflows.discovery-scope-query-required' });
     }
-    // SQL-family connectors push the records as they are (see initForm()'s own comment), and a remote workflow has no
-    // item to map nor record to identify: identity keys only drive the local diff against the previous run
+    // Records are identified whatever the mode: locally to tell the items apart between two runs, and by OIAnalytics to
+    // compare the records pushed by a run with those of the previous ones. A SQL connector has no Items step.
+    if (this.identityKeyFields().length === 0) {
+      problems.push({ step: this.isSqlFamily() ? 'filter' : 'items', key: 'south.workflows.identity-key-fields-none' });
+    }
+    // SQL-family connectors push the records as they are (see initForm()'s own comment): a remote workflow has no item to map
     if (!this.isSqlFamily() && !this.pushToOIAnalytics()) {
-      if (this.identityKeyFields().length === 0) {
-        problems.push({ step: 'items', key: 'south.workflows.identity-key-fields-none' });
-      }
       const mappingProblem = itemMappingProblem(this.activeMappableFields(), this.itemFieldMappingValues());
       if (mappingProblem) {
         problems.push({ step: 'items', key: mappingProblem });
@@ -1141,7 +1144,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       name: formValue.name,
       description: formValue.description.trim() || null,
       discoveryScope,
-      identityKeyFields: pushToOIAnalytics ? [] : this.identityKeyFields(),
+      identityKeyFields: this.identityKeyFields(),
       fieldProcesses: this.fieldProcesses(),
       addedFields: this.addedFields(),
       eligibilityFilter: this.eligibilityFilter(),

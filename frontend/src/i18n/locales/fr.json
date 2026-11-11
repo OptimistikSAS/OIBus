@@ -2021,7 +2021,7 @@
       "mode-sql-fixed": "Ce connecteur ne prend en charge que l'envoi à OIAnalytics - une requête pouvant retourner plusieurs points distincts, aucun point n'est jamais créé ou mis à jour par une synchronisation ici.",
       "mode-remote-not-registered": "OIBus n'est pas enregistré auprès d'OIAnalytics - rien ne sera envoyé tant qu'il ne l'est pas",
       "pushed-fields": "Champs à envoyer",
-      "pushed-fields-hint": "Les champs des enregistrements envoyés à OIAnalytics. Si aucun n'est coché, tous les champs sont envoyés.",
+      "pushed-fields-hint": "Les champs des enregistrements envoyés à OIAnalytics. Si aucun n'est coché, tous les champs sont envoyés. Les champs de clé d'identité sont toujours envoyés.",
       "pushed-fields-all": "Tous les champs",
       "enabled": "Activé",
       "confirm-deletion": "Êtes-vous sûr de vouloir supprimer la synchronisation des points \"{{name}}\" ?",

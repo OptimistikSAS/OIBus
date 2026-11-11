@@ -573,8 +573,9 @@ for the other.
   each run logs a warning and sends nothing.
 
   **Fields to push** lists the fields of the discovered records (and the added ones): check the ones to send to
-  OIAnalytics, sent in the order listed. When none is checked, every field is sent. A checked field no longer
-  discovered stays listed, and a record without one of the checked fields is sent without it.
+  OIAnalytics, sent in the order listed after the [identity key fields](#identity-key-fields). When none is checked,
+  every field is sent. A checked field no longer discovered stays listed, and a record without one of the checked
+  fields is sent without it.
 
 - **Create/update items locally** shows the **Item field mapping** below.
 
@@ -622,14 +623,16 @@ expression.
 ##### Identity Key Fields {#identity-key-fields}
 
 The **Identity key fields** name the record field(s) whose combined value identifies a record across runs — e.g. `id`
-for OPC UA and BACnet. At least one is required in local mode:
+for OPC UA and BACnet. At least one is required, whatever the mode:
 
 - A local synchronisation discovers the data source again on every run, and matches the records against the previous
   run by this key: a record is new, changed or unchanged, and a key that no longer comes back is missing (see
   [Running an Items Synchronisation](#running-an-items-synchronisation)). If two records of the same run share a key,
   the later one wins.
-- **Push to OIAnalytics** never compares runs, so it has no identity key fields: correlating records across runs is
-  left to OIAnalytics.
+- **Push to OIAnalytics** does not compare runs itself: each record is sent with its key, and OIAnalytics compares
+  the records of a run with those of the previous ones by this key. The identity key fields are always sent, whatever
+  the fields to push, and if two records of the same run share a key, the later one is sent. For a SQL connector, which
+  has no Items step, they are set in the Filter step, under the matching records.
 
 ##### Mapping Expressions {#mapping-expressions}
 
@@ -690,8 +693,9 @@ the added fields and keeps the eligible ones, then acts depending on the mode:
   deletes — the item of each missing record, with the reason "Configuration workflow no longer discovers this entry".
   A new item gets the usual default value of every field the mapping leaves out, where it applies.
 - **Push to OIAnalytics** forwards the eligible records, as processed and with only the fields to push, to OIAnalytics,
-  as one message per run. Nothing is
-  created, updated or disabled.
+  as one message per run. Each run sends all its records, and OIAnalytics only keeps the most recent one: a run still
+  waiting to be sent is dropped when a newer run of the same synchronisation is ready. Nothing is created, updated or
+  disabled.
 
 :::tip Run now works on a disabled connector
 Building and testing a synchronisation doesn't require enabling the connector first: **Run now** works on a disabled

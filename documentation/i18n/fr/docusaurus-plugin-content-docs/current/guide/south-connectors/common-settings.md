@@ -629,8 +629,9 @@ efface ce qui avait été configuré pour l'autre.
   affiché dans l'assistant, et chaque exécution journalise un avertissement et n'envoie rien.
 
   **Champs à envoyer** liste les champs des enregistrements découverts (et ceux ajoutés) : cochez ceux à envoyer à
-  OIAnalytics, envoyés dans l'ordre de la liste. Si aucun n'est coché, tous les champs sont envoyés. Un champ coché qui
-  n'est plus découvert reste listé, et un enregistrement sans l'un des champs cochés est envoyé sans lui.
+  OIAnalytics, envoyés dans l'ordre de la liste après les [champs de clé d'identité](#identity-key-fields). Si aucun
+  n'est coché, tous les champs sont envoyés. Un champ coché qui n'est plus découvert reste listé, et un enregistrement
+  sans l'un des champs cochés est envoyé sans lui.
 
 - **Créer/mettre à jour les points localement** affiche la **Correspondance des champs des points** ci-dessous.
 
@@ -684,14 +685,17 @@ expression `{{field}}`.
 ##### Champs de clé d'identité {#identity-key-fields}
 
 Les **Champs de clé d'identité** désignent le ou les champs de l'enregistrement dont la valeur combinée identifie un
-enregistrement d'une exécution à l'autre — par ex. `id` pour OPC UA et BACnet. Au moins un est requis en mode local :
+enregistrement d'une exécution à l'autre — par ex. `id` pour OPC UA et BACnet. Au moins un est requis, quel que soit le mode :
 
 - Une synchronisation locale redécouvre la source de données à chaque exécution, et rapproche les enregistrements de
   ceux de l'exécution précédente par cette clé : un enregistrement est nouveau, modifié ou inchangé, et une clé qui ne
   revient plus est manquante (voir [Exécuter une synchronisation des points](#running-an-items-synchronisation)). Si
   deux enregistrements d'une même exécution partagent une clé, le dernier l'emporte.
-- **Envoyer à OIAnalytics** ne compare jamais les exécutions, il n'a donc pas de champs de clé d'identité : la
-  corrélation des enregistrements d'une exécution à l'autre est laissée à OIAnalytics.
+- **Envoyer à OIAnalytics** ne compare pas lui-même les exécutions : chaque enregistrement est envoyé avec sa clé, et
+  OIAnalytics compare les enregistrements d'une exécution à ceux des précédentes par cette clé. Les champs de clé
+  d'identité sont toujours envoyés, quels que soient les champs à envoyer, et si deux enregistrements d'une même
+  exécution partagent une clé, le dernier est envoyé. Pour un connecteur SQL, qui n'a pas d'étape Points, ils se
+  règlent à l'étape Filtre, sous les enregistrements correspondants.
 
 ##### Expressions de correspondance {#mapping-expressions}
 
@@ -759,8 +763,9 @@ champs des enregistrements, ajoute les champs ajoutés et conserve les éligible
   "Configuration workflow no longer discovers this entry". Un nouvel élément reçoit la valeur par défaut habituelle de
   chaque champ que la correspondance ne couvre pas, lorsqu'elle s'applique.
 - **Envoyer à OIAnalytics** transmet les enregistrements éligibles, tels que traités et avec seulement les champs à
-  envoyer, à OIAnalytics, sous la forme d'un message
-  par exécution. Rien n'est créé, mis à jour ni désactivé.
+  envoyer, à OIAnalytics, sous la forme d'un message par exécution. Chaque exécution envoie tous ses enregistrements,
+  et OIAnalytics ne garde que la plus récente : une exécution encore en attente d'envoi est abandonnée dès qu'une
+  exécution plus récente de la même synchronisation est prête. Rien n'est créé, mis à jour ni désactivé.
 
 :::tip Exécuter maintenant fonctionne sur un connecteur désactivé
 Construire et tester une synchronisation ne nécessite pas d'activer d'abord le connecteur : **Exécuter maintenant**

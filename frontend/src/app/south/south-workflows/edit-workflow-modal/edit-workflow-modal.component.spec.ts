@@ -39,16 +39,28 @@ const southSettings = testData.south.list[0].settings;
 // exercises both the manifest-driven fields and the historian fields added alongside them. Given a tree-based discovery.
 const manifest: SouthConnectorManifest = { ...testData.south.manifest, discovery: { kind: 'tree' } };
 // A SQL-family connector with no explore() - query-only discovery scope, no reference tree.
-const sqlManifest: SouthConnectorManifest = { ...manifest, id: 'mysql', explore: false, discovery: { kind: 'query' } };
+// As the SQL connectors declare it: the records of a query are identified by their `id` unless told otherwise
+const sqlDefaults = { identityKeyFields: ['id'], itemFieldMapping: {} };
+const sqlManifest: SouthConnectorManifest = {
+  ...manifest,
+  id: 'mysql',
+  explore: false,
+  discovery: { kind: 'query', defaults: sqlDefaults }
+};
 // A SQL-family connector with a metadata query template (e.g. MSSQL and its Wonderware Historian tags)
 const templateManifest: SouthConnectorManifest = {
   ...manifest,
   id: 'mssql',
   explore: false,
-  discovery: { kind: 'query', templates: [{ id: 'wonderware-historian-tags', query: 'SELECT TagName FROM Tag' }] }
+  discovery: { kind: 'query', defaults: sqlDefaults, templates: [{ id: 'wonderware-historian-tags', query: 'SELECT TagName FROM Tag' }] }
 };
 // A SQL-family connector that also has explore() (e.g. SQLite) - query editor plus the reference tree.
-const sqliteManifest: SouthConnectorManifest = { ...manifest, id: 'sqlite', explore: true, discovery: { kind: 'query' } };
+const sqliteManifest: SouthConnectorManifest = {
+  ...manifest,
+  id: 'sqlite',
+  explore: true,
+  discovery: { kind: 'query', defaults: sqlDefaults }
+};
 // No discovery at all, even though it can be explored (e.g. Folder Scanner).
 const unsupportedManifest: SouthConnectorManifest = { ...manifest, explore: true, discovery: undefined };
 const noHistoryManifest: SouthConnectorManifest = { ...manifest, modes: { ...manifest.modes, history: false } };
@@ -772,7 +784,8 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.localMode).not.toBeInTheDocument();
       await expect.element(tester.remoteMode).not.toBeInTheDocument();
       await expect.element(tester.mappingTable).not.toBeInTheDocument();
-      await expect.element(tester.identityKeyFields).not.toBeInTheDocument();
+      // The records pushed are identified, for OIAnalytics to compare a run with the previous ones
+      await expect.element(tester.identityKeyFields).toBeInTheDocument();
       await expect.element(tester.notRegisteredWarning).toBeInTheDocument();
     });
 
@@ -799,7 +812,7 @@ describe('EditWorkflowModalComponent', () => {
           discoveryScope: { query: 'SELECT column_name FROM my_metadata_table' },
           pushToOIAnalytics: true,
           itemFieldMapping: null,
-          identityKeyFields: []
+          identityKeyFields: sqlWorkflow.identityKeyFields
         })
       );
     });
@@ -818,18 +831,31 @@ describe('EditWorkflowModalComponent', () => {
       await tester.remoteMode.click();
 
       await expect.element(tester.notRegisteredWarning).toBeInTheDocument();
+      await tester.addIdentityKeyField('nodeId');
       await tester.goToStep('schedule');
       await tester.name.fill('New workflow');
       await tester.save();
-      expect(savedCommand()).toEqual(expect.objectContaining({ pushToOIAnalytics: true }));
+      expect(savedCommand()).toEqual(expect.objectContaining({ pushToOIAnalytics: true, identityKeyFields: ['nodeId'] }));
     });
 
-    test('should only show identity key fields and the item field mapping in local mode', async () => {
+    test('should refuse a remote workflow without identity key field', async () => {
+      const tester = create();
+      await tester.remoteMode.click();
+      await tester.goToStep('schedule');
+      await tester.name.fill('New workflow');
+
+      await tester.save();
+
+      await expect.element(tester.formError).toHaveTextContent('At least one identity key field is required');
+      expect(activeModal.close).not.toHaveBeenCalled();
+    });
+
+    test('should show identity key fields in both modes, and the item field mapping in local mode only', async () => {
       const tester = create();
       await expect.element(tester.identityKeyFields).toBeInTheDocument();
 
       await tester.remoteMode.click();
-      await expect.element(tester.identityKeyFields).not.toBeInTheDocument();
+      await expect.element(tester.identityKeyFields).toBeInTheDocument();
       await expect.element(tester.mappingTable).not.toBeInTheDocument();
 
       await tester.localMode.click();
@@ -837,7 +863,7 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingTable).toBeInTheDocument();
     });
 
-    test('should save a remote workflow without identity key fields nor item field mapping, when OIBus is registered', async () => {
+    test('should save a remote workflow with its identity key fields and no item field mapping, when OIBus is registered', async () => {
       engineService.getRegistrationSettings.mockReturnValue(of(registered));
       const tester = create({ mode: 'edit' });
 
@@ -845,8 +871,14 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.notRegisteredWarning).not.toBeInTheDocument();
       await tester.save();
 
-      // Identity keys only apply to local mode - never sent for a remote workflow, even if some were typed before switching.
-      expect(savedCommand()).toEqual(expect.objectContaining({ pushToOIAnalytics: true, itemFieldMapping: null, identityKeyFields: [] }));
+      // The records pushed are identified too, for OIAnalytics to compare a run with the previous ones
+      expect(savedCommand()).toEqual(
+        expect.objectContaining({
+          pushToOIAnalytics: true,
+          itemFieldMapping: null,
+          identityKeyFields: existingWorkflow.identityKeyFields
+        })
+      );
     });
   });
 
@@ -1370,7 +1402,6 @@ describe('EditWorkflowModalComponent', () => {
       // a remote workflow: nothing else to set up before saving it
       const workflow: ConfigurationWorkflowCommandDTO = {
         ...existingWorkflow,
-        identityKeyFields: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
         fieldProcesses: [{ field: 'path', operations: [{ type: 'lowercase' }, { type: 'trim' }] }]
@@ -1420,7 +1451,6 @@ describe('EditWorkflowModalComponent', () => {
       configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
       const workflow: ConfigurationWorkflowCommandDTO = {
         ...existingWorkflow,
-        identityKeyFields: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
         addedFields: [{ field: 'site', value: 'Lyon' }]
@@ -1478,7 +1508,6 @@ describe('EditWorkflowModalComponent', () => {
       configurationWorkflowService.previewCommand.mockReturnValue(of(previewResult()));
       const workflow: ConfigurationWorkflowCommandDTO = {
         ...existingWorkflow,
-        identityKeyFields: [],
         itemFieldMapping: null,
         pushToOIAnalytics: true,
         fieldProcesses: [{ field: 'site', operations: [{ type: 'lowercase' }] }],

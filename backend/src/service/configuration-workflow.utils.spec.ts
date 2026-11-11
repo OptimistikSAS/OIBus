@@ -10,6 +10,7 @@ import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import {
   addFields,
   checkAddedFields,
+  checkPushedIdentityKeyFields,
   checkWorkflowMode,
   computeIdentityKey,
   isEligible,
@@ -93,10 +94,24 @@ describe('configuration-workflow.utils', () => {
     });
   });
 
+  describe('checkPushedIdentityKeyFields', () => {
+    it('should require an identity key field of a workflow pushing to OIAnalytics only', () => {
+      checkPushedIdentityKeyFields({ ...remoteCommand, identityKeyFields: ['nodeId'] });
+      checkPushedIdentityKeyFields({ ...localCommand, identityKeyFields: [] });
+      assert.throws(
+        () => checkPushedIdentityKeyFields({ ...remoteCommand, identityKeyFields: [] }),
+        /pushing to OIAnalytics requires at least one identity key field/
+      );
+    });
+  });
+
   describe('resolveIdentityKeyFields', () => {
-    it('should keep the identity key fields of a local workflow and discard those of a remote one', () => {
+    it('should keep the identity key fields of a local workflow and of a remote one, once each', () => {
       assert.deepStrictEqual(resolveIdentityKeyFields(localCommand), ['nodeId']);
-      assert.deepStrictEqual(resolveIdentityKeyFields(remoteCommand), []);
+      assert.deepStrictEqual(resolveIdentityKeyFields({ ...remoteCommand, identityKeyFields: ['nodeId', 'path', 'nodeId'] }), [
+        'nodeId',
+        'path'
+      ]);
     });
   });
 
@@ -124,6 +139,12 @@ describe('configuration-workflow.utils', () => {
       const selected = selectPushedFields(records, ['min', 'unit', 'nodeId']);
       assert.deepStrictEqual(selected, [{ min: null, unit: '°C', nodeId: 'ns=1;s=Temperature' }, { nodeId: 'ns=1;s=Count' }]);
       assert.deepStrictEqual(Object.keys(selected[0]), ['min', 'unit', 'nodeId']);
+    });
+
+    it('should always keep the identity key fields, first, each field once', () => {
+      const selected = selectPushedFields(records, ['unit', 'nodeId'], ['nodeId']);
+      assert.deepStrictEqual(selected, [{ nodeId: 'ns=1;s=Temperature', unit: '°C' }, { nodeId: 'ns=1;s=Count' }]);
+      assert.deepStrictEqual(Object.keys(selected[0]), ['nodeId', 'unit']);
     });
   });
 

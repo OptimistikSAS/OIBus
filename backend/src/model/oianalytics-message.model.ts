@@ -19,14 +19,13 @@ export interface OIAnalyticsMessageHistoryQueries extends BaseOIAnalyticsMessage
   type: 'history-queries';
 }
 
-// Unlike the two above, a workflow run's discovered records are a one-off snapshot that can't be
+// Unlike the two above, the records a synchronisation run discovered are a one-off snapshot that can't be
 // recomputed later without re-running discovery, so this message type stores its own payload directly.
-export interface OIAnalyticsMessageConfigurationWorkflowResult extends BaseOIAnalyticsMessage {
-  type: 'configuration-workflow-result';
+export interface OIAnalyticsMessageSyncMetadata extends BaseOIAnalyticsMessage {
+  type: 'sync-metadata';
   workflowRunId: string;
-  /** JSON-serialized OIBusConfigurationWorkflowResultCommandDTO, sent to OIAnalytics verbatim. */
+  /** JSON-serialized OIBusSyncMetadataCommandDTO, sent to OIAnalytics verbatim. */
   payload: string;
 }
 
-export type OIAnalyticsMessage =
-  OIAnalyticsMessageFullConfig | OIAnalyticsMessageHistoryQueries | OIAnalyticsMessageConfigurationWorkflowResult;
+export type OIAnalyticsMessage = OIAnalyticsMessageFullConfig | OIAnalyticsMessageHistoryQueries | OIAnalyticsMessageSyncMetadata;

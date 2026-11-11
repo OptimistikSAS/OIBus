@@ -2021,7 +2021,7 @@
       "mode-sql-fixed": "此连接器仅支持推送到 OIAnalytics - 一个查询可能返回多个不同的点，因此此处的同步永远不会创建或更新项。",
       "mode-remote-not-registered": "OIBus 尚未注册到 OIAnalytics - 注册之前不会推送任何内容",
       "pushed-fields": "要推送的字段",
-      "pushed-fields-hint": "发送到 OIAnalytics 的记录字段。未勾选任何字段时，将发送所有字段。",
+      "pushed-fields-hint": "发送到 OIAnalytics 的记录字段。未勾选任何字段时，将发送所有字段。标识键字段始终会被发送。",
       "pushed-fields-all": "所有字段",
       "enabled": "已启用",
       "confirm-deletion": "您确定要删除项同步“{{name}}”吗？",

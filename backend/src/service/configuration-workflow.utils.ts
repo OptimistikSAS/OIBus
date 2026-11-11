@@ -26,6 +26,19 @@ export function checkWorkflowMode(command: ConfigurationWorkflowCommandDTO): voi
 }
 
 /**
+ * A workflow pushing to OIAnalytics identifies its records too, for OIAnalytics to compare a run with the previous ones.
+ * Checked when a workflow is saved and when it runs, not by `checkWorkflowMode`: a preview of the records as discovered
+ * has no identity key to give.
+ */
+export function checkPushedIdentityKeyFields(
+  workflow: Pick<ConfigurationWorkflowCommandDTO, 'pushToOIAnalytics' | 'identityKeyFields'>
+): void {
+  if (workflow.pushToOIAnalytics && workflow.identityKeyFields.length === 0) {
+    throw new OIBusValidationError('A configuration workflow pushing to OIAnalytics requires at least one identity key field');
+  }
+}
+
+/**
  * The fields a workflow adds to its records must each have a key of its own: a field added twice would be computed twice,
  * the second time replacing the first.
  */
@@ -42,10 +55,10 @@ export function checkAddedFields(command: ConfigurationWorkflowCommandDTO): void
   }
 }
 
-/** Identity keys only drive the local diff against the previous run - a remote workflow never performs it,
- *  so whatever it was sent with is discarded rather than stored as meaningless configuration. */
-export function resolveIdentityKeyFields(command: ConfigurationWorkflowCommandDTO): Array<string> {
-  return command.pushToOIAnalytics ? [] : command.identityKeyFields;
+/** The fields identifying a record across runs, each listed once: locally to tell the items of the workflow apart, and
+ *  by OIAnalytics to compare the records pushed by a run with those of the previous ones. */
+export function resolveIdentityKeyFields(command: Pick<ConfigurationWorkflowCommandDTO, 'identityKeyFields'>): Array<string> {
+  return Array.from(new Set(command.identityKeyFields));
 }
 
 /** The fields pushed to OIAnalytics only apply to a remote workflow, so whatever a local one was sent with is discarded rather
@@ -55,14 +68,20 @@ export function resolvePushedFields(command: Pick<ConfigurationWorkflowCommandDT
 }
 
 /**
- * The records as a remote workflow pushes them to OIAnalytics: only their `pushedFields`, in this order - a field a record
- * does not have stays missing - or every field when none is listed.
+ * The records as a remote workflow pushes them to OIAnalytics: their identity key fields - always pushed, OIAnalytics
+ * needs what identifies a record - then their `pushedFields`, in this order. A field a record does not have stays
+ * missing. Every field is pushed when none is listed.
  */
-export function selectPushedFields(records: Array<OIBusRecord>, pushedFields: Array<string>): Array<OIBusRecord> {
+export function selectPushedFields(
+  records: Array<OIBusRecord>,
+  pushedFields: Array<string>,
+  identityKeyFields: Array<string> = []
+): Array<OIBusRecord> {
   if (pushedFields.length === 0) {
     return records;
   }
-  return records.map(record => Object.fromEntries(pushedFields.filter(field => field in record).map(field => [field, record[field]])));
+  const fields = Array.from(new Set([...identityKeyFields, ...pushedFields]));
+  return records.map(record => Object.fromEntries(fields.filter(field => field in record).map(field => [field, record[field]])));
 }
 
 /** How many values of each field a preview returns, for a field process to be tested on. */

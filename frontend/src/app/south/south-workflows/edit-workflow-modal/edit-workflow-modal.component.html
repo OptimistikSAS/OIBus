@@ -469,7 +469,51 @@
           (processField)="openFieldProcess($event)"
         />
       }
+      <!-- A SQL connector has no Items step: the records its query returns are identified here, next to them -->
+      @if (isSqlFamily() && flow() !== 'items') {
+        <ng-container [ngTemplateOutlet]="identityKeys" />
+      }
     </div>
+
+    <!-- Records are identified to tell them apart between two runs: the items of a workflow, or the records pushed -->
+    <ng-template #identityKeys>
+      <div class="form-group">
+        <label class="form-label" for="new-identity-key-field" translate="south.workflows.identity-key-fields"></label>
+        <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
+        <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
+          @for (field of identityKeyFields(); track $index) {
+            <span class="badge bg-secondary d-flex align-items-center">
+              {{ field }}
+              <button
+                type="button"
+                class="btn-close btn-close-white ms-1 remove-identity-key-field"
+                [attr.aria-label]="'common.delete' | translate"
+                (click)="removeIdentityKeyField(field)"
+              ></button>
+            </span>
+          }
+        </div>
+        <div class="input-group input-group-sm identity-key-field-input">
+          <input
+            class="form-control"
+            id="new-identity-key-field"
+            [(ngModel)]="newIdentityKeyField"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
+            (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
+          />
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="add-identity-key-field"
+            [attr.aria-label]="'common.add' | translate"
+            (click)="addIdentityKeyField()"
+          >
+            <span class="fa-solid fa-plus" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </ng-template>
 
     <!-- 3. Items: what to do with the records -->
     <div [hidden]="step() !== 'items'" id="step-items">
@@ -533,47 +577,15 @@
         </div>
       }
 
+      <!-- Whatever the mode: a pushed record is identified too, for OIAnalytics to compare a run with the previous ones -->
+      @if (!isSqlFamily() && flow() !== 'items') {
+        <ng-container [ngTemplateOutlet]="identityKeys" />
+      }
+
       <!-- Item field mapping - local mode only. Never rendered for a SQL-family connector (always
              remote, see buildForm()'s own comment) or while "Push to OIAnalytics" is picked - that mode is
              already explained by the mode section above, so nothing needs to be shown here in that case. -->
       @if (!pushToOIAnalytics() && flow() !== 'items') {
-        <!-- Records are identified to tell the items of a workflow apart between two runs -->
-        <div class="form-group">
-          <label class="form-label" for="new-identity-key-field" translate="south.workflows.identity-key-fields"></label>
-          <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
-          <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
-            @for (field of identityKeyFields(); track $index) {
-              <span class="badge bg-secondary d-flex align-items-center">
-                {{ field }}
-                <button
-                  type="button"
-                  class="btn-close btn-close-white ms-1 remove-identity-key-field"
-                  [attr.aria-label]="'common.delete' | translate"
-                  (click)="removeIdentityKeyField(field)"
-                ></button>
-              </span>
-            }
-          </div>
-          <div class="input-group input-group-sm identity-key-field-input">
-            <input
-              class="form-control"
-              id="new-identity-key-field"
-              [(ngModel)]="newIdentityKeyField"
-              [ngModelOptions]="{ standalone: true }"
-              [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
-              (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
-            />
-            <button
-              type="button"
-              class="btn btn-secondary"
-              id="add-identity-key-field"
-              [attr.aria-label]="'common.add' | translate"
-              (click)="addIdentityKeyField()"
-            >
-              <span class="fa-solid fa-plus" aria-hidden="true"></span>
-            </button>
-          </div>
-        </div>
         <oib-item-field-mapping-form
           [fields]="activeMappableFields()"
           [(values)]="itemFieldMappingValues"
