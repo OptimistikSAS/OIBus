@@ -213,6 +213,21 @@ jobs:
             if (Test-Path "$env:CERT_PATH") { Remove-Item -Path "$env:CERT_PATH" -Force }
           }
 
+      # Linux has no embedded signature format: the binaries get detached signatures made with the same code
+      # signing key as the Windows ones, shipped in the archive with the matching certificate
+      - name: Set up gcloud
+        if: ${{ runner.os == 'Linux' }}
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Sign OIBus binaries (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        env:
+          CERT_BASE64_CONTENT: ${{ secrets.CERT }}
+        run: |
+          ./build/deps/linux/sign-kms.sh ./build/bin/${{ matrix.config['platform'] }}/signatures \
+            ./build/bin/${{ matrix.config['platform'] }}/binaries/oibus \
+            ./build/bin/${{ matrix.config['platform'] }}/oibus-launcher
+
       - name: Test OIBus runtime for ${{ matrix.config['friendlyName'] }}
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
@@ -232,28 +247,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
           gh release upload ${{ needs.prepare.outputs.release_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip
-
-      # --- LINUX SPECIFIC ---
-      # Linux has no embedded signature format: the archive gets a detached signature made with the same
-      # code signing key as the Windows binaries, published next to it with the matching certificate
-      - name: Set up gcloud
-        if: ${{ runner.os == 'Linux' }}
-        uses: google-github-actions/setup-gcloud@v3
-
-      - name: Sign Linux archive
-        if: ${{ runner.os == 'Linux' }}
-        env:
-          CERT_BASE64_CONTENT: ${{ secrets.CERT }}
-        run: ./build/deps/linux/sign-kms.sh ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip
-
-      - name: Upload Linux archive signature
-        if: ${{ runner.os == 'Linux' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload ${{ needs.prepare.outputs.release_name }} \
-            ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip.sig \
-            ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip.crt
 
       # --- WINDOWS SPECIFIC ---
       - name: Cache Inno Setup
