@@ -213,6 +213,21 @@ jobs:
             if (Test-Path "$env:CERT_PATH") { Remove-Item -Path "$env:CERT_PATH" -Force }
           }
 
+      # pkg embeds the newest Node.js its own release knows, whatever runs the build: fail if it lags behind
+      # the version pinned in the engines field
+      - name: Check Node.js version embedded in the binaries
+        shell: bash
+        run: |
+          expected=$(node -p "require('./backend/package.json').engines.node")
+          extension="${{ matrix.config['platform'] == 'win-x64' && '.exe' || '' }}"
+          for binary in "binaries/oibus$extension" "oibus-launcher$extension"; do
+            if ! grep -aq "node-v$expected\.tar\.gz" "./build/bin/${{ matrix.config['platform'] }}/$binary"; then
+              echo "::error::$binary does not embed Node.js v$expected. Upgrade @yao-pkg/pkg."
+              exit 1
+            fi
+            echo "$binary embeds Node.js v$expected"
+          done
+
       # Linux has no embedded signature format: the binaries get detached signatures made with the same code
       # signing key as the Windows ones, shipped in the archive with the matching certificate
       - name: Set up gcloud
