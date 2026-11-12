@@ -13,9 +13,6 @@ on:
 permissions:
   contents: write
   packages: write
-  # Needed to sign the Linux build provenance attestations
-  id-token: write
-  attestations: write
 
 jobs:
   prepare:
@@ -175,7 +172,7 @@ jobs:
           Write-Host "Installation Complete."
 
       - name: Authenticate to Google Cloud
-        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        if: ${{ runner.os == 'Windows' || runner.os == 'Linux' }}
         id: auth
         uses: google-github-actions/auth@v3
         with:
@@ -237,25 +234,26 @@ jobs:
           gh release upload ${{ needs.prepare.outputs.release_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip
 
       # --- LINUX SPECIFIC ---
-      # Linux has no Authenticode equivalent: the archive and the binaries it contains get a Sigstore-signed
-      # attestation instead, verifiable with: gh attestation verify <file> --repo OptimistikSAS/OIBus
-      - name: Attest Linux archive and binaries
+      # Linux has no embedded signature format: the archive gets a detached signature made with the same
+      # code signing key as the Windows binaries, published next to it with the matching certificate
+      - name: Set up gcloud
         if: ${{ runner.os == 'Linux' }}
-        id: attest
-        uses: actions/attest-build-provenance@v4
-        with:
-          subject-path: |
-            build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip
-            build/bin/${{ matrix.config['platform'] }}/binaries/oibus
-            build/bin/${{ matrix.config['platform'] }}/oibus-launcher
+        uses: google-github-actions/setup-gcloud@v3
 
-      - name: Upload attestation bundle for offline verification
+      - name: Sign Linux archive
+        if: ${{ runner.os == 'Linux' }}
+        env:
+          CERT_BASE64_CONTENT: ${{ secrets.CERT }}
+        run: ./build/deps/linux/sign-kms.sh ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip
+
+      - name: Upload Linux archive signature
         if: ${{ runner.os == 'Linux' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp "${{ steps.attest.outputs.bundle-path }}" ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.attestation.jsonl
-          gh release upload ${{ needs.prepare.outputs.release_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.attestation.jsonl
+          gh release upload ${{ needs.prepare.outputs.release_name }} \
+            ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip.sig \
+            ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip.crt
 
       # --- WINDOWS SPECIFIC ---
       - name: Cache Inno Setup

@@ -38,13 +38,18 @@ unzip oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
 </CodeBlock>
 
 :::tip Verify the download
-The Linux archives, and the `oibus` and `oibus-launcher` binaries they contain, are published with a signed build
-attestation. With the [GitHub CLI](https://cli.github.com/) installed, check that a file was built by the OIBus release
-pipeline:
+Each Linux archive is signed with the Optimistik code signing certificate, the one used for the Windows binaries. The
+signature (`.zip.sig`) and the certificate (`.zip.crt`) are published next to the archive on the
+[release page](https://github.com/OptimistikSAS/OIBus/releases). Download both, then check the archive and the
+certificate owner with OpenSSL:
 
 <CodeBlock language="bash">
-  {`gh attestation verify oibus-linux_x64-v${packageInfo.version}.zip --repo OptimistikSAS/OIBus`}
+  {`ARCHIVE=oibus-linux_x64-v${packageInfo.version}.zip
+openssl dgst -sha256 -verify <(openssl x509 -in $ARCHIVE.crt -pubkey -noout) -signature $ARCHIVE.sig $ARCHIVE
+openssl x509 -in $ARCHIVE.crt -noout -subject -issuer`}
 </CodeBlock>
+
+The first command must print `Verified OK`, and the second must show `OPTIMISTIK` as subject, issued by Sectigo.
 :::
 
 :::info Archive contents
