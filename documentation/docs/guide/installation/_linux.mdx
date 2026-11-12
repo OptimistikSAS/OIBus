@@ -37,6 +37,16 @@ unzip oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
 
 </CodeBlock>
 
+:::tip Verify the download
+The Linux archives, and the `oibus` and `oibus-launcher` binaries they contain, are published with a signed build
+attestation. With the [GitHub CLI](https://cli.github.com/) installed, check that a file was built by the OIBus release
+pipeline:
+
+<CodeBlock language="bash">
+  {`gh attestation verify oibus-linux_x64-v${packageInfo.version}.zip --repo OptimistikSAS/OIBus`}
+</CodeBlock>
+:::
+
 :::info Archive contents
 
 - `oibus-launcher` — launcher that manages the OIBus process and handles upgrades

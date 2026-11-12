@@ -13,6 +13,9 @@ on:
 permissions:
   contents: write
   packages: write
+  # Needed to sign the Linux build provenance attestations
+  id-token: write
+  attestations: write
 
 jobs:
   prepare:
@@ -83,11 +86,12 @@ jobs:
       matrix:
         config:
           - { friendlyName: 'MacOS arm64', os: 'macos-15', platform: 'macos-arm64', archiveName: 'oibus-macos_arm64', zip: 'zip -r' }
-          - { friendlyName: 'MacOS x64', os: 'macos-15-intel', platform: 'macos-x64', archiveName: 'oibus-macos_x64', zip: 'zip -r' }
+          - { friendlyName: 'MacOS x64', os: 'macos-15-intel', platform: 'macos-x64', archiveName: 'oibus-macos_x64', zip: 'zip -r', timeout: 60 }
           - { friendlyName: 'Windows x64', os: 'windows-2025', platform: 'win-x64', archiveName: 'oibus-win_x64', zip: '7z a -tzip' }
           - { friendlyName: 'Linux x64', os: 'ubuntu-24.04', platform: 'linux-x64', archiveName: 'oibus-linux_x64', zip: 'zip -r' }
           - { friendlyName: 'Linux arm64', os: 'ubuntu-24.04-arm', platform: 'linux-arm64', archiveName: 'oibus-linux_arm64', zip: 'zip -r' }
-    timeout-minutes: 25
+    # MacOS x64 recompiles some native dependencies, so it gets a longer limit
+    timeout-minutes: ${{ matrix.config['timeout'] || 25 }}
 
     steps:
       - name: Checkout
@@ -189,17 +193,20 @@ jobs:
               $encodedBytes = [System.Convert]::FromBase64String("$env:CERT_BASE64_CONTENT")
               Set-Content -Path "$env:CERT_PATH" -AsByteStream -Value $encodedBytes
 
-              # 2. Find the System x64 Signtool (Fixes "term not recognized")
-              $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Filter "signtool.exe" -Recurse | Where-Object { $_.FullName -like "*x64*" } | Select-Object -First 1 -ExpandProperty FullName
+              # 2. Sign every executable we ship (the script retries and falls back on another timestamp server)
+              $binaries = @(
+                "./build/bin/${{ matrix.config['platform'] }}/binaries/oibus.exe",
+                "./build/bin/${{ matrix.config['platform'] }}/oibus-launcher.exe",
+                "./build/bin/${{ matrix.config['platform'] }}/nssm.exe"
+              )
+              foreach ($binary in $binaries) {
+                  & ./build/deps/win-x64/sign-kms.ps1 $binary
+                  if ($LASTEXITCODE -ne 0) { throw "Could not sign $binary" }
+              }
 
-              if (-not $signtool) { throw "Could not find x64 signtool.exe on this runner." }
-              Write-Host "Found Signtool at: $signtool"
-
-              # 3. Sign OIBus binary
-              & $signtool sign /debug /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /f "$env:CERT_PATH" /csp "Google Cloud KMS Provider" /kc projects/oibus-dev/locations/global/keyRings/sectigo/cryptoKeys/202512-code-signing/cryptoKeyVersions/1 ./build/bin/${{ matrix.config['platform'] }}/binaries/oibus.exe
-
-              # 4. Sign OIBus launcher
-              & $signtool sign /debug /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /f "$env:CERT_PATH" /csp "Google Cloud KMS Provider" /kc projects/oibus-dev/locations/global/keyRings/sectigo/cryptoKeys/202512-code-signing/cryptoKeyVersions/1 ./build/bin/${{ matrix.config['platform'] }}/oibus-launcher.exe
+              # 3. Make sure nothing unsigned gets packaged
+              & ./build/deps/win-x64/verify-signature.ps1 -FilePaths $binaries
+              if ($LASTEXITCODE -ne 0) { throw "Signature verification failed" }
           }
           catch {
             Write-Error $_
@@ -228,6 +235,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
           gh release upload ${{ needs.prepare.outputs.release_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip
+
+      # --- LINUX SPECIFIC ---
+      # Linux has no Authenticode equivalent: the archive and the binaries it contains get a Sigstore-signed
+      # attestation instead, verifiable with: gh attestation verify <file> --repo OptimistikSAS/OIBus
+      - name: Attest Linux archive and binaries
+        if: ${{ runner.os == 'Linux' }}
+        id: attest
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip
+            build/bin/${{ matrix.config['platform'] }}/binaries/oibus
+            build/bin/${{ matrix.config['platform'] }}/oibus-launcher
+
+      - name: Upload attestation bundle for offline verification
+        if: ${{ runner.os == 'Linux' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp "${{ steps.attest.outputs.bundle-path }}" ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.attestation.jsonl
+          gh release upload ${{ needs.prepare.outputs.release_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.attestation.jsonl
 
       # --- WINDOWS SPECIFIC ---
       - name: Cache Inno Setup
@@ -269,6 +297,11 @@ jobs:
               Remove-Item -Path "$env:CERT_PATH" -Force
             }
           }
+
+      - name: Verify Windows installer signature
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        shell: pwsh
+        run: ./build/deps/win-x64/verify-signature.ps1 -FilePaths ./build/bin/win-setup-release/oibus-setup.exe
 
       - name: Rename & Upload Windows installer
         if: ${{ matrix.config['platform'] == 'win-x64' }}
