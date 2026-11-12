@@ -199,7 +199,8 @@ describe('SouthRestAPI connector', () => {
 
   it('should analyze the time variables of the query params, the headers and the body of a request with a body', () => {
     const usage = { usesStartTime: true, usesEndTime: false, hasInlineOffset: true };
-    utilsExports.getQueryTimeVariablesUsage = mock.fn((_text: string) => usage);
+    const getUsage = mock.fn((_text: string) => usage);
+    utilsExports.getQueryTimeVariablesUsage = getUsage;
     const item = createItem({
       method: 'POST',
       queryParams: [{ key: 'start', value: '@StartTime', dateTimeInput: { type: 'iso-string' } }],
@@ -208,17 +209,16 @@ describe('SouthRestAPI connector', () => {
     });
 
     assert.deepStrictEqual(south['getHistoryQueryTimeVariablesUsage'](item), usage);
-    assert.deepStrictEqual((utilsExports.getQueryTimeVariablesUsage as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
-      '@StartTime\n@StartTime.add(-1, \'day\')\n{"to": "@EndTime"}'
-    ]);
+    assert.deepStrictEqual(getUsage.mock.calls[0].arguments, ['@StartTime\n@StartTime.add(-1, \'day\')\n{"to": "@EndTime"}']);
   });
 
   it('should not analyze the body of a request that does not send one', () => {
-    utilsExports.getQueryTimeVariablesUsage = mock.fn((_text: string) => ({
+    const getUsage = mock.fn((_text: string) => ({
       usesStartTime: true,
       usesEndTime: true,
       hasInlineOffset: false
     }));
+    utilsExports.getQueryTimeVariablesUsage = getUsage;
     const item = createItem({
       method: 'GET',
       queryParams: [{ key: 'start', value: '@StartTime', dateTimeInput: { type: 'iso-string' } }],
@@ -227,7 +227,7 @@ describe('SouthRestAPI connector', () => {
 
     south['getHistoryQueryTimeVariablesUsage'](item);
 
-    assert.deepStrictEqual((utilsExports.getQueryTimeVariablesUsage as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['@StartTime']);
+    assert.deepStrictEqual(getUsage.mock.calls[0].arguments, ['@StartTime']);
   });
 
   it('should replace @StartTime and @EndTime in Query Params', async () => {

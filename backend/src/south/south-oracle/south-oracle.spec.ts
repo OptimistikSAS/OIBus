@@ -203,12 +203,11 @@ describe('SouthOracle', () => {
 
     it('should analyze the time variables of the item query', () => {
       const usage = { usesStartTime: true, usesEndTime: false, hasInlineOffset: true };
-      utilsExports.getSqlQueryTimeVariablesUsage = mock.fn((_query: string) => usage);
+      const getUsage = mock.fn((_query: string) => usage);
+      utilsExports.getSqlQueryTimeVariablesUsage = getUsage;
 
       assert.deepStrictEqual(south['getHistoryQueryTimeVariablesUsage'](configuration.items[0]), usage);
-      assert.deepStrictEqual((utilsExports.getSqlQueryTimeVariablesUsage as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
-        configuration.items[0].settings.query
-      ]);
+      assert.deepStrictEqual(getUsage.mock.calls[0].arguments, [configuration.items[0].settings.query]);
     });
 
     it('should properly run historyQuery', async () => {

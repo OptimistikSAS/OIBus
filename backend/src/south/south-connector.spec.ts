@@ -731,7 +731,12 @@ describe('SouthConnector', () => {
 
       it('should query the whole window at once when the query does not use @EndTime', async () => {
         utilsExports.getSqlQueryTimeVariablesUsage = mock.fn(() => ({ usesStartTime: true, usesEndTime: false, hasInlineOffset: false }));
-        const historyQueryMock = mock.fn(async () => ({ trackedInstant: null, value: null }));
+        const historyQueryMock = mock.fn(
+          async (_items: Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>, _startTime?: Instant, _endTime?: Instant) => ({
+            trackedInstant: null,
+            value: null
+          })
+        );
         south.historyQuery = historyQueryMock;
 
         await south.historyQueryHandler(items, windowStart, windowEnd);
