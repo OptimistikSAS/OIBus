@@ -37,28 +37,27 @@ unzip oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
 
 </CodeBlock>
 
-:::tip Verify the download
-Each Linux archive is signed with the Optimistik code signing certificate, the one used for the Windows binaries. The
-signature (`.zip.sig`) and the certificate (`.zip.crt`) are published next to the archive on the
-[release page](https://github.com/OptimistikSAS/OIBus/releases). Download both, then check the archive and the
-certificate owner with OpenSSL:
-
-<CodeBlock language="bash">
-  {`ARCHIVE=oibus-linux_x64-v${packageInfo.version}.zip
-openssl dgst -sha256 -verify <(openssl x509 -in $ARCHIVE.crt -pubkey -noout) -signature $ARCHIVE.sig $ARCHIVE
-openssl x509 -in $ARCHIVE.crt -noout -subject -issuer`}
-</CodeBlock>
-
-The first command must print `Verified OK`, and the second must show `OPTIMISTIK` as subject, issued by Sectigo.
-:::
-
 :::info Archive contents
 
 - `oibus-launcher` — launcher that manages the OIBus process and handles upgrades
 - `binaries/oibus` — main OIBus executable
 - `oibus-setup.sh` — interactive installation script
 - `oibus-uninstall.sh` — uninstallation script (updated during installation)
+- `signatures/` — signatures of `oibus-launcher` and `binaries/oibus`, with the certificate they were made with
   :::
+
+:::tip Verify the binaries
+Both binaries are signed with the Optimistik code signing certificate, the one used for the Windows binaries. From the
+extracted directory, check them and the certificate owner with OpenSSL:
+
+```bash
+openssl dgst -sha256 -verify <(openssl x509 -in signatures/oibus-code-signing.crt -pubkey -noout) -signature signatures/oibus.sig binaries/oibus
+openssl dgst -sha256 -verify <(openssl x509 -in signatures/oibus-code-signing.crt -pubkey -noout) -signature signatures/oibus-launcher.sig oibus-launcher
+openssl x509 -in signatures/oibus-code-signing.crt -noout -subject -issuer
+```
+
+The first two commands must print `Verified OK`, and the last one must show `OPTIMISTIK` as subject, issued by Sectigo.
+:::
 
 :::note
 The setup script has been tested on **Ubuntu** and **Debian**. For other distributions you may need to adapt the systemd service configuration.
