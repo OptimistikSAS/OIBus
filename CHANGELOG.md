@@ -1,17 +1,5 @@
 # Changelog
 
-## [3.9.7](https://github.com/OptimistikSAS/OIBus/compare/v3.9.6...v3.9.7) (2026-11-11)
-
-
-### Bug Fixes
-
-* **cache:** keep north cache usable with millions of small files ([713151b](https://github.com/OptimistikSAS/OIBus/commit/713151b1118e2fdeb2872bf5e0316f6ced9914c3))
-* **installer:** keep the service log on account when upgrading over an existing service ([4aea0bb](https://github.com/OptimistikSAS/OIBus/commit/4aea0bb7682f38ae84a3b72dd944099b5e6ef577))
-* **migration:** recover from interrupted migrations on large logs database ([803d9ef](https://github.com/OptimistikSAS/OIBus/commit/803d9ef0a4a9454f32b463c42db16b3cb3596167))
-* **opcua:** derive subscription watchdog timeout from the keepalive interval ([e681237](https://github.com/OptimistikSAS/OIBus/commit/e681237748637fb30e6e0a72f183d10ce5b5504e))
-* **south:** do not split history queries that ignore the interval bounds ([378168c](https://github.com/OptimistikSAS/OIBus/commit/378168cc45602ac322b031cddfd3c1d0798b9026))
-* **south:** log history query warnings once per work-unit, then as trace ([0b7af3c](https://github.com/OptimistikSAS/OIBus/commit/0b7af3ce3414e864008fa7842eebd9837cb74fbd))
-
 ## [3.9.6](https://github.com/OptimistikSAS/OIBus/compare/v3.9.5...v3.9.6) (2026-10-21)
 
 
