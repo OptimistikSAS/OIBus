@@ -44,7 +44,9 @@
         @for (record of page().content; track $index) {
           <tr>
             @for (field of fields(); track field) {
-              <td class="text-break small">{{ record[field] }}</td>
+              <td class="small">
+                <div class="record-value">{{ record[field] }}</div>
+              </td>
             }
           </tr>
         }

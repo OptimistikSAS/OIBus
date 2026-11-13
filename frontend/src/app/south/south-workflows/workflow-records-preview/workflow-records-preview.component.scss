@@ -5,7 +5,8 @@
 }
 
 .records-table {
-  // the columns are whatever the discovered records carry: each sizes to its content
+  // the columns are whatever the discovered records carry: each sizes to its content - however many they are, the table
+  // then gets wider than the modal and scrolls horizontally in its container (`table-responsive`), rather than squeezing them
   table-layout: auto;
 
   thead th {
@@ -16,8 +17,12 @@
     background-color: var(--bs-body-bg);
   }
 
-  td {
+  // a value is as wide as it is up to a limit, beyond which it wraps: the width of a cell does not keep its column from
+  // getting narrower than its values, the width of what it holds does
+  .record-value {
+    width: max-content;
     max-width: 24rem;
+    overflow-wrap: anywhere;
   }
 }
 

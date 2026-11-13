@@ -119,6 +119,27 @@ describe('WorkflowPreviewComponent', () => {
     await expect.element(tester.rows.nth(1)).toHaveClass('text-muted');
   });
 
+  test('should scroll many columns horizontally in their container, rather than squeezing them or widening the page', async () => {
+    const record: Record<string, string> = {};
+    for (let index = 0; index < 12; index++) {
+      record[`field${index}`] = `ns=1;s=Plant/Reactor/Sensor${index}`;
+    }
+    const tester = new WorkflowPreviewComponentTester(
+      result({ discoveredCount: 1, eligibleCount: 1, entries: [entry('field0=ns=1;s=Plant/Reactor/Sensor0', { record })] })
+    );
+    const host: HTMLElement = tester.fixture.nativeElement;
+    host.style.display = 'block';
+    host.style.width = '600px';
+
+    await expect.element(tester.headers).toHaveLength(14);
+    const container = tester.root.getByCss('.preview-table-container').element();
+    expect(container.scrollWidth).toBeGreaterThan(container.clientWidth);
+    expect(host.scrollWidth).toBe(host.clientWidth);
+    // the values are not wrapped while they fit: one line each
+    const value = tester.cell(0, 3).getByCss('.preview-value').element();
+    expect(value.getBoundingClientRect().height).toBeLessThan(2 * parseFloat(getComputedStyle(value).lineHeight));
+  });
+
   test('should paginate a large list of entries, 20 per page', async () => {
     const tester = new WorkflowPreviewComponentTester(
       result({ discoveredCount: 25, eligibleCount: 25, entries: Array.from({ length: 25 }, (_, i) => entry(`nodeId=${i}`)) })
