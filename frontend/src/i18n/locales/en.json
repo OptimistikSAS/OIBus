@@ -1799,7 +1799,7 @@
               "templates": {
                 "wonderware-historian-tags": {
                   "title": "Wonderware Historian tags",
-                  "description": "The analog, discrete and string tags of a Wonderware (AVEVA) Historian 2020, 2023 or 2026, with their description, unit, engineering range and where they are acquired from - and, for the tags of an Application Server, their area, equipment, sub-equipment and hierarchical name. Connect to its Runtime database; the Historian's system tags (Sys...) are left out."
+                  "description": "The analog, discrete and string tags of a Wonderware (AVEVA) Historian 2020, 2023 or 2026, with their description, unit, engineering range and where they are acquired from - and, for the tags of an Application Server, their parent area, area, equipment, sub-equipment and hierarchical name. Connect to its Runtime database; the Historian's system tags (Sys...) are left out."
                 }
               }
             }
