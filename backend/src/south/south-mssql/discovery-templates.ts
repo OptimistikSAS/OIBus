@@ -7,9 +7,10 @@ import { SouthDiscoveryTemplate } from '../../../shared/model/connector/south-ma
  *
  * The tags historized by an Application Server (System Platform) also get where they are in its model view, which the
  * Historian keeps a copy of in `aaObjectData` (areas and objects, each with its parent) and `aaAttributeData` (the tag of
- * each historized attribute of an object): the area of the tag, its equipment - the top object under that area - and
- * its sub-equipment - the object contained in that equipment, the tag belongs to or is under - with its full
- * hierarchical name (e.g. `Reactor_001.Inlet.Level`). They are null for the tags of other sources (I/O servers...).
+ * each historized attribute of an object): the area of the tag, the parent area that contains it (areas nest, e.g. a
+ * production line and its sections), its equipment - the top object under that area - and its sub-equipment - the
+ * object contained in that equipment, the tag belongs to or is under - with its full hierarchical name (e.g.
+ * `Reactor_001.Inlet.Level`). They are null for the tags of other sources (I/O servers...).
  *
  * The same for Historian 2020, 2023 and 2026, whose `Runtime` database have the same tables and views for these: `Tag`,
  * `AnalogTag`, `DiscreteTag`, `StringTag`, `Topic` and `IOServer` are views kept for backward compatibility since 2020.
@@ -17,7 +18,7 @@ import { SouthDiscoveryTemplate } from '../../../shared/model/connector/south-ma
 export const WONDERWARE_HISTORIAN_TAGS: SouthDiscoveryTemplate = {
   id: 'wonderware-historian-tags',
   query: `WITH Ancestor AS (
-  -- The object of each historized attribute, then its parents up to its area (Type 0)
+  -- The object of each historized attribute, then its parents: its containers, its area (Type 0) and the areas above
   SELECT ad.AttributeName AS TagName, ad.HierarchicalAttributeName AS HierarchicalName, o.Type, o.aaTagName, o.ParentKey, 0 AS Depth
   FROM aaAttributeData ad
   INNER JOIN aaObjectData o ON o.ObjectKey = ad.ObjectKey
@@ -25,19 +26,24 @@ export const WONDERWARE_HISTORIAN_TAGS: SouthDiscoveryTemplate = {
   SELECT an.TagName, an.HierarchicalName, p.Type, p.aaTagName, p.ParentKey, an.Depth + 1
   FROM Ancestor an
   INNER JOIN aaObjectData p ON p.ObjectKey = an.ParentKey
-  WHERE an.Type <> 0
+  WHERE an.Depth < 32
 ),
 AncestorPath AS (
-  SELECT an.*, MAX(CASE WHEN an.Type <> 0 THEN an.Depth END) OVER (PARTITION BY an.TagName) AS EquipmentDepth
+  -- The depth of the area of the tag: its nearest area, or above its top object when it has none
+  SELECT an.*, COALESCE(
+    MIN(CASE WHEN an.Type = 0 THEN an.Depth END) OVER (PARTITION BY an.TagName),
+    MAX(an.Depth) OVER (PARTITION BY an.TagName) + 1
+  ) AS AreaDepth
   FROM Ancestor an
 ),
 Hierarchy AS (
   SELECT
     TagName,
     MAX(HierarchicalName) AS HierarchicalName,
-    MAX(CASE WHEN Type = 0 THEN aaTagName END) AS Area,
-    MAX(CASE WHEN Type <> 0 AND Depth = EquipmentDepth THEN aaTagName END) AS Equipment,
-    MAX(CASE WHEN Type <> 0 AND Depth = EquipmentDepth - 1 THEN aaTagName END) AS SubEquipment
+    MAX(CASE WHEN Type = 0 AND Depth = AreaDepth + 1 THEN aaTagName END) AS ParentArea,
+    MAX(CASE WHEN Type = 0 AND Depth = AreaDepth THEN aaTagName END) AS Area,
+    MAX(CASE WHEN Depth = AreaDepth - 1 THEN aaTagName END) AS Equipment,
+    MAX(CASE WHEN Depth = AreaDepth - 2 THEN aaTagName END) AS SubEquipment
   FROM AncestorPath
   GROUP BY TagName
 )
@@ -46,6 +52,7 @@ SELECT
   t.Description AS description,
   t.TagType AS tagTypeCode,
   CASE t.TagType WHEN 1 THEN 'analog' WHEN 2 THEN 'discrete' WHEN 3 THEN 'string' ELSE 'other' END AS tagType,
+  h.ParentArea AS parentArea,
   h.Area AS area,
   h.Equipment AS equipment,
   h.SubEquipment AS subEquipment,
