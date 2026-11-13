@@ -76,17 +76,21 @@
                 {{ 'south.workflows.preview-status.' + row.entry.status | translate }}
               </span>
             </td>
-            <td class="preview-key">{{ displayKey(row.entry.key) }}</td>
+            <td class="preview-key">
+              <div class="preview-value">{{ displayKey(row.entry.key) }}</div>
+            </td>
             @for (column of columns(); track column) {
               @if (isChangedCell(row, column)) {
                 <td
                   class="preview-changed-cell"
                   [title]="'south.workflows.preview-previous-value' | translate: { value: row.previousValues![column] || '' }"
                 >
-                  {{ row.values[column] }}
+                  <div class="preview-value">{{ row.values[column] }}</div>
                 </td>
               } @else {
-                <td>{{ row.values[column] }}</td>
+                <td>
+                  <div class="preview-value">{{ row.values[column] }}</div>
+                </td>
               }
             }
           </tr>

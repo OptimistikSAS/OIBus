@@ -7,6 +7,10 @@
   // oib-table's fixed layout (and fixed-width last column) suits a known set of columns - these are
   // whatever the discovered records carry, so let each size to its content and scroll horizontally.
   table-layout: auto;
+  // the badge of the status never wraps
+  td:first-child {
+    white-space: nowrap;
+  }
 
   thead th {
     position: sticky;
@@ -20,7 +24,10 @@
     }
   }
 
-  td {
+  // a value is as wide as it is up to a limit, beyond which it wraps: the width of a cell does not keep its column from
+  // getting narrower than its values (squeezing them when there are many), the width of what it holds does
+  .preview-value {
+    width: max-content;
     max-width: 24rem;
     overflow-wrap: anywhere;
   }

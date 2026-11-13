@@ -55,6 +55,29 @@ describe('WorkflowRecordsPreviewComponent', () => {
     await expect.element(tester.pagination).not.toBeInTheDocument();
   });
 
+  test('should scroll many columns horizontally in their container, rather than squeezing them or widening the page', async () => {
+    const host: HTMLElement = tester.fixture.nativeElement;
+    host.style.display = 'block';
+    host.style.width = '600px';
+    const record: OIBusRecord = { short: 'x', long: 'ns=1;s=' + 'Plant.Reactor.'.repeat(10) };
+    for (let index = 0; index < 12; index++) {
+      record[`field${index}`] = `ns=1;s=Plant/Reactor/Sensor${index}`;
+    }
+
+    tester.show([record]);
+
+    await expect.element(tester.headers).toHaveLength(14);
+    const container = tester.root.getByCss('.records-table-container').element();
+    expect(container.scrollWidth).toBeGreaterThan(container.clientWidth);
+    expect(host.scrollWidth).toBe(host.clientWidth);
+    // a value is not wrapped while it fits, and wraps beyond 24rem
+    const values = tester.root.getByCss('.record-value');
+    const height = (index: number) => values.nth(index).element().getBoundingClientRect().height;
+    expect(height(2)).toBe(height(0));
+    expect(height(1)).toBeGreaterThan(height(0));
+    expect(values.nth(1).element().getBoundingClientRect().width).toBeLessThanOrEqual(24 * 16);
+  });
+
   test('should only have buttons to process the fields when the records are processable, highlighting the processed ones', async () => {
     tester.show(sensors(3));
     await expect.element(tester.processButtons).not.toBeInTheDocument();
