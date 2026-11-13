@@ -335,6 +335,7 @@ describe('SouthDetailComponent', () => {
         discoveryManifest,
         expect.anything(),
         southConnector.items,
+        expect.any(Function),
         expect.any(Function)
       );
       expect(southConnectorService.importItems).not.toHaveBeenCalled();
@@ -352,17 +353,41 @@ describe('SouthDetailComponent', () => {
       expect(southConnectorService.importItems).not.toHaveBeenCalled();
     });
 
-    test('should create the items of the explore and sync home and reload the connector', async () => {
+    test('should let the explore and sync home create the items of its wizard, and reload the connector', async () => {
       southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
       const tester = await createTester();
       const commands = [{ ...testData.south.itemCommand, id: null, name: 'Reactor/Temperature' }];
-      mockModal(createMock(ManageWorkflowsModalComponent), { kind: 'items', commands });
+      const home = mockModal(createMock(ManageWorkflowsModalComponent));
       southConnectorService.importItems.mockReturnValue(of(undefined));
+      southConnectorService.findById.mockReturnValue(
+        of({ ...southConnector, items: [...southConnector.items, buildItem('new', 'Reactor/Temperature')] })
+      );
 
       await tester.exploreButton.click();
+      // the wizard saves its items before it closes
+      expect(southConnectorService.importItems).not.toHaveBeenCalled();
+      const saveItems = home.prepareForDirectSave.mock.lastCall![7]!;
+      saveItems(commands).subscribe();
 
-      await vi.waitFor(() => expect(southConnectorService.importItems).toHaveBeenCalledWith('southId1', commands));
+      expect(southConnectorService.importItems).toHaveBeenCalledWith('southId1', commands);
       expect(notificationService.success).toHaveBeenCalledWith('south.add-discovered-items.added', { count: '1' });
+      await tester.expectItems('item b', 'item a', 'item c', 'Reactor/Temperature');
+    });
+
+    test('should give the error of the items the wizard could not create, reloading nothing', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(discoveryManifest));
+      const tester = await createTester();
+      const home = mockModal(createMock(ManageWorkflowsModalComponent));
+      southConnectorService.importItems.mockReturnValue(throwError(() => new Error('duplicate name')));
+      southConnectorService.findById.mockClear();
+
+      await tester.exploreButton.click();
+      const error = vi.fn();
+      home.prepareForDirectSave.mock.lastCall![7]!([testData.south.itemCommand]).subscribe({ error });
+
+      expect(error).toHaveBeenCalledWith(new Error('duplicate name'));
+      expect(southConnectorService.findById).not.toHaveBeenCalled();
+      expect(notificationService.success).not.toHaveBeenCalled();
     });
 
     test('should open the item modal with the item the tables checked in the explore and sync home give', async () => {
@@ -1024,6 +1049,7 @@ describe('SouthDetailComponent', () => {
         discoveryManifest,
         expect.anything(),
         southConnector.items,
+        expect.any(Function),
         expect.any(Function)
       );
 

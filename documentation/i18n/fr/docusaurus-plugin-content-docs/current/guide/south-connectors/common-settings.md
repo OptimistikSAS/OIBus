@@ -283,7 +283,8 @@ qu'ils ne l'ont pas été :
 - Une ligne dont les paramètres sont déjà lus par un élément existant est signalée **Déjà lu par** _cet élément_, et
   laissée décochée. Un nom déjà utilisé par un autre élément ou une autre ligne est signalé **Nom déjà utilisé**.
 
-**Ajouter les points** crée les lignes cochées. Les éléments sont nommés et configurés à partir des
+**Ajouter les points** crée les lignes cochées : la fenêtre se ferme une fois qu'ils sont créés, et reste ouverte avec
+eux, en indiquant pourquoi, quand ils ne peuvent pas l'être. Les éléments sont nommés et configurés à partir des
 [valeurs par défaut de découverte](#discovery-defaults) du connecteur ; chaque paramètre d'élément qu'elles ne
 couvrent pas reçoit sa valeur par défaut habituelle, comme dans la fenêtre de l'élément.
 
@@ -522,6 +523,8 @@ d'abord une étape **Source**, pour sa requête. La barre d'étapes en haut indi
 
 **Suivant** quitte l'étape Source dès qu'elle a une requête. Une nouvelle synchronisation s'enregistre depuis l'étape
 Vérification ; une synchronisation en cours de modification peut être enregistrée depuis n'importe quelle étape.
+L'assistant se ferme une fois la synchronisation enregistrée : quand elle ne peut pas l'être, il reste ouvert avec ce qui
+a été modifié et indique pourquoi, pour corriger et enregistrer à nouveau.
 
 #### Source {#source}
 
@@ -608,7 +611,8 @@ corbeille.
 
 L'ouverture de l'étape découvre la source de données et affiche **Enregistrements correspondants : _éligibles_ sur
 _découverts_**, avec les enregistrements correspondants dans un tableau, pour voir quels champs ils possèdent et leurs
-valeurs. Le tableau est paginé, et sa zone de recherche cherche un texte dans les valeurs de chaque champ. Cliquez sur **Actualiser l'aperçu** après avoir modifié les conditions. La découverte est un véritable
+valeurs. Le tableau est paginé, défile horizontalement quand les enregistrements ont plus de champs que l'assistant
+n'est large, et sa zone de recherche cherche un texte dans les valeurs de chaque champ. Cliquez sur **Actualiser l'aperçu** après avoir modifié les conditions. La découverte est un véritable
 aller-retour vers la source de données : prévisualiser une source volumineuse coûte autant qu'une exécution, les
 écritures en moins.
 
@@ -685,7 +689,9 @@ expression `{{field}}`.
 ##### Champs de clé d'identité {#identity-key-fields}
 
 Les **Champs de clé d'identité** désignent le ou les champs de l'enregistrement dont la valeur combinée identifie un
-enregistrement d'une exécution à l'autre — par ex. `id` pour OPC UA et BACnet. Au moins un est requis, quel que soit le mode :
+enregistrement d'une exécution à l'autre — par ex. `id` pour OPC UA et BACnet. Au moins un est requis, quel que soit le
+mode. Ils se définissent dans l'étape Points (dans l'étape Filtre pour un connecteur SQL, voir ci-dessous), au-dessus des
+**Champs à envoyer** ou du mapping des champs de point, et les champs des enregistrements prévisualisés sont suggérés :
 
 - Une synchronisation locale redécouvre la source de données à chaque exécution, et rapproche les enregistrements de
   ceux de l'exécution précédente par cette clé : un enregistrement est nouveau, modifié ou inchangé, et une clé qui ne
@@ -736,7 +742,7 @@ En mode local, un rappel indique que lorsqu'un point n'est plus trouvé, l'élé
 #### Vérification {#review}
 
 L'étape Vérification récapitule la synchronisation (nom, périmètre de découverte, champs traités et ajoutés, nombre de
-conditions, mode, planification) et prévisualise ce que ferait une exécution — l'ouverture de l'étape lance l'aperçu, **Actualiser
+conditions, champs de clé d'identité, mode, planification) et prévisualise ce que ferait une exécution — l'ouverture de l'étape lance l'aperçu, **Actualiser
 l'aperçu** le relance. Tant que quelque chose l'empêche (un nom ou une requête manquants, aucun champ de clé
 d'identité, un champ d'élément obligatoire non associé…), l'étape liste ce qu'il faut corriger, chacun avec un bouton
 vers l'étape où le corriger, et aucun aperçu ne s'exécute :

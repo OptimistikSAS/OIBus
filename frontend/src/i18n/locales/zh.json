@@ -2029,6 +2029,7 @@
       "updated": "项同步已更新",
       "deleted": "项同步已删除",
       "delete-error": "删除项同步时出错：{{error}}",
+      "save-error": "无法保存：{{error}}",
       "none-title": "尚无项同步",
       "none-hint": "让项与数据源保持同步：浏览数据源，勾选要跟踪的节点，然后选择“保持同步…”。也可以从“新建同步”开始。",
       "none-title-sql": "尚无元数据同步",

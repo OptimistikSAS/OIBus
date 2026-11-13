@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -168,7 +168,8 @@ describe('HistoryQueryDetailComponent', () => {
       southSettings: historyQuery.southSettings,
       manifest: testData.south.manifest,
       existingItems: historyQuery.items,
-      discover: expect.any(Function)
+      discover: expect.any(Function),
+      saveItems: expect.any(Function)
     });
     // there is no synchronisation, nor schedule, for a history query
     const options = wizard.prepareForExploration.mock.calls[0][0];
@@ -182,7 +183,7 @@ describe('HistoryQueryDetailComponent', () => {
     expect(historyQueryService.closeExplore).toHaveBeenCalledWith(historyQuery.id, 'sessionId');
   });
 
-  test('should add the items of the explore wizard, discovering them through the history query', async () => {
+  test('should let the explore wizard add its items, discovering them through the history query', async () => {
     const wizard = createMock(EditWorkflowModalComponent);
     const discovered = { ...testData.south.itemCommand, id: null, name: 'Reactor/Temperature' };
     mockModal(wizard, { kind: 'items', commands: [discovered] } satisfies ExploreWizardResult);
@@ -190,8 +191,11 @@ describe('HistoryQueryDetailComponent', () => {
     const tester = new HistoryQueryDetailComponentTester();
 
     await tester.exploreButton.click();
+    // the wizard saves its items before it closes: closing with them saves nothing more
+    expect(historyQueryService.importItems).not.toHaveBeenCalled();
+    wizard.prepareForExploration.mock.calls[0][0].saveItems!([discovered]).subscribe();
 
-    await vi.waitFor(() => expect(historyQueryService.importItems).toHaveBeenCalled());
+    expect(historyQueryService.importItems).toHaveBeenCalledTimes(1);
     historyQueryService.discoverItems.mockReturnValue(of([]));
     wizard.prepareForExploration.mock.calls[0][0].discover!({ nodeIds: ['ns=1;s=Reactor'] }, { name: '{{path}}' });
     expect(historyQueryService.discoverItems).toHaveBeenCalledWith(
@@ -211,6 +215,20 @@ describe('HistoryQueryDetailComponent', () => {
       }
     ]);
     expect(notificationService.success).toHaveBeenCalledWith('south.add-discovered-items.added', { count: '1' });
+  });
+
+  test('should give the explore wizard the error of the items it could not add', async () => {
+    const wizard = createMock(EditWorkflowModalComponent);
+    mockModal(wizard);
+    historyQueryService.importItems.mockReturnValue(throwError(() => new Error('duplicate name')));
+    const tester = new HistoryQueryDetailComponentTester();
+
+    await tester.exploreButton.click();
+    const error = vi.fn();
+    wizard.prepareForExploration.mock.calls[0][0].saveItems!([testData.south.itemCommand]).subscribe({ error });
+
+    expect(error).toHaveBeenCalledWith(new Error('duplicate name'));
+    expect(notificationService.success).not.toHaveBeenCalled();
   });
 
   test('should open the item modal with the item the tables checked give, to complete', async () => {

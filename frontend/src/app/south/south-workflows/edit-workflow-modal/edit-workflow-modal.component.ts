@@ -11,6 +11,7 @@ import {
   viewChild,
   WritableSignal
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -194,11 +195,21 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   });
   private filterPreviewKey: string | null = null;
   readonly state = new ObservableState();
+  /** Whether the workflow, or the items, are being saved (see `saveWorkflow`) */
+  protected readonly saving = toSignal(this.state.isPending, { initialValue: false });
+  /** Why the workflow, or the items, could not be saved: the modal stays open with them */
+  readonly saveError = signal<string | null>(null);
   /** True when opened from south-detail (the caller saves the workflow straight to the API); false when
    *  opened from edit-south (the caller keeps it in memory until the connector itself is saved) - only
    *  changes the confirm button's wording/icon, like EditSouthItemModalComponent's own directSave.
    *  Set by the opener right after opening the modal, before its first change detection. */
   directSave = true;
+  /**
+   * Saves the workflow before the modal closes, set by the opener (like `directSave`, or through the `sync` option of the
+   * Explore wizard): the modal closes with the saved workflow once it is saved, and stays open with the error, the workflow
+   * as edited, when it can't be. Without it, the modal closes with the workflow, for the opener to keep.
+   */
+  saveWorkflow: ((command: ConfigurationWorkflowCommandDTO) => Observable<ConfigurationWorkflowCommandDTO>) | null = null;
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   /** The schedule an item of the connector accepts: a connector that only polls (or subscribes) has no use of the other one */
   private readonly itemScheduleType = signal<OIBusScanModeAttribute['acceptableType'] | null>(null);
@@ -447,6 +458,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   prepareForExploration(options: ExploreWizardOptions) {
     this.exploreOptions.set(options);
     this.directSave = options.sync?.directSave ?? false;
+    this.saveWorkflow = options.sync?.save ?? null;
     const target = options.workflow ?? null;
     this.prepare(
       target?.mode ?? 'create',
@@ -921,11 +933,26 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   addItems() {
     const addItemsStep = this.addItemsStep();
-    if (!addItemsStep?.canAdd()) {
+    if (!addItemsStep?.canAdd() || this.saving()) {
       return;
     }
-    const result: ExploreWizardResult = { kind: 'items', commands: addItemsStep.includedCommands() };
-    this.modal.close(result);
+    const commands = addItemsStep.includedCommands();
+    const result: ExploreWizardResult = { kind: 'items', commands };
+    const saveItems = this.exploreOptions()?.saveItems;
+    if (!saveItems) {
+      this.modal.close(result);
+      return;
+    }
+    this.closeOnceSaved(saveItems(commands), () => result);
+  }
+
+  /** Closes the modal with what was saved once it is, or keeps it open with the error, and whatever was edited */
+  private closeOnceSaved<T>(save$: Observable<T>, closeWith: (saved: T) => unknown) {
+    this.saveError.set(null);
+    save$.pipe(this.state.pendingUntilFinalization()).subscribe({
+      next: saved => this.modal.close(closeWith(saved)),
+      error: error => this.saveError.set(extractErrorMessage(error))
+    });
   }
 
   /** The next step - not before the Source step has what any preview needs: a query, for SQL. */
@@ -1070,8 +1097,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   }
 
   save() {
-    // The form is also submitted by the Enter key of any of its fields
-    if (this.step() === 'explore' || this.step() === 'add-items') {
+    // The form is also submitted by the Enter key of any of its fields - while it is saved too
+    if (this.step() === 'explore' || this.step() === 'add-items' || this.saving()) {
       return;
     }
     this.formError.set(null);
@@ -1081,7 +1108,13 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       this.step.set(built.step);
       return;
     }
-    this.modal.close(this.exploring() ? ({ kind: 'workflow', command: built.command } satisfies ExploreWizardResult) : built.command);
+    const closeWith = (command: ConfigurationWorkflowCommandDTO) =>
+      this.exploring() ? ({ kind: 'workflow', command } satisfies ExploreWizardResult) : command;
+    if (!this.saveWorkflow) {
+      this.modal.close(closeWith(built.command));
+      return;
+    }
+    this.closeOnceSaved(this.saveWorkflow(built.command), closeWith);
   }
 
   /** Everything that keeps the workflow from being previewed and saved, in the order of the steps - listed in the Review step. */

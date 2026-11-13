@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of, Subject, throwError } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -21,6 +21,7 @@ import { MockModalService, provideModalTesting } from '../../../shared/mock-moda
 import { NotificationService } from '../../../shared/notification.service';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../../south-items/south-item-groups.testing';
 import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
+import { ExploreWizardOptions } from '../edit-workflow-modal/explore-wizard';
 import { toConfigurationWorkflowCommand } from '../workflow-command';
 import ManageWorkflowsModalComponent from './manage-workflows-modal.component';
 
@@ -110,10 +111,21 @@ describe('ManageWorkflowsModalComponent', () => {
     tester = new ManageWorkflowsModalComponentTester();
   });
 
-  function mockEditModal(result: ConfigurationWorkflowCommandDTO) {
+  /** The edit modal, which saves its workflow with what the modal under test gave it (see `save`) */
+  function mockEditModal() {
     const editModal = createMock(EditWorkflowModalComponent);
-    modalService.mockClosedModal(editModal, result);
+    modalService.mockDismissedModal(editModal);
     return editModal;
+  }
+
+  /** Saves a workflow as a modal does with the save function given to it: emits the saved workflow, or the error */
+  function save(
+    saveWorkflow: ((command: ConfigurationWorkflowCommandDTO) => Observable<ConfigurationWorkflowCommandDTO>) | null | undefined,
+    command: ConfigurationWorkflowCommandDTO
+  ): { saved: ConfigurationWorkflowCommandDTO | null; error: unknown } {
+    const outcome: { saved: ConfigurationWorkflowCommandDTO | null; error: unknown } = { saved: null, error: null };
+    saveWorkflow!(command).subscribe({ next: saved => (outcome.saved = saved), error: error => (outcome.error = error) });
+    return outcome;
   }
 
   describe('direct mode', () => {
@@ -177,12 +189,14 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.noMatch).toBeInTheDocument();
     });
 
-    test('should add a workflow through the edit modal and create it', async () => {
+    test('should add a workflow through the edit modal, which creates it before it closes', async () => {
       const command = buildWorkflowCommand(null, 'Gamma');
-      const editModal = mockEditModal(command);
+      const editModal = mockEditModal();
       configurationWorkflowService.create.mockReturnValue(of(buildWorkflow('workflow3', 'Gamma')));
 
       await tester.addButton.click();
+      expect(configurationWorkflowService.create).not.toHaveBeenCalled();
+      expect(save(editModal.saveWorkflow, command).saved).toEqual(expect.objectContaining({ id: 'workflow3', name: 'Gamma' }));
 
       expect(editModal.directSave).toBe(true);
       expect(editModal.prepareForCreation).toHaveBeenCalledWith(
@@ -199,12 +213,24 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.title).toHaveTextContent('Items synchronisations (3)');
     });
 
-    test('should edit a workflow through the edit modal and update it', async () => {
+    test('should not list a workflow the edit modal could not create, giving it the error', async () => {
+      const editModal = mockEditModal();
+      configurationWorkflowService.create.mockReturnValue(throwError(() => new Error('duplicate name')));
+
+      await tester.addButton.click();
+
+      expect(save(editModal.saveWorkflow, buildWorkflowCommand(null, 'Gamma')).error).toEqual(new Error('duplicate name'));
+      expect(notificationService.success).not.toHaveBeenCalled();
+      await expect.element(tester.rows).toHaveLength(2);
+    });
+
+    test('should edit a workflow through the edit modal, which updates it before it closes', async () => {
       const command = buildWorkflowCommand('workflow1', 'Alpha renamed');
-      const editModal = mockEditModal(command);
+      const editModal = mockEditModal();
       configurationWorkflowService.update.mockReturnValue(of(buildWorkflow('workflow1', 'Alpha renamed')));
 
       await tester.rowButton(0, 'Edit items synchronisation').click();
+      save(editModal.saveWorkflow, command);
 
       expect(editModal.prepareForEdition).toHaveBeenCalledWith(
         scanModes,
@@ -220,12 +246,25 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.row(0)).toMatchTextContent('Alpha renamed');
     });
 
-    test('should duplicate a workflow through the edit modal and create the copy', async () => {
+    test('should keep a workflow the edit modal could not update as it was', async () => {
+      const editModal = mockEditModal();
+      configurationWorkflowService.update.mockReturnValue(throwError(() => new Error('not found')));
+
+      await tester.rowButton(0, 'Edit items synchronisation').click();
+
+      expect(save(editModal.saveWorkflow, buildWorkflowCommand('workflow1', 'Alpha renamed')).error).toEqual(new Error('not found'));
+      expect(notificationService.success).not.toHaveBeenCalled();
+      await expect.element(tester.row(0)).toMatchTextContent('Alpha');
+      await expect.element(tester.row(0)).not.toMatchTextContent('renamed');
+    });
+
+    test('should duplicate a workflow through the edit modal, which creates the copy before it closes', async () => {
       const command = buildWorkflowCommand(null, 'Alpha-copy');
-      const editModal = mockEditModal(command);
+      const editModal = mockEditModal();
       configurationWorkflowService.create.mockReturnValue(of(buildWorkflow('workflow3', 'Alpha-copy')));
 
       await tester.rowButton(0, 'Duplicate').click();
+      save(editModal.saveWorkflow, command);
 
       expect(editModal.directSave).toBe(true);
       expect(editModal.prepareForCopy).toHaveBeenCalledWith(
@@ -355,9 +394,10 @@ describe('ManageWorkflowsModalComponent', () => {
 
     test("should add a workflow to the page's workflows with a temp id, without calling the backend", async () => {
       prepareInMemory();
-      const editModal = mockEditModal(buildWorkflowCommand(null, 'Gamma'));
+      const editModal = mockEditModal();
 
       await tester.addButton.click();
+      save(editModal.saveWorkflow, buildWorkflowCommand(null, 'Gamma'));
 
       expect(editModal.directSave).toBe(false);
       expect(editModal.prepareForCreation).toHaveBeenCalledWith(scanModes, commands, manifest, 'create', southSettings, groups);
@@ -370,9 +410,10 @@ describe('ManageWorkflowsModalComponent', () => {
 
     test("should replace the edited workflow in the page's workflows, keeping its id", async () => {
       prepareInMemory();
-      mockEditModal(buildWorkflowCommand(null, 'Alpha renamed'));
+      const editModal = mockEditModal();
 
       await tester.rowButton(0, 'Edit items synchronisation').click();
+      save(editModal.saveWorkflow, buildWorkflowCommand(null, 'Alpha renamed'));
 
       expect(configurationWorkflowService.update).not.toHaveBeenCalled();
       expect(pageWorkflows()[0]).toEqual(expect.objectContaining({ id: 'workflow1', name: 'Alpha renamed' }));
@@ -382,9 +423,10 @@ describe('ManageWorkflowsModalComponent', () => {
 
     test("should add a duplicate to the page's workflows with a fresh temp id", async () => {
       prepareInMemory();
-      mockEditModal(buildWorkflowCommand(null, 'Alpha-copy'));
+      const editModal = mockEditModal();
 
       await tester.rowButton(0, 'Duplicate').click();
+      save(editModal.saveWorkflow, buildWorkflowCommand(null, 'Alpha-copy'));
 
       expect(configurationWorkflowService.create).not.toHaveBeenCalled();
       expect(pageWorkflows()).toHaveLength(3);
@@ -498,6 +540,11 @@ describe('ManageWorkflowsModalComponent', () => {
       }
     }
 
+    /** What the wizard was opened with */
+    function wizardOptions(): ExploreWizardOptions {
+      return wizard.prepareForExploration.mock.lastCall![0];
+    }
+
     function mockWizard(result?: unknown) {
       wizard = createMock(EditWorkflowModalComponent);
       if (result === undefined) {
@@ -530,7 +577,7 @@ describe('ManageWorkflowsModalComponent', () => {
         manifest: treeManifest,
         schedule: { scanModes, groups },
         existingItems: [{ name: 'item', settings: itemSettings }],
-        sync: { directSave: true, existingWorkflows: commands }
+        sync: { directSave: true, existingWorkflows: commands, save: expect.any(Function) }
       });
     });
 
@@ -541,7 +588,11 @@ describe('ManageWorkflowsModalComponent', () => {
       await tester.exploreButton.click();
 
       expect(wizard.prepareForExploration).toHaveBeenCalledWith(
-        expect.objectContaining({ southId: 'create', exploreConnectorId: null, sync: { directSave: false, existingWorkflows: commands } })
+        expect.objectContaining({
+          southId: 'create',
+          exploreConnectorId: null,
+          sync: { directSave: false, existingWorkflows: commands, save: expect.any(Function) }
+        })
       );
     });
 
@@ -552,16 +603,43 @@ describe('ManageWorkflowsModalComponent', () => {
 
       await tester.exploreButton.click();
 
+      expect(wizardOptions().saveItems).toBeUndefined();
       expect(activeModal.close).toHaveBeenCalledWith({ kind: 'items', commands: items });
     });
 
-    test('should create the workflow the wizard gave, and stay open', async () => {
+    test('should let the wizard save its items as the page tells, and close once they are', async () => {
+      const items = [testData.south.itemCommand];
+      const saveItems = vi.fn(() => of(undefined));
+      mockWizard({ kind: 'items', commands: items });
+      configurationWorkflowService.list.mockReturnValue(of([]));
+      tester.fixture.componentInstance.prepareForDirectSave(
+        'southId1',
+        southSettings,
+        scanModes,
+        treeManifest,
+        groups,
+        [],
+        undefined,
+        saveItems
+      );
+
+      await tester.exploreButton.click();
+
+      expect(wizardOptions().saveItems).toBe(saveItems);
+      // saved by the wizard already: nothing for the page to save
+      expect(activeModal.close).toHaveBeenCalledWith();
+    });
+
+    test('should let the wizard create its workflow before it closes, and stay open', async () => {
       const command = buildWorkflowCommand(null, 'Boiler sync');
       mockWizard({ kind: 'workflow', command });
       configurationWorkflowService.create.mockReturnValue(of(buildWorkflow('workflow4', 'Boiler sync')));
       prepare();
 
       await tester.exploreButton.click();
+      // the workflow the wizard closes with is the one it saved
+      expect(configurationWorkflowService.create).not.toHaveBeenCalled();
+      save(wizardOptions().sync!.save, command);
 
       expect(configurationWorkflowService.create).toHaveBeenCalledWith('southId1', command);
       expect(activeModal.close).not.toHaveBeenCalled();
@@ -570,11 +648,12 @@ describe('ManageWorkflowsModalComponent', () => {
 
     test('should update the workflow the wizard gave when it is one of the list', async () => {
       const command = { ...commands[0], name: 'Reactor sync renamed' };
-      mockWizard({ kind: 'workflow', command: { ...command, id: 'workflow1' } });
+      mockWizard();
       configurationWorkflowService.update.mockReturnValue(of(buildWorkflow('workflow1', 'Reactor sync renamed')));
       prepare();
 
       await tester.exploreButton.click();
+      save(wizardOptions().sync!.save, { ...command, id: 'workflow1' });
 
       expect(configurationWorkflowService.update).toHaveBeenCalledWith(
         'southId1',

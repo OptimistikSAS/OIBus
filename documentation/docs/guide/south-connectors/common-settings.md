@@ -255,7 +255,8 @@ the mapping changes (or with **Refresh preview**), and the items can't be added 
 - A row whose settings are already read by an existing item is flagged **Already read by** _that item_, and left
   unchecked. A name already used by another item or row is flagged **Name already used**.
 
-**Add items** creates the checked rows. Items are named and set up from the connector's
+**Add items** creates the checked rows: the modal closes once they are created, and stays open with them, saying why,
+when they can't be. Items are named and set up from the connector's
 [discovery defaults](#discovery-defaults); every item setting left out of them gets its usual default value, as in the
 item modal.
 
@@ -472,7 +473,8 @@ A synchronisation is created and edited in a wizard. For a tree-based connector 
 | **Review**          | A summary, what to fix before saving, and a preview of what a run would do.     |
 
 **Next** leaves the Source step once it has a query. A new synchronisation is saved from the Review step; one being
-edited can be saved from any step.
+edited can be saved from any step. The wizard closes once the synchronisation is saved: when it can't be, it stays open
+with what was edited and says why, to fix it and save again.
 
 #### Source {#source}
 
@@ -552,8 +554,8 @@ on — leave it empty to make every record eligible. It compares the processed v
 Add a condition with the fields below the table; edit or remove one with its pencil and trash icons.
 
 Opening the step discovers the data source and shows **Matching records: _eligible_ of _discovered_**, with the matching
-records in a table, to see which fields they have and their values. The table is paginated, and its search box looks for
-a text in the values of every field. Click **Refresh preview** after changing the conditions. Discovery is a real round trip to the data source: previewing a large source costs what a run costs,
+records in a table, to see which fields they have and their values. The table is paginated, scrolls sideways when the
+records have more fields than the wizard is wide, and its search box looks for a text in the values of every field. Click **Refresh preview** after changing the conditions. Discovery is a real round trip to the data source: previewing a large source costs what a run costs,
 minus the writes.
 
 #### Items {#items-step}
@@ -623,7 +625,9 @@ expression.
 ##### Identity Key Fields {#identity-key-fields}
 
 The **Identity key fields** name the record field(s) whose combined value identifies a record across runs — e.g. `id`
-for OPC UA and BACnet. At least one is required, whatever the mode:
+for OPC UA and BACnet. At least one is required, whatever the mode. They are set in the Items step (in the Filter step
+for a SQL connector, see below), above the **Fields to push** or the item field mapping, and the fields of the
+previewed records are suggested:
 
 - A local synchronisation discovers the data source again on every run, and matches the records against the previous
   run by this key: a record is new, changed or unchanged, and a key that no longer comes back is missing (see
@@ -669,7 +673,7 @@ In local mode, a reminder states that when a point is no longer found, the item 
 #### Review {#review}
 
 The Review step sums up the synchronisation (name, discovery scope, processed and added fields, number of conditions,
-mode, schedule) and previews what a run would do — opening the step runs the preview, **Refresh preview** runs it again. While something prevents it
+identity key fields, mode, schedule) and previews what a run would do — opening the step runs the preview, **Refresh preview** runs it again. While something prevents it
 (a missing name or query, no identity key field, a mandatory item field not mapped…), the step lists what to fix, each
 with a button to the step where to fix it, and no preview runs:
 

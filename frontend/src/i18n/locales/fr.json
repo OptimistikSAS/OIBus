@@ -2029,6 +2029,7 @@
       "updated": "Synchronisation des points mise à jour",
       "deleted": "Synchronisation des points supprimée",
       "delete-error": "Erreur lors de la suppression de la synchronisation des points : {{error}}",
+      "save-error": "Impossible d'enregistrer : {{error}}",
       "none-title": "Aucune synchronisation de points pour le moment",
       "none-hint": "Gardez des points synchronisés avec la source de données : explorez-la, cochez les nœuds à suivre, puis choisissez Synchroniser…. Vous pouvez aussi partir de Nouvelle synchronisation.",
       "none-title-sql": "Aucune synchronisation de métadonnées pour le moment",

@@ -289,29 +289,26 @@ export class HistoryQueryDetailComponent {
           historyQuery.southSettings,
           discoveryScope,
           itemFieldMapping
-        )
-    })
-      .pipe(
-        switchMap(result => {
-          if (result.kind === 'item') {
-            this.openItemCreation(historyQuery.items, null, toHistoryQueryItemCommand(result.command));
-            return EMPTY;
-          }
-          return result.kind === 'items'
-            ? this.historyQueryService
-                .importItems(
-                  historyQuery.id,
-                  result.commands.map(command => toHistoryQueryItemCommand(command))
-                )
-                .pipe(map(() => result.commands.length))
-            : EMPTY;
-        })
-      )
-      .subscribe(count => {
-        this.refreshHistoryQuery();
-        this.itemTable()?.goToFirstPage();
-        this.notificationService.success('south.add-discovered-items.added', { count: String(count) });
-      });
+        ),
+      // the items are created before the wizard closes: it stays open when they can't be
+      saveItems: commands =>
+        this.historyQueryService
+          .importItems(
+            historyQuery.id,
+            commands.map(command => toHistoryQueryItemCommand(command))
+          )
+          .pipe(
+            tap(() => {
+              this.refreshHistoryQuery();
+              this.itemTable()?.goToFirstPage();
+              this.notificationService.success('south.add-discovered-items.added', { count: String(commands.length) });
+            })
+          )
+    }).subscribe(result => {
+      if (result.kind === 'item') {
+        this.openItemCreation(historyQuery.items, null, toHistoryQueryItemCommand(result.command));
+      }
+    });
   }
 
   /** The history query is finished when all the intervals are retrieved and all the data is sent */

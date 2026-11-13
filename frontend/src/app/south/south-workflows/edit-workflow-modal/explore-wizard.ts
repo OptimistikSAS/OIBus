@@ -68,7 +68,20 @@ export interface ExploreWizardOptions {
    * Keeping items in sync with the checked nodes through a workflow, with tree-based discovery only: whether it is saved
    * through the API (the caller saves it) or in memory, and the other workflows of the connector for the name uniqueness check
    */
-  sync?: { directSave: boolean; existingWorkflows: Array<ConfigurationWorkflowCommandDTO> };
+  sync?: {
+    directSave: boolean;
+    existingWorkflows: Array<ConfigurationWorkflowCommandDTO>;
+    /**
+     * Saves the workflow of the wizard before it closes (see `EditWorkflowModalComponent.saveWorkflow`): the wizard closes
+     * with the saved workflow, or stays open with the error. Without it, the wizard closes with the workflow to save.
+     */
+    save?: (command: ConfigurationWorkflowCommandDTO) => Observable<ConfigurationWorkflowCommandDTO>;
+  };
+  /**
+   * Saves the items of the Add as items step before the wizard closes with them: it stays open, with the error, when they
+   * can't be. Without it, the wizard closes with the items to save.
+   */
+  saveItems?: (commands: Array<SouthConnectorItemCommandDTO>) => Observable<unknown>;
   /** Only the synchronisation is offered on the checked nodes, whatever the connector can do besides - from its New button */
   syncOnly?: boolean;
   /** Nothing is offered on the checked nodes: the data source is only browsed - e.g. to write the query of an item */
