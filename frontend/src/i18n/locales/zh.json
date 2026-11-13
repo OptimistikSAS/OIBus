@@ -801,7 +801,7 @@
               "templates": {
                 "wonderware-historian-tags": {
                   "title": "Wonderware Historian 标签",
-                  "description": "Wonderware (AVEVA) Historian 2020、2023 或 2026 的模拟量、离散量和字符串标签，包括其描述、单位、工程量程和采集来源；对于 Application Server 的标签，还包括其区域 (area)、设备、子设备和层级名称。请连接到其 Runtime 数据库；Historian 的系统标签 (Sys...) 不包含在内。"
+                  "description": "Wonderware (AVEVA) Historian 2020、2023 或 2026 的模拟量、离散量和字符串标签，包括其描述、单位、工程量程和采集来源；对于 Application Server 的标签，还包括其父区域、区域 (area)、设备、子设备和层级名称。请连接到其 Runtime 数据库；Historian 的系统标签 (Sys...) 不包含在内。"
                 }
               }
             }
