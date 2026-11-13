@@ -16,6 +16,16 @@
     @if (formError(); as formError) {
       <div class="alert alert-danger py-1 px-2" id="form-error" role="alert" [translate]="formError"></div>
     }
+    <!-- The save failed: the modal stays open with what was edited, to try again -->
+    @if (saveError(); as saveError) {
+      <div
+        class="alert alert-danger py-1 px-2"
+        id="save-error"
+        role="alert"
+        [translate]="'south.workflows.save-error'"
+        [translateParams]="{ error: saveError }"
+      ></div>
+    }
 
     <!-- Explore: the nodes to use, checked in the data source -->
     @if (exploring()) {
@@ -432,12 +442,6 @@
           </button>
         </div>
       </div>
-      <datalist id="record-fields">
-        @for (field of recordFields(); track $index) {
-          <option [value]="field"></option>
-        }
-      </datalist>
-
       <div class="d-flex align-items-center gap-2 mb-2" id="filter-preview">
         <button
           type="button"
@@ -475,6 +479,13 @@
       }
     </div>
 
+    <!-- The fields of the records, suggested wherever a field is typed: a condition, a processed field, an identity key -->
+    <datalist id="record-fields">
+      @for (field of recordFields(); track $index) {
+        <option [value]="field"></option>
+      }
+    </datalist>
+
     <!-- Records are identified to tell them apart between two runs: the items of a workflow, or the records pushed -->
     <ng-template #identityKeys>
       <div class="form-group">
@@ -497,6 +508,7 @@
           <input
             class="form-control"
             id="new-identity-key-field"
+            list="record-fields"
             [(ngModel)]="newIdentityKeyField"
             [ngModelOptions]="{ standalone: true }"
             [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
@@ -557,6 +569,11 @@
         }
       </div>
 
+      <!-- Whatever the mode: a pushed record is identified too, for OIAnalytics to compare a run with the previous ones -->
+      @if (!isSqlFamily() && flow() !== 'items') {
+        <ng-container [ngTemplateOutlet]="identityKeys" />
+      }
+
       <!-- The fields of the records pushed to OIAnalytics - remote mode only -->
       @if (pushToOIAnalytics()) {
         <div class="form-group" id="pushed-fields">
@@ -575,11 +592,6 @@
             </div>
           }
         </div>
-      }
-
-      <!-- Whatever the mode: a pushed record is identified too, for OIAnalytics to compare a run with the previous ones -->
-      @if (!isSqlFamily() && flow() !== 'items') {
-        <ng-container [ngTemplateOutlet]="identityKeys" />
       }
 
       <!-- Item field mapping - local mode only. Never rendered for a SQL-family connector (always
@@ -677,6 +689,14 @@
           [translate]="'south.workflows.wizard.conditions'"
           [translateParams]="{ count: eligibilityFilter().length }"
         ></dd>
+        <dt class="col-sm-3" translate="south.workflows.identity-key-fields"></dt>
+        <dd class="col-sm-9" id="review-identity-key-fields">
+          @if (identityKeyFields().length > 0) {
+            {{ identityKeyFields().join(', ') }}
+          } @else {
+            <span translate="south.workflows.field-processes-none-short"></span>
+          }
+        </dd>
         <dt class="col-sm-3" translate="south.workflows.mode"></dt>
         <dd class="col-sm-9" [translate]="pushToOIAnalytics() ? 'south.workflows.mode-remote' : 'south.workflows.mode-local'"></dd>
         @if (pushToOIAnalytics()) {
@@ -814,7 +834,7 @@
           type="button"
           class="btn btn-primary"
           id="add-discovered-items"
-          [disabled]="!addItemsStep()?.canAdd()"
+          [disabled]="!addItemsStep()?.canAdd() || saving()"
           (click)="addItems()"
           [translate]="'south.add-discovered-items.add'"
           [translateParams]="{ count: addItemsStep()?.includedCount() ?? 0 }"

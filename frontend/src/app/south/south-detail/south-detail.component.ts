@@ -700,22 +700,17 @@ export class SouthDetailComponent {
       this.manifest()!,
       this.itemGroups,
       this.southConnector()!.items,
-      () => this.reloadAfterWorkflowRun()
+      () => this.reloadAfterWorkflowRun(),
+      // the items the wizard of the modal adds are created before it closes: it stays open when they can't be
+      commands => this.addDiscoveredItems(commands)
     );
-    modalRef.result
-      .pipe(
-        tap(() => this.workflowsResource.reload()),
-        // the wizard of the modal may have given items to add
-        switchMap((result: ExploreAndSyncResult | undefined) => {
-          if (result?.kind === 'item') {
-            // the item the tables checked give, which the item modal completes
-            this.openItemCreation(null, result.command);
-            return of(null);
-          }
-          return result?.kind === 'items' ? this.addDiscoveredItems(result.commands) : of(null);
-        })
-      )
-      .subscribe();
+    modalRef.result.subscribe((result: ExploreAndSyncResult | undefined) => {
+      this.workflowsResource.reload();
+      if (result?.kind === 'item') {
+        // the item the tables checked give, which the item modal completes
+        this.openItemCreation(null, result.command);
+      }
+    });
   }
 
   /** A manual workflow run may have created/updated items directly on this connector - reload it so

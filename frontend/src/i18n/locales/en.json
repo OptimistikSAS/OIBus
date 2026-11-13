@@ -3027,6 +3027,7 @@
       "updated": "Items synchronisation updated",
       "deleted": "Items synchronisation deleted",
       "delete-error": "Error deleting items synchronisation: {{error}}",
+      "save-error": "Could not save: {{error}}",
       "none-title": "No items synchronisation yet",
       "none-hint": "Keep items in sync with the data source: explore it, check the nodes to follow, and choose Keep in sync…. You can also start from New synchronisation.",
       "none-title-sql": "No metadata synchronisation yet",

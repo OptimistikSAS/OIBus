@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { EMPTY, NEVER, of, throwError } from 'rxjs';
+import { EMPTY, NEVER, Observable, of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -176,6 +176,8 @@ class EditWorkflowModalComponentTester {
   }
   readonly sqlFixedMode = this.root.getByText('This connector only supports pushing to OIAnalytics', { exact: false });
   readonly formError = this.root.getByCss('#form-error');
+  readonly saveError = this.root.getByCss('#save-error');
+  readonly reviewIdentityKeyFields = this.root.getByCss('#review-identity-key-fields');
   readonly mustBeUnique = this.root.getByText('Must be unique');
   // discovery scope
   readonly discoveryNodes = this.root.getByCss('#discovery-nodes');
@@ -863,6 +865,42 @@ describe('EditWorkflowModalComponent', () => {
       await expect.element(tester.mappingTable).toBeInTheDocument();
     });
 
+    test('should offer the identity key fields before the fields to push, suggesting the fields of the records', async () => {
+      configurationWorkflowService.previewCommand.mockReturnValue(
+        of({ discoveredCount: 1, eligibleCount: 1, entries: [], records: [{ nodeId: 'ns=1;s=T', unit: '°C' }], samples: {} })
+      );
+      const tester = create({ step: 'filter' });
+      await tester.goToStep('items');
+
+      await tester.remoteMode.click();
+
+      await expect.element(tester.newIdentityKeyField).toBeVisible();
+      await expect.element(tester.pushedFields).toBeVisible();
+      // the identity key fields are always pushed: they come first
+      const identityKeys = tester.newIdentityKeyField.element();
+      const pushedFields = tester.pushedFields.element();
+      expect(identityKeys.compareDocumentPosition(pushedFields) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      await expect.element(tester.newIdentityKeyField).toHaveAttribute('list', 'record-fields');
+      await expect.element(tester.root.getByCss('#record-fields option[value="unit"]')).toBeInTheDocument();
+      await expect.element(tester.root.getByCss('#record-fields option[value="nodeId"]')).toBeInTheDocument();
+    });
+
+    test('should review the identity key fields of a remote workflow', async () => {
+      const tester = create({ mode: 'edit' });
+      await tester.remoteMode.click();
+      await tester.addIdentityKeyField('unit');
+
+      await tester.goToStep('review');
+
+      await expect.element(tester.reviewIdentityKeyFields).toHaveTextContent('nodeId, unit');
+      await tester.goToStep('items');
+      await tester.identityKeyFields.getByRole('button', { name: 'Delete' }).first().click();
+      await tester.identityKeyFields.getByRole('button', { name: 'Delete' }).first().click();
+      await tester.goToStep('review');
+      await expect.element(tester.reviewIdentityKeyFields).toHaveTextContent('None');
+      await expect.element(tester.root.getByCss('.review-error')).toMatchTextContent('At least one identity key field is required');
+    });
+
     test('should save a remote workflow with its identity key fields and no item field mapping, when OIBus is registered', async () => {
       engineService.getRegistrationSettings.mockReturnValue(of(registered));
       const tester = create({ mode: 'edit' });
@@ -879,6 +917,72 @@ describe('EditWorkflowModalComponent', () => {
           identityKeyFields: existingWorkflow.identityKeyFields
         })
       );
+    });
+  });
+
+  describe('saving through the opener', () => {
+    const saved = buildWorkflowCommand('workflowId1', 'Reactor discovery renamed');
+    // a workflow that can be saved as it is
+    const pushed = { ...existingWorkflow, pushToOIAnalytics: true, itemFieldMapping: null };
+
+    test('should close with the saved workflow once it is saved, not before', async () => {
+      const save$ = new Subject<ConfigurationWorkflowCommandDTO>();
+      const tester = create({ mode: 'edit', workflow: pushed, existingWorkflows: [pushed] });
+      const saveWorkflow = vi.fn(() => save$);
+      tester.fixture.componentInstance.saveWorkflow = saveWorkflow;
+      await tester.name.fill('Reactor discovery renamed');
+
+      await tester.saveButton.click();
+
+      expect(saveWorkflow).toHaveBeenCalledWith(expect.objectContaining({ id: 'workflowId1', name: 'Reactor discovery renamed' }));
+      expect(activeModal.close).not.toHaveBeenCalled();
+      await expect.element(tester.saveButton).toBeDisabled();
+      // submitted again (e.g. with the Enter key) while it is saved: saved once
+      tester.fixture.componentInstance.save();
+      expect(saveWorkflow).toHaveBeenCalledTimes(1);
+
+      save$.next(saved);
+      save$.complete();
+
+      expect(activeModal.close).toHaveBeenCalledWith(saved);
+    });
+
+    test('should stay open with the error and the workflow as edited when it cannot be saved, to try again', async () => {
+      const tester = create({ mode: 'edit', workflow: pushed, existingWorkflows: [pushed] });
+      const saveWorkflow = vi.fn<(command: ConfigurationWorkflowCommandDTO) => Observable<ConfigurationWorkflowCommandDTO>>(() =>
+        throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'Name already used' } }))
+      );
+      tester.fixture.componentInstance.saveWorkflow = saveWorkflow;
+      await tester.name.fill('Reactor discovery renamed');
+
+      await tester.saveButton.click();
+
+      await expect.element(tester.saveError).toHaveTextContent('Could not save: Name already used');
+      expect(activeModal.close).not.toHaveBeenCalled();
+      await expect.element(tester.name).toHaveValue('Reactor discovery renamed');
+      await expect.element(tester.saveButton).toBeEnabled();
+
+      saveWorkflow.mockReturnValue(of(saved));
+      await tester.saveButton.click();
+
+      expect(saveWorkflow).toHaveBeenCalledTimes(2);
+      expect(activeModal.close).toHaveBeenCalledWith(saved);
+    });
+
+    test('should save a new workflow from the Review step through the opener', async () => {
+      const tester = create({ step: 'items' });
+      tester.fixture.componentInstance.saveWorkflow = () => throwError(() => new Error('unreachable'));
+      await tester.remoteMode.click();
+      await tester.addIdentityKeyField('nodeId');
+      await tester.goToStep('schedule');
+      await tester.name.fill('New workflow');
+
+      await tester.save();
+
+      await expect.element(tester.saveError).toHaveTextContent('Could not save: unreachable');
+      await expect.element(tester.stepButton('review')).toHaveAttribute('aria-current', 'step');
+      await expect.element(tester.reviewIdentityKeyFields).toHaveTextContent('nodeId');
+      expect(activeModal.close).not.toHaveBeenCalled();
     });
   });
 
@@ -2057,6 +2161,29 @@ describe('EditWorkflowModalComponent', () => {
         await expect.element(tester.name).toHaveValue('Reactor sync');
       });
 
+      test.each(['edit', 'copy'] as const)(
+        'should offer the identity key fields of a synchronisation pushed to OIAnalytics, to %s',
+        async mode => {
+          const pushed = { ...reactorSync, pushToOIAnalytics: true, itemFieldMapping: null, identityKeyFields: ['id', 'path'] };
+          const tester = exploreWith({ workflow: { command: pushed, mode } });
+          await tester.root.getByRole('button', { name: 'Next' }).click();
+
+          await tester.goToStep('items');
+
+          await expect.element(tester.remoteMode).toBeChecked();
+          await expect.element(tester.newIdentityKeyField).toBeVisible();
+          await expect.element(tester.identityKeyFields).toMatchTextContent(/id\s*path/);
+          await tester.addIdentityKeyField('name');
+          await tester.goToStep('schedule');
+          await tester.name.fill(`Reactor ${mode}`);
+          await tester.save();
+          expect(closedWith()).toEqual({
+            kind: 'workflow',
+            command: expect.objectContaining({ pushToOIAnalytics: true, identityKeyFields: ['id', 'path', 'name'] })
+          });
+        }
+      );
+
       test('should save the edited synchronisation under its id, with the nodes checked', async () => {
         const tester = exploreWith({ workflow: { command: reactorSync, mode: 'edit' } });
         await tester.exploreCheck('Boiler').click();
@@ -2328,6 +2455,24 @@ describe('EditWorkflowModalComponent', () => {
         await expect.element(tester.name).toHaveValue('measures_tags');
       });
 
+      test('should identify the records of a metadata synchronisation on the Filter step, and close with them', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([tableItem()]));
+        const tester = exploreSql();
+        await tester.exploreCheck('Reactor').click();
+        await tester.root.getByRole('button', { name: 'Metadata sync' }).click();
+
+        await tester.goToStep('filter');
+
+        await expect.element(tester.newIdentityKeyField).toBeVisible();
+        await expect.element(tester.identityKeyFields).toHaveTextContent('id');
+        await tester.addIdentityKeyField('tag');
+        await tester.save();
+        expect(closedWith()).toEqual({
+          kind: 'workflow',
+          command: expect.objectContaining({ pushToOIAnalytics: true, identityKeyFields: ['id', 'tag'] })
+        });
+      });
+
       test('should keep the name already given to the synchronisation', async () => {
         southConnectorService.discoverItems.mockReturnValue(of([tableItem()]));
         const tester = exploreSql();
@@ -2446,6 +2591,56 @@ describe('EditWorkflowModalComponent', () => {
             itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id, ...historyDefaults }
           })
         });
+      });
+
+      test('should require the identity key fields of the records pushed to OIAnalytics, and close with them', async () => {
+        const tester = explore();
+        await keepInSync(tester);
+        await tester.goToStep('items');
+
+        await tester.remoteMode.click();
+
+        await expect.element(tester.newIdentityKeyField).toBeVisible();
+        await expect.element(tester.identityKeyFields).toHaveTextContent('nodeId');
+        await tester.identityKeyFields.getByRole('button', { name: 'Delete' }).click();
+        await tester.goToStep('schedule');
+        await tester.name.fill('Reactor push');
+        await tester.save();
+        await expect.element(tester.formError).toHaveTextContent('At least one identity key field is required');
+        await expect.element(tester.stepButton('items')).toHaveAttribute('aria-current', 'step');
+        expect(activeModal.close).not.toHaveBeenCalled();
+
+        await tester.addIdentityKeyField('id');
+        await tester.save();
+
+        expect(closedWith()).toEqual({
+          kind: 'workflow',
+          command: expect.objectContaining({ pushToOIAnalytics: true, identityKeyFields: ['id'], itemFieldMapping: null })
+        });
+      });
+
+      test('should close with the workflow the opener saved, or stay open with the error', async () => {
+        const save = vi.fn<(command: ConfigurationWorkflowCommandDTO) => Observable<ConfigurationWorkflowCommandDTO>>(command =>
+          throwError(() => new HttpErrorResponse({ status: 400, error: { message: `${command.name} is taken` } }))
+        );
+        const tester = explore({ sync: { directSave: true, existingWorkflows: [], save } });
+        await keepInSync(tester);
+        await tester.goToStep('items');
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+        await tester.goToStep('schedule');
+        await tester.name.fill('Reactor sync');
+
+        await tester.save();
+
+        await expect.element(tester.saveError).toHaveTextContent('Could not save: Reactor sync is taken');
+        expect(activeModal.close).not.toHaveBeenCalled();
+        await expect.element(tester.discoveryNodes).toHaveTextContent('ns=1;s=Reactor');
+
+        const saved = buildWorkflowCommand('workflow9', 'Reactor sync');
+        save.mockReturnValue(of(saved));
+        await tester.saveButton.click();
+
+        expect(closedWith()).toEqual({ kind: 'workflow', command: saved });
       });
     });
 
@@ -2751,6 +2946,34 @@ describe('EditWorkflowModalComponent', () => {
             }
           ]
         });
+      });
+
+      test('should close with the items once the opener saved them, or stay open with the error', async () => {
+        southConnectorService.discoverItems.mockReturnValue(of([{ ...discovered('Reactor/a', 'a.csv'), scanModeId: scanModes[0].id }]));
+        const save$ = new Subject<void>();
+        const saveItems = vi.fn<(commands: Array<SouthConnectorItemCommandDTO>) => Observable<unknown>>(() =>
+          throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'Reactor/a exists' } }))
+        );
+        const tester = explore({ saveItems });
+        await addAsItems(tester);
+        await tester.mappingField('scanModeId').selectOptions(scanModes[0].name);
+        await expect.element(tester.discoveredItemNames).toHaveLength(1);
+
+        await tester.addItemsButton.click();
+
+        await expect.element(tester.saveError).toHaveTextContent('Could not save: Reactor/a exists');
+        expect(activeModal.close).not.toHaveBeenCalled();
+        await expect.element(tester.discoveredItemNames.nth(0)).toHaveValue('Reactor/a');
+
+        saveItems.mockReturnValue(save$);
+        await tester.discoveredItemNames.nth(0).fill('Reactor/a2');
+        await tester.addItemsButton.click();
+        await expect.element(tester.addItemsButton).toBeDisabled();
+        expect(saveItems).toHaveBeenLastCalledWith([expect.objectContaining({ name: 'Reactor/a2' })]);
+        save$.next();
+        save$.complete();
+
+        expect(closedWith()).toEqual({ kind: 'items', commands: [expect.objectContaining({ name: 'Reactor/a2' })] });
       });
 
       test('should have the items of a group follow its schedule', async () => {
