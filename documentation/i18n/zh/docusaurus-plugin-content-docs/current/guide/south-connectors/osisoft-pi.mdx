@@ -6,35 +6,102 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OSIsoft PI System™
 
-读取 PI Data Archive 的记录值。OIBus 通过安装在 OIBus 计算机上的 PI AF Client 访问它，借助随 OIBus 一起提供的小型
-Windows 辅助进程。
+读取 PI Data Archive 的记录值。
 
-:::caution 系统要求
+OIBus 通过随 OIBus 一起提供的小型 Windows 辅助进程访问 PI。打开连接时，该进程会加载 OIBus 计算机上所安装的
+PI AF Client 中的 **AF SDK**。OIBus 不包含任何 AVEVA 软件：按下文所述准备好该计算机后，连接器即可工作。
 
-- 使用此连接器时，OIBus **必须**运行在 Windows x64 上。
-- OIBus 计算机上**必须**安装 **PI AF Client**。它安装 OIBus 加载的 AF SDK，并保存已知服务器表：OIBus 可以连接的
-  PI Data Archive 以及默认服务器。OIBus 不附带任何 AVEVA 软件：请根据您与 AVEVA 签订的协议，从 AVEVA 安装
-  PI AF Client。
-- 运行 OIBus 的 Windows 账户**必须**通过[映射或信任](#pi-af-client-configuration)对 PI Data Archive 拥有读取权限。
-- AVEVA 要求任何读取 PI 数据的非 AVEVA 程序（包括 OIBus）拥有 **PI System Access (PSA)** 许可证。
+## 前提条件 {#prerequisites}
 
-:::
+无论采用哪种部署方式，OIBus 计算机都需要：
+
+- **Windows x64**。此连接器不支持 Linux 和 macOS。
+- **.NET Framework 4.8**。Windows 10（1903 及更高版本）、Windows 11 以及 Windows Server 2022 及更高版本已自带。
+  在 Windows Server 2016 和 2019 上需要手动安装。
+- **PI System Access (PSA)** 许可证。AVEVA 要求任何读取 PI 数据的非 AVEVA 程序（包括 OIBus）拥有该许可证。
+
+其他要求取决于 OIBus 的运行位置：运行在 PI Data Archive 服务器本身（**本地访问**），或运行在另一台计算机上
+（**远程访问**）。OIBus 始终使用运行其服务的 Windows 账户，通过 Windows 集成安全性进行连接，因此没有用户名或密码字段。
+
+| 要求                                         | 本地访问（OIBus 位于 PI 服务器上）                                                                                                                                                                         | 远程访问（OIBus 位于另一台计算机上）                                                                                                           |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| [安装 PI AF Client](#install-pi-af-client)   | 通常已安装：PI Server 安装程序会一并安装它。请确认 **PI System Explorer** 存在。                                                                                                                           | 在 OIBus 计算机上安装。仅在 PI 服务器上安装是不够的。                                                                                          |
+| [注册 PI Data Archive](#known-servers-table) | 本地服务器通常已在已知服务器表中，并被设为默认服务器。**PI Data Archive** 设置可以留空。                                                                                                                   | 按名称添加远程 PI Data Archive。OIBus 计算机必须能够解析该名称（DNS 或 `hosts` 文件）。                                                        |
+| 网络访问（TCP 5450）                         | 无需开放任何端口。                                                                                                                                                                                         | 在两者之间的每道防火墙（包括 PI 服务器上的 Windows 防火墙）中，开放从 OIBus 计算机到 PI Data Archive 的 TCP **5450** 端口。                    |
+| [服务账户](#user-configuration)              | **Local System** 可以使用，显示为 `NT AUTHORITY\SYSTEM`。但最好使用专用的本地或域账户，以便只授予其只读权限。                                                                                              | 该账户必须为 PI 服务器所知：域账户；服务以 Local System 运行时为计算机账户 `DOMAIN\MACHINE$`；无域时，在两台计算机上创建同名同密码的本地用户。 |
+| [PI 访问权限（映射或信任）](#pi-access)      | 将服务账户（或 `NT AUTHORITY\SYSTEM`）映射到只读 PI 身份。PI 默认安装通常会将 `BUILTIN\Administrators` 映射到 `piadmins`，这同样适用于 Local System，会赋予 OIBus 管理员权限，因此建议使用显式的只读映射。 | 将远程账户（见上文）映射到只读 PI 身份。如果使用信任，它必须与 OIBus 计算机的 IP 地址匹配。                                                    |
+
+## 准备 OIBus 计算机 {#pi-af-client-configuration}
+
+### 1. 安装 PI AF Client {#install-pi-af-client}
+
+从 AVEVA 客户门户安装 PI AF Client。它会将 AF SDK（`OSIsoft.AFSDK`）放入全局程序集缓存（GAC），OIBus 会在那里找到它。
+如果不在 GAC 中，OIBus 会在 `%PIHOME%\AF\PublicAssemblies\4.0` 中查找。
+
+### 2. 注册 PI Data Archive {#known-servers-table}
+
+将 PI Data Archive 添加到 PI AF Client 的已知服务器表中，例如在 PI System Explorer 中选择 **File** →
+**Connections** → **Add Data Archive**。如果连接器的 **PI Data Archive** 设置留空，请将该服务器设为默认服务器。
+
+连接器的 **PI Data Archive** 设置必须与此表中显示的名称一致。
+
+### 3. 选择 OIBus 服务账户 {#user-configuration}
+
+安装程序以 **Local System** 账户创建 OIBus Windows 服务，PI Data Archive 看到的是运行该服务的账户。请选择以下方式之一：
+
+- **保留 Local System。** OIBus 计算机将使用其计算机账户（`DOMAIN\MACHINE$`）连接，PI 映射必须以该账户为目标。
+  仅当两台计算机位于同一个域中时才可行。
+- **使用专用域账户（推荐）。** 创建一个域用户，例如 `DOMAIN\svc-oibus`。打开 **services.msc**，打开 OIBus 服务，
+  进入 **登录** 选项卡，选择 **此账户** 并输入该用户，然后重启服务。该账户需要对 OIBus 数据文件夹拥有完全控制权限。
+- **无域。** 在两台计算机上创建同名同密码的本地用户，并以该用户运行 OIBus 服务。
+
+### 4. 在 PI Data Archive 上授予访问权限 {#pi-access}
+
+在 PI Data Archive 上，为服务账户关联一个对点位拥有读取权限的 PI 身份。推荐使用**映射**。**信任**（trust）是一种旧机制，
+仅在无法使用映射时才使用。
+
+#### 映射（推荐） {#mapping-configuration}
+
+1. 打开 **PI System Management Tools** 并连接到 PI Data Archive。
+2. 进入 **Security** → **Mappings & Trusts**，**Mappings** 选项卡。
+3. 创建映射：
+   - **Windows Account**：OIBus 服务账户（Local System 时为 `DOMAIN\MACHINE$`）
+   - **PI Identity**：对点位及其数据拥有读取权限的身份，例如 `PIWorld` 或专用身份
+
+![PI add mapping](@site/static/img/guide/south/osisoft-pi/3-add-mapping.png)
+
+![PI list mapping](@site/static/img/guide/south/osisoft-pi/4-mapping-list.png)
+
+#### 信任（旧机制） {#trust-configuration}
+
+1. 在 **PI System Management Tools** 中，进入 **Security** → **Mappings & Trusts**，**Trusts** 选项卡。
+2. 创建与 OIBus 计算机匹配的信任：其 IP 地址和子网掩码，以及适用时的域或账户。
+3. 选择用于连接的 **PI Identity**。
+
+![PI add trust](@site/static/img/guide/south/osisoft-pi/1-add-trust.png)
+
+![PI list trust](@site/static/img/guide/south/osisoft-pi/2-trust-list.png)
+
+### 5. 测试连接 {#test-connection}
+
+在 OIBus 中创建连接器并点击 **测试连接**。测试成功时会显示服务器名称和版本，这说明 AF SDK 已加载且账户可以登录。
+然后测试一个项目，确认该账户可以读取其点位。测试失败时请参见[故障排除](#troubleshooting)。
 
 ## 连接设置 {#connection-settings}
 
-| 设置            | 描述                                                                                         | 示例值       |
-| --------------- | -------------------------------------------------------------------------------------------- | ------------ |
-| PI Data Archive | PI AF Client 已知服务器表中的 PI Data Archive 名称。留空：使用该表中的默认 PI Data Archive。 | `MYPISERVER` |
-| 重试间隔        | 重试连接前等待的时间（毫秒）。默认：`10000`。                                                | `10000`      |
+| 设置            | 描述                                                                                                    | 示例值       |
+| --------------- | ------------------------------------------------------------------------------------------------------- | ------------ |
+| PI Data Archive | [已知服务器表](#known-servers-table)中的 PI Data Archive 名称。留空：使用该表中的默认 PI Data Archive。 | `MYPISERVER` |
+| 重试间隔        | 重试连接前等待的时间（毫秒）。默认：`10000`。                                                           | `10000`      |
 
 :::note 连接
-OIBus 在连接器启动时进行连接，并每隔 **重试间隔** 重试，直到成功。与 PI Data Archive 的连接中断时，正在进行的读取
+OIBus 在连接器启动时进行连接，并每隔 **重试间隔** 重试，直到成功。如果与 PI Data Archive 的连接中断，正在进行的读取
 会失败，下一次读取将重新连接。
 :::
 
 ## 分组设置 {#group-settings}
 
-项目被组织成**分组**。每个分组定义一个共享的扫描模式以及历史数据检索的默认限流参数。
+项目被组织成**分组**。每个分组有自己的扫描模式以及读取历史数据的默认限流参数。
 
 | 设置         | 描述                                 | 示例值        |
 | ------------ | ------------------------------------ | ------------- |
@@ -44,102 +111,57 @@ OIBus 在连接器启动时进行连接，并每隔 **重试间隔** 重试，�
 <ThrottlingSettings />
 
 :::tip 按项目覆盖限流
-每个项目都可以通过在项目编辑表单中禁用**与组同步**开关来覆盖分组的限流默认值。
+要为某个项目覆盖分组的限流默认值，请在项目编辑表单中关闭**与组同步**开关。
 :::
 
-## 项目配置 {#item-configuration}
+## 项目设置 {#item-configuration}
 
-### 点访问方法 {#point-access-methods}
+| 设置     | 描述                                                                                                                                                                                                                                             | 示例值                           |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| 类型     | `PI point` 按名称读取一个点位。`PI query` 读取查询匹配到的所有点位。                                                                                                                                                                             | `PI point`                       |
+| PI 点位  | 精确的点位名称，不含服务器名称，不区分大小写。当类型为 `PI point` 时使用。                                                                                                                                                                       | `SINUSOID`                       |
+| PI 查询  | 选择多个点位的查询（参见 [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)）。不带属性名称的查询（如 `sinus*`）会在点位名称中搜索。默认值：`*`（所有点位）。                             | `tag:=SINUS* AND pointsource:=R` |
+| 值过滤器 | 可选条件，采用 [performance equation 语法](https://docs.aveva.com/bundle/af-sdk/page/html/M_OSIsoft_AF_PI_PIPoint_RecordedValues.htm)。由 PI Data Archive 计算，只发送满足条件的值，从而减少传输。条件中可以引用被过滤的点位。留空：发送所有值。 | `'SINUSOID' > 50`                |
 
-| 设置     | 描述                                                                                                                                                                                                                                       | 示例值                           |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
-| 类型     | 访问方法：`PI point`（按名称访问单个点）或 `PI query`（通过查询表达式访问多个点）                                                                                                                                                          | `PI point` 或 `PI query`         |
-| PI 点位  | 精确的点名称（不含服务器名称，不区分大小写）。当类型为 `PI point` 时使用。                                                                                                                                                                 | `SINUSOID`                       |
-| PI 查询  | 选择多个点的查询（参见 [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)）。不带属性名称的查询（如 `sinus*`）会在点名称中搜索。默认值：`*`（所有点）。                             | `tag:=SINUS* AND pointsource:=R` |
-| 值过滤器 | 可选条件，采用 [performance equation 语法](https://docs.aveva.com/bundle/af-sdk/page/html/M_OSIsoft_AF_PI_PIPoint_RecordedValues.htm)，由 PI Data Archive 计算：只有满足条件的值才会发送给 OIBus。条件中可以引用被过滤的点。留空：所有值。 | `'SINUSOID' > 50`                |
-
-:::info 引用名称
-
-- 对于 `PI point`：项目名称在 JSON 有效载荷中作为引用
-- 对于 `PI query`：PI 名称用作引用
-  :::
-
-:::note 值过滤器
-PI Data Archive 在发送值之前应用值过滤器，从而避免传输其他值。一次批量调用只能使用一个过滤器：一起读取的 `PI point`
-项目按不同的过滤器各进行一次调用（没有过滤器时只需一次调用），每个 `PI query` 项目单独调用。对于 `PI query` 项目，
-过滤器应用于查询匹配到的每个点。
+:::caution PI 查询 `*`
+默认查询 `*` 会读取 PI Data Archive 的所有点位。启用项目前请先缩小范围。
 :::
 
-:::info 值
-OIBus 读取每个时间区间起点与终点之间（含两端）的记录值。每条记录包含点位（`pointId`）、时间戳（ISO 8601 UTC 字符串）
-和值：数值点为数字，数字状态为状态名称（包括系统状态，如 `I/O Timeout`），其他为字符串。下一个区间从最后读取的值之后
-开始。找不到的点或失败的查询会记录为警告，其他项目仍会被读取。
+:::note 项目的读取方式
+
+- 一个分组中的 `PI point` 项目批量读取：每个不同的值过滤器一次调用；如果都没有过滤器，则只调用一次。
+- 每个 `PI query` 项目单独调用一次，其值过滤器应用于查询匹配到的所有点位。
+- 如果找不到某个点位或查询失败，OIBus 会记录一条警告，并继续读取其他项目。
+
 :::
 
-## PI AF Client 配置 {#pi-af-client-configuration}
+## 采集的值 {#values}
 
-### 已知服务器表 {#known-servers-table}
+OIBus 读取每个区间开始和结束之间（包含两端）的记录值（已归档、已压缩）。下一个区间从最后读取的值之后开始。
 
-在 OIBus 计算机上将 PI Data Archive 添加到 PI AF Client 的已知服务器表中（例如使用 PI System Explorer，
-**File** → **Connections**）；如果连接器的 **PI Data Archive** 设置留空，请将其设为默认服务器。
+每条记录包含：
 
-### 用户配置 {#user-configuration}
+- `pointId`：`PI point` 项目为项目名称；`PI query` 项目匹配到的每个点位为 PI 点位名称
+- `timestamp`：ISO 8601 UTC 字符串
+- `value`：数值点位为数字，数字状态为状态名称（包括系统状态，例如 `I/O Timeout`），其他情况为字符串
 
-OIBus 使用运行它的 Windows 账户（其服务账户）进行连接，从不弹出登录提示：
+## 故障排除 {#troubleshooting}
 
-1. 创建域用户账户（可从两台计算机访问）
+| 现象                               | 检查项                                                                                                                 |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 无法加载 AF SDK                    | 确认 PI AF Client 已安装在 OIBus 计算机上（而不仅仅是 PI 服务器上），并且已安装 .NET Framework 4.8。                   |
+| 找不到服务器                       | 确认 **PI Data Archive** 设置与已知服务器表中的名称一致；设置留空时，确认表中已设置默认服务器。                        |
+| 连接被拒绝或超时                   | 确认 OIBus 计算机与 PI Data Archive 之间的 TCP 5450 端口已开放（防火墙）。                                             |
+| 访问被拒绝，或没有匹配的映射或信任 | 确认运行 OIBus 服务的账户，以及有映射准确指向该账户（Local System 时为 `DOMAIN\MACHINE$`）。更改服务账户后请重启服务。 |
+| 找不到点位                         | 检查点位名称，并确认该 PI 身份有权读取它（点位安全性和数据安全性）。                                                   |
 
-- 如果域不存在，请创建具有相同密码的相同本地用户
-
-2. 以该用户身份运行 OIBus 服务
-
-### 信任配置 {#trust-configuration}
-
-1. 打开 PI System Management Tools
-2. 导航到 `Mapping & Trusts` → `Trusts` 选项卡
-3. 创建新信任，包含：
-
-- OIBus 计算机 IP 和子网掩码
-- 域（如适用）
-- 用于连接的 PI Identity
-
-### 映射配置 {#mapping-configuration}
-
-1. 在 PI System Management Tools 中
-2. 导航到 `Mapping & Trusts` → `Mappings` 选项卡
-3. 创建新映射，包含：
-
-- OIBus 服务用户
-- 来自信任配置的 PI Identity
-
-:::tip 日志访问
-在 PI System Management Tools 中查看系统日志：
-`Operation` → `Messages Logs`
-:::
-
-### 配置截图 {#configuration-screenshots}
-
-**1. 信任配置** — 为 OIBus 计算机配置信任
-
-![PI add trust](@site/static/img/guide/south/osisoft-pi/1-add-trust.png)
-
-**2. 信任列表** — 已验证的信任配置
-
-![PI list trust](@site/static/img/guide/south/osisoft-pi/2-trust-list.png)
-
-**3. 映射创建** — 将 OIBus 服务用户映射到 PI Identity
-
-![PI add mapping](@site/static/img/guide/south/osisoft-pi/3-add-mapping.png)
-
-**4. 映射列表** — 已验证的用户映射
-
-![PI list mapping](@site/static/img/guide/south/osisoft-pi/4-mapping-list.png)
+要查看连接被拒绝的原因，请在 **PI System Management Tools** → **Operation** → **Message Logs** 中查看 PI Data Archive 的消息。
 
 ## 第三方组件 {#third-party-components}
 
-Windows 辅助进程是 [`@oibus/pi`](https://github.com/OptimistikSAS/oibus-pi) 软件包，采用 Apache License 2.0 许可。
-它不包含任何 AVEVA 软件：它在运行时加载 OIBus 计算机上安装的 PI AF Client 的 AF SDK，该软件仍受您与 AVEVA 签订的
-协议约束。
+Windows 辅助进程是 [`@oibus/pi`](https://github.com/OptimistikSAS/oibus-pi) 包，采用 Apache License 2.0 许可发布。
+它不包含任何 AVEVA 软件。运行时，它加载 OIBus 计算机上所安装的 PI AF Client 中的 AF SDK，该 SDK 仍受您与 AVEVA
+签订的协议约束。
 
-AVEVA、PI System、PI AF 和 PI Data Archive 是 AVEVA Group Limited 或其子公司的商标。OIBus 与 AVEVA 无关联，也未获得
-AVEVA 的赞助或认可；这些名称仅用于描述 OIBus 所连接的对象。
+AVEVA、PI System、PI AF 和 PI Data Archive 是 AVEVA Group Limited 或其子公司的商标。OIBus 与 AVEVA 无关联，
+也未获得 AVEVA 的赞助或认可。这些名称仅用于说明 OIBus 所连接的对象。
