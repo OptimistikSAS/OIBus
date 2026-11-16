@@ -13,15 +13,12 @@ export interface OIAnalyticsCompactTimeValues {
 }
 
 /**
- * Minimal shape of a value that can be converted into the compact format: a point record (`{ pointId, timestamp,
- * value }`), or the legacy OIAnalytics array format (`{ pointId, timestamp, data: { value } }`) a custom transformer may
- * still produce.
+ * Minimal shape of a value that can be converted into the compact format: a point record (`{ pointId, timestamp, value }`)
  */
 export interface PointValueLike {
   pointId: string;
   timestamp: Instant;
   value?: unknown;
-  data?: { value?: unknown };
 }
 
 export const toCompactTimeValues = (
@@ -38,7 +35,7 @@ export const toCompactTimeValues = (
     const value = values[i];
     compact.timestamps[i] = formatTimestamp(value.timestamp);
     // undefined is not valid JSON in an array (it would be serialized as null anyway): make it explicit
-    compact.values[i] = value.value ?? value.data?.value ?? null;
+    compact.values[i] = value.value ?? null;
     compact.references[i] = formatReference(value.pointId);
   }
   return compact;

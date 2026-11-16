@@ -725,6 +725,7 @@ export function transform(
 :::caution 使 `data` 与输出类型匹配；确保 `filename` 是字符串
 
 - 对于**类型化**输出类型（`record-list`、`mqtt`、`oianalytics`、`modbus`、`opcua`），北向连接器会将缓存文件作为 **JSON** 读取——请返回字符串或对象/数组（OIBus 会将其序列化为 JSON）。在这里返回二进制数据将无法解析。
+- 对于 **`oianalytics`** 输出类型，`data` 必须采用 OIAnalytics **紧凑格式**（`{ timestamps, values, references }`，三个大小相同的并行数组，参见 [OIAnalytics 有效载荷](#oianalytics-payload)）：OIAnalytics 北向连接器会原样发送。
 - **二进制**输出（`Uint8Array`/`ArrayBuffer`）用于 **`file`** 输出类型，此时文件类北向连接器（File Writer、S3、Azure、OIAnalytics 文件上传）会原样写入/上传这些字节。
 - 非字符串、非二进制的值如果被 `JSON.stringify` 拒绝（循环结构、`BigInt`）或丢弃（函数），转换会以明确的错误失败，而不会被缓存。
 

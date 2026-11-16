@@ -87,7 +87,8 @@ OIBus 4 是一个主要版本。它新增了连接器，让 OIBus 能够发现�
   没有转换器的数据将被丢弃。
 - **调整自定义转换器**：读取或写入时间值的自定义转换器现在读取或写入扁平记录（`{ pointId, timestamp, value }`，
   例如 `record.value`，而不是 `{ pointId, timestamp, data: { value } }`）。读取或写入设定值的自定义转换器读取或写入保持
-  `{ reference, value }` 结构的记录。
+  `{ reference, value }` 结构的记录。输出类型为 `oianalytics` 的自定义转换器必须返回 OIAnalytics 紧凑格式
+  （`{ timestamps, values, references }`），而不是值数组。OIAnalytics North 连接器缓存中待发送的值会在升级时转换。
 - **检查转换器的字段处理**：JavaScript 表达式会被转换为效果相同的操作，无法由任何操作重现的表达式（例如
   `value.split('/').pop()`）会被移除，并在日志中给出警告。
 - 为不再使用 OIBus Agent 的 OPC Classic、ODBC、OLE DB 和 PI South 连接器**在 OIBus 机器上安装驱动程序**（升级时会移除

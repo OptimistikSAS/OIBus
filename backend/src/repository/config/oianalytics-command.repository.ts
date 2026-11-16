@@ -2,7 +2,7 @@ import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
 
 import { Instant, Page } from '../../../shared/model/common/types';
-import { CommandSearchParam, OIBUS_COMMAND_TYPES, OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/oia/command.model';
+import { CommandSearchParam, OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/oia/command.model';
 
 import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
@@ -10,10 +10,6 @@ import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model'
 const COMMANDS_TABLE = 'commands';
 
 const PAGE_SIZE = 50;
-
-// Commands of a type this version no longer supports (left over by an older version) cannot be mapped,
-// so they are ignored when reading. They can still be deleted by id.
-const KNOWN_TYPES_CLAUSE = `type IN (${OIBUS_COMMAND_TYPES.map(type => `'${type}'`).join(', ')})`;
 
 /**
  * Repository used for managing commands within OIBus
@@ -23,8 +19,7 @@ export default class OIAnalyticsCommandRepository {
 
   findAll(): Array<OIBusCommand> {
     const query = `SELECT *
-                   FROM ${COMMANDS_TABLE}
-                   WHERE ${KNOWN_TYPES_CLAUSE};`;
+                   FROM ${COMMANDS_TABLE};`;
     return this.database
       .prepare(query)
       .all()
@@ -33,7 +28,7 @@ export default class OIAnalyticsCommandRepository {
 
   search(searchParams: CommandSearchParam): Page<OIBusCommand> {
     const queryParams = [];
-    let whereClause = `WHERE ${KNOWN_TYPES_CLAUSE}`;
+    let whereClause = 'WHERE id IS NOT NULL';
     if (searchParams.types.length > 0) {
       whereClause += ` AND type IN (${searchParams.types.map(() => '?')})`;
       queryParams.push(...searchParams.types);
@@ -84,7 +79,7 @@ export default class OIAnalyticsCommandRepository {
 
   list(searchParams: Omit<CommandSearchParam, 'page'>): Array<OIBusCommand> {
     const queryParams = [];
-    let whereClause = `WHERE ${KNOWN_TYPES_CLAUSE}`;
+    let whereClause = 'WHERE id IS NOT NULL';
     if (searchParams.types.length > 0) {
       whereClause += ` AND type IN (${searchParams.types.map(() => '?')})`;
       queryParams.push(...searchParams.types);
@@ -118,7 +113,7 @@ export default class OIAnalyticsCommandRepository {
   findById(id: string): OIBusCommand | null {
     const query = `SELECT *
                    FROM ${COMMANDS_TABLE}
-                   WHERE id = ? AND ${KNOWN_TYPES_CLAUSE};`;
+                   WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     return result ? this.toOIBusCommand(result as Record<string, string>) : null;
   }
@@ -126,7 +121,7 @@ export default class OIAnalyticsCommandRepository {
   findFirstToExecute(): OIBusCommand | null {
     const query = `SELECT *
                    FROM ${COMMANDS_TABLE}
-                   WHERE status IN ('RETRIEVED', 'RUNNING') AND ${KNOWN_TYPES_CLAUSE}
+                   WHERE status IN ('RETRIEVED', 'RUNNING')
                    ORDER BY retrieved_date ASC
                    LIMIT 1;`;
     const result = this.database.prepare(query).get();

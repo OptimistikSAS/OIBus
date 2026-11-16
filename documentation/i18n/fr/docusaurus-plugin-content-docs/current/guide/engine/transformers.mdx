@@ -912,6 +912,9 @@ type de contenu. `data` est traité selon sa nature :
 - Pour les types de sortie **typés** (`record-list`, `mqtt`, `oianalytics`, `modbus`, `opcua`), le North lit le
   fichier de cache comme du **JSON** — retournez une chaîne ou un objet/tableau (qu'OIBus sérialise en JSON). Un
   retour binaire ne pourra pas être analysé.
+- Pour le type de sortie **`oianalytics`**, `data` doit être au **format compact** d'OIAnalytics
+  (`{ timestamps, values, references }`, trois tableaux parallèles de même taille, voir
+  [Charge utile OIAnalytics](#oianalytics-payload)) : le North OIAnalytics l'envoie tel quel.
 - La sortie **binaire** (`Uint8Array`/`ArrayBuffer`) est destinée au type de sortie **`file`**, où les North fichier
   (File Writer, S3, Azure, envoi de fichiers OIAnalytics) écrivent/téléversent les octets sans modification.
 - Une valeur ni chaîne ni binaire que `JSON.stringify` rejette (une structure circulaire, un `BigInt`) ou ignore (une

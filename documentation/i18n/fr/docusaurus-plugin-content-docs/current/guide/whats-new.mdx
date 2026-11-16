@@ -118,7 +118,10 @@ PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
 - **Adaptez vos transformateurs personnalisés** : ceux qui lisent ou écrivent des valeurs temporelles lisent ou
   écrivent désormais des enregistrements à plat (`{ pointId, timestamp, value }`, par exemple `record.value`, au lieu
   de `{ pointId, timestamp, data: { value } }`). Ceux qui lisent ou écrivent des consignes lisent ou écrivent des
-  enregistrements qui gardent la forme `{ reference, value }`.
+  enregistrements qui gardent la forme `{ reference, value }`. Ceux dont le type de sortie est `oianalytics`
+  doivent retourner le format compact d'OIAnalytics (`{ timestamps, values, references }`) au lieu d'un tableau de
+  valeurs. Les valeurs en attente dans les caches des connecteurs North OIAnalytics sont converties lors de la mise à
+  niveau.
 - **Vérifiez le traitement des champs de vos transformateurs** : les expressions JavaScript sont converties en
   opérations équivalentes, et une expression qu'aucune opération ne peut reproduire (par exemple
   `value.split('/').pop()`) est supprimée avec un avertissement dans les logs.

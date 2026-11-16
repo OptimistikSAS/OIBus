@@ -913,8 +913,7 @@ export interface CacheMetadata {
   /**
    * The South connector the content comes from. Content from different South connectors is never merged together, so
    * that the receiver can know where each batch comes from.
-   * Absent for content cached before 4.0, or not coming from a South connector (history queries, OIBus API,
-   * OIAnalytics setpoints).
+   * Absent for content not coming from a South connector (history queries, OIBus API, OIAnalytics setpoints).
    */
   dataSource?: CacheMetadataDataSource | null;
 }

@@ -12,8 +12,7 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import type CacheService from '../../service/cache/cache.service';
 import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
-import { PointValueLike, toCompactTimeValues } from '../../service/oia/compact-time-values';
-import { getErrorMessage, streamToString } from '../../service/utils';
+import { getErrorMessage } from '../../service/utils';
 import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 import NorthConnector from '../north-connector';
 
@@ -42,46 +41,6 @@ async function* multipartStream(boundary: string, filename: string, dataStream: 
     yield chunk;
   }
   yield Buffer.from(`\r\n--${boundary}--\r\n`);
-}
-
-/**
- * Read the first available chunk of `stream` and push it back at the front of the stream, so the stream can still be
- * consumed from the beginning afterward. Resolves to null for an empty stream.
- */
-function peekFirstChunk(stream: Readable): Promise<Buffer | null> {
-  return new Promise((resolve, reject) => {
-    const cleanup = () => {
-      stream.off('readable', onReadable);
-      stream.off('end', onEnd);
-      stream.off('error', onError);
-    };
-    const onReadable = () => {
-      const chunk = stream.read() as Buffer | string | null;
-      if (chunk === null) return; // nothing buffered yet: wait for the next 'readable' or 'end' event
-      cleanup();
-      stream.unshift(chunk);
-      resolve(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-    };
-    const onEnd = () => {
-      cleanup();
-      resolve(null);
-    };
-    const onError = (error: Error) => {
-      cleanup();
-      reject(error);
-    };
-    stream.on('readable', onReadable);
-    stream.on('end', onEnd);
-    stream.on('error', onError);
-  });
-}
-
-/**
- * Whether the JSON document starting with `chunk` is an array (legacy `[{ pointId, timestamp, data }]` format) rather
- * than the OIAnalytics compact object format. Leading whitespaces (and UTF-8 BOM) are ignored.
- */
-function isJsonArray(chunk: Buffer | null): boolean {
-  return chunk !== null && chunk.toString('utf8').trimStart().startsWith('[');
 }
 
 /**
@@ -129,16 +88,10 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   }
 
   /**
-   * Send time values to OIAnalytics in the compact format `{ timestamps, values, references }`.
-   * `oianalytics` content is already in the compact format (produced by the OIAnalytics transformers) and is streamed
-   * as is. Content still in the legacy array format (e.g. from a custom transformer, or cached before 4.0) is converted
-   * on the fly.
+   * Send time values to OIAnalytics: the `oianalytics` content is in the compact format `{ timestamps, values, references }`
+   * of its `/time-values/compact` endpoints, and is streamed as is.
    */
   async handleValues(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
-    const body = await this.toCompactBody(fileStream, cacheMetadata);
-    if (!body) {
-      return;
-    }
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
     const httpOptions = await buildHttpOptions(
       'POST',
@@ -159,7 +112,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     );
     addDataSourceParams(url, cacheMetadata);
     // Stream the body directly (or through async gzip) instead of gzipping synchronously on the event loop.
-    httpOptions.body = this.connector.settings.compress ? gzipStream(body, this.logger) : body;
+    httpOptions.body = this.connector.settings.compress ? gzipStream(fileStream, this.logger) : fileStream;
 
     let response: ReqResponse;
     try {
@@ -176,28 +129,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
     // Drain the response body so undici can return the connection to its pool.
     await response.body.dump();
-  }
-
-  /**
-   * Returns null when there is no value to send.
-   */
-  private async toCompactBody(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<Readable | null> {
-    if (cacheMetadata.contentType === 'oianalytics' && !isJsonArray(await peekFirstChunk(fileStream))) {
-      // Already compact: stream the file without buffering it in memory
-      return fileStream;
-    }
-    const values = JSON.parse(await streamToString(fileStream)) as Array<PointValueLike>;
-    // Values without point or timestamp cannot be sent
-    const pointValues = values
-      .filter(value => value.pointId !== null && value.pointId !== undefined && value.timestamp !== null && value.timestamp !== undefined)
-      .map(value => ({ ...value, pointId: String(value.pointId) }));
-    if (pointValues.length < values.length) {
-      this.logger.warn(`${values.length - pointValues.length} value(s) without "pointId" or "timestamp" not sent`);
-    }
-    if (pointValues.length === 0) {
-      return null;
-    }
-    return Readable.from([Buffer.from(JSON.stringify(toCompactTimeValues(pointValues)))]);
   }
 
   async handleFile(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
