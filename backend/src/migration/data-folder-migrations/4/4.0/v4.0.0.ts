@@ -5,7 +5,7 @@ import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 
 import { PREFIXING_NORTH_TYPES } from '../../../../service/config-transfer/config-upgrades/4.0/v4.0.0';
-import { filesExists, getCommandLineArguments, NestedPointValue, toPointRecord } from '../../../../service/utils';
+import { filesExists, getCommandLineArguments } from '../../../../service/utils';
 
 const { configFile } = getCommandLineArguments();
 
@@ -19,8 +19,10 @@ const DATA_FOLDER_PATH = path.resolve(configFile);
  * types, each file going through these conversions in order:
  *  1. The `time-values` content type is replaced by `record-list`: the time values are converted into point records
  *     (`{ pointId, timestamp, value, ...extras }`), so the North connectors can still send them. The OIAnalytics North
- *     no longer accepts record lists: in its caches, the time values become `oianalytics` content, which it still
- *     accepts in this (legacy array) format.
+ *     no longer accepts record lists, and only accepts `oianalytics` content in the compact format: in its caches, the
+ *     time values and the `oianalytics` content (an array of time values, as the OIAnalytics transformers and custom
+ *     transformers produced it) are converted to the compact format. The values without point or timestamp, which
+ *     cannot be sent, are dropped, and a file left without value is removed.
  *  2. The `any` content type is renamed `file`, the content itself being unchanged.
  *  3. The North File Writer only writes files: the records and setpoints in its caches become files, their content (a
  *     JSON array) being written as it is.
@@ -59,6 +61,40 @@ export async function up(knex: Knex): Promise<void> {
   if (converted > 0) {
     console.info(`Converted ${converted} cached file(s) to the 4.0.0 content types and names`);
   }
+}
+
+/** A time value as cached before 4.0.0: the value and its extra fields (e.g. the quality) nested in `data`. */
+interface NestedPointValue {
+  pointId: string;
+  timestamp: string;
+  data: { value: string | number; [field: string]: string | number };
+}
+
+/** The values to send to OIAnalytics, in the compact format of its `/time-values/compact` endpoints */
+interface CompactTimeValues {
+  timestamps: Array<string>;
+  values: Array<unknown>;
+  references: Array<string>;
+}
+
+/** A time value of an array cached for OIAnalytics: nested, or a point record */
+interface ArrayTimeValue {
+  pointId?: string | number | null;
+  timestamp?: string | null;
+  value?: unknown;
+  data?: { value?: unknown };
+}
+
+const toPointRecord = ({ pointId, timestamp, data }: NestedPointValue) => ({ pointId, timestamp, ...data });
+
+/** The values of an array cached for OIAnalytics that can be sent (with a point and a timestamp), in the compact format */
+function toCompactTimeValues(values: Array<ArrayTimeValue>): CompactTimeValues {
+  const sendable = values.filter(value => value.pointId !== null && value.pointId !== undefined && value.timestamp);
+  return {
+    timestamps: sendable.map(value => value.timestamp!),
+    values: sendable.map(value => value.value ?? value.data?.value ?? null),
+    references: sendable.map(value => String(value.pointId))
+  };
 }
 
 interface CachingNorth {
@@ -110,19 +146,32 @@ async function convertCachedContent(folder: string, north: CachingNorth | undefi
         contentFile: string;
         contentType: string;
         contentSize: number;
+        numberOfElement: number;
       };
-      let { contentType, contentSize } = metadata;
+      let { contentType, contentSize, numberOfElement } = metadata;
 
-      if (contentType === 'time-values') {
-        if (northType === 'oianalytics') {
-          contentType = 'oianalytics';
-        } else {
-          const values = JSON.parse(await fs.readFile(contentPath, 'utf-8')) as Array<NestedPointValue>;
-          const content = JSON.stringify(values.map(toPointRecord));
+      if (northType === 'oianalytics' && (contentType === 'time-values' || contentType === 'oianalytics')) {
+        const cached = JSON.parse(await fs.readFile(contentPath, 'utf-8')) as Array<ArrayTimeValue> | CompactTimeValues;
+        if (Array.isArray(cached)) {
+          const compact = toCompactTimeValues(cached);
+          if (compact.references.length === 0) {
+            await fs.rm(contentPath, { force: true });
+            await fs.rm(metadataPath);
+            converted++;
+            continue;
+          }
+          const content = JSON.stringify(compact);
           await fs.writeFile(contentPath, content);
-          contentType = 'record-list';
           contentSize = Buffer.byteLength(content);
+          numberOfElement = compact.references.length;
         }
+        contentType = 'oianalytics';
+      } else if (contentType === 'time-values') {
+        const values = JSON.parse(await fs.readFile(contentPath, 'utf-8')) as Array<NestedPointValue>;
+        const content = JSON.stringify(values.map(toPointRecord));
+        await fs.writeFile(contentPath, content);
+        contentType = 'record-list';
+        contentSize = Buffer.byteLength(content);
       }
       if (contentType === 'any') {
         contentType = 'file';
@@ -136,8 +185,15 @@ async function convertCachedContent(folder: string, north: CachingNorth | undefi
 
       const contentFile = north ? prefixedFilename(metadata.contentFile, north) : metadata.contentFile;
 
-      if (contentType === metadata.contentType && contentFile === metadata.contentFile) continue;
-      await fs.writeFile(metadataPath, JSON.stringify({ ...metadata, contentFile, contentType, contentSize }));
+      if (
+        contentType === metadata.contentType &&
+        contentFile === metadata.contentFile &&
+        contentSize === metadata.contentSize &&
+        numberOfElement === metadata.numberOfElement
+      ) {
+        continue;
+      }
+      await fs.writeFile(metadataPath, JSON.stringify({ ...metadata, contentFile, contentType, contentSize, numberOfElement }));
       converted++;
     } catch (error: unknown) {
       console.error(`Error while converting the cached file "${metadataPath}": ${(error as Error).message}`);

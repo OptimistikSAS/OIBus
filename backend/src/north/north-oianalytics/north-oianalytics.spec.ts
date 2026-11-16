@@ -133,41 +133,37 @@ describe('NorthOIAnalytics', () => {
   });
 
   describe('handleValues (oianalytics)', () => {
-    // Values in the legacy array format, as produced by a custom transformer or cached before 4.0
-    const timeValuesMetadata = {
+    const oianalyticsMetadata = {
       contentFile: 'file.json',
       contentSize: 100,
       numberOfElement: 2,
       createdAt: '2020-02-02T02:02:02.222Z',
       contentType: 'oianalytics'
     };
-    const oianalyticsMetadata = { ...timeValuesMetadata, contentType: 'oianalytics' };
-    const timeValues = [
-      { pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1.5, quality: 'good' } },
-      { pointId: 'ref2', timestamp: '2020-01-01T00:01:00.000Z', data: { value: null } }
-    ];
     const compactTimeValues = {
       timestamps: ['2020-01-01T00:00:00.000Z', '2020-01-01T00:01:00.000Z'],
       values: [1.5, null],
       references: ['ref1', 'ref2']
     };
+    const content = JSON.stringify(compactTimeValues);
 
-    it('should convert time values into the compact format and send them without compression', async () => {
-      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata);
+    it('should stream the compact content as is, without compression', async () => {
+      const compactFileStream = fileStreamOf(content);
+
+      await north.handleContent(compactFileStream, oianalyticsMetadata);
 
       assert.strictEqual(createGzipMock.mock.calls.length, 0);
       const { url, options } = sentRequest();
       assert.strictEqual(url.pathname, '/api/oianalytics/oibus/time-values/compact');
-      assert.deepStrictEqual(JSON.parse(await readBody(options.body)), compactTimeValues);
+      // The file stream itself is sent, not buffered
+      assert.strictEqual(options.body, compactFileStream);
+      assert.strictEqual(await readBody(options.body), content);
       assertContains(options.headers, { 'Content-Type': 'application/json' });
       assert.strictEqual(options.query, undefined);
     });
 
     it('should send the data source of the values', async () => {
-      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), {
-        ...timeValuesMetadata,
-        dataSource: { id: 'southId', name: 'My South' }
-      });
+      await north.handleContent(fileStreamOf(content), { ...oianalyticsMetadata, dataSource: { id: 'southId', name: 'My South' } });
 
       const { url } = sentRequest();
       assert.strictEqual(url.searchParams.get('dataSourceId'), 'southId');
@@ -175,68 +171,16 @@ describe('NorthOIAnalytics', () => {
     });
 
     it('should not send any data source when the content has none', async () => {
-      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), { ...timeValuesMetadata, dataSource: null });
+      await north.handleContent(fileStreamOf(content), { ...oianalyticsMetadata, dataSource: null });
 
       const { url } = sentRequest();
       assert.strictEqual(url.search, '');
     });
 
-    it('should stream compact oianalytics content as is', async () => {
-      const content = `  ${JSON.stringify(compactTimeValues)}`;
-      const compactFileStream = fileStreamOf(content);
-
-      await north.handleContent(compactFileStream, oianalyticsMetadata);
-
-      const { url, options } = sentRequest();
-      assert.strictEqual(url.pathname, '/api/oianalytics/oibus/time-values/compact');
-      // The file stream itself is sent (not buffered), and the peeked chunk is not lost
-      assert.strictEqual(options.body, compactFileStream);
-      assert.strictEqual(await readBody(options.body), content);
-    });
-
-    it('should convert flat array oianalytics content into the compact format', async () => {
-      const legacy = timeValues.map(timeValue => ({
-        pointId: timeValue.pointId,
-        timestamp: timeValue.timestamp,
-        value: timeValue.data.value
-      }));
-
-      await north.handleContent(fileStreamOf(`\n${JSON.stringify(legacy)}`), oianalyticsMetadata);
-
-      assert.deepStrictEqual(JSON.parse(await readBody(sentRequest().options.body)), compactTimeValues);
-    });
-
-    it('should stream empty oianalytics content as is', async () => {
-      const emptyFileStream = fileStreamOf('');
-      await north.handleContent(emptyFileStream, oianalyticsMetadata);
-
-      assert.strictEqual(sentRequest().options.body, emptyFileStream);
-    });
-
-    it('should reject when the oianalytics content cannot be read', async () => {
-      const source = new PassThrough();
-      const promise = north.handleContent(toReadStream(source), oianalyticsMetadata);
-      source.destroy(new Error('read error'));
-
-      await assert.rejects(promise, /read error/);
-      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
-    });
-
-    it('should wait for data before peeking oianalytics content', async () => {
-      const source = new PassThrough();
-      const promise = north.handleContent(toReadStream(source), oianalyticsMetadata);
-      // Let the peek subscribe before any data is available
-      await new Promise(resolve => setImmediate(resolve));
-      source.end(JSON.stringify(compactTimeValues));
-      await promise;
-
-      assert.deepStrictEqual(JSON.parse(await readBody(sentRequest().options.body)), compactTimeValues);
-    });
-
     it('should send values with compression if enabled', async () => {
       north['connector'].settings.compress = true;
 
-      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata);
+      await north.handleContent(fileStreamOf(content), oianalyticsMetadata);
 
       // the body is piped through createGzip — no synchronous gzip
       assert.strictEqual(createGzipMock.mock.calls.length, 1);
@@ -248,19 +192,8 @@ describe('NorthOIAnalytics', () => {
       assert.deepStrictEqual(JSON.parse(await readBody(gzipStream)), compactTimeValues);
     });
 
-    it('should throw an error when array content is not valid JSON', async () => {
-      await assert.rejects(north.handleContent(fileStreamOf('[not json'), timeValuesMetadata), SyntaxError);
-      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
-    });
-
-    it('should not send values without point or timestamp', async () => {
-      await north.handleContent(fileStreamOf(JSON.stringify([{ id: 1, value: 2 }])), timeValuesMetadata);
-
-      assert.strictEqual(HTTPRequest.mock.calls.length, 0);
-    });
-
     it('should not handle record lists', async () => {
-      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), { ...timeValuesMetadata, contentType: 'record-list' });
+      await north.handleContent(fileStreamOf(content), { ...oianalyticsMetadata, contentType: 'record-list' });
 
       assert.strictEqual(HTTPRequest.mock.calls.length, 0);
     });
@@ -269,18 +202,12 @@ describe('NorthOIAnalytics', () => {
       HTTPRequest.mock.mockImplementation(async () => {
         throw new Error('Network Error');
       });
-      await assert.rejects(
-        north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata),
-        /Fail to reach values endpoint/
-      );
+      await assert.rejects(north.handleContent(fileStreamOf(content), oianalyticsMetadata), /Fail to reach values endpoint/);
     });
 
     it('should throw OIBusError on non-ok response', async () => {
       HTTPRequest.mock.mockImplementation(async () => createMockResponse(500, 'Internal Server Error'));
-      await assert.rejects(
-        north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata),
-        /Error 500: Internal Server Error/
-      );
+      await assert.rejects(north.handleContent(fileStreamOf(content), oianalyticsMetadata), /Error 500: Internal Server Error/);
     });
   });
 

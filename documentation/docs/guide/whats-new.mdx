@@ -110,7 +110,10 @@ Archive through the PI AF Client, and can filter the values on the PI Data Archi
   routed through an equivalent transformer on upgrade, but from now on, data without a transformer is dropped.
 - **Adapt your custom transformers**: those reading or writing time values now read or write flat records
   (`{ pointId, timestamp, value }`, e.g. `record.value`, instead of `{ pointId, timestamp, data: { value } }`). Those
-  reading or writing setpoints read or write records keeping the `{ reference, value }` shape.
+  reading or writing setpoints read or write records keeping the `{ reference, value }` shape. Those with the
+  `oianalytics` output type must return the OIAnalytics compact format (`{ timestamps, values, references }`) instead
+  of an array of values. The values waiting in the caches of the OIAnalytics North connectors are converted on
+  upgrade.
 - **Check the field processing of your transformers**: the JavaScript expressions are converted to the operations doing
   the same, and an expression no operation can reproduce (e.g. `value.split('/').pop()`) is removed with a warning in
   the logs.

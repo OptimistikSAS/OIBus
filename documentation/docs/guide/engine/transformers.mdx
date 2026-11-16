@@ -871,6 +871,9 @@ according to its content type. `data` is handled by kind:
 - For **typed** output types (`record-list`, `mqtt`, `oianalytics`, `modbus`, `opcua`) the North reads
   the cache file as **JSON** — return a string or an object/array (which OIBus serializes to JSON).
   Returning binary here will not parse.
+- For the **`oianalytics`** output type, `data` must be in the OIAnalytics **compact format**
+  (`{ timestamps, values, references }`, three parallel arrays of the same size, see
+  [OIAnalytics payload](#oianalytics-payload)): the OIAnalytics North sends it as it is.
 - **Binary** output (`Uint8Array`/`ArrayBuffer`) is for the **`file`** output type, where file Norths
   (File Writer, S3, Azure, OIAnalytics file upload) write/upload the bytes untouched.
 - A non-string, non-binary value that `JSON.stringify` rejects (a circular structure, a `BigInt`) or

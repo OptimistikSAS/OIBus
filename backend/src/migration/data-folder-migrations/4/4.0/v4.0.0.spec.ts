@@ -131,7 +131,7 @@ describe('Data folder migration v4.0.0', () => {
     assert.strictEqual(info.mock.callCount(), 1);
   });
 
-  it('should turn the cached time values of OIAnalytics norths and history queries into oianalytics content', async () => {
+  it('should turn the cached time values of OIAnalytics norths and history queries into compact oianalytics content', async () => {
     const folders = [path.join(tmpRoot, 'cache', 'north-oia'), path.join(tmpRoot, 'archive', 'history-h2', 'north')];
     for (const folder of folders) {
       await writeCacheFile(folder, 'file1', 'time-values', timeValues);
@@ -139,11 +139,60 @@ describe('Data folder migration v4.0.0', () => {
 
     await migration.up(knex);
 
+    const compact = {
+      timestamps: ['2024-01-01T00:00:00.000Z', '2024-01-01T00:00:01.000Z'],
+      values: [1, '2'],
+      references: ['p1', 'p2']
+    };
     for (const folder of folders) {
       const { content, metadata } = await readCacheFile(folder, 'file1');
-      assert.deepStrictEqual(content, timeValues);
-      assert.strictEqual(metadata.contentType, 'oianalytics');
+      assert.deepStrictEqual(content, compact);
+      assert.deepStrictEqual(metadata, {
+        contentFile: 'file1.json',
+        contentSize: Buffer.byteLength(JSON.stringify(compact)),
+        numberOfElement: 2,
+        createdAt: '',
+        contentType: 'oianalytics'
+      });
     }
+  });
+
+  it('should convert the oianalytics arrays cached for OIAnalytics into the compact format, dropping the unsendable values', async () => {
+    const north = path.join(tmpRoot, 'cache', 'north-oia');
+    const compact = { timestamps: ['2024-01-01T00:00:00.000Z'], values: ['a'], references: ['ref1'] };
+    // As produced by the OIAnalytics or custom transformers: nested values, or point records
+    await writeCacheFile(north, 'file1', 'oianalytics', [
+      { pointId: 'p1', timestamp: '2024-01-01T00:00:00.000Z', data: { value: 1 } },
+      { pointId: 2, timestamp: '2024-01-01T00:00:01.000Z', value: 'b' },
+      { pointId: 'p3', timestamp: '2024-01-01T00:00:02.000Z' },
+      { pointId: null, timestamp: '2024-01-01T00:00:03.000Z', value: 3 },
+      { pointId: 'p4', value: 4 }
+    ]);
+    await writeCacheFile(north, 'file2', 'oianalytics', [{ pointId: 'p1', value: 1 }]);
+    await writeCacheFile(north, 'file3', 'oianalytics', compact);
+
+    await migration.up(knex);
+
+    assert.deepStrictEqual((await readCacheFile(north, 'file1')).content, {
+      timestamps: ['2024-01-01T00:00:00.000Z', '2024-01-01T00:00:01.000Z', '2024-01-01T00:00:02.000Z'],
+      values: [1, 'b', null],
+      references: ['p1', '2', 'p3']
+    });
+    assert.strictEqual((await readCacheFile(north, 'file1')).metadata.numberOfElement, 3);
+    // Nothing left to send: removed
+    assert.deepStrictEqual(await fs.readdir(path.join(north, 'metadata')), ['file1', 'file3']);
+    assert.deepStrictEqual(await fs.readdir(path.join(north, 'content')), ['file1', 'file3']);
+    // Already compact: untouched
+    assert.deepStrictEqual(await readCacheFile(north, 'file3'), {
+      content: compact,
+      metadata: {
+        contentFile: 'file3.json',
+        contentSize: JSON.stringify(compact).length,
+        numberOfElement: 2,
+        createdAt: '',
+        contentType: 'oianalytics'
+      }
+    });
   });
 
   it('should rename the any content type file, keeping the content', async () => {
