@@ -28,9 +28,3 @@
 文件以其转换器给出的名称写入，不含其子文件夹：即
 [文件（原样、重命名或转换）](../engine/transformers.mdx#file-as-is-renamed-or-converted)和
 [文件](../engine/transformers.mdx#file-from-records)转换器的**文件名**（例如 `@SourceFilename-@CurrentDate@SourceExtension`）。
-
-:::info 升级到 4.0
-在 4.0 之前，连接器会在文件名中添加**前缀**和**后缀**。升级时会将它们添加到其转换器的文件名中，其中 `@ConnectorName`
-会被替换为该连接器的名称（在转换器中，`@ConnectorName` 是南向连接器的名称），并重命名其缓存中等待发送的文件。自定义
-转换器自行为文件命名。
-:::

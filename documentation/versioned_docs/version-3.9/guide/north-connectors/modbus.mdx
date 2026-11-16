@@ -1,0 +1,44 @@
+import ModbusDataFormatTester from '@site/src/components/ModbusDataFormatTester/index';
+
+# Modbus
+
+The **Modbus North Connector** enables OIBus to **write data to Modbus-compatible devices**, allowing seamless integration with PLCs, RTUs, and other industrial equipment that supports the Modbus protocol.
+
+**Example Use Cases**
+
+- **Process Control**: Write setpoints and control values to PLCs
+- **Configuration Management**: Update device parameters remotely
+- **System Integration**: Bridge OIBus data with Modbus-compatible equipment
+
+## Specific Settings
+
+### Connection Configuration
+
+| Setting                | Description                                                                                                              | Example Value   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------- |
+| **Host**               | IP address or hostname of the Modbus server machine.                                                                     | `192.168.1.100` |
+| **Port**               | Port to use for connection (502 by default).                                                                             | `502`           |
+| **Connection timeout** | Maximum time to wait for a connection (in milliseconds).                                                                 | `10000`         |
+| **Retry interval**     | Time to wait (in milliseconds) before reconnecting, whether after a connection failure or after a write command fails.   | `10000`         |
+| **Slave ID**           | Identifies the Modbus source machine (default is 1).                                                                     | `1`             |
+| **Address offset**     | For most PLCs, there is no offset (Modbus option). Some PLCs may start the address range at 1 instead of 0 (JBus option) | `Modbus`        |
+
+### Data Format Options
+
+| Setting        | Description                                                   | Example Value    |
+| -------------- | ------------------------------------------------------------- | ---------------- |
+| **Endianness** | Type of bit encoding.                                         | `Big endian`     |
+| **Swap Bytes** | Whether bytes within a 16-bit word should be swapped.         | Enabled/Disabled |
+| **Swap Words** | Whether 16-bit words should be swapped within a 32-bit group. | Enabled/Disabled |
+
+Use the tester below to preview how different endianness and swap settings affect the byte layout of a value written to a Modbus register:
+
+<ModbusDataFormatTester />
+
+:::caution Endianness and swap settings currently have no effect on writes
+This connector only writes single 16-bit registers or coils (`writeSingleCoil` / `writeSingleRegister`) — it has no
+multi-register write path, so **Endianness**, **Swap Bytes**, and **Swap Words** are not currently applied when
+sending data. Changing them has no effect on what gets written. The tester above illustrates the byte-layout concept
+(shared with the Modbus South connector, where these settings _are_ applied when reading), not this connector's
+actual behavior.
+:::

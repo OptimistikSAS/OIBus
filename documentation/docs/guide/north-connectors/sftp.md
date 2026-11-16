@@ -28,10 +28,3 @@ The **SFTP North Connector** securely uploads files to an **SFTP (SSH File Trans
 The files are written with the name given by their transformer, without their sub-folder: the **Filename** of the
 [File (as is, renamed or converted)](../engine/transformers.mdx#file-as-is-renamed-or-converted) and
 [File](../engine/transformers.mdx#file-from-records) transformers (e.g. `@SourceFilename-@CurrentDate@SourceExtension`).
-
-:::info Upgrading to 4.0
-Before 4.0, the connector added a **Prefix** and a **Suffix** to the name of the files. Upgrading adds them to the
-filename of its transformers, `@ConnectorName` being replaced by the name of the connector (in a transformer,
-`@ConnectorName` is the name of the South connector), and renames the files waiting in its cache. A custom transformer
-names the files itself.
-:::

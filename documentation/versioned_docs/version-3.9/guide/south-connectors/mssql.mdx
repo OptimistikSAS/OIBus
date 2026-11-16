@@ -1,0 +1,73 @@
+---
+sidebar_position: 3
+---
+
+import ItemSettings from './_south-sql-item-settings.mdx';
+
+# Microsoft SQL Server™
+
+Connect to and query Microsoft SQL Server™ (MSSQL) databases with OIBus.
+
+This connector is commonly used to extract process and historian data from industrial platforms that store their data in SQL Server, such as **AVEVA™ Historian** (formerly Wonderware® InSQL) or **Inductive Automation Ignition®**.
+
+:::info Compatibility Notes
+
+- Supports SQL Server 2012 and later
+- Requires TCP/IP protocol to be enabled on SQL Server
+
+:::
+
+## Specific Settings
+
+| Setting                  | Description                                                            | Example Value    |
+| ------------------------ | ---------------------------------------------------------------------- | ---------------- |
+| Host                     | IP address or hostname of the SQL Server instance.                     | `192.168.1.10`   |
+| Port                     | SQL Server port number. Default: `1433`.                               | `1433`           |
+| Connection timeout       | Maximum time in milliseconds to establish connection. Default: `5000`. | `5000`           |
+| Database                 | Name of the database to connect to.                                    | `production`     |
+| Use encryption           | Enable data encryption between OIBus and the database.                 | Enabled/Disabled |
+| Trust server certificate | Accept self-signed or expired certificates. Use with caution.          | Enabled/Disabled |
+| Username                 | Authentication username.                                               | `sa`             |
+| Password                 | Authentication password.                                               | `••••••••`       |
+| Domain                   | Active Directory domain for domain authentication (optional).          | `CORP`           |
+| Request timeout          | Maximum execution time in milliseconds for individual SQL queries.     | `15000`          |
+
+### Security Best Practices
+
+- **User Permissions**: Always use a read-only database user
+- **Certificate Validation**: Only trust server certificates in development/test environments
+- **Encryption**: Enable for sensitive data, untrusted networks, or compliance requirements
+
+### Performance Considerations
+
+**Query Optimization**:
+
+- Use indexed columns in WHERE clauses
+- Limit result sets (avoid `SELECT *`)
+- Prefer parameterized queries
+
+**Resource Management**:
+
+- Encryption adds CPU overhead
+- Increase timeouts for long-running queries
+- Implement pagination for large result sets
+- Reuse connections where possible
+
+<ItemSettings />
+
+:::note MSSQL datetime field types
+The following **Type** values are available for datetime field configuration in Microsoft SQL Server:
+
+| Type            | Description                                            |
+| --------------- | ------------------------------------------------------ |
+| String          | String representation parsed with a custom format      |
+| Date            | SQL `DATE` column (date only, no time)                 |
+| DateTime        | SQL `DATETIME` column                                  |
+| DateTime2       | SQL `DATETIME2` column (higher precision)              |
+| DateTime Offset | SQL `DATETIMEOFFSET` column (includes timezone offset) |
+| Small DateTime  | SQL `SMALLDATETIME` column (minute precision)          |
+| ISO String      | ISO 8601 string (e.g. `2024-01-15T10:30:00.000Z`)      |
+| UNIX epoch (s)  | Unix timestamp in seconds                              |
+| UNIX epoch (ms) | Unix timestamp in milliseconds                         |
+
+:::

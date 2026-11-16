@@ -145,9 +145,7 @@ Les transformateurs standard sont intégrés et nécessitent seulement une confi
 
 :::info Listes d'enregistrements envoyées à OIAnalytics
 Le North OIAnalytics n'accepte que des fichiers et des valeurs OIAnalytics : les listes d'enregistrements sont envoyées
-via le transformateur [Charge utile OIAnalytics](#oianalytics-payload). Lors de la mise à jour vers la 4.0, ce
-transformateur est ajouté à chaque North OIAnalytics pour les connecteurs South à points (OPC UA, OPC Classic, Modbus,
-ADS, S7, BACnet, OSIsoft PI) et les requêtes d'historique, dont il recevait auparavant les valeurs sans transformateur.
+via le transformateur [Charge utile OIAnalytics](#oianalytics-payload).
 :::
 
 ---
@@ -197,9 +195,6 @@ pour qu'il apparaisse dans la sortie. Déclarer un champ (via **Champs**) n'est 
 renommé, converti vers un type spécifique, reformaté (dates) ou traité. Lorsque
 **Conserver les autres champs** est désactivé, seuls les champs configurés sont écrits, dans leur ordre de
 configuration.
-
-Avant la 4.0, les fichiers CSV et JSON avaient leurs propres transformateurs (CSV et JSON) : la mise à jour les
-remplace par celui-ci, en conservant leurs paramètres.
 
 ##### Paramètres {#settings}
 
@@ -261,14 +256,6 @@ Les opérations ne s'appliquent qu'à une valeur pouvant être traitée :
 - un objet ou un tableau (d'un fichier JSON) peut uniquement être converti ;
 - un champ sans opération est écrit tel qu'il est lu : un texte d'un fichier CSV reste un texte dans un fichier JSON,
   sauf s'il est converti.
-
-Avant la 4.0, les traitements étaient des expressions JavaScript, et les champs avaient un type de données et des
-paramètres de date/heure : la mise à jour les transforme en opérations équivalentes — une **Conversion** pour le type
-de données, une **Conversion de date** pour les paramètres de date/heure, puis les opérations de l'expression :
-`value.trim().toUpperCase()` devient **Supprimer les espaces** puis **Majuscules**, `Math.round(value * 100) / 100` un
-**Arrondi** à 2 décimales, `'plant.' + value` un **Ajout de texte**... Une expression faisant ce qu'aucune opération ne
-fait (par exemple `value.split('/').pop()`) est supprimée, avec un avertissement dans les journaux : vérifiez le
-traitement du champ après la mise à jour.
 
 ##### Exemple — Enregistrements de points dans un fichier CSV {#example}
 
@@ -436,12 +423,6 @@ Les paramètres sont regroupés par partie de la charge utile OIAnalytics.
 | **Valeur**     | **Champ de la valeur**         | Champ des enregistrements contenant la valeur (par défaut `value`)                                                                                                                                                                                                                                       |
 |                | **Traitement de la valeur**    | Opérations facultatives appliquées à chaque valeur (par exemple Arrondir à 2 décimales), voir [Traitements des champs et des valeurs](#field-processes)                                                                                                                                                  |
 
-Avant la 4.0, les paramètres n'étaient pas regroupés : la mise à jour les déplace dans leur groupe, sans traitement de
-la valeur. Un type de source de l'horodatage autre que `iso-string` (avec son fuseau horaire, son format et ses
-paramètres régionaux) devient une conversion de date vers `iso-string` dans le traitement de l'horodatage, et une
-précision autre que `ms` devient la **Précision** de cette conversion (d'une conversion de `iso-string` vers
-`iso-string` ajoutée à cet effet, pour un horodatage ISO).
-
 ##### Exemple — Précision `s` {#example--precision-s}
 
 Traitement de l'horodatage : une conversion de date de `iso-string` vers `iso-string`, avec la précision **Seconde**.
@@ -549,10 +530,6 @@ correspondance imbriquée, de sorte qu'un seul message contenant plusieurs lectu
 l'exemple [Charge utile OIAnalytics](#oianalytics-payload-from-file) ci-dessous pour un cas détaillé.
 :::
 
-Avant la 4.0, les fichiers CSV et JSON avaient leurs propres transformateurs (Valeurs temporelles et Charges utiles
-MQTT depuis CSV, OIAnalytics depuis JSON) : la mise à jour les remplace par les transformateurs de fichiers ci-dessous,
-en conservant leurs paramètres.
-
 ---
 
 #### Enregistrements {#records-from-file}
@@ -602,10 +579,6 @@ Après le [groupe Fichier](#reading-the-file) :
 | **Champ de valeur**         | Champ contenant la charge utile (charge utile `value`)                                                                                                                      |
 | **Traitement de la valeur** | Opérations facultatives appliquées à la valeur, voir [Traitements des champs et des valeurs](#field-processes) — la charge utile est la valeur traitée, sous forme de texte |
 | **Champs objet**            | Liste de correspondances `{ key, field }` (charge utile `object`), chacune avec son propre **Traitement du champ** (par exemple Convertir en nombre)                        |
-
-Avant la 4.0, le type de charge utile typait aussi une charge utile simple (`string`, `number`, `boolean` ou
-`datetime`, avec des paramètres de date/heure), et les champs objet avaient un type de données : la mise à jour les
-transforme en une charge utile `value` et des champs objet avec les opérations équivalentes.
 
 ##### Exemple — Charge utile simple {#example--simple-payload}
 
@@ -734,10 +707,6 @@ En plus des variables des listes d'enregistrements, le **Nom du fichier** prend 
 `@SourceExtension` : le nom (sans extension) et l'extension (avec son point) du fichier transformé, par exemple
 `@SourceFilename_copy@SourceExtension`.
 
-Avant la 4.0, les fichiers JSON avaient leur propre transformateur vers CSV (CSV depuis JSON), et les fichiers étaient
-envoyés tels quels par le transformateur **Fichier (tel quel)** : la mise à jour les remplace par celui-ci, en
-conservant les paramètres du premier, le second envoyant les fichiers tels quels.
-
 ##### Exemple — JSON vers CSV {#example-6}
 
 Un connecteur South REST récupère un rapport JSON depuis une API, reformaté pour un connecteur North File Writer.
@@ -858,14 +827,6 @@ ainsi (`valve2/open` n'ayant pas de correspondance) :
 [{ "topic": "control/pump1/speed", "payload": "1200" }]
 ```
 
-:::info Transformateurs de consignes depuis OIBus 3.9
-Le type de données `setpoint` n'existe plus. Lors de la mise à jour, les transformateurs de consignes JSON, Charges
-utiles MQTT, Valeurs Modbus et Valeurs OPCUA sont remplacés par leurs équivalents pour les listes d'enregistrements,
-leur table de mappage conservant ses références comme identifiants de point (celui des charges utiles MQTT publiant la
-valeur seule, comme auparavant). Les transformateurs personnalisés prenant ou produisant des consignes ont été basculés
-vers `record-list` : les enregistrements qu'ils lisent ou écrivent conservent la forme `{ reference, value }`.
-:::
-
 ---
 
 ## Tester un transformateur sur un élément South réel {#testing-a-transformer-against-a-real-south-item}
@@ -908,13 +869,6 @@ Les transformateurs personnalisés sont créés dans la page **Moteur → Transf
 la liste de sélection des transformateurs de tout connecteur North. Leur **type d'entrée** est `file` (fichiers et
 charges utiles) ou `record-list` (enregistrements, et consignes OIAnalytics) ; leur **type de sortie** est `file`,
 `record-list`, `mqtt`, `opcua`, `modbus` ou `oianalytics`.
-
-:::info Transformateurs personnalisés depuis OIBus 3.9
-Le type de données `time-values` n'existe plus : les transformateurs personnalisés prenant ou produisant des
-time-values ont été basculés vers `record-list` lors de la mise à jour. Leur code doit désormais lire et écrire des
-enregistrements de points plats (`{ pointId, timestamp, value }`, par exemple `record.value`) au lieu de
-`{ pointId, timestamp, data: { value } }`.
-:::
 
 ### Fonction Transform {#transform-function}
 

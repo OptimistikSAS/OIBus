@@ -16,8 +16,7 @@ import RegexTester from '../../../../../../src/components/RegexTester/index';
 | 输入文件夹 | 要扫描的文件夹路径。可以是**绝对路径**或**相对路径**（相对于**数据文件夹**——参见 _关于_ 部分）。支持远程路径（例如 `/remote.server/data` 或 `Z:\Remote disk\DATA`）。**区分大小写**。 | `/data/input` 或 `Z:\Files` |
 
 要压缩文件（gzip），请使用[文件（原样、重命名或转换）](../engine/transformers.mdx#file-as-is-renamed-or-converted)转换器，
-将文件类型设为 **任意文件** 并启用 **压缩文件**。在 4.0 之前，连接器会自行压缩其文件：升级后，凡是其文件按原样发送的地方，
-该设置都会移至这样的转换器。
+将文件类型设为 **任意文件** 并启用 **压缩文件**。
 
 :::caution 用户访问权限要求
 

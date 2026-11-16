@@ -1,0 +1,35 @@
+---
+sidebar_position: 17
+---
+
+import ItemSettings from './_south-sql-item-settings.mdx';
+
+# SQLite™
+
+Connect to and query SQLite™ database files with OIBus.
+
+## Specific Settings
+
+| Setting       | Description                       | Example Value                    |
+| ------------- | --------------------------------- | -------------------------------- |
+| Database path | Full path to SQLite database file | `C:\databases\production.sqlite` |
+
+### Best Practices
+
+- Place database on fast storage (SSD recommended)
+- Avoid concurrent writes from multiple processes
+- Use WAL mode for better concurrency (PRAGMA journal_mode=WAL)
+
+<ItemSettings />
+
+:::note SQLite datetime field types
+The following **Type** values are available for datetime field configuration:
+
+| Type            | Description                                       |
+| --------------- | ------------------------------------------------- |
+| String          | String representation parsed with a custom format |
+| ISO String      | ISO 8601 string (e.g. `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)  | Unix timestamp in seconds                         |
+| UNIX epoch (ms) | Unix timestamp in milliseconds                    |
+
+:::

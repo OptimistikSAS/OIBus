@@ -75,9 +75,8 @@ written**: the import is all-or-nothing.
 
 ## Supported versions {#supported-versions}
 
-Configuration export is available from OIBus 4.0.0 onwards, but a file can hold the configuration
-of an OIBus as old as 3.9.0 (for example a file produced by OIAnalytics). A file can be imported into
-any OIBus at least as recent as the one its `oibusVersion` names:
+A file can hold the configuration of an OIBus as old as 3.9.0 (for example a file produced by OIAnalytics), and can be
+imported into any OIBus at least as recent as the one its `oibusVersion` names:
 
 - **Newer files are rejected**: an import is rejected outright if the file's `oibusVersion` is
   newer than the importing OIBus instance, since it may contain settings this version does not know.
@@ -137,9 +136,9 @@ with OIAnalytics (or re-registering it) must be done manually, the same way as o
 
 ## Import from OIAnalytics {#import-from-oianalytics}
 
-From OIBus 4.0.0, a configuration file can also be sent from OIAnalytics to a registered OIBus, with the
-**Import configuration** command. OIAnalytics stores the uploaded file and creates the command; OIBus downloads the file
-when it retrieves the command, and imports it exactly like a file imported from its own UI, with two differences:
+A configuration file can also be sent from OIAnalytics to a registered OIBus, with the **Import configuration**
+command. OIAnalytics stores the uploaded file and creates the command; OIBus downloads the file when it retrieves the
+command, and imports it exactly like a file imported from its own UI, with two differences:
 
 - **The local users are all kept**, with their passwords, and the users of the file are not imported: they could only
   be recreated with random passwords, which would lock everyone out of the local UI.

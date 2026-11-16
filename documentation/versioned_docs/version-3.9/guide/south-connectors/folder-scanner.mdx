@@ -1,0 +1,54 @@
+---
+sidebar_position: 1
+---
+
+import RegexTester from '@site/src/components/RegexTester/index';
+
+# Folder Scanner
+
+The **Folder Scanner** South connector periodically scans a specified input folder for new files based on **regular expressions (Regexp)** defined in its items. Matching files are transmitted to North caches.
+
+## Specific Settings
+
+| Setting            | Description                                                                                                                                                                                                                    | Example Value               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| Input folder       | Path of the folder to scan. Can be **absolute** or **relative** (relative to the **Data folder** - see the _About_ section). Supports remote paths (e.g., `/remote.server/data` or `Z:\Remote disk\DATA`). **Case-sensitive**. | `/data/input` or `Z:\Files` |
+| Enable compression | If enabled, files are compressed using **gzip** before being sent to North caches.                                                                                                                                             | Enabled/Disabled            |
+
+:::caution User Access Requirements
+
+The user running OIBus (terminal user or service account) **must have read access** to the input folder. If **Preserve file** is disabled, **write access** is also required to delete files.
+
+:::
+
+### Network Share Authentication (Windows only)
+
+To scan a Windows network share, set **Input folder** to a UNC path (`\\server\share\...`) and provide credentials
+for it:
+
+| Setting          | Description                                                        | Example Value |
+| ---------------- | ------------------------------------------------------------------ | ------------- |
+| **SMB username** | Username used to authenticate against the network share.           | `svc_oibus`   |
+| **SMB password** | Password for the SMB username.                                     | `••••••••`    |
+| **SMB domain**   | Domain for the SMB username (optional, e.g. for Active Directory). | `CORP`        |
+
+:::info Windows only
+These fields only appear when OIBus runs on Windows. OIBus authenticates an SMB session against the server (`net use`)
+before scanning, and removes it when the connector disconnects. This does not go through the Windows Credential Manager,
+so it also works when OIBus runs as a Windows service, where the interactive-session-only Credential Manager is
+unreliable even under an account that otherwise has access to the share.
+:::
+
+## Item Settings
+
+| Setting               | Description                                                                                                                                                             | Example Value                           |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| RegExp                | Regular expression to filter files.                                                                                                                                     | `.*\.csv\|.*\xlsx` → CSV or Excel files |
+| Minimum age           | Minimum age (in ms) for files to be retrieved. Avoids corrupted files still being written. Default: `1000` ms.                                                          | `1000`                                  |
+| Preserve file         | If enabled, files are **not deleted** after retrieval. Useful if other applications need access. OIBus tracks modification time to avoid re-retrieving unchanged files. | Enabled/Disabled                        |
+| Ignored modified date | (_Requires **Preserve file**_) Forces retrieval even if the file's modification time hasn't changed. Useful for ensuring files are always processed.                    | Enabled/Disabled                        |
+| Max files per scan    | Maximum number of files to retrieve per scan. Set to **0** for no limit. Remaining files are retrieved in the next scan.                                                | `0` (no limit), `100`                   |
+| Max size per scan     | Maximum total size (in MB) of files per scan. Set to **0** for no limit. Remaining files are retrieved in the next scan.                                                | `0` (no limit), `500`                   |
+| Scan sub-folders      | If enabled, recursively scans sub-folders within the input folder.                                                                                                      | Enabled/Disabled                        |
+
+<RegexTester />

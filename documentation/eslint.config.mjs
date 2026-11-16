@@ -100,6 +100,7 @@ export default [
       '**/.docusaurus/',
       '**/build/',
       'docs/**/*.{md,mdx}',
+      'versioned_docs/**/*.{md,mdx}',
       'i18n/**/docusaurus-plugin-content-docs/**/*.{md,mdx}'
     ]
   }

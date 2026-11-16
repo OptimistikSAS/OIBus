@@ -1,0 +1,127 @@
+---
+sidebar_position: 8
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# OIAnalytics®
+
+Query time series data from [OIAnalytics®](https://optimistik.com/oianalytics/) SaaS application.
+
+## Connection Settings
+
+### Main Configuration
+
+| Setting                      | Description                                                                                                                | Example Value    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Use OIAnalytics registration | Use pre-configured connection settings from [OIAnalytics registration](../installation/oianalytics.mdx). Default: enabled. | Enabled/Disabled |
+| Timeout                      | Duration in seconds before connection failure is reported. Default: `30`.                                                  | `30`             |
+
+### Manual Configuration (when registration not used)
+
+| Setting                             | Description                                                              | Example Value                        |
+| ----------------------------------- | ------------------------------------------------------------------------ | ------------------------------------ |
+| **Host**                            | Hostname of the OIAnalytics® SaaS application.                           | `https://optimistik.oianalytics.com` |
+| **Accept unauthorized certificate** | Enable if HTTP queries pass through a firewall that strips certificates. | Enabled/Disabled                     |
+
+#### Authentication Settings
+
+| Setting               | Description                                                                                                 | Example Value                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Authentication method | Authentication type for the connection.                                                                     | `Access key/Secret`, `Azure AD (Client Secret)`, `Azure AD (Certificate)` |
+| Access key            | Access key for Access key/Secret authentication.                                                            | `my_access_key`                                                           |
+| Secret                | Secret for Access key/Secret authentication.                                                                | `••••••••`                                                                |
+| Tenant ID             | Azure AD tenant identifier (for Azure AD methods).                                                          | `tenant-id-uuid`                                                          |
+| Client ID             | Azure AD client identifier (for Azure AD methods).                                                          | `client-id-uuid`                                                          |
+| Client Secret         | Azure AD client secret (for Azure AD Client Secret method).                                                 | `••••••••`                                                                |
+| Certificate           | Certificate selected from OIBus's Certificates page (for Azure AD Certificate method), not a raw file path. | (selected from list)                                                      |
+| Scope                 | OAuth scope (for Azure AD Certificate method).                                                              | `https://resource/.default`                                               |
+
+#### Proxy Configuration
+
+| Setting            | Description                                      | Example Value                   |
+| ------------------ | ------------------------------------------------ | ------------------------------- |
+| **Use proxy**      | Route requests through a proxy server.           | Enabled/Disabled                |
+| **Proxy URL**      | URL of the proxy server.                         | `http://proxy.example.com:8080` |
+| **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
+| **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
+
+## Group Settings
+
+Items can be organised into groups. Each group defines a shared collection schedule and default throttling
+settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
+provides common defaults that individual items can override.
+
+| Setting        | Description                                                                                                                                       | Example Value             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| **Name**       | Unique label for the group within this connector.                                                                                                 | `Group A`                 |
+| **Scan mode**  | Schedule used to collect all items in the group.                                                                                                  | `Every 1 min`             |
+| **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) inherited by items in the group. | `3600, 200, 0, 0, oldest` |
+
+## Item Settings
+
+Each item can be individually configured. Items inherit their scan mode and throttling defaults from their
+group, but each setting can be overridden per item by disabling **Sync with group**.
+
+<ThrottlingSettings />
+
+### Endpoint Settings
+
+| Setting  | Description                    | Example Value                  |
+| -------- | ------------------------------ | ------------------------------ |
+| Endpoint | API endpoint for HTTP requests | `/api/oianalytics/data/values` |
+
+### Query Parameters
+
+**Query Variables**:
+
+- `@StartTime`: Initial execution time, updates to most recent timestamp from results
+- `@EndTime`: Current time (`now()`) or sub-interval end when queries are split
+
+:::info Query Splitting
+Large time intervals are automatically divided into smaller chunks using:
+
+- **Max read interval** (from [throttling settings](#throttling-settings))
+- Reduces server and network load
+- Improves data stream resilience
+  :::
+
+:::tip Repeated keys
+Adding the same key several times sends it as an array of values in the request, instead of overwriting the
+previous one. This is useful for endpoints that accept multiple values for a single parameter, such as
+`data-reference` below.
+:::
+
+#### Example: querying data values
+
+To retrieve raw values for several data references over a time window, configure the item with the
+`/api/oianalytics/data/values` endpoint and the following query parameters:
+
+| Key            | Value                           |
+| -------------- | ------------------------------- |
+| from           | `@StartTime`                    |
+| to             | `@EndTime`                      |
+| aggregation    | `RAW_VALUES`                    |
+| data-reference | `CIP_Line_1_Acid_Tank_Level`    |
+| data-reference | `CIP_Line_1_Caustic_Tank_Level` |
+
+Since `data-reference` is repeated, it is sent as `data-reference=CIP_Line_1_Acid_Tank_Level&data-reference=CIP_Line_1_Caustic_Tank_Level`,
+letting the endpoint return values for both tank levels in a single query.
+
+## CSV Serialization Options
+
+| Setting                | Description                                                              | Example Value                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Filename               | Output filename pattern with variables: `@ConnectorName`, `@CurrentDate` | `data_@ConnectorName.csv`                                                                                         |
+| Delimiter              | Field separator character                                                | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
+| Compression            | Enable gzip compression                                                  | Enabled/Disabled                                                                                                  |
+| Output datetime format | Format for datetime fields in CSV                                        | `yyyy-MM-dd HH:mm:ss`                                                                                             |
+| Output timezone        | Timezone for datetime values                                             | `UTC` or `Europe/Paris`                                                                                           |
+
+:::info Filename Variables
+
+- `@ConnectorName`: Connector name
+- `@CurrentDate`: Current timestamp in `yyyy_MM_dd_HH_mm_ss_SSS` format (fixed format)
+- Datetime format setting doesn't affect filename timestamp
+
+:::

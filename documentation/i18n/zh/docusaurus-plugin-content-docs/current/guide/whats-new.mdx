@@ -1,0 +1,98 @@
+---
+sidebar_position: 1.5
+---
+
+# OIBus 4 新特性
+
+OIBus 4 是一个主要版本。它新增了连接器，让 OIBus 能够发现数据源中的数据并保持其项同步，重新设计了数据流向 North
+连接器的方式，并为 OIBus 的管理提供了安全保护和审计。
+
+从 OIBus 3.9 升级是自动完成的：OIBus 4 首次启动时会转换配置以及缓存中待发送的数据，并且可以导入从 OIBus 3.9
+导出的配置。但仍有少数变更需要您留意：请参阅[升级之前](#before-upgrading)。
+
+## 新连接器 {#new-connectors}
+
+- [**Siemens S7**](./south-connectors/s7.mdx) South：读取 S7-200、S7-300、S7-400、S7-1200 和 S7-1500 PLC
+  的数据块、输入、输出、标志位、定时器和计数器，无需安装驱动程序。
+- [**Rockwell EtherNet/IP**](./south-connectors/ethernet-ip.mdx) South：读取 Allen-Bradley ControlLogix 和
+  CompactLogix 控制器的标签。
+- [**BACnet**](./south-connectors/bacnet.mdx) South：读取 BACnet/IP 设备的对象，订阅其变化（COV）并获取其趋势日志，
+  支持设备发现（广播或单播、通过 BBMD、路由器后的 MS/TP 设备）。
+- [**MongoDB**](./south-connectors/mongodb.mdx) South：查询 MongoDB 集合中的文档。
+- [**Azure Data Explorer**](./north-connectors/azure-data-explorer.md) North：将数据写入 Azure Data
+  Explorer（Kusto）表。
+- BACnet、S7 和 InfluxDB South 连接器不再处于测试阶段。
+
+## 发现和同步项 {#discover-and-synchronise-items}
+
+- [**浏览 South 连接器的数据源**](./south-connectors/common-settings.md#exploring-the-data-source)（OPC UA、BACnet、
+  EtherNet/IP、SQL 数据库、Folder Scanner），并将勾选的节点、标签或表添加为项。一个 SQL 项可以通过一条连接查询读取多个表。
+- [**项同步**](./south-connectors/common-settings.md#items-synchronisation)会发现数据源的节点或行，处理并筛选其字段，
+  然后据此按需或按计划创建或更新 South 连接器的项。它们也可以改为将发现的记录推送到 OIAnalytics。
+- South 项、历史查询项和同步都有**描述**。
+
+## 数据流和转换器 {#data-flow-and-transformers}
+
+- **更简单的数据类型**：South 连接器发送文件或记录列表。记录列表取代了时间值，OIAnalytics 发送的设定值也是记录列表，
+  而类 SQL 的 South 连接器（ODBC、OLE DB、InfluxDB 等）发送记录列表，由转换器将其转换为 CSV、JSON 或 OIAnalytics 值。
+- North 连接器只接收配置了[**转换器**](./engine/transformers.mdx)的数据：_按原样缓存_ 和 _忽略_ 转换器已移除。North
+  连接器会显示它接收哪些数据源以及经由哪个转换器，并且可以将某些项排除在转换器之外。
+- 新的标准转换器可读写 **CSV 和 JSON 文件**（发送到 OIAnalytics、MQTT、Modbus、OPC UA 或记录列表，以及再写回文件），
+  转换器的字段通过**操作**而不是 JavaScript 表达式进行处理。
+- **OIAnalytics 载荷**的选项按引用、时间戳和值分组。
+- 项的转换器可以分步骤配置，并**针对真实的项进行测试**，可从 North 连接器或项本身进行。
+- 为 IoT 类 South 连接器（OPC UA、OPC Classic、Modbus、ADS、S7、EtherNet/IP、MQTT、BACnet）提供按项设置的
+  [**缓存策略**](./south-connectors/common-settings.md#caching-strategy)（全部值、变化时或阈值，可设置最大缓存间隔），
+  并可查看每个项的最新值。
+- 历史项可以在没有新数据的时间区间上推进其跟踪的时刻（**空区间策略**）。
+- 数据库类 South 连接器通过连接池**并行**执行查询。
+- North 连接器的缓存、错误和归档文件夹各自拥有最大容量，缓存的数据会保留其来源数据源。
+
+## 无需 OIBus Agent 的 Windows 驱动 {#windows-drivers-without-the-oibus-agent}
+
+[OPC Classic](./south-connectors/opc.mdx)、[ODBC](./south-connectors/odbc.mdx)、[OLE DB](./south-connectors/oledb.mdx)
+和 [OSIsoft PI](./south-connectors/osisoft-pi.mdx) South 连接器不再经由 OIBus Agent：它们使用安装在 OIBus 机器上的
+驱动程序。PI 连接器通过 PI AF Client 读取 PI Data Archive，并可在 PI Data Archive 上筛选值。
+
+## 引擎与管理 {#engine-and-administration}
+
+- Web 服务器可以使用证书库中的证书或 PEM 文件提供 [**HTTPS**](./engine/engine-settings.mdx#https) 服务。
+- 可以禁用 OIBus API 的[**内容端点**](./engine/engine-settings.mdx#content-endpoints)（`/api/content`）。
+- 引擎有了[**描述**](./engine/engine-settings.mdx#description)。
+- [**审计跟踪**](./engine/audit-trail.mdx)记录谁修改了配置中的哪些内容，并可设置保留期限。
+- 可以从文件或从 OIAnalytics [**导出和导入**](./engine/config-export-import.mdx)整个配置，并在导入前预览。
+- [**扫描模式**](./engine/scan-modes.mdx)可以按固定间隔运行，并且只在激活时间窗口内运行。
+- 通过 OIAnalytics，OIBus 还可以导入配置、上传其日志数据库或内存转储，并且每个命令都有各自的权限。
+- 界面和文档提供**法语和中文**版本，文档内嵌于 OIBus 中并带有独立的搜索功能，可离线阅读。
+- 界面重新设计：连接器、历史查询和项按步骤创建和编辑，详情页显示设置摘要，表格的列宽可以调整。
+
+## 修复 {#fixes}
+
+- **BACnet**：支持通过 BBMD 连接、连接 MS/TP 设备以及单播；COV 订阅可复用并按时续订，网络中断后连接器会重新连接。
+- **OPC UA**：会话和客户端一起关闭，发现功能可获取更多节点及其描述、单位和量程。
+- **S7**：连接和请求超时设置生效，并使用新的 S7comm 客户端。
+- **文件**：大于最大容量的文件不再导致 Folder Scanner、FTP 和 SFTP South 连接器停滞，SFTP 递归扫描保留的文件按相对路径跟踪。
+- **North 缓存**：无法压缩的内容不再被删除。
+- **CSV**：不再使用不间断空格作为分隔符，导入项时可检测到使用其他分隔符的文件。
+- **OIAnalytics**：OIAnalytics North 只接受文件和 OIAnalytics 值，可以设置 Azure AD 客户端密钥认证的作用域，
+  OIAnalytics South 会写入值和单位列。
+- **OLE DB**：只跟踪最大时刻，并按提供程序返回的方式发送记录。
+- **REST South**：会写入无类型的 JSON 响应，并保留主机路径。
+- **Windows 安装程序**：升级时会在替换文件之前停止 OIBus 服务和进程，并在报告失败前等待服务运行。
+- **日志**：日志传输的错误不再导致 OIBus 停止。
+
+## 升级之前 {#before-upgrading}
+
+- **备份 OIBus 的数据文件夹**：迁移不可逆。
+- **检查 North 连接器的转换器**：升级时，North 连接器以前无转换器接收的数据会经由等效的转换器路由，但从此以后，
+  没有转换器的数据将被丢弃。
+- **调整自定义转换器**：读取或写入时间值的自定义转换器现在读取或写入扁平记录（`{ pointId, timestamp, value }`，
+  例如 `record.value`，而不是 `{ pointId, timestamp, data: { value } }`）。读取或写入设定值的自定义转换器读取或写入保持
+  `{ reference, value }` 结构的记录。
+- **检查转换器的字段处理**：JavaScript 表达式会被转换为效果相同的操作，无法由任何操作重现的表达式（例如
+  `value.split('/').pop()`）会被移除，并在日志中给出警告。
+- 为不再使用 OIBus Agent 的 OPC Classic、ODBC、OLE DB 和 PI South 连接器**在 OIBus 机器上安装驱动程序**（升级时会移除
+  Agent 的设置）。
+- **REST API**：引擎通用设置通过 `PUT /api/engine/general` 更新（取代 `PUT /api/engine/name`），当没有 North
+  转换器应用于 OIBus API 时，内容端点会被禁用。
+- 由 OIBus 4 预发布版本升级过的数据文件夹无法再升级：请从您的 OIBus 3.9 数据文件夹开始。

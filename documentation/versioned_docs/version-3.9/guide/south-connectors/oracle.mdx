@@ -1,0 +1,74 @@
+---
+sidebar_position: 12
+---
+
+import ItemSettings from './_south-sql-item-settings.mdx';
+
+# Oracle Database™
+
+Connect to and query Oracle Database™ using OIBus with support for both thin and thick connection modes.
+
+## Version Compatibility
+
+| Oracle DB Version | Thin Mode | Thick Mode | Notes                              |
+| ----------------- | --------- | ---------- | ---------------------------------- |
+| 19c+              | ✅        | ✅         | Recommended                        |
+| 12.2 (12c R2)     | ✅        | ✅         | Minimum for thin mode              |
+| 12.1 (12c R1)     | ⚠️        | ✅         | Thin mode not officially supported |
+| 11.2 (11g R2)     | ❌        | ✅         | Minimum for thick mode             |
+| 10g or older      | ❌        | ❌         | Not compatible                     |
+
+## Specific Settings
+
+| Setting               | Description                                                                                                                        | Example Value                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Thick mode            | Use Oracle Client Library for database access. Requires Instant Client installation.                                               | Enabled/Disabled               |
+| Oracle Client Library | Path to Oracle Instant Client. Required when thick mode is enabled.                                                                | `C:\oracle\instantclient_23_5` |
+| Host                  | IP address or hostname of the Oracle server.                                                                                       | `192.168.1.10`                 |
+| Port                  | Server port. Default: `1521`.                                                                                                      | `1521`                         |
+| Connection timeout    | Maximum time in milliseconds to establish connection. Default: `15000`.                                                            | `15000`                        |
+| Database              | Service name of the target database (Oracle Easy Connect format: `host:port/service_name`; the classic SID form is not supported). | `ORCL`                         |
+| Username              | Authentication username.                                                                                                           | `db_user`                      |
+| Password              | Authentication password.                                                                                                           | `••••••••`                     |
+
+### Connection Modes
+
+| Mode  | Description                    | Requirements         | Benefits                       |
+| ----- | ------------------------------ | -------------------- | ------------------------------ |
+| Thin  | Pure JavaScript implementation | None                 | Easy setup, no native binaries |
+| Thick | Uses Oracle Client Library     | Instant Client 18.5+ | Full feature support           |
+
+:::info Oracle Instant Client
+
+- **Required only for thick mode**
+- Minimum version: 18.5.0.0.0
+- Supports Oracle Database 11.2+
+- Download: [Oracle Instant Client](https://www.oracle.com/database/technologies/instant-client.html)
+  :::
+
+:::tip Security Best Practices
+
+- Use a read-only database user
+- Prefer thin mode when possible for simpler deployment
+
+:::
+
+<ItemSettings />
+
+:::note Oracle datetime field types
+The following **Type** values are available for datetime field configuration:
+
+| Type            | Description                                       |
+| --------------- | ------------------------------------------------- |
+| String          | String representation parsed with a custom format |
+| DateTime        | Oracle `DATE` or `TIMESTAMP` column               |
+| ISO String      | ISO 8601 string (e.g. `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)  | Unix timestamp in seconds                         |
+| UNIX epoch (ms) | Unix timestamp in milliseconds                    |
+
+:::
+
+:::note Oracle item request timeout
+Each Oracle item has an additional **Request timeout** field (milliseconds) that sets the maximum execution
+time for that specific query.
+:::

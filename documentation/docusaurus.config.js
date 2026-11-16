@@ -115,7 +115,15 @@ export default {
           sidebarPath: require.resolve('./sidebars.js'),
           path: 'docs',
           routeBasePath: '/docs',
-          editLocalizedFiles: true
+          editLocalizedFiles: true,
+          // The current docs (OIBus 4) are served at /docs, the frozen OIBus 3.9 docs at /docs/3.9. The embedded build
+          // only documents the OIBus version it ships with: the latest one.
+          lastVersion: 'current',
+          versions: {
+            current: { label: 'v4' },
+            3.9: { label: 'v3.9', path: '3.9', banner: 'none' }
+          },
+          ...(docsBuildTarget === 'embedded' ? { onlyIncludeVersions: ['current'] } : {})
         },
         sitemap: {
           changefreq: 'weekly',
@@ -183,6 +191,15 @@ export default {
             position: 'left',
             label: 'API'
           },
+          ...(docsBuildTarget === 'public'
+            ? [
+                {
+                  type: 'docsVersionDropdown',
+                  position: 'right',
+                  dropdownActiveClassDisabled: true
+                }
+              ]
+            : []),
           {
             type: 'localeDropdown',
             position: 'right'
