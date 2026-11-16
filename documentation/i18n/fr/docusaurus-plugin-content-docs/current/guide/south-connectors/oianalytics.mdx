@@ -122,7 +122,7 @@ Pour les écrire dans un fichier CSV (ou JSON), associez le transformateur [Fich
 au connecteur North ou à la requête d'historique : ses paramètres choisissent les colonnes, le format et le fuseau horaire
 de l'horodatage, le délimiteur, le nom du fichier et la compression.
 
-Avant la 3.10, les éléments écrivaient eux-mêmes des fichiers CSV (nom du fichier, délimiteur, compression, format et
+Avant la 4.0, les éléments écrivaient eux-mêmes des fichiers CSV (nom du fichier, délimiteur, compression, format et
 fuseau horaire de l'horodatage) : la mise à jour déplace ces paramètres dans un transformateur Fichier pour chaque élément
 dont les fichiers étaient envoyés tels quels. Les autres transformateurs lisant ses fichiers sont supprimés, les données
 étant des listes d'enregistrements.

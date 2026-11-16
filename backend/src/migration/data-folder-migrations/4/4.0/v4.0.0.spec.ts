@@ -11,9 +11,9 @@ import { mockModule, reloadModule } from '../../../../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
-type MigrationModule = typeof import('./v3.10.0');
+type MigrationModule = typeof import('./v4.0.0');
 
-describe('Data folder migration v3.10.0', () => {
+describe('Data folder migration v4.0.0', () => {
   let tmpRoot: string;
   let migration: MigrationModule;
   let info: ReturnType<typeof mock.method>;
@@ -67,7 +67,7 @@ describe('Data folder migration v3.10.0', () => {
         launcherVersion: 'test'
       })
     });
-    migration = reloadModule<MigrationModule>(nodeRequire, './v3.10.0');
+    migration = reloadModule<MigrationModule>(nodeRequire, './v4.0.0');
   });
 
   after(async () => {

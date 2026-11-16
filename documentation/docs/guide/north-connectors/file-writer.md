@@ -4,7 +4,7 @@ The **File Writer North Connector** writes files to a specified output folder on
 local storage, data processing pipelines, or integration with file-based systems.
 
 It only receives files: the record lists (the OIAnalytics setpoints included) are written into files by a transformer
-(e.g. [File](../engine/transformers.mdx#file-from-records)). Before 3.10, it also received records and setpoints:
+(e.g. [File](../engine/transformers.mdx#file-from-records)). Before 4.0, it also received records and setpoints:
 upgrading writes the rows of the [Records](../engine/transformers.mdx#records-from-file) transformers in JSON files
 through [File (as is, renamed or converted)](../engine/transformers.mdx#file-as-is-renamed-or-converted), and removes its custom
 transformers sending records or setpoints.
@@ -39,8 +39,8 @@ The files are written with the name given by their transformer, without their su
 [File (as is, renamed or converted)](../engine/transformers.mdx#file-as-is-renamed-or-converted) and
 [File](../engine/transformers.mdx#file-from-records) transformers (e.g. `@SourceFilename-@CurrentDate@SourceExtension`).
 
-:::info Upgrading to 3.10
-Before 3.10, the connector added a **Prefix** and a **Suffix** to the name of the files. Upgrading adds them to the
+:::info Upgrading to 4.0
+Before 4.0, the connector added a **Prefix** and a **Suffix** to the name of the files. Upgrading adds them to the
 filename of its transformers, `@ConnectorName` being replaced by the name of the connector (in a transformer,
 `@ConnectorName` is the name of the South connector), and renames the files waiting in its cache. A custom transformer
 names the files itself.

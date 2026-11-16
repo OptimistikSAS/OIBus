@@ -30,8 +30,8 @@ Les fichiers sont écrits avec le nom donné par leur transformateur, sans leur 
 transformateurs [Fichier (tel quel, renommé ou converti)](../engine/transformers.mdx#file-as-is-renamed-or-converted)
 et [Fichier](../engine/transformers.mdx#file-from-records) (par exemple `@SourceFilename-@CurrentDate@SourceExtension`).
 
-:::info Mise à jour vers la 3.10
-Avant la 3.10, le connecteur ajoutait un **Préfixe** et un **Suffixe** au nom des fichiers. La mise à jour les ajoute
+:::info Mise à jour vers la 4.0
+Avant la 4.0, le connecteur ajoutait un **Préfixe** et un **Suffixe** au nom des fichiers. La mise à jour les ajoute
 au nom de fichier de ses transformateurs, `@ConnectorName` étant remplacé par le nom du connecteur (dans un
 transformateur, `@ConnectorName` est le nom du connecteur South), et renomme les fichiers en attente dans son cache. Un
 transformateur personnalisé nomme lui-même les fichiers.

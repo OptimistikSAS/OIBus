@@ -66,7 +66,7 @@ export class ConfigImportError extends Error {
 }
 
 /**
- * The oldest configuration an import accepts. Config export shipped in 3.10.0, but OIAnalytics can
+ * The oldest configuration an import accepts. Config export shipped in 4.0.0, but OIAnalytics can
  * produce a file from the configuration messages any OIBus sent it, down to 3.9.0 (pre-releases of
  * 3.9.0 excluded).
  */

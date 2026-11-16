@@ -1,7 +1,7 @@
 import { FieldNumberOperator, FieldOperation } from '../../../../../shared/model/connector/field-process.model';
 
 /**
- * Up to 3.9, a field of a transformer was processed by a JavaScript expression on `value`. From 3.10, it is processed by
+ * Up to 3.9, a field of a transformer was processed by a JavaScript expression on `value`. From 4.0, it is processed by
  * operations only (upper case, substring, number operation...): the expressions used were string and number operations,
  * which `expressionToOperations` turns into the operations doing the same.
  *

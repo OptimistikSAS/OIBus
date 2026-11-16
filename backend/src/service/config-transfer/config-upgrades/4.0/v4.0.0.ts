@@ -34,11 +34,11 @@ import {
 } from './passthrough-transformers';
 
 /**
- * The 3.10.0 changes to the configuration, shared with the entity migration doing the same to existing
- * installs (`migration/entity-migrations/3/3.10/v3.10.0.ts`, which documents each of them).
+ * The 4.0.0 changes to the configuration, shared with the entity migration doing the same to existing
+ * installs (`migration/entity-migrations/4/4.0/v4.0.0.ts`, which documents each of them).
  *
  * Unlike its migration, the step only rewrites what is still in the old shape: an export from a
- * 3.10.0 pre-release is upgraded by it too, and may already have (part of) the new one.
+ * 4.0.0 pre-release is upgraded by it too, and may already have (part of) the new one.
  */
 
 // The SQL-family souths reworked to emit 'record-list' content instead of pre-serialized CSV. With a remote agent
@@ -53,7 +53,7 @@ export function usesRemoteAgent(southType: string, southSettings: { remoteAgent?
   return southType === 'oledb' || (southType === 'odbc' && southSettings?.remoteAgent === true);
 }
 
-// "IoT family" south connector types at 3.10.0: the only ones for which a per-item caching strategy
+// "IoT family" south connector types at 4.0.0: the only ones for which a per-item caching strategy
 // is meaningful, defaulted to 'allValues'.
 export const IOT_FAMILY_SOUTH_TYPES = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt'];
 
@@ -911,7 +911,7 @@ const setMissing = (object: JsonObject, key: string, value: unknown): void => {
   if (object[key] === undefined) object[key] = value;
 };
 // A 3.9 SQL item always has `serialization` (the 3.9 manifests required it); its absence does not mean the
-// item already has the 3.10 shape, since `trackingInstant` is optional
+// item already has the 4.0 shape, since `trackingInstant` is optional
 const isOldSqlItem = (item: JsonObject): boolean => {
   const settings = item.settings as JsonObject;
   return settings.serialization !== undefined || settings.dateTimeFields !== undefined;
@@ -1819,7 +1819,7 @@ export function addFolderMaxSizes(caching: JsonObject | undefined): void {
 }
 
 export const upgrade: ConfigUpgrade = {
-  version: '3.10.0',
+  version: '4.0.0',
   description:
     'Add scan mode scheduling types, certificate chains, item caching strategies and configuration workflows; ' +
     'move SQL items CSV serialization to record-list-to-csv transformers; replace the raw resampling of OPC UA and OPC items with none; ' +
@@ -1871,7 +1871,7 @@ export const upgrade: ConfigUpgrade = {
     forEachSouth(config, null, south => {
       const settings = south.settings as JsonObject;
       setMissing(settings, 'configurationWorkflows', []);
-      // The workflows of a 3.10.0 pre-release add no field to their records
+      // The workflows of a 4.0.0 pre-release add no field to their records
       asObjects(settings.configurationWorkflows).forEach(workflow => setMissing(workflow, 'addedFields', []));
       const defaultCachingStrategy = IOT_FAMILY_SOUTH_TYPES.includes(south.type as string) ? 'allValues' : null;
       const defaultEmptyIntervalStrategy = HISTORY_SOUTH_TYPES.includes(south.type as string) ? 'keep' : null;
