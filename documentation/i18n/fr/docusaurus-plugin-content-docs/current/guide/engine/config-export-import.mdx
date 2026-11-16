@@ -73,9 +73,8 @@ est tout-ou-rien.
 
 ## Versions prises en charge {#supported-versions}
 
-L'export de configuration est disponible à partir d'OIBus 4.0.0, mais un fichier peut contenir la configuration d'un
-OIBus aussi ancien que 3.9.0 (par exemple un fichier produit par OIAnalytics). Un fichier peut être importé dans tout
-OIBus au moins aussi récent que celui que désigne son `oibusVersion` :
+Un fichier peut contenir la configuration d'un OIBus aussi ancien que 3.9.0 (par exemple un fichier produit par
+OIAnalytics), et peut être importé dans tout OIBus au moins aussi récent que celui que désigne son `oibusVersion` :
 
 - **Les fichiers plus récents sont rejetés** : un import est rejeté d'emblée si l'`oibusVersion` du fichier est plus
   récente que l'instance OIBus qui l'importe, car il peut contenir des paramètres que cette version ne connaît pas.
@@ -136,10 +135,10 @@ réenregistrer) doit être fait manuellement, de la même façon que sur une ins
 
 ## Import depuis OIAnalytics {#import-from-oianalytics}
 
-À partir d'OIBus 4.0.0, un fichier de configuration peut aussi être envoyé depuis OIAnalytics à un OIBus enregistré,
-avec la commande **Importer la configuration**. OIAnalytics stocke le fichier téléversé et crée la commande ; OIBus télécharge
-le fichier quand il récupère la commande, et l'importe exactement comme un fichier importé depuis sa propre interface, à
-deux différences près :
+Un fichier de configuration peut aussi être envoyé depuis OIAnalytics à un OIBus enregistré, avec la commande
+**Importer la configuration**. OIAnalytics stocke le fichier téléversé et crée la commande ; OIBus télécharge le fichier
+quand il récupère la commande, et l'importe exactement comme un fichier importé depuis sa propre interface, à deux
+différences près :
 
 - **Les utilisateurs locaux sont tous conservés**, avec leurs mots de passe, et les utilisateurs du fichier ne sont pas
   importés : ils ne pourraient être recréés qu'avec des mots de passe aléatoires, ce qui empêcherait tout le monde

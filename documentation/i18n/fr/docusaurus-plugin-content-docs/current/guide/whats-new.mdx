@@ -1,0 +1,132 @@
+---
+sidebar_position: 1.5
+---
+
+# Nouveautés d'OIBus 4
+
+OIBus 4 est une version majeure. Elle ajoute de nouveaux connecteurs, permet à OIBus de découvrir les données d'une
+source et d'en garder les éléments synchronisés, revoit la façon dont les données parviennent aux connecteurs North, et
+sécurise et trace l'administration d'OIBus.
+
+La mise à niveau depuis OIBus 3.9 est automatique : à son premier démarrage, OIBus 4 convertit la configuration et les
+données en attente dans les caches, et une configuration exportée depuis OIBus 3.9 peut être importée. Quelques
+changements demandent tout de même votre attention : voir [Avant la mise à niveau](#before-upgrading).
+
+## Nouveaux connecteurs {#new-connectors}
+
+- South [**Siemens S7**](./south-connectors/s7.mdx) : lit les blocs de données, entrées, sorties, mémentos,
+  temporisations et compteurs des automates S7-200, S7-300, S7-400, S7-1200 et S7-1500, sans pilote à installer.
+- South [**Rockwell EtherNet/IP**](./south-connectors/ethernet-ip.mdx) : lit les tags des contrôleurs Allen-Bradley
+  ControlLogix et CompactLogix.
+- South [**BACnet**](./south-connectors/bacnet.mdx) : lit les objets des équipements BACnet/IP, s'abonne à leurs
+  changements (COV) et récupère leurs journaux de tendance, avec la découverte des équipements (en broadcast ou en
+  unicast, via un BBMD, équipements MS/TP derrière un routeur).
+- South [**MongoDB**](./south-connectors/mongodb.mdx) : interroge les documents d'une collection MongoDB.
+- North [**Azure Data Explorer**](./north-connectors/azure-data-explorer.md) : ingère les données dans une table Azure
+  Data Explorer (Kusto).
+- Les connecteurs South BACnet, S7 et InfluxDB ne sont plus en bêta.
+
+## Découvrir et synchroniser les éléments {#discover-and-synchronise-items}
+
+- [**Explorez la source de données**](./south-connectors/common-settings.md#exploring-the-data-source) d'un connecteur
+  South (OPC UA, BACnet, EtherNet/IP, bases de données SQL, Folder Scanner) et ajoutez les nœuds, tags ou tables cochés
+  comme éléments. Un élément SQL peut lire plusieurs tables avec une seule requête jointe.
+- Les [**synchronisations des points**](./south-connectors/common-settings.md#items-synchronisation) découvrent les
+  nœuds ou les lignes d'une source de données, traitent et filtrent leurs champs, et créent ou mettent à jour à partir
+  d'eux les éléments du connecteur South, à la demande ou selon une planification. Elles peuvent aussi envoyer les
+  enregistrements découverts à OIAnalytics.
+- Les éléments South, les éléments des requêtes d'historique et les synchronisations ont une **description**.
+
+## Flux de données et transformateurs {#data-flow-and-transformers}
+
+- **Des types de données plus simples** : les connecteurs South envoient des fichiers ou des listes d'enregistrements.
+  Les listes d'enregistrements remplacent les valeurs temporelles, les consignes envoyées par OIAnalytics sont des
+  listes d'enregistrements, et les connecteurs South de type SQL (ODBC, OLE DB, InfluxDB...) envoient des listes
+  d'enregistrements qu'un transformateur convertit en CSV, en JSON ou en valeurs OIAnalytics.
+- Un connecteur North ne reçoit que les données pour lesquelles un [**transformateur**](./engine/transformers.mdx) est
+  configuré : les transformateurs _Mettre en cache tel quel_ et _Ignorer_ disparaissent. Le connecteur North montre les
+  sources qu'il reçoit et par quel transformateur, et des éléments peuvent être exclus d'un transformateur.
+- De nouveaux transformateurs standards lisent et écrivent des **fichiers CSV et JSON** (vers OIAnalytics, MQTT,
+  Modbus, OPC UA ou des listes d'enregistrements, et à nouveau vers des fichiers), et les champs des transformateurs
+  sont traités par des **opérations** au lieu d'expressions JavaScript.
+- Les options du **payload OIAnalytics** sont regroupées par référence, horodatage et valeur.
+- Le transformateur d'un élément se configure et se **teste sur un élément réel** par étapes, depuis le connecteur
+  North ou depuis l'élément lui-même.
+- Une [**stratégie de mise en cache**](./south-connectors/common-settings.md#caching-strategy) par élément (toutes les
+  valeurs, au changement ou par seuil, avec un intervalle maximal de mise en cache) pour les connecteurs South IoT
+  (OPC UA, OPC Classic, Modbus, ADS, S7, EtherNet/IP, MQTT, BACnet), et la dernière valeur de chaque élément.
+- Les éléments d'historique peuvent faire avancer leur instant suivi sur les intervalles sans nouvelle donnée
+  (**stratégie d'intervalle vide**).
+- Les connecteurs South de bases de données exécutent leurs requêtes **en parallèle** sur un pool de connexions.
+- Les dossiers de cache, d'erreurs et d'archive d'un connecteur North ont chacun leur propre taille maximale, et les
+  données en cache conservent la source de données dont elles proviennent.
+
+## Pilotes Windows sans l'agent OIBus {#windows-drivers-without-the-oibus-agent}
+
+Les connecteurs South [OPC Classic](./south-connectors/opc.mdx), [ODBC](./south-connectors/odbc.mdx),
+[OLE DB](./south-connectors/oledb.mdx) et [OSIsoft PI](./south-connectors/osisoft-pi.mdx) ne passent plus par l'agent
+OIBus : ils utilisent les pilotes installés sur la machine d'OIBus. Le connecteur PI lit le PI Data Archive via le
+PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
+
+## Moteur et administration {#engine-and-administration}
+
+- Le serveur web peut servir en [**HTTPS**](./engine/engine-settings.mdx#https), avec un certificat du magasin de
+  certificats ou des fichiers PEM.
+- Les [**points d'accès de contenu**](./engine/engine-settings.mdx#content-endpoints) de l'API OIBus (`/api/content`)
+  peuvent être désactivés.
+- Le moteur a une [**description**](./engine/engine-settings.mdx#description).
+- Une [**piste d'audit**](./engine/audit-trail.mdx) enregistre qui a modifié quoi dans la configuration, avec une durée
+  de rétention.
+- Toute la configuration peut être [**exportée et importée**](./engine/config-export-import.mdx), depuis un fichier ou
+  depuis OIAnalytics, avec un aperçu avant l'import.
+- Les [**modes d'acquisition**](./engine/scan-modes.mdx) peuvent s'exécuter à intervalle fixe, et seulement dans une
+  fenêtre d'activation.
+- Depuis OIAnalytics, OIBus peut aussi importer une configuration, envoyer sa base de logs ou un dump mémoire, et
+  chacune de ces commandes a sa propre permission.
+- L'interface et la documentation sont disponibles en **français et en chinois**, et la documentation est intégrée à
+  OIBus, avec sa propre recherche, pour être consultée hors ligne.
+- Interface revue : les connecteurs, requêtes d'historique et éléments se créent et se modifient par étapes, les pages
+  de détail montrent le résumé des paramètres, et les colonnes des tableaux peuvent être redimensionnées.
+
+## Corrections {#fixes}
+
+- **BACnet** : connexions via un BBMD, vers des équipements MS/TP et en unicast ; les abonnements COV sont réutilisés et
+  renouvelés à temps, et le connecteur se reconnecte après une perte réseau.
+- **OPC UA** : la session et le client sont fermés ensemble, et la découverte récupère davantage de nœuds avec leur
+  description, leur unité et leur plage.
+- **S7** : les délais de connexion et de requête sont appliqués, avec un nouveau client S7comm.
+- **Fichiers** : un fichier plus gros que la taille maximale ne bloque plus les connecteurs South Folder Scanner, FTP
+  et SFTP, et les fichiers conservés d'un parcours SFTP récursif sont suivis par leur chemin relatif.
+- **Cache North** : un contenu qui ne peut pas être compacté n'est plus supprimé.
+- **CSV** : l'espace insécable n'est plus utilisé comme séparateur, et un fichier utilisant un autre séparateur est
+  détecté lors de l'import d'éléments.
+- **OIAnalytics** : le North OIAnalytics n'accepte que des fichiers et des valeurs OIAnalytics, la portée de
+  l'authentification par secret client Azure AD peut être renseignée, et le South OIAnalytics écrit les colonnes valeur
+  et unité.
+- **OLE DB** : seul l'instant maximum est suivi, et les enregistrements sont envoyés tels que le fournisseur les
+  renvoie.
+- **South REST** : les réponses JSON non typées sont écrites, et le chemin de l'hôte est conservé.
+- **Installeur Windows** : les services et processus OIBus sont arrêtés avant le remplacement des fichiers lors d'une
+  mise à niveau, et l'installeur attend que le service tourne avant de signaler un échec.
+- **Logs** : une erreur d'un transport de logs n'arrête plus OIBus.
+
+## Avant la mise à niveau {#before-upgrading}
+
+- **Sauvegardez le dossier de données** d'OIBus : les migrations ne sont pas réversibles.
+- **Vérifiez les transformateurs de vos connecteurs North** : les données qu'un connecteur North recevait sans
+  transformateur passent par un transformateur équivalent lors de la mise à niveau, mais désormais, les données sans
+  transformateur sont abandonnées.
+- **Adaptez vos transformateurs personnalisés** : ceux qui lisent ou écrivent des valeurs temporelles lisent ou
+  écrivent désormais des enregistrements à plat (`{ pointId, timestamp, value }`, par exemple `record.value`, au lieu
+  de `{ pointId, timestamp, data: { value } }`). Ceux qui lisent ou écrivent des consignes lisent ou écrivent des
+  enregistrements qui gardent la forme `{ reference, value }`.
+- **Vérifiez le traitement des champs de vos transformateurs** : les expressions JavaScript sont converties en
+  opérations équivalentes, et une expression qu'aucune opération ne peut reproduire (par exemple
+  `value.split('/').pop()`) est supprimée avec un avertissement dans les logs.
+- **Installez les pilotes sur la machine d'OIBus** pour les connecteurs South OPC Classic, ODBC, OLE DB et PI, qui
+  n'utilisent plus l'agent OIBus (les paramètres de l'agent sont supprimés lors de la mise à niveau).
+- **API REST** : les paramètres généraux du moteur se mettent à jour avec `PUT /api/engine/general` (au lieu de
+  `PUT /api/engine/name`), et les points d'accès de contenu sont désactivés quand aucun transformateur North ne
+  s'appliquait à l'API OIBus.
+- Un dossier de données mis à niveau par une préversion d'OIBus 4 ne peut pas être mis à niveau : repartez de votre
+  dossier de données OIBus 3.9.

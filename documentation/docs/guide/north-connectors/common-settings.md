@@ -124,12 +124,3 @@ caches the data of the sources (and items) a transformer is configured for. **Da
 To send data as it is, use a passthrough transformer: [File (as is, renamed or converted)](../engine/transformers.mdx#file-as-is-renamed-or-converted) for files
 and JSON payloads, or [File](../engine/transformers.mdx#file-from-records) for record lists (the OIAnalytics setpoints
 included).
-
-:::info Upgrading to 4.0
-Before 4.0, the data compatible with the North connector type was cached without transformer, and the **No
-transform** and **Ignore** transformers forced or prevented it. When upgrading, OIBus adds the passthrough transformers
-reproducing what each North connector received (at the South connector level, so that new items are still sent),
-replaces **No transform** by them, and leaves the items set to **Ignore** out of the transformers they fell back to
-(**Except some items**; for history queries, these transformers are narrowed to the list of the other items). The files
-of the OIBus API go through a **File (as is, renamed or converted)** transformer applying to every data source.
-:::

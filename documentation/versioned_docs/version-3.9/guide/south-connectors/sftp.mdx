@@ -1,0 +1,50 @@
+---
+sidebar_position: 16
+---
+
+import RegexTester from '@site/src/components/RegexTester/index';
+
+# SFTP
+
+Securely transfer and read files from remote SFTP servers.
+
+## Specific Settings
+
+| Setting           | Description                                      | Example Value    |
+| ----------------- | ------------------------------------------------ | ---------------- |
+| **Host**          | IP address or hostname of the SFTP server.       | `192.168.1.100`  |
+| **Port**          | Port for the connection. Default: `22`.          | `22`             |
+| **Compress file** | Enable gzip compression before North processing. | Enabled/Disabled |
+
+### Authentication
+
+| Setting          | Description                                                                  | Example Value                      |
+| ---------------- | ---------------------------------------------------------------------------- | ---------------------------------- |
+| Authentication   | Authentication method.                                                       | `Username/Password`, `Private Key` |
+| Username         | Username for SFTP authentication.                                            | `sftp_user`                        |
+| Password         | Password (for Username/Password authentication).                             | `••••••••`                         |
+| Private key path | Path to the private key file in PEM format (for Private Key authentication). | `/home/user/.ssh/id_rsa`           |
+| Passphrase       | Passphrase for the private key, if protected (optional).                     | `••••••••`                         |
+
+:::info Private Key Notes
+
+- Supports passphrase-protected keys
+- Key format: PEM
+- Example path: `/home/user/.ssh/id_rsa` or `C:\Users\user\.ssh\id_rsa`
+
+:::
+
+## File Retrieval Settings
+
+| Setting               | Description                                                                                                                                                             | Example Value         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| Remote folder         | Source directory path on the SFTP server.                                                                                                                               | `/incoming/data`      |
+| RegExp                | File pattern filter (regular expression).                                                                                                                               | `.*\.txt`, `.*\.csv`  |
+| Minimum age           | Minimum age (in ms) for files to be retrieved. Avoids corrupted files still being written. Default: `1000` ms.                                                          | `1000`                |
+| Preserve file         | If enabled, files are **not deleted** after retrieval. Useful if other applications need access. OIBus tracks modification time to avoid re-retrieving unchanged files. | Enabled/Disabled      |
+| Ignored modified date | (_Requires **Preserve file**_) Forces retrieval even if the file's modification time hasn't changed. Useful for ensuring files are always processed.                    | Enabled/Disabled      |
+| Max files per scan    | Maximum number of files to retrieve per scan. Set to **0** for no limit. Remaining files are retrieved in the next scan.                                                | `0` (no limit), `100` |
+| Max size per scan     | Maximum total size (in MB) of files per scan. Set to **0** for no limit. Remaining files are retrieved in the next scan.                                                | `0` (no limit), `500` |
+| Scan sub-folders      | If enabled, recursively scans sub-folders within the remote folder.                                                                                                     | Enabled/Disabled      |
+
+<RegexTester />

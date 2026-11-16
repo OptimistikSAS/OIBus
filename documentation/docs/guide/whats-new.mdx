@@ -1,0 +1,122 @@
+---
+sidebar_position: 1.5
+---
+
+# What's New in OIBus 4
+
+OIBus 4 is a major release. It adds new connectors, lets OIBus discover the data of a source and keep its items in
+sync, reworks how the data flows to the North connectors, and secures and audits the administration of OIBus.
+
+Upgrading from OIBus 3.9 is automatic: on its first start, OIBus 4 converts the configuration and the data waiting in
+the caches, and a configuration exported from OIBus 3.9 can be imported. A few changes still need your attention: see
+[Before upgrading](#before-upgrading).
+
+## New Connectors {#new-connectors}
+
+- [**Siemens S7**](./south-connectors/s7.mdx) South: read the data blocks, inputs, outputs, markers, timers and
+  counters of S7-200, S7-300, S7-400, S7-1200 and S7-1500 PLCs, with no driver to install.
+- [**Rockwell EtherNet/IP**](./south-connectors/ethernet-ip.mdx) South: read the tags of Allen-Bradley ControlLogix
+  and CompactLogix controllers.
+- [**BACnet**](./south-connectors/bacnet.mdx) South: read the objects of BACnet/IP devices, subscribe to their changes
+  (COV) and retrieve their trend logs, with device discovery (broadcast or unicast, through a BBMD, MS/TP devices
+  behind a router).
+- [**MongoDB**](./south-connectors/mongodb.mdx) South: query the documents of a MongoDB collection.
+- [**Azure Data Explorer**](./north-connectors/azure-data-explorer.md) North: ingest the data into an Azure Data
+  Explorer (Kusto) table.
+- The BACnet, S7 and InfluxDB South connectors are no longer in beta.
+
+## Discover and Synchronise Items {#discover-and-synchronise-items}
+
+- [**Explore the data source**](./south-connectors/common-settings.md#exploring-the-data-source) of a South connector
+  (OPC UA, BACnet, EtherNet/IP, SQL databases, Folder Scanner) and add the checked nodes, tags or tables as items. An
+  SQL item can read several tables with one joined query.
+- [**Items synchronisations**](./south-connectors/common-settings.md#items-synchronisation) discover the nodes or the
+  rows of a data source, process and filter their fields, and create or update the items of the South connector from
+  them, on demand or on a schedule. They can instead push the discovered records to OIAnalytics.
+- The South items, the history query items and the synchronisations have a **description**.
+
+## Data Flow and Transformers {#data-flow-and-transformers}
+
+- **Simpler data types**: the South connectors send files or record lists. Record lists replace time values, the
+  setpoints sent by OIAnalytics are record lists, and the SQL-like South connectors (ODBC, OLE DB, InfluxDB...) send
+  record lists that a transformer turns into CSV, JSON or OIAnalytics values.
+- A North connector only receives the data a [**transformer**](./engine/transformers.mdx) is configured for: the
+  _Cache as is_ and _Ignore_ transformers are gone. The North connector shows which sources it receives and through
+  which transformer, and items can be left out of a transformer.
+- New standard transformers read and write **CSV and JSON files** (to OIAnalytics, MQTT, Modbus, OPC UA or record
+  lists, and back to files), and the fields of the transformers are processed with **operations** instead of
+  JavaScript expressions.
+- The **OIAnalytics payload** options are grouped by reference, timestamp and value.
+- The transformer of an item is configured and **tested against a real item** in steps, from the North connector or
+  from the item itself.
+- A per-item [**caching strategy**](./south-connectors/common-settings.md#caching-strategy) (all values, on change or
+  threshold, with a maximum caching interval) for the IoT South connectors (OPC UA, OPC Classic, Modbus, ADS, S7,
+  EtherNet/IP, MQTT, BACnet), and the last value of each item.
+- History items can advance their tracked instant over the intervals without new data (**empty interval
+  strategy**).
+- The database South connectors run their queries **in parallel** over a connection pool.
+- The cache, error and archive folders of a North connector each have their own maximum size, and the cached data
+  keeps the data source it comes from.
+
+## Windows Drivers Without the OIBus Agent {#windows-drivers-without-the-oibus-agent}
+
+The [OPC Classic](./south-connectors/opc.mdx), [ODBC](./south-connectors/odbc.mdx),
+[OLE DB](./south-connectors/oledb.mdx) and [OSIsoft PI](./south-connectors/osisoft-pi.mdx) South connectors no longer
+go through the OIBus Agent: they use the drivers installed on the OIBus machine. The PI connector reads the PI Data
+Archive through the PI AF Client, and can filter the values on the PI Data Archive.
+
+## Engine and Administration {#engine-and-administration}
+
+- The web server can serve [**HTTPS**](./engine/engine-settings.mdx#https), with a certificate of the certificate
+  store or PEM files.
+- The [**content endpoints**](./engine/engine-settings.mdx#content-endpoints) of the OIBus API (`/api/content`) can be
+  disabled.
+- The engine has a [**description**](./engine/engine-settings.mdx#description).
+- An [**audit trail**](./engine/audit-trail.mdx) records who changed what in the configuration, with a retention
+  duration.
+- The whole configuration can be [**exported and imported**](./engine/config-export-import.mdx), from a file or from
+  OIAnalytics, with a preview before importing.
+- [**Scan modes**](./engine/scan-modes.mdx) can run on a fixed interval, and only within an activation window.
+- From OIAnalytics, OIBus can also import a configuration, upload its logs database or a memory dump, and each of
+  these commands has its own permission.
+- The interface and the documentation are available in **French and Chinese**, and the documentation is embedded in
+  OIBus, with its own search, to be read offline.
+- Reworked interface: the connectors, history queries and items are created and edited in steps, the detail pages
+  show the settings summary, and the columns of the tables can be resized.
+
+## Fixes {#fixes}
+
+- **BACnet**: connections through a BBMD, to MS/TP devices and in unicast; COV subscriptions are reused and renewed in
+  time, and the connector reconnects after a network loss.
+- **OPC UA**: the session and the client are closed together, and the discovery retrieves more nodes and their
+  description, unit and range.
+- **S7**: the connect and request timeouts are applied, with a new S7comm client.
+- **Files**: a file bigger than the maximum size no longer stalls the Folder Scanner, FTP and SFTP South connectors,
+  and the preserved files of a recursive SFTP scan are tracked by their relative path.
+- **North cache**: content that cannot be compacted is no longer deleted.
+- **CSV**: a non-breaking space is no longer used as a delimiter, and a file using another delimiter is detected when
+  importing items.
+- **OIAnalytics**: the OIAnalytics North only accepts files and OIAnalytics values, the scope of the Azure AD client
+  secret authentication can be set, and the OIAnalytics South writes the value and unit columns.
+- **OLE DB**: only the max instant is tracked, and the records are sent as the provider returns them.
+- **REST South**: untyped JSON responses are written, and the host path is kept.
+- **Windows installer**: the OIBus services and processes are stopped before the files are replaced on upgrade, and
+  the installer waits for the service to run before reporting a failure.
+- **Logs**: an error of a log transport no longer stops OIBus.
+
+## Before Upgrading {#before-upgrading}
+
+- **Back up the data folder** of OIBus: the migrations are not reversible.
+- **Check the transformers of your North connectors**: the data a North connector received without transformer is
+  routed through an equivalent transformer on upgrade, but from now on, data without a transformer is dropped.
+- **Adapt your custom transformers**: those reading or writing time values now read or write flat records
+  (`{ pointId, timestamp, value }`, e.g. `record.value`, instead of `{ pointId, timestamp, data: { value } }`). Those
+  reading or writing setpoints read or write records keeping the `{ reference, value }` shape.
+- **Check the field processing of your transformers**: the JavaScript expressions are converted to the operations doing
+  the same, and an expression no operation can reproduce (e.g. `value.split('/').pop()`) is removed with a warning in
+  the logs.
+- **Install the drivers on the OIBus machine** for the OPC Classic, ODBC, OLE DB and PI South connectors, which no
+  longer use the OIBus Agent (the agent settings are removed on upgrade).
+- **REST API**: the engine general settings are updated with `PUT /api/engine/general` (instead of
+  `PUT /api/engine/name`), and the content endpoints are disabled when no North transformer applied to the OIBus API.
+- A data folder upgraded by a pre-release of OIBus 4 cannot be upgraded: start from your OIBus 3.9 data folder.

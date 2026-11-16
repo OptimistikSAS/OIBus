@@ -131,13 +131,3 @@ Pour envoyer les données telles quelles, utilisez un transformateur de passage 
 [Fichier (tel quel, renommé ou converti)](../engine/transformers.mdx#file-as-is-renamed-or-converted) pour les fichiers
 et les charges utiles JSON, ou [Fichier](../engine/transformers.mdx#file-from-records) pour les listes d'enregistrements
 (consignes OIAnalytics comprises).
-
-:::info Mise à jour vers la 4.0
-Avant la 4.0, les données compatibles avec le type du connecteur North étaient mises en cache sans transformateur, et
-les transformateurs **Pas de transformation** et **Ignorer** les forçaient ou les empêchaient. Lors de la mise à jour,
-OIBus ajoute les transformateurs de passage direct reproduisant ce que chaque connecteur North recevait (au niveau du
-connecteur South, afin que les nouveaux items soient toujours envoyés), remplace **Pas de transformation** par ceux-ci,
-et écarte les items réglés sur **Ignorer** des transformateurs dont ils héritaient (**Sauf certains items** ; pour les
-requêtes d'historique, ces transformateurs sont restreints à la liste des autres items). Les fichiers de l'API OIBus
-passent par un transformateur **Fichier (tel quel, renommé ou converti)** s'appliquant à toutes les sources de données.
-:::

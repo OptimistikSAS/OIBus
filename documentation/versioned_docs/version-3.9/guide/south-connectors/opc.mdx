@@ -1,0 +1,165 @@
+---
+sidebar_position: 10
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# OPC Classic™
+
+Connect to OPC Classic™ servers using OIBus with the [OIBus Agent](../oibus-agent/installation.mdx).
+
+:::info Technology Context
+
+- Industrial communication protocol by [OPC Foundation](https://opcfoundation.org/)
+- Supports both HDA and DA mode
+- Requires Windows-based OIBus Agent
+- For OPC UA, see [OPC UA connector](./opcua.mdx)
+
+:::
+
+:::caution System Requirements
+OIBus Agent **must** be installed on a Windows machine
+:::
+
+## OPC Classic vs OPC UA
+
+|                          | OPC Classic™                                                                                                        | OPC UA                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Standard**             | Three separate specs: **DA** (live values), **HDA** (historical data), **AE** (alarms &amp; events)                 | Single unified standard: **DA** (live values) + **HA** (historical access) + alarms        |
+| **Historical mode name** | **HDA** — Historical Data Access                                                                                    | **HA** — Historical Access (OPC UA Part 11). Same concept, different name — see note below |
+| **Transport**            | COM/DCOM — Windows inter-process communication only                                                                 | TCP/IP or HTTPS — works over any IP network                                                |
+| **Platform**             | Windows only                                                                                                        | Cross-platform: Windows, Linux, macOS, embedded                                            |
+| **Security**             | Relies on Windows domain/DCOM security                                                                              | Built-in: message signing, encryption, certificate-based auth                              |
+| **Introduced**           | 1996                                                                                                                | 2006                                                                                       |
+| **OIBus requirement**    | Requires an [OIBus Agent](../oibus-agent/installation.mdx) running on the Windows machine that hosts the OPC server | Connects directly from OIBus — no agent needed                                             |
+
+:::note HDA vs HA — the naming confusion
+Users coming from an OPC Classic background often look for **HDA** in OPC UA and cannot find it.
+OPC UA renames the equivalent feature **HA** (Historical Access, defined in OPC UA Part 11).
+The concept is identical — querying a server for values recorded in the past — but the acronym
+changed. In OIBus, this connector calls the mode `HDA`, and the OPC UA connector calls it `HA`.
+Do not confuse OPC UA HA with OPC Classic HDA: they are separate protocols and are **not
+interoperable**.
+:::
+
+**Choose OPC Classic** when your infrastructure already runs OPC DA or OPC HDA servers that cannot be
+migrated. The COM/DCOM technology that OPC Classic relies on is Windows-only and does not travel over
+standard IP networks without DCOM tunnelling — hence the requirement for OIBus Agent to run directly on
+the Windows host.
+
+**Choose OPC UA** for any new deployment. OPC UA is the current industry standard, supported on all
+platforms and with security built in. See the [OPC UA connector](./opcua.mdx) for details.
+
+## Common OPC Classic Servers
+
+| Server                                                                                                                                                           | Vendor              | Modes   | Notes                                                                                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [KEPServerEX](https://www.ptc.com/en/products/kepware/kepserverex)                                                                                               | PTC (Kepware)       | DA, HDA | Most widely deployed OPC gateway; supports hundreds of PLC, DCS and device types. Also exposes an OPC UA endpoint — see the OPC UA page |
+| [FactoryTalk Linx](https://www.rockwellautomation.com/en-us/products/software/factorytalk/operationsuite/linx.html)                                              | Rockwell Automation | DA      | Standard OPC DA server for Allen-Bradley / ControlLogix PLCs                                                                            |
+| [SIMATIC NET PC Software](https://www.siemens.com/global/en/products/automation/industry-software/automation-software/simatic-net-industrial-communication.html) | Siemens             | DA      | OPC DA access for S7-300 and S7-400 PLCs. S7-1500 and newer expose native OPC UA — use the OPC UA connector instead                     |
+| [Matrikon OPC](https://www.matrikon.com)                                                                                                                         | Honeywell           | DA, HDA | Large catalogue of device-specific OPC servers, including a widely used free simulation server                                          |
+| [PI Server](https://www.aveva.com/en/products/aveva-pi-system/)                                                                                                  | AVEVA (OSIsoft)     | DA, HDA | Industry-leading process historian; also exposes an OPC UA interface                                                                    |
+| [Proficy Historian](https://www.ge.com/digital/applications/proficy-historian)                                                                                   | GE Digital          | HDA     | Common historian in manufacturing and utilities                                                                                         |
+| [InfoPlus.21](https://www.aspentech.com/en/products/mss/aspen-infoplus-21)                                                                                       | AspenTech           | DA, HDA | Widely used in oil & gas and chemical industries                                                                                        |
+
+## Specific Settings
+
+| Setting          | Description                                | Example Value               |
+| ---------------- | ------------------------------------------ | --------------------------- |
+| Remote agent URL | Agent endpoint (e.g., `http://host:2224`)  | `http://192.168.1.100:2224` |
+| Retry interval   | Time (ms) before connection retry          | 10000                       |
+| Server URL       | Address of OPC server (from agent machine) | `localhost` or IP address   |
+| Server name      | OPC server name (ProgID)                   | `Matrikon.OPC.Simulation`   |
+| Mode             | Data access mode (DA or HDA)               | `HDA`                       |
+
+## Group Settings
+
+Items are organised into **groups**. Each group defines a shared schedule and, for HDA mode, the default
+throttling parameters for all items it contains.
+
+| Setting       | Description                                             | Example Value |
+| ------------- | ------------------------------------------------------- | ------------- |
+| **Name**      | Unique label for the group within this connector.       | `Group A`     |
+| **Scan mode** | Collection schedule applied to every item in the group. | `Every 1 min` |
+
+<ThrottlingSettings />
+
+:::tip Overriding throttling per item
+Each item can override the group throttling defaults by disabling the **Sync with group** toggle in the item
+edit form.
+:::
+
+## Item Settings
+
+| Setting    | Description                                                                    | Example Value                   |
+| ---------- | ------------------------------------------------------------------------------ | ------------------------------- |
+| Node ID    | Path to data in OPC server namespace                                           | `Channel1.Device1.Tag1`         |
+| Aggregate  | Data aggregation method (verify server support). See note below for full list. | `Raw`, `Average`, `Minimum`, …  |
+| Resampling | Resample aggregated values at requested interval (requires non-Raw aggregate)  | `None`, `1 second`, `1 hour`, … |
+
+:::caution Compatibility Notes
+
+1. **Aggregation Support**: Not all servers support all aggregation methods
+2. **Resampling**: Only available when aggregate ≠ `Raw`
+3. **Recommended Settings**: Use `Raw` aggregation and `None` resampling for maximum compatibility
+4. **Server Capabilities**: Verify supported features with your OPC server documentation
+
+:::
+
+:::note Aggregate values
+
+| Value               | Description                              |
+| ------------------- | ---------------------------------------- |
+| Raw                 | All raw values in the interval           |
+| Interpolative       | Interpolated value at the requested time |
+| Total               | Sum of all values in the interval        |
+| Average             | Arithmetic mean                          |
+| Time average        | Time-weighted average                    |
+| Count               | Number of data points                    |
+| STDEV               | Standard deviation                       |
+| Minimum actual time | Minimum value with its actual timestamp  |
+| Minimum             | Minimum value in the interval            |
+| Maximum actual time | Maximum value with its actual timestamp  |
+| Maximum             | Maximum value in the interval            |
+| Start               | First value in the interval              |
+| End                 | Last value in the interval               |
+| Delta               | Difference between first and last value  |
+| Reg slope           | Linear regression slope                  |
+| Reg const           | Linear regression y-intercept            |
+| Reg dev             | Linear regression deviation              |
+| Variance            | Statistical variance                     |
+| Range               | Maximum minus minimum                    |
+| Duration good       | Duration of good-quality data            |
+| Duration bad        | Duration of bad-quality data             |
+| Percent good        | Percentage of good-quality samples       |
+| Percent bad         | Percentage of bad-quality samples        |
+| Worst quality       | Worst quality code in the interval       |
+| Annotations         | Annotation events                        |
+
+:::
+
+:::note Resampling values
+
+`None` · `1 second` · `10 seconds` · `30 seconds` · `1 minute` · `1 hour` · `1 day`
+
+:::
+
+### Configuration Examples
+
+1. **Basic Configuration**:
+
+- Node ID: `Simulation Random.Int4`
+- Aggregate: `Raw`
+- Resampling: `None`
+
+2. **Aggregated Values**:
+
+- Node ID: `Production.Line1.Temperature`
+- Aggregate: `Average`
+- Resampling: `1 minute`
+
+3. **High-Frequency Data**:
+
+- Node ID: `Process.Vessel.Pressure`
+- Aggregate: `Minimum`
+- Resampling: `1s`

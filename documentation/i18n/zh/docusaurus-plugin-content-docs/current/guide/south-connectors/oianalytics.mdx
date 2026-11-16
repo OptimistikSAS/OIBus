@@ -116,6 +116,3 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 
 要将它们写入 CSV（或 JSON）文件，请将[文件](../engine/transformers.mdx#file-from-records)转换器关联到北向连接器或历史查询：
 其设置用于选择列、时间戳格式和时区、分隔符、文件名以及压缩方式。
-
-在 4.0 之前，项目会自行写入 CSV 文件（文件名、分隔符、压缩、时间戳格式和时区）：升级会将这些设置移至每个原样发送其文件的
-项目的文件转换器中。读取其文件的其他转换器会被移除，因为数据为记录列表。

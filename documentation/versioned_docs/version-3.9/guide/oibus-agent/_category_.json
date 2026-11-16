@@ -1,0 +1,8 @@
+{
+  "label": "OIBus Agent",
+  "position": 8,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn how to install and communicate with the OIBus Agent."
+  }
+}

@@ -131,9 +131,7 @@ Standard transformers are built-in and require only configuration — no coding.
 
 :::info Record lists sent to OIAnalytics
 The OIAnalytics North only accepts files and OIAnalytics values: record lists are sent through the
-[OIAnalytics payload](#oianalytics-payload) transformer. When upgrading to 4.0, this
-transformer is added to every OIAnalytics North for the point-based South connectors (OPC UA, OPC Classic, Modbus,
-ADS, S7, BACnet, OSIsoft PI) and history queries, whose values it used to receive without transformer.
+[OIAnalytics payload](#oianalytics-payload) transformer.
 :::
 
 ---
@@ -180,9 +178,6 @@ Every field of a record is written automatically — there's no need to declare 
 output. Declaring a field (via **Fields**) is only needed when it must be renamed, converted to a specific type, reformatted
 (dates), or processed. With **Keep the other fields** off, only the configured fields are
 written, in their configured order.
-
-Before 4.0, the CSV and JSON files had their own transformers (CSV and JSON): upgrading replaces them by this one,
-keeping their settings.
 
 ##### Settings {#settings}
 
@@ -239,13 +234,6 @@ The operations only apply to a value that can be processed:
   number before a number operation);
 - an object or an array (of a JSON file) can only be converted;
 - a field without operation is written as it is read: a text of a CSV file stays a text in a JSON file, unless converted.
-
-Before 4.0, the processes were JavaScript expressions, and the fields had a data type and datetime settings: upgrading
-turns them into the operations doing the same — a **Convert** for the data type, a **Date time conversion** for the
-datetime settings, then the operations of the expression: `value.trim().toUpperCase()` becomes **Trim spaces** then
-**Upper case**, `Math.round(value * 100) / 100` a **Round** to 2 decimals, `'plant.' + value` an **Add text**... An
-expression doing something no operation does (e.g. `value.split('/').pop()`) is removed, with a warning in the logs:
-check the processing of the field after the upgrade.
 
 ##### Example — Point records in a CSV file {#example}
 
@@ -408,11 +396,6 @@ The settings are grouped by part of the OIAnalytics payload.
 | **Value**     | **Value field**          | Field of the records holding the value (default `value`)                                                                                                                                                                                             |
 |               | **Value processing**     | Optional operations applied to each value (e.g. Round to 2 decimals), see [Field and value processes](#field-processes)                                                                                                                              |
 
-Before 4.0, the settings were not grouped: upgrading moves them in their group, without value process. A timestamp
-source type other than `iso-string` (with its timezone, format and locale) becomes a date time conversion to
-`iso-string` in the timestamp processing, and a precision other than `ms` the **Precision** of that conversion (of a
-conversion from `iso-string` to `iso-string` added for it, for an ISO timestamp).
-
 ##### Example — Precision `s` {#example--precision-s}
 
 Timestamp processing: a date time conversion from `iso-string` to `iso-string`, with the precision **Second**.
@@ -517,9 +500,6 @@ boundary and still produce one row per nested match, so a single message holding
 rows. See the [OIAnalytics payload](#oianalytics-payload-from-file) example below for a worked-through case.
 :::
 
-Before 4.0, the CSV and JSON files had their own transformers (Records and MQTT payloads from CSV, OIAnalytics from
-JSON): upgrading replaces them by the file transformers below, keeping their settings.
-
 ---
 
 #### Records {#records-from-file}
@@ -568,10 +548,6 @@ After the [File group](#reading-the-file):
 | **Value field**      | Field holding the payload (`value` payload)                                                                                                |
 | **Value processing** | Optional operations applied to the value, see [Field and value processes](#field-processes) — the payload is the processed value as a text |
 | **Object fields**    | List of `{ key, field }` mappings (`object` payload), each with its own **Field processing** (e.g. Convert to number)                      |
-
-Before 4.0, the payload type also typed a simple payload (`string`, `number`, `boolean` or `datetime`, with datetime
-settings), and the object fields had a data type: upgrading turns them into a `value` payload and object fields with the
-operations doing the same.
 
 ##### Example — Simple payload {#example--simple-payload}
 
@@ -697,10 +673,6 @@ transformer of the record lists, the fields being read in the rows of the file (
 Besides the variables of the record lists, the **Filename** supports `@SourceFilename` and `@SourceExtension`: the name
 (without extension) and the extension (with its dot) of the transformed file, e.g. `@SourceFilename_copy@SourceExtension`.
 
-Before 4.0, the JSON files had their own transformer to CSV (CSV from JSON), and the files were sent as they are by the
-**File (as is)** transformer: upgrading replaces them by this one, keeping the settings of the first, the second sending
-the files as they are.
-
 ##### Example — JSON to CSV {#example-6}
 
 A REST South connector fetches a JSON report from an API, reformatted for a File Writer North connector.
@@ -817,13 +789,6 @@ having no mapping):
 [{ "topic": "control/pump1/speed", "payload": "1200" }]
 ```
 
-:::info Setpoint transformers from OIBus 3.9
-The `setpoint` data type no longer exists. On upgrade, the JSON, MQTT payloads, Modbus values and OPCUA values setpoint
-transformers are replaced by their record-list counterparts, their mapping keeping its references as point IDs (the
-MQTT payloads one publishing the value alone, as before). The custom transformers taking or producing setpoints were
-switched to `record-list`: the records they read or write keep the `{ reference, value }` shape.
-:::
-
 ---
 
 ## Testing a Transformer Against a Real South Item {#testing-a-transformer-against-a-real-south-item}
@@ -863,12 +828,6 @@ modules, or the network.
 Custom transformers are created in the **Engine → Transformers** page and are then available in the transformer
 selection list of any North connector. Their **input type** is `file` (files and payloads) or `record-list`
 (records, and the OIAnalytics setpoints); their **output type** is `file`, `record-list`, `mqtt`, `opcua`, `modbus` or `oianalytics`.
-
-:::info Custom transformers from OIBus 3.9
-The `time-values` data type no longer exists: custom transformers taking or producing time-values were switched to
-`record-list` on upgrade. Their code must now read and write flat point records (`{ pointId, timestamp, value }`,
-e.g. `record.value`) instead of `{ pointId, timestamp, data: { value } }`.
-:::
 
 ### Transform Function {#transform-function}
 
