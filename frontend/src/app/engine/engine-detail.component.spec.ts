@@ -26,8 +26,8 @@ import { METRICS_REFRESH_INTERVAL_MS } from '../shared/polling';
 import { PortRedirectModalComponent } from '../shared/port-redirect-modal/port-redirect-modal.component';
 import { WindowService } from '../shared/window.service';
 import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
+import { EditEngineGeneralModalComponent } from './edit-engine-general-modal/edit-engine-general-modal.component';
 import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
-import { EditEngineNameModalComponent } from './edit-engine-name-modal/edit-engine-name-modal.component';
 import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
 import { EditEngineWebServerModalComponent } from './edit-engine-web-server-modal/edit-engine-web-server-modal.component';
 import { EngineDetailComponent } from './engine-detail.component';
@@ -45,7 +45,7 @@ class EngineDetailComponentTester {
 }
 
 type EngineSettingsModal =
-  EditEngineNameModalComponent | EditEngineWebServerModalComponent | EditEngineProxyModalComponent | EditEngineLoggerModalComponent;
+  EditEngineGeneralModalComponent | EditEngineWebServerModalComponent | EditEngineProxyModalComponent | EditEngineLoggerModalComponent;
 
 const importResponse: ConfigImportResponseDTO = {
   fromVersion: '3.10.0',
@@ -125,6 +125,16 @@ describe('EngineDetailComponent', () => {
     await expect.element(tester.settingRows.nth(10)).toMatchTextContent('Syslog levelSilent');
     await expect.element(tester.settingRows.nth(11)).toMatchTextContent('OIAnalytics levelSilent');
     await expect.element(tester.settingRows.nth(12)).toMatchTextContent('90 days');
+    await expect.element(tester.root.getByCss('#engine-description')).not.toBeInTheDocument();
+  });
+
+  test('should display the engine description', async () => {
+    engineService.getEngineSettings.mockReturnValue(of(buildEngineSettings({ general: { name: 'OIBus Test', description: 'Plant A' } })));
+    const tester = new EngineDetailComponentTester();
+
+    await expect.element(tester.root.getByCss('#engine-description')).toHaveTextContent('Plant A');
+    await expect.element(tester.settingRows.nth(0)).toMatchTextContent('NameOIBus Test');
+    await expect.element(tester.settingRows.nth(1)).toMatchTextContent('DescriptionPlant A');
   });
 
   test('should display the certificate of the store the web server serves https with', async () => {
@@ -183,7 +193,7 @@ describe('EngineDetailComponent', () => {
   });
 
   test.each<[string, Type<EngineSettingsModal>]>([
-    ['#edit-name-button', EditEngineNameModalComponent],
+    ['#edit-name-button', EditEngineGeneralModalComponent],
     ['#edit-web-server-button', EditEngineWebServerModalComponent],
     ['#edit-proxy-button', EditEngineProxyModalComponent],
     ['#edit-logger-button', EditEngineLoggerModalComponent]
@@ -193,7 +203,7 @@ describe('EngineDetailComponent', () => {
     const openSpy = vi.spyOn(modalService, 'open');
     const tester = new EngineDetailComponentTester();
     await expect.element(tester.settingRows.nth(0)).toMatchTextContent('OIBus Test');
-    engineService.getEngineSettings.mockReturnValue(of(buildEngineSettings({ general: { name: 'Renamed' } })));
+    engineService.getEngineSettings.mockReturnValue(of(buildEngineSettings({ general: { name: 'Renamed', description: null } })));
 
     await tester.root.getByCss(button).click();
 
@@ -204,7 +214,7 @@ describe('EngineDetailComponent', () => {
   });
 
   test('should not refresh the settings when an edit modal is dismissed', async () => {
-    modalService.mockDismissedModal(createMock(EditEngineNameModalComponent));
+    modalService.mockDismissedModal(createMock(EditEngineGeneralModalComponent));
     const tester = new EngineDetailComponentTester();
 
     await tester.root.getByCss('#edit-name-button').click();

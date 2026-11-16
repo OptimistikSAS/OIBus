@@ -1,7 +1,7 @@
 import { CertificateCommandDTO } from '../../shared/model/api/certificate.model';
 import {
+  EngineGeneralCommandDTO,
   EngineLoggerCommandDTO,
-  EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineWebServerCommandDTO
 } from '../../shared/model/api/engine.model';
@@ -53,7 +53,7 @@ export interface OIBusRegenerateCipherKeysCommand extends BaseOIBusCommand {
 
 export interface OIBusUpdateEngineGeneralCommand extends BaseOIBusCommand {
   type: 'update-engine-general';
-  commandContent: EngineNameCommandDTO;
+  commandContent: EngineGeneralCommandDTO;
 }
 
 export interface OIBusUpdateEngineWebServerCommand extends BaseOIBusCommand {

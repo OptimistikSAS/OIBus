@@ -81,7 +81,7 @@ describe('EngineRepository with populated database', () => {
     });
 
     it('should update engine settings', () => {
-      const command = { ...testData.engine.command, general: { name: 'updated engine' } };
+      const command = { ...testData.engine.command, general: { name: 'updated engine', description: 'updated description' } };
       const { auditRetentionDuration: _loggerAuditRetentionDuration, ...loggerOnly } = command.logger;
       const before = repository.get();
       repository.update(toSettingsCommand(command), testData.users.list[0].id);
@@ -91,7 +91,7 @@ describe('EngineRepository with populated database', () => {
         version: testData.engine.settings.version,
         launcherVersion: testData.engine.settings.launcherVersion,
         auditRetentionDuration: null,
-        general: { name: 'updated engine' },
+        general: { name: 'updated engine', description: 'updated description' },
         webServer: {
           port: command.webServer.port,
           authTokenDuration: command.webServer.authTokenDuration,
@@ -123,8 +123,8 @@ describe('EngineRepository with populated database', () => {
         'engine_general',
         after!.id,
         'UPDATE',
-        { name: before!.general.name },
-        { name: 'updated engine' },
+        { name: before!.general.name, description: before!.general.description },
+        { name: 'updated engine', description: 'updated description' },
         testData.users.list[0].id
       ]);
       // Passwords are never recorded, but their change is (they are cleared by this command)
@@ -161,11 +161,11 @@ describe('EngineRepository with populated database', () => {
       assert.strictEqual(repository.get()!.auditRetentionDuration, null);
     });
 
-    it('should update name only', () => {
+    it('should update general settings only', () => {
       const before = repository.get();
-      repository.updateName('my new name', testData.users.list[0].id);
+      repository.updateGeneral({ name: 'my new name', description: null }, testData.users.list[0].id);
       const after = repository.get();
-      assert.strictEqual(after!.general.name, 'my new name');
+      assert.deepStrictEqual(after!.general, { name: 'my new name', description: null });
 
       assert.deepStrictEqual(recorded(), [
         [
@@ -289,7 +289,7 @@ describe('EngineRepository with populated database', () => {
 
     it('should not record anything when a section is saved without changes', () => {
       const current = repository.get()!;
-      repository.updateName(current.general.name, testData.users.list[0].id);
+      repository.updateGeneral(current.general, testData.users.list[0].id);
       repository.updateWebServer(current.webServer, testData.users.list[0].id);
       assert.deepStrictEqual(recorded(), []);
     });

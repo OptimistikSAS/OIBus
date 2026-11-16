@@ -4,8 +4,8 @@ import { RECORD_FILTER_OPERATORS } from '../../../shared/model/domain/configurat
 import { HISTORY_QUERY_STATUS } from '../../../shared/model/domain/history-query.model';
 
 import {
+  engineGeneralSchema,
   engineLoggerSchema,
-  engineNameSchema,
   engineProxySchema,
   engineWebServerSchema,
   ipFilterSchema,
@@ -315,7 +315,7 @@ const importedEngineLoggerSchema = engineLoggerSchema.fork(
 export const CONFIG_SCHEMA = Joi.object({
   engine: Joi.object({
     settings: Joi.object({
-      general: engineNameSchema.required(),
+      general: engineGeneralSchema.required(),
       webServer: engineWebServerSchema.required(),
       proxyServer: engineProxySchema.required(),
       logger: importedEngineLoggerSchema.required()

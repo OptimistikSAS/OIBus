@@ -304,6 +304,7 @@ const createEngineSettings = async (database: knex.Knex, engineSettings: EngineS
     .insert({
       id: engineSettings.id,
       name: engineSettings.general.name,
+      description: engineSettings.general.description,
       port: engineSettings.webServer.port,
       auth_token_duration: engineSettings.webServer.authTokenDuration,
       https_enabled: +engineSettings.webServer.https.enabled,

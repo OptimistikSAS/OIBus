@@ -9,9 +9,9 @@ import argon2 from 'argon2';
 import { DateTime } from 'luxon';
 
 import {
+  EngineGeneralCommandDTO,
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
-  EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
@@ -41,8 +41,8 @@ import EngineRepository from '../repository/config/engine.repository';
 import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import {
+  engineGeneralSchema,
   engineLoggerSchema,
-  engineNameSchema,
   engineProxySchema,
   engineSchema,
   engineWebServerSchema
@@ -200,9 +200,9 @@ export default class OIBusService {
     return result;
   }
 
-  async updateEngineName(command: EngineNameCommandDTO, updatedBy: string): Promise<void> {
-    await this.validator.validate(engineNameSchema, command);
-    this.engineRepository.updateName(command.name, updatedBy);
+  async updateEngineGeneral(command: EngineGeneralCommandDTO, updatedBy: string): Promise<void> {
+    await this.validator.validate(engineGeneralSchema, command);
+    this.engineRepository.updateGeneral({ name: command.name, description: command.description }, updatedBy);
     const settings = this.getEngineSettings();
     await this.resetLogger(settings);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -474,7 +474,8 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
     launcherVersion: engineSettings.launcherVersion,
     auditRetentionDuration: engineSettings.auditRetentionDuration,
     general: {
-      name: engineSettings.general.name
+      name: engineSettings.general.name,
+      description: engineSettings.general.description
     },
     webServer: {
       port: engineSettings.webServer.port,

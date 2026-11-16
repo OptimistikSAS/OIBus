@@ -1,5 +1,5 @@
 import { CertificateCommandDTO } from '../api/certificate.model';
-import { EngineLoggerCommandDTO, EngineNameCommandDTO, EngineProxyCommandDTO, EngineWebServerCommandDTO } from '../api/engine.model';
+import { EngineGeneralCommandDTO, EngineLoggerCommandDTO, EngineProxyCommandDTO, EngineWebServerCommandDTO } from '../api/engine.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../api/history-query.model';
 import { IPFilterCommandDTO } from '../api/ip-filter.model';
 import { NorthConnectorCommandDTO } from '../api/north-connector.model';
@@ -198,7 +198,7 @@ export interface OIBusRegenerateCipherKeysCommandDTO extends BaseOIBusCommandDTO
 }
 
 /**
- * Command DTO for updating only the engine's general settings (name).
+ * Command DTO for updating only the engine's general settings (name and description).
  */
 export interface OIBusUpdateEngineGeneralCommandDTO extends BaseOIBusCommandDTO {
   /**
@@ -207,9 +207,9 @@ export interface OIBusUpdateEngineGeneralCommandDTO extends BaseOIBusCommandDTO 
   type: 'update-engine-general';
 
   /**
-   * The content of the command, including the engine name.
+   * The content of the command: the engine name and description.
    */
-  commandContent: EngineNameCommandDTO;
+  commandContent: EngineGeneralCommandDTO;
 }
 
 /**

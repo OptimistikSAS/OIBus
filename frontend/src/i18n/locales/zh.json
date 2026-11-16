@@ -2273,6 +2273,7 @@
     "general-settings": {
       "title": "常规设置",
       "name": "名称",
+      "description": "描述",
       "port": "端口",
       "console": "控制台：{{ level }}",
       "file": "文件：{{ level }}",

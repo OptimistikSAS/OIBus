@@ -85,7 +85,7 @@ export const toEngineSettingsCommand = (
   const { auditRetentionDuration: _, ...logger } = toEngineLoggerCommand(command.logger, secrets);
   return {
     auditRetentionDuration: command.auditRetentionDuration,
-    general: { name: command.general.name },
+    general: { name: command.general.name, description: command.general.description },
     webServer: toEngineWebServerCommand(command.webServer, currentWebServer),
     proxyServer: toEngineProxyCommand(command.proxyServer, secrets),
     logger

@@ -165,7 +165,8 @@ export default class ConfigTransferBuilderService {
       settings: {
         auditRetentionDuration: engine.auditRetentionDuration,
         general: {
-          name: engine.general.name
+          name: engine.general.name,
+          description: engine.general.description
         },
         webServer: {
           port: engine.webServer.port,

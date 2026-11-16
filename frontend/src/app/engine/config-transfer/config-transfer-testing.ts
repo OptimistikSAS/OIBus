@@ -62,7 +62,7 @@ export const configImportPreview: ConfigImportPreviewDTO = {
       ignoreIpFilters: false,
       ignoreRemoteUpdate: false,
       settings: {
-        general: { name: 'OIBus' },
+        general: { name: 'OIBus', description: null },
         auditRetentionDuration: 90,
         webServer: { port: 2224, authTokenDuration: '7d' },
         proxyServer: {

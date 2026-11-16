@@ -6,6 +6,7 @@ import { LogLevel } from '../../../shared/model/domain/logs.model';
 import { version } from '../../../package.json';
 import { AuditEntityType } from '../../model/audit.model';
 import {
+  EngineGeneralCommand,
   EngineLoggerCommand,
   EngineProxyCommand,
   EngineSettings,
@@ -57,7 +58,8 @@ const DEFAULT_ENGINE_SETTINGS: Omit<
 > = {
   auditRetentionDuration: 90,
   general: {
-    name: 'OIBus'
+    name: 'OIBus',
+    description: null
   },
   webServer: {
     port: 2223,
@@ -131,7 +133,7 @@ export default class EngineRepository {
       {
         ...DEFAULT_ENGINE_SETTINGS,
         webServer: { ...DEFAULT_ENGINE_SETTINGS.webServer, port: defaultPort },
-        general: { name: defaultName }
+        general: { name: defaultName, description: DEFAULT_ENGINE_SETTINGS.general.description }
       },
       launcherVersion
     );
@@ -139,7 +141,7 @@ export default class EngineRepository {
 
   get(): EngineSettings | null {
     const query =
-      'SELECT id, name, port, auth_token_duration, https_enabled, https_certificate_source, https_certificate_id, https_certificate_path, ' +
+      'SELECT id, name, description, port, auth_token_duration, https_enabled, https_certificate_source, https_certificate_id, https_certificate_path, ' +
       'https_private_key_path, enable_content_endpoint, audit_retention_duration, oibus_version, oibus_launcher_version, proxy_enabled, proxy_port, ' +
       'forward_proxy_enabled, forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, ' +
@@ -160,7 +162,7 @@ export default class EngineRepository {
   update(command: EngineSettingsCommand, updatedBy: string): void {
     const before = this.get();
     const query =
-      `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, auth_token_duration = ?, https_enabled = ?, https_certificate_source = ?, ` +
+      `UPDATE ${ENGINES_TABLE} SET name = ?, description = ?, port = ?, auth_token_duration = ?, https_enabled = ?, https_certificate_source = ?, ` +
       'https_certificate_id = ?, https_certificate_path = ?, https_private_key_path = ?, enable_content_endpoint = ?, audit_retention_duration = ?, ' +
       'proxy_enabled = ?, proxy_port = ?, ' +
       'forward_proxy_enabled = ?, forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, proxy_username = ?, proxy_password = ?, ' +
@@ -188,6 +190,7 @@ export default class EngineRepository {
       .prepare(query)
       .run(
         command.general.name,
+        command.general.description,
         command.webServer.port,
         command.webServer.authTokenDuration,
         +command.webServer.https.enabled,
@@ -227,12 +230,12 @@ export default class EngineRepository {
     this.recordSectionChanges(before, this.get(), updatedBy, ALL_ENGINE_SECTIONS);
   }
 
-  updateName(name: string, updatedBy: string): void {
+  updateGeneral(command: EngineGeneralCommand, updatedBy: string): void {
     const before = this.get();
     const query =
-      `UPDATE ${ENGINES_TABLE} SET name = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+      `UPDATE ${ENGINES_TABLE} SET name = ?, description = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
-    this.database.prepare(query).run(name, updatedBy);
+    this.database.prepare(query).run(command.name, command.description, updatedBy);
     this.recordSectionChanges(before, this.get(), updatedBy, ['engine_general']);
   }
 
@@ -346,7 +349,7 @@ export default class EngineRepository {
     }
 
     const query =
-      `INSERT INTO ${ENGINES_TABLE} (id, name, oibus_version, oibus_launcher_version, port, auth_token_duration, https_enabled, https_certificate_source, ` +
+      `INSERT INTO ${ENGINES_TABLE} (id, name, description, oibus_version, oibus_launcher_version, port, auth_token_duration, https_enabled, https_certificate_source, ` +
       'https_certificate_id, https_certificate_path, https_private_key_path, enable_content_endpoint, audit_retention_duration, proxy_enabled, proxy_port,' +
       'forward_proxy_enabled, forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
@@ -354,12 +357,13 @@ export default class EngineRepository {
       'log_loki_username, log_loki_password, log_oia_level, log_oia_interval, ' +
       'log_syslog_level, log_syslog_host, log_syslog_port, log_syslog_protocol, ' +
       `created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
         generateRandomId(),
         command.general.name,
+        command.general.description,
         version,
         launcherVersion,
         command.webServer.port,
@@ -434,7 +438,8 @@ export default class EngineRepository {
       launcherVersion: result.oibus_launcher_version as string,
       auditRetentionDuration: (result.audit_retention_duration as number | null) ?? null,
       general: {
-        name: result.name as string
+        name: result.name as string,
+        description: result.description as string | null
       },
       webServer: {
         port: result.port as number,

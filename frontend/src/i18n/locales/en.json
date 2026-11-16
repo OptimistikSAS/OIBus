@@ -661,6 +661,7 @@
     "general-settings": {
       "title": "General settings",
       "name": "Name",
+      "description": "Description",
       "port": "Port",
       "console": "Console: {{ level }}",
       "file": "File: {{ level }}",

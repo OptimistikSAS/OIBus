@@ -129,7 +129,7 @@ describe('engine-command utils', () => {
       );
 
       assert.strictEqual(result.auditRetentionDuration, 45);
-      assert.deepStrictEqual(result.general, { name: command.general.name });
+      assert.deepStrictEqual(result.general, { name: command.general.name, description: command.general.description });
       assert.deepStrictEqual(result.webServer, toEngineWebServerCommand(command.webServer, testData.engine.settings.webServer));
       assert.deepStrictEqual(
         result.proxyServer,

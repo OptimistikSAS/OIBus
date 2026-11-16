@@ -1,0 +1,22 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="engine.general-settings.title"></h4>
+</div>
+<div class="modal-body">
+  <form id="engine-general-form" [formGroup]="form" (ngSubmit)="save()">
+    <div class="form-group">
+      <label class="form-label" for="name" translate="engine.general-settings.name"></label>
+      <input formControlName="name" id="name" class="form-control" />
+      <val-errors controlName="name" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="description" translate="engine.general-settings.description"></label>
+      <textarea formControlName="description" id="description" class="form-control" rows="3"></textarea>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="submit" form="engine-general-form" class="btn btn-primary" translate="common.save" id="save-general-button"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-general-button"></button>
+  </div>
+</div>
