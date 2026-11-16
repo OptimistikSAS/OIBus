@@ -24,8 +24,8 @@ importers:
         specifier: 2.1.1
         version: 2.1.1
       cronstrue:
-        specifier: 3.38.0
-        version: 3.38.0
+        specifier: 3.39.0
+        version: 3.39.0
       prism-react-renderer:
         specifier: 2.4.1
         version: 2.4.1(react@19.3.1)
@@ -55,8 +55,8 @@ importers:
         specifier: 10.1.8
         version: 10.1.8(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))
       eslint-plugin-mdx:
-        specifier: 3.9.1
-        version: 3.9.1(@types/estree@1.0.10)(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(supports-color@9.4.0)
+        specifier: 3.9.4
+        version: 3.9.4(@types/estree@1.0.10)(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(supports-color@9.4.0)
       eslint-plugin-prettier:
         specifier: 5.5.7
         version: 5.5.7(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0)))(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(prettier@3.9.10)
@@ -2597,8 +2597,8 @@ packages:
       typescript:
         optional: true
 
-  cronstrue@3.38.0:
-    resolution: {integrity: sha512-i10xR7fS4AH9LKwmt3gYdt/5lSsB2qFGSNfC8aeyYybxo48DCMz+nUrSVI4kUj8yo+SgTbMJqp/BWEem9avlcA==}
+  cronstrue@3.39.0:
+    resolution: {integrity: sha512-b5lKTLr5uFJZfkjjGx3k/XIHvi1xKmv1wVmHOC1hVUJCgf8SYX/EoX4SHeJKYPVQRXDVddN78lwhmwtnUbdn7w==}
     hasBin: true
 
   cross-env@10.1.0:
@@ -3055,21 +3055,18 @@ packages:
     peerDependencies:
       eslint: '>=7.0.0'
 
-  eslint-mdx@3.9.1:
-    resolution: {integrity: sha512-PNO+iBG9s0ERe53glwh987Ab96gY94xX9i3hpE04fto16na1n6ilZA+3UzNTRy6LkmxYX4yObpihJbQAlEpjBQ==}
+  eslint-mdx@3.10.0:
+    resolution: {integrity: sha512-vEOh2PymD4O8Afuyyxqa1HH6c3CrMY8OLi2avnLhsACWdEAmpj9YCWCcR7Vnhk9lG+XiUsYBsPtChf9yhxGaMA==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       '@types/estree': ^1.0.10
       eslint: '>=8.0.0'
-      remark-lint-file-extension: '*'
     peerDependenciesMeta:
       '@types/estree':
         optional: true
-      remark-lint-file-extension:
-        optional: true
 
-  eslint-plugin-mdx@3.9.1:
-    resolution: {integrity: sha512-rekc3S2KkRna/W2gwjXtLvNo7qgbSY/7l+EnuhLzmO9iBCR9aD2mu3/8FmWh/zI9ku0bUpqP3CIlet5BWHhF6w==}
+  eslint-plugin-mdx@3.9.4:
+    resolution: {integrity: sha512-WDAS0Fy+VB81SBFCPBaIxeU89/fvxSxyV54QllEqh391p5YpBk/RtchBBs1XxT6C1I4N5y+CA5/5FDeySKiNJw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       eslint: '>=8.0.0'
@@ -10430,7 +10427,7 @@ snapshots:
       parse-json: 5.2.0
       path-type: 4.0.0
 
-  cronstrue@3.38.0: {}
+  cronstrue@3.39.0: {}
 
   cross-env@10.1.0:
     dependencies:
@@ -10982,7 +10979,7 @@ snapshots:
     dependencies:
       eslint: 9.39.5(jiti@1.21.7)(supports-color@9.4.0)
 
-  eslint-mdx@3.9.1(@types/estree@1.0.10)(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(supports-color@9.4.0):
+  eslint-mdx@3.10.0(@types/estree@1.0.10)(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(supports-color@9.4.0):
     dependencies:
       acorn: 8.19.0
       acorn-jsx: 5.3.2(acorn@8.19.0)
@@ -11008,10 +11005,10 @@ snapshots:
       - bluebird
       - supports-color
 
-  eslint-plugin-mdx@3.9.1(@types/estree@1.0.10)(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(supports-color@9.4.0):
+  eslint-plugin-mdx@3.9.4(@types/estree@1.0.10)(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(supports-color@9.4.0):
     dependencies:
       eslint: 9.39.5(jiti@1.21.7)(supports-color@9.4.0)
-      eslint-mdx: 3.9.1(@types/estree@1.0.10)(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(supports-color@9.4.0)
+      eslint-mdx: 3.10.0(@types/estree@1.0.10)(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(supports-color@9.4.0)
       mdast-util-mdx: 3.0.0(supports-color@9.4.0)
       prettier-linter-helpers: 1.0.1
       remark-mdx: 3.1.1(supports-color@9.4.0)
@@ -11022,7 +11019,6 @@ snapshots:
     transitivePeerDependencies:
       - '@types/estree'
       - bluebird
-      - remark-lint-file-extension
       - supports-color
 
   eslint-plugin-prettier@5.5.7(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0)))(eslint@9.39.5(jiti@1.21.7)(supports-color@9.4.0))(prettier@3.9.10):
