@@ -8,6 +8,9 @@
             <div class="oib-page-meta">
               <span id="engine-name">{{ settings.general.name }}</span>
             </div>
+            @if (settings.general.description) {
+              <p class="oib-page-description" id="engine-description">{{ settings.general.description }}</p>
+            }
           </div>
           <div class="oib-page-actions">
             <a class="btn btn-subtle" id="oianalytics-module" routerLink="oianalytics">
@@ -53,7 +56,7 @@
               type="button"
               class="btn btn-subtle btn-sm"
               id="edit-name-button"
-              (click)="openNameModal()"
+              (click)="openGeneralModal()"
               [attr.aria-label]="'engine.tooltips.edit' | translate"
             >
               <i class="fa-solid fa-pencil me-1" aria-hidden="true"></i>
@@ -75,6 +78,12 @@
               <dt translate="engine.general-settings.name"></dt>
               <dd>{{ settings.general.name }}</dd>
             </div>
+            @if (settings.general.description) {
+              <div class="oib-summary-entry">
+                <dt translate="engine.general-settings.description"></dt>
+                <dd>{{ settings.general.description }}</dd>
+              </div>
+            }
           </dl>
         </section>
         <section class="oib-panel">

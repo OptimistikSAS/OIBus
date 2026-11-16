@@ -5233,10 +5233,11 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "EngineNameCommandDTO": {
+    "EngineGeneralCommandDTO": {
         "dataType": "refObject",
         "properties": {
             "name": {"dataType":"string","required":true},
+            "description": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -5252,7 +5253,7 @@ const models: TsoaRoute.Models = {
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "targetVersion": {"dataType":"string","required":true},
-            "commandContent": {"ref":"EngineNameCommandDTO","required":true},
+            "commandContent": {"ref":"EngineGeneralCommandDTO","required":true},
         },
         "additionalProperties": false,
     },
@@ -10389,7 +10390,7 @@ const models: TsoaRoute.Models = {
             "version": {"dataType":"string","required":true},
             "launcherVersion": {"dataType":"string","required":true},
             "auditRetentionDuration": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "general": {"dataType":"nestedObjectLiteral","nestedProperties":{"name":{"dataType":"string","required":true}},"required":true},
+            "general": {"dataType":"nestedObjectLiteral","nestedProperties":{"description":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"name":{"dataType":"string","required":true}},"required":true},
             "webServer": {"dataType":"nestedObjectLiteral","nestedProperties":{"enableContentEndpoint":{"dataType":"boolean","required":true},"https":{"ref":"WebServerHttpsSettings","required":true},"authTokenDuration":{"ref":"AuthTokenDuration","required":true},"port":{"dataType":"double","required":true}},"required":true},
             "proxyServer": {"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"forward":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"port":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},
             "logger": {"dataType":"nestedObjectLiteral","nestedProperties":{"syslog":{"dataType":"nestedObjectLiteral","nestedProperties":{"protocol":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["udp4"]},{"dataType":"enum","enums":["tcp"]}],"required":true},"port":{"dataType":"double","required":true},"host":{"dataType":"string","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"required":true},
@@ -10415,7 +10416,7 @@ const models: TsoaRoute.Models = {
     "EngineSettingsCommandDTO": {
         "dataType": "refObject",
         "properties": {
-            "general": {"ref":"EngineNameCommandDTO","required":true},
+            "general": {"ref":"EngineGeneralCommandDTO","required":true},
             "webServer": {"ref":"EngineWebServerCommandDTO","required":true},
             "proxyServer": {"ref":"EngineProxyCommandDTO","required":true},
             "logger": {"ref":"EngineLoggerCommandDTO","required":true},
@@ -15400,26 +15401,26 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsEngineController_updateEngineName: Record<string, TsoaRoute.ParameterSchema> = {
-                command: {"in":"body","name":"command","required":true,"ref":"EngineNameCommandDTO"},
+        const argsEngineController_updateEngineGeneral: Record<string, TsoaRoute.ParameterSchema> = {
+                command: {"in":"body","name":"command","required":true,"ref":"EngineGeneralCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.put('/api/engine/name',
+        app.put('/api/engine/general',
             ...(fetchMiddlewares<RequestHandler>(EngineController)),
-            ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineName)),
+            ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineGeneral)),
 
-            async function EngineController_updateEngineName(request: ExRequest, response: ExResponse, next: any) {
+            async function EngineController_updateEngineGeneral(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsEngineController_updateEngineName, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsEngineController_updateEngineGeneral, request, response });
 
                 const controller = new EngineController();
 
               await templateService.apiHandler({
-                methodName: 'updateEngineName',
+                methodName: 'updateEngineGeneral',
                 controller,
                 response,
                 next,

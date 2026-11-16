@@ -45,6 +45,12 @@ export interface EngineSettingsDTO extends BaseEntity {
      * @example "OIBus OT"
      */
     name: string;
+
+    /**
+     * An optional free-text description of the engine.
+     * @example "Collects the data of the production lines of plant A"
+     */
+    description: string | null;
   };
 
   /**
@@ -466,7 +472,7 @@ export interface RegistrationSettingsCommandDTO {
  * Used as the request body for updating engine settings.
  */
 export interface EngineSettingsCommandDTO {
-  general: EngineNameCommandDTO;
+  general: EngineGeneralCommandDTO;
 
   webServer: EngineWebServerCommandDTO;
 
@@ -483,15 +489,21 @@ export interface EngineSettingsCommandDTO {
 }
 
 /**
- * Engine name command Data Transfer Object.
- * Used as the request body for updating only the engine name.
+ * Engine general settings command Data Transfer Object.
+ * Used as the request body for updating only the engine name and description.
  */
-export interface EngineNameCommandDTO {
+export interface EngineGeneralCommandDTO {
   /**
    * The name of the engine.
    * @example "OIBus OT"
    */
   name: string;
+
+  /**
+   * An optional free-text description of the engine.
+   * @example "Collects the data of the production lines of plant A"
+   */
+  description: string | null;
 }
 
 /**

@@ -23692,23 +23692,30 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"EngineNameCommandDTO": {
-				"description": "Engine name command Data Transfer Object.\nUsed as the request body for updating only the engine name.",
+			"EngineGeneralCommandDTO": {
+				"description": "Engine general settings command Data Transfer Object.\nUsed as the request body for updating only the engine name and description.",
 				"properties": {
 					"name": {
 						"type": "string",
 						"description": "The name of the engine.",
 						"example": "OIBus OT"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "An optional free-text description of the engine.",
+						"example": "Collects the data of the production lines of plant A"
 					}
 				},
 				"required": [
-					"name"
+					"name",
+					"description"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
 			"OIBusUpdateEngineGeneralCommandDTO": {
-				"description": "Command DTO for updating only the engine's general settings (name).",
+				"description": "Command DTO for updating only the engine's general settings (name and description).",
 				"properties": {
 					"id": {
 						"type": "string",
@@ -23764,8 +23771,8 @@
 						"example": "3.7.0"
 					},
 					"commandContent": {
-						"$ref": "#/components/schemas/EngineNameCommandDTO",
-						"description": "The content of the command, including the engine name."
+						"$ref": "#/components/schemas/EngineGeneralCommandDTO",
+						"description": "The content of the command: the engine name and description."
 					}
 				},
 				"required": [
@@ -48298,6 +48305,12 @@
 					},
 					"general": {
 						"properties": {
+							"description": {
+								"type": "string",
+								"nullable": true,
+								"description": "An optional free-text description of the engine.",
+								"example": "Collects the data of the production lines of plant A"
+							},
 							"name": {
 								"type": "string",
 								"description": "The name of the engine.",
@@ -48305,6 +48318,7 @@
 							}
 						},
 						"required": [
+							"description",
 							"name"
 						],
 						"type": "object",
@@ -48647,7 +48661,7 @@
 				"description": "Engine settings command Data Transfer Object.\nUsed as the request body for updating engine settings.",
 				"properties": {
 					"general": {
-						"$ref": "#/components/schemas/EngineNameCommandDTO"
+						"$ref": "#/components/schemas/EngineGeneralCommandDTO"
 					},
 					"webServer": {
 						"$ref": "#/components/schemas/EngineWebServerCommandDTO"
@@ -50275,7 +50289,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.9.6",
+		"version": "3.10.0",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
@@ -55779,16 +55793,16 @@
 				}
 			}
 		},
-		"/api/engine/name": {
+		"/api/engine/general": {
 			"put": {
-				"operationId": "UpdateEngineName",
+				"operationId": "UpdateEngineGeneral",
 				"responses": {
 					"200": {
-						"description": "Engine name updated successfully"
+						"description": "Engine general settings updated successfully"
 					}
 				},
-				"description": "Updates only the engine name",
-				"summary": "Update engine name",
+				"description": "Updates only the engine general settings (name and description)",
+				"summary": "Update engine general settings",
 				"tags": [
 					"Engine"
 				],
@@ -55799,7 +55813,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/EngineNameCommandDTO"
+								"$ref": "#/components/schemas/EngineGeneralCommandDTO"
 							}
 						}
 					}

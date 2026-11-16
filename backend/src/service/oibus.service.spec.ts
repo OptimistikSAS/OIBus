@@ -335,14 +335,14 @@ describe('OIBus Service', () => {
     assert.strictEqual(loggerService.createChildLogger.mock.calls.length, 1); // in constructor only
   });
 
-  it('should update engine name', async () => {
+  it('should update engine general settings', async () => {
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
 
-    await service.updateEngineName(testData.engine.nameCommand, testData.users.list[0].id);
+    await service.updateEngineGeneral(testData.engine.generalCommand, testData.users.list[0].id);
 
-    assert.strictEqual(engineRepository.updateName.mock.calls.length, 1);
-    assert.deepStrictEqual(engineRepository.updateName.mock.calls[0].arguments, [
-      testData.engine.nameCommand.name,
+    assert.strictEqual(engineRepository.updateGeneral.mock.calls.length, 1);
+    assert.deepStrictEqual(engineRepository.updateGeneral.mock.calls[0].arguments, [
+      { name: testData.engine.generalCommand.name, description: testData.engine.generalCommand.description },
       testData.users.list[0].id
     ]);
     assert.strictEqual(loggerService.stop.mock.calls.length, 1);
@@ -797,7 +797,8 @@ describe('OIBus Service', () => {
         launcherVersion: engineSettings.launcherVersion,
         auditRetentionDuration: engineSettings.auditRetentionDuration,
         general: {
-          name: engineSettings.general.name
+          name: engineSettings.general.name,
+          description: engineSettings.general.description
         },
         webServer: {
           port: engineSettings.webServer.port,

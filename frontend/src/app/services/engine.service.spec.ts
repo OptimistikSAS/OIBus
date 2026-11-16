@@ -99,10 +99,10 @@ describe('EngineService', () => {
     },
     {
       name: 'update the engine name',
-      call: s => s.updateEngineName(testData.engine.nameCommand),
+      call: s => s.updateEngineGeneral(testData.engine.generalCommand),
       method: 'PUT',
-      url: '/api/engine/name',
-      body: testData.engine.nameCommand,
+      url: '/api/engine/general',
+      body: testData.engine.generalCommand,
       response: null
     },
     {

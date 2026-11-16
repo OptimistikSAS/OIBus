@@ -14,6 +14,7 @@ import {
   addContentEndpointSetting,
   addDatabaseConnectionSettings,
   addEmptyIntervalStrategies,
+  addEngineDescription,
   addErrorAndArchiveMaxSizes,
   addHttpsSettings,
   addItemAndWorkflowDescriptions,
@@ -4989,5 +4990,57 @@ describe('Entity migration v3.10.0: addErrorAndArchiveMaxSizes', () => {
       assert.ok(!columns.includes('caching_error_max_size'), `${table}.caching_error_max_size removed`);
       assert.ok(!columns.includes('caching_archive_max_size'), `${table}.caching_archive_max_size removed`);
     }
+  });
+});
+
+describe('Entity migration v3.10.0: addEngineDescription', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addEngineDescription, db)
+  });
+  let db: Knex;
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('engines').insert({
+      id: 'test-engine-id',
+      name: 'Test Engine',
+      port: 2223,
+      auth_token_duration: '7d',
+      log_console_level: 'silent',
+      log_file_level: 'silent',
+      log_file_max_file_size: 50,
+      log_file_number_of_files: 5,
+      log_database_level: 'silent',
+      log_database_max_number_of_logs: 100000,
+      log_loki_level: 'silent',
+      log_loki_interval: 60,
+      log_oia_level: 'silent',
+      log_oia_interval: 10,
+      proxy_enabled: 0,
+      proxy_port: 9000,
+      oibus_version: '3.9.0',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z'
+    });
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should add a description column, null for the existing engine', async () => {
+    await addEngineDescription(db);
+
+    assert.ok((await columnNames(db, 'engines')).includes('description'));
+    assert.strictEqual((await db('engines').where('id', 'test-engine-id').first('description')).description, null);
+  });
+
+  it('should drop the description column on down', async () => {
+    await runStepsFrom(addEngineDescription, db);
+    await down(db);
+
+    assert.ok(!(await columnNames(db, 'engines')).includes('description'));
+    assert.strictEqual((await db('engines').select('id')).length, 1);
   });
 });

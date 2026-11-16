@@ -3,8 +3,8 @@ import { createRequire } from 'node:module';
 import { before, beforeEach, describe, it, mock } from 'node:test';
 
 import {
+  EngineGeneralCommandDTO,
   EngineLoggerCommandDTO,
-  EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsUpdateResultDTO,
@@ -127,13 +127,13 @@ describe('EngineController', () => {
   });
 
   it('should update engine name', async () => {
-    const command: EngineNameCommandDTO = testData.engine.nameCommand;
-    oIBusService.updateEngineName.mock.mockImplementation(async () => undefined);
+    const command: EngineGeneralCommandDTO = testData.engine.generalCommand;
+    oIBusService.updateEngineGeneral.mock.mockImplementation(async () => undefined);
 
-    await controller.updateEngineName(command, mockRequest as CustomExpressRequest);
+    await controller.updateEngineGeneral(command, mockRequest as CustomExpressRequest);
 
-    assert.strictEqual(oIBusService.updateEngineName.mock.calls.length, 1);
-    assert.deepStrictEqual(oIBusService.updateEngineName.mock.calls[0].arguments, [command, testData.users.list[0].id]);
+    assert.strictEqual(oIBusService.updateEngineGeneral.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateEngineGeneral.mock.calls[0].arguments, [command, testData.users.list[0].id]);
   });
 
   it('should update engine web server settings', async () => {

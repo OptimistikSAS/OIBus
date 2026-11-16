@@ -117,8 +117,9 @@ const engineLoggerSchema = Joi.object({
   })
 });
 
-const engineNameSchema: Joi.ObjectSchema = Joi.object({
-  name: Joi.string().required()
+const engineGeneralSchema: Joi.ObjectSchema = Joi.object({
+  name: Joi.string().required(),
+  description: Joi.string().required().allow(null, '')
 });
 
 // The certificate (from the store or from files) is only required when HTTPS is enabled
@@ -167,7 +168,7 @@ const engineProxySchema: Joi.ObjectSchema = Joi.object({
 });
 
 const engineSchema: Joi.ObjectSchema = Joi.object({
-  general: engineNameSchema.required(),
+  general: engineGeneralSchema.required(),
   webServer: engineWebServerSchema.required(),
   proxyServer: engineProxySchema.required(),
   logger: engineLoggerSchema.required()
@@ -295,8 +296,8 @@ export {
   certificateImportSchema,
   certificatePrivateKeyExportSchema,
   certificateSchema,
+  engineGeneralSchema,
   engineLoggerSchema,
-  engineNameSchema,
   engineProxySchema,
   engineSchema,
   engineWebServerSchema,

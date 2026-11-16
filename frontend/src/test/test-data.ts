@@ -5,8 +5,8 @@
  */
 import { CertificateCommandDTO, CertificateDTO } from '@oibus/shared/api/certificate.model';
 import {
+  EngineGeneralCommandDTO,
   EngineLoggerCommandDTO,
-  EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineWebServerCommandDTO,
@@ -2169,7 +2169,8 @@ const transformerCommand: CustomTransformerCommandDTO = {
 
 const engineCommand: EngineSettingsCommandDTO = {
   general: {
-    name: 'updated OIBus'
+    name: 'updated OIBus',
+    description: 'updated description'
   },
   auditRetentionDuration: null,
   webServer: {
@@ -2222,8 +2223,9 @@ const engineCommand: EngineSettingsCommandDTO = {
   }
 };
 
-const engineNameCommand: EngineNameCommandDTO = {
-  name: 'updated OIBus'
+const engineGeneralCommand: EngineGeneralCommandDTO = {
+  name: 'updated OIBus',
+  description: 'updated description'
 };
 
 const engineWebServerCommand: EngineWebServerCommandDTO = {
@@ -2484,7 +2486,8 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
     result: 'ok',
     targetVersion: '3.4.9',
     commandContent: {
-      name: 'updated OIBus'
+      name: 'updated OIBus',
+      description: 'updated description'
     }
   },
   {
@@ -2912,7 +2915,7 @@ const testData = {
   transformers: { customList: customTransformerList, command: transformerCommand },
   engine: {
     command: engineCommand,
-    nameCommand: engineNameCommand,
+    generalCommand: engineGeneralCommand,
     webServerCommand: engineWebServerCommand,
     proxyCommand: engineProxyCommand,
     loggerCommand: engineLoggerCommand,

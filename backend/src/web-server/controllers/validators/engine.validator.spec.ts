@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import JoiValidator from './joi.validator';
-import { engineLoggerSchema, engineNameSchema, engineProxySchema, engineSchema, engineWebServerSchema } from './oibus-validation-schema';
+import { engineGeneralSchema, engineLoggerSchema, engineProxySchema, engineSchema, engineWebServerSchema } from './oibus-validation-schema';
 
 interface DataProvider {
   dto: object;
@@ -13,7 +13,7 @@ interface DataProvider {
 const dataProviders: Array<DataProvider> = [
   {
     dto: {
-      general: { name: null },
+      general: { name: null, description: null },
       webServer: { port: null, authTokenDuration: null },
       proxyServer: {
         enabled: null,
@@ -30,7 +30,7 @@ const dataProviders: Array<DataProvider> = [
   },
   {
     dto: {
-      general: { name: 'OIBus' },
+      general: { name: 'OIBus', description: 'OIBus of the plant' },
       webServer: { port: 2223, authTokenDuration: '7d' },
       proxyServer: {
         enabled: false,
@@ -53,7 +53,7 @@ const dataProviders: Array<DataProvider> = [
   },
   {
     dto: {
-      general: { name: null },
+      general: { name: null, description: null },
       webServer: { port: null, authTokenDuration: null },
       proxyServer: {
         enabled: null,
@@ -94,7 +94,7 @@ const dataProviders: Array<DataProvider> = [
   },
   {
     dto: {
-      general: { name: '' },
+      general: { name: '', description: '' },
       webServer: { port: '', authTokenDuration: '' },
       proxyServer: {
         enabled: '',
@@ -135,7 +135,7 @@ const dataProviders: Array<DataProvider> = [
   },
   {
     dto: {
-      general: { name: 'OIBus' },
+      general: { name: 'OIBus', description: 'OIBus of the plant' },
       webServer: { port: 2223, authTokenDuration: '7d' },
       proxyServer: {
         enabled: false,
@@ -191,21 +191,32 @@ describe('Engine validator', () => {
   }
 });
 
-describe('Engine name validator', () => {
+describe('Engine general validator', () => {
   const validator: JoiValidator = new JoiValidator();
 
-  it('should accept valid name', async () => {
-    await assert.doesNotReject(validator.validate(engineNameSchema, { name: 'OIBus' }));
+  it('should accept a valid name and description', async () => {
+    await assert.doesNotReject(validator.validate(engineGeneralSchema, { name: 'OIBus', description: 'OIBus of the plant' }));
+  });
+
+  it('should accept an empty or null description', async () => {
+    await assert.doesNotReject(validator.validate(engineGeneralSchema, { name: 'OIBus', description: '' }));
+    await assert.doesNotReject(validator.validate(engineGeneralSchema, { name: 'OIBus', description: null }));
+  });
+
+  it('should reject a missing description', async () => {
+    await assert.rejects(validator.validate(engineGeneralSchema, { name: 'OIBus' }), {
+      message: '"description" is required'
+    });
   });
 
   it('should reject null name', async () => {
-    await assert.rejects(validator.validate(engineNameSchema, { name: null }), {
+    await assert.rejects(validator.validate(engineGeneralSchema, { name: null, description: null }), {
       message: '"name" must be a string'
     });
   });
 
   it('should reject empty name', async () => {
-    await assert.rejects(validator.validate(engineNameSchema, { name: '' }), {
+    await assert.rejects(validator.validate(engineGeneralSchema, { name: '', description: null }), {
       message: '"name" is not allowed to be empty'
     });
   });

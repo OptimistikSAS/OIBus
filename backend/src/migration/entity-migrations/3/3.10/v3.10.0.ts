@@ -126,7 +126,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   removeOpcAgentSettings,
   useLocalOleDbDriver,
   removePiAgentSettings,
-  addErrorAndArchiveMaxSizes
+  addErrorAndArchiveMaxSizes,
+  addEngineDescription
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -147,6 +148,7 @@ export async function up(knex: Knex): Promise<void> {
  * is enabled.
  */
 export async function down(knex: Knex): Promise<void> {
+  await dropColumns(knex, ENGINES_TABLE, ['description']);
   for (const table of [NORTH_CONNECTORS_TABLE, HISTORY_QUERIES_TABLE]) {
     await dropColumns(knex, table, ['caching_error_max_size', 'caching_archive_max_size']);
   }
@@ -1912,4 +1914,13 @@ export async function addErrorAndArchiveMaxSizes(knex: Knex): Promise<void> {
       caching_archive_max_size: knex.ref('caching_throttling_cache_max_size')
     });
   }
+}
+
+/**
+ * The general settings of the engine gain an optional free-text description, null for the existing engine.
+ */
+export async function addEngineDescription(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(ENGINES_TABLE, t => {
+    t.text('description').nullable();
+  });
 }

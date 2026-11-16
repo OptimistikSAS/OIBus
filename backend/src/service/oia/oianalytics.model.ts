@@ -3,8 +3,8 @@
 //
 import { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
 import {
+  EngineGeneralCommandDTO,
   EngineLoggerCommandDTO,
-  EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineWebServerCommandDTO
 } from '../../../shared/model/api/engine.model';
@@ -100,7 +100,7 @@ export interface OIAnalyticsFetchRegenerateCipherKeysCommandDTO extends BaseOIAn
 
 export interface OIAnalyticsFetchUpdateEngineGeneralCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'update-engine-general';
-  commandContent: EngineNameCommandDTO;
+  commandContent: EngineGeneralCommandDTO;
 }
 
 export interface OIAnalyticsFetchUpdateEngineWebServerCommandDTO extends BaseOIAnalyticsFetchCommandDTO {

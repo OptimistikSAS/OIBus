@@ -25,8 +25,8 @@ import { ObservableState } from '../shared/save-button/save-button.component';
 import { WindowService } from '../shared/window.service';
 import { CertificateListComponent } from './certificate-list/certificate-list.component';
 import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
+import { EditEngineGeneralModalComponent } from './edit-engine-general-modal/edit-engine-general-modal.component';
 import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
-import { EditEngineNameModalComponent } from './edit-engine-name-modal/edit-engine-name-modal.component';
 import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
 import { EditEngineWebServerModalComponent } from './edit-engine-web-server-modal/edit-engine-web-server-modal.component';
 import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
@@ -85,8 +85,8 @@ export class EngineDetailComponent {
   readonly exporting = new ObservableState();
   readonly dumpingMemory = new ObservableState();
 
-  openNameModal() {
-    const modal = this.modalService.open(EditEngineNameModalComponent);
+  openGeneralModal() {
+    const modal = this.modalService.open(EditEngineGeneralModalComponent);
     modal.componentInstance.initialize(this.engineSettings()!);
     modal.result.subscribe(() => this.engineSettingsResource.reload());
   }

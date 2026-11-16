@@ -12,22 +12,23 @@ import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { NotificationService } from '../../shared/notification.service';
-import { EditEngineNameModalComponent } from './edit-engine-name-modal.component';
+import { EditEngineGeneralModalComponent } from './edit-engine-general-modal.component';
 
-class EditEngineNameModalTester {
-  readonly fixture = TestBed.createComponent(EditEngineNameModalComponent);
+class EditEngineGeneralModalTester {
+  readonly fixture = TestBed.createComponent(EditEngineGeneralModalComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByRole('heading', { name: 'General settings' });
   readonly name = this.root.getByLabelText('Name');
+  readonly description = this.root.getByLabelText('Description');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
 
   constructor() {
-    this.fixture.componentInstance.initialize(buildEngineSettings({ general: { name: 'OIBus' } }));
+    this.fixture.componentInstance.initialize(buildEngineSettings({ general: { name: 'OIBus', description: 'Plant A' } }));
   }
 }
 
-describe('EditEngineNameModalComponent', () => {
+describe('EditEngineGeneralModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let engineService: MockObject<EngineService>;
   let notificationService: MockObject<NotificationService>;
@@ -49,39 +50,58 @@ describe('EditEngineNameModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
   });
 
-  test('should initialize the form with the engine name', async () => {
-    const tester = new EditEngineNameModalTester();
+  test('should initialize the form with the engine name and description', async () => {
+    const tester = new EditEngineGeneralModalTester();
 
     await expect.element(tester.title).toBeInTheDocument();
     await expect.element(tester.name).toHaveValue('OIBus');
+    await expect.element(tester.description).toHaveValue('Plant A');
+  });
+
+  test('should initialize an empty description when the engine has none', async () => {
+    const tester = new EditEngineGeneralModalTester();
+    tester.fixture.componentInstance.initialize(buildEngineSettings({ general: { name: 'OIBus', description: null } }));
+
+    await expect.element(tester.description).toHaveValue('');
   });
 
   test('should not save when the name is empty', async () => {
-    const tester = new EditEngineNameModalTester();
+    const tester = new EditEngineGeneralModalTester();
 
     await tester.name.fill('');
     await tester.saveButton.click();
 
     await expect.element(tester.root.getByText('This field is required')).toBeInTheDocument();
-    expect(engineService.updateEngineName).not.toHaveBeenCalled();
+    expect(engineService.updateEngineGeneral).not.toHaveBeenCalled();
   });
 
-  test('should save the name and close the modal', async () => {
-    engineService.updateEngineName.mockReturnValue(of(undefined));
-    const tester = new EditEngineNameModalTester();
+  test('should save the name and description and close the modal', async () => {
+    engineService.updateEngineGeneral.mockReturnValue(of(undefined));
+    const tester = new EditEngineGeneralModalTester();
 
     await tester.name.fill('new name');
+    await tester.description.fill('new description');
     await tester.saveButton.click();
 
-    expect(engineService.updateEngineName).toHaveBeenCalledWith({ name: 'new name' });
+    expect(engineService.updateEngineGeneral).toHaveBeenCalledWith({ name: 'new name', description: 'new description' });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();
   });
 
+  test('should save a blank description as null', async () => {
+    engineService.updateEngineGeneral.mockReturnValue(of(undefined));
+    const tester = new EditEngineGeneralModalTester();
+
+    await tester.description.fill('  ');
+    await tester.saveButton.click();
+
+    expect(engineService.updateEngineGeneral).toHaveBeenCalledWith({ name: 'OIBus', description: null });
+  });
+
   test('should keep the modal open when the save fails', async () => {
     const unhandledError = catchUnhandledErrors();
-    engineService.updateEngineName.mockReturnValue(throwError(() => new Error('boom')));
-    const tester = new EditEngineNameModalTester();
+    engineService.updateEngineGeneral.mockReturnValue(throwError(() => new Error('boom')));
+    const tester = new EditEngineGeneralModalTester();
 
     await tester.saveButton.click();
 
@@ -91,11 +111,11 @@ describe('EditEngineNameModalComponent', () => {
   });
 
   test('should dismiss the modal on cancel', async () => {
-    const tester = new EditEngineNameModalTester();
+    const tester = new EditEngineGeneralModalTester();
 
     await tester.cancelButton.click();
 
-    expect(engineService.updateEngineName).not.toHaveBeenCalled();
+    expect(engineService.updateEngineGeneral).not.toHaveBeenCalled();
     expect(activeModal.dismiss).toHaveBeenCalled();
   });
 });

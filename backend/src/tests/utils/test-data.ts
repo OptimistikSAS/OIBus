@@ -1,7 +1,7 @@
 import { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
 import {
+  EngineGeneralCommandDTO,
   EngineLoggerCommandDTO,
-  EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineWebServerCommandDTO,
@@ -1532,7 +1532,8 @@ const engineSettings: EngineSettings = {
   launcherVersion: '3.4.9',
   auditRetentionDuration: null,
   general: {
-    name: 'OIBus'
+    name: 'OIBus',
+    description: 'OIBus of the test plant'
   },
   webServer: {
     port: 2223,
@@ -1594,8 +1595,9 @@ const engineSettings: EngineSettings = {
   createdAt: '',
   updatedAt: ''
 };
-const engineNameCommand: EngineNameCommandDTO = {
-  name: 'updated OIBus'
+const engineGeneralCommand: EngineGeneralCommandDTO = {
+  name: 'updated OIBus',
+  description: 'updated description'
 };
 const engineWebServerCommand: EngineWebServerCommandDTO = {
   port: 3333,
@@ -1654,7 +1656,7 @@ const engineLoggerCommand: EngineLoggerCommandDTO = {
   }
 };
 const engineSettingsCommand: EngineSettingsCommandDTO = {
-  general: { name: 'updated OIBus' },
+  general: { name: 'updated OIBus', description: 'updated description' },
   auditRetentionDuration: null,
   webServer: { port: 2223, authTokenDuration: '7d' },
   proxyServer: {
@@ -2073,7 +2075,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: engineSettings.version,
-    commandContent: engineNameCommand,
+    commandContent: engineGeneralCommand,
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -2362,7 +2364,7 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
     id: 'newCommandId2',
     type: 'update-engine-general',
     targetVersion: engineSettings.version,
-    commandContent: engineNameCommand
+    commandContent: engineGeneralCommand
   },
   {
     id: 'newCommandId3',
@@ -2515,7 +2517,7 @@ export default Object.freeze({
       securityKey: 'security-key'
     },
     command: engineSettingsCommand,
-    nameCommand: engineNameCommand,
+    generalCommand: engineGeneralCommand,
     webServerCommand: engineWebServerCommand,
     proxyCommand: engineProxyCommand,
     loggerCommand: engineLoggerCommand,

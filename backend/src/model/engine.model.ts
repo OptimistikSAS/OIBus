@@ -12,6 +12,7 @@ export interface EngineSettings extends BaseEntity {
   auditRetentionDuration: number | null;
   general: {
     name: string;
+    description: string | null;
   };
   webServer: {
     port: number;
@@ -69,6 +70,8 @@ export interface EngineSettings extends BaseEntity {
  * secrets are already encrypted (hashed for the proxy password) or carried over from the current settings, and
  * values the API lets callers omit are explicit nulls.
  */
+export type EngineGeneralCommand = EngineSettings['general'];
+
 export type EngineWebServerCommand = EngineSettings['webServer'];
 
 export type EngineProxyCommand = EngineSettings['proxyServer'];
@@ -85,7 +88,7 @@ export interface EngineLoggerCommand {
 
 export interface EngineSettingsCommand {
   auditRetentionDuration: number | null;
-  general: EngineSettings['general'];
+  general: EngineGeneralCommand;
   webServer: EngineWebServerCommand;
   proxyServer: EngineProxyCommand;
   logger: Omit<EngineLoggerCommand, 'auditRetentionDuration'>;

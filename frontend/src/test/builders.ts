@@ -114,7 +114,7 @@ export function buildEngineSettings(overrides: Partial<EngineSettingsDTO> = {}):
     version: '3.7.0',
     launcherVersion: '3.7.0',
     auditRetentionDuration: 90,
-    general: { name: 'OIBus Test' },
+    general: { name: 'OIBus Test', description: null },
     webServer: {
       port: 2223,
       authTokenDuration: '7d',

@@ -4,9 +4,9 @@ import { inject, Service } from '@angular/core';
 import { Observable, shareReplay } from 'rxjs';
 
 import {
+  EngineGeneralCommandDTO,
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
-  EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
@@ -44,8 +44,8 @@ export class EngineService {
     return this.http.put<EngineSettingsUpdateResultDTO>(`/api/engine`, command);
   }
 
-  updateEngineName(command: EngineNameCommandDTO): Observable<void> {
-    return this.http.put<void>(`/api/engine/name`, command);
+  updateEngineGeneral(command: EngineGeneralCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/engine/general`, command);
   }
 
   updateEngineWebServer(command: EngineWebServerCommandDTO): Observable<EngineSettingsUpdateResultDTO> {

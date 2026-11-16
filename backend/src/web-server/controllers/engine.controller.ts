@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
 
 import {
+  EngineGeneralCommandDTO,
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
-  EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
@@ -55,14 +55,14 @@ export class EngineController extends Controller {
   }
 
   /**
-   * Updates only the engine name
-   * @summary Update engine name
-   * @param {EngineNameCommandDTO} command.body.required - Engine name to update
+   * Updates only the engine general settings (name and description)
+   * @summary Update engine general settings
+   * @param {EngineGeneralCommandDTO} command.body.required - Engine general settings to update
    */
-  @Put('/engine/name')
-  @SuccessResponse(200, 'Engine name updated successfully')
-  async updateEngineName(@Body() command: EngineNameCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
-    return await request.services.oIBusService.updateEngineName(command, request.user.id);
+  @Put('/engine/general')
+  @SuccessResponse(200, 'Engine general settings updated successfully')
+  async updateEngineGeneral(@Body() command: EngineGeneralCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+    return await request.services.oIBusService.updateEngineGeneral(command, request.user.id);
   }
 
   /**

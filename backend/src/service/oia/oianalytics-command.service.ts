@@ -727,8 +727,12 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeUpdateEngineGeneralCommand(command: OIBusUpdateEngineGeneralCommand) {
-    await this.oIBusService.updateEngineName(command.commandContent, 'oianalytics');
-    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Engine name updated successfully');
+    await this.oIBusService.updateEngineGeneral(command.commandContent, 'oianalytics');
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      'Engine general settings updated successfully'
+    );
   }
 
   private async executeUpdateEngineWebServerCommand(command: OIBusUpdateEngineWebServerCommand) {

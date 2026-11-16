@@ -176,6 +176,14 @@ describe('3.10.0 config upgrade', () => {
     assert.strictEqual(enabled(kept), false);
   });
 
+  it('adds an empty description to the engine, keeping an existing one', () => {
+    const description = (general: JsonObject) =>
+      (((upgrade.apply({ engine: { settings: { general } } }).engine as JsonObject).settings as JsonObject).general as JsonObject)
+        .description;
+    assert.strictEqual(description({ name: 'OIBus' }), null);
+    assert.strictEqual(description({ name: 'OIBus', description: 'Kept' }), 'Kept');
+  });
+
   it('adds an empty description to the south and history query items, keeping the existing ones', () => {
     const config: JsonObject = {
       southConnectors: [{ type: 'mqtt', settings: { items: [{ name: 'item1' }, { name: 'item2', description: 'Kept' }] } }],

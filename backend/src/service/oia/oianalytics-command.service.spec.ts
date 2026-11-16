@@ -576,9 +576,9 @@ const executionCases = (): Array<ExecutionCase> => {
     // engine
     {
       command: updateEngineGeneralCommand,
-      calls: () => oIBusService.updateEngineName.mock.calls,
+      calls: () => oIBusService.updateEngineGeneral.mock.calls,
       args: [updateEngineGeneralCommand.commandContent, 'oianalytics'],
-      result: 'Engine name updated successfully'
+      result: 'Engine general settings updated successfully'
     },
     {
       command: updateEngineWebServerCommand,

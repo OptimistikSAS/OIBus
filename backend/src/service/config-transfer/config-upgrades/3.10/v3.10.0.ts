@@ -1841,7 +1841,8 @@ export const upgrade: ConfigUpgrade = {
     'and group the connection settings of the InfluxDB, MSSQL, MySQL, Oracle and PostgreSQL souths, with the idle timeout of their connection pool; ' +
     'move the request timeout of the MSSQL and PostgreSQL souths to their items; ' +
     'add the setting enabling the content endpoints of the web server, enabled when a North transformer applies to the OIBus API; ' +
-    'give the error and archive folders of the North connectors and history queries their own maximum size',
+    'give the error and archive folders of the North connectors and history queries their own maximum size; ' +
+    'add the description of the engine',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1861,6 +1862,7 @@ export const upgrade: ConfigUpgrade = {
     const engineSettings = (config.engine as JsonObject | undefined)?.settings as JsonObject | undefined;
     if (engineSettings) {
       setMissing(engineSettings, 'auditRetentionDuration', 90);
+      if (engineSettings.general) setMissing(engineSettings.general as JsonObject, 'description', null);
       if (engineSettings.logger) setMissing(engineSettings.logger as JsonObject, 'auditRetentionDuration', 90);
       // Enabled when the OIBus API was used, before replaceIsoAndIgnoreTransformers adds a transformer applying to it to every North
       if (engineSettings.webServer) setMissing(engineSettings.webServer as JsonObject, 'enableContentEndpoint', usesOIBusApi(config));
