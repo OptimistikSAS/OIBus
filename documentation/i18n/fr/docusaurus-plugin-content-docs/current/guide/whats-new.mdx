@@ -14,22 +14,21 @@ changements demandent tout de même votre attention : voir [Avant la mise à niv
 
 ## Nouveaux connecteurs {#new-connectors}
 
-- South [**Siemens S7**](./south-connectors/s7.mdx) : lit les blocs de données, entrées, sorties, mémentos,
+- South [**Siemens® S7**](./south-connectors/s7.mdx) : lit les blocs de données, entrées, sorties, mémentos,
   temporisations et compteurs des automates S7-200, S7-300, S7-400, S7-1200 et S7-1500, sans pilote à installer.
-- South [**Rockwell EtherNet/IP**](./south-connectors/ethernet-ip.mdx) : lit les tags des contrôleurs Allen-Bradley
-  ControlLogix et CompactLogix.
-- South [**BACnet**](./south-connectors/bacnet.mdx) : lit les objets des équipements BACnet/IP, s'abonne à leurs
+- South [**Rockwell® EtherNet/IP™**](./south-connectors/ethernet-ip.mdx) : lit les tags des contrôleurs ControlLogix®
+  et CompactLogix®.
+- South [**BACnet®**](./south-connectors/bacnet.mdx) : lit les objets des équipements BACnet/IP, s'abonne à leurs
   changements (COV) et récupère leurs journaux de tendance, avec la découverte des équipements (en broadcast ou en
   unicast, via un BBMD, équipements MS/TP derrière un routeur).
 - South [**MongoDB**](./south-connectors/mongodb.mdx) : interroge les documents d'une collection MongoDB.
-- North [**Azure Data Explorer**](./north-connectors/azure-data-explorer.md) : ingère les données dans une table Azure
-  Data Explorer (Kusto).
-- Les connecteurs South BACnet, S7 et InfluxDB ne sont plus en bêta.
+- North [**Azure Data Explorer™**](./north-connectors/azure-data-explorer.md) : ingère les données dans une table Azure
+  Data Explorer.
 
 ## Découvrir et synchroniser les éléments {#discover-and-synchronise-items}
 
 - [**Explorez la source de données**](./south-connectors/common-settings.md#exploring-the-data-source) d'un connecteur
-  South (OPC UA, BACnet, EtherNet/IP, bases de données SQL, Folder Scanner) et ajoutez les nœuds, tags ou tables cochés
+  South (OPC UA®, BACnet, EtherNet/IP, bases de données SQL, Folder Scanner) et ajoutez les nœuds, tags ou tables cochés
   comme éléments. Un élément SQL peut lire plusieurs tables avec une seule requête jointe.
 - Les [**synchronisations des points**](./south-connectors/common-settings.md#items-synchronisation) découvrent les
   nœuds ou les lignes d'une source de données, traitent et filtrent leurs champs, et créent ou mettent à jour à partir
@@ -64,7 +63,7 @@ changements demandent tout de même votre attention : voir [Avant la mise à niv
 ## Pilotes Windows sans l'agent OIBus {#windows-drivers-without-the-oibus-agent}
 
 Les connecteurs South [OPC Classic](./south-connectors/opc.mdx), [ODBC](./south-connectors/odbc.mdx),
-[OLE DB](./south-connectors/oledb.mdx) et [OSIsoft PI](./south-connectors/osisoft-pi.mdx) ne passent plus par l'agent
+[OLE DB](./south-connectors/oledb.mdx) et [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx) ne passent plus par l'agent
 OIBus : ils utilisent les pilotes installés sur la machine d'OIBus. Le connecteur PI lit le PI Data Archive via le
 PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
 
@@ -128,5 +127,3 @@ PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
 - **API REST** : les paramètres généraux du moteur se mettent à jour avec `PUT /api/engine/general` (au lieu de
   `PUT /api/engine/name`), et les points d'accès de contenu sont désactivés quand aucun transformateur North ne
   s'appliquait à l'API OIBus.
-- Un dossier de données mis à niveau par une préversion d'OIBus 4 ne peut pas être mis à niveau : repartez de votre
-  dossier de données OIBus 3.9.

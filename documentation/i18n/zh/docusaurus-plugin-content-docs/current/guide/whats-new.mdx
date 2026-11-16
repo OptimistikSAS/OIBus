@@ -12,20 +12,19 @@ OIBus 4 是一个主要版本。它新增了连接器，让 OIBus 能够发现�
 
 ## 新连接器 {#new-connectors}
 
-- [**Siemens S7**](./south-connectors/s7.mdx) South：读取 S7-200、S7-300、S7-400、S7-1200 和 S7-1500 PLC
+- [**Siemens® S7**](./south-connectors/s7.mdx) South：读取 S7-200、S7-300、S7-400、S7-1200 和 S7-1500 PLC
   的数据块、输入、输出、标志位、定时器和计数器，无需安装驱动程序。
-- [**Rockwell EtherNet/IP**](./south-connectors/ethernet-ip.mdx) South：读取 Allen-Bradley ControlLogix 和
-  CompactLogix 控制器的标签。
-- [**BACnet**](./south-connectors/bacnet.mdx) South：读取 BACnet/IP 设备的对象，订阅其变化（COV）并获取其趋势日志，
+- [**Rockwell® EtherNet/IP™**](./south-connectors/ethernet-ip.mdx) South：读取 ControlLogix® 和 CompactLogix®
+  控制器的标签。
+- [**BACnet®**](./south-connectors/bacnet.mdx) South：读取 BACnet/IP 设备的对象，订阅其变化（COV）并获取其趋势日志，
   支持设备发现（广播或单播、通过 BBMD、路由器后的 MS/TP 设备）。
 - [**MongoDB**](./south-connectors/mongodb.mdx) South：查询 MongoDB 集合中的文档。
-- [**Azure Data Explorer**](./north-connectors/azure-data-explorer.md) North：将数据写入 Azure Data
-  Explorer（Kusto）表。
-- BACnet、S7 和 InfluxDB South 连接器不再处于测试阶段。
+- [**Azure Data Explorer™**](./north-connectors/azure-data-explorer.md) North：将数据写入 Azure Data
+  Explorer 表。
 
 ## 发现和同步项 {#discover-and-synchronise-items}
 
-- [**浏览 South 连接器的数据源**](./south-connectors/common-settings.md#exploring-the-data-source)（OPC UA、BACnet、
+- [**浏览 South 连接器的数据源**](./south-connectors/common-settings.md#exploring-the-data-source)（OPC UA®、BACnet、
   EtherNet/IP、SQL 数据库、Folder Scanner），并将勾选的节点、标签或表添加为项。一个 SQL 项可以通过一条连接查询读取多个表。
 - [**项同步**](./south-connectors/common-settings.md#items-synchronisation)会发现数据源的节点或行，处理并筛选其字段，
   然后据此按需或按计划创建或更新 South 连接器的项。它们也可以改为将发现的记录推送到 OIAnalytics。
@@ -51,7 +50,7 @@ OIBus 4 是一个主要版本。它新增了连接器，让 OIBus 能够发现�
 ## 无需 OIBus Agent 的 Windows 驱动 {#windows-drivers-without-the-oibus-agent}
 
 [OPC Classic](./south-connectors/opc.mdx)、[ODBC](./south-connectors/odbc.mdx)、[OLE DB](./south-connectors/oledb.mdx)
-和 [OSIsoft PI](./south-connectors/osisoft-pi.mdx) South 连接器不再经由 OIBus Agent：它们使用安装在 OIBus 机器上的
+和 [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx) South 连接器不再经由 OIBus Agent：它们使用安装在 OIBus 机器上的
 驱动程序。PI 连接器通过 PI AF Client 读取 PI Data Archive，并可在 PI Data Archive 上筛选值。
 
 ## 引擎与管理 {#engine-and-administration}
@@ -95,4 +94,3 @@ OIBus 4 是一个主要版本。它新增了连接器，让 OIBus 能够发现�
   Agent 的设置）。
 - **REST API**：引擎通用设置通过 `PUT /api/engine/general` 更新（取代 `PUT /api/engine/name`），当没有 North
   转换器应用于 OIBus API 时，内容端点会被禁用。
-- 由 OIBus 4 预发布版本升级过的数据文件夹无法再升级：请从您的 OIBus 3.9 数据文件夹开始。

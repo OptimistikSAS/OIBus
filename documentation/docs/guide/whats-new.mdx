@@ -13,22 +13,21 @@ the caches, and a configuration exported from OIBus 3.9 can be imported. A few c
 
 ## New Connectors {#new-connectors}
 
-- [**Siemens S7**](./south-connectors/s7.mdx) South: read the data blocks, inputs, outputs, markers, timers and
+- [**Siemens® S7**](./south-connectors/s7.mdx) South: read the data blocks, inputs, outputs, markers, timers and
   counters of S7-200, S7-300, S7-400, S7-1200 and S7-1500 PLCs, with no driver to install.
-- [**Rockwell EtherNet/IP**](./south-connectors/ethernet-ip.mdx) South: read the tags of Allen-Bradley ControlLogix
-  and CompactLogix controllers.
-- [**BACnet**](./south-connectors/bacnet.mdx) South: read the objects of BACnet/IP devices, subscribe to their changes
+- [**Rockwell® EtherNet/IP™**](./south-connectors/ethernet-ip.mdx) South: read the tags of ControlLogix® and
+  CompactLogix® controllers.
+- [**BACnet®**](./south-connectors/bacnet.mdx) South: read the objects of BACnet/IP devices, subscribe to their changes
   (COV) and retrieve their trend logs, with device discovery (broadcast or unicast, through a BBMD, MS/TP devices
   behind a router).
 - [**MongoDB**](./south-connectors/mongodb.mdx) South: query the documents of a MongoDB collection.
-- [**Azure Data Explorer**](./north-connectors/azure-data-explorer.md) North: ingest the data into an Azure Data
-  Explorer (Kusto) table.
-- The BACnet, S7 and InfluxDB South connectors are no longer in beta.
+- [**Azure Data Explorer™**](./north-connectors/azure-data-explorer.md) North: ingest the data into an Azure Data
+  Explorer table.
 
 ## Discover and Synchronise Items {#discover-and-synchronise-items}
 
 - [**Explore the data source**](./south-connectors/common-settings.md#exploring-the-data-source) of a South connector
-  (OPC UA, BACnet, EtherNet/IP, SQL databases, Folder Scanner) and add the checked nodes, tags or tables as items. An
+  (OPC UA®, BACnet, EtherNet/IP, SQL databases, Folder Scanner) and add the checked nodes, tags or tables as items. An
   SQL item can read several tables with one joined query.
 - [**Items synchronisations**](./south-connectors/common-settings.md#items-synchronisation) discover the nodes or the
   rows of a data source, process and filter their fields, and create or update the items of the South connector from
@@ -61,7 +60,7 @@ the caches, and a configuration exported from OIBus 3.9 can be imported. A few c
 ## Windows Drivers Without the OIBus Agent {#windows-drivers-without-the-oibus-agent}
 
 The [OPC Classic](./south-connectors/opc.mdx), [ODBC](./south-connectors/odbc.mdx),
-[OLE DB](./south-connectors/oledb.mdx) and [OSIsoft PI](./south-connectors/osisoft-pi.mdx) South connectors no longer
+[OLE DB](./south-connectors/oledb.mdx) and [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx) South connectors no longer
 go through the OIBus Agent: they use the drivers installed on the OIBus machine. The PI connector reads the PI Data
 Archive through the PI AF Client, and can filter the values on the PI Data Archive.
 
@@ -119,4 +118,3 @@ Archive through the PI AF Client, and can filter the values on the PI Data Archi
   longer use the OIBus Agent (the agent settings are removed on upgrade).
 - **REST API**: the engine general settings are updated with `PUT /api/engine/general` (instead of
   `PUT /api/engine/name`), and the content endpoints are disabled when no North transformer applied to the OIBus API.
-- A data folder upgraded by a pre-release of OIBus 4 cannot be upgraded: start from your OIBus 3.9 data folder.
