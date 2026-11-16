@@ -1166,7 +1166,7 @@ export const sanitizeCommandError = (error: unknown, secret: string): Error => {
 };
 
 /**
- * A value as sent by the OIBus agents (OPC, PI), and as cached by OIBus before 3.10: the value and its extra fields
+ * A value as sent by the OIBus agents (OPC, PI), and as cached by OIBus before 4.0: the value and its extra fields
  * (e.g. the quality) nested in `data`.
  */
 export interface NestedPointValue {

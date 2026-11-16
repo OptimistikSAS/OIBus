@@ -12,7 +12,7 @@ import {
   RoutingLink,
   SETPOINT_PASSTHROUGH,
   southContentType
-} from '../../../../service/config-transfer/config-upgrades/3.10/passthrough-transformers';
+} from '../../../../service/config-transfer/config-upgrades/4.0/passthrough-transformers';
 import {
   buildRecordListToCsvOptions,
   COMPRESSED_FILE_OPTIONS,
@@ -63,7 +63,7 @@ import {
   withoutPiAgentSettings,
   withPiValueFilter,
   withPrefixAndSuffix
-} from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
+} from '../../../../service/config-transfer/config-upgrades/4.0/v4.0.0';
 import { generateRandomId } from '../../../../service/utils';
 
 const SCAN_MODES_TABLE = 'scan_modes';
@@ -90,7 +90,7 @@ const ITEM_POINT_METADATA_TABLE = 'item_point_metadata';
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 
 /**
- * 3.10.0 bundles several features and fixes, each applied by a step below, in this order (the steps exported for the
+ * 4.0.0 bundles several features and fixes, each applied by a step below, in this order (the steps exported for the
  * spec, which tests each of them on what the previous ones leave). Most data steps mirror a function of the config
  * upgrade of the same version, applied to imported configurations.
  */
@@ -851,7 +851,7 @@ export async function addContentEndpointSetting(knex: Knex): Promise<void> {
  *     'iso' link of a point-based south (or history query) to an OIAnalytics North becomes one, and one is added at the
  *     south (or history query) level when there is none (see `addOIAnalyticsTransformers` in the config upgrade).
  *
- * The time values still waiting in the North caches are converted by the 3.10.0 data folder migration.
+ * The time values still waiting in the North caches are converted by the 4.0.0 data folder migration.
  */
 export async function replaceTimeValuesByRecordLists(knex: Knex): Promise<void> {
   await knex(TRANSFORMERS_TABLE).where({ type: 'custom', input_type: 'time-values' }).update({ input_type: 'record-list' });
@@ -1239,7 +1239,7 @@ export async function groupOIAnalyticsOptions(knex: Knex): Promise<void> {
 
 /**
  * The `any` data type is renamed `file` (see `toFileDataType`): the input and output types of the standard and custom
- * transformers are updated. The files still waiting in the North caches are updated by the 3.10.0 data folder
+ * transformers are updated. The files still waiting in the North caches are updated by the 4.0.0 data folder
  * migration.
  */
 export async function renameAnyDataType(knex: Knex): Promise<void> {
@@ -1301,7 +1301,7 @@ const NORTH_LINK_OWNER_TABLES = [
  * The North File Writer only writes files (see `convertFileWriterLinks` in the config upgrade): its file-to-record-list
  * links write the rows of the file in a JSON file through file-to-file instead, and its links to the custom
  * transformers sending records or setpoints are removed. The records and setpoints still waiting in its caches are
- * turned into files by the 3.10.0 data folder migration.
+ * turned into files by the 4.0.0 data folder migration.
  */
 export async function convertFileWriterLinks(knex: Knex): Promise<void> {
   const transformers: Array<{ id: string; type: string; function_name: string | null; output_type: string }> = await knex(
@@ -1534,7 +1534,7 @@ export async function moveCompressionToNorths(knex: Knex): Promise<void> {
  *    `toSetpointTransformerOptions`);
  *  - the custom transformers reading or writing setpoints read or write records;
  *  - the record-list-to-mqtt links without payload publish the whole record, as before.
- * The setpoints still waiting in the caches become records with the 3.10.0 data folder migration.
+ * The setpoints still waiting in the caches become records with the 4.0.0 data folder migration.
  */
 export async function mergeSetpointsIntoRecordLists(knex: Knex): Promise<void> {
   for (const [oldFunctionName, functionName] of Object.entries(SETPOINT_TRANSFORMER_REPLACEMENTS)) {
@@ -1569,7 +1569,7 @@ export async function replaceFileTransformer(knex: Knex): Promise<void> {
  * The File Writer and SFTP North connectors no longer add a prefix and a suffix to the name of the files they send (see
  * `moveFilenamePrefixAndSuffixToTransformers` in the config upgrade): the `prefix` and `suffix` settings are removed, and
  * added to the filename of their file-to-file and record-list-to-file transformers. Their custom transformers name the
- * files themselves: a warning lists them. The files still waiting in their caches are renamed by the 3.10.0 data folder
+ * files themselves: a warning lists them. The files still waiting in their caches are renamed by the 4.0.0 data folder
  * migration.
  */
 export async function moveFilenamePrefixAndSuffixToTransformers(knex: Knex): Promise<void> {

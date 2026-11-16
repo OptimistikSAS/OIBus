@@ -32,7 +32,7 @@ import { createAuditServiceMock } from '../utils/test-utils';
  *
  * The 3.9 fixtures predate config export: they were generated from the v3.9.0 and v3.9.3 checkouts, as
  * OIAnalytics would produce them from the full-config and history-queries messages those versions send
- * (their `OIAnalyticsMessageService`), from the same test data plus the upgrade cases the 3.10.0 step
+ * (their `OIAnalyticsMessageService`), from the same test data plus the upgrade cases the 4.0.0 step
  * handles (SQL items with their CSV serialization resolved at item, group and south level, OIAnalytics
  * transformers, and on 3.9.0 an OPC UA item with an empty timestampOrigin). Being frozen, they are
  * never regenerated.

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 
-import { PREFIXING_NORTH_TYPES } from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
+import { PREFIXING_NORTH_TYPES } from '../../../../service/config-transfer/config-upgrades/4.0/v4.0.0';
 import { filesExists, getCommandLineArguments, NestedPointValue, toPointRecord } from '../../../../service/utils';
 
 const { configFile } = getCommandLineArguments();
@@ -15,7 +15,7 @@ const METADATA_FOLDER = 'metadata';
 const DATA_FOLDER_PATH = path.resolve(configFile);
 
 /**
- * Converts the content still waiting in a North cache (or kept in its error and archive folders) to the 3.10.0 content
+ * Converts the content still waiting in a North cache (or kept in its error and archive folders) to the 4.0.0 content
  * types, each file going through these conversions in order:
  *  1. The `time-values` content type is replaced by `record-list`: the time values are converted into point records
  *     (`{ pointId, timestamp, value, ...extras }`), so the North connectors can still send them. The OIAnalytics North
@@ -57,7 +57,7 @@ export async function up(knex: Knex): Promise<void> {
     }
   }
   if (converted > 0) {
-    console.info(`Converted ${converted} cached file(s) to the 3.10.0 content types and names`);
+    console.info(`Converted ${converted} cached file(s) to the 4.0.0 content types and names`);
   }
 }
 

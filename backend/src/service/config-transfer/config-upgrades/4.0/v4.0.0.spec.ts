@@ -27,7 +27,7 @@ import {
   withoutPiAgentSettings,
   withPiValueFilter,
   withPrefixAndSuffix
-} from './v3.10.0';
+} from './v4.0.0';
 
 const fixtureConfig = (version: string): JsonObject =>
   JSON.parse(fs.readFileSync(path.join(CONFIG_TRANSFER_FIXTURES_DIR, version, 'export.json'), 'utf-8')).config;
@@ -61,9 +61,9 @@ const jsonFileOptions = {
   fields: []
 };
 
-describe('3.10.0 config upgrade', () => {
-  it('leaves a configuration already in the 3.10.0 shape untouched, as exported by a 3.10.0 pre-release', () => {
-    const config = fixtureConfig('3.10.0');
+describe('4.0.0 config upgrade', () => {
+  it('leaves a configuration already in the 4.0.0 shape untouched, as exported by a 4.0.0 pre-release', () => {
+    const config = fixtureConfig('4.0.0');
 
     assert.deepStrictEqual(upgrade.apply(structuredClone(config)), config);
   });

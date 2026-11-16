@@ -27,7 +27,7 @@ import { ConfigUpgrade, forEachSouth, JsonObject } from './config-upgrades/confi
 import { CONFIG_UPGRADES } from './config-upgrades/registry';
 
 /** Version of the importing OIBus the tests pin, independently of `package.json`. */
-const CURRENT_VERSION = '3.11.0';
+const CURRENT_VERSION = '4.1.0';
 
 describe('Config Import Service', () => {
   let service: ConfigImportService;
@@ -168,22 +168,22 @@ describe('Config Import Service', () => {
     });
 
     it('accepts an export from a pre-release of the current version', async () => {
-      const file = { ...validFile(), oibusVersion: '3.11.0-beta-6' };
+      const file = { ...validFile(), oibusVersion: '4.1.0-beta-6' };
 
       const result = await service.validateAndUpgrade(file, CURRENT_VERSION);
 
-      assert.strictEqual(result.fromVersion, '3.11.0-beta-6');
+      assert.strictEqual(result.fromVersion, '4.1.0-beta-6');
     });
 
     it('rejects an export produced by a newer OIBus', async () => {
-      const error = await rejection({ ...validFile(), oibusVersion: '3.11.1' });
+      const error = await rejection({ ...validFile(), oibusVersion: '4.1.1' });
 
       assert.match(error.message, /newer than this OIBus instance/);
       assert.deepStrictEqual(error.validationErrors, []);
     });
 
     it('rejects an export from a release when running one of its pre-releases', async () => {
-      const error = await rejection({ ...validFile(), oibusVersion: '3.11.0' }, '3.11.0-beta-6');
+      const error = await rejection({ ...validFile(), oibusVersion: '4.1.0' }, '4.1.0-beta-6');
 
       assert.match(error.message, /newer than this OIBus instance/);
     });
@@ -201,7 +201,7 @@ describe('Config Import Service', () => {
       assert.strictEqual(result.fromVersion, '3.9.0');
       assert.deepStrictEqual(
         result.appliedUpgrades.map(upgrade => upgrade.version),
-        ['3.9.2', '3.10.0']
+        ['3.9.2', '4.0.0']
       );
     });
 
@@ -236,30 +236,30 @@ describe('Config Import Service', () => {
           });
           return config;
         };
-      register({ version: '3.11.0', description: 'second', apply: step('3.11.0') });
-      register({ version: '3.10.1', description: 'first', apply: step('3.10.1') });
-      register({ version: '3.10.0', description: 'already in the export', apply: step('3.10.0') });
-      register({ version: '3.11.1', description: 'newer than this OIBus', apply: step('3.11.1') });
+      register({ version: '4.1.0', description: 'second', apply: step('4.1.0') });
+      register({ version: '4.0.1', description: 'first', apply: step('4.0.1') });
+      register({ version: '4.0.0', description: 'already in the export', apply: step('4.0.0') });
+      register({ version: '4.1.1', description: 'newer than this OIBus', apply: step('4.1.1') });
 
-      const result = await service.validateAndUpgrade({ ...validFile(), oibusVersion: '3.10.0' }, CURRENT_VERSION);
+      const result = await service.validateAndUpgrade({ ...validFile(), oibusVersion: '4.0.0' }, CURRENT_VERSION);
 
-      assert.deepStrictEqual(calls, ['3.10.1', '3.11.0']);
+      assert.deepStrictEqual(calls, ['4.0.1', '4.1.0']);
       assert.deepStrictEqual(
         result.appliedUpgrades.map(upgrade => [upgrade.version, upgrade.description]),
         [
-          ['3.10.1', 'first'],
-          ['3.11.0', 'second']
+          ['4.0.1', 'first'],
+          ['4.1.0', 'second']
         ]
       );
-      assert.strictEqual(findSouth(result.config, 'opcua').settings.description, 'upgraded to 3.11.0');
+      assert.strictEqual(findSouth(result.config, 'opcua').settings.description, 'upgraded to 4.1.0');
     });
 
     it('validates the upgraded configuration, not the exported one', async () => {
       // The export lacks a field the current shape requires, and the step adds it back.
-      const file = { ...validFile(), oibusVersion: '3.10.0' };
+      const file = { ...validFile(), oibusVersion: '4.0.0' };
       delete (findSouth(file.config, 'opcua').settings as Partial<OIAnalyticsSouthCommandDTO['settings']>).configurationWorkflows;
       register({
-        version: '3.11.0',
+        version: '4.1.0',
         description: 'add configuration workflows',
         apply: config => {
           forEachSouth(config, null, south => ((south.settings as JsonObject).configurationWorkflows ??= []));
@@ -274,16 +274,16 @@ describe('Config Import Service', () => {
 
     it('rejects the import when a step throws, naming the step', async () => {
       register({
-        version: '3.11.0',
+        version: '4.1.0',
         description: 'broken step',
         apply: () => {
           throw new Error('boom');
         }
       });
 
-      const error = await rejection({ ...validFile(), oibusVersion: '3.10.0' });
+      const error = await rejection({ ...validFile(), oibusVersion: '4.0.0' });
 
-      assert.match(error.message, /Could not upgrade the configuration to OIBus 3\.11\.0 \(broken step\): boom/);
+      assert.match(error.message, /Could not upgrade the configuration to OIBus 4\.1\.0 \(broken step\): boom/);
     });
   });
 
@@ -454,7 +454,7 @@ describe('Config Import Service', () => {
       assert.strictEqual(result.toVersion, CURRENT_VERSION);
       assert.deepStrictEqual(
         result.appliedUpgrades.map(upgrade => upgrade.version),
-        ['3.9.2', '3.10.0']
+        ['3.9.2', '4.0.0']
       );
       assert.ok(result.appliedUpgrades.every(upgrade => Object.keys(upgrade).sort().join() === 'description,version'));
       assert.strictEqual(result.config.southConnectors.length, 1);
@@ -470,7 +470,7 @@ describe('Config Import Service', () => {
     const validateAndUpgrade = service.validateAndUpgrade.bind(service);
     mock.method(service, 'validateAndUpgrade', (rawInput: unknown) => validateAndUpgrade(rawInput, CURRENT_VERSION));
     await assert.rejects(
-      () => service.importConfiguration({ ...validFile(), oibusVersion: '3.10.0' }, 'some-user-id'),
+      () => service.importConfiguration({ ...validFile(), oibusVersion: '4.0.0' }, 'some-user-id'),
       /constructed without the repositories required to write an import/
     );
   });

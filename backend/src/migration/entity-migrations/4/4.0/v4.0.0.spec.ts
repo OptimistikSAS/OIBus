@@ -4,7 +4,7 @@ import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:t
 
 import { Knex } from 'knex';
 
-import { COMPRESSED_FILE_OPTIONS, toOIAnalyticsItemFileOptions } from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
+import { COMPRESSED_FILE_OPTIONS, toOIAnalyticsItemFileOptions } from '../../../../service/config-transfer/config-upgrades/4.0/v4.0.0';
 import {
   buildSchemaBefore,
   createMigrationFileCloneHarness,
@@ -43,7 +43,7 @@ import {
   STEPS,
   up,
   useLocalOleDbDriver
-} from './v3.10.0';
+} from './v4.0.0';
 
 const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 const NOW = '2024-01-01T00:00:00.000Z';
@@ -107,7 +107,7 @@ const itemSettings = (filename: string) => JSON.stringify({ endpoint: '/api', qu
 
 /** Builds the schema and data the steps of the migration before `step` leave (on the data of the previous migrations) */
 async function buildSchemaBeforeStep(step: (knex: Knex) => Promise<void>, db: Knex): Promise<void> {
-  await buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v3.10.0.ts', db);
+  await buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v4.0.0.ts', db);
   for (const previousStep of STEPS.slice(0, STEPS.indexOf(step))) {
     await previousStep(db);
   }
@@ -120,10 +120,10 @@ async function runStepsFrom(step: (knex: Knex) => Promise<void>, db: Knex): Prom
   }
 }
 
-describe('Entity migration v3.10.0', () => {
+describe('Entity migration v4.0.0', () => {
   // The pre-migration schema is built once, each test gets its own copy of it
   const harness = createMigrationFileCloneHarness({
-    buildSchema: db => buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v3.10.0.ts', db)
+    buildSchema: db => buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v4.0.0.ts', db)
   });
   before(() => harness.before());
   beforeEach(() => harness.beforeEach());
@@ -1872,7 +1872,7 @@ describe('Entity migration v3.10.0', () => {
       });
     }
 
-    it('runs end-to-end on a realistic pre-3.10.0 schema', async () => {
+    it('runs end-to-end on a realistic pre-4.0.0 schema', async () => {
       await up(db); // must not throw
     });
 
@@ -2108,7 +2108,7 @@ describe('Entity migration v3.10.0', () => {
   });
 });
 
-describe('Entity migration v3.10.0: addRegistrationPermissions', () => {
+describe('Entity migration v4.0.0: addRegistrationPermissions', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(addRegistrationPermissions, db)
   });
@@ -2211,7 +2211,7 @@ describe('Entity migration v3.10.0: addRegistrationPermissions', () => {
   });
 });
 
-describe('Entity migration v3.10.0: replaceRawResampling', () => {
+describe('Entity migration v4.0.0: replaceRawResampling', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(replaceRawResampling, db)
   });
@@ -2306,7 +2306,7 @@ describe('Entity migration v3.10.0: replaceRawResampling', () => {
   });
 });
 
-describe('Entity migration v3.10.0: addHttpsSettings', () => {
+describe('Entity migration v4.0.0: addHttpsSettings', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(addHttpsSettings, db)
   });
@@ -2368,7 +2368,7 @@ describe('Entity migration v3.10.0: addHttpsSettings', () => {
   });
 });
 
-describe('Entity migration v3.10.0: addContentEndpointSetting', () => {
+describe('Entity migration v4.0.0: addContentEndpointSetting', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(addContentEndpointSetting, db)
   });
@@ -2441,7 +2441,7 @@ describe('Entity migration v3.10.0: addContentEndpointSetting', () => {
   });
 });
 
-describe('Entity migration v3.10.0: replaceTimeValuesByRecordLists', () => {
+describe('Entity migration v4.0.0: replaceTimeValuesByRecordLists', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(replaceTimeValuesByRecordLists, db)
   });
@@ -2832,7 +2832,7 @@ describe('Entity migration v3.10.0: replaceTimeValuesByRecordLists', () => {
   });
 });
 
-describe('Entity migration v3.10.0: replaceIsoAndIgnoreTransformers', () => {
+describe('Entity migration v4.0.0: replaceIsoAndIgnoreTransformers', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(replaceIsoAndIgnoreTransformers, db)
   });
@@ -3090,7 +3090,7 @@ describe('Entity migration v3.10.0: replaceIsoAndIgnoreTransformers', () => {
   });
 });
 
-describe('Entity migration v3.10.0: groupOIAnalyticsOptions', () => {
+describe('Entity migration v4.0.0: groupOIAnalyticsOptions', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(groupOIAnalyticsOptions, db)
   });
@@ -3170,7 +3170,7 @@ describe('Entity migration v3.10.0: groupOIAnalyticsOptions', () => {
   });
 });
 
-describe('Entity migration v3.10.0: renameAnyDataType', () => {
+describe('Entity migration v4.0.0: renameAnyDataType', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(renameAnyDataType, db)
   });
@@ -3205,7 +3205,7 @@ describe('Entity migration v3.10.0: renameAnyDataType', () => {
   });
 });
 
-describe('Entity migration v3.10.0: replaceCsvAndJsonReaders', () => {
+describe('Entity migration v4.0.0: replaceCsvAndJsonReaders', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(replaceCsvAndJsonReaders, db)
   });
@@ -3355,7 +3355,7 @@ describe('Entity migration v3.10.0: replaceCsvAndJsonReaders', () => {
   });
 });
 
-describe('Entity migration v3.10.0: replaceCsvAndJsonWriters', () => {
+describe('Entity migration v4.0.0: replaceCsvAndJsonWriters', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(replaceCsvAndJsonWriters, db)
   });
@@ -3526,7 +3526,7 @@ describe('Entity migration v3.10.0: replaceCsvAndJsonWriters', () => {
   });
 });
 
-describe('Entity migration v3.10.0: convertFileWriterLinks', () => {
+describe('Entity migration v4.0.0: convertFileWriterLinks', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(convertFileWriterLinks, db)
   });
@@ -3633,7 +3633,7 @@ describe('Entity migration v3.10.0: convertFileWriterLinks', () => {
   });
 });
 
-describe('Entity migration v3.10.0: convertOIAnalyticsSouths', () => {
+describe('Entity migration v4.0.0: convertOIAnalyticsSouths', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(convertOIAnalyticsSouths, db)
   });
@@ -3778,7 +3778,7 @@ describe('Entity migration v3.10.0: convertOIAnalyticsSouths', () => {
   });
 });
 
-describe('Entity migration v3.10.0: moveCompressionToNorths', () => {
+describe('Entity migration v4.0.0: moveCompressionToNorths', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(moveCompressionToNorths, db)
   });
@@ -3894,7 +3894,7 @@ describe('Entity migration v3.10.0: moveCompressionToNorths', () => {
   });
 });
 
-describe('Entity migration v3.10.0: mergeSetpointsIntoRecordLists', () => {
+describe('Entity migration v4.0.0: mergeSetpointsIntoRecordLists', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(mergeSetpointsIntoRecordLists, db)
   });
@@ -4059,7 +4059,7 @@ describe('Entity migration v3.10.0: mergeSetpointsIntoRecordLists', () => {
   });
 });
 
-describe('Entity migration v3.10.0: replaceFileTransformer', () => {
+describe('Entity migration v4.0.0: replaceFileTransformer', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(replaceFileTransformer, db)
   });
@@ -4145,7 +4145,7 @@ describe('Entity migration v3.10.0: replaceFileTransformer', () => {
   });
 });
 
-describe('Entity migration v3.10.0: moveFilenamePrefixAndSuffixToTransformers', () => {
+describe('Entity migration v4.0.0: moveFilenamePrefixAndSuffixToTransformers', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(moveFilenamePrefixAndSuffixToTransformers, db)
   });
@@ -4268,7 +4268,7 @@ describe('Entity migration v3.10.0: moveFilenamePrefixAndSuffixToTransformers', 
   });
 });
 
-describe('Entity migration v3.10.0: addOPCUATimeoutsAndSubscriptionSettings', () => {
+describe('Entity migration v4.0.0: addOPCUATimeoutsAndSubscriptionSettings', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(addOPCUATimeoutsAndSubscriptionSettings, db)
   });
@@ -4372,7 +4372,7 @@ describe('Entity migration v3.10.0: addOPCUATimeoutsAndSubscriptionSettings', ()
   });
 });
 
-describe('Entity migration v3.10.0: addItemAndWorkflowDescriptions', () => {
+describe('Entity migration v4.0.0: addItemAndWorkflowDescriptions', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(addItemAndWorkflowDescriptions, db)
   });
@@ -4419,7 +4419,7 @@ describe('Entity migration v3.10.0: addItemAndWorkflowDescriptions', () => {
   });
 });
 
-describe('Entity migration v3.10.0: addEmptyIntervalStrategies', () => {
+describe('Entity migration v4.0.0: addEmptyIntervalStrategies', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(addEmptyIntervalStrategies, db)
   });
@@ -4471,7 +4471,7 @@ describe('Entity migration v3.10.0: addEmptyIntervalStrategies', () => {
   });
 });
 
-describe('Entity migration v3.10.0: addDatabaseConnectionSettings', () => {
+describe('Entity migration v4.0.0: addDatabaseConnectionSettings', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(addDatabaseConnectionSettings, db)
   });
@@ -4561,7 +4561,7 @@ describe('Entity migration v3.10.0: addDatabaseConnectionSettings', () => {
   });
 });
 
-describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
+describe('Entity migration v4.0.0: convertFieldProcessesToOperations', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(convertFieldProcessesToOperations, db)
   });
@@ -4669,7 +4669,7 @@ describe('Entity migration v3.10.0: convertFieldProcessesToOperations', () => {
   });
 });
 
-describe('Entity migration v3.10.0: removeOdbcAgentSettings', () => {
+describe('Entity migration v4.0.0: removeOdbcAgentSettings', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(removeOdbcAgentSettings, db)
   });
@@ -4719,7 +4719,7 @@ describe('Entity migration v3.10.0: removeOdbcAgentSettings', () => {
   });
 });
 
-describe('Entity migration v3.10.0: removeOpcAgentSettings', () => {
+describe('Entity migration v4.0.0: removeOpcAgentSettings', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(removeOpcAgentSettings, db)
   });
@@ -4763,7 +4763,7 @@ describe('Entity migration v3.10.0: removeOpcAgentSettings', () => {
   });
 });
 
-describe('Entity migration v3.10.0: useLocalOleDbDriver', () => {
+describe('Entity migration v4.0.0: useLocalOleDbDriver', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(useLocalOleDbDriver, db)
   });
@@ -4812,7 +4812,7 @@ describe('Entity migration v3.10.0: useLocalOleDbDriver', () => {
         end_time: NOW,
         south_type: 'oledb',
         north_type: 'console',
-        // Already without agent and with a max parallel run (3.10.0 pre-release): kept as is
+        // Already without agent and with a max parallel run (4.0.0 pre-release): kept as is
         south_settings: JSON.stringify({ ...oledbSettings, maxParallelRun: 4 }),
         north_settings: '{}'
       }
@@ -4830,7 +4830,7 @@ describe('Entity migration v3.10.0: useLocalOleDbDriver', () => {
   });
 });
 
-describe('Entity migration v3.10.0: removePiAgentSettings', () => {
+describe('Entity migration v4.0.0: removePiAgentSettings', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(removePiAgentSettings, db)
   });
@@ -4872,7 +4872,7 @@ describe('Entity migration v3.10.0: removePiAgentSettings', () => {
         end_time: NOW,
         south_type: 'osisoft-pi',
         north_type: 'console',
-        // Already without agent and with a server name (3.10.0 pre-release): kept as is
+        // Already without agent and with a server name (4.0.0 pre-release): kept as is
         south_settings: JSON.stringify({ serverName: 'PISRV1', retryInterval: 10000 }),
         north_settings: '{}'
       }
@@ -4902,7 +4902,7 @@ describe('Entity migration v3.10.0: removePiAgentSettings', () => {
         history_id: 'hq-pi-named',
         name: 'PI item',
         enabled: true,
-        // Already with a value filter (3.10.0 pre-release): kept as is
+        // Already with a value filter (4.0.0 pre-release): kept as is
         settings: JSON.stringify({ type: 'point-query', piQuery: '*', valueFilter: "'SINUSOID' > 50" })
       }
     ]);
@@ -4930,7 +4930,7 @@ describe('Entity migration v3.10.0: removePiAgentSettings', () => {
   });
 });
 
-describe('Entity migration v3.10.0: addErrorAndArchiveMaxSizes', () => {
+describe('Entity migration v4.0.0: addErrorAndArchiveMaxSizes', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(addErrorAndArchiveMaxSizes, db)
   });
@@ -4993,7 +4993,7 @@ describe('Entity migration v3.10.0: addErrorAndArchiveMaxSizes', () => {
   });
 });
 
-describe('Entity migration v3.10.0: addEngineDescription', () => {
+describe('Entity migration v4.0.0: addEngineDescription', () => {
   const harness = createMigrationSchemaHarness({
     buildSchema: db => buildSchemaBeforeStep(addEngineDescription, db)
   });

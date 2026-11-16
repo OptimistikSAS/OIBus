@@ -27,7 +27,7 @@ const fixtureVersions = fs
  * Version the fixtures are upgraded and migrated to, pinned independently of `package.json` (only bumped by
  * release-please at release time). It must not be older than the newest config upgrade step.
  */
-const currentVersion = '3.11.0';
+const currentVersion = '4.1.0';
 
 /**
  * Uses the entity migrations as the reference for the config upgrade chain. For every frozen fixture

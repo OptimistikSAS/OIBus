@@ -133,7 +133,7 @@ describe('NorthOIAnalytics', () => {
   });
 
   describe('handleValues (oianalytics)', () => {
-    // Values in the legacy array format, as produced by a custom transformer or cached before 3.10
+    // Values in the legacy array format, as produced by a custom transformer or cached before 4.0
     const timeValuesMetadata = {
       contentFile: 'file.json',
       contentSize: 100,

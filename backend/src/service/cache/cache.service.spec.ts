@@ -1157,7 +1157,7 @@ describe('CacheService', () => {
       await service.compactQueue(100, 'typeA', 'south1');
       assert.deepStrictEqual((accumulateContent.mock.calls[0].arguments as Array<unknown>)[0], [item1, item3]);
 
-      // Content without data source (cached before 3.10 or from OIAnalytics setpoints) is only merged together
+      // Content without data source (cached before 4.0 or from OIAnalytics setpoints) is only merged together
       await service.compactQueue(100, 'typeA', null);
       assert.strictEqual(accumulateContent.mock.calls.length, 1); // a single file: nothing to compact
     });

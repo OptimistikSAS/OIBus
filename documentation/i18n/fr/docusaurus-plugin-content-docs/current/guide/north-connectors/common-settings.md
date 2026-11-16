@@ -132,8 +132,8 @@ Pour envoyer les données telles quelles, utilisez un transformateur de passage 
 et les charges utiles JSON, ou [Fichier](../engine/transformers.mdx#file-from-records) pour les listes d'enregistrements
 (consignes OIAnalytics comprises).
 
-:::info Mise à jour vers la 3.10
-Avant la 3.10, les données compatibles avec le type du connecteur North étaient mises en cache sans transformateur, et
+:::info Mise à jour vers la 4.0
+Avant la 4.0, les données compatibles avec le type du connecteur North étaient mises en cache sans transformateur, et
 les transformateurs **Pas de transformation** et **Ignorer** les forçaient ou les empêchaient. Lors de la mise à jour,
 OIBus ajoute les transformateurs de passage direct reproduisant ce que chaque connecteur North recevait (au niveau du
 connecteur South, afin que les nouveaux items soient toujours envoyés), remplace **Pas de transformation** par ceux-ci,

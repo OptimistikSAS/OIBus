@@ -131,7 +131,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   /**
    * Send time values to OIAnalytics in the compact format `{ timestamps, values, references }`.
    * `oianalytics` content is already in the compact format (produced by the OIAnalytics transformers) and is streamed
-   * as is. Content still in the legacy array format (e.g. from a custom transformer, or cached before 3.10) is converted
+   * as is. Content still in the legacy array format (e.g. from a custom transformer, or cached before 4.0) is converted
    * on the fly.
    */
   async handleValues(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

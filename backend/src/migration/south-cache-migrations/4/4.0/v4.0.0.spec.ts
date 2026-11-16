@@ -3,9 +3,9 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 
 import knex, { Knex } from 'knex';
 
-import { down, up } from './v3.10.0';
+import { down, up } from './v4.0.0';
 
-describe('South cache migration v3.10.0 (dedicated caching-strategy columns)', () => {
+describe('South cache migration v4.0.0 (dedicated caching-strategy columns)', () => {
   let db: Knex;
 
   before(() => {
