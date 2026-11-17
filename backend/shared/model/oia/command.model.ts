@@ -9,7 +9,13 @@ import { CustomTransformerCommandDTO, TransformerTestRequest } from '../api/tran
 import { Instant } from '../common/types';
 import { OIBusSouthType } from '../connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../connector/south-settings.model';
-import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType, RegistrationCommandPermissions } from '../domain/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  CommandPermission,
+  DataFolderType,
+  RegistrationCommandPermissions
+} from '../domain/engine.model';
 import { HistoryQueryStatus } from '../domain/history-query.model';
 import { SouthConnectorItemTestingSettings } from '../domain/south-connector.model';
 
@@ -75,6 +81,64 @@ export const OIBUS_COMMAND_TYPES = [
  * @example 'update-version'
  */
 export type OIBusCommandType = (typeof OIBUS_COMMAND_TYPES)[number];
+
+/**
+ * The permissions a command requires, all of them. Importing a configuration replaces all of it (except the registration
+ * and the users), so it requires every permission changing the configuration.
+ */
+export const COMMAND_REQUIRED_PERMISSIONS: Readonly<Record<OIBusCommandType, ReadonlyArray<CommandPermission>>> = {
+  'update-version': ['updateVersion'],
+  'restart-engine': ['operate'],
+  'update-history-query-status': ['operate'],
+  'update-engine-general': ['configureEngine'],
+  'update-engine-proxy': ['configureEngine'],
+  'update-engine-logger': ['configureEngine'],
+  'create-scan-mode': ['configureDataFlow'],
+  'update-scan-mode': ['configureDataFlow'],
+  'delete-scan-mode': ['configureDataFlow'],
+  'create-certificate': ['configureDataFlow'],
+  'update-certificate': ['configureDataFlow'],
+  'delete-certificate': ['configureDataFlow'],
+  'create-south': ['configureDataFlow'],
+  'update-south': ['configureDataFlow'],
+  'delete-south': ['configureDataFlow'],
+  'create-or-update-south-items-from-csv': ['configureDataFlow'],
+  'create-north': ['configureDataFlow'],
+  'update-north': ['configureDataFlow'],
+  'delete-north': ['configureDataFlow'],
+  'create-history-query': ['configureDataFlow'],
+  'update-history-query': ['configureDataFlow'],
+  'delete-history-query': ['configureDataFlow'],
+  'create-or-update-history-query-south-items-from-csv': ['configureDataFlow'],
+  'create-custom-transformer': ['configureCustomCode'],
+  'update-custom-transformer': ['configureCustomCode'],
+  'delete-custom-transformer': ['configureCustomCode'],
+  'test-custom-transformer': ['configureCustomCode'],
+  'update-engine-web-server': ['manageAccess'],
+  'create-ip-filter': ['manageAccess'],
+  'update-ip-filter': ['manageAccess'],
+  'delete-ip-filter': ['manageAccess'],
+  'import-configuration': ['configureEngine', 'configureDataFlow', 'configureCustomCode', 'manageAccess'],
+  'update-registration-settings': ['manageRegistration'],
+  'regenerate-cipher-keys': ['manageRegistration'],
+  'test-south-connection': ['connectToDataSources'],
+  'test-south-item': ['connectToDataSources'],
+  'test-north-connection': ['connectToDataSources'],
+  'test-history-query-north-connection': ['connectToDataSources'],
+  'test-history-query-south-connection': ['connectToDataSources'],
+  'test-history-query-south-item': ['connectToDataSources'],
+  'test-transformer': ['connectToDataSources'],
+  'open-interactive-session': ['connectToDataSources'],
+  'search-north-cache-content': ['manageCache'],
+  'search-history-cache-content': ['manageCache'],
+  'get-north-cache-file-content': ['manageCache'],
+  'get-history-cache-file-content': ['manageCache'],
+  'update-north-cache-content': ['manageCache'],
+  'update-history-cache-content': ['manageCache'],
+  'dump-memory': ['diagnostics'],
+  'retrieve-logs-database': ['diagnostics'],
+  setpoint: ['setpoint']
+};
 
 /**
  * List of possible OIBus command statuses.
@@ -385,7 +449,7 @@ export interface OIBusUpdateRegistrationSettingsCommandDTO extends BaseOIBusComm
     messageRetryInterval: number;
 
     /**
-     * Permissions for various commands.
+     * The permissions OIAnalytics asks for: a permission can only be revoked remotely, never granted.
      */
     commandPermissions: RegistrationCommandPermissions;
   };

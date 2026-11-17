@@ -20,7 +20,6 @@ import {
   addItemAndWorkflowDescriptions,
   addOIAnalyticsReferenceProcess,
   addOPCUATimeoutsAndSubscriptionSettings,
-  addRegistrationPermissions,
   convertFieldProcessesToOperations,
   convertFileWriterLinks,
   convertOIAnalyticsSouths,
@@ -40,6 +39,7 @@ import {
   replaceIsoAndIgnoreTransformers,
   replaceRawResampling,
   replaceTimeValuesByRecordLists,
+  reworkRegistrationPermissions,
   STEPS,
   up,
   useLocalOleDbDriver
@@ -2108,17 +2108,22 @@ describe('Entity migration v4.0.0', () => {
   });
 });
 
-describe('Entity migration v4.0.0: addRegistrationPermissions', () => {
+describe('Entity migration v4.0.0: reworkRegistrationPermissions', () => {
   const harness = createMigrationSchemaHarness({
-    buildSchema: db => buildSchemaBeforeStep(addRegistrationPermissions, db)
+    buildSchema: db => buildSchemaBeforeStep(reworkRegistrationPermissions, db)
   });
   let db: Knex;
 
   before(() => harness.before());
   after(() => harness.after());
 
-  const CONFIGURATION_PERMISSIONS = {
+  /** Every permission of a 3.9 OIBus, granted */
+  const FORMER_PERMISSIONS = {
+    command_update_version: true,
+    command_restart_engine: true,
+    command_regenerate_cipher_keys: true,
     command_update_engine_settings: true,
+    command_update_registration_settings: true,
     command_create_scan_mode: true,
     command_update_scan_mode: true,
     command_delete_scan_mode: true,
@@ -2128,21 +2133,49 @@ describe('Entity migration v4.0.0: addRegistrationPermissions', () => {
     command_create_certificate: true,
     command_update_certificate: true,
     command_delete_certificate: true,
-    command_create_south: true,
-    command_update_south: true,
-    command_delete_south: true,
-    command_create_or_update_south_items_from_csv: true,
-    command_create_north: true,
-    command_update_north: true,
-    command_delete_north: true,
     command_create_history_query: true,
     command_update_history_query: true,
     command_delete_history_query: true,
     command_create_or_update_history_items_from_csv: true,
+    command_test_history_north_connection: true,
+    command_test_history_south_connection: true,
+    command_test_history_south_item: true,
+    command_create_south: true,
+    command_update_south: true,
+    command_delete_south: true,
+    command_create_or_update_south_items_from_csv: true,
+    command_test_south_connection: true,
+    command_test_south_item: true,
+    command_create_north: true,
+    command_update_north: true,
+    command_delete_north: true,
+    command_test_north_connection: true,
+    command_setpoint: true,
+    command_search_history_cache_content: true,
+    command_get_history_cache_file_content: true,
+    command_update_history_cache_content: true,
+    command_search_north_cache_content: true,
+    command_get_north_cache_file_content: true,
+    command_update_north_cache_content: true,
     command_create_custom_transformer: true,
     command_update_custom_transformer: true,
-    command_delete_custom_transformer: true
+    command_delete_custom_transformer: true,
+    command_test_custom_transformer: true
   };
+
+  const PERMISSION_COLUMNS = [
+    'command_update_version',
+    'command_operate',
+    'command_configure_engine',
+    'command_configure_data_flow',
+    'command_configure_custom_code',
+    'command_manage_access',
+    'command_manage_registration',
+    'command_connect_to_data_sources',
+    'command_manage_cache',
+    'command_diagnostics',
+    'command_setpoint'
+  ];
 
   beforeEach(async () => {
     await harness.beforeEach();
@@ -2150,85 +2183,131 @@ describe('Entity migration v4.0.0: addRegistrationPermissions', () => {
   });
   afterEach(() => harness.afterEach());
 
-  async function importConfigurationAfterMigration(permissions: Record<string, boolean | null>): Promise<number> {
+  async function permissionsAfterMigration(permissions: Record<string, boolean | null>): Promise<Record<string, number>> {
     await db('registrations').insert({ id: 'registration-id', host: 'http://localhost:4200', status: 'REGISTERED', ...permissions });
-    await addRegistrationPermissions(db);
-    return (await db('registrations').where('id', 'registration-id').first()).command_import_configuration;
-  }
-
-  it('should add the new permissions', async () => {
-    await addRegistrationPermissions(db);
-
-    const columns = await columnNames(db, 'registrations');
-    assert.ok(columns.includes('command_import_configuration'));
-    assert.ok(columns.includes('command_dump_memory'));
-    assert.ok(columns.includes('command_retrieve_logs_database'));
-    assert.ok(columns.includes('command_open_interactive_session'));
-  });
-
-  for (const [testSouthConnection, expected] of [
-    [true, 1],
-    [false, 0],
-    [null, 0]
-  ] as const) {
-    it(`should grant the open-interactive-session permission like the south connection test (${testSouthConnection})`, async () => {
-      await db('registrations').insert({
-        id: 'registration-id',
-        host: 'http://localhost:4200',
-        status: 'REGISTERED',
-        command_test_south_connection: testSouthConnection
-      });
-
-      await addRegistrationPermissions(db);
-
-      const registration = await db('registrations').where('id', 'registration-id').first();
-      assert.strictEqual(registration.command_open_interactive_session, expected);
-    });
-  }
-
-  it('should grant the dump-memory and retrieve-logs-database permissions', async () => {
-    await db('registrations').insert({ id: 'registration-id', host: 'http://localhost:4200', status: 'REGISTERED' });
-
-    await addRegistrationPermissions(db);
-
+    await reworkRegistrationPermissions(db);
     const registration = await db('registrations').where('id', 'registration-id').first();
-    assert.strictEqual(registration.command_dump_memory, 1);
-    assert.strictEqual(registration.command_retrieve_logs_database, 1);
+    return Object.fromEntries(PERMISSION_COLUMNS.map(column => [column, registration[column]]));
+  }
+
+  it('should replace the former permissions by the permissions scoped by risk', async () => {
+    await reworkRegistrationPermissions(db);
+
+    const columns = (await columnNames(db, 'registrations')).filter(column => column.startsWith('command_'));
+    assert.deepStrictEqual(columns.sort(), [...PERMISSION_COLUMNS, 'command_refresh_interval', 'command_retry_interval'].sort());
   });
 
-  it('should grant the import-configuration permission when every configuration permission is granted', async () => {
-    assert.strictEqual(
-      await importConfigurationAfterMigration({
-        ...CONFIGURATION_PERMISSIONS,
-        // not changing the configuration
-        command_update_version: false,
-        command_update_registration_settings: false,
-        command_test_south_connection: false,
-        command_setpoint: false,
-        command_update_north_cache_content: false
-      }),
-      1
-    );
+  it('should keep every permission but the diagnostics when every former permission is granted', async () => {
+    assert.deepStrictEqual(await permissionsAfterMigration(FORMER_PERMISSIONS), {
+      command_update_version: 1,
+      command_operate: 1,
+      command_configure_engine: 1,
+      command_configure_data_flow: 1,
+      command_configure_custom_code: 1,
+      command_manage_access: 1,
+      command_manage_registration: 1,
+      command_connect_to_data_sources: 1,
+      command_manage_cache: 1,
+      command_diagnostics: 0,
+      command_setpoint: 1
+    });
   });
 
-  for (const permission of Object.keys(CONFIGURATION_PERMISSIONS)) {
-    it(`should not grant the import-configuration permission when ${permission} is not granted`, async () => {
-      assert.strictEqual(await importConfigurationAfterMigration({ ...CONFIGURATION_PERMISSIONS, [permission]: false }), 0);
+  for (const [formerPermission, revoked] of [
+    ['command_update_version', ['command_update_version']],
+    ['command_restart_engine', ['command_operate']],
+    ['command_update_history_query', ['command_operate', 'command_configure_data_flow']],
+    ['command_update_engine_settings', ['command_configure_engine', 'command_manage_access']],
+    ['command_delete_south', ['command_configure_data_flow']],
+    ['command_create_certificate', ['command_configure_data_flow']],
+    ['command_test_custom_transformer', ['command_configure_custom_code']],
+    ['command_delete_ip_filter', ['command_manage_access']],
+    ['command_regenerate_cipher_keys', ['command_manage_registration']],
+    ['command_test_history_south_item', ['command_connect_to_data_sources']],
+    ['command_update_north_cache_content', ['command_manage_cache']],
+    ['command_setpoint', ['command_setpoint']]
+  ] as const) {
+    it(`should revoke ${revoked.join(' and ')} when ${formerPermission} is not granted`, async () => {
+      const permissions = await permissionsAfterMigration({ ...FORMER_PERMISSIONS, [formerPermission]: false });
+
+      assert.deepStrictEqual(
+        PERMISSION_COLUMNS.filter(column => !permissions[column]),
+        PERMISSION_COLUMNS.filter(column => column === 'command_diagnostics' || (revoked as ReadonlyArray<string>).includes(column))
+      );
     });
   }
 
-  it('should not grant the import-configuration permission when a configuration permission is not set', async () => {
-    assert.strictEqual(await importConfigurationAfterMigration({ ...CONFIGURATION_PERMISSIONS, command_create_south: null }), 0);
+  it('should revoke a permission when a former permission it gathers is not set', async () => {
+    const permissions = await permissionsAfterMigration({ ...FORMER_PERMISSIONS, command_create_south: null });
+
+    assert.strictEqual(permissions.command_configure_data_flow, 0);
   });
 
-  it('should remove the new permissions', async () => {
-    await runStepsFrom(addRegistrationPermissions, db);
+  it('should convert the permissions of the update-registration-settings commands', async () => {
+    const content = {
+      commandRefreshInterval: 15,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5,
+      commandPermissions: { updateVersion: true, restartEngine: true, updateHistoryQuery: false, testSouthItem: false, setpoint: true }
+    };
+    await db('commands').insert([
+      {
+        id: 'command-1',
+        type: 'update-registration-settings',
+        status: 'RETRIEVED',
+        target_version: '3.9.0',
+        command_content: JSON.stringify(content)
+      },
+      { id: 'command-2', type: 'update-registration-settings', status: 'RETRIEVED', target_version: '3.9.0', command_content: null },
+      {
+        id: 'command-3',
+        type: 'restart-engine',
+        status: 'RETRIEVED',
+        target_version: '3.9.0',
+        command_content: '{"commandPermissions":{}}'
+      }
+    ]);
+
+    await reworkRegistrationPermissions(db);
+
+    const converted = await db('commands').orderBy('id');
+    assert.deepStrictEqual(JSON.parse(converted[0].command_content), {
+      commandRefreshInterval: 15,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        operate: false,
+        configureEngine: true,
+        configureDataFlow: false,
+        configureCustomCode: true,
+        manageAccess: true,
+        manageRegistration: true,
+        connectToDataSources: false,
+        manageCache: true,
+        diagnostics: true,
+        setpoint: true
+      }
+    });
+    assert.strictEqual(converted[1].command_content, null);
+    assert.strictEqual(converted[2].command_content, '{"commandPermissions":{}}');
+  });
+
+  it('should restore the former permissions', async () => {
+    await db('registrations').insert({ id: 'registration-id', host: 'http://localhost:4200', status: 'REGISTERED', ...FORMER_PERMISSIONS });
+    await db('registrations').update({ command_update_engine_settings: false, command_create_south: false });
+    await runStepsFrom(reworkRegistrationPermissions, db);
     await down(db);
 
     const columns = await columnNames(db, 'registrations');
-    assert.ok(!columns.includes('command_import_configuration'));
-    assert.ok(!columns.includes('command_dump_memory'));
-    assert.ok(!columns.includes('command_retrieve_logs_database'));
+    assert.ok(!columns.includes('command_configure_data_flow'));
+    const registration = await db('registrations').where('id', 'registration-id').first();
+    assert.strictEqual(registration.command_update_engine_settings, 0);
+    assert.strictEqual(registration.command_create_south, 0);
+    assert.strictEqual(registration.command_delete_north, 0);
+    assert.strictEqual(registration.command_create_ip_filter, 0);
+    assert.strictEqual(registration.command_test_south_item, 1);
+    assert.strictEqual(registration.command_restart_engine, 1);
   });
 });
 

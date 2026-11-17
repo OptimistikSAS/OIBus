@@ -453,7 +453,7 @@ if %errorlevel% neq 0 (
 echo Registering OIBus...
 curl --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/oianalytics/register" ^
 --header "Content-Type: application/json" ^
---data "{\"host\": \"%ESCAPED_OIANALYTICS_URL%\", \"useProxy\": false, \"proxyUrl\": null, \"proxyUsername\": null, \"proxyPassword\": null, \"useApiGateway\": false, \"apiGatewayHeaderKey\": null, \"apiGatewayHeaderValue\": null, \"apiGatewayBaseEndpoint\": null, \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"testCustomTransformer\": true, \"deleteCustomTransformer\": true, \"updateCustomTransformer\": true, \"createCustomTransformer\": true, \"updateNorthCacheContent\": true, \"getNorthCacheFileContent\": true, \"searchNorthCacheContent\": true, \"updateHistoryCacheContent\": true, \"getHistoryCacheFileContent\": true, \"searchHistoryCacheContent\": true, \"setpoint\": true, \"testNorthConnection\": true, \"deleteNorth\": true, \"updateNorth\": true, \"createNorth\": true, \"testSouthItem\": true, \"testSouthConnection\": true, \"createOrUpdateSouthItemsFromCsv\": true, \"deleteSouth\": true, \"updateSouth\": true, \"createSouth\": true, \"testHistorySouthItem\": true, \"testHistorySouthConnection\": true, \"testHistoryNorthConnection\": true, \"createOrUpdateHistoryItemsFromCsv\": true, \"deleteHistoryQuery\": true, \"updateHistoryQuery\": true, \"createHistoryQuery\": true, \"deleteCertificate\": true, \"updateCertificate\": true, \"createCertificate\": true, \"deleteIpFilter\": true, \"updateIpFilter\": true, \"createIpFilter\": true, \"deleteScanMode\": true, \"updateScanMode\": true, \"createScanMode\": true, \"updateRegistrationSettings\": true, \"importConfiguration\": true, \"dumpMemory\": true, \"retrieveLogsDatabase\": true, \"updateEngineSettings\": true, \"regenerateCipherKeys\": true, \"restartEngine\": true, \"updateVersion\": true}}"
+--data "{\"host\": \"%ESCAPED_OIANALYTICS_URL%\", \"useProxy\": false, \"proxyUrl\": null, \"proxyUsername\": null, \"proxyPassword\": null, \"useApiGateway\": false, \"apiGatewayHeaderKey\": null, \"apiGatewayHeaderValue\": null, \"apiGatewayBaseEndpoint\": null, \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"updateVersion\": true, \"operate\": true, \"configureEngine\": true, \"configureDataFlow\": true, \"configureCustomCode\": false, \"manageAccess\": true, \"manageRegistration\": true, \"connectToDataSources\": true, \"manageCache\": true, \"diagnostics\": false, \"setpoint\": false}}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to register OIBus.
@@ -469,10 +469,10 @@ if %errorlevel% neq 0 (
 .\mass-install.bat -n "OIBus" -c "C:\OIBusData" -u "admin" -p "pass" -o "https://instance.optimistik.fr/"
 ```
 
-| 参数 | 描述                        | 默认值                           |
-| --------- | ---------------------------------- | --------------------------------- |
-| `-n`      | OIBus Windows 服务的名称。 | `OIBus`                           |
-| `-c`      | OIBus 数据目录的路径。  | `C:\OIBusData`                    |
-| `-u`      | OIBus API 用户名。                | `admin`                           |
-| `-p`      | OIBus API 密码。                | `pass`                            |
-| `-o`      | OIAnalytics 注册 URL。      | `https://instance.optimistik.fr/` |
+| 参数 | 描述                       | 默认值                            |
+| ---- | -------------------------- | --------------------------------- |
+| `-n` | OIBus Windows 服务的名称。 | `OIBus`                           |
+| `-c` | OIBus 数据目录的路径。     | `C:\OIBusData`                    |
+| `-u` | OIBus API 用户名。         | `admin`                           |
+| `-p` | OIBus API 密码。           | `pass`                            |
+| `-o` | OIAnalytics 注册 URL。     | `https://instance.optimistik.fr/` |

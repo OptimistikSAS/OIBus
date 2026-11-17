@@ -1,13 +1,41 @@
 import { Database } from 'better-sqlite3';
 
 import { Instant } from '../../../shared/model/common/types';
-import { RegistrationStatus } from '../../../shared/model/domain/engine.model';
+import {
+  COMMAND_PERMISSIONS,
+  CommandPermission,
+  RegistrationCommandPermissions,
+  RegistrationStatus
+} from '../../../shared/model/domain/engine.model';
 
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { generateRandomId } from '../../service/utils';
 
 const REGISTRATIONS_TABLE = 'registrations';
+
+/**
+ * The column storing each permission granted to OIAnalytics.
+ */
+const PERMISSION_COLUMNS: Readonly<Record<CommandPermission, string>> = {
+  updateVersion: 'command_update_version',
+  operate: 'command_operate',
+  configureEngine: 'command_configure_engine',
+  configureDataFlow: 'command_configure_data_flow',
+  configureCustomCode: 'command_configure_custom_code',
+  manageAccess: 'command_manage_access',
+  manageRegistration: 'command_manage_registration',
+  connectToDataSources: 'command_connect_to_data_sources',
+  manageCache: 'command_manage_cache',
+  diagnostics: 'command_diagnostics',
+  setpoint: 'command_setpoint'
+};
+const PERMISSION_COLUMN_LIST = COMMAND_PERMISSIONS.map(permission => PERMISSION_COLUMNS[permission]);
+const PERMISSION_COLUMNS_SELECT = PERMISSION_COLUMN_LIST.join(', ');
+const PERMISSION_COLUMNS_UPDATE = PERMISSION_COLUMN_LIST.map(column => `${column} = ?`).join(', ');
+
+const toPermissionValues = (permissions: RegistrationCommandPermissions): Array<number> =>
+  COMMAND_PERMISSIONS.map(permission => +permissions[permission]);
 
 export default class OIAnalyticsRegistrationRepository {
   constructor(
@@ -30,51 +58,16 @@ export default class OIAnalyticsRegistrationRepository {
       messageRetryInterval: 5,
       commandPermissions: {
         updateVersion: true,
-        restartEngine: true,
-        regenerateCipherKeys: true,
-        updateEngineSettings: true,
-        updateRegistrationSettings: true,
-        createScanMode: true,
-        updateScanMode: true,
-        deleteScanMode: true,
-        createIpFilter: true,
-        updateIpFilter: true,
-        deleteIpFilter: true,
-        createCertificate: true,
-        updateCertificate: true,
-        deleteCertificate: true,
-        createHistoryQuery: true,
-        updateHistoryQuery: true,
-        deleteHistoryQuery: true,
-        createOrUpdateHistoryItemsFromCsv: true,
-        testHistoryNorthConnection: true,
-        testHistorySouthConnection: true,
-        testHistorySouthItem: true,
-        createSouth: true,
-        updateSouth: true,
-        deleteSouth: true,
-        createOrUpdateSouthItemsFromCsv: true,
-        testSouthConnection: true,
-        testSouthItem: true,
-        createNorth: true,
-        updateNorth: true,
-        deleteNorth: true,
-        testNorthConnection: true,
-        setpoint: true,
-        searchNorthCacheContent: true,
-        getNorthCacheFileContent: true,
-        updateNorthCacheContent: true,
-        searchHistoryCacheContent: true,
-        getHistoryCacheFileContent: true,
-        updateHistoryCacheContent: true,
-        createCustomTransformer: true,
-        updateCustomTransformer: true,
-        deleteCustomTransformer: true,
-        testCustomTransformer: true,
-        importConfiguration: true,
-        dumpMemory: true,
-        retrieveLogsDatabase: true,
-        openInteractiveSession: true
+        operate: true,
+        configureEngine: true,
+        configureDataFlow: true,
+        configureCustomCode: false,
+        manageAccess: true,
+        manageRegistration: true,
+        connectToDataSources: true,
+        manageCache: true,
+        diagnostics: false,
+        setpoint: false
       }
     });
   }
@@ -83,18 +76,7 @@ export default class OIAnalyticsRegistrationRepository {
     const query =
       `SELECT id, host, token, public_key, private_key, activation_code, status, activation_date, check_url, ` +
       `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, accept_unauthorized, use_api_gateway, api_gateway_header_key, api_gateway_header_value, api_gateway_base_endpoint, ` +
-      `command_refresh_interval, command_retry_interval, message_retry_interval, ` +
-      `command_update_version, command_restart_engine, command_regenerate_cipher_keys, command_update_engine_settings, command_update_registration_settings, ` +
-      `command_create_scan_mode, command_update_scan_mode, command_delete_scan_mode, ` +
-      `command_create_ip_filter, command_update_ip_filter, command_delete_ip_filter, ` +
-      `command_create_certificate, command_update_certificate, command_delete_certificate, ` +
-      `command_create_history_query, command_update_history_query, command_delete_history_query, command_create_or_update_history_items_from_csv, ` +
-      `command_test_history_north_connection, command_test_history_south_connection, command_test_history_south_item, ` +
-      `command_create_south, command_update_south, command_delete_south, command_create_or_update_south_items_from_csv, command_test_south_connection, command_test_south_item, ` +
-      `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
-      `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
-      `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content, ` +
-      `command_create_custom_transformer, command_update_custom_transformer, command_delete_custom_transformer, command_test_custom_transformer, command_import_configuration, command_dump_memory, command_retrieve_logs_database, command_open_interactive_session, ` +
+      `command_refresh_interval, command_retry_interval, message_retry_interval, ${PERMISSION_COLUMNS_SELECT}, ` +
       `created_by, updated_by, created_at, updated_at ` +
       `FROM ${REGISTRATIONS_TABLE};`;
     const results = this.database.prepare(query).all();
@@ -126,18 +108,8 @@ export default class OIAnalyticsRegistrationRepository {
       `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, ` +
       `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
       `use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?,` +
-      `accept_unauthorized = ?, public_key = ?, private_key = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, command_update_version = ?, ` +
-      `command_restart_engine = ?, command_regenerate_cipher_keys = ?, command_update_engine_settings = ?, command_update_registration_settings = ?, ` +
-      `command_create_scan_mode = ?, command_update_scan_mode = ?, command_delete_scan_mode = ?, ` +
-      `command_create_ip_filter = ?, command_update_ip_filter = ?, command_delete_ip_filter = ?, ` +
-      `command_create_certificate = ?, command_update_certificate = ?, command_delete_certificate = ?, ` +
-      `command_create_history_query = ?, command_update_history_query = ?, command_delete_history_query = ?, ` +
-      `command_create_or_update_history_items_from_csv = ?, command_test_history_north_connection = ?, command_test_history_south_connection = ?, command_test_history_south_item = ?, ` +
-      `command_create_south = ?, command_update_south = ?, command_delete_south = ?, command_create_or_update_south_items_from_csv = ?, command_test_south_connection = ?, command_test_south_item = ?, ` +
-      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
-      `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
-      `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ?, ` +
-      `command_create_custom_transformer = ?, command_update_custom_transformer = ?, command_delete_custom_transformer = ?, command_test_custom_transformer = ?, command_import_configuration = ?, command_dump_memory = ?, command_retrieve_logs_database = ?, command_open_interactive_session = ?, ` +
+      `accept_unauthorized = ?, public_key = ?, private_key = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
+      `${PERMISSION_COLUMNS_UPDATE}, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
@@ -161,52 +133,7 @@ export default class OIAnalyticsRegistrationRepository {
         command.commandRefreshInterval,
         command.commandRetryInterval,
         command.messageRetryInterval,
-        +command.commandPermissions.updateVersion,
-        +command.commandPermissions.restartEngine,
-        +command.commandPermissions.regenerateCipherKeys,
-        +command.commandPermissions.updateEngineSettings,
-        +command.commandPermissions.updateRegistrationSettings,
-        +command.commandPermissions.createScanMode,
-        +command.commandPermissions.updateScanMode,
-        +command.commandPermissions.deleteScanMode,
-        +command.commandPermissions.createIpFilter,
-        +command.commandPermissions.updateIpFilter,
-        +command.commandPermissions.deleteIpFilter,
-        +command.commandPermissions.createCertificate,
-        +command.commandPermissions.updateCertificate,
-        +command.commandPermissions.deleteCertificate,
-        +command.commandPermissions.createHistoryQuery,
-        +command.commandPermissions.updateHistoryQuery,
-        +command.commandPermissions.deleteHistoryQuery,
-        +command.commandPermissions.createOrUpdateHistoryItemsFromCsv,
-        +command.commandPermissions.testHistoryNorthConnection,
-        +command.commandPermissions.testHistorySouthConnection,
-        +command.commandPermissions.testHistorySouthItem,
-        +command.commandPermissions.createSouth,
-        +command.commandPermissions.updateSouth,
-        +command.commandPermissions.deleteSouth,
-        +command.commandPermissions.createOrUpdateSouthItemsFromCsv,
-        +command.commandPermissions.testSouthConnection,
-        +command.commandPermissions.testSouthItem,
-        +command.commandPermissions.createNorth,
-        +command.commandPermissions.updateNorth,
-        +command.commandPermissions.deleteNorth,
-        +command.commandPermissions.testNorthConnection,
-        +command.commandPermissions.setpoint,
-        +command.commandPermissions.searchHistoryCacheContent,
-        +command.commandPermissions.getHistoryCacheFileContent,
-        +command.commandPermissions.updateHistoryCacheContent,
-        +command.commandPermissions.searchNorthCacheContent,
-        +command.commandPermissions.getNorthCacheFileContent,
-        +command.commandPermissions.updateNorthCacheContent,
-        +command.commandPermissions.createCustomTransformer,
-        +command.commandPermissions.updateCustomTransformer,
-        +command.commandPermissions.deleteCustomTransformer,
-        +command.commandPermissions.testCustomTransformer,
-        +command.commandPermissions.importConfiguration,
-        +command.commandPermissions.dumpMemory,
-        +command.commandPermissions.retrieveLogsDatabase,
-        +command.commandPermissions.openInteractiveSession,
+        ...toPermissionValues(command.commandPermissions),
         updatedBy
       );
   }
@@ -231,17 +158,7 @@ export default class OIAnalyticsRegistrationRepository {
       `UPDATE ${REGISTRATIONS_TABLE} SET ` +
       `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?, ` +
       `accept_unauthorized = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
-      `command_update_version = ?, command_restart_engine = ?, command_regenerate_cipher_keys = ?, command_update_engine_settings = ?, command_update_registration_settings = ?, ` +
-      `command_create_scan_mode = ?, command_update_scan_mode = ?, command_delete_scan_mode = ?, ` +
-      `command_create_ip_filter = ?, command_update_ip_filter = ?, command_delete_ip_filter = ?, ` +
-      `command_create_certificate = ?, command_update_certificate = ?, command_delete_certificate = ?, ` +
-      `command_create_history_query = ?, command_update_history_query = ?, command_delete_history_query = ?, ` +
-      `command_create_or_update_history_items_from_csv = ?, command_test_history_north_connection = ?, command_test_history_south_connection = ?, command_test_history_south_item = ?,` +
-      `command_create_south = ?, command_update_south = ?, command_delete_south = ?, command_create_or_update_south_items_from_csv = ?, command_test_south_connection = ?, command_test_south_item = ?,` +
-      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
-      `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
-      `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ?, ` +
-      `command_create_custom_transformer = ?, command_update_custom_transformer = ?, command_delete_custom_transformer = ?, command_test_custom_transformer = ?, command_import_configuration = ?, command_dump_memory = ?, command_retrieve_logs_database = ?, command_open_interactive_session = ?, ` +
+      `${PERMISSION_COLUMNS_UPDATE}, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
@@ -259,52 +176,7 @@ export default class OIAnalyticsRegistrationRepository {
         command.commandRefreshInterval,
         command.commandRetryInterval,
         command.messageRetryInterval,
-        +command.commandPermissions.updateVersion,
-        +command.commandPermissions.restartEngine,
-        +command.commandPermissions.regenerateCipherKeys,
-        +command.commandPermissions.updateEngineSettings,
-        +command.commandPermissions.updateRegistrationSettings,
-        +command.commandPermissions.createScanMode,
-        +command.commandPermissions.updateScanMode,
-        +command.commandPermissions.deleteScanMode,
-        +command.commandPermissions.createIpFilter,
-        +command.commandPermissions.updateIpFilter,
-        +command.commandPermissions.deleteIpFilter,
-        +command.commandPermissions.createCertificate,
-        +command.commandPermissions.updateCertificate,
-        +command.commandPermissions.deleteCertificate,
-        +command.commandPermissions.createHistoryQuery,
-        +command.commandPermissions.updateHistoryQuery,
-        +command.commandPermissions.deleteHistoryQuery,
-        +command.commandPermissions.createOrUpdateHistoryItemsFromCsv,
-        +command.commandPermissions.testHistoryNorthConnection,
-        +command.commandPermissions.testHistorySouthConnection,
-        +command.commandPermissions.testHistorySouthItem,
-        +command.commandPermissions.createSouth,
-        +command.commandPermissions.updateSouth,
-        +command.commandPermissions.deleteSouth,
-        +command.commandPermissions.createOrUpdateSouthItemsFromCsv,
-        +command.commandPermissions.testSouthConnection,
-        +command.commandPermissions.testSouthItem,
-        +command.commandPermissions.createNorth,
-        +command.commandPermissions.updateNorth,
-        +command.commandPermissions.deleteNorth,
-        +command.commandPermissions.testNorthConnection,
-        +command.commandPermissions.setpoint,
-        +command.commandPermissions.searchHistoryCacheContent,
-        +command.commandPermissions.getHistoryCacheFileContent,
-        +command.commandPermissions.updateHistoryCacheContent,
-        +command.commandPermissions.searchNorthCacheContent,
-        +command.commandPermissions.getNorthCacheFileContent,
-        +command.commandPermissions.updateNorthCacheContent,
-        +command.commandPermissions.createCustomTransformer,
-        +command.commandPermissions.updateCustomTransformer,
-        +command.commandPermissions.deleteCustomTransformer,
-        +command.commandPermissions.testCustomTransformer,
-        +command.commandPermissions.importConfiguration,
-        +command.commandPermissions.dumpMemory,
-        +command.commandPermissions.retrieveLogsDatabase,
-        +command.commandPermissions.openInteractiveSession,
+        ...toPermissionValues(command.commandPermissions),
         updatedBy
       );
     const after = this.get();
@@ -337,21 +209,9 @@ export default class OIAnalyticsRegistrationRepository {
     }
     const query =
       `INSERT INTO ${REGISTRATIONS_TABLE} (id, host, status, use_proxy, proxy_url, proxy_username, proxy_password, use_api_gateway, api_gateway_header_key, api_gateway_header_value, api_gateway_base_endpoint, ` +
-      `accept_unauthorized, command_refresh_interval, command_retry_interval, message_retry_interval, command_update_version, ` +
-      `command_restart_engine, command_regenerate_cipher_keys, command_update_engine_settings, command_update_registration_settings, ` +
-      `command_create_scan_mode, command_update_scan_mode, command_delete_scan_mode, ` +
-      `command_create_ip_filter, command_update_ip_filter, command_delete_ip_filter, ` +
-      `command_create_certificate, command_update_certificate, command_delete_certificate, ` +
-      `command_create_history_query, command_update_history_query, command_delete_history_query, command_create_or_update_history_items_from_csv, ` +
-      `command_test_history_north_connection, command_test_history_south_connection, command_test_history_south_item, ` +
-      `command_create_south, command_update_south, command_delete_south, command_create_or_update_south_items_from_csv, ` +
-      `command_test_south_connection, command_test_south_item, ` +
-      `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
-      `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
-      `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content, ` +
-      `command_create_custom_transformer, command_update_custom_transformer, command_delete_custom_transformer, command_test_custom_transformer, command_import_configuration, command_dump_memory, command_retrieve_logs_database, command_open_interactive_session, ` +
+      `accept_unauthorized, command_refresh_interval, command_retry_interval, message_retry_interval, ${PERMISSION_COLUMNS_SELECT}, ` +
       `created_by, updated_by, created_at, updated_at` +
-      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${PERMISSION_COLUMN_LIST.map(() => '?').join(', ')}, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
@@ -370,52 +230,7 @@ export default class OIAnalyticsRegistrationRepository {
         command.commandRefreshInterval,
         command.commandRetryInterval,
         command.messageRetryInterval,
-        +command.commandPermissions.updateVersion,
-        +command.commandPermissions.restartEngine,
-        +command.commandPermissions.regenerateCipherKeys,
-        +command.commandPermissions.updateEngineSettings,
-        +command.commandPermissions.updateRegistrationSettings,
-        +command.commandPermissions.createScanMode,
-        +command.commandPermissions.updateScanMode,
-        +command.commandPermissions.deleteScanMode,
-        +command.commandPermissions.createIpFilter,
-        +command.commandPermissions.updateIpFilter,
-        +command.commandPermissions.deleteIpFilter,
-        +command.commandPermissions.createCertificate,
-        +command.commandPermissions.updateCertificate,
-        +command.commandPermissions.deleteCertificate,
-        +command.commandPermissions.createHistoryQuery,
-        +command.commandPermissions.updateHistoryQuery,
-        +command.commandPermissions.deleteHistoryQuery,
-        +command.commandPermissions.createOrUpdateHistoryItemsFromCsv,
-        +command.commandPermissions.testHistoryNorthConnection,
-        +command.commandPermissions.testHistorySouthConnection,
-        +command.commandPermissions.testHistorySouthItem,
-        +command.commandPermissions.createSouth,
-        +command.commandPermissions.updateSouth,
-        +command.commandPermissions.deleteSouth,
-        +command.commandPermissions.createOrUpdateSouthItemsFromCsv,
-        +command.commandPermissions.testSouthConnection,
-        +command.commandPermissions.testSouthItem,
-        +command.commandPermissions.createNorth,
-        +command.commandPermissions.updateNorth,
-        +command.commandPermissions.deleteNorth,
-        +command.commandPermissions.testNorthConnection,
-        +command.commandPermissions.setpoint,
-        +command.commandPermissions.searchHistoryCacheContent,
-        +command.commandPermissions.getHistoryCacheFileContent,
-        +command.commandPermissions.updateHistoryCacheContent,
-        +command.commandPermissions.searchNorthCacheContent,
-        +command.commandPermissions.getNorthCacheFileContent,
-        +command.commandPermissions.updateNorthCacheContent,
-        +command.commandPermissions.createCustomTransformer,
-        +command.commandPermissions.updateCustomTransformer,
-        +command.commandPermissions.deleteCustomTransformer,
-        +command.commandPermissions.testCustomTransformer,
-        +command.commandPermissions.importConfiguration,
-        +command.commandPermissions.dumpMemory,
-        +command.commandPermissions.retrieveLogsDatabase,
-        +command.commandPermissions.openInteractiveSession,
+        ...toPermissionValues(command.commandPermissions),
         'system',
         'system'
       );
@@ -465,54 +280,9 @@ export default class OIAnalyticsRegistrationRepository {
       commandRefreshInterval: result.command_refresh_interval as number,
       commandRetryInterval: result.command_retry_interval as number,
       messageRetryInterval: result.message_retry_interval as number,
-      commandPermissions: {
-        updateVersion: Boolean(result.command_update_version),
-        restartEngine: Boolean(result.command_restart_engine),
-        regenerateCipherKeys: Boolean(result.command_regenerate_cipher_keys),
-        updateEngineSettings: Boolean(result.command_update_engine_settings),
-        updateRegistrationSettings: Boolean(result.command_update_registration_settings),
-        createScanMode: Boolean(result.command_create_scan_mode),
-        updateScanMode: Boolean(result.command_update_scan_mode),
-        deleteScanMode: Boolean(result.command_delete_scan_mode),
-        createIpFilter: Boolean(result.command_create_ip_filter),
-        updateIpFilter: Boolean(result.command_update_ip_filter),
-        deleteIpFilter: Boolean(result.command_delete_ip_filter),
-        createCertificate: Boolean(result.command_create_certificate),
-        updateCertificate: Boolean(result.command_update_certificate),
-        deleteCertificate: Boolean(result.command_delete_certificate),
-        createHistoryQuery: Boolean(result.command_create_history_query),
-        updateHistoryQuery: Boolean(result.command_update_history_query),
-        deleteHistoryQuery: Boolean(result.command_delete_history_query),
-        createOrUpdateHistoryItemsFromCsv: Boolean(result.command_create_or_update_history_items_from_csv),
-        testHistoryNorthConnection: Boolean(result.command_test_history_north_connection),
-        testHistorySouthConnection: Boolean(result.command_test_history_south_connection),
-        testHistorySouthItem: Boolean(result.command_test_history_south_item),
-        createSouth: Boolean(result.command_create_south),
-        updateSouth: Boolean(result.command_update_south),
-        deleteSouth: Boolean(result.command_delete_south),
-        createOrUpdateSouthItemsFromCsv: Boolean(result.command_create_or_update_south_items_from_csv),
-        testSouthConnection: Boolean(result.command_test_south_connection),
-        testSouthItem: Boolean(result.command_test_south_item),
-        createNorth: Boolean(result.command_create_north),
-        updateNorth: Boolean(result.command_update_north),
-        deleteNorth: Boolean(result.command_delete_north),
-        testNorthConnection: Boolean(result.command_test_north_connection),
-        setpoint: Boolean(result.command_setpoint),
-        searchHistoryCacheContent: Boolean(result.command_search_history_cache_content),
-        getHistoryCacheFileContent: Boolean(result.command_get_history_cache_file_content),
-        updateHistoryCacheContent: Boolean(result.command_update_history_cache_content),
-        searchNorthCacheContent: Boolean(result.command_search_north_cache_content),
-        getNorthCacheFileContent: Boolean(result.command_get_north_cache_file_content),
-        updateNorthCacheContent: Boolean(result.command_update_north_cache_content),
-        createCustomTransformer: Boolean(result.command_create_custom_transformer),
-        updateCustomTransformer: Boolean(result.command_update_custom_transformer),
-        deleteCustomTransformer: Boolean(result.command_delete_custom_transformer),
-        testCustomTransformer: Boolean(result.command_test_custom_transformer),
-        importConfiguration: Boolean(result.command_import_configuration),
-        dumpMemory: Boolean(result.command_dump_memory),
-        retrieveLogsDatabase: Boolean(result.command_retrieve_logs_database),
-        openInteractiveSession: Boolean(result.command_open_interactive_session)
-      }
+      commandPermissions: Object.fromEntries(
+        COMMAND_PERMISSIONS.map(permission => [permission, Boolean(result[PERMISSION_COLUMNS[permission]])])
+      ) as Record<CommandPermission, boolean>
     };
   }
 }

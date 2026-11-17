@@ -22859,286 +22859,76 @@
 				"description": "Type representing a registration status."
 			},
 			"RegistrationCommandPermissions": {
-				"description": "Permissions granted to OIAnalytics for each remote command.",
+				"description": "Permissions granted to OIAnalytics, scoped by risk. Importing a full configuration is not a permission of its own: it\nrequires every permission changing the configuration (configureEngine, configureDataFlow, configureCustomCode and\nmanageAccess), as it replaces all of it.",
 				"properties": {
 					"updateVersion": {
 						"type": "boolean",
-						"description": "Permission to update the engine version.",
+						"description": "Update the version of OIBus, replacing its binaries.",
 						"example": true
 					},
-					"restartEngine": {
+					"operate": {
 						"type": "boolean",
-						"description": "Permission to restart the engine.",
+						"description": "Change what runs without changing the configuration: restart OIBus, start or stop a history query.",
 						"example": true
 					},
-					"regenerateCipherKeys": {
+					"configureEngine": {
 						"type": "boolean",
-						"description": "Permission to regenerate cipher keys.",
+						"description": "Update the general, proxy and logger settings of the engine.",
 						"example": true
 					},
-					"updateEngineSettings": {
+					"configureDataFlow": {
 						"type": "boolean",
-						"description": "Permission to update engine settings.",
+						"description": "Create, update and delete the South connectors, North connectors, history queries (and their items), scan modes and\ncertificates. Updating a connector is as powerful as creating or deleting one: it can send the data anywhere, or stop\ncollecting it.",
 						"example": true
 					},
-					"importConfiguration": {
+					"configureCustomCode": {
 						"type": "boolean",
-						"description": "Permission to import a full configuration, replacing the local one (except the OIAnalytics registration and the users).",
+						"description": "Create, update, delete and test custom transformers, which run code sent by OIAnalytics (in a sandbox).",
+						"example": false
+					},
+					"manageAccess": {
+						"type": "boolean",
+						"description": "Update the web server settings and the IP filters, which control who can reach the OIBus web interface.",
 						"example": true
 					},
-					"dumpMemory": {
+					"manageRegistration": {
 						"type": "boolean",
-						"description": "Permission to write a memory dump (V8 heap snapshot) and upload it to OIAnalytics. A memory dump may contain secrets\nin clear text.",
+						"description": "Update the registration settings and regenerate the cipher keys of the registration. Permissions can only be revoked\nremotely, never granted.",
 						"example": true
 					},
-					"retrieveLogsDatabase": {
+					"connectToDataSources": {
 						"type": "boolean",
-						"description": "Permission to upload the logs database to OIAnalytics.",
+						"description": "Connect to the data sources and destinations with the settings sent by OIAnalytics, without saving anything: test a\nconnection or an item, test a transformer, open an interactive session to explore a data source.",
 						"example": true
 					},
-					"openInteractiveSession": {
+					"manageCache": {
 						"type": "boolean",
-						"description": "Permission to open an interactive session, through which OIAnalytics browses the data sources (explore) and previews\nthe configuration workflows of the South connectors. Testing a connection or an item through a session also requires\nthe permission of the matching test command.",
+						"description": "Search, read, move and remove the files of the cache of the North connectors and history queries. Their content is\nprocess data, and removing it loses that data.",
 						"example": true
 					},
-					"updateRegistrationSettings": {
+					"diagnostics": {
 						"type": "boolean",
-						"description": "Permission to update registration settings.",
-						"example": true
-					},
-					"createScanMode": {
-						"type": "boolean",
-						"description": "Permission to create a scan mode.",
-						"example": true
-					},
-					"updateScanMode": {
-						"type": "boolean",
-						"description": "Permission to update a scan mode.",
-						"example": true
-					},
-					"deleteScanMode": {
-						"type": "boolean",
-						"description": "Permission to delete a scan mode.",
-						"example": true
-					},
-					"createIpFilter": {
-						"type": "boolean",
-						"description": "Permission to create an IP filter.",
-						"example": true
-					},
-					"updateIpFilter": {
-						"type": "boolean",
-						"description": "Permission to update an IP filter.",
-						"example": true
-					},
-					"deleteIpFilter": {
-						"type": "boolean",
-						"description": "Permission to delete an IP filter.",
-						"example": true
-					},
-					"createCertificate": {
-						"type": "boolean",
-						"description": "Permission to create a certificate.",
-						"example": true
-					},
-					"updateCertificate": {
-						"type": "boolean",
-						"description": "Permission to update a certificate.",
-						"example": true
-					},
-					"deleteCertificate": {
-						"type": "boolean",
-						"description": "Permission to delete a certificate.",
-						"example": true
-					},
-					"createHistoryQuery": {
-						"type": "boolean",
-						"description": "Permission to create a history query.",
-						"example": true
-					},
-					"updateHistoryQuery": {
-						"type": "boolean",
-						"description": "Permission to update a history query.",
-						"example": true
-					},
-					"deleteHistoryQuery": {
-						"type": "boolean",
-						"description": "Permission to delete a history query.",
-						"example": true
-					},
-					"createOrUpdateHistoryItemsFromCsv": {
-						"type": "boolean",
-						"description": "Permission to create or update history items from CSV.",
-						"example": true
-					},
-					"testHistoryNorthConnection": {
-						"type": "boolean",
-						"description": "Permission to test a history north connection.",
-						"example": true
-					},
-					"testHistorySouthConnection": {
-						"type": "boolean",
-						"description": "Permission to test a history south connection.",
-						"example": true
-					},
-					"testHistorySouthItem": {
-						"type": "boolean",
-						"description": "Permission to test a history south item.",
-						"example": true
-					},
-					"createSouth": {
-						"type": "boolean",
-						"description": "Permission to create a south connector.",
-						"example": true
-					},
-					"updateSouth": {
-						"type": "boolean",
-						"description": "Permission to update a south connector.",
-						"example": true
-					},
-					"deleteSouth": {
-						"type": "boolean",
-						"description": "Permission to delete a south connector.",
-						"example": true
-					},
-					"createOrUpdateSouthItemsFromCsv": {
-						"type": "boolean",
-						"description": "Permission to create or update south items from CSV.",
-						"example": true
-					},
-					"testSouthConnection": {
-						"type": "boolean",
-						"description": "Permission to test a south connection.",
-						"example": true
-					},
-					"testSouthItem": {
-						"type": "boolean",
-						"description": "Permission to test a south item.",
-						"example": true
-					},
-					"createNorth": {
-						"type": "boolean",
-						"description": "Permission to create a north connector.",
-						"example": true
-					},
-					"updateNorth": {
-						"type": "boolean",
-						"description": "Permission to update a north connector.",
-						"example": true
-					},
-					"deleteNorth": {
-						"type": "boolean",
-						"description": "Permission to delete a north connector.",
-						"example": true
-					},
-					"testNorthConnection": {
-						"type": "boolean",
-						"description": "Permission to test a north connection.",
-						"example": true
+						"description": "Retrieve a memory dump or the logs database. A memory dump may contain secrets in clear text.",
+						"example": false
 					},
 					"setpoint": {
 						"type": "boolean",
-						"description": "Permission to apply setpoints.",
-						"example": true
-					},
-					"searchHistoryCacheContent": {
-						"type": "boolean",
-						"description": "Permission to search cache content.",
-						"example": true
-					},
-					"getHistoryCacheFileContent": {
-						"type": "boolean",
-						"description": "Permission to get cache file content.",
-						"example": true
-					},
-					"updateHistoryCacheContent": {
-						"type": "boolean",
-						"description": "Permission to remove cache content.",
-						"example": true
-					},
-					"searchNorthCacheContent": {
-						"type": "boolean",
-						"description": "Permission to search cache content.",
-						"example": true
-					},
-					"getNorthCacheFileContent": {
-						"type": "boolean",
-						"description": "Permission to get cache file content.",
-						"example": true
-					},
-					"updateNorthCacheContent": {
-						"type": "boolean",
-						"description": "Permission to remove cache content.",
-						"example": true
-					},
-					"createCustomTransformer": {
-						"type": "boolean",
-						"description": "Permission to create a custom transformer.",
-						"example": true
-					},
-					"updateCustomTransformer": {
-						"type": "boolean",
-						"description": "Permission to update a custom transformer.",
-						"example": true
-					},
-					"deleteCustomTransformer": {
-						"type": "boolean",
-						"description": "Permission to delete a custom transformer.",
-						"example": true
-					},
-					"testCustomTransformer": {
-						"type": "boolean",
-						"description": "Permission to test a custom transformer.",
-						"example": true
+						"description": "Write setpoints to the equipment through the South connectors.",
+						"example": false
 					}
 				},
 				"required": [
 					"updateVersion",
-					"restartEngine",
-					"regenerateCipherKeys",
-					"updateEngineSettings",
-					"importConfiguration",
-					"dumpMemory",
-					"retrieveLogsDatabase",
-					"openInteractiveSession",
-					"updateRegistrationSettings",
-					"createScanMode",
-					"updateScanMode",
-					"deleteScanMode",
-					"createIpFilter",
-					"updateIpFilter",
-					"deleteIpFilter",
-					"createCertificate",
-					"updateCertificate",
-					"deleteCertificate",
-					"createHistoryQuery",
-					"updateHistoryQuery",
-					"deleteHistoryQuery",
-					"createOrUpdateHistoryItemsFromCsv",
-					"testHistoryNorthConnection",
-					"testHistorySouthConnection",
-					"testHistorySouthItem",
-					"createSouth",
-					"updateSouth",
-					"deleteSouth",
-					"createOrUpdateSouthItemsFromCsv",
-					"testSouthConnection",
-					"testSouthItem",
-					"createNorth",
-					"updateNorth",
-					"deleteNorth",
-					"testNorthConnection",
-					"setpoint",
-					"searchHistoryCacheContent",
-					"getHistoryCacheFileContent",
-					"updateHistoryCacheContent",
-					"searchNorthCacheContent",
-					"getNorthCacheFileContent",
-					"updateNorthCacheContent",
-					"createCustomTransformer",
-					"updateCustomTransformer",
-					"deleteCustomTransformer",
-					"testCustomTransformer"
+					"operate",
+					"configureEngine",
+					"configureDataFlow",
+					"configureCustomCode",
+					"manageAccess",
+					"manageRegistration",
+					"connectToDataSources",
+					"manageCache",
+					"diagnostics",
+					"setpoint"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -24744,7 +24534,7 @@
 						"properties": {
 							"commandPermissions": {
 								"$ref": "#/components/schemas/RegistrationCommandPermissions",
-								"description": "Permissions for various commands."
+								"description": "The permissions OIAnalytics asks for: a permission can only be revoked remotely, never granted."
 							},
 							"messageRetryInterval": {
 								"type": "number",
@@ -49550,6 +49340,13 @@
 					},
 					"settings": {
 						"properties": {
+							"allowedCommands": {
+								"items": {
+									"$ref": "#/components/schemas/OIBusCommandType"
+								},
+								"type": "array",
+								"description": "The commands OIBus accepts with these permissions: OIAnalytics only offers those, without knowing which permission\neach one requires."
+							},
 							"commandPermissions": {
 								"$ref": "#/components/schemas/RegistrationCommandPermissions"
 							},
@@ -49567,6 +49364,7 @@
 							}
 						},
 						"required": [
+							"allowedCommands",
 							"commandPermissions",
 							"messageRetryInterval",
 							"commandRetryInterval",

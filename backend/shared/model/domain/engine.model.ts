@@ -81,287 +81,104 @@ export const REGISTRATION_STATUS = ['NOT_REGISTERED', 'PENDING', 'REGISTERED'] a
 export type RegistrationStatus = (typeof REGISTRATION_STATUS)[number];
 
 /**
- * Permissions granted to OIAnalytics for each remote command.
+ * The permissions granted to OIAnalytics, each one allowing a set of remote commands with the same risk.
+ */
+export const COMMAND_PERMISSIONS = [
+  'updateVersion',
+  'operate',
+  'configureEngine',
+  'configureDataFlow',
+  'configureCustomCode',
+  'manageAccess',
+  'manageRegistration',
+  'connectToDataSources',
+  'manageCache',
+  'diagnostics',
+  'setpoint'
+] as const;
+
+/**
+ * A permission granted to OIAnalytics.
+ * @example 'configureDataFlow'
+ */
+export type CommandPermission = (typeof COMMAND_PERMISSIONS)[number];
+
+/**
+ * Permissions granted to OIAnalytics, scoped by risk. Importing a full configuration is not a permission of its own: it
+ * requires every permission changing the configuration (configureEngine, configureDataFlow, configureCustomCode and
+ * manageAccess), as it replaces all of it.
  */
 export interface RegistrationCommandPermissions {
   /**
-   * Permission to update the engine version.
+   * Update the version of OIBus, replacing its binaries.
    * @example true
    */
   updateVersion: boolean;
 
   /**
-   * Permission to restart the engine.
+   * Change what runs without changing the configuration: restart OIBus, start or stop a history query.
    * @example true
    */
-  restartEngine: boolean;
+  operate: boolean;
 
   /**
-   * Permission to regenerate cipher keys.
+   * Update the general, proxy and logger settings of the engine.
    * @example true
    */
-  regenerateCipherKeys: boolean;
+  configureEngine: boolean;
 
   /**
-   * Permission to update engine settings.
+   * Create, update and delete the South connectors, North connectors, history queries (and their items), scan modes and
+   * certificates. Updating a connector is as powerful as creating or deleting one: it can send the data anywhere, or stop
+   * collecting it.
    * @example true
    */
-  updateEngineSettings: boolean;
+  configureDataFlow: boolean;
 
   /**
-   * Permission to import a full configuration, replacing the local one (except the OIAnalytics registration and the users).
+   * Create, update, delete and test custom transformers, which run code sent by OIAnalytics (in a sandbox).
+   * @example false
+   */
+  configureCustomCode: boolean;
+
+  /**
+   * Update the web server settings and the IP filters, which control who can reach the OIBus web interface.
    * @example true
    */
-  importConfiguration: boolean;
+  manageAccess: boolean;
 
   /**
-   * Permission to write a memory dump (V8 heap snapshot) and upload it to OIAnalytics. A memory dump may contain secrets
-   * in clear text.
+   * Update the registration settings and regenerate the cipher keys of the registration. Permissions can only be revoked
+   * remotely, never granted.
    * @example true
    */
-  dumpMemory: boolean;
+  manageRegistration: boolean;
 
   /**
-   * Permission to upload the logs database to OIAnalytics.
+   * Connect to the data sources and destinations with the settings sent by OIAnalytics, without saving anything: test a
+   * connection or an item, test a transformer, open an interactive session to explore a data source.
    * @example true
    */
-  retrieveLogsDatabase: boolean;
+  connectToDataSources: boolean;
 
   /**
-   * Permission to open an interactive session, through which OIAnalytics browses the data sources (explore) and previews
-   * the configuration workflows of the South connectors. Testing a connection or an item through a session also requires
-   * the permission of the matching test command.
+   * Search, read, move and remove the files of the cache of the North connectors and history queries. Their content is
+   * process data, and removing it loses that data.
    * @example true
    */
-  openInteractiveSession: boolean;
+  manageCache: boolean;
 
   /**
-   * Permission to update registration settings.
-   * @example true
+   * Retrieve a memory dump or the logs database. A memory dump may contain secrets in clear text.
+   * @example false
    */
-  updateRegistrationSettings: boolean;
+  diagnostics: boolean;
 
   /**
-   * Permission to create a scan mode.
-   * @example true
-   */
-  createScanMode: boolean;
-
-  /**
-   * Permission to update a scan mode.
-   * @example true
-   */
-  updateScanMode: boolean;
-
-  /**
-   * Permission to delete a scan mode.
-   * @example true
-   */
-  deleteScanMode: boolean;
-
-  /**
-   * Permission to create an IP filter.
-   * @example true
-   */
-  createIpFilter: boolean;
-
-  /**
-   * Permission to update an IP filter.
-   * @example true
-   */
-  updateIpFilter: boolean;
-
-  /**
-   * Permission to delete an IP filter.
-   * @example true
-   */
-  deleteIpFilter: boolean;
-
-  /**
-   * Permission to create a certificate.
-   * @example true
-   */
-  createCertificate: boolean;
-
-  /**
-   * Permission to update a certificate.
-   * @example true
-   */
-  updateCertificate: boolean;
-
-  /**
-   * Permission to delete a certificate.
-   * @example true
-   */
-  deleteCertificate: boolean;
-
-  /**
-   * Permission to create a history query.
-   * @example true
-   */
-  createHistoryQuery: boolean;
-
-  /**
-   * Permission to update a history query.
-   * @example true
-   */
-  updateHistoryQuery: boolean;
-
-  /**
-   * Permission to delete a history query.
-   * @example true
-   */
-  deleteHistoryQuery: boolean;
-
-  /**
-   * Permission to create or update history items from CSV.
-   * @example true
-   */
-  createOrUpdateHistoryItemsFromCsv: boolean;
-
-  /**
-   * Permission to test a history north connection.
-   * @example true
-   */
-  testHistoryNorthConnection: boolean;
-
-  /**
-   * Permission to test a history south connection.
-   * @example true
-   */
-  testHistorySouthConnection: boolean;
-
-  /**
-   * Permission to test a history south item.
-   * @example true
-   */
-  testHistorySouthItem: boolean;
-
-  /**
-   * Permission to create a south connector.
-   * @example true
-   */
-  createSouth: boolean;
-
-  /**
-   * Permission to update a south connector.
-   * @example true
-   */
-  updateSouth: boolean;
-
-  /**
-   * Permission to delete a south connector.
-   * @example true
-   */
-  deleteSouth: boolean;
-
-  /**
-   * Permission to create or update south items from CSV.
-   * @example true
-   */
-  createOrUpdateSouthItemsFromCsv: boolean;
-
-  /**
-   * Permission to test a south connection.
-   * @example true
-   */
-  testSouthConnection: boolean;
-
-  /**
-   * Permission to test a south item.
-   * @example true
-   */
-  testSouthItem: boolean;
-
-  /**
-   * Permission to create a north connector.
-   * @example true
-   */
-  createNorth: boolean;
-
-  /**
-   * Permission to update a north connector.
-   * @example true
-   */
-  updateNorth: boolean;
-
-  /**
-   * Permission to delete a north connector.
-   * @example true
-   */
-  deleteNorth: boolean;
-
-  /**
-   * Permission to test a north connection.
-   * @example true
-   */
-  testNorthConnection: boolean;
-
-  /**
-   * Permission to apply setpoints.
-   * @example true
+   * Write setpoints to the equipment through the South connectors.
+   * @example false
    */
   setpoint: boolean;
-
-  /**
-   * Permission to search cache content.
-   * @example true
-   */
-  searchHistoryCacheContent: boolean;
-
-  /**
-   * Permission to get cache file content.
-   * @example true
-   */
-  getHistoryCacheFileContent: boolean;
-
-  /**
-   * Permission to remove cache content.
-   * @example true
-   */
-  updateHistoryCacheContent: boolean;
-
-  /**
-   * Permission to search cache content.
-   * @example true
-   */
-  searchNorthCacheContent: boolean;
-
-  /**
-   * Permission to get cache file content.
-   * @example true
-   */
-  getNorthCacheFileContent: boolean;
-
-  /**
-   * Permission to remove cache content.
-   * @example true
-   */
-  updateNorthCacheContent: boolean;
-
-  /**
-   * Permission to create a custom transformer.
-   * @example true
-   */
-  createCustomTransformer: boolean;
-
-  /**
-   * Permission to update a custom transformer.
-   * @example true
-   */
-  updateCustomTransformer: boolean;
-
-  /**
-   * Permission to delete a custom transformer.
-   * @example true
-   */
-  deleteCustomTransformer: boolean;
-
-  /**
-   * Permission to test a custom transformer.
-   * @example true
-   */
-  testCustomTransformer: boolean;
 }
 
 /**

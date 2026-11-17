@@ -96,6 +96,7 @@ import type SouthService from '../south.service';
 import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
 import type TransformerService from '../transformer.service';
 import { delay, getErrorMessage, getOIBusInfo, sanitizeFilename, unzip, withTimeout, zipFile } from '../utils';
+import { applyRemoteCommandPermissions, isCommandAllowed } from './command-permissions.utils';
 import OIAnalyticsClient from './oianalytics-client.service';
 import type OIAnalyticsMessageService from './oianalytics-message.service';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
@@ -367,7 +368,7 @@ export default class OIAnalyticsCommandService {
       return;
     }
 
-    if (!this.checkCommandPermission(command, registration)) {
+    if (!isCommandAllowed(command.type, registration.commandPermissions)) {
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, `Command ${command.id} of type ${command.type} is not authorized`);
       this.commandEvent.emit('next');
       return;
@@ -862,148 +863,7 @@ export default class OIAnalyticsCommandService {
       commandRefreshInterval: command.commandContent.commandRefreshInterval,
       commandRetryInterval: command.commandContent.commandRetryInterval,
       messageRetryInterval: command.commandContent.messageRetryInterval,
-      commandPermissions: {
-        // only update permissions if enabled, otherwise, it can only be enabled from OIBus
-        updateVersion: registration.commandPermissions.updateVersion
-          ? command.commandContent.commandPermissions.updateVersion
-          : registration.commandPermissions.updateVersion,
-        restartEngine: registration.commandPermissions.restartEngine
-          ? command.commandContent.commandPermissions.restartEngine
-          : registration.commandPermissions.restartEngine,
-        regenerateCipherKeys: registration.commandPermissions.regenerateCipherKeys
-          ? command.commandContent.commandPermissions.regenerateCipherKeys
-          : registration.commandPermissions.regenerateCipherKeys,
-        updateEngineSettings: registration.commandPermissions.updateEngineSettings
-          ? command.commandContent.commandPermissions.updateEngineSettings
-          : registration.commandPermissions.updateEngineSettings,
-        importConfiguration: registration.commandPermissions.importConfiguration
-          ? command.commandContent.commandPermissions.importConfiguration
-          : registration.commandPermissions.importConfiguration,
-        dumpMemory: registration.commandPermissions.dumpMemory
-          ? command.commandContent.commandPermissions.dumpMemory
-          : registration.commandPermissions.dumpMemory,
-        retrieveLogsDatabase: registration.commandPermissions.retrieveLogsDatabase
-          ? command.commandContent.commandPermissions.retrieveLogsDatabase
-          : registration.commandPermissions.retrieveLogsDatabase,
-        // OIAnalytics versions not knowing this permission yet do not send it: keep the local one
-        openInteractiveSession: registration.commandPermissions.openInteractiveSession
-          ? (command.commandContent.commandPermissions.openInteractiveSession ?? true)
-          : false,
-        updateRegistrationSettings: registration.commandPermissions.updateRegistrationSettings
-          ? command.commandContent.commandPermissions.updateRegistrationSettings
-          : registration.commandPermissions.updateRegistrationSettings,
-        createScanMode: registration.commandPermissions.createScanMode
-          ? command.commandContent.commandPermissions.createScanMode
-          : registration.commandPermissions.createScanMode,
-        updateScanMode: registration.commandPermissions.updateScanMode
-          ? command.commandContent.commandPermissions.updateScanMode
-          : registration.commandPermissions.updateScanMode,
-        deleteScanMode: registration.commandPermissions.deleteScanMode
-          ? command.commandContent.commandPermissions.deleteScanMode
-          : registration.commandPermissions.deleteScanMode,
-        createIpFilter: registration.commandPermissions.createIpFilter
-          ? command.commandContent.commandPermissions.createIpFilter
-          : registration.commandPermissions.createIpFilter,
-        updateIpFilter: registration.commandPermissions.updateIpFilter
-          ? command.commandContent.commandPermissions.updateIpFilter
-          : registration.commandPermissions.updateIpFilter,
-        deleteIpFilter: registration.commandPermissions.deleteIpFilter
-          ? command.commandContent.commandPermissions.deleteIpFilter
-          : registration.commandPermissions.deleteIpFilter,
-        createCertificate: registration.commandPermissions.createCertificate
-          ? command.commandContent.commandPermissions.createCertificate
-          : registration.commandPermissions.createCertificate,
-        updateCertificate: registration.commandPermissions.updateCertificate
-          ? command.commandContent.commandPermissions.updateCertificate
-          : registration.commandPermissions.updateCertificate,
-        deleteCertificate: registration.commandPermissions.deleteCertificate
-          ? command.commandContent.commandPermissions.deleteCertificate
-          : registration.commandPermissions.deleteCertificate,
-        createHistoryQuery: registration.commandPermissions.createHistoryQuery
-          ? command.commandContent.commandPermissions.createHistoryQuery
-          : registration.commandPermissions.createHistoryQuery,
-        updateHistoryQuery: registration.commandPermissions.updateHistoryQuery
-          ? command.commandContent.commandPermissions.updateHistoryQuery
-          : registration.commandPermissions.updateHistoryQuery,
-        deleteHistoryQuery: registration.commandPermissions.deleteHistoryQuery
-          ? command.commandContent.commandPermissions.deleteHistoryQuery
-          : registration.commandPermissions.deleteHistoryQuery,
-        createOrUpdateHistoryItemsFromCsv: registration.commandPermissions.createOrUpdateHistoryItemsFromCsv
-          ? command.commandContent.commandPermissions.createOrUpdateHistoryItemsFromCsv
-          : registration.commandPermissions.createOrUpdateHistoryItemsFromCsv,
-        testHistoryNorthConnection: registration.commandPermissions.testHistoryNorthConnection
-          ? command.commandContent.commandPermissions.testHistoryNorthConnection
-          : registration.commandPermissions.testHistoryNorthConnection,
-        testHistorySouthConnection: registration.commandPermissions.testHistorySouthConnection
-          ? command.commandContent.commandPermissions.testHistorySouthConnection
-          : registration.commandPermissions.testHistorySouthConnection,
-        testHistorySouthItem: registration.commandPermissions.testHistorySouthItem
-          ? command.commandContent.commandPermissions.testHistorySouthItem
-          : registration.commandPermissions.testHistorySouthItem,
-        createSouth: registration.commandPermissions.createSouth
-          ? command.commandContent.commandPermissions.createSouth
-          : registration.commandPermissions.createSouth,
-        updateSouth: registration.commandPermissions.updateSouth
-          ? command.commandContent.commandPermissions.updateSouth
-          : registration.commandPermissions.updateSouth,
-        deleteSouth: registration.commandPermissions.deleteSouth
-          ? command.commandContent.commandPermissions.deleteSouth
-          : registration.commandPermissions.deleteSouth,
-        createOrUpdateSouthItemsFromCsv: registration.commandPermissions.createOrUpdateSouthItemsFromCsv
-          ? command.commandContent.commandPermissions.createOrUpdateSouthItemsFromCsv
-          : registration.commandPermissions.createOrUpdateSouthItemsFromCsv,
-        testSouthConnection: registration.commandPermissions.testSouthConnection
-          ? command.commandContent.commandPermissions.testSouthConnection
-          : registration.commandPermissions.testSouthConnection,
-        testSouthItem: registration.commandPermissions.testSouthItem
-          ? command.commandContent.commandPermissions.testSouthItem
-          : registration.commandPermissions.testSouthItem,
-        createNorth: registration.commandPermissions.createNorth
-          ? command.commandContent.commandPermissions.createNorth
-          : registration.commandPermissions.createNorth,
-        updateNorth: registration.commandPermissions.updateNorth
-          ? command.commandContent.commandPermissions.updateNorth
-          : registration.commandPermissions.updateNorth,
-        deleteNorth: registration.commandPermissions.deleteNorth
-          ? command.commandContent.commandPermissions.deleteNorth
-          : registration.commandPermissions.deleteNorth,
-        testNorthConnection: registration.commandPermissions.testNorthConnection
-          ? command.commandContent.commandPermissions.testNorthConnection
-          : registration.commandPermissions.testNorthConnection,
-        setpoint: registration.commandPermissions.setpoint
-          ? command.commandContent.commandPermissions.setpoint
-          : registration.commandPermissions.setpoint,
-        searchNorthCacheContent: registration.commandPermissions.searchNorthCacheContent
-          ? command.commandContent.commandPermissions.searchNorthCacheContent
-          : registration.commandPermissions.searchNorthCacheContent,
-        getNorthCacheFileContent: registration.commandPermissions.getNorthCacheFileContent
-          ? command.commandContent.commandPermissions.getNorthCacheFileContent
-          : registration.commandPermissions.getNorthCacheFileContent,
-        updateNorthCacheContent: registration.commandPermissions.updateNorthCacheContent
-          ? command.commandContent.commandPermissions.updateNorthCacheContent
-          : registration.commandPermissions.updateNorthCacheContent,
-        searchHistoryCacheContent: registration.commandPermissions.searchHistoryCacheContent
-          ? command.commandContent.commandPermissions.searchHistoryCacheContent
-          : registration.commandPermissions.searchHistoryCacheContent,
-        getHistoryCacheFileContent: registration.commandPermissions.getHistoryCacheFileContent
-          ? command.commandContent.commandPermissions.getHistoryCacheFileContent
-          : registration.commandPermissions.getHistoryCacheFileContent,
-        updateHistoryCacheContent: registration.commandPermissions.updateHistoryCacheContent
-          ? command.commandContent.commandPermissions.updateHistoryCacheContent
-          : registration.commandPermissions.updateHistoryCacheContent,
-        createCustomTransformer: registration.commandPermissions.createCustomTransformer
-          ? command.commandContent.commandPermissions.createCustomTransformer
-          : registration.commandPermissions.createCustomTransformer,
-        updateCustomTransformer: registration.commandPermissions.updateCustomTransformer
-          ? command.commandContent.commandPermissions.updateCustomTransformer
-          : registration.commandPermissions.updateCustomTransformer,
-        deleteCustomTransformer: registration.commandPermissions.deleteCustomTransformer
-          ? command.commandContent.commandPermissions.deleteCustomTransformer
-          : registration.commandPermissions.deleteCustomTransformer,
-        testCustomTransformer: registration.commandPermissions.testCustomTransformer
-          ? command.commandContent.commandPermissions.testCustomTransformer
-          : registration.commandPermissions.testCustomTransformer
-      }
+      commandPermissions: applyRemoteCommandPermissions(registration.commandPermissions, command.commandContent.commandPermissions)
     };
     await this.oIAnalyticsRegistrationService.editRegistrationSettings(registrationCommand, 'oianalytics');
 
@@ -1658,110 +1518,6 @@ export default class OIAnalyticsCommandService {
         () => this.sendPendingAcks().catch(err => this.logger.error(`Unexpected error in ack flush: ${getErrorMessage(err)}`)),
         freshRegistration.commandRetryInterval * 1000
       );
-    }
-  }
-
-  private checkCommandPermission(command: OIBusCommand, registration: OIAnalyticsRegistration) {
-    switch (command.type) {
-      case 'update-version':
-        return registration.commandPermissions.updateVersion;
-      case 'restart-engine':
-        return registration.commandPermissions.restartEngine;
-      case 'regenerate-cipher-keys':
-        return registration.commandPermissions.regenerateCipherKeys;
-      case 'update-engine-general':
-      case 'update-engine-web-server':
-      case 'update-engine-proxy':
-      case 'update-engine-logger':
-        return registration.commandPermissions.updateEngineSettings;
-      case 'import-configuration':
-        return registration.commandPermissions.importConfiguration;
-      case 'open-interactive-session':
-        return registration.commandPermissions.openInteractiveSession;
-      case 'dump-memory':
-        return registration.commandPermissions.dumpMemory;
-      case 'retrieve-logs-database':
-        return registration.commandPermissions.retrieveLogsDatabase;
-      case 'update-registration-settings':
-        return registration.commandPermissions.updateRegistrationSettings;
-      case 'create-scan-mode':
-        return registration.commandPermissions.createScanMode;
-      case 'update-scan-mode':
-        return registration.commandPermissions.updateScanMode;
-      case 'delete-scan-mode':
-        return registration.commandPermissions.deleteScanMode;
-      case 'create-ip-filter':
-        return registration.commandPermissions.createIpFilter;
-      case 'update-ip-filter':
-        return registration.commandPermissions.updateIpFilter;
-      case 'delete-ip-filter':
-        return registration.commandPermissions.deleteIpFilter;
-      case 'create-certificate':
-        return registration.commandPermissions.createCertificate;
-      case 'update-certificate':
-        return registration.commandPermissions.updateCertificate;
-      case 'delete-certificate':
-        return registration.commandPermissions.deleteCertificate;
-      case 'create-north':
-        return registration.commandPermissions.createNorth;
-      case 'update-north':
-        return registration.commandPermissions.updateNorth;
-      case 'delete-north':
-        return registration.commandPermissions.deleteNorth;
-      case 'test-north-connection':
-        return registration.commandPermissions.testNorthConnection;
-      case 'create-south':
-        return registration.commandPermissions.createSouth;
-      case 'update-south':
-        return registration.commandPermissions.updateSouth;
-      case 'delete-south':
-        return registration.commandPermissions.deleteSouth;
-      case 'test-south-connection':
-        return registration.commandPermissions.testSouthConnection;
-      case 'test-south-item':
-        return registration.commandPermissions.testSouthItem;
-      case 'create-or-update-south-items-from-csv':
-        return registration.commandPermissions.createOrUpdateSouthItemsFromCsv;
-      case 'create-history-query':
-        return registration.commandPermissions.createHistoryQuery;
-      case 'update-history-query':
-        return registration.commandPermissions.updateHistoryQuery;
-      case 'delete-history-query':
-        return registration.commandPermissions.deleteHistoryQuery;
-      case 'test-history-query-north-connection':
-        return registration.commandPermissions.testHistoryNorthConnection;
-      case 'test-history-query-south-connection':
-        return registration.commandPermissions.testHistorySouthConnection;
-      case 'test-history-query-south-item':
-        return registration.commandPermissions.testHistorySouthItem;
-      case 'create-or-update-history-query-south-items-from-csv':
-        return registration.commandPermissions.createOrUpdateHistoryItemsFromCsv;
-      case 'update-history-query-status':
-        return registration.commandPermissions.updateHistoryQuery;
-      case 'setpoint':
-        return registration.commandPermissions.setpoint;
-      case 'search-north-cache-content':
-        return registration.commandPermissions.searchNorthCacheContent;
-      case 'search-history-cache-content':
-        return registration.commandPermissions.searchHistoryCacheContent;
-      case 'get-north-cache-file-content':
-        return registration.commandPermissions.getNorthCacheFileContent;
-      case 'get-history-cache-file-content':
-        return registration.commandPermissions.getHistoryCacheFileContent;
-      case 'update-north-cache-content':
-        return registration.commandPermissions.updateNorthCacheContent;
-      case 'update-history-cache-content':
-        return registration.commandPermissions.updateHistoryCacheContent;
-      case 'create-custom-transformer':
-        return registration.commandPermissions.createCustomTransformer;
-      case 'update-custom-transformer':
-        return registration.commandPermissions.updateCustomTransformer;
-      case 'delete-custom-transformer':
-        return registration.commandPermissions.deleteCustomTransformer;
-      case 'test-custom-transformer':
-        return registration.commandPermissions.testCustomTransformer;
-      case 'test-transformer':
-        return registration.commandPermissions.testNorthConnection;
     }
   }
 }

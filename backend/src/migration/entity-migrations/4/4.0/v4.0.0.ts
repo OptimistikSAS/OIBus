@@ -69,6 +69,7 @@ import { generateRandomId } from '../../../../service/utils';
 const SCAN_MODES_TABLE = 'scan_modes';
 const CERTIFICATES_TABLE = 'certificates';
 const REGISTRATIONS_TABLE = 'registrations';
+const COMMANDS_TABLE = 'commands';
 const TRANSFORMERS_TABLE = 'transformers';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -101,7 +102,7 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   addConfigurationWorkflows,
   addCachingStrategies,
   addOIAnalyticsReferenceProcess,
-  addRegistrationPermissions,
+  reworkRegistrationPermissions,
   replaceRawResampling,
   addHttpsSettings,
   addContentEndpointSetting,
@@ -165,12 +166,29 @@ export async function down(knex: Knex): Promise<void> {
     'https_certificate_path',
     'https_private_key_path'
   ]);
-  await dropColumns(knex, REGISTRATIONS_TABLE, [
-    'command_import_configuration',
-    'command_dump_memory',
-    'command_retrieve_logs_database',
-    'command_open_interactive_session'
-  ]);
+  await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
+    for (const column of FORMER_PERMISSION_COLUMNS) {
+      table.boolean(column);
+    }
+  });
+  // A former permission gathered by several permissions is only granted when all of them are
+  await knex(REGISTRATIONS_TABLE).update(
+    Object.fromEntries(
+      FORMER_PERMISSION_COLUMNS.map(formerColumn => [
+        formerColumn,
+        knex.raw(
+          `CASE WHEN ${REGISTRATION_PERMISSIONS.filter(({ formerColumns }) => formerColumns.includes(formerColumn))
+            .map(({ column }) => `${column} = 1`)
+            .join(' AND ')} THEN 1 ELSE 0 END`
+        )
+      ])
+    )
+  );
+  await dropColumns(
+    knex,
+    REGISTRATIONS_TABLE,
+    REGISTRATION_PERMISSIONS.map(({ column }) => column)
+  );
 
   await dropColumns(knex, SOUTH_ITEM_GROUPS_TABLE, ['caching_strategy']);
   await dropColumns(knex, SOUTH_ITEMS_TABLE, [
@@ -722,60 +740,126 @@ export async function addOIAnalyticsReferenceProcess(knex: Knex): Promise<void> 
 }
 
 /**
- * The permissions of the commands changing the configuration that the import-configuration command replaces. Registration
- * settings are not part of it (an import never changes the registration).
+ * The permissions granted to OIAnalytics scoped by risk, with the former permissions (one per command) each one gathers.
+ * `command_update_version` and `command_setpoint` keep their column.
  */
-const CONFIGURATION_PERMISSION_COLUMNS = [
-  'command_update_engine_settings',
-  'command_create_scan_mode',
-  'command_update_scan_mode',
-  'command_delete_scan_mode',
-  'command_create_ip_filter',
-  'command_update_ip_filter',
-  'command_delete_ip_filter',
-  'command_create_certificate',
-  'command_update_certificate',
-  'command_delete_certificate',
-  'command_create_south',
-  'command_update_south',
-  'command_delete_south',
-  'command_create_or_update_south_items_from_csv',
-  'command_create_north',
-  'command_update_north',
-  'command_delete_north',
-  'command_create_history_query',
-  'command_update_history_query',
-  'command_delete_history_query',
-  'command_create_or_update_history_items_from_csv',
-  'command_create_custom_transformer',
-  'command_update_custom_transformer',
-  'command_delete_custom_transformer'
+const REGISTRATION_PERMISSIONS: ReadonlyArray<{ column: string; formerColumns: ReadonlyArray<string> }> = [
+  { column: 'command_operate', formerColumns: ['command_restart_engine', 'command_update_history_query'] },
+  { column: 'command_configure_engine', formerColumns: ['command_update_engine_settings'] },
+  {
+    column: 'command_configure_data_flow',
+    formerColumns: [
+      'command_create_scan_mode',
+      'command_update_scan_mode',
+      'command_delete_scan_mode',
+      'command_create_certificate',
+      'command_update_certificate',
+      'command_delete_certificate',
+      'command_create_south',
+      'command_update_south',
+      'command_delete_south',
+      'command_create_or_update_south_items_from_csv',
+      'command_create_north',
+      'command_update_north',
+      'command_delete_north',
+      'command_create_history_query',
+      'command_update_history_query',
+      'command_delete_history_query',
+      'command_create_or_update_history_items_from_csv'
+    ]
+  },
+  {
+    column: 'command_configure_custom_code',
+    formerColumns: [
+      'command_create_custom_transformer',
+      'command_update_custom_transformer',
+      'command_delete_custom_transformer',
+      'command_test_custom_transformer'
+    ]
+  },
+  {
+    column: 'command_manage_access',
+    formerColumns: ['command_update_engine_settings', 'command_create_ip_filter', 'command_update_ip_filter', 'command_delete_ip_filter']
+  },
+  { column: 'command_manage_registration', formerColumns: ['command_update_registration_settings', 'command_regenerate_cipher_keys'] },
+  {
+    column: 'command_connect_to_data_sources',
+    formerColumns: [
+      'command_test_south_connection',
+      'command_test_south_item',
+      'command_test_north_connection',
+      'command_test_history_north_connection',
+      'command_test_history_south_connection',
+      'command_test_history_south_item'
+    ]
+  },
+  {
+    column: 'command_manage_cache',
+    formerColumns: [
+      'command_search_north_cache_content',
+      'command_get_north_cache_file_content',
+      'command_update_north_cache_content',
+      'command_search_history_cache_content',
+      'command_get_history_cache_file_content',
+      'command_update_history_cache_content'
+    ]
+  },
+  // Retrieving a memory dump or the logs database is new, and may expose secrets: never granted on upgrade
+  { column: 'command_diagnostics', formerColumns: [] }
 ];
 
+const FORMER_PERMISSION_COLUMNS = [...new Set(REGISTRATION_PERMISSIONS.flatMap(permission => permission.formerColumns))];
+
+/** The key of a permission in the content of a command, from its column (`command_create_south` -> `createSouth`) */
+const toPermissionKey = (column: string): string =>
+  column.replace(/^command_/, '').replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
+
 /**
- * Adds the permissions of the import-configuration, dump-memory, retrieve-logs-database and open-interactive-session
- * remote commands.
+ * Replaces the permissions granted to OIAnalytics, one per command, by fewer permissions scoped by risk (see
+ * `RegistrationCommandPermissions`). A permission is only granted when every former permission it gathers was: an OIBus
+ * never grants OIAnalytics more than before the upgrade. A missing former permission (null) counts as revoked.
  *
- * As importing a configuration replaces the whole configuration, it is only granted on a registration granting every
- * permission changing the configuration: an OIBus forbidding any of them must not be fully reconfigured by a single
- * command. An interactive session connects to the data sources like a connection test does, so it is granted when
- * testing a South connection is. The other two are granted, like the other permissions were when they were introduced.
+ * The permissions sent by the update-registration-settings commands already received are converted the same way, so that
+ * a command not executed yet revokes what it asked to. As OIAnalytics can only revoke a permission, a permission it did
+ * not send counts as granted there.
  */
-export async function addRegistrationPermissions(knex: Knex): Promise<void> {
+export async function reworkRegistrationPermissions(knex: Knex): Promise<void> {
   await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
-    table.boolean('command_import_configuration');
-    table.boolean('command_dump_memory');
-    table.boolean('command_retrieve_logs_database');
-    table.boolean('command_open_interactive_session');
+    for (const { column } of REGISTRATION_PERMISSIONS) {
+      table.boolean(column);
+    }
   });
-  await knex(REGISTRATIONS_TABLE).update({
-    command_dump_memory: true,
-    command_retrieve_logs_database: true,
-    command_open_interactive_session: knex.raw('COALESCE(command_test_south_connection, 0)'),
-    command_import_configuration: knex.raw(
-      `CASE WHEN ${CONFIGURATION_PERMISSION_COLUMNS.map(column => `${column} = 1`).join(' AND ')} THEN 1 ELSE 0 END`
+  await knex(REGISTRATIONS_TABLE).update(
+    Object.fromEntries(
+      REGISTRATION_PERMISSIONS.map(({ column, formerColumns }) => [
+        column,
+        formerColumns.length > 0
+          ? knex.raw(`CASE WHEN ${formerColumns.map(formerColumn => `${formerColumn} = 1`).join(' AND ')} THEN 1 ELSE 0 END`)
+          : false
+      ])
     )
-  });
+  );
+  await dropColumns(knex, REGISTRATIONS_TABLE, FORMER_PERMISSION_COLUMNS);
+
+  const commands: Array<{ id: string; command_content: string | null }> = await knex(COMMANDS_TABLE)
+    .select('id', 'command_content')
+    .where('type', 'update-registration-settings');
+  for (const command of commands) {
+    if (!command.command_content) continue;
+    const content = JSON.parse(command.command_content);
+    const formerPermissions: Record<string, boolean | undefined> = content.commandPermissions ?? {};
+    const isGranted = (column: string) => formerPermissions[toPermissionKey(column)] !== false;
+    content.commandPermissions = {
+      updateVersion: isGranted('command_update_version'),
+      ...Object.fromEntries(
+        REGISTRATION_PERMISSIONS.map(({ column, formerColumns }) => [toPermissionKey(column), formerColumns.every(isGranted)])
+      ),
+      setpoint: isGranted('command_setpoint')
+    };
+    await knex(COMMANDS_TABLE)
+      .where('id', command.id)
+      .update({ command_content: JSON.stringify(content) });
+  }
 }
 
 /**

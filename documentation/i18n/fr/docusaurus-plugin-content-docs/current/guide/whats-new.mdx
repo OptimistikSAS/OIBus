@@ -80,8 +80,11 @@ PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
   depuis OIAnalytics, avec un aperçu avant l'import.
 - Les [**modes d'acquisition**](./engine/scan-modes.mdx) peuvent s'exécuter à intervalle fixe, et seulement dans une
   fenêtre d'activation.
-- Depuis OIAnalytics, OIBus peut aussi importer une configuration, envoyer sa base de logs ou un dump mémoire, et
-  chacune de ces commandes a sa propre permission.
+- Depuis OIAnalytics, OIBus peut aussi importer une configuration, et envoyer sa base de logs ou un dump mémoire.
+- Les [**permissions accordées à OIAnalytics**](./installation/oianalytics.mdx#command-permissions) sont moins nombreuses
+  et regroupées selon ce qu'elles mettent en jeu (flux de données, connexion aux sources de données, cache, diagnostic,
+  consignes…) au lieu d'une par commande. Lors de la mise à jour, une permission n'est accordée que si toutes les
+  anciennes permissions qu'elle regroupe l'étaient.
 - L'interface et la documentation sont disponibles en **français et en chinois**, et la documentation est intégrée à
   OIBus, avec sa propre recherche, pour être consultée hors ligne.
 - Interface revue : les connecteurs, requêtes d'historique et éléments se créent et se modifient par étapes, les pages

@@ -9,6 +9,7 @@ import { CustomTransformerCommandDTO } from '../api/transformer.model';
 import { UserCommandDTO } from '../api/user.model';
 import { OIBusObjectAttribute } from '../connector/form.model';
 import { RegistrationCommandPermissions } from '../domain/engine.model';
+import { OIBusCommandType } from './command.model';
 
 /*
  * Configuration DTOs OIBus sends to OIAnalytics in its `full-config` and `history-queries` messages.
@@ -60,6 +61,11 @@ export interface OIAnalyticsRegistrationCommandDTO extends BaseAuditFields {
     commandRetryInterval: number;
     messageRetryInterval: number;
     commandPermissions: RegistrationCommandPermissions;
+    /**
+     * The commands OIBus accepts with these permissions: OIAnalytics only offers those, without knowing which permission
+     * each one requires.
+     */
+    allowedCommands: Array<OIBusCommandType>;
   };
 }
 
