@@ -139,6 +139,18 @@ describe('OiaCommandDetailsModalComponent', () => {
     await expect.element(tester.contentLines.nth(1)).toHaveTextContent('Configuration file: fileId1');
   });
 
+  test('should display an interactive session opening', async () => {
+    const tester = new OiaCommandDetailsModalComponentTester({
+      ...commandOfType('restart-engine'),
+      type: 'open-interactive-session',
+      commandContent: { sessionId: 'sessionId1' }
+    });
+
+    await expect.element(tester.title).toHaveTextContent('Command Open interactive session');
+    await expect.element(tester.contentLines).toHaveLength(2);
+    await expect.element(tester.contentLines.nth(1)).toHaveTextContent('Session: sessionId1');
+  });
+
   test.each<OIBusCommandDTO>([
     { ...base, type: 'create-ip-filter', commandContent: testData.ipFilters.command },
     { ...base, type: 'create-certificate', commandContent: testData.certificates.command },

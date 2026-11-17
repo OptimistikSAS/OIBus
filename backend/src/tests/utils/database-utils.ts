@@ -418,6 +418,7 @@ const createOIAnalyticsRegistration = async (database: knex.Knex, registration: 
       command_import_configuration: registration.commandPermissions.importConfiguration,
       command_dump_memory: registration.commandPermissions.dumpMemory,
       command_retrieve_logs_database: registration.commandPermissions.retrieveLogsDatabase,
+      command_open_interactive_session: registration.commandPermissions.openInteractiveSession,
       created_by: registration.createdBy,
       updated_by: registration.updatedBy,
       created_at: registration.createdAt,

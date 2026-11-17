@@ -128,6 +128,14 @@ export interface RegistrationCommandPermissions {
   retrieveLogsDatabase: boolean;
 
   /**
+   * Permission to open an interactive session, through which OIAnalytics browses the data sources (explore) and previews
+   * the configuration workflows of the South connectors. Testing a connection or an item through a session also requires
+   * the permission of the matching test command.
+   * @example true
+   */
+  openInteractiveSession: boolean;
+
+  /**
    * Permission to update registration settings.
    * @example true
    */

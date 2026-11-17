@@ -185,6 +185,7 @@ describe('OianalyticsRegistrationRepository with empty database', () => {
       importConfiguration: true,
       dumpMemory: true,
       retrieveLogsDatabase: true,
+      openInteractiveSession: true,
       updateRegistrationSettings: true,
       createScanMode: true,
       updateScanMode: true,

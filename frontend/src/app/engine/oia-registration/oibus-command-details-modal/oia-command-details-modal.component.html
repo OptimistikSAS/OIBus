@@ -68,6 +68,12 @@
                 [translateParams]="{ fileId: cmd.commandContent.fileId }"
               ></li>
             }
+            @case ('open-interactive-session') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.open-interactive-session.session-id"
+                [translateParams]="{ sessionId: cmd.commandContent.sessionId }"
+              ></li>
+            }
             @case ('update-registration-settings') {
               <ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: cmd.commandContent }" />
             }

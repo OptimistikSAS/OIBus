@@ -25,6 +25,7 @@ export const OIBUS_COMMAND_TYPES = [
   'update-engine-proxy',
   'update-engine-logger',
   'import-configuration',
+  'open-interactive-session',
   'dump-memory',
   'retrieve-logs-database',
   'update-registration-settings',
@@ -276,6 +277,28 @@ export interface OIBusImportConfigurationCommandDTO extends BaseOIBusCommandDTO 
      * @example "1d5c4ee0-1c4a-4a43-9a64-8f6e9c1fa6d7"
      */
     fileId: string;
+  };
+}
+
+/**
+ * Command DTO for opening an interactive session with OIAnalytics: OIBus then polls the requests of the session at a short
+ * interval (exploring a data source, testing a connection...) until OIAnalytics closes it.
+ */
+export interface OIBusOpenInteractiveSessionCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'open-interactive-session';
+
+  /**
+   * The content of the command, referencing the session to open.
+   */
+  commandContent: {
+    /**
+     * The OIAnalytics identifier of the session.
+     * @example "3c1f0a52-8a3e-4c4e-9d6f-2b7e1a0c9d41"
+     */
+    sessionId: string;
   };
 }
 
@@ -1237,6 +1260,7 @@ export type OIBusCommandDTO =
   | OIBusUpdateEngineProxyCommandDTO
   | OIBusUpdateEngineLoggerCommandDTO
   | OIBusImportConfigurationCommandDTO
+  | OIBusOpenInteractiveSessionCommandDTO
   | OIBusDumpMemoryCommandDTO
   | OIBusRetrieveLogsDatabaseCommandDTO
   | OIBusUpdateRegistrationSettingsCommandDTO

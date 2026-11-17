@@ -122,6 +122,7 @@ const COMMAND_PERMISSION_GROUPS: ReadonlyArray<CommandPermissionGroup> = [
         key: 'south-actions',
         entries: [
           { permission: 'testSouthConnection', labelKey: 'test-connection' },
+          { permission: 'openInteractiveSession', labelKey: 'interactive-session' },
           { permission: 'createOrUpdateSouthItemsFromCsv', labelKey: 'import-items' },
           { permission: 'testSouthItem', labelKey: 'test-item' }
         ]
@@ -209,6 +210,7 @@ export class RegisterOibusModalComponent {
       importConfiguration: [true, Validators.required],
       dumpMemory: [true, Validators.required],
       retrieveLogsDatabase: [true, Validators.required],
+      openInteractiveSession: [true, Validators.required],
       updateRegistrationSettings: [true, Validators.required],
       createScanMode: [true, Validators.required],
       updateScanMode: [true, Validators.required],

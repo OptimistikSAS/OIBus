@@ -251,6 +251,7 @@
       "update-engine-proxy": "Update engine proxy settings",
       "update-engine-logger": "Update engine logger settings",
       "import-configuration": "Import configuration",
+      "open-interactive-session": "Open interactive session",
       "dump-memory": "Memory dump",
       "retrieve-logs-database": "Logs database retrieval",
       "update-registration-settings": "Update registration settings",
@@ -541,6 +542,7 @@
           "delete": "Delete",
           "test": "Test",
           "test-connection": "Test connection",
+          "interactive-session": "Interactive session (explore)",
           "import-items": "Import items",
           "test-item": "Test item",
           "north": "North",
@@ -580,6 +582,9 @@
           },
           "import-configuration": {
             "file-id": "Configuration file: {{ fileId }}"
+          },
+          "open-interactive-session": {
+            "session-id": "Session: {{ sessionId }}"
           },
           "scan-mode": {
             "scan-mode-id": "Scan mode ID: {{ scanModeId }}"

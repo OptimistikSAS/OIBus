@@ -2,6 +2,10 @@ import { mock } from 'node:test';
 
 import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../../../shared/model/api/engine.model';
 import { Instant } from '../../../../../shared/model/common/types';
+import {
+  OIBusInteractiveSessionRequestCompletionDTO,
+  OIBusInteractiveSessionRequestDTO
+} from '../../../../../shared/model/oia/interactive-session.model';
 
 import { OIBusCommand } from '../../../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registration.model';
@@ -48,4 +52,25 @@ export default class OIAnalyticsClientMock {
     async (_registrationSettings: OIAnalyticsRegistration, _commandId: string, _filePath: string, _filename: string): Promise<string> =>
       'fileId'
   );
+  retrieveSessionRequests = mock.fn(
+    async (_registrationSettings: OIAnalyticsRegistration, _sessionId: string): Promise<Array<OIBusInteractiveSessionRequestDTO>> => []
+  );
+  completeSessionRequest = mock.fn(
+    async (
+      _registrationSettings: OIAnalyticsRegistration,
+      _sessionId: string,
+      _requestId: string,
+      _completion: OIBusInteractiveSessionRequestCompletionDTO
+    ): Promise<void> => undefined
+  );
+  uploadSessionRequestFile = mock.fn(
+    async (
+      _registrationSettings: OIAnalyticsRegistration,
+      _sessionId: string,
+      _requestId: string,
+      _filePath: string,
+      _filename: string
+    ): Promise<void> => undefined
+  );
+  closeSession = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _sessionId: string): Promise<void> => undefined);
 }

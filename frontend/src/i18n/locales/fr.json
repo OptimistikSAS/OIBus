@@ -2699,6 +2699,7 @@
       "update-engine-proxy": "Mettre à jour les paramètres de proxy du moteur",
       "update-engine-logger": "Mettre à jour les paramètres de journalisation du moteur",
       "import-configuration": "Importer la configuration",
+      "open-interactive-session": "Ouvrir une session interactive",
       "dump-memory": "Dump mémoire",
       "retrieve-logs-database": "Récupération de la base des logs",
       "update-registration-settings": "Mettre à jour les paramètres d'enregistrement",
@@ -3458,6 +3459,7 @@
           "delete": "Supprimer",
           "test": "Tester",
           "test-connection": "Tester la connexion",
+          "interactive-session": "Session interactive (exploration)",
           "import-items": "Importer les éléments",
           "test-item": "Tester un élément",
           "north": "North",
@@ -3497,6 +3499,9 @@
           },
           "import-configuration": {
             "file-id": "Fichier de configuration : {{ fileId }}"
+          },
+          "open-interactive-session": {
+            "session-id": "Session : {{ sessionId }}"
           },
           "scan-mode": {
             "scan-mode-id": "ID du mode de scan : {{ scanModeId }}"

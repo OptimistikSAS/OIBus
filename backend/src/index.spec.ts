@@ -98,6 +98,7 @@ describe('index.ts bootstrap()', () => {
   let webServerMock: ReturnType<typeof makeWebServerMock>;
   let oibusServiceMock: ReturnType<typeof makeServiceMock>;
   let oianalyticsCommandServiceMock: ReturnType<typeof makeServiceMock>;
+  let oianalyticsSessionServiceMock: ReturnType<typeof makeServiceMock>;
   let oianalyticsMessageServiceMock: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> };
   let cleanupServiceMock: ReturnType<typeof makeServiceMock>;
   let oianalyticsRegistrationServiceMock: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> };
@@ -116,6 +117,7 @@ describe('index.ts bootstrap()', () => {
     webServerMock = makeWebServerMock();
     oibusServiceMock = makeServiceMock();
     oianalyticsCommandServiceMock = makeServiceMock();
+    oianalyticsSessionServiceMock = makeServiceMock();
     oianalyticsMessageServiceMock = { start: mock.fn(), stop: mock.fn(async () => undefined) };
     cleanupServiceMock = makeServiceMock();
     oianalyticsRegistrationServiceMock = { start: mock.fn(), stop: mock.fn() };
@@ -261,6 +263,16 @@ describe('index.ts bootstrap()', () => {
       default: class FakeCertificateService {}
     });
 
+    const sessionMock = oianalyticsSessionServiceMock;
+    mockModule(nodeRequire, './service/oia/oianalytics-session.service', {
+      __esModule: true,
+      default: class FakeOIAnalyticsSessionService {
+        constructor() {
+          Object.assign(this, sessionMock);
+        }
+      }
+    });
+
     const cmdMock = oianalyticsCommandServiceMock;
     mockModule(nodeRequire, './service/oia/oianalytics-command.service', {
       __esModule: true,
@@ -394,6 +406,7 @@ describe('index.ts bootstrap()', () => {
     await sigintHandler!();
 
     assert.equal(oibusServiceMock.stop.mock.calls.length, 1);
+    assert.equal(oianalyticsSessionServiceMock.stop.mock.calls.length, 1);
     assert.equal(oianalyticsCommandServiceMock.stop.mock.calls.length, 1);
     assert.equal(oianalyticsMessageServiceMock.stop.mock.calls.length, 1);
     assert.equal(webServerMock.stop.mock.calls.length, 1);

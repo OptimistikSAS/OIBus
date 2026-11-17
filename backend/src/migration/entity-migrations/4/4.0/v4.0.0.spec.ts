@@ -2163,7 +2163,28 @@ describe('Entity migration v4.0.0: addRegistrationPermissions', () => {
     assert.ok(columns.includes('command_import_configuration'));
     assert.ok(columns.includes('command_dump_memory'));
     assert.ok(columns.includes('command_retrieve_logs_database'));
+    assert.ok(columns.includes('command_open_interactive_session'));
   });
+
+  for (const [testSouthConnection, expected] of [
+    [true, 1],
+    [false, 0],
+    [null, 0]
+  ] as const) {
+    it(`should grant the open-interactive-session permission like the south connection test (${testSouthConnection})`, async () => {
+      await db('registrations').insert({
+        id: 'registration-id',
+        host: 'http://localhost:4200',
+        status: 'REGISTERED',
+        command_test_south_connection: testSouthConnection
+      });
+
+      await addRegistrationPermissions(db);
+
+      const registration = await db('registrations').where('id', 'registration-id').first();
+      assert.strictEqual(registration.command_open_interactive_session, expected);
+    });
+  }
 
   it('should grant the dump-memory and retrieve-logs-database permissions', async () => {
     await db('registrations').insert({ id: 'registration-id', host: 'http://localhost:4200', status: 'REGISTERED' });
