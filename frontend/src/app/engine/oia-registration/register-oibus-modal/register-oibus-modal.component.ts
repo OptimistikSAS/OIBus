@@ -10,6 +10,7 @@ import { RegistrationCommandPermissions } from '@oibus/shared/domain/engine.mode
 
 import { EngineService } from '../../../services/engine.service';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
+import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { trackControl } from '../../../shared/form/tracked-control';
 import { NotificationService } from '../../../shared/notification.service';
@@ -327,7 +328,7 @@ export class RegisterOibusModalComponent {
           this.notificationService.success('oia-module.registration.test-connection-success');
         },
         error: (httpError: HttpErrorResponse) => {
-          this.testError.set(httpError.error?.message || httpError.message || 'Unknown error occurred');
+          this.testError.set(extractErrorMessage(httpError));
           this.testLoading.set(false);
         }
       });

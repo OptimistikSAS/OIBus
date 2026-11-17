@@ -10,6 +10,7 @@ import { ALL_CSV_CHARACTERS, createPageFromArray, CsvCharacter, Page } from '@oi
 import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
+import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builder';
 import { CsvValidationError, validateCsvHeaders } from '../../../shared/form/validators';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
@@ -180,7 +181,7 @@ export class ImportHistoryQueryItemsModalComponent {
       this.changePageNew(0);
       this.changePageError(0);
     } catch (error: unknown) {
-      this.checkError.set((error as { error?: { message?: string }; message?: string }).error?.message || 'Unknown error');
+      this.checkError.set(extractErrorMessage(error));
       this.resetResults();
     } finally {
       this.checking.set(false);

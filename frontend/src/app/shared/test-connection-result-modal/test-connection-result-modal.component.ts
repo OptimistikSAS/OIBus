@@ -14,6 +14,7 @@ import { OIBusConnectionTestResult } from '@oibus/shared/domain/engine.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
+import { extractErrorMessage } from '../extract-error-message';
 
 @Component({
   selector: 'oib-test-connection-result-modal',
@@ -92,7 +93,7 @@ export class TestConnectionResultModalComponent {
     this.loading.set(true);
     test$.subscribe({
       error: (httpError: HttpErrorResponse) => {
-        this.error.set(httpError.error.message);
+        this.error.set(extractErrorMessage(httpError));
         this.loading.set(false);
       },
       next: result => {
