@@ -30,6 +30,7 @@ import OIAnalyticsClient from './service/oia/oianalytics-client.service';
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
+import OIAnalyticsSessionService from './service/oia/oianalytics-session.service';
 import OIBusService from './service/oibus.service';
 import RepositoryService from './service/repository.service';
 import ScanModeService from './service/scan-mode.service';
@@ -301,6 +302,14 @@ export async function bootstrap(): Promise<void> {
     loggerService.createChildLogger('internal')
   );
 
+  const oIAnalyticsSessionService = new OIAnalyticsSessionService(
+    oIAnalyticsRegistrationService,
+    oIAnalyticsClient,
+    southService,
+    configurationWorkflowRunService,
+    loggerService.createChildLogger('internal'),
+    path.resolve(CACHE_FOLDER, 'tmp')
+  );
   const oIAnalyticsCommandService = new OIAnalyticsCommandService(
     repositoryService.oianalyticsCommandRepository,
     oIAnalyticsRegistrationService,
@@ -315,6 +324,7 @@ export async function bootstrap(): Promise<void> {
     historyQueryService,
     transformerService,
     configImportService,
+    oIAnalyticsSessionService,
     loggerService.createChildLogger('internal'),
     binaryFolder,
     path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
@@ -370,6 +380,7 @@ export async function bootstrap(): Promise<void> {
     if (stopping) return;
     console.info(`${signal} received. Stopping everything.`);
     stopping = true;
+    await oIAnalyticsSessionService.stop();
     await southService.closeAllExploreSessions();
     await oIBusService.stop();
     await oIAnalyticsCommandService.stop();

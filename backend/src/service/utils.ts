@@ -1116,6 +1116,38 @@ export function workUnitLogCtx<I extends SouthItemSettings>(items: Array<SouthCo
  * reasons live inside `.errors[]`. This helper recurses into sub-errors and
  * `Error.cause` so that callers always receive a non-empty, descriptive string.
  */
+/**
+ * Races `promise` against a rejection after `ms` milliseconds.
+ * Does NOT cancel the underlying operation — Node has no universal cancellation
+ * primitive — but it does unblock the caller so the command lock is released.
+ *
+ * Wired through a single Promise with manual resolve/reject (rather than
+ * Promise.race([promise, timeout])) so neither branch is ever left permanently
+ * pending: with Promise.race, whichever promise loses never settles once its
+ * timer is cleared, and a pending Promise (plus whatever it keeps reachable) is
+ * only reclaimed on a full GC pass, not eagerly. Attaching `.then(resolve, reject)`
+ * directly to `promise` also means it always has a rejection handler, so a late
+ * rejection after the timeout has already won can never become an
+ * UnhandledPromiseRejection (which would terminate the process in Node v24+).
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms / 1000}s`));
+    }, ms);
+    promise.then(
+      result => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      },
+      error => {
+        clearTimeout(timeoutId);
+        reject(error);
+      }
+    );
+  });
+}
+
 export function getErrorMessage(error: unknown): string {
   if (error instanceof AggregateError) {
     const subMessages = error.errors.map(getErrorMessage).filter(Boolean);

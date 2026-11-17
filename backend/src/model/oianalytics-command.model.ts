@@ -76,6 +76,11 @@ export interface OIBusImportConfigurationCommand extends BaseOIBusCommand {
   commandContent: { fileId: string };
 }
 
+export interface OIBusOpenInteractiveSessionCommand extends BaseOIBusCommand {
+  type: 'open-interactive-session';
+  commandContent: { sessionId: string };
+}
+
 export interface OIBusDumpMemoryCommand extends BaseOIBusCommand {
   type: 'dump-memory';
 }
@@ -368,6 +373,7 @@ export type OIBusCommand =
   | OIBusUpdateEngineProxyCommand
   | OIBusUpdateEngineLoggerCommand
   | OIBusImportConfigurationCommand
+  | OIBusOpenInteractiveSessionCommand
   | OIBusDumpMemoryCommand
   | OIBusRetrieveLogsDatabaseCommand
   | OIBusUpdateRegistrationSettingsCommand

@@ -4,6 +4,10 @@ import { pipeline } from 'node:stream/promises';
 
 import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine.model';
 import { Instant } from '../../../shared/model/common/types';
+import {
+  OIBusInteractiveSessionRequestCompletionDTO,
+  OIBusInteractiveSessionRequestDTO
+} from '../../../shared/model/oia/interactive-session.model';
 
 import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
@@ -24,10 +28,13 @@ const SYNC_METADATA_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/sync-metadata
 const DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/upgrade/asset`;
 const CONFIGURATION_FILE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/commands/configuration-file`;
 const COMMAND_FILE_OIANALYTICS_ENDPOINT = (commandId: string) => `/api/oianalytics/oibus/commands/${encodeURIComponent(commandId)}/file`;
+const SESSION_OIANALYTICS_ENDPOINT = (sessionId: string) => `/api/oianalytics/oibus/sessions/${encodeURIComponent(sessionId)}`;
+const SESSION_REQUEST_OIANALYTICS_ENDPOINT = (sessionId: string, requestId: string) =>
+  `${SESSION_OIANALYTICS_ENDPOINT(sessionId)}/requests/${encodeURIComponent(requestId)}`;
 
-async function* multipartStream(boundary: string, filename: string, dataStream: AsyncIterable<Buffer>) {
+async function* multipartStream(boundary: string, filename: string, dataStream: AsyncIterable<Buffer>, contentType = 'application/zip') {
   yield Buffer.from(
-    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: application/zip\r\n\r\n`
+    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${contentType}\r\n\r\n`
   );
   for await (const chunk of dataStream) {
     yield chunk;
@@ -281,5 +288,94 @@ export default class OIAnalyticsClient {
     }
     const { fileId } = (await response.body.json()) as { fileId: string };
     return fileId;
+  }
+
+  /**
+   * Retrieves the requests of an interactive session not retrieved yet. A session closed or expired in OIAnalytics answers
+   * a 404 error: OIBus must then stop polling it.
+   */
+  async retrieveSessionRequests(
+    registrationSettings: OIAnalyticsRegistration,
+    sessionId: string
+  ): Promise<Array<OIBusInteractiveSessionRequestDTO>> {
+    const url = getUrl(`${SESSION_OIANALYTICS_ENDPOINT(sessionId)}/requests`, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
+    const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+
+    const response = await HTTPRequest(url, httpOptions);
+    if (!response.ok) {
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
+    }
+    return (await response.body.json()) as Array<OIBusInteractiveSessionRequestDTO>;
+  }
+
+  /**
+   * Sends the result of a request of an interactive session.
+   */
+  async completeSessionRequest(
+    registrationSettings: OIAnalyticsRegistration,
+    sessionId: string,
+    requestId: string,
+    completion: OIBusInteractiveSessionRequestCompletionDTO
+  ): Promise<void> {
+    const url = getUrl(SESSION_REQUEST_OIANALYTICS_ENDPOINT(sessionId, requestId), registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
+    const httpOptions = await buildHttpOptions('PUT', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+    (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
+    httpOptions.body = JSON.stringify(completion);
+
+    const response = await HTTPRequest(url, httpOptions);
+    if (!response.ok) {
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
+    }
+    await response.body.dump();
+  }
+
+  /**
+   * Uploads the file holding a result of a request of an interactive session too large to be sent inline, before the
+   * request is completed.
+   */
+  async uploadSessionRequestFile(
+    registrationSettings: OIAnalyticsRegistration,
+    sessionId: string,
+    requestId: string,
+    filePath: string,
+    filename: string
+  ): Promise<void> {
+    const url = getUrl(`${SESSION_REQUEST_OIANALYTICS_ENDPOINT(sessionId, requestId)}/file`, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
+    const httpOptions = await buildHttpOptions('POST', true, registrationSettings, null, OIANALYTICS_DOWNLOAD_TIMEOUT, null);
+    const boundary = `OIBusBoundary${Date.now()}`;
+    httpOptions.body = Readable.from(multipartStream(boundary, filename, createReadStream(filePath), 'application/json'));
+    httpOptions.headers = { ...httpOptions.headers, 'content-type': `multipart/form-data; boundary=${boundary}` };
+
+    const response = await HTTPRequest(url, httpOptions);
+    if (!response.ok) {
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
+    }
+    await response.body.dump();
+  }
+
+  /**
+   * Closes an interactive session from OIBus (when it stops).
+   */
+  async closeSession(registrationSettings: OIAnalyticsRegistration, sessionId: string): Promise<void> {
+    const url = getUrl(SESSION_OIANALYTICS_ENDPOINT(sessionId), registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
+    const httpOptions = await buildHttpOptions('DELETE', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+
+    const response = await HTTPRequest(url, httpOptions);
+    if (!response.ok) {
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
+    }
+    await response.body.dump();
   }
 }

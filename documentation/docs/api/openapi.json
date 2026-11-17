@@ -22896,6 +22896,11 @@
 						"description": "Permission to upload the logs database to OIAnalytics.",
 						"example": true
 					},
+					"openInteractiveSession": {
+						"type": "boolean",
+						"description": "Permission to open an interactive session, through which OIAnalytics browses the data sources (explore) and previews\nthe configuration workflows of the South connectors. Testing a connection or an item through a session also requires\nthe permission of the matching test command.",
+						"example": true
+					},
 					"updateRegistrationSettings": {
 						"type": "boolean",
 						"description": "Permission to update registration settings.",
@@ -23095,6 +23100,7 @@
 					"importConfiguration",
 					"dumpMemory",
 					"retrieveLogsDatabase",
+					"openInteractiveSession",
 					"updateRegistrationSettings",
 					"createScanMode",
 					"updateScanMode",
@@ -23393,6 +23399,7 @@
 					"update-engine-proxy",
 					"update-engine-logger",
 					"import-configuration",
+					"open-interactive-session",
 					"dump-memory",
 					"retrieve-logs-database",
 					"update-registration-settings",
@@ -24436,6 +24443,91 @@
 						],
 						"type": "object",
 						"description": "The content of the command, referencing the configuration file to download from OIAnalytics."
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusOpenInteractiveSessionCommandDTO": {
+				"description": "Command DTO for opening an interactive session with OIAnalytics: OIBus then polls the requests of the session at a short\ninterval (exploring a data source, testing a connection...) until OIAnalytics closes it.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"open-interactive-session"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
+					"commandContent": {
+						"properties": {
+							"sessionId": {
+								"type": "string",
+								"description": "The OIAnalytics identifier of the session.",
+								"example": "3c1f0a52-8a3e-4c4e-9d6f-2b7e1a0c9d41"
+							}
+						},
+						"required": [
+							"sessionId"
+						],
+						"type": "object",
+						"description": "The content of the command, referencing the session to open."
 					}
 				},
 				"required": [
@@ -40109,6 +40201,9 @@
 						"$ref": "#/components/schemas/OIBusImportConfigurationCommandDTO"
 					},
 					{
+						"$ref": "#/components/schemas/OIBusOpenInteractiveSessionCommandDTO"
+					},
+					{
 						"$ref": "#/components/schemas/OIBusDumpMemoryCommandDTO"
 					},
 					{
@@ -43186,7 +43281,7 @@
 							}
 						],
 						"nullable": true,
-						"description": "The South connector the content comes from. Content from different South connectors is never merged together, so\nthat the receiver can know where each batch comes from.\nAbsent for content cached before 3.10, or not coming from a South connector (history queries, OIBus API,\nOIAnalytics setpoints)."
+						"description": "The South connector the content comes from. Content from different South connectors is never merged together, so\nthat the receiver can know where each batch comes from.\nAbsent for content not coming from a South connector (history queries, OIBus API, OIAnalytics setpoints)."
 					}
 				},
 				"required": [
@@ -50289,7 +50384,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.10.0",
+		"version": "4.0.0",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"

@@ -196,6 +196,7 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     importConfiguration: Joi.boolean().required(),
     dumpMemory: Joi.boolean().required(),
     retrieveLogsDatabase: Joi.boolean().required(),
+    openInteractiveSession: Joi.boolean().required(),
     updateRegistrationSettings: Joi.boolean().required(),
     createScanMode: Joi.boolean().required(),
     updateScanMode: Joi.boolean().required(),

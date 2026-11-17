@@ -165,7 +165,12 @@ export async function down(knex: Knex): Promise<void> {
     'https_certificate_path',
     'https_private_key_path'
   ]);
-  await dropColumns(knex, REGISTRATIONS_TABLE, ['command_import_configuration', 'command_dump_memory', 'command_retrieve_logs_database']);
+  await dropColumns(knex, REGISTRATIONS_TABLE, [
+    'command_import_configuration',
+    'command_dump_memory',
+    'command_retrieve_logs_database',
+    'command_open_interactive_session'
+  ]);
 
   await dropColumns(knex, SOUTH_ITEM_GROUPS_TABLE, ['caching_strategy']);
   await dropColumns(knex, SOUTH_ITEMS_TABLE, [
@@ -748,21 +753,25 @@ const CONFIGURATION_PERMISSION_COLUMNS = [
 ];
 
 /**
- * Adds the permissions of the import-configuration, dump-memory and retrieve-logs-database remote commands.
+ * Adds the permissions of the import-configuration, dump-memory, retrieve-logs-database and open-interactive-session
+ * remote commands.
  *
  * As importing a configuration replaces the whole configuration, it is only granted on a registration granting every
  * permission changing the configuration: an OIBus forbidding any of them must not be fully reconfigured by a single
- * command. The other two are granted, like the other permissions were when they were introduced.
+ * command. An interactive session connects to the data sources like a connection test does, so it is granted when
+ * testing a South connection is. The other two are granted, like the other permissions were when they were introduced.
  */
 export async function addRegistrationPermissions(knex: Knex): Promise<void> {
   await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
     table.boolean('command_import_configuration');
     table.boolean('command_dump_memory');
     table.boolean('command_retrieve_logs_database');
+    table.boolean('command_open_interactive_session');
   });
   await knex(REGISTRATIONS_TABLE).update({
     command_dump_memory: true,
     command_retrieve_logs_database: true,
+    command_open_interactive_session: knex.raw('COALESCE(command_test_south_connection, 0)'),
     command_import_configuration: knex.raw(
       `CASE WHEN ${CONFIGURATION_PERMISSION_COLUMNS.map(column => `${column} = 1`).join(' AND ')} THEN 1 ELSE 0 END`
     )

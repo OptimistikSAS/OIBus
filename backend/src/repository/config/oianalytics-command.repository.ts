@@ -142,6 +142,7 @@ export default class OIAnalyticsCommandRepository {
       case 'update-engine-proxy':
       case 'update-engine-logger':
       case 'import-configuration':
+      case 'open-interactive-session':
       case 'create-scan-mode':
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
@@ -474,6 +475,12 @@ export default class OIAnalyticsCommandRepository {
         return {
           ...baseCommandFields(command),
           type: 'import-configuration',
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'open-interactive-session':
+        return {
+          ...baseCommandFields(command),
+          type: 'open-interactive-session',
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-registration-settings':

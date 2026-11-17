@@ -48,6 +48,7 @@ import {
   OIBusGetHistoryCacheFileContentCommand,
   OIBusGetNorthCacheFileContentCommand,
   OIBusImportConfigurationCommand,
+  OIBusOpenInteractiveSessionCommand,
   OIBusRetrieveLogsDatabaseCommand,
   OIBusSearchHistoryCacheContentCommand,
   OIBusSearchNorthCacheContentCommand,
@@ -102,6 +103,7 @@ import type OIAnalyticsCommandServiceType from './oianalytics-command.service';
 import type { toOIBusCommandDTO as toOIBusCommandDTOType } from './oianalytics-command.service';
 import type OIAnalyticsMessageService from './oianalytics-message.service';
 import type OIAnalyticsRegistrationService from './oianalytics-registration.service';
+import type OIAnalyticsSessionService from './oianalytics-session.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -139,6 +141,7 @@ let northService: Mocked<NorthService>;
 let historyQueryService: Mocked<HistoryQueryService>;
 let transformerService: Mocked<TransformerService>;
 let configImportService: Mocked<ConfigImportService>;
+let oIAnalyticsSessionService: Mocked<OIAnalyticsSessionService>;
 let oIAnalyticsClient: OianalyticsClientMock;
 let service: OIAnalyticsCommandServiceType;
 
@@ -180,6 +183,7 @@ beforeEach(() => {
   historyQueryService = createMock<HistoryQueryService>();
   transformerService = createMock<TransformerService>();
   configImportService = createMock<ConfigImportService>();
+  oIAnalyticsSessionService = createMock<OIAnalyticsSessionService>();
   oIAnalyticsClient = new OianalyticsClientMock();
 });
 
@@ -202,6 +206,7 @@ function makeService(ignoreRemoteUpdate = false, launcherVersion = testData.engi
     historyQueryService,
     transformerService,
     configImportService,
+    oIAnalyticsSessionService,
     logger,
     'binaryFolder',
     LOGS_DATABASE_PATH,
@@ -1522,6 +1527,30 @@ describe('OIAnalytics Command Service', () => {
     assertCompleted(regenerateCipherKeysCommand, 'OIAnalytics keys reloaded');
   });
 
+  describe('open-interactive-session command', () => {
+    const command = buildCommand<OIBusOpenInteractiveSessionCommand>({
+      id: 'openInteractiveSessionId',
+      type: 'open-interactive-session',
+      commandContent: { sessionId: 'sessionId' }
+    });
+
+    it('should open the interactive session', async () => {
+      await executeCommand(command);
+
+      assert.deepStrictEqual(oIAnalyticsSessionService.open.mock.calls[0].arguments, ['sessionId']);
+      assertCompleted(command, 'Interactive session opened');
+    });
+
+    it('should not open the interactive session without permission', async () => {
+      withoutPermission('openInteractiveSession');
+
+      await executeCommand(command);
+
+      assert.strictEqual(oIAnalyticsSessionService.open.mock.calls.length, 0);
+      assertErrored(command, `Command ${command.id} of type ${command.type} is not authorized`);
+    });
+  });
+
   describe('import-configuration command', () => {
     const command = buildCommand<OIBusImportConfigurationCommand>({
       id: 'importConfigurationId',
@@ -2242,6 +2271,7 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
 
     assert.strictEqual(logger.debug.mock.calls.length, 0);
     assert.strictEqual(anotherLogger.debug.mock.calls.length, 2);
+    assert.deepStrictEqual(oIAnalyticsSessionService.setLogger.mock.calls[0].arguments, [anotherLogger]);
   });
 
   it('should not run an update', async () => {

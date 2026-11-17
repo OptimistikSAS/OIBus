@@ -241,6 +241,21 @@ describe('RegisterOibusModalComponent', () => {
     await expect.element(diagnostic.getByRole('checkbox')).toHaveLength(2);
   });
 
+  test('should let disable the interactive sessions among the south actions', async () => {
+    const tester = new RegisterOibusModalComponentTester();
+    tester.fixture.componentInstance.prepare(registration, 'register', false);
+
+    const southActions = tester.root.getByRole('group', { name: 'South actions' });
+    const interactiveSession = southActions.getByRole('checkbox', { name: 'Interactive session (explore)' });
+    await expect.element(interactiveSession).toBeChecked();
+    await tester.root.getByCss('label[for="permission-openInteractiveSession"]').click();
+    await tester.saveButton.click();
+
+    expect(engineService.register).toHaveBeenCalledWith(
+      expectedCommand({ commandPermissions: { ...registration.commandPermissions, openInteractiveSession: false } })
+    );
+  });
+
   test('should cancel', async () => {
     const tester = new RegisterOibusModalComponentTester();
     tester.fixture.componentInstance.prepare(registration, 'register', false);

@@ -2699,6 +2699,7 @@
       "update-engine-proxy": "更新引擎代理设置",
       "update-engine-logger": "更新引擎日志设置",
       "import-configuration": "导入配置",
+      "open-interactive-session": "打开交互式会话",
       "dump-memory": "内存转储",
       "retrieve-logs-database": "获取日志数据库",
       "update-registration-settings": "更新注册设置",
@@ -3458,6 +3459,7 @@
           "delete": "删除",
           "test": "测试",
           "test-connection": "测试连接",
+          "interactive-session": "交互式会话（浏览）",
           "import-items": "导入项目",
           "test-item": "测试项目",
           "north": "North",
@@ -3497,6 +3499,9 @@
           },
           "import-configuration": {
             "file-id": "配置文件：{{ fileId }}"
+          },
+          "open-interactive-session": {
+            "session-id": "会话：{{ sessionId }}"
           },
           "scan-mode": {
             "scan-mode-id": "扫描模式 ID：{{ scanModeId }}"

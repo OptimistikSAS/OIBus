@@ -31,6 +31,7 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'update-engine-proxy',
   'update-engine-logger',
   'import-configuration',
+  'open-interactive-session',
   'dump-memory',
   'retrieve-logs-database',
   'update-registration-settings',
@@ -121,6 +122,11 @@ export interface OIAnalyticsFetchUpdateEngineLoggerCommandDTO extends BaseOIAnal
 export interface OIAnalyticsFetchImportConfigurationCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'import-configuration';
   commandContent: { fileId: string };
+}
+
+export interface OIAnalyticsFetchOpenInteractiveSessionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'open-interactive-session';
+  commandContent: { sessionId: string };
 }
 
 export interface OIAnalyticsFetchDumpMemoryCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -408,6 +414,7 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateEngineProxyCommandDTO
   | OIAnalyticsFetchUpdateEngineLoggerCommandDTO
   | OIAnalyticsFetchImportConfigurationCommandDTO
+  | OIAnalyticsFetchOpenInteractiveSessionCommandDTO
   | OIAnalyticsFetchDumpMemoryCommandDTO
   | OIAnalyticsFetchRetrieveLogsDatabaseCommandDTO
   | OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO

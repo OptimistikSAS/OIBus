@@ -403,4 +403,116 @@ describe('OIAnalytics Client', () => {
       );
     });
   });
+
+  describe('interactive sessions', () => {
+    const registration = testData.oIAnalytics.registration.completed;
+
+    it('should retrieve the requests of a session', async () => {
+      const requests = [{ id: 'request1', type: 'BROWSE', content: { exploreId: 'explore1', parentId: null }, creationDate: '' }];
+      respondWith(200, requests);
+
+      const result = await service.retrieveSessionRequests(registration, 'session 1');
+
+      assert.deepStrictEqual(result, requests);
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
+        'GET',
+        true,
+        registration,
+        null,
+        30_000,
+        null
+      ]);
+      assert.ok(sentRequest()[0].href.endsWith('/api/oianalytics/oibus/sessions/session%201/requests'));
+    });
+
+    it('should throw the status of a session that does not exist anymore', async () => {
+      respondWith(404, 'Not Found');
+
+      await assert.rejects(() => service.retrieveSessionRequests(registration, 'session1'), /^Error: 404 - Not Found$/);
+    });
+
+    it('should complete a request', async () => {
+      await service.completeSessionRequest(registration, 'session1', 'request 1', { status: 'COMPLETED', result: { entries: [] } });
+
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
+        'PUT',
+        true,
+        registration,
+        null,
+        30_000,
+        null
+      ]);
+      const [calledUrl, calledOptions] = sentRequest();
+      assert.ok(calledUrl.href.endsWith('/api/oianalytics/oibus/sessions/session1/requests/request%201'));
+      assert.strictEqual((calledOptions.headers as Record<string, string>)['Content-Type'], 'application/json');
+      assert.strictEqual(calledOptions.body, JSON.stringify({ status: 'COMPLETED', result: { entries: [] } }));
+    });
+
+    it('should throw when a request cannot be completed', async () => {
+      respondWith(400, 'Bad Request');
+
+      await assert.rejects(
+        () => service.completeSessionRequest(registration, 'session1', 'request1', { status: 'ERRORED', result: 'error' }),
+        /400 - Bad Request/
+      );
+    });
+
+    it('should upload the result file of a request as multipart', async () => {
+      const createReadStreamMock = mock.method(fsSync, 'createReadStream', () => Readable.from([Buffer.from('[]')]));
+
+      await service.uploadSessionRequestFile(registration, 'session1', 'request1', 'path/result.json', 'result.json');
+
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
+        'POST',
+        true,
+        registration,
+        null,
+        900_000,
+        null
+      ]);
+      assert.deepStrictEqual(createReadStreamMock.mock.calls[0].arguments, ['path/result.json']);
+      const [calledUrl, calledOptions] = sentRequest();
+      assert.ok(calledUrl.href.endsWith('/api/oianalytics/oibus/sessions/session1/requests/request1/file'));
+      const boundary = (calledOptions.headers as Record<string, string>)['content-type'].replace('multipart/form-data; boundary=', '');
+      const chunks: Array<Buffer> = [];
+      for await (const chunk of calledOptions.body as Readable) {
+        chunks.push(chunk);
+      }
+      assert.strictEqual(
+        Buffer.concat(chunks).toString(),
+        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="result.json"\r\nContent-Type: application/json\r\n\r\n` +
+          `[]\r\n--${boundary}--\r\n`
+      );
+    });
+
+    it('should throw when the result file cannot be uploaded', async () => {
+      respondWith(413, 'Payload Too Large');
+      mock.method(fsSync, 'createReadStream', () => Readable.from([]));
+
+      await assert.rejects(
+        () => service.uploadSessionRequestFile(registration, 'session1', 'request1', 'path/result.json', 'result.json'),
+        /413 - Payload Too Large/
+      );
+    });
+
+    it('should close a session', async () => {
+      await service.closeSession(registration, 'session1');
+
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
+        'DELETE',
+        true,
+        registration,
+        null,
+        30_000,
+        null
+      ]);
+      assert.ok(sentRequest()[0].href.endsWith('/api/oianalytics/oibus/sessions/session1'));
+    });
+
+    it('should throw when a session cannot be closed', async () => {
+      respondWith(404, 'Not Found');
+
+      await assert.rejects(() => service.closeSession(registration, 'session1'), /404 - Not Found/);
+    });
+  });
 });

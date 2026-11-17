@@ -47,6 +47,7 @@ import {
   OIBusGetHistoryCacheFileContentCommand,
   OIBusGetNorthCacheFileContentCommand,
   OIBusImportConfigurationCommand,
+  OIBusOpenInteractiveSessionCommand,
   OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
   OIBusRetrieveLogsDatabaseCommand,
@@ -94,10 +95,11 @@ import type ScanModeService from '../scan-mode.service';
 import type SouthService from '../south.service';
 import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
 import type TransformerService from '../transformer.service';
-import { delay, getErrorMessage, getOIBusInfo, sanitizeFilename, unzip, zipFile } from '../utils';
+import { delay, getErrorMessage, getOIBusInfo, sanitizeFilename, unzip, withTimeout, zipFile } from '../utils';
 import OIAnalyticsClient from './oianalytics-client.service';
 import type OIAnalyticsMessageService from './oianalytics-message.service';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
+import type OIAnalyticsSessionService from './oianalytics-session.service';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -105,38 +107,6 @@ const UPDATE_SETTINGS_FILE = 'update.json';
 // system, not by OIBus. Without a deadline here, a hung connection keeps
 // `isExecutingCommand` true forever, blocking every subsequent command.
 const TEST_COMMAND_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-
-/**
- * Races `promise` against a rejection after `ms` milliseconds.
- * Does NOT cancel the underlying operation — Node has no universal cancellation
- * primitive — but it does unblock the caller so the command lock is released.
- *
- * Wired through a single Promise with manual resolve/reject (rather than
- * Promise.race([promise, timeout])) so neither branch is ever left permanently
- * pending: with Promise.race, whichever promise loses never settles once its
- * timer is cleared, and a pending Promise (plus whatever it keeps reachable) is
- * only reclaimed on a full GC pass, not eagerly. Attaching `.then(resolve, reject)`
- * directly to `promise` also means it always has a rejection handler, so a late
- * rejection after the timeout has already won can never become an
- * UnhandledPromiseRejection (which would terminate the process in Node v24+).
- */
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      reject(new Error(`${label} timed out after ${ms / 1000}s`));
-    }, ms);
-    promise.then(
-      result => {
-        clearTimeout(timeoutId);
-        resolve(result);
-      },
-      error => {
-        clearTimeout(timeoutId);
-        reject(error);
-      }
-    );
-  });
-}
 
 export default class OIAnalyticsCommandService {
   private isRetrievingCommands = false;
@@ -162,6 +132,7 @@ export default class OIAnalyticsCommandService {
     private historyQueryService: HistoryQueryService,
     private transformerService: TransformerService,
     private configImportService: ConfigImportService,
+    private oIAnalyticsSessionService: OIAnalyticsSessionService,
     private logger: ILogger,
     private binaryFolder: string,
     private logsDatabasePath: string,
@@ -224,6 +195,7 @@ export default class OIAnalyticsCommandService {
   async start(): Promise<void> {
     this.oIBusService.loggerEvent.on('updated', (logger: ILogger) => {
       this.logger = logger;
+      this.oIAnalyticsSessionService.setLogger(logger);
     });
 
     this.oIAnalyticsRegistrationService.registrationEvent.on('updated', async () => {
@@ -432,6 +404,9 @@ export default class OIAnalyticsCommandService {
           break;
         case 'import-configuration':
           await this.executeImportConfigurationCommand(command, registration);
+          break;
+        case 'open-interactive-session':
+          this.executeOpenInteractiveSessionCommand(command);
           break;
         case 'dump-memory':
           await this.executeDumpMemoryCommand(command, registration);
@@ -769,6 +744,15 @@ export default class OIAnalyticsCommandService {
    * Downloads the configuration file from OIAnalytics and imports it (keeping the local users and the registration),
    * then restarts OIBus to run the new configuration. Like restart-engine, the command is acknowledged on the next start.
    */
+  /**
+   * Opens an interactive session: OIBus then polls its requests at a short interval, until OIAnalytics closes it. The
+   * command completes as soon as the session is open.
+   */
+  private executeOpenInteractiveSessionCommand(command: OIBusOpenInteractiveSessionCommand) {
+    this.oIAnalyticsSessionService.open(command.commandContent.sessionId);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Interactive session opened');
+  }
+
   private async executeImportConfigurationCommand(command: OIBusImportConfigurationCommand, registration: OIAnalyticsRegistration) {
     const fileContent = await this.oIAnalyticsClient.retrieveConfigurationFile(registration, command.commandContent.fileId);
     let configuration: unknown;
@@ -901,6 +885,10 @@ export default class OIAnalyticsCommandService {
         retrieveLogsDatabase: registration.commandPermissions.retrieveLogsDatabase
           ? command.commandContent.commandPermissions.retrieveLogsDatabase
           : registration.commandPermissions.retrieveLogsDatabase,
+        // OIAnalytics versions not knowing this permission yet do not send it: keep the local one
+        openInteractiveSession: registration.commandPermissions.openInteractiveSession
+          ? (command.commandContent.commandPermissions.openInteractiveSession ?? true)
+          : false,
         updateRegistrationSettings: registration.commandPermissions.updateRegistrationSettings
           ? command.commandContent.commandPermissions.updateRegistrationSettings
           : registration.commandPermissions.updateRegistrationSettings,
@@ -1688,6 +1676,8 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.updateEngineSettings;
       case 'import-configuration':
         return registration.commandPermissions.importConfiguration;
+      case 'open-interactive-session':
+        return registration.commandPermissions.openInteractiveSession;
       case 'dump-memory':
         return registration.commandPermissions.dumpMemory;
       case 'retrieve-logs-database':
@@ -1823,6 +1813,12 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
         commandContent: command.commandContent
       };
     case 'import-configuration':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
+    case 'open-interactive-session':
       return {
         ...toBaseOIBusCommandDTO(command),
         type: command.type,
