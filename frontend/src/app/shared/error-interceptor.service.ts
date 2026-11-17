@@ -4,6 +4,7 @@ import { inject } from '@angular/core';
 import { from, Observable, switchMap, tap, throwError } from 'rxjs';
 
 import { CurrentUserService } from './current-user.service';
+import { bodyMessage } from './extract-error-message';
 import { NotificationService } from './notification.service';
 import { WindowService } from './window.service';
 
@@ -45,20 +46,14 @@ export function ignoreErrorUnlessStatusIs(...statusCodes: Array<HttpStatusCode>)
 
 export function getMessageFromHttpErrorResponse(errorResponse: HttpErrorResponse): string {
   let message = `${errorResponse.status} - ${errorResponse.message}`;
-  if (errorResponse.error && errorResponse.error.message) {
-    message += ' - ' + errorResponse.error.message;
+  const detail = bodyMessage(errorResponse.error);
+  if (detail) {
+    message += ' - ' + detail;
   }
   return message.trim();
 }
 
-export const messageFromBody = (body: unknown): string | undefined => {
-  if (!body || typeof body !== 'object') return undefined;
-  const { message, error } = body as { message?: unknown; error?: unknown };
-  // tsoa ValidateError puts a field map (not a string) in `message`
-  if (typeof message === 'string') return message;
-  if (typeof error === 'string') return error;
-  return undefined;
-};
+export const messageFromBody = (body: unknown): string | undefined => bodyMessage(body) ?? undefined;
 
 /**
  * Rethrows the message the backend put in the error body, falling back to the generic HTTP

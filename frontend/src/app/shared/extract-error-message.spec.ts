@@ -14,6 +14,23 @@ describe('extractErrorMessage', () => {
       expected: 'Http failure response for /api/x: 500 Server Error'
     },
     { name: 'the message of an error', error: new Error('boom'), expected: 'boom' },
+    {
+      name: 'the fields rejected by the request validation',
+      error: new HttpErrorResponse({
+        error: {
+          message: {
+            'command.host': { message: '"host" is required' },
+            'command.commandPermissions.setpoint': { message: 'invalid boolean value', value: 'yes' }
+          }
+        }
+      }),
+      expected: 'host: "host" is required; commandPermissions.setpoint: invalid boolean value'
+    },
+    {
+      name: 'a rejected field without message',
+      error: new HttpErrorResponse({ error: { message: { 'command.host': {} } } }),
+      expected: 'host'
+    },
     { name: 'a default message for an object without message', error: { error: {} }, expected: 'Unknown error' },
     { name: 'a default message for null', error: null, expected: 'Unknown error' },
     { name: 'a default message for a string', error: 'oops', expected: 'Unknown error' }

@@ -152,7 +152,7 @@ describe('error helpers', () => {
     { body: { message: 'Invalid' }, expected: 'Invalid' },
     { body: { error: 'Not found' }, expected: 'Not found' },
     { body: { message: { name: 'required' }, error: 'Validation' }, expected: 'Validation' },
-    { body: { message: { name: 'required' } }, expected: undefined }
+    { body: { message: { name: 'required' } }, expected: 'name: required' }
   ])('messageFromBody($body) should be $expected', ({ body, expected }) => {
     expect(messageFromBody(body)).toBe(expected);
   });
@@ -160,6 +160,9 @@ describe('error helpers', () => {
   test('getMessageFromHttpErrorResponse should add the message of the body', () => {
     expect(getMessageFromHttpErrorResponse(errorResponse(null))).toBe(fallback);
     expect(getMessageFromHttpErrorResponse(errorResponse({ message: 'Invalid' }))).toBe(`${fallback} - Invalid`);
+    expect(getMessageFromHttpErrorResponse(errorResponse({ message: { 'command.name': { message: 'required' } } }))).toBe(
+      `${fallback} - name: required`
+    );
   });
 
   test.each([

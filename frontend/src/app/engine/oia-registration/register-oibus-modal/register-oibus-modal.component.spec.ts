@@ -174,6 +174,28 @@ describe('RegisterOibusModalComponent', () => {
     await expect.element(tester.testButton).toBeEnabled();
   });
 
+  test('should display the fields rejected by the validation of the connection test', async () => {
+    const rejected = {
+      'command.commandPermissions.openInteractiveSession': {
+        message: '"openInteractiveSession" is an excess property with value true',
+        value: true
+      }
+    };
+    engineService.testOIAnalyticsConnection.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 400, error: { message: rejected } }))
+    );
+    const tester = new RegisterOibusModalComponentTester();
+    tester.fixture.componentInstance.prepare(registration, 'register', false);
+
+    await tester.testButton.click();
+
+    await expect
+      .element(tester.testError)
+      .toHaveTextContent(
+        'Error when testing connectioncommandPermissions.openInteractiveSession: "openInteractiveSession" is an excess property with value true'
+      );
+  });
+
   test('should allow all or none of the permissions of a group', async () => {
     const tester = new RegisterOibusModalComponentTester();
     tester.fixture.componentInstance.prepare(registration, 'register', false);
