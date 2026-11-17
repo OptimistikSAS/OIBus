@@ -67,7 +67,8 @@ const previewResponse: ConfigImportPreviewDTO = {
         commandRefreshInterval: registrationCommand.commandRefreshInterval,
         commandRetryInterval: registrationCommand.commandRetryInterval,
         messageRetryInterval: registrationCommand.messageRetryInterval,
-        commandPermissions: registrationCommand.commandPermissions
+        commandPermissions: registrationCommand.commandPermissions,
+        allowedCommands: []
       }
     },
     scanModes: [],

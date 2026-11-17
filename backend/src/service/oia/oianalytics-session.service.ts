@@ -120,6 +120,16 @@ export default class OIAnalyticsSessionService {
       await this.closeLocally(session);
       return;
     }
+    if (!registration.commandPermissions.connectToDataSources) {
+      this.logger.info(`OIAnalytics is not allowed to connect to the data sources anymore: interactive session ${session.id} closed`);
+      await this.closeLocally(session);
+      try {
+        await this.oIAnalyticsClient.closeSession(registration, session.id);
+      } catch (error: unknown) {
+        this.logger.debug(`Could not close interactive session ${session.id} on OIAnalytics: ${getErrorMessage(error)}`);
+      }
+      return;
+    }
 
     let requests: Array<OIBusInteractiveSessionRequestDTO>;
     try {
@@ -223,12 +233,10 @@ export default class OIAnalyticsSessionService {
         return null;
       }
       case 'TEST_SOUTH_CONNECTION': {
-        this.checkPermission(registration.commandPermissions.testSouthConnection, request);
         const content = await this.decryptSouthContent(request.content as OIBusInteractiveSessionSouthContent, registration);
         return await this.southService.testSouth(content.southId, content.southType, content.settings);
       }
       case 'TEST_SOUTH_ITEM': {
-        this.checkPermission(registration.commandPermissions.testSouthItem, request);
         const content = (await this.decryptSouthContent(
           request.content as OIBusTestSouthItemRequestContent,
           registration
@@ -264,12 +272,6 @@ export default class OIAnalyticsSessionService {
   private checkExplore(session: InteractiveSession, exploreId: string): void {
     if (!session.exploreIds.has(exploreId)) {
       throw new Error(`Explore "${exploreId}" not found in interactive session ${session.id}`);
-    }
-  }
-
-  private checkPermission(permission: boolean, request: OIBusInteractiveSessionRequestDTO): void {
-    if (!permission) {
-      throw new Error(`Interactive session request ${request.id} of type ${request.type} is not authorized`);
     }
   }
 

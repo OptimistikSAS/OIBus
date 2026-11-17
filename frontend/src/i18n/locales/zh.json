@@ -3420,54 +3420,61 @@
       "edit": "编辑注册",
       "permissions": {
         "title": "OIAnalytics 命令权限",
-        "info": "下面的按钮表示 OIAnalytics 允许让此 OIBus 执行的命令。点击按钮以允许或禁止某个命令。",
+        "info": "OIAnalytics 被允许让此 OIBus 执行的操作，按其风险分组。导入完整配置会替换全部配置，因此需要所有“配置”权限以及“管理访问”权限。",
         "all": "全部",
         "none": "无",
-        "remote-update-disabled": "此 OIBus 已禁用远程更新（以 --ignoreRemoteUpdate 启动），因此无法启用 upgrade-version 命令。",
+        "remote-update-disabled": "此 OIBus 已禁用远程更新（以 --ignoreRemoteUpdate 启动），因此无法授予“更新版本”权限。",
         "group": {
-          "oibus": "OIBus",
-          "connectors": "连接器",
-          "history-query": "历史查询"
+          "lifecycle": "生命周期",
+          "configuration": "配置",
+          "security": "安全",
+          "data": "数据与设备"
         },
-        "section": {
-          "engine": "引擎",
-          "diagnostic": "诊断",
-          "registration": "注册",
-          "scan-mode": "扫描模式",
-          "ip-filter": "IP 过滤器",
-          "certificate": "证书",
-          "transformers": "自定义转换器",
-          "north-connector": "North 连接器",
-          "south-connector": "South 连接器",
-          "north-actions": "North 操作",
-          "south-actions": "South 操作",
-          "north-cache": "North 缓存管理",
-          "history-query": "历史查询",
-          "test-history-query": "测试历史查询",
-          "history-cache": "历史缓存管理"
-        },
-        "labels": {
-          "upgrade": "升级",
-          "restart": "重启",
-          "settings": "设置",
-          "import-config": "导入配置",
-          "memory-dump": "内存转储",
-          "logs-database": "日志数据库",
-          "cipher-keys": "加密密钥",
-          "create": "创建",
-          "update": "更新",
-          "delete": "删除",
-          "test": "测试",
-          "test-connection": "测试连接",
-          "interactive-session": "交互式会话（浏览）",
-          "import-items": "导入项目",
-          "test-item": "测试项目",
-          "north": "North",
-          "south": "South",
-          "item": "项目",
-          "search": "搜索",
-          "view-file": "查看文件",
-          "setpoint": "设定点"
+        "permission": {
+          "updateVersion": {
+            "label": "更新版本",
+            "description": "用新版本替换 OIBus 的二进制文件"
+          },
+          "operate": {
+            "label": "运行操作",
+            "description": "重启 OIBus，启动或停止历史查询"
+          },
+          "configureEngine": {
+            "label": "引擎设置",
+            "description": "修改常规、代理和日志设置"
+          },
+          "configureDataFlow": {
+            "label": "数据流",
+            "description": "创建、修改和删除连接器、历史查询、扫描模式和证书，可将数据发送到任何地方或停止采集"
+          },
+          "configureCustomCode": {
+            "label": "自定义代码",
+            "description": "创建、修改和测试自定义转换器，它们会运行 OIAnalytics 发送的代码"
+          },
+          "manageAccess": {
+            "label": "管理访问",
+            "description": "修改 Web 服务器设置和 IP 过滤器，它们控制谁可以访问此 OIBus"
+          },
+          "manageRegistration": {
+            "label": "管理注册",
+            "description": "修改注册设置并重新生成其加密密钥。权限只能被远程撤销"
+          },
+          "connectToDataSources": {
+            "label": "连接数据源",
+            "description": "测试连接和数据项，浏览数据源：OIBus 会连接 OIAnalytics 发送的主机"
+          },
+          "manageCache": {
+            "label": "管理缓存",
+            "description": "读取、重试和删除北向连接器和历史查询缓存的文件"
+          },
+          "diagnostics": {
+            "label": "诊断",
+            "description": "获取内存转储（可能包含明文密钥）或日志数据库"
+          },
+          "setpoint": {
+            "label": "设定值",
+            "description": "通过南向连接器向设备写入数值"
+          }
         }
       }
     },

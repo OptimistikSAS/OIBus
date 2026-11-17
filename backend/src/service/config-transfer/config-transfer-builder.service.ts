@@ -30,6 +30,7 @@ import TransformerRepository from '../../repository/config/transformer.repositor
 import UserRepository from '../../repository/config/user.repository';
 import EncryptionService from '../encryption.service';
 import { northManifestList } from '../north-manifests';
+import { getAllowedCommands } from '../oia/command-permissions.utils';
 import { southManifestList } from '../south-manifests';
 import { getStandardManifest } from '../transformer.service';
 import { getOIBusInfo } from '../utils';
@@ -234,7 +235,8 @@ export default class ConfigTransferBuilderService {
         commandRefreshInterval: registration.commandRefreshInterval,
         commandRetryInterval: registration.commandRetryInterval,
         messageRetryInterval: registration.messageRetryInterval,
-        commandPermissions: registration.commandPermissions
+        commandPermissions: registration.commandPermissions,
+        allowedCommands: getAllowedCommands(registration.commandPermissions)
       }
     };
   }

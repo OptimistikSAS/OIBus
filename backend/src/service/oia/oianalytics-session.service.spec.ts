@@ -170,6 +170,37 @@ describe('OIAnalytics Session Service', () => {
       assert.strictEqual(client.retrieveSessionRequests.mock.calls.length, 0);
       assert.deepStrictEqual(service.getOpenSessionIds(), []);
     });
+
+    it('should close the session, on OIAnalytics too, when connecting to the data sources is revoked', async () => {
+      southService.startExplore.mock.mockImplementationOnce(async () => ({ sessionId: 'explore1', entries: [] }));
+      respondWith(request('START_EXPLORE', southContent()));
+      await openSession();
+      registration = { ...REGISTRATION, commandPermissions: { ...REGISTRATION.commandPermissions, connectToDataSources: false } };
+
+      mock.timers.tick(sessionModule.SESSION_POLL_INTERVAL_MS);
+      await settle();
+
+      assert.strictEqual(client.retrieveSessionRequests.mock.calls.length, 1);
+      assert.deepStrictEqual(service.getOpenSessionIds(), []);
+      assert.deepStrictEqual(southService.closeExplore.mock.calls[0].arguments, ['explore1']);
+      assert.deepStrictEqual(client.closeSession.mock.calls[0].arguments, [registration, 'session1']);
+    });
+
+    it('should ignore the error of OIAnalytics when closing a session whose permission is revoked', async () => {
+      registration = { ...REGISTRATION, commandPermissions: { ...REGISTRATION.commandPermissions, connectToDataSources: false } };
+      client.closeSession.mock.mockImplementationOnce(async () => {
+        throw new Error('404 - Not Found');
+      });
+
+      await openSession();
+
+      assert.deepStrictEqual(service.getOpenSessionIds(), []);
+      assert.ok(
+        logger.debug.mock.calls.some(
+          call => call.arguments[0] === 'Could not close interactive session session1 on OIAnalytics: 404 - Not Found'
+        )
+      );
+    });
   });
 
   describe('requests', () => {
@@ -269,23 +300,6 @@ describe('OIAnalytics Session Service', () => {
       assert.deepStrictEqual(completions(), [[registration, 'session1', 'request1', { status: 'COMPLETED', result }]]);
     });
 
-    it('should not test the connection of a south connector without permission', async () => {
-      registration = { ...REGISTRATION, commandPermissions: { ...REGISTRATION.commandPermissions, testSouthConnection: false } };
-      respondWith(request('TEST_SOUTH_CONNECTION', southContent()));
-
-      await openSession();
-
-      assert.strictEqual(southService.testSouth.mock.calls.length, 0);
-      assert.deepStrictEqual(completions(), [
-        [
-          registration,
-          'session1',
-          'request1',
-          { status: 'ERRORED', result: 'Interactive session request request1 of type TEST_SOUTH_CONNECTION is not authorized' }
-        ]
-      ]);
-    });
-
     it('should test an item, with the secrets of the item decrypted', async () => {
       const result = { raw: { type: 'any', content: '' }, transformed: null, connectionDuration: 1, queryDuration: 2 } as never;
       southService.testItem.mock.mockImplementationOnce(async () => result);
@@ -305,16 +319,6 @@ describe('OIAnalytics Session Service', () => {
         testingSettings
       ]);
       assert.deepStrictEqual(completions(), [[registration, 'session1', 'request1', { status: 'COMPLETED', result }]]);
-    });
-
-    it('should not test an item without permission', async () => {
-      registration = { ...REGISTRATION, commandPermissions: { ...REGISTRATION.commandPermissions, testSouthItem: false } };
-      respondWith(request('TEST_SOUTH_ITEM', { ...southContent(), itemName: 'item', itemSettings: {}, testingSettings: {} }));
-
-      await openSession();
-
-      assert.strictEqual(southService.testItem.mock.calls.length, 0);
-      assert.strictEqual(completions()[0][3].status, 'ERRORED');
     });
 
     it('should preview a configuration workflow', async () => {

@@ -91,7 +91,8 @@ export const configImportPreview: ConfigImportPreviewDTO = {
         commandRefreshInterval: 10,
         commandRetryInterval: 5,
         messageRetryInterval: 5,
-        commandPermissions: testData.oIAnalytics.registration.completed.commandPermissions
+        commandPermissions: testData.oIAnalytics.registration.completed.commandPermissions,
+        allowedCommands: ['update-version', 'restart-engine']
       }
     },
     scanModes: [

@@ -1490,6 +1490,23 @@ describe('OIAnalytics Command Service', () => {
     assertCompleted(updateRegistrationCommand, 'Registration settings updated successfully');
   });
 
+  it('should execute update-registration-settings command and revoke the permissions revoked by OIAnalytics', async () => {
+    const command: OIBusUpdateRegistrationSettingsCommand = {
+      ...updateRegistrationCommand,
+      commandContent: {
+        ...updateRegistrationCommand.commandContent,
+        commandPermissions: { ...updateRegistrationCommand.commandContent.commandPermissions, setpoint: false }
+      }
+    };
+
+    await service['executeUpdateRegistrationSettingsCommand'](command, testData.oIAnalytics.registration.completed);
+
+    assert.deepStrictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls[0].arguments[0].commandPermissions, {
+      ...testData.oIAnalytics.registration.completed.commandPermissions,
+      setpoint: false
+    });
+  });
+
   it('should execute update-registration-settings command and not enabling permissions if disabled', async () => {
     const commandPermissions = { ...testData.oIAnalytics.registration.completed.commandPermissions };
     for (const permission of Object.keys(commandPermissions) as Array<keyof RegistrationCommandPermissions>) {
@@ -1542,7 +1559,7 @@ describe('OIAnalytics Command Service', () => {
     });
 
     it('should not open the interactive session without permission', async () => {
-      withoutPermission('openInteractiveSession');
+      withoutPermission('connectToDataSources');
 
       await executeCommand(command);
 
@@ -1620,14 +1637,16 @@ describe('OIAnalytics Command Service', () => {
       assertErrored(command, 'Export from a newer OIBus');
     });
 
-    it('should not import the configuration without permission', async () => {
-      withoutPermission('importConfiguration');
+    for (const permission of ['configureEngine', 'configureDataFlow', 'configureCustomCode', 'manageAccess'] as const) {
+      it(`should not import the configuration without the ${permission} permission`, async () => {
+        withoutPermission(permission);
 
-      await service.processNextCommand();
+        await service.processNextCommand();
 
-      assert.strictEqual(oIAnalyticsClient.retrieveConfigurationFile.mock.calls.length, 0);
-      assertErrored(command, `Command ${command.id} of type ${command.type} is not authorized`);
-    });
+        assert.strictEqual(oIAnalyticsClient.retrieveConfigurationFile.mock.calls.length, 0);
+        assertErrored(command, `Command ${command.id} of type ${command.type} is not authorized`);
+      });
+    }
   });
 
   describe('commands uploading a file', () => {
@@ -1712,12 +1731,9 @@ describe('OIAnalytics Command Service', () => {
       assert.deepStrictEqual(await fs.readdir(TMP_FOLDER), []);
     });
 
-    for (const [command, permission] of [
-      [dumpMemoryCommand, 'dumpMemory'],
-      [retrieveLogsDatabaseCommand, 'retrieveLogsDatabase']
-    ] as const) {
+    for (const command of [dumpMemoryCommand, retrieveLogsDatabaseCommand]) {
       it(`should not execute ${command.type} command without permission`, async () => {
-        withoutPermission(permission);
+        withoutPermission('diagnostics');
 
         await executeCommand(command);
 
@@ -2076,10 +2092,16 @@ describe('OIAnalytics Command Service', () => {
   });
 
   for (const [title, command, permission] of [
-    ['should not execute command if permission is not right', createNorthCommand, 'createNorth'],
-    ['should not execute cache command if permission is not right', searchNorthCacheCommand, 'searchNorthCacheContent'],
-    ['should not execute get-cache-file-content command if permission is not right', getNorthCacheFileCommand, 'getNorthCacheFileContent'],
-    ['should not execute update-cache-content command if permission is not right', updateNorthCacheCommand, 'updateNorthCacheContent']
+    ['should not execute command if permission is not right', createNorthCommand, 'configureDataFlow'],
+    ['should not execute cache command if permission is not right', searchNorthCacheCommand, 'manageCache'],
+    ['should not execute get-cache-file-content command if permission is not right', getNorthCacheFileCommand, 'manageCache'],
+    ['should not execute update-cache-content command if permission is not right', updateNorthCacheCommand, 'manageCache'],
+    ['should not execute restart-engine command if permission is not right', restartCommand, 'operate'],
+    [
+      'should not test a transformer reading an item without connecting to the data sources',
+      testTransformerWithItemCommand,
+      'connectToDataSources'
+    ]
   ] as const) {
     it(title, async () => {
       withoutPermission(permission);

@@ -503,54 +503,61 @@
       "edit": "Edit registration",
       "permissions": {
         "title": "OIAnalytics command permissions",
-        "info": "The buttons below represent the commands that OIAnalytics is allowed to make this OIBus execute. Click on a button to allow or forbid a command.",
+        "info": "What OIAnalytics is allowed to make this OIBus do, grouped by what it puts at risk. Importing a full configuration replaces all of it, so it requires every Configuration permission and Manage access.",
         "all": "All",
         "none": "None",
-        "remote-update-disabled": "Remote update is disabled on this OIBus (started with --ignoreRemoteUpdate), so the upgrade-version command cannot be enabled.",
+        "remote-update-disabled": "Remote update is disabled on this OIBus (started with --ignoreRemoteUpdate), so the Update version permission cannot be granted.",
         "group": {
-          "oibus": "OIBus",
-          "connectors": "Connectors",
-          "history-query": "History queries"
+          "lifecycle": "Lifecycle",
+          "configuration": "Configuration",
+          "security": "Security",
+          "data": "Data and equipment"
         },
-        "section": {
-          "engine": "Engine",
-          "diagnostic": "Diagnostic",
-          "registration": "Registration",
-          "scan-mode": "Scan mode",
-          "ip-filter": "IP filter",
-          "certificate": "Certificate",
-          "transformers": "Custom transformers",
-          "north-connector": "North connector",
-          "south-connector": "South connector",
-          "north-actions": "North actions",
-          "south-actions": "South actions",
-          "north-cache": "North cache management",
-          "history-query": "History query",
-          "test-history-query": "Test history queries",
-          "history-cache": "History cache management"
-        },
-        "labels": {
-          "upgrade": "Upgrade",
-          "restart": "Restart",
-          "settings": "Settings",
-          "import-config": "Import config",
-          "memory-dump": "Memory dump",
-          "logs-database": "Logs database",
-          "cipher-keys": "Cipher keys",
-          "create": "Create",
-          "update": "Update",
-          "delete": "Delete",
-          "test": "Test",
-          "test-connection": "Test connection",
-          "interactive-session": "Interactive session (explore)",
-          "import-items": "Import items",
-          "test-item": "Test item",
-          "north": "North",
-          "south": "South",
-          "item": "Item",
-          "search": "Search",
-          "view-file": "View file",
-          "setpoint": "Setpoint"
+        "permission": {
+          "updateVersion": {
+            "label": "Update version",
+            "description": "Replace the binaries of OIBus by a new version"
+          },
+          "operate": {
+            "label": "Operate",
+            "description": "Restart OIBus, start or stop a history query"
+          },
+          "configureEngine": {
+            "label": "Engine settings",
+            "description": "Change the general, proxy and logger settings"
+          },
+          "configureDataFlow": {
+            "label": "Data flow",
+            "description": "Create, update and delete the connectors, history queries, scan modes and certificates, which can send the data anywhere or stop collecting it"
+          },
+          "configureCustomCode": {
+            "label": "Custom code",
+            "description": "Create, update and test custom transformers, which run code sent by OIAnalytics"
+          },
+          "manageAccess": {
+            "label": "Manage access",
+            "description": "Change the web server settings and the IP filters, which control who can reach this OIBus"
+          },
+          "manageRegistration": {
+            "label": "Manage registration",
+            "description": "Change the registration settings and regenerate its cipher keys. Permissions can only be revoked remotely"
+          },
+          "connectToDataSources": {
+            "label": "Connect to data sources",
+            "description": "Test connections and items, explore the data sources: OIBus connects to the hosts OIAnalytics sends"
+          },
+          "manageCache": {
+            "label": "Manage cache",
+            "description": "Read, retry and remove the files cached by the North connectors and history queries"
+          },
+          "diagnostics": {
+            "label": "Diagnostics",
+            "description": "Retrieve a memory dump, which may contain secrets in clear text, or the logs database"
+          },
+          "setpoint": {
+            "label": "Setpoints",
+            "description": "Write values to the equipment through the South connectors"
+          }
         }
       }
     },

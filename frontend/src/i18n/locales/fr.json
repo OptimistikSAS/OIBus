@@ -3420,54 +3420,61 @@
       "edit": "Modifier l'enregistrement",
       "permissions": {
         "title": "Permissions des commandes OIAnalytics",
-        "info": "Les boutons ci-dessous représentent les commandes qu'OIAnalytics est autorisé à faire exécuter par cet OIBus. Cliquez sur un bouton pour autoriser ou interdire une commande.",
+        "info": "Ce qu'OIAnalytics est autorisé à faire faire à cet OIBus, regroupé selon ce que cela met en jeu. Importer une configuration complète la remplace entièrement : cela nécessite toutes les permissions de Configuration et Gérer les accès.",
         "all": "Tout",
         "none": "Aucun",
-        "remote-update-disabled": "La mise à jour à distance est désactivée sur cet OIBus (démarré avec --ignoreRemoteUpdate), la commande de mise à niveau de version ne peut donc pas être activée.",
+        "remote-update-disabled": "La mise à jour à distance est désactivée sur cet OIBus (démarré avec --ignoreRemoteUpdate), la permission Mettre à jour la version ne peut donc pas être accordée.",
         "group": {
-          "oibus": "OIBus",
-          "connectors": "Connecteurs",
-          "history-query": "Requêtes d'historique"
+          "lifecycle": "Cycle de vie",
+          "configuration": "Configuration",
+          "security": "Sécurité",
+          "data": "Données et équipements"
         },
-        "section": {
-          "engine": "Moteur",
-          "diagnostic": "Diagnostic",
-          "registration": "Enregistrement",
-          "scan-mode": "Mode de scan",
-          "ip-filter": "Filtre IP",
-          "certificate": "Certificat",
-          "transformers": "Transformateurs personnalisés",
-          "north-connector": "Connecteur North",
-          "south-connector": "Connecteur South",
-          "north-actions": "Actions North",
-          "south-actions": "Actions South",
-          "north-cache": "Gestion du cache North",
-          "history-query": "Requête d'historique",
-          "test-history-query": "Tester les requêtes d'historique",
-          "history-cache": "Gestion du cache d'historique"
-        },
-        "labels": {
-          "upgrade": "Mettre à niveau",
-          "restart": "Redémarrer",
-          "settings": "Paramètres",
-          "import-config": "Importer config",
-          "memory-dump": "Dump mémoire",
-          "logs-database": "Base des logs",
-          "cipher-keys": "Clés de chiffrement",
-          "create": "Créer",
-          "update": "Modifier",
-          "delete": "Supprimer",
-          "test": "Tester",
-          "test-connection": "Tester la connexion",
-          "interactive-session": "Session interactive (exploration)",
-          "import-items": "Importer les éléments",
-          "test-item": "Tester un élément",
-          "north": "North",
-          "south": "South",
-          "item": "Élément",
-          "search": "Rechercher",
-          "view-file": "Afficher un fichier",
-          "setpoint": "Consigne"
+        "permission": {
+          "updateVersion": {
+            "label": "Mettre à jour la version",
+            "description": "Remplacer les binaires d'OIBus par une nouvelle version"
+          },
+          "operate": {
+            "label": "Exploiter",
+            "description": "Redémarrer OIBus, démarrer ou arrêter une requête d'historique"
+          },
+          "configureEngine": {
+            "label": "Paramètres du moteur",
+            "description": "Modifier les paramètres généraux, du proxy et des journaux"
+          },
+          "configureDataFlow": {
+            "label": "Flux de données",
+            "description": "Créer, modifier et supprimer les connecteurs, requêtes d'historique, modes de scan et certificats, ce qui permet d'envoyer les données n'importe où ou d'arrêter leur collecte"
+          },
+          "configureCustomCode": {
+            "label": "Code personnalisé",
+            "description": "Créer, modifier et tester les transformateurs personnalisés, qui exécutent du code envoyé par OIAnalytics"
+          },
+          "manageAccess": {
+            "label": "Gérer les accès",
+            "description": "Modifier les paramètres du serveur web et les filtres IP, qui contrôlent qui peut accéder à cet OIBus"
+          },
+          "manageRegistration": {
+            "label": "Gérer l'enregistrement",
+            "description": "Modifier les paramètres d'enregistrement et régénérer ses clés de chiffrement. Les permissions ne peuvent qu'être retirées à distance"
+          },
+          "connectToDataSources": {
+            "label": "Se connecter aux sources de données",
+            "description": "Tester les connexions et les items, explorer les sources de données : OIBus se connecte aux hôtes envoyés par OIAnalytics"
+          },
+          "manageCache": {
+            "label": "Gérer le cache",
+            "description": "Lire, renvoyer et supprimer les fichiers en cache des connecteurs North et des requêtes d'historique"
+          },
+          "diagnostics": {
+            "label": "Diagnostic",
+            "description": "Récupérer un dump mémoire, qui peut contenir des secrets en clair, ou la base des journaux"
+          },
+          "setpoint": {
+            "label": "Consignes",
+            "description": "Écrire des valeurs dans les équipements via les connecteurs South"
+          }
         }
       }
     },

@@ -177,38 +177,27 @@
             </div>
           </ng-template>
           <div class="row">
-            @for (section of group.sections; track section.key) {
-              <div class="col-6">
-                <div class="row my-1 align-items-center">
+            @for (permission of group.permissions; track permission) {
+              <div class="col-md-6 my-1">
+                <div class="form-check form-switch">
+                  <input
+                    [formControlName]="permission"
+                    [id]="'permission-' + permission"
+                    [attr.aria-describedby]="'permission-description-' + permission"
+                    type="checkbox"
+                    role="switch"
+                    class="form-check-input"
+                  />
+                  <label
+                    class="form-check-label fw-medium"
+                    [for]="'permission-' + permission"
+                    [translate]="'oia-module.registration.permissions.permission.' + permission + '.label'"
+                  ></label>
                   <div
-                    class="col-4 permission-section-label"
-                    [id]="'permission-section-' + section.key"
-                    [translate]="'oia-module.registration.permissions.section.' + section.key"
+                    class="form-text mt-0"
+                    [id]="'permission-description-' + permission"
+                    [translate]="'oia-module.registration.permissions.permission.' + permission + '.description'"
                   ></div>
-                  <div class="col-8">
-                    <div
-                      class="btn-group btn-group-sm flex-wrap permission-toggles"
-                      role="group"
-                      [attr.aria-labelledby]="'permission-section-' + section.key"
-                    >
-                      @for (entry of section.entries; track entry.permission) {
-                        <input
-                          [formControlName]="entry.permission"
-                          [id]="'permission-' + entry.permission"
-                          type="checkbox"
-                          class="btn-check"
-                          autocomplete="off"
-                        />
-                        <label
-                          class="btn"
-                          [class.btn-outline-success]="isAllowed(entry.permission)"
-                          [class.btn-outline-danger]="!isAllowed(entry.permission)"
-                          [for]="'permission-' + entry.permission"
-                          [translate]="'oia-module.registration.permissions.labels.' + entry.labelKey"
-                        ></label>
-                      }
-                    </div>
-                  </div>
                 </div>
               </div>
             }
