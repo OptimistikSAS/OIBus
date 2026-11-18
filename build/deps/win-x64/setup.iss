@@ -863,6 +863,16 @@ begin
     Result := True;
 end;
 
+// Restricts a new data directory to the OIBus service (LocalSystem) and the administrators: it holds the
+// configuration, the key of the secrets and the private key of OIBus. The inherited permissions (such as the read
+// access of the users) are removed. Well-known SIDs, so that it also works on a localized Windows.
+function RestrictDataDir(const Dir: String): Boolean;
+var
+  ErrorMsg: String;
+begin
+  Result := RunCmd('icacls.exe', '"' + RemoveBackslashUnlessRoot(Dir) + '" /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F', '', ErrorMsg);
+end;
+
 function CreateDataDir: Boolean;
 begin
   Result := True;
@@ -871,8 +881,14 @@ begin
      DeleteDataDir(FinalDataDir);
   end;
 
+  // Only a data directory created here is restricted: the permissions of an existing one are left to the administrator
   if not DirExists(FinalDataDir) then
-    if not ForceDirectories(FinalDataDir) then Result := False;
+  begin
+    if not ForceDirectories(FinalDataDir) then
+      Result := False
+    else if not RestrictDataDir(FinalDataDir) then
+      SuppressibleMsgBox('Warning: the access to the data directory "' + FinalDataDir + '" could not be restricted to the administrators. Restrict it in its security properties.', mbError, MB_OK, IDOK);
+  end;
 end;
 
 // --- Step Change Events ---

@@ -67,6 +67,26 @@ OIBus utilise cinq bases de données SQLite :
 
 Sauvegarder à la fois `oibus.db` et `crypto.db` ensemble est nécessaire pour obtenir un instantané complet et restaurable.
 
+### Permissions des fichiers {#file-permissions}
+
+Le dossier de données contient la configuration (hash des mots de passe, secrets chiffrés), la clé des secrets et la clé
+privée d'OIBus. Son accès est restreint au compte qui exécute OIBus à sa création, puis laissé à l'administrateur, qui
+peut le modifier (par exemple pour qu'un agent de sauvegarde puisse le lire) :
+
+- Les installeurs créent un nouveau dossier de données pour ce seul compte : mode `700` sous Linux, et sous Windows une
+  liste de contrôle d'accès donnant le contrôle total au service OIBus (`SYSTEM`) et aux administrateurs uniquement,
+  sans les permissions héritées de son dossier parent. Un dossier de données existant est laissé tel quel.
+- Sous Linux et macOS, OIBus crée `oibus.db`, `crypto.db` et `certs/private.pem` pour son seul utilisateur (mode `600`),
+  ainsi que le dossier `certs/` (mode `700`). La mise à jour vers OIBus 4.0 restreint une fois ceux créés auparavant.
+
+Sous Windows, restreignez de la même façon un dossier de données existant depuis une invite de commandes administrateur :
+
+```bat
+icacls "C:\OIBusData" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F"
+```
+
+Exécuter OIBus de manière interactive (`go.bat`) nécessite alors une invite de commandes administrateur.
+
 ## Authentification de l'interface web {#web-interface-authentication}
 
 L'interface web d'OIBus prend en charge deux méthodes d'authentification :

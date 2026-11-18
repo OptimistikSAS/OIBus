@@ -59,6 +59,24 @@ OIBus 使用五个 SQLite 数据库：
 
 要获得一份完整的、可恢复的快照，必须同时备份 `oibus.db` 和 `crypto.db`。
 
+### 文件权限 {#file-permissions}
+
+数据文件夹包含配置（密码哈希、加密后的机密信息）、机密信息的密钥以及 OIBus 的私钥。其访问权限在创建时被限制为
+运行 OIBus 的账户，之后由管理员负责，管理员可以修改这些权限（例如允许备份代理读取）：
+
+- 安装程序创建新的数据文件夹时，仅允许该账户访问：在 Linux 上为模式 `700`；在 Windows 上为一个访问控制列表，
+  仅授予 OIBus 服务（`SYSTEM`）和管理员完全控制权限，并移除从父文件夹继承的权限。已存在的数据文件夹保持不变。
+- 在 Linux 和 macOS 上，OIBus 创建的 `oibus.db`、`crypto.db` 和 `certs/private.pem` 仅允许其用户访问（模式 `600`），
+  `certs/` 文件夹也是如此（模式 `700`）。升级到 OIBus 4.0 时，会对之前创建的这些文件执行一次同样的限制。
+
+在 Windows 上，可在管理员命令提示符中以同样的方式限制已存在的数据文件夹：
+
+```bat
+icacls "C:\OIBusData" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F"
+```
+
+此后，以交互方式运行 OIBus（`go.bat`）需要使用管理员命令提示符。
+
 ## Web 界面身份验证 {#web-interface-authentication}
 
 OIBus Web 界面支持两种身份验证方式：

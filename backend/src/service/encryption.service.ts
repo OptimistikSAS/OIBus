@@ -10,7 +10,7 @@ import { CertificateOptions } from '../../shared/model/api/certificate.model';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { CryptoSettings } from '../../shared/model/domain/engine.model';
 
-import { createFolder, filesExists } from './utils';
+import { filesExists } from './utils';
 
 export const CERT_PRIVATE_KEY_FILE_NAME = 'private.pem';
 export const CERT_PUBLIC_KEY_FILE_NAME = 'public.pem';
@@ -107,7 +107,8 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     this._certsFolder = certsFolder;
     this._cryptoSettings = { key: deriveSecretKey(cryptoSettings.securityKey) };
 
-    await createFolder(this._certsFolder);
+    // Created for the user running OIBus only, like the private key (an existing folder is left as it is)
+    await fs.mkdir(this._certsFolder, { recursive: true, mode: 0o700 });
 
     if (
       !(await filesExists(this.getCertPath())) ||
@@ -123,7 +124,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
         keySize: 4096,
         daysBeforeExpiry: 36500
       });
-      await fs.writeFile(this.getPrivateKeyPath(), certificate.private);
+      await fs.writeFile(this.getPrivateKeyPath(), certificate.private, { mode: 0o600 });
       await fs.writeFile(this.getPublicKeyPath(), certificate.public);
       await fs.writeFile(this.getCertPath(), certificate.cert);
     }

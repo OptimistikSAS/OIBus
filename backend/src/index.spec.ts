@@ -100,6 +100,7 @@ describe('index.ts bootstrap()', () => {
   let oianalyticsMessageServiceMock: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> };
   let cleanupServiceMock: ReturnType<typeof makeServiceMock>;
   let oianalyticsRegistrationServiceMock: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> };
+  let createOwnerOnlyFileMock: ReturnType<typeof mock.fn>;
 
   beforeEach(() => {
     mock.method(console, 'info', () => undefined);
@@ -111,6 +112,7 @@ describe('index.ts bootstrap()', () => {
     mock.method(process, 'chdir', mock.fn());
 
     loggerServiceMock = makeLoggerServiceMock();
+    createOwnerOnlyFileMock = mock.fn(async () => undefined);
     repoServiceMock = makeRepositoryServiceMock(engineSettings, cryptoSettings);
     webServerMock = makeWebServerMock();
     oibusServiceMock = makeServiceMock();
@@ -132,6 +134,7 @@ describe('index.ts bootstrap()', () => {
         launcherVersion: '3.0.0'
       }),
       createFolder: async () => undefined,
+      createOwnerOnlyFile: createOwnerOnlyFileMock,
       readInitConfig: () => ({}),
       getOIBusInfo: () => ({})
     });
@@ -349,6 +352,15 @@ describe('index.ts bootstrap()', () => {
     assert.equal(oibusServiceMock.start.mock.calls.length, 1);
     assert.equal(oianalyticsCommandServiceMock.start.mock.calls.length, 1);
     assert.equal(cleanupServiceMock.start.mock.calls.length, 1);
+  });
+
+  it('creates the configuration and crypto databases for their owner only', async () => {
+    setupMocks(fakeEngineSettings, fakeCryptoSettings);
+    await indexMod.bootstrap();
+    assert.deepStrictEqual(
+      createOwnerOnlyFileMock.mock.calls.map(call => call.arguments),
+      [[path.resolve('oibus.db')], [path.resolve('crypto.db')]]
+    );
   });
 
   describe('helper extract folders', () => {

@@ -199,6 +199,20 @@ export const zipFile = (input: string, entryName: string, output: string): Promi
 /**
  * Check if a file exists in async way
  */
+/**
+ * Creates an empty file only its owner can read and write, when it does not exist yet. SQLite uses an empty file as a new
+ * database, keeping its permissions (and giving them to its journal files): the databases holding secrets are created
+ * private. The permissions of an existing file are left as they are, the administrator being free to change them.
+ * Windows ignores these modes, the access to the data folder being controlled by its ACLs.
+ */
+export const createOwnerOnlyFile = async (filePath: string): Promise<void> => {
+  try {
+    await fs.writeFile(filePath, '', { flag: 'wx', mode: 0o600 });
+  } catch (error: unknown) {
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+  }
+};
+
 export const filesExists = async (filePath: string): Promise<boolean> => {
   try {
     await fs.stat(filePath);

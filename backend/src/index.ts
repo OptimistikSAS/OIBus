@@ -37,7 +37,14 @@ import ScanModeService from './service/scan-mode.service';
 import SouthService from './service/south.service';
 import TransformerService from './service/transformer.service';
 import UserService from './service/user.service';
-import { createFolder, getCommandLineArguments, getOIBusInfo, INIT_CONFIG_FILENAME, readInitConfig } from './service/utils';
+import {
+  createFolder,
+  createOwnerOnlyFile,
+  getCommandLineArguments,
+  getOIBusInfo,
+  INIT_CONFIG_FILENAME,
+  readInitConfig
+} from './service/utils';
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import WebServer from './web-server/web-server';
 
@@ -73,6 +80,11 @@ export async function bootstrap(): Promise<void> {
   for (const variable of HELPER_EXTRACT_DIR_VARIABLES) {
     process.env[variable] ||= path.resolve(HELPERS_FOLDER);
   }
+
+  // The configuration (encrypted secrets, password hashes) and the key of the secrets are created for the user running
+  // OIBus only
+  await createOwnerOnlyFile(path.resolve(CONFIG_DATABASE));
+  await createOwnerOnlyFile(path.resolve(CRYPTO_DATABASE));
 
   // run migrations
   await migrateDataFolder(path.resolve(CONFIG_DATABASE));

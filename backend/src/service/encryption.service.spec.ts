@@ -138,6 +138,7 @@ describe('Encryption Service', () => {
   let statMock: ReturnType<typeof mock.fn>;
   let readFileMock: ReturnType<typeof mock.fn>;
   let writeFileMock: ReturnType<typeof mock.fn>;
+  let mkdirMock: ReturnType<typeof mock.fn>;
   let privateDecryptMock: ReturnType<typeof mock.fn>;
   let generateKeyPairMock: ReturnType<typeof mock.fn>;
   let mockCert: ReturnType<typeof createCertMock>;
@@ -159,7 +160,7 @@ describe('Encryption Service', () => {
 
     // Mock fs functions
     statMock = mock.method(fs, 'stat', async () => undefined);
-    mock.method(fs, 'mkdir', async () => undefined);
+    mkdirMock = mock.method(fs, 'mkdir', async () => undefined);
     readFileMock = mock.method(fs, 'readFile', async () => '');
     writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
 
@@ -186,14 +187,14 @@ describe('Encryption Service', () => {
   });
 
   it('should not create certificate if it already exists', async () => {
-    // fs.stat resolves → filesExists returns true, createFolder sees folder as existing
+    // fs.stat resolves → filesExists returns true
     const generateCertMock = mock.method(encryptionService, 'generateSelfSignedCertificate', mock.fn());
 
     await encryptionService.init(cryptoSettings, certFolder);
 
-    // Verify createFolder was called (fs.stat called with resolved certFolder path)
+    // The certificate folder is created for the user running OIBus only, an existing one being left as it is
+    assert.deepStrictEqual(mkdirMock.mock.calls[0].arguments, [certFolder, { recursive: true, mode: 0o700 }]);
     const statCalls = statMock.mock.calls.map(c => c.arguments[0]);
-    assert.ok(statCalls.includes(path.resolve(certFolder)), 'createFolder should check folder existence');
     // Verify filesExists was called for cert paths
     assert.ok(statCalls.includes(path.resolve(certFolder, CERT_FILE_NAME)));
     assert.ok(statCalls.includes(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME)));
@@ -235,7 +236,11 @@ describe('Encryption Service', () => {
         daysBeforeExpiry: 36500
       }
     ]);
-    assert.deepStrictEqual(writeFileMock.mock.calls[0].arguments, [path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME), 'private']);
+    assert.deepStrictEqual(writeFileMock.mock.calls[0].arguments, [
+      path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME),
+      'private',
+      { mode: 0o600 }
+    ]);
     assert.deepStrictEqual(writeFileMock.mock.calls[1].arguments, [path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'public']);
     assert.deepStrictEqual(writeFileMock.mock.calls[2].arguments, [path.resolve(certFolder, CERT_FILE_NAME), 'cert']);
   });
