@@ -213,7 +213,11 @@ export default class OIAnalyticsClient {
     const httpOptions: ReqOptions = {
       method: 'POST',
       headers,
-      body: JSON.stringify({ refreshToken: await encryptionService.decryptText(registrationSettings.refreshToken!) }),
+      // the current public key is sent with each refresh, so that OIAnalytics gets the new one after a key rotation
+      body: JSON.stringify({
+        refreshToken: await encryptionService.decryptText(registrationSettings.refreshToken!),
+        publicKey: registrationSettings.publicCipherKey
+      }),
       acceptUnauthorized,
       proxy,
       timeout: OIANALYTICS_TIMEOUT

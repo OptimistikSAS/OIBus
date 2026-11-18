@@ -2770,7 +2770,7 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
   },
   {
     id: 'commandId13',
-    type: 'regenerate-cipher-keys',
+    type: 'restart-engine',
     status: 'RETRIEVED',
     ack: false,
     retrievedDate: '2020-03-15T00:00:00.000Z',
@@ -2780,7 +2780,7 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
   },
   {
     id: 'commandId14',
-    type: 'regenerate-cipher-keys',
+    type: 'restart-engine',
     status: 'RETRIEVED',
     targetVersion: '3.4.9',
     ack: false,

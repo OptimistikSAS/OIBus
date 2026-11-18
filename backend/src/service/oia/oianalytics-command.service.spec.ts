@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { writeFileSync } from 'node:fs';
 import fs from 'node:fs/promises';
@@ -251,7 +250,6 @@ const deleteNorthCommand = commands[8] as OIBusDeleteNorthConnectorCommand;
 const createScanModeCommand = commands[9] as OIBusCreateScanModeCommand;
 const createSouthCommand = commands[10] as OIBusCreateSouthConnectorCommand;
 const createNorthCommand = commands[11] as OIBusCreateNorthConnectorCommand;
-const regenerateCipherKeysCommand = commands[12];
 const southItemsFromCsvCommand = commands[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand;
 const updateRegistrationCommand = commands[15] as OIBusUpdateRegistrationSettingsCommand;
 
@@ -1283,6 +1281,23 @@ describe('OIAnalytics Command Service', () => {
     );
   });
 
+  it('should skip the retrieved commands of an unknown type', async () => {
+    const restartCommand = testData.oIAnalytics.commands.oIAnalyticsList.find(command => command.type === 'restart-engine')!;
+    oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => [
+      // a command type this version doesn't know, as OIAnalytics sends it
+      JSON.parse('{"id":"removedCommandId","type":"regenerate-cipher-keys","targetVersion":"4.0.0"}'),
+      restartCommand
+    ]);
+
+    await service.fetchNewCommands(testData.oIAnalytics.registration.completed);
+
+    assert.deepStrictEqual(
+      oIAnalyticsCommandRepository.create.mock.calls.map(call => call.arguments[0]),
+      [restartCommand]
+    );
+    assert.ok(logged(logger.warn).includes('Command removedCommandId of unknown type regenerate-cipher-keys ignored'));
+  });
+
   it('should retrieve commands and do nothing', async () => {
     await service.fetchNewCommands(testData.oIAnalytics.registration.completed);
 
@@ -1532,16 +1547,6 @@ describe('OIAnalytics Command Service', () => {
     assertCompleted(restartCommand, 'OIBus restarted');
     assert.strictEqual(utilsExports.delay.mock.calls.length, 1);
     assert.strictEqual(exitMock.mock.calls.length, 1);
-  });
-
-  it('should execute regenerate-cipher-keys command', async () => {
-    mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
-
-    await executeCommand(regenerateCipherKeysCommand);
-
-    assert.deepStrictEqual(oIAnalyticsRegistrationService.updateKeys.mock.calls[0].arguments, ['private key', 'public key', 'oianalytics']);
-    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
-    assertCompleted(regenerateCipherKeysCommand, 'OIAnalytics keys reloaded');
   });
 
   describe('open-interactive-session command', () => {

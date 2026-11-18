@@ -95,9 +95,9 @@ OIBus 在 HTTP 请求级别强制执行基于 IP 的访问控制。来自未列�
 - 当 OIBus 将其配置发送给 OIAnalytics 时，所有机密信息字段都会在
   传输之前被剥离。
 
-RSA 密钥对在 OIAnalytics 注册期间生成，可以通过
-**重新生成密钥**远程命令进行轮换。轮换后，任何先前通过
-OIAnalytics 输入的机密信息都必须重新输入，因为旧的密文将无法再被解密。
+RSA 密钥对在 OIAnalytics 注册期间生成，OIBus 每 90 天会随其令牌一起自行更换该密钥对
+（参见[身份验证令牌](../installation/oianalytics.mdx#authentication-tokens)）。
+OIBus 会保留之前的私钥，以便仍能解密在更换前不久通过 OIAnalytics 输入的机密信息。
 
 此外，OIBus 在启动时会生成自己的 4096 位 RSA 证书/密钥对（`private.pem` /
 `public.pem` / `cert.pem`）——正是它对上文所述的 JWT 进行签名，也用于自签名

@@ -22,6 +22,7 @@ import type SouthService from '../south.service';
 import { getErrorMessage, withTimeout } from '../utils';
 import type OIAnalyticsClient from './oianalytics-client.service';
 import type OIAnalyticsRegistrationService from './oianalytics-registration.service';
+import { getPrivateCipherKeys } from './oianalytics-registration.service';
 
 /** Interval between two polls of the requests of a session: a request waits at most this long before being executed. */
 export const SESSION_POLL_INTERVAL_MS = 1000;
@@ -287,7 +288,7 @@ export default class OIAnalyticsSessionService {
     const settings = await encryptionService.decryptSecretsWithPrivateKey(
       content.settings,
       manifest.settings,
-      this.getPrivateKey(registration)
+      getPrivateCipherKeys(registration)
     );
     return { ...content, southId: content.southId ?? 'create', settings };
   }
@@ -303,12 +304,8 @@ export default class OIAnalyticsSessionService {
     return await encryptionService.decryptSecretsWithPrivateKey(
       content.itemSettings,
       itemSettingsManifest,
-      this.getPrivateKey(registration)
+      getPrivateCipherKeys(registration)
     );
-  }
-
-  private getPrivateKey(registration: OIAnalyticsRegistration): string {
-    return encryptionService.decryptText(registration.privateCipherKey!);
   }
 
   private async closeLocally(session: InteractiveSession): Promise<void> {

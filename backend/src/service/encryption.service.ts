@@ -325,20 +325,33 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     return decryptedData;
   }
 
-  decryptTextWithPrivateKey(encryptedText: string, privateKey: string): string {
-    return crypto
-      .privateDecrypt(
-        {
-          key: privateKey,
-          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-          oaepHash: 'sha256'
-        },
-        Buffer.from(encryptedText, 'base64')
-      )
-      .toString();
+  /**
+   * Decrypt a text encrypted by OIAnalytics with the public key of OIBus. The private keys are tried in turn: the text may
+   * have been encrypted with the public key replaced by the last key rotation.
+   * @param privateKeys the current private key, then the previous one if any
+   */
+  decryptTextWithPrivateKey(encryptedText: string, privateKeys: Array<string>): string {
+    let lastError: unknown = new Error('No private key to decrypt the text');
+    for (const privateKey of privateKeys) {
+      try {
+        return crypto
+          .privateDecrypt(
+            {
+              key: privateKey,
+              padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+              oaepHash: 'sha256'
+            },
+            Buffer.from(encryptedText, 'base64')
+          )
+          .toString();
+      } catch (error: unknown) {
+        lastError = error;
+      }
+    }
+    throw lastError;
   }
 
-  async decryptSecretsWithPrivateKey<T>(newSettings: T, formSettings: OIBusObjectAttribute, privateKey: string): Promise<T> {
+  async decryptSecretsWithPrivateKey<T>(newSettings: T, formSettings: OIBusObjectAttribute, privateKeys: Array<string>): Promise<T> {
     const encryptedSettings: Record<string, string | object | Array<object>> = JSON.parse(JSON.stringify(newSettings)) as Record<
       string,
       string | object | Array<object>
@@ -349,7 +362,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
         if (encryptedSettings[fieldSettings.key]) {
           encryptedSettings[fieldSettings.key] = await this.decryptTextWithPrivateKey(
             encryptedSettings[fieldSettings.key] as string,
-            privateKey
+            privateKeys
           );
         } else {
           encryptedSettings[fieldSettings.key] = '';
@@ -359,14 +372,14 @@ export default class EncryptionService<TInitialized extends boolean = false> {
           (encryptedSettings[fieldSettings.key] as Array<object>)[i] = await this.decryptSecretsWithPrivateKey<object>(
             (encryptedSettings[fieldSettings.key] as Array<object>)[i],
             fieldSettings.rootAttribute,
-            privateKey
+            privateKeys
           );
         }
       } else if (fieldSettings.type === 'object' && encryptedSettings[fieldSettings.key]) {
         encryptedSettings[fieldSettings.key] = await this.decryptSecretsWithPrivateKey<object>(
           encryptedSettings[fieldSettings.key] as object,
           fieldSettings,
-          privateKey
+          privateKeys
         );
       }
     }

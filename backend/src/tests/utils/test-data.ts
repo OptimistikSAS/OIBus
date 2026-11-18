@@ -1842,6 +1842,8 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
   refreshTokenExpirationDate: constants.dates.FAKE_NOW,
   publicCipherKey: 'public key',
   privateCipherKey: 'private key',
+  previousPrivateCipherKey: null,
+  cipherKeyRotationDate: '2021-04-02T00:00:00.000Z',
   status: 'REGISTERED',
   checkUrl: '',
   activationExpirationDate: constants.dates.DATE_1,
@@ -1886,6 +1888,8 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
   refreshTokenExpirationDate: null,
   publicCipherKey: '',
   privateCipherKey: '',
+  previousPrivateCipherKey: null,
+  cipherKeyRotationDate: null,
   status: 'PENDING',
   checkUrl: '/check/url',
   activationExpirationDate: constants.dates.DATE_1,
@@ -2141,7 +2145,7 @@ const oIBusCommands: Array<OIBusCommand> = [
   },
   {
     id: 'commandId13',
-    type: 'regenerate-cipher-keys',
+    type: 'restart-engine',
     status: 'RETRIEVED',
     ack: false,
     retrievedDate: constants.dates.DATE_1,
@@ -2155,7 +2159,7 @@ const oIBusCommands: Array<OIBusCommand> = [
   },
   {
     id: 'commandId14',
-    type: 'regenerate-cipher-keys',
+    type: 'restart-engine',
     status: 'RETRIEVED',
     targetVersion: engineSettings.version,
     ack: false,
@@ -2282,7 +2286,7 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
   },
   {
     id: 'newCommandId10',
-    type: 'regenerate-cipher-keys',
+    type: 'restart-engine',
     targetVersion: engineSettings.version
   },
   {

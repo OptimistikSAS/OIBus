@@ -25,7 +25,6 @@ import { SouthConnectorItemTestingSettings } from '../domain/south-connector.mod
 export const OIBUS_COMMAND_TYPES = [
   'update-version',
   'restart-engine',
-  'regenerate-cipher-keys',
   'update-engine-general',
   'update-engine-web-server',
   'update-engine-proxy',
@@ -120,7 +119,6 @@ export const COMMAND_REQUIRED_PERMISSIONS: Readonly<Record<OIBusCommandType, Rea
   'delete-ip-filter': ['manageAccess'],
   'import-configuration': ['configureEngine', 'configureDataFlow', 'configureCustomCode', 'manageAccess'],
   'update-registration-settings': ['manageRegistration'],
-  'regenerate-cipher-keys': ['manageRegistration'],
   'test-south-connection': ['connectToDataSources'],
   'test-south-item': ['connectToDataSources'],
   'test-north-connection': ['connectToDataSources'],
@@ -250,16 +248,6 @@ export interface OIBusRestartEngineCommandDTO extends BaseOIBusCommandDTO {
    * The type of the command.
    */
   type: 'restart-engine';
-}
-
-/**
- * Command DTO for regenerating cipher keys.
- */
-export interface OIBusRegenerateCipherKeysCommandDTO extends BaseOIBusCommandDTO {
-  /**
-   * The type of the command.
-   */
-  type: 'regenerate-cipher-keys';
 }
 
 /**
@@ -1317,7 +1305,6 @@ export interface OIBusTestTransformerCommandDTO extends BaseOIBusCommandDTO {
  */
 export type OIBusCommandDTO =
   | OIBusUpdateVersionCommandDTO
-  | OIBusRegenerateCipherKeysCommandDTO
   | OIBusRestartEngineCommandDTO
   | OIBusUpdateEngineGeneralCommandDTO
   | OIBusUpdateEngineWebServerCommandDTO

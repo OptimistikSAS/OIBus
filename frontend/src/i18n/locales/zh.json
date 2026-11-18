@@ -2693,7 +2693,6 @@
     "oibus-command-type": {
       "update-version": "升级版本",
       "restart-engine": "重启",
-      "regenerate-cipher-keys": "重新生成密钥",
       "update-engine-general": "更新引擎常规设置",
       "update-engine-web-server": "更新引擎 Web 服务器设置",
       "update-engine-proxy": "更新引擎代理设置",
@@ -3457,7 +3456,7 @@
           },
           "manageRegistration": {
             "label": "管理注册",
-            "description": "修改注册设置并重新生成其加密密钥。权限只能被远程撤销"
+            "description": "修改注册设置。权限只能被远程撤销"
           },
           "connectToDataSources": {
             "label": "连接数据源",

@@ -396,9 +396,33 @@ describe('Encryption Service', () => {
     privateDecryptMock.mock.mockImplementation(() => Buffer.from('encrypted secret'));
 
     assert.deepStrictEqual(
-      await encryptionService.decryptSecretsWithPrivateKey(secretSettings, manifest, 'private key'),
+      await encryptionService.decryptSecretsWithPrivateKey(secretSettings, manifest, ['private key']),
       encryptedSettings
     );
+  });
+
+  it('should decrypt a text with the previous private key when the current one fails', () => {
+    privateDecryptMock.mock.mockImplementation((options: { key: string }) => {
+      if (options.key === 'current key') throw new Error('oaep decoding error');
+      return Buffer.from('secret');
+    });
+
+    assert.strictEqual(encryptionService.decryptTextWithPrivateKey('encrypted', ['current key', 'previous key']), 'secret');
+    assert.deepStrictEqual(
+      privateDecryptMock.mock.calls.map(call => (call.arguments[0] as { key: string }).key),
+      ['current key', 'previous key']
+    );
+  });
+
+  it('should throw the last error when no private key decrypts the text', () => {
+    privateDecryptMock.mock.mockImplementation((options: { key: string }) => {
+      throw new Error(`cannot decrypt with ${options.key}`);
+    });
+
+    assert.throws(() => encryptionService.decryptTextWithPrivateKey('encrypted', ['current key', 'previous key']), {
+      message: 'cannot decrypt with previous key'
+    });
+    assert.throws(() => encryptionService.decryptTextWithPrivateKey('encrypted', []), { message: 'No private key to decrypt the text' });
   });
 
   it('should generate a certificate with correct extensions and SANs', async () => {

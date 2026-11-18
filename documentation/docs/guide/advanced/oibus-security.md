@@ -95,9 +95,10 @@ being transmitted, using OIBus's RSA public key (RSA-OAEP, 4096-bit). This means
 - When OIBus sends its configuration to OIAnalytics, all secret fields are stripped out before
   transmission.
 
-The RSA key pair is generated during OIAnalytics registration and can be rotated with the
-**Regenerate cipher keys** remote command. After rotation, any secrets previously entered through
-OIAnalytics must be re-entered because the old ciphertext can no longer be decrypted.
+The RSA key pair is generated during OIAnalytics registration, and OIBus replaces it by itself every
+90 days, along with its tokens (see [Authentication Tokens](../installation/oianalytics.mdx#authentication-tokens)).
+OIBus keeps the previous private key, so that the secrets entered through OIAnalytics just before a
+replacement can still be decrypted.
 
 Separately, OIBus generates its own 4096-bit RSA certificate/key pair at startup (`private.pem` /
 `public.pem` / `cert.pem`) — this is what signs the JWTs described above, and is also used to self-sign

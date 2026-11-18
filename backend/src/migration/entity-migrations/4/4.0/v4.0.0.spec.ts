@@ -5162,18 +5162,61 @@ describe('Entity migration v4.0.0: addRegistrationTokenRefresh', () => {
   });
   afterEach(() => harness.afterEach());
 
-  it('should add the refresh token and expiration date columns, null for an existing registration', async () => {
+  const ADDED_COLUMNS = [
+    'refresh_token',
+    'token_expiration_date',
+    'refresh_token_expiration_date',
+    'previous_private_key',
+    'cipher_key_rotation_date'
+  ];
+
+  it('should add the refresh token, expiration date and key rotation columns, null for an existing registration', async () => {
     await addRegistrationTokenRefresh(db);
 
     const columns = await columnNames(db, 'registrations');
-    for (const column of ['refresh_token', 'token_expiration_date', 'refresh_token_expiration_date']) {
+    for (const column of ADDED_COLUMNS) {
       assert.ok(columns.includes(column), column);
     }
     assert.deepStrictEqual(
       await db('registrations')
         .where('id', 'registration-id')
-        .first('token', 'refresh_token', 'token_expiration_date', 'refresh_token_expiration_date'),
-      { token: 'long-lived', refresh_token: null, token_expiration_date: null, refresh_token_expiration_date: null }
+        .first('token', ...ADDED_COLUMNS),
+      {
+        token: 'long-lived',
+        refresh_token: null,
+        token_expiration_date: null,
+        refresh_token_expiration_date: null,
+        previous_private_key: null,
+        cipher_key_rotation_date: null
+      }
+    );
+  });
+
+  it('should delete the regenerate-cipher-keys commands', async () => {
+    await db('commands').insert([
+      {
+        id: 'regenerate',
+        type: 'regenerate-cipher-keys',
+        status: 'COMPLETED',
+        ack: 1,
+        retrieved_date: '2026-01-01T00:00:00.000Z',
+        target_version: '3.9.0'
+      },
+      {
+        id: 'restart',
+        type: 'restart-engine',
+        status: 'COMPLETED',
+        ack: 1,
+        retrieved_date: '2026-01-01T00:00:00.000Z',
+        target_version: '3.9.0'
+      }
+    ]);
+
+    await addRegistrationTokenRefresh(db);
+
+    assert.deepStrictEqual(
+      (await db('commands').select('id')).map(command => command.id),
+      ['restart']
     );
   });
 
@@ -5182,7 +5225,7 @@ describe('Entity migration v4.0.0: addRegistrationTokenRefresh', () => {
     await down(db);
 
     const columns = await columnNames(db, 'registrations');
-    for (const column of ['refresh_token', 'token_expiration_date', 'refresh_token_expiration_date']) {
+    for (const column of ADDED_COLUMNS) {
       assert.ok(!columns.includes(column), column);
     }
     assert.strictEqual((await db('registrations').select('id')).length, 1);
