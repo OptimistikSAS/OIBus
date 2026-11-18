@@ -342,53 +342,45 @@ describe('Data folder migration v4.0.0', () => {
 
   describe('restrictKeyMaterial', () => {
     let platform: PropertyDescriptor | undefined;
+    let warn: ReturnType<typeof mock.method>;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       platform = Object.getOwnPropertyDescriptor(process, 'platform');
       Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
-      await fs.mkdir(path.join(tmpRoot, 'certs'), { recursive: true, mode: 0o755 });
-      await fs.chmod(path.join(tmpRoot, 'certs'), 0o755);
-      for (const file of ['oibus.db', 'crypto.db', 'logs.db', path.join('certs', 'private.pem'), path.join('certs', 'cert.pem')]) {
-        await fs.writeFile(path.join(tmpRoot, file), '', { mode: 0o644 });
-        await fs.chmod(path.join(tmpRoot, file), 0o644);
-      }
+      warn = mock.method(console, 'warn', () => undefined);
     });
 
-    afterEach(async () => {
+    afterEach(() => {
       Object.defineProperty(process, 'platform', platform!);
-      for (const file of ['oibus.db', 'crypto.db', 'logs.db', 'certs']) {
-        await fs.rm(path.join(tmpRoot, file), { recursive: true, force: true });
-      }
+      mock.restoreAll();
     });
-
-    const modeOf = async (file: string) => (await fs.stat(path.join(tmpRoot, file))).mode & 0o777;
 
     it('should restrict the key material of the data folder to its owner when migrating', async () => {
+      const chmod = mock.method(fs, 'chmod', async () => undefined);
+
       await migration.up(knex);
 
-      assert.strictEqual(await modeOf('oibus.db'), 0o600);
-      assert.strictEqual(await modeOf('crypto.db'), 0o600);
-      assert.strictEqual(await modeOf('certs'), 0o700);
-      assert.strictEqual(await modeOf(path.join('certs', 'private.pem')), 0o600);
-      // not key material
-      assert.strictEqual(await modeOf('logs.db'), 0o644);
-      assert.strictEqual(await modeOf(path.join('certs', 'cert.pem')), 0o644);
+      assert.deepStrictEqual(
+        chmod.mock.calls.map(call => call.arguments),
+        [
+          [path.resolve(tmpRoot, 'oibus.db'), 0o600],
+          [path.resolve(tmpRoot, 'crypto.db'), 0o600],
+          [path.resolve(tmpRoot, 'certs'), 0o700],
+          [path.resolve(tmpRoot, 'certs', 'private.pem'), 0o600]
+        ]
+      );
     });
 
     it('should ignore the missing files', async () => {
-      const warn = mock.method(console, 'warn', () => undefined);
-      await fs.rm(path.join(tmpRoot, 'crypto.db'));
-      await fs.rm(path.join(tmpRoot, 'certs'), { recursive: true });
+      mock.method(fs, 'chmod', async () => {
+        throw Object.assign(new Error('no such file or directory'), { code: 'ENOENT' });
+      });
 
-      await migration.restrictKeyMaterial(tmpRoot);
-
-      assert.strictEqual(await modeOf('oibus.db'), 0o600);
+      await assert.doesNotReject(() => migration.restrictKeyMaterial(tmpRoot));
       assert.strictEqual(warn.mock.callCount(), 0);
-      warn.mock.restore();
     });
 
     it('should only report a failure', async () => {
-      const warn = mock.method(console, 'warn', () => undefined);
       const chmod = mock.method(fs, 'chmod', async () => {
         throw Object.assign(new Error('operation not permitted'), { code: 'EPERM' });
       });
@@ -397,16 +389,36 @@ describe('Data folder migration v4.0.0', () => {
 
       assert.strictEqual(chmod.mock.callCount(), 4);
       assert.deepStrictEqual(warn.mock.calls[0].arguments, ['Could not restrict the access to oibus.db: operation not permitted']);
-      chmod.mock.restore();
-      warn.mock.restore();
     });
 
     it('should leave the permissions to the ACLs on Windows', async () => {
       Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      const chmod = mock.method(fs, 'chmod', async () => undefined);
 
       await migration.restrictKeyMaterial(tmpRoot);
 
-      assert.strictEqual(await modeOf('oibus.db'), 0o644);
+      assert.strictEqual(chmod.mock.callCount(), 0);
+    });
+
+    // Windows reports every file as 0o666 whatever chmod sets: the modes can only be checked elsewhere
+    it('should set the modes of the files', { skip: process.platform === 'win32' }, async () => {
+      const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-key-material-'));
+      await fs.mkdir(path.join(folder, 'certs'), { mode: 0o755 });
+      for (const file of ['oibus.db', 'logs.db', path.join('certs', 'private.pem'), path.join('certs', 'cert.pem')]) {
+        await fs.writeFile(path.join(folder, file), '', { mode: 0o644 });
+        await fs.chmod(path.join(folder, file), 0o644);
+      }
+      const modeOf = async (file: string) => (await fs.stat(path.join(folder, file))).mode & 0o777;
+
+      await migration.restrictKeyMaterial(folder);
+
+      assert.strictEqual(await modeOf('oibus.db'), 0o600);
+      assert.strictEqual(await modeOf('certs'), 0o700);
+      assert.strictEqual(await modeOf(path.join('certs', 'private.pem')), 0o600);
+      // not key material
+      assert.strictEqual(await modeOf('logs.db'), 0o644);
+      assert.strictEqual(await modeOf(path.join('certs', 'cert.pem')), 0o644);
+      await fs.rm(folder, { recursive: true, force: true });
     });
   });
 });
