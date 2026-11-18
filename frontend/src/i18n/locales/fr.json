@@ -3794,10 +3794,7 @@
       "passwords-not-identical": "Le nouveau mot de passe et sa confirmation doivent être identiques",
       "password-changed": "Le mot de passe a été changé avec succès",
       "error": "Le mot de passe n'a pas été changé. Assurez-vous d'avoir saisi le mot de passe actuel correct.",
-      "lowercase-character-required": "Au moins une lettre minuscule requise",
-      "uppercase-character-required": "Au moins une lettre majuscule requise",
-      "numeric-character-required": "Au moins un chiffre requis",
-      "special-character-required": "Au moins un caractère spécial requis"
+      "change-required": "Ce compte a encore le mot de passe par défaut d'OIBus : changez-le avant de continuer."
     }
   },
   "enabled": "actif",

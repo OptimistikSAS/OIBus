@@ -10,6 +10,8 @@ import { generateRandomId } from '../../service/utils';
 
 const USERS_TABLE = 'users';
 const PAGE_SIZE = 50;
+const USER_COLUMNS =
+  'id, login, first_name, last_name, email, language, timezone, must_change_password, created_by, updated_by, created_at, updated_at';
 
 const DEFAULT_USER: UserCommand = {
   login: 'admin',
@@ -32,7 +34,7 @@ export default class UserRepository {
   }
 
   list(): Array<User> {
-    const query = `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE}`;
+    const query = `SELECT ${USER_COLUMNS} FROM ${USERS_TABLE}`;
     return this.database
       .prepare(query)
       .all()
@@ -48,8 +50,7 @@ export default class UserRepository {
       queryParams.push(searchParams.login);
     }
     const query =
-      `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE} ${whereClause}` +
-      ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
+      `SELECT ${USER_COLUMNS} FROM ${USERS_TABLE} ${whereClause}` + ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
     const results = this.database
       .prepare(query)
       .all(...queryParams)
@@ -69,14 +70,14 @@ export default class UserRepository {
   }
 
   findById(id: string): User | null {
-    const query = `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE} WHERE id = ?;`;
+    const query = `SELECT ${USER_COLUMNS} FROM ${USERS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) return null;
     return this.toUser(result as Record<string, string>);
   }
 
   findByLogin(login: string): User | null {
-    const query = `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE} WHERE login = ?;`;
+    const query = `SELECT ${USER_COLUMNS} FROM ${USERS_TABLE} WHERE login = ?;`;
     const result = this.database.prepare(query).get(login);
     if (!result) return null;
     return this.toUser(result as Record<string, string>);
@@ -96,9 +97,15 @@ export default class UserRepository {
    * import, which recreates users under their originally exported id) instead of always minting a
    * fresh one.
    */
-  async create(command: UserCommand, password: string, createdBy: string, id = generateRandomId(6)): Promise<User> {
+  async create(
+    command: UserCommand,
+    password: string,
+    createdBy: string,
+    id = generateRandomId(6),
+    mustChangePassword = false
+  ): Promise<User> {
     const hash = await argon2.hash(password);
-    return this.createWithHashedPassword(command, hash, createdBy, id);
+    return this.createWithHashedPassword(command, hash, createdBy, id, mustChangePassword);
   }
 
   /**
@@ -107,10 +114,16 @@ export default class UserRepository {
    * because `better-sqlite3` transactions run their callback synchronously and cannot `await` the
    * asynchronous `argon2.hash` call in the middle of it.
    */
-  createWithHashedPassword(command: UserCommand, hashedPassword: string, createdBy: string, id = generateRandomId(6)): User {
+  createWithHashedPassword(
+    command: UserCommand,
+    hashedPassword: string,
+    createdBy: string,
+    id = generateRandomId(6),
+    mustChangePassword = false
+  ): User {
     const insertQuery =
-      `INSERT INTO ${USERS_TABLE} (id, login, password, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `INSERT INTO ${USERS_TABLE} (id, login, password, first_name, last_name, email, language, timezone, must_change_password, created_by, updated_by, created_at, updated_at) ` +
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
 
     const insertResult = this.database
       .prepare(insertQuery)
@@ -123,22 +136,26 @@ export default class UserRepository {
         command.email,
         command.language,
         command.timezone,
+        +mustChangePassword,
         createdBy,
         createdBy
       );
 
-    const query = `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE} WHERE ROWID = ?;`;
+    const query = `SELECT ${USER_COLUMNS} FROM ${USERS_TABLE} WHERE ROWID = ?;`;
     const result = this.toUser(this.database.prepare(query).get(insertResult.lastInsertRowid) as Record<string, string>);
     this.auditService.record('user', result.id, 'CREATE', null, this.toAuditableUser(result), createdBy);
     return result;
   }
 
+  /**
+   * Changes the password of a user, which no longer has to change it.
+   */
   async updatePassword(id: string, password: string, updatedBy: string): Promise<void> {
     const user = this.findById(id);
     const previous = this.database.prepare(`SELECT password FROM ${USERS_TABLE} WHERE id = ?;`).get(id) as { password: string } | undefined;
     const hash = await argon2.hash(password);
 
-    const queryUpdate = `UPDATE ${USERS_TABLE} SET password = ? WHERE id = ?;`;
+    const queryUpdate = `UPDATE ${USERS_TABLE} SET password = ?, must_change_password = 0 WHERE id = ?;`;
     this.database.prepare(queryUpdate).run(hash, id);
     if (user) {
       // The password hash is never recorded: only the fact that it changed
@@ -146,13 +163,25 @@ export default class UserRepository {
         'user',
         id,
         'UPDATE',
-        ...redactAuditSnapshots({ ...user, password: previous?.password ?? null }, { ...user, password: hash }, entity => ({
-          ...this.toAuditableUser(entity),
-          password: ''
-        })),
+        ...redactAuditSnapshots(
+          { ...user, password: previous?.password ?? null },
+          { ...user, mustChangePassword: false, password: hash },
+          entity => ({
+            ...this.toAuditableUser(entity),
+            password: ''
+          })
+        ),
         updatedBy
       );
     }
+  }
+
+  /**
+   * Replaces the hash of an unchanged password, computed again with the current hashing parameters: not audited, since the
+   * password itself does not change.
+   */
+  updateHashedPassword(login: string, hashedPassword: string): void {
+    this.database.prepare(`UPDATE ${USERS_TABLE} SET password = ? WHERE login = ?;`).run(hashedPassword, login);
   }
 
   update(id: string, command: UserCommand, updatedBy: string): void {
@@ -188,7 +217,8 @@ export default class UserRepository {
       return;
     }
 
-    this.create({ ...DEFAULT_USER, login }, password, 'system').catch(err => {
+    // The default password is known by anyone: the account must change it before doing anything else
+    this.create({ ...DEFAULT_USER, login }, password, 'system', undefined, password === DEFAULT_PASSWORD).catch(err => {
       console.error(err.message);
     });
   }
@@ -213,7 +243,8 @@ export default class UserRepository {
       lastName: result.last_name || null,
       email: result.email || null,
       language: result.language as Language,
-      timezone: result.timezone
+      timezone: result.timezone,
+      mustChangePassword: Boolean(result.must_change_password)
     };
   }
 }

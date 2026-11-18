@@ -19,6 +19,7 @@ const USERS_TABLE_DEFINITION = `
     email TEXT,
     language TEXT,
     timezone TEXT,
+    must_change_password BOOLEAN NOT NULL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
   );
@@ -26,12 +27,12 @@ const USERS_TABLE_DEFINITION = `
 
 const createdDirectories: Array<string> = [];
 
-const createTemporaryDatabase = (): string => {
+const createTemporaryDatabase = (tableDefinition = USERS_TABLE_DEFINITION): string => {
   const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'launcher-user-repo-'));
   createdDirectories.push(tempDirectory);
   const databasePath = path.join(tempDirectory, 'oibus.db');
   const database = new Database(databasePath);
-  database.exec(USERS_TABLE_DEFINITION);
+  database.exec(tableDefinition);
   database.close();
   return databasePath;
 };
@@ -68,7 +69,7 @@ describe('UserRepository', () => {
     const verificationDatabase = new Database(databasePath);
     const admin = verificationDatabase
       .prepare(
-        `SELECT login, password, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE login = ?;`
+        `SELECT login, password, first_name as firstName, last_name as lastName, email, language, timezone, must_change_password as mustChangePassword FROM users WHERE login = ?;`
       )
       .get('admin') as {
       login: string;
@@ -78,6 +79,7 @@ describe('UserRepository', () => {
       email: string | null;
       language: string;
       timezone: string;
+      mustChangePassword: number;
     } | null;
     verificationDatabase.close();
 
@@ -89,6 +91,21 @@ describe('UserRepository', () => {
     assert.strictEqual(admin?.language, 'en');
     assert.strictEqual(admin?.timezone, 'Europe/Paris');
     assert.strictEqual(await argon2.verify(admin!.password, 'pass'), true);
+    assert.strictEqual(admin?.mustChangePassword, 1);
+  });
+
+  it('resets the admin user of a database not migrated to 4.0 yet, without the password change flag', async () => {
+    const databasePath = createTemporaryDatabase(
+      USERS_TABLE_DEFINITION.replace('    must_change_password BOOLEAN NOT NULL DEFAULT 0,\n', '')
+    );
+    const repository = new UserRepository(databasePath);
+
+    await repository.resetAdmin();
+
+    const database = new Database(databasePath);
+    const admin = database.prepare('SELECT password FROM users WHERE login = ?;').get('admin') as { password: string };
+    database.close();
+    assert.strictEqual(await argon2.verify(admin.password, 'pass'), true);
   });
 
   it('creates an admin user when it does not exist', async () => {
@@ -103,7 +120,7 @@ describe('UserRepository', () => {
     } | null;
     const admin = database
       .prepare(
-        `SELECT login, password, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE login = ?;`
+        `SELECT login, password, first_name as firstName, last_name as lastName, email, language, timezone, must_change_password as mustChangePassword FROM users WHERE login = ?;`
       )
       .get('admin') as {
       login: string;
@@ -113,6 +130,7 @@ describe('UserRepository', () => {
       email: string | null;
       language: string;
       timezone: string;
+      mustChangePassword: number;
     } | null;
     database.close();
 
@@ -121,6 +139,7 @@ describe('UserRepository', () => {
     assert.strictEqual(await argon2.verify(admin!.password, 'pass'), true);
     assert.strictEqual(admin?.language, 'en');
     assert.strictEqual(admin?.timezone, 'Europe/Paris');
+    assert.strictEqual(admin?.mustChangePassword, 1);
   });
 });
 

@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { afterEach, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import argon2 from 'argon2';
 import type { NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -15,6 +14,7 @@ import testData from '../../tests/utils/test-data';
 import { createMock, Mocked } from '../../tests/utils/test-utils';
 import type { CustomExpressRequest } from '../express';
 import { authMiddleware, passwordFingerprint } from './auth.middleware';
+import type AuthenticationLimiter from './authentication-limiter';
 
 const basicAuthHeader = (user: string, pass: string) => 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
 const bearerHeader = (token: string) => `Bearer ${token}`;
@@ -27,12 +27,14 @@ describe('authMiddleware', () => {
   let userService: Mocked<UserService>;
   let encryptionService: Mocked<EncryptionService>;
   let oIBusService: Mocked<OIBusService>;
+  let authenticationLimiter: Mocked<AuthenticationLimiter>;
   let mockNext: Mock<NextFunction>;
 
   beforeEach(() => {
     userService = createMock<UserService>();
     encryptionService = createMock<EncryptionService>({ getPrivateKey: async () => 'privateKey' });
     oIBusService = createMock<OIBusService>({ getEngineSettings: () => ({ webServer: { authTokenDuration: '7d' } }) as EngineSettings });
+    authenticationLimiter = createMock<AuthenticationLimiter>({ retryAfter: () => 0 });
     mockNext = mock.fn();
   });
 
@@ -41,11 +43,17 @@ describe('authMiddleware', () => {
   });
 
   /** Runs the middleware on a request to `path` and returns the request and the response */
-  const run = async (path: string, headers: Record<string, string> = {}, url = path, query: Record<string, string> = {}) => {
-    const req = createMock<CustomExpressRequest>({ path, url, headers, query });
+  const run = async (
+    path: string,
+    headers: Record<string, string> = {},
+    url = path,
+    query: Record<string, string> = {},
+    method = 'GET'
+  ) => {
+    const req = createMock<CustomExpressRequest>({ path, url, headers, query, method, ip: '1.2.3.4' });
     const res = createMock<Response>();
     res.status.mock.mockImplementation(() => res);
-    await authMiddleware(userService, encryptionService, oIBusService)(req, res, mockNext);
+    await authMiddleware(userService, encryptionService, oIBusService, authenticationLimiter)(req, res, mockNext);
     return { req, res };
   };
 
@@ -53,7 +61,7 @@ describe('authMiddleware', () => {
     it('should call next() and set req.user on valid credentials', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
       userService.findByLogin.mock.mockImplementation(() => FAKE_USER);
-      mock.method(argon2, 'verify', async () => true);
+      userService.verifyPassword.mock.mockImplementation(async () => true);
 
       const { req } = await run('/api/data', { authorization: basicAuthHeader('alice', 'secret') });
 
@@ -68,28 +76,55 @@ describe('authMiddleware', () => {
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
     });
 
-    it('should return 401 when user is not found', async () => {
+    it('should return 401 and record the failure when user is not found', async () => {
+      userService.verifyPassword.mock.mockImplementation(async () => false);
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => null);
 
       const { res } = await run('/api/data', { authorization: basicAuthHeader('unknown', 'pass') });
 
+      assert.deepStrictEqual(userService.verifyPassword.mock.calls[0].arguments, ['unknown', 'pass']);
       assert.strictEqual(mockNext.mock.calls.length, 0);
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
+      assert.deepStrictEqual(authenticationLimiter.recordFailure.mock.calls[0].arguments, ['1.2.3.4', 'unknown']);
     });
 
-    it('should return 401 when password is wrong', async () => {
+    it('should return 401 and record the failure when password is wrong', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
-      mock.method(argon2, 'verify', async () => false);
+      userService.verifyPassword.mock.mockImplementation(async () => false);
 
       const { res } = await run('/api/data', { authorization: basicAuthHeader('alice', 'wrong') });
 
       assert.strictEqual(mockNext.mock.calls.length, 0);
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
+      assert.deepStrictEqual(authenticationLimiter.recordFailure.mock.calls[0].arguments, ['1.2.3.4', 'alice']);
+    });
+
+    it('should return 429 without verifying the password when the address or the login is blocked', async () => {
+      authenticationLimiter.retryAfter.mock.mockImplementation(() => 600);
+
+      const { res } = await run('/api/data', { authorization: basicAuthHeader('alice', 'secret') });
+
+      assert.deepStrictEqual(authenticationLimiter.retryAfter.mock.calls[0].arguments, ['1.2.3.4', 'alice']);
+      assert.strictEqual(userService.verifyPassword.mock.calls.length, 0);
+      assert.strictEqual(res.status.mock.calls[0].arguments[0], 429);
+      assert.deepStrictEqual(res.set.mock.calls[0].arguments, ['Retry-After', '600']);
+      assert.strictEqual(mockNext.mock.calls.length, 0);
+    });
+
+    it('should not record a failure on valid credentials', async () => {
+      userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
+      userService.findByLogin.mock.mockImplementation(() => FAKE_USER);
+      userService.verifyPassword.mock.mockImplementation(async () => true);
+
+      await run('/api/data', { authorization: basicAuthHeader('alice', 'secret') });
+
+      assert.strictEqual(authenticationLimiter.recordFailure.mock.calls.length, 0);
+      assert.strictEqual(mockNext.mock.calls.length, 1);
     });
 
     it('should return JWT token for valid credentials on /api/users/authentication', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
-      mock.method(argon2, 'verify', async () => true);
+      userService.verifyPassword.mock.mockImplementation(async () => true);
       const signMock = mock.method(jwt, 'sign', () => 'fake-jwt-token');
 
       const { res } = await run('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
@@ -102,7 +137,7 @@ describe('authMiddleware', () => {
 
     it('should sign a fingerprint of the password hash, not the hash itself', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
-      mock.method(argon2, 'verify', async () => true);
+      userService.verifyPassword.mock.mockImplementation(async () => true);
       const signMock = mock.method(jwt, 'sign', () => 'fake-jwt-token');
 
       await run('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
@@ -113,7 +148,7 @@ describe('authMiddleware', () => {
 
     it('should sign the token with a lifetime derived from the configured authTokenDuration', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
-      mock.method(argon2, 'verify', async () => true);
+      userService.verifyPassword.mock.mockImplementation(async () => true);
       const signMock = mock.method(jwt, 'sign', () => 'fake-jwt-token');
       oIBusService.getEngineSettings.mock.mockImplementation(() => ({ webServer: { authTokenDuration: '1h' } }) as EngineSettings);
 
@@ -125,7 +160,7 @@ describe('authMiddleware', () => {
     it('should return user for valid credentials on /api/users/current-user', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
       userService.findByLogin.mock.mockImplementation(() => FAKE_USER);
-      mock.method(argon2, 'verify', async () => true);
+      userService.verifyPassword.mock.mockImplementation(async () => true);
 
       const { res } = await run('/api/users/current-user', { authorization: basicAuthHeader('alice', 'secret') });
 
@@ -136,7 +171,7 @@ describe('authMiddleware', () => {
     it('should return 404 when user not found on /api/users/current-user', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
       userService.findByLogin.mock.mockImplementation(() => null as unknown as User);
-      mock.method(argon2, 'verify', async () => true);
+      userService.verifyPassword.mock.mockImplementation(async () => true);
 
       const { res } = await run('/api/users/current-user', { authorization: basicAuthHeader('alice', 'secret') });
 
@@ -144,12 +179,55 @@ describe('authMiddleware', () => {
     });
 
     it('should use 403 and no WWW-Authenticate on /api/users/authentication failure', async () => {
-      userService.getHashedPasswordByLogin.mock.mockImplementation(() => null);
+      userService.verifyPassword.mock.mockImplementation(async () => false);
 
       const { res } = await run('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 403);
       assert.strictEqual(res.removeHeader.mock.calls.length, 1);
+    });
+  });
+
+  describe('Password change required', () => {
+    const MUST_CHANGE_USER: User = { ...FAKE_USER, mustChangePassword: true };
+
+    beforeEach(() => {
+      userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
+      userService.findByLogin.mock.mockImplementation(() => MUST_CHANGE_USER);
+      mock.method(jwt, 'verify', () => ({ login: 'alice', passwordFingerprint: FINGERPRINT }));
+    });
+
+    it('should refuse the other requests of a user who must change their password', async () => {
+      const { res } = await run('/api/south', { authorization: bearerHeader('token') });
+
+      assert.strictEqual(res.status.mock.calls[0].arguments[0], 403);
+      assert.deepStrictEqual(res.json.mock.calls[0].arguments[0], { error: 'The password must be changed first', status: 403 });
+      assert.strictEqual(mockNext.mock.calls.length, 0);
+    });
+
+    it('should refuse to change the password of another user', async () => {
+      const { res } = await run('/api/users/other/password', { authorization: bearerHeader('token') }, undefined, {}, 'POST');
+
+      assert.strictEqual(res.status.mock.calls[0].arguments[0], 403);
+      assert.strictEqual(mockNext.mock.calls.length, 0);
+    });
+
+    it('should let a user who must change their password change it', async () => {
+      await run('/api/users/u1/password', { authorization: bearerHeader('token') }, undefined, {}, 'POST');
+
+      assert.strictEqual(mockNext.mock.calls.length, 1);
+    });
+
+    it('should let a user who must change their password read the OIBus information', async () => {
+      await run('/api/engine/info', { authorization: bearerHeader('token') });
+
+      assert.strictEqual(mockNext.mock.calls.length, 1);
+    });
+
+    it('should return the current user who must change their password', async () => {
+      const { res } = await run('/api/users/current-user', { authorization: bearerHeader('token') });
+
+      assert.deepStrictEqual(res.json.mock.calls[0].arguments[0], MUST_CHANGE_USER);
     });
   });
 
@@ -203,7 +281,7 @@ describe('authMiddleware', () => {
       encryptionService.getPublicKey.mock.mockImplementation(async () => publicKey);
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
       userService.findByLogin.mock.mockImplementation(() => FAKE_USER);
-      mock.method(argon2, 'verify', async () => true);
+      userService.verifyPassword.mock.mockImplementation(async () => true);
 
       const { res } = await run('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
       const token = (res.json.mock.calls[0].arguments[0] as { access_token: string }).access_token;

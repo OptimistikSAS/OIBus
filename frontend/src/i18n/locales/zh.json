@@ -3794,10 +3794,7 @@
       "passwords-not-identical": "新密码与确认密码必须一致",
       "password-changed": "密码修改成功",
       "error": "密码未修改。请确保输入了正确的当前密码。",
-      "lowercase-character-required": "至少需要一个小写字母",
-      "uppercase-character-required": "至少需要一个大写字母",
-      "numeric-character-required": "至少需要一个数字",
-      "special-character-required": "至少需要一个特殊字符"
+      "change-required": "此账户仍在使用 OIBus 的默认密码：请先修改密码再继续。"
     }
   },
   "enabled": "运行中",

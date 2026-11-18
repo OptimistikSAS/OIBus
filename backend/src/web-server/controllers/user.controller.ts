@@ -55,7 +55,7 @@ export class UserController extends Controller {
   }
 
   /**
-   * Creates a new user account with the provided details and password
+   * Creates a new user account with the provided details and password (from 8 to 128 characters)
    * @summary Create user
    * @returns {Promise<UserDTO>} The created user account
    */
@@ -80,7 +80,8 @@ export class UserController extends Controller {
   }
 
   /**
-   *  Updates a user's password
+   * Updates a user's password, from 8 to 128 characters. The current password is the one of the authenticated user: their
+   * own when they change it, and theirs too when they change the password of another user
    * @summary Change password
    */
   @Post('/{userId}/password')
@@ -91,7 +92,7 @@ export class UserController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const userService = request.services.userService;
-    await userService.updatePassword(userId, command.newPassword, request.user.id);
+    await userService.updatePassword(userId, command, request.user.id);
   }
 
   /**

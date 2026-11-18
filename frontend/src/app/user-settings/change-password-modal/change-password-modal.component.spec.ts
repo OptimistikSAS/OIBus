@@ -11,6 +11,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { UserSettingsService } from '../../services/user-settings.service';
+import { CurrentUserService } from '../../shared/current-user.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { provideNgbConfigTesting } from '../../shared/form/oi-ngb-testing';
 import { NotificationService } from '../../shared/notification.service';
@@ -24,6 +25,8 @@ class ChangePasswordModalComponentTester {
   readonly newPasswordConfirmation = this.root.getByLabelText('New password confirmation');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
+  readonly logoutButton = this.root.getByRole('button', { name: 'Logout' });
+  readonly changeRequired = this.root.getByText('This account still has the OIBus default password: change it before going on.');
   readonly alert = this.root.getByRole('alert');
   readonly notIdenticalError = this.root.getByText('The new password and its confirmation must be identical');
 
@@ -39,12 +42,14 @@ describe('ChangePasswordModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let userSettingsService: MockObject<UserSettingsService>;
   let notificationService: MockObject<NotificationService>;
+  let currentUserService: MockObject<CurrentUserService>;
   const userSettings: UserDTO = testData.users.list[0];
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     userSettingsService = createMock(UserSettingsService);
     notificationService = createMock(NotificationService);
+    currentUserService = createMock(CurrentUserService);
     userSettingsService.currentUser.mockReturnValue(of(userSettings));
 
     TestBed.configureTestingModule({
@@ -53,7 +58,8 @@ describe('ChangePasswordModalComponent', () => {
         provideNgbConfigTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: UserSettingsService, useValue: userSettingsService },
-        { provide: NotificationService, useValue: notificationService }
+        { provide: NotificationService, useValue: notificationService },
+        { provide: CurrentUserService, useValue: currentUserService }
       ]
     });
 
@@ -66,6 +72,25 @@ describe('ChangePasswordModalComponent', () => {
     await expect.element(tester.newPassword).toHaveValue('');
     await expect.element(tester.newPasswordConfirmation).toHaveValue('');
     await expect.element(tester.alert).not.toBeInTheDocument();
+    await expect.element(tester.changeRequired).not.toBeInTheDocument();
+    await expect.element(tester.logoutButton).not.toBeInTheDocument();
+  });
+
+  test('should not save when the new password is shorter than 8 characters', async () => {
+    await tester.fillForm('current', 'short', 'short');
+    await tester.saveButton.click();
+
+    await expect.element(tester.root.getByText('This field must have at least 8 characters')).toBeVisible();
+    expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
+  });
+
+  test('should not save when the new password is longer than 128 characters', async () => {
+    const tooLong = 'a'.repeat(129);
+    await tester.fillForm('current', tooLong, tooLong);
+    await tester.saveButton.click();
+
+    await expect.element(tester.root.getByText('This field must have at most 128 characters')).toBeVisible();
+    expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
   });
 
   test('should not save when the form is invalid', async () => {
@@ -76,25 +101,25 @@ describe('ChangePasswordModalComponent', () => {
   });
 
   test('should not save when the new password and its confirmation are different', async () => {
-    await tester.fillForm('current', 'newABCD12!', 'other');
+    await tester.fillForm('current', 'new password', 'other');
     await tester.saveButton.click();
 
     await expect.element(tester.notIdenticalError).toBeVisible();
     expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
 
-    await tester.newPasswordConfirmation.fill('newABCD12!');
+    await tester.newPasswordConfirmation.fill('new password');
     await expect.element(tester.notIdenticalError).not.toBeInTheDocument();
   });
 
   test('should save the change', async () => {
     userSettingsService.updatePassword.mockReturnValue(of(undefined));
 
-    await tester.fillForm('current', 'newABCD12!', 'newABCD12!');
+    await tester.fillForm('current', 'new password', 'new password');
     await tester.saveButton.click();
 
     expect(userSettingsService.updatePassword).toHaveBeenCalledWith(userSettings.id, {
       currentPassword: 'current',
-      newPassword: 'newABCD12!'
+      newPassword: 'new password'
     });
     expect(notificationService.success).toHaveBeenCalledWith('user-settings.change-password.password-changed');
     expect(activeModal.close).toHaveBeenCalled();
@@ -103,7 +128,7 @@ describe('ChangePasswordModalComponent', () => {
   test('should show an error when the save fails', async () => {
     userSettingsService.updatePassword.mockReturnValue(throwError(() => new Error('fail')));
 
-    await tester.fillForm('current', 'newABCD12!', 'newABCD12!');
+    await tester.fillForm('current', 'new password', 'new password');
     await tester.saveButton.click();
 
     await expect.element(tester.alert).toBeVisible();
@@ -118,5 +143,15 @@ describe('ChangePasswordModalComponent', () => {
 
     expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
     expect(activeModal.dismiss).toHaveBeenCalled();
+  });
+
+  test('should explain why and offer to log out instead of cancelling when the change is required', async () => {
+    tester.fixture.componentInstance.forceChange();
+
+    await expect.element(tester.changeRequired).toBeVisible();
+    await expect.element(tester.cancelButton).not.toBeInTheDocument();
+    await tester.logoutButton.click();
+
+    expect(currentUserService.logout).toHaveBeenCalled();
   });
 });

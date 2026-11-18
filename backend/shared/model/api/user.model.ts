@@ -49,6 +49,13 @@ export interface UserDTO extends BaseEntity {
    * @example "John Doe"
    */
   friendlyName: string;
+
+  /**
+   * Whether the user must change their password before doing anything else: true for the default account while it still
+   * has its default password.
+   * @example false
+   */
+  mustChangePassword: boolean;
 }
 
 /**
@@ -102,13 +109,14 @@ export interface UserCommandDTO {
  */
 export interface ChangePasswordCommand {
   /**
-   * The current password of the user.
+   * The current password of the authenticated user, confirming their identity: their own password when they change it,
+   * and theirs too (not the one of the user changed) when they change the password of another user.
    * @example "oldPassword123"
    */
   currentPassword: string;
 
   /**
-   * The new password for the user.
+   * The new password for the user, from 8 to 128 characters.
    * @example "newSecurePassword456"
    */
   newPassword: string;

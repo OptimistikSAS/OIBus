@@ -71,7 +71,10 @@ describe('UserRepository', () => {
     const result = await repository.create(testData.users.command, 'password', testData.users.list[0].id);
     createdId = result.id;
     assert.ok(createdId);
-    assert.deepStrictEqual(stripAuditFields(result), stripAuditFields({ ...testData.users.command, id: createdId }));
+    assert.deepStrictEqual(
+      stripAuditFields(result),
+      stripAuditFields({ ...testData.users.command, id: createdId, mustChangePassword: false })
+    );
 
     assert.deepStrictEqual(recorded(), [['user', result.id, 'CREATE', null, result, testData.users.list[0].id]]);
   });
@@ -88,6 +91,38 @@ describe('UserRepository', () => {
     const result = repository.createWithHashedPassword(importedCommand, 'already-hashed-value', 'importUser', 'preserved-user-id-2');
     assert.strictEqual(result.id, 'preserved-user-id-2');
     assert.strictEqual(repository.getHashedPasswordByLogin('imported-login-2'), 'already-hashed-value');
+  });
+
+  it('should create a user who must change their password', async () => {
+    const command: UserCommandDTO = { ...testData.users.command, login: 'must-change-login' };
+    const result = await repository.create(command, 'password', 'creatorUser', 'must-change-id', true);
+    assert.strictEqual(result.mustChangePassword, true);
+    assert.strictEqual(repository.findById('must-change-id')!.mustChangePassword, true);
+  });
+
+  it('should no longer require a password change once the password changed', async () => {
+    const before = repository.findById('must-change-id')!;
+
+    await repository.updatePassword('must-change-id', 'new password', 'must-change-id');
+
+    assert.strictEqual(repository.findById('must-change-id')!.mustChangePassword, false);
+    assert.deepStrictEqual(recorded(), [
+      [
+        'user',
+        'must-change-id',
+        'UPDATE',
+        { ...before, password: '' },
+        { ...before, mustChangePassword: false, password: '<changed>' },
+        'must-change-id'
+      ]
+    ]);
+  });
+
+  it('should replace a password hash without auditing it', () => {
+    repository.updateHashedPassword('must-change-login', 'rehashed password');
+
+    assert.strictEqual(repository.getHashedPasswordByLogin('must-change-login'), 'rehashed password');
+    assert.deepStrictEqual(recorded(), []);
   });
 
   it('should update a user', async () => {
@@ -152,6 +187,7 @@ describe('UserRepository with custom default credentials', () => {
     const users = repository.list();
     assert.strictEqual(users.length, 1);
     assert.strictEqual(users[0].login, 'customuser');
+    assert.strictEqual(users[0].mustChangePassword, false);
     assert.strictEqual(repository.getHashedPasswordByLogin('customuser'), 'custompass');
   });
 
@@ -211,6 +247,7 @@ describe('UserRepository with empty database', () => {
     assert.strictEqual(user.login, 'admin');
     assert.strictEqual(user.language, 'en');
     assert.strictEqual(user.timezone, 'Europe/Paris');
+    assert.strictEqual(user.mustChangePassword, true);
     assert.strictEqual(repository.getHashedPasswordByLogin('admin'), 'pass');
   });
 });

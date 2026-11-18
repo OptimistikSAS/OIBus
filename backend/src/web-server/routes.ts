@@ -82,6 +82,7 @@ const models: TsoaRoute.Models = {
             "language": {"ref":"Language","required":true},
             "timezone": {"ref":"Timezone","required":true},
             "friendlyName": {"dataType":"string","required":true},
+            "mustChangePassword": {"dataType":"boolean","required":true},
         },
         "additionalProperties": false,
     },

@@ -451,10 +451,7 @@
       "passwords-not-identical": "The new password and its confirmation must be identical",
       "password-changed": "The password has been changed successfully",
       "error": "The password has not been changed. Make sure you enter the correct current password.",
-      "lowercase-character-required": "At least one lowercase character required",
-      "uppercase-character-required": "At least one uppercase character required",
-      "numeric-character-required": "At least one numeric character required",
-      "special-character-required": "At least one special character required"
+      "change-required": "This account still has the OIBus default password: change it before going on."
     }
   },
   "home": {

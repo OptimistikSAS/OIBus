@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import argon2 from 'argon2';
 
 import { createPageFromArray } from '../../shared/model/common/types';
 
@@ -8,7 +10,7 @@ import type UserRepository from '../repository/config/user.repository';
 import testData from '../tests/utils/test-data';
 import { createMock, type Mocked } from '../tests/utils/test-utils';
 import type JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import { changePasswordSchema, userPasswordSchema, userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import UserService, { toUserDTO } from './user.service';
 
 const getUserInfo = (id: string) => ({ id, friendlyName: 'test' });
@@ -25,8 +27,11 @@ const expectedUserDTO = (user: User, friendlyName: string) => ({
   createdBy: getUserInfo(user.createdBy),
   updatedBy: getUserInfo(user.updatedBy),
   createdAt: user.createdAt,
-  updatedAt: user.updatedAt
+  updatedAt: user.updatedAt,
+  mustChangePassword: user.mustChangePassword
 });
+
+const changePasswordCommand = { currentPassword: 'current password', newPassword: 'new password' };
 
 describe('User Service', () => {
   let validator: Mocked<JoiValidator>;
@@ -37,6 +42,10 @@ describe('User Service', () => {
     validator = createMock<JoiValidator>();
     userRepository = createMock<UserRepository>();
     service = new UserService(validator, userRepository);
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('should list all users', () => {
@@ -103,19 +112,78 @@ describe('User Service', () => {
     assert.deepStrictEqual(result, expectedResult);
   });
 
+  it('should verify the password of a user', async () => {
+    userRepository.getHashedPasswordByLogin.mock.mockImplementationOnce(() => 'hash');
+    const verify = mock.method(argon2, 'verify', async () => true);
+    mock.method(argon2, 'needsRehash', () => false);
+
+    assert.strictEqual(await service.verifyPassword('admin', 'password'), true);
+
+    assert.deepStrictEqual(verify.mock.calls[0].arguments, ['hash', 'password']);
+    assert.strictEqual(userRepository.updateHashedPassword.mock.calls.length, 0);
+  });
+
+  it('should not verify a wrong password', async () => {
+    userRepository.getHashedPasswordByLogin.mock.mockImplementationOnce(() => 'hash');
+    mock.method(argon2, 'verify', async () => false);
+
+    assert.strictEqual(await service.verifyPassword('admin', 'wrong'), false);
+    assert.strictEqual(userRepository.updateHashedPassword.mock.calls.length, 0);
+  });
+
+  it('should verify the password of an unknown login against the same dummy hash', async () => {
+    userRepository.getHashedPasswordByLogin.mock.mockImplementation(() => null);
+    const hash = mock.method(argon2, 'hash', async () => 'dummy hash');
+    const verify = mock.method(argon2, 'verify', async () => true);
+
+    assert.strictEqual(await service.verifyPassword('unknown', 'password'), false);
+    assert.strictEqual(await service.verifyPassword('other unknown', 'password'), false);
+
+    assert.strictEqual(hash.mock.calls.length, 1);
+    assert.deepStrictEqual(
+      verify.mock.calls.map(call => call.arguments),
+      [
+        ['dummy hash', 'password'],
+        ['dummy hash', 'password']
+      ]
+    );
+  });
+
+  it('should hash a verified password again when the hashing parameters changed', async () => {
+    userRepository.getHashedPasswordByLogin.mock.mockImplementationOnce(() => 'old hash');
+    mock.method(argon2, 'verify', async () => true);
+    const needsRehash = mock.method(argon2, 'needsRehash', () => true);
+    mock.method(argon2, 'hash', async () => 'new hash');
+
+    assert.strictEqual(await service.verifyPassword('admin', 'password'), true);
+
+    assert.deepStrictEqual(needsRehash.mock.calls[0].arguments, ['old hash']);
+    assert.deepStrictEqual(userRepository.updateHashedPassword.mock.calls[0].arguments, ['admin', 'new hash']);
+  });
+
   it('should create a user', async () => {
     userRepository.create.mock.mockImplementationOnce(async () => testData.users.list[0]);
 
     const result = await service.create(testData.users.command, 'password', testData.users.list[0].id);
 
-    assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [userSchema, testData.users.command]);
+    assert.deepStrictEqual(
+      validator.validate.mock.calls.map(call => call.arguments),
+      [
+        [userSchema, testData.users.command],
+        [userPasswordSchema, { password: 'password' }]
+      ]
+    );
     assert.deepStrictEqual(userRepository.create.mock.calls[0].arguments, [testData.users.command, 'password', testData.users.list[0].id]);
     assert.deepStrictEqual(result, testData.users.list[0]);
   });
 
-  it('should not create if the password is not provided', async () => {
-    await assert.rejects(() => service.create(testData.users.command, undefined, testData.users.list[0].id), {
-      message: 'Password is required'
+  it('should not create a user if the password is invalid', async () => {
+    validator.validate.mock.mockImplementation(async schema => {
+      if (schema === userPasswordSchema) throw new Error('"password" length must be at least 8 characters long');
+    });
+
+    await assert.rejects(() => service.create(testData.users.command, 'short', testData.users.list[0].id), {
+      message: '"password" length must be at least 8 characters long'
     });
 
     assert.strictEqual(userRepository.create.mock.calls.length, 0);
@@ -146,33 +214,48 @@ describe('User Service', () => {
     assert.strictEqual(userRepository.update.mock.calls.length, 0);
   });
 
-  it('should update a user password', async () => {
-    userRepository.findById.mock.mockImplementationOnce(() => testData.users.list[0]);
+  it('should update the password of a user after checking the current password of its author', async () => {
+    const [user, author] = testData.users.list;
+    userRepository.findById.mock.mockImplementation(id => testData.users.list.find(element => element.id === id) ?? null);
+    userRepository.getHashedPasswordByLogin.mock.mockImplementation(() => 'hash');
+    const verify = mock.method(argon2, 'verify', async () => true);
+    mock.method(argon2, 'needsRehash', () => false);
 
-    await service.updatePassword(testData.users.list[0].id, 'new password', 'updaterUser');
+    await service.updatePassword(user.id, changePasswordCommand, author.id);
 
-    assert.deepStrictEqual(userRepository.findById.mock.calls[0].arguments, [testData.users.list[0].id]);
-    assert.deepStrictEqual(userRepository.updatePassword.mock.calls[0].arguments, [
-      testData.users.list[0].id,
-      'new password',
-      'updaterUser'
-    ]);
+    assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [changePasswordSchema, changePasswordCommand]);
+    assert.deepStrictEqual(userRepository.getHashedPasswordByLogin.mock.calls[0].arguments, [author.login]);
+    assert.deepStrictEqual(verify.mock.calls[0].arguments, ['hash', 'current password']);
+    assert.deepStrictEqual(userRepository.updatePassword.mock.calls[0].arguments, [user.id, 'new password', author.id]);
   });
 
-  it('should not update a user password if the password is not provided', async () => {
-    userRepository.findById.mock.mockImplementationOnce(() => testData.users.list[0]);
+  it('should not update a user password if the current password is wrong', async () => {
+    userRepository.findById.mock.mockImplementation(() => testData.users.list[0]);
+    userRepository.getHashedPasswordByLogin.mock.mockImplementation(() => 'hash');
+    mock.method(argon2, 'verify', async () => false);
 
-    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, undefined, 'updaterUser'), {
-      message: `Password is required`
+    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, changePasswordCommand, testData.users.list[0].id), {
+      message: 'The current password is incorrect'
     });
-    assert.deepStrictEqual(userRepository.findById.mock.calls[0].arguments, [testData.users.list[0].id]);
+    assert.strictEqual(userRepository.updatePassword.mock.calls.length, 0);
+  });
+
+  it('should not update a user password if the new password is invalid', async () => {
+    userRepository.findById.mock.mockImplementationOnce(() => testData.users.list[0]);
+    validator.validate.mock.mockImplementationOnce(async () => {
+      throw new Error('"newPassword" length must be at least 8 characters long');
+    });
+
+    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, changePasswordCommand, 'updaterUser'), {
+      message: '"newPassword" length must be at least 8 characters long'
+    });
     assert.strictEqual(userRepository.updatePassword.mock.calls.length, 0);
   });
 
   it('should not update the password if the user is not found', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, 'new password', 'updaterUser'), {
+    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, changePasswordCommand, 'updaterUser'), {
       message: `User "${testData.users.list[0].id}" (id) not found`
     });
 

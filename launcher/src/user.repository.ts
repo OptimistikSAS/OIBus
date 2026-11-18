@@ -50,6 +50,7 @@ export default class UserRepository {
       } else {
         this.create(database, DEFAULT_USER, passwordHash);
       }
+      this.requirePasswordChange(database, DEFAULT_USER.login);
     } finally {
       database.close();
     }
@@ -72,6 +73,17 @@ export default class UserRepository {
     database
       .prepare(updateQuery)
       .run(user.login, passwordHash, user.firstName, user.lastName, user.email, user.language, user.timezone, id);
+  }
+
+  /**
+   * The default password is known by anyone: OIBus makes the account change it before doing anything else. A database
+   * OIBus has not migrated to 4.0 yet has no such flag: its migration sets it on the accounts having the default password.
+   */
+  private requirePasswordChange(database: Database, login: string): void {
+    const columns = database.prepare(`PRAGMA table_info(${USERS_TABLE});`).all() as Array<{ name: string }>;
+    if (columns.some(column => column.name === 'must_change_password')) {
+      database.prepare(`UPDATE ${USERS_TABLE} SET must_change_password = 1 WHERE login = ?;`).run(login);
+    }
   }
 
   private create(database: Database, user: typeof DEFAULT_USER, passwordHash: string): void {

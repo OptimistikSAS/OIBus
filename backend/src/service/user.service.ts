@@ -1,4 +1,8 @@
-import { UserCommandDTO, UserDTO } from '../../shared/model/api/user.model';
+import crypto from 'node:crypto';
+
+import argon2 from 'argon2';
+
+import { ChangePasswordCommand, UserCommandDTO, UserDTO } from '../../shared/model/api/user.model';
 import { GetUserInfo, Language, Page, UserInfo } from '../../shared/model/common/types';
 import { UserSearchParam } from '../../shared/model/domain/user.model';
 
@@ -6,9 +10,12 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import { User } from '../model/user.model';
 import UserRepository from '../repository/config/user.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import { changePasswordSchema, userPasswordSchema, userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 
 export default class UserService {
+  // Hash of a random password, verified for an unknown login: computed on first use, with the current hashing parameters
+  private dummyHash: Promise<string> | null = null;
+
   constructor(
     protected readonly validator: JoiValidator,
     private userRepository: UserRepository
@@ -38,15 +45,31 @@ export default class UserService {
     return this.userRepository.getHashedPasswordByLogin(login);
   }
 
+  /**
+   * Checks the password of a user. An unknown login is verified against a dummy hash, so that it takes as long as a known
+   * one and does not tell which logins exist. Once verified, the password is hashed again if the hashing parameters
+   * changed since it was hashed.
+   */
+  async verifyPassword(login: string, password: string): Promise<boolean> {
+    const hashedPassword = this.userRepository.getHashedPasswordByLogin(login);
+    this.dummyHash ??= argon2.hash(crypto.randomUUID());
+    const verified = await argon2.verify(hashedPassword ?? (await this.dummyHash), password);
+    if (!hashedPassword || !verified) {
+      return false;
+    }
+    if (argon2.needsRehash(hashedPassword)) {
+      this.userRepository.updateHashedPassword(login, await argon2.hash(password));
+    }
+    return true;
+  }
+
   search(searchParams: UserSearchParam): Page<User> {
     return this.userRepository.search(searchParams);
   }
 
-  async create(command: UserCommandDTO, password: string | undefined, createdBy: string): Promise<User> {
+  async create(command: UserCommandDTO, password: string, createdBy: string): Promise<User> {
     await this.validator.validate(userSchema, command);
-    if (!password) {
-      throw new OIBusValidationError('Password is required');
-    }
+    await this.validator.validate(userPasswordSchema, { password });
     return await this.userRepository.create(command, password, createdBy);
   }
 
@@ -56,12 +79,18 @@ export default class UserService {
     this.userRepository.update(user.id, command, updatedBy);
   }
 
-  async updatePassword(userId: string, newPassword: string | undefined, updatedBy: string): Promise<void> {
+  /**
+   * Changes the password of a user. The current password checked is the one of the user changing it (`updatedBy`): their
+   * own password when they change it, and theirs too when they change the password of another user.
+   */
+  async updatePassword(userId: string, command: ChangePasswordCommand, updatedBy: string): Promise<void> {
     const user = this.findById(userId);
-    if (!newPassword) {
-      throw new OIBusValidationError('Password is required');
+    await this.validator.validate(changePasswordSchema, command);
+    const author = this.findById(updatedBy);
+    if (!(await this.verifyPassword(author.login, command.currentPassword))) {
+      throw new OIBusValidationError('The current password is incorrect');
     }
-    await this.userRepository.updatePassword(user.id, newPassword, updatedBy);
+    await this.userRepository.updatePassword(user.id, command.newPassword, updatedBy);
   }
 
   delete(userId: string, deletedBy: string): void {
@@ -99,6 +128,7 @@ export const toUserDTO = (user: User, getUserInfo: GetUserInfo): UserDTO => {
     createdBy: getUserInfo(user.createdBy),
     updatedBy: getUserInfo(user.updatedBy),
     createdAt: user.createdAt,
-    updatedAt: user.updatedAt
+    updatedAt: user.updatedAt,
+    mustChangePassword: user.mustChangePassword
   };
 };

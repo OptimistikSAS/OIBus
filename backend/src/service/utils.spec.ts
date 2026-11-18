@@ -1368,6 +1368,15 @@ describe('Service utils', () => {
     });
   });
 
+  describe('isLocalhostAddress', () => {
+    it('should tell the local addresses', () => {
+      assert.strictEqual(utils.isLocalhostAddress('127.0.0.1'), true);
+      assert.strictEqual(utils.isLocalhostAddress('::1'), true);
+      assert.strictEqual(utils.isLocalhostAddress('::ffff:127.0.0.1'), true);
+      assert.strictEqual(utils.isLocalhostAddress('192.168.1.1'), false);
+    });
+  });
+
   describe('testIPOnFilter', () => {
     it('should return false for an empty filter list', () => {
       assert.deepStrictEqual(utils.testIPOnFilter([], '192.168.1.1'), false);

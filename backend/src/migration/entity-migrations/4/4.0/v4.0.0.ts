@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
+import argon2 from 'argon2';
 import Database from 'better-sqlite3';
 import { Knex } from 'knex';
 
@@ -93,6 +94,7 @@ const ENGINES_TABLE = 'engines';
 const CONFIGURATION_WORKFLOWS_TABLE = 'configuration_workflows';
 const WORKFLOW_RUNS_TABLE = 'workflow_runs';
 const ITEM_POINT_METADATA_TABLE = 'item_point_metadata';
+const USERS_TABLE = 'users';
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 
 /**
@@ -135,7 +137,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   addErrorAndArchiveMaxSizes,
   addEngineDescription,
   addRegistrationTokenRefresh,
-  encryptSecretsWithAesGcm
+  encryptSecretsWithAesGcm,
+  flagDefaultPasswords
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -156,6 +159,7 @@ export async function up(knex: Knex): Promise<void> {
  * is enabled.
  */
 export async function down(knex: Knex): Promise<void> {
+  await dropColumns(knex, USERS_TABLE, ['must_change_password']);
   await dropColumns(knex, REGISTRATIONS_TABLE, [
     'refresh_token',
     'token_expiration_date',
@@ -2206,4 +2210,24 @@ async function loadLegacyReEncryption(knex: Knex): Promise<((value: string) => s
     const encrypted = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
     return Buffer.concat([nonce, encrypted, cipher.getAuthTag()]).toString('base64');
   };
+}
+
+/**
+ * Password of the default account created at the first start, unless the init configuration sets another one.
+ */
+const DEFAULT_PASSWORD = 'pass';
+
+/**
+ * A user still having the default password must change it before doing anything else: flag them.
+ */
+export async function flagDefaultPasswords(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(USERS_TABLE, table => {
+    table.boolean('must_change_password').notNullable().defaultTo(false);
+  });
+  const users: Array<{ id: string; password: string }> = await knex(USERS_TABLE).select('id', 'password');
+  for (const user of users) {
+    if (await argon2.verify(user.password, DEFAULT_PASSWORD).catch(() => false)) {
+      await knex(USERS_TABLE).where('id', user.id).update({ must_change_password: true });
+    }
+  }
 }
