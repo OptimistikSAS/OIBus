@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import { afterEach, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import argon2 from 'argon2';
@@ -13,13 +14,14 @@ import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
 import { createMock, Mocked } from '../../tests/utils/test-utils';
 import type { CustomExpressRequest } from '../express';
-import { authMiddleware } from './auth.middleware';
+import { authMiddleware, passwordFingerprint } from './auth.middleware';
 
 const basicAuthHeader = (user: string, pass: string) => 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
 const bearerHeader = (token: string) => `Bearer ${token}`;
 
 const FAKE_USER: User = { ...testData.users.list[0], id: 'u1', login: 'alice' };
 const HASHED = '$argon2id$hashed';
+const FINGERPRINT = passwordFingerprint(HASHED);
 
 describe('authMiddleware', () => {
   let userService: Mocked<UserService>;
@@ -98,6 +100,17 @@ describe('authMiddleware', () => {
       assert.strictEqual((signMock.mock.calls[0].arguments[2] as { expiresIn: string }).expiresIn, '7d');
     });
 
+    it('should sign a fingerprint of the password hash, not the hash itself', async () => {
+      userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
+      mock.method(argon2, 'verify', async () => true);
+      const signMock = mock.method(jwt, 'sign', () => 'fake-jwt-token');
+
+      await run('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
+
+      assert.deepStrictEqual(signMock.mock.calls[0].arguments[0], { login: 'alice', passwordFingerprint: FINGERPRINT });
+      assert.strictEqual(FINGERPRINT, crypto.createHash('sha256').update(HASHED).digest('base64url'));
+    });
+
     it('should sign the token with a lifetime derived from the configured authTokenDuration', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
       mock.method(argon2, 'verify', async () => true);
@@ -144,7 +157,7 @@ describe('authMiddleware', () => {
     it('should call next() with valid bearer token', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
       userService.findByLogin.mock.mockImplementation(() => FAKE_USER);
-      mock.method(jwt, 'verify', () => ({ login: 'alice', password: HASHED }));
+      mock.method(jwt, 'verify', () => ({ login: 'alice', passwordFingerprint: FINGERPRINT }));
 
       await run('/api/data', { authorization: bearerHeader('valid-token') });
 
@@ -170,9 +183,44 @@ describe('authMiddleware', () => {
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
     });
 
+    it('should return 401 for a token carrying the password hash, issued before the fingerprint', async () => {
+      userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
+      mock.method(jwt, 'verify', () => ({ login: 'alice', password: HASHED }));
+
+      const { res } = await run('/api/data', { authorization: bearerHeader('token') });
+
+      assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
+      assert.strictEqual(mockNext.mock.calls.length, 0);
+    });
+
+    it('should accept the token it issued until the password changes', async () => {
+      const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+        publicKeyEncoding: { type: 'spki', format: 'pem' }
+      });
+      encryptionService.getPrivateKey.mock.mockImplementation(async () => privateKey);
+      encryptionService.getPublicKey.mock.mockImplementation(async () => publicKey);
+      userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
+      userService.findByLogin.mock.mockImplementation(() => FAKE_USER);
+      mock.method(argon2, 'verify', async () => true);
+
+      const { res } = await run('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
+      const token = (res.json.mock.calls[0].arguments[0] as { access_token: string }).access_token;
+      assert.ok(!Buffer.from(token.split('.')[1], 'base64url').toString().includes(HASHED));
+
+      await run('/api/data', { authorization: bearerHeader(token) });
+      assert.strictEqual(mockNext.mock.calls.length, 1);
+
+      userService.getHashedPasswordByLogin.mock.mockImplementation(() => '$argon2id$new-hash');
+      const { res: afterChange } = await run('/api/data', { authorization: bearerHeader(token) });
+      assert.strictEqual(afterChange.status.mock.calls[0].arguments[0], 401);
+      assert.strictEqual(mockNext.mock.calls.length, 1);
+    });
+
     it('should return 401 when hashed password does not match token', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => 'different-hash');
-      mock.method(jwt, 'verify', () => ({ login: 'alice', password: HASHED }));
+      mock.method(jwt, 'verify', () => ({ login: 'alice', passwordFingerprint: FINGERPRINT }));
 
       const { res } = await run('/api/data', { authorization: bearerHeader('token') });
 
@@ -181,7 +229,7 @@ describe('authMiddleware', () => {
 
     it('should return 401 when user not found via bearer token', async () => {
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => null);
-      mock.method(jwt, 'verify', () => ({ login: 'alice', password: HASHED }));
+      mock.method(jwt, 'verify', () => ({ login: 'alice', passwordFingerprint: FINGERPRINT }));
 
       const { res } = await run('/api/data', { authorization: bearerHeader('token') });
 
@@ -191,7 +239,7 @@ describe('authMiddleware', () => {
 
   describe('Query string token', () => {
     it('should not authenticate a token passed in the query string', async () => {
-      const verifySpy = mock.method(jwt, 'verify', () => ({ login: 'alice', password: HASHED }));
+      const verifySpy = mock.method(jwt, 'verify', () => ({ login: 'alice', passwordFingerprint: FINGERPRINT }));
 
       const { res } = await run('/api/engine/metrics', {}, '/api/engine/metrics?token=abc', { token: 'abc' });
 

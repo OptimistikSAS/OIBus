@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 import argon2 from 'argon2';
 import basicAuth, { BasicAuthResult } from 'basic-auth';
 import { NextFunction, Request, Response } from 'express';
@@ -13,6 +15,14 @@ interface AuthConfig {
   encryptionService: EncryptionService;
   oIBusService: OIBusService;
 }
+
+/**
+ * Fingerprint of the password hash of a user, carried by the tokens: a password change changes the hash (its salt is
+ * random), which invalidates the tokens issued before. The hash itself, which holds the salt, never leaves OIBus: the
+ * fingerprint cannot be used to test passwords offline.
+ */
+export const passwordFingerprint = (hashedPassword: string): string =>
+  crypto.createHash('sha256').update(hashedPassword).digest('base64url');
 
 // Helper function for authentication errors
 const createAuthError = (res: Response, message = 'Unauthorized', status = 401, challenge = true) => {
@@ -72,12 +82,11 @@ const createAuthMiddleware = (config: AuthConfig) => {
             return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
           }
 
-          headerUser = { name: verifiedToken.login, pass: verifiedToken.password };
-          const hashedPassword = config.userService.getHashedPasswordByLogin(headerUser.name);
-
-          if (!hashedPassword || hashedPassword !== verifiedToken.password) {
+          const hashedPassword = config.userService.getHashedPasswordByLogin(verifiedToken.login);
+          if (!hashedPassword || passwordFingerprint(hashedPassword) !== verifiedToken.passwordFingerprint) {
             return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
           }
+          headerUser = { name: verifiedToken.login, pass: hashedPassword };
         } catch {
           return createAuthError(res, 'Invalid token', 403, shouldChallenge);
         }
@@ -100,7 +109,7 @@ const createAuthMiddleware = (config: AuthConfig) => {
       if (req.path === '/api/users/authentication') {
         const authTokenDuration = config.oIBusService.getEngineSettings().webServer.authTokenDuration;
         const token = jwt.sign(
-          { login: headerUser.name, password: headerUser.pass },
+          { login: headerUser.name, passwordFingerprint: passwordFingerprint(headerUser.pass) },
           { key: await config.encryptionService.getPrivateKey(), passphrase: '' },
           {
             algorithm: 'RS256',

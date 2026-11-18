@@ -57,8 +57,8 @@ Après une connexion réussie, OIBus émet un **JWT signé avec RS256** (RSA-SHA
 - A une **durée de vie de 7 jours par défaut**, configurable dans les paramètres du moteur de 1 heure jusqu'à 30 jours.
 - Est signé avec une clé privée RSA détenue par OIBus.
 - Est vérifié à chaque requête API à l'aide de la clé publique correspondante.
-- Contient l'identifiant de connexion de l'utilisateur et un hash de son mot de passe — le jeton est automatiquement invalidé si le
-  mot de passe change.
+- Contient l'identifiant de connexion de l'utilisateur et une empreinte du hash de son mot de passe (jamais le hash lui-même) —
+  le jeton est automatiquement invalidé si le mot de passe change.
 
 ### Basic Auth (API / CLI) {#basic-auth-api--cli}
 
