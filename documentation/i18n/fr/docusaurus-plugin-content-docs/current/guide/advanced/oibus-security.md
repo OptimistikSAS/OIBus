@@ -14,13 +14,16 @@ par force brute et aux attaques accélérées par GPU.
 
 ### Secrets des connecteurs {#connector-secrets}
 
-Les mots de passe, jetons et clés API configurés dans les connecteurs South et North sont chiffrés au repos avec
-**AES-256-CBC** :
+Les mots de passe, jetons et clés API configurés dans les connecteurs South et North — ainsi que les jetons et clés de
+l'enregistrement OIAnalytics, les mots de passe du proxy de redirection et de Loki, et les clés privées des certificats —
+sont chiffrés au repos avec **AES-256-GCM** :
 
-- Une clé de 256 bits et un vecteur d'initialisation (IV) de 128 bits sont générés avec un générateur de nombres
-  aléatoires cryptographiquement sûr lors de l'initialisation d'OIBus.
-- La clé et l'IV sont stockés sous forme de chaînes base64 dans **`crypto.db`** — une base de données SQLite distincte
-  de la base de données de configuration principale.
+- Une clé de 256 bits est générée avec un générateur de nombres aléatoires cryptographiquement sûr lors de
+  l'initialisation d'OIBus, et stockée sous forme de chaîne base64 dans **`crypto.db`** — une base de données SQLite
+  distincte de la base de données de configuration principale. La clé de chiffrement en est dérivée avec HKDF-SHA256.
+- Chaque secret est chiffré avec son propre nonce aléatoire de 96 bits, de sorte que deux secrets identiques ne donnent
+  jamais la même valeur chiffrée, et porte une étiquette d'authentification, de sorte qu'une valeur altérée est rejetée
+  au lieu d'être déchiffrée.
 - Les secrets chiffrés sont stockés dans **`oibus.db`** et ne peuvent être déchiffrés que lorsque les deux bases de données
   sont présentes.
 
@@ -36,7 +39,7 @@ OIBus utilise cinq bases de données SQLite :
 | Base de données  | Contenu                                                                                                                    |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | **`oibus.db`**   | Toute la configuration : connecteurs, éléments, modes de scan, filtres IP, utilisateurs (mots de passe hachés), secrets chiffrés. |
-| **`crypto.db`**  | Clé et IV AES-256-CBC utilisés pour chiffrer/déchiffrer les secrets des connecteurs.                                          |
+| **`crypto.db`**  | Clé dont est dérivée la clé AES-256-GCM qui chiffre/déchiffre les secrets.                                                    |
 | **`logs.db`**    | Entrées de journal d'exécution. Stockées dans le sous-dossier `logs/`.                                                        |
 | **`metrics.db`** | Métriques d'exécution South/North/requête d'historique, mises à jour à chaque scan et chaque envoi North. Stockées dans le sous-dossier `logs/`. |
 | **`cache.db`**   | Cache du connecteur South (valeurs en attente de transmission vers les connecteurs North). Stocké dans le sous-dossier `cache/`. |

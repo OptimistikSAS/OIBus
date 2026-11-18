@@ -68,17 +68,13 @@ describe('Repository with empty database', () => {
 
     it('should properly init crypto settings table', () => {
       const randomBytesMock = mock.method(crypto, 'randomBytes');
-      randomBytesMock.mock.mockImplementationOnce(() => Buffer.from('init vector'), 0);
-      randomBytesMock.mock.mockImplementationOnce(() => Buffer.from('security key'), 1);
+      randomBytesMock.mock.mockImplementationOnce(() => Buffer.from('security key'), 0);
 
       repository.createCryptoSettings('id1');
-      assert.strictEqual(randomBytesMock.mock.calls.length, 2);
-      assert.deepStrictEqual(randomBytesMock.mock.calls[0].arguments, [16]);
-      assert.deepStrictEqual(randomBytesMock.mock.calls[1].arguments, [32]);
+      assert.strictEqual(randomBytesMock.mock.calls.length, 1);
+      assert.deepStrictEqual(randomBytesMock.mock.calls[0].arguments, [32]);
 
       assert.deepStrictEqual(repository.getCryptoSettings('id1'), {
-        algorithm: 'aes-256-cbc',
-        initVector: Buffer.from('init vector').toString('base64'),
         securityKey: Buffer.from('security key').toString('base64')
       });
     });

@@ -22,10 +22,9 @@ const forgeModule = nodeRequire('node-forge');
 
 const encryptionService = EncryptionService.getInstance();
 
+const securityKey = Buffer.from('0123456789abcdef0123456789abcdef');
 const cryptoSettings = {
-  algorithm: 'aes-256-cbc',
-  initVector: Buffer.from('0123456789abcdef').toString('base64'),
-  securityKey: Buffer.from('0123456789abcdef').toString('base64')
+  securityKey: securityKey.toString('base64')
 };
 
 const manifest: OIBusObjectAttribute = {
@@ -139,21 +138,17 @@ describe('Encryption Service', () => {
   let statMock: ReturnType<typeof mock.fn>;
   let readFileMock: ReturnType<typeof mock.fn>;
   let writeFileMock: ReturnType<typeof mock.fn>;
-  let createCipherivMock: ReturnType<typeof mock.fn>;
-  let createDecipherivMock: ReturnType<typeof mock.fn>;
   let privateDecryptMock: ReturnType<typeof mock.fn>;
   let generateKeyPairMock: ReturnType<typeof mock.fn>;
   let mockCert: ReturnType<typeof createCertMock>;
 
-  /** Makes the next ciphers or deciphers return `output`. */
-  const mockCipher = (cipherMock: ReturnType<typeof mock.fn>, output: string) => {
-    const update = mock.fn(() => output);
-    const final = mock.fn(() => '');
-    cipherMock.mock.mockImplementation(() => ({ update, final }));
-    return { update, final };
-  };
+  beforeEach(async () => {
+    // Derive the keys from the crypto settings, with the certificate files reported as existing
+    mock.method(fs, 'stat', async () => undefined);
+    mock.method(fs, 'mkdir', async () => undefined);
+    await encryptionService.init(cryptoSettings, certFolder);
+    mock.restoreAll();
 
-  beforeEach(() => {
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     // Reset service caches between tests
@@ -169,8 +164,6 @@ describe('Encryption Service', () => {
     writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
 
     // Mock crypto functions
-    createCipherivMock = mock.method(crypto, 'createCipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
-    createDecipherivMock = mock.method(crypto, 'createDecipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
     privateDecryptMock = mock.method(crypto, 'privateDecrypt', () => Buffer.from(''));
 
     mockCert = createCertMock();
@@ -267,24 +260,31 @@ describe('Encryption Service', () => {
     assert.strictEqual(readFileMock.mock.calls.length, 3);
   });
 
-  it('should properly encrypt text', async () => {
-    const { update, final } = mockCipher(createCipherivMock, 'encrypted text');
+  it('should encrypt a text with AES-256-GCM and a random nonce', () => {
+    const encryptedText = encryptionService.encryptText('text to encrypt');
+    const otherEncryptedText = encryptionService.encryptText('text to encrypt');
 
-    const encryptedText = await encryptionService.encryptText('text to encrypt');
-    assert.strictEqual(encryptedText, 'encrypted text');
-    assert.deepStrictEqual(createCipherivMock.mock.calls[0].arguments, [
-      cryptoSettings.algorithm,
-      Buffer.from(cryptoSettings.securityKey, 'base64'),
-      Buffer.from(cryptoSettings.initVector, 'base64')
-    ]);
-    assert.deepStrictEqual(update.mock.calls[0].arguments, ['text to encrypt', 'utf8', 'base64']);
-    assert.deepStrictEqual(final.mock.calls[0].arguments, ['base64']);
+    // nonce (12 bytes) | ciphertext (as long as the text) | authentication tag (16 bytes)
+    assert.strictEqual(Buffer.from(encryptedText, 'base64').length, 12 + 'text to encrypt'.length + 16);
+    assert.notStrictEqual(encryptedText, otherEncryptedText);
+    assert.strictEqual(encryptionService.decryptText(encryptedText), 'text to encrypt');
+    assert.strictEqual(encryptionService.decryptText(otherEncryptedText), 'text to encrypt');
   });
 
-  it('should properly encrypt empty input', async () => {
-    const encryptedText = await encryptionService.encryptText('');
-    assert.strictEqual(encryptedText, '');
-    assert.strictEqual(createCipherivMock.mock.calls.length, 0);
+  it('should encrypt with a key derived from the stored key, not the stored key itself', () => {
+    const data = Buffer.from(encryptionService.encryptText('text to encrypt'), 'base64');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', securityKey, data.subarray(0, 12));
+    decipher.setAuthTag(data.subarray(data.length - 16));
+    decipher.update(data.subarray(12, data.length - 16));
+
+    assert.throws(() => decipher.final(), { message: 'Unsupported state or unable to authenticate data' });
+  });
+
+  it('should properly encrypt and decrypt empty input', () => {
+    assert.strictEqual(encryptionService.encryptText(''), '');
+    assert.strictEqual(encryptionService.encryptText(null), '');
+    assert.strictEqual(encryptionService.decryptText(''), '');
+    assert.strictEqual(encryptionService.decryptText(undefined), '');
   });
 
   it('should throw error on encrypt when class is not initialized', () => {
@@ -292,24 +292,26 @@ describe('Encryption Service', () => {
     assert.throws(() => encryptionService.encryptText('test'), { message: 'EncryptionService not initialized' });
   });
 
-  it('should properly decrypt text', async () => {
-    const { update, final } = mockCipher(createDecipherivMock, 'decrypted text');
+  it('should refuse to decrypt an altered text', () => {
+    const data = Buffer.from(encryptionService.encryptText('text to encrypt'), 'base64');
+    data[14] ^= 1;
 
-    const decryptedText = await encryptionService.decryptText('text to decrypt');
-    assert.strictEqual(decryptedText, 'decrypted text');
-    assert.deepStrictEqual(createDecipherivMock.mock.calls[0].arguments, [
-      cryptoSettings.algorithm,
-      Buffer.from(cryptoSettings.securityKey, 'base64'),
-      Buffer.from(cryptoSettings.initVector, 'base64')
-    ]);
-    assert.deepStrictEqual(update.mock.calls[0].arguments, ['text to decrypt', 'base64', 'utf8']);
-    assert.deepStrictEqual(final.mock.calls[0].arguments, ['utf8']);
+    assert.throws(() => encryptionService.decryptText(data.toString('base64')), {
+      message: 'Unsupported state or unable to authenticate data'
+    });
   });
 
-  it('should properly decrypt empty input', async () => {
-    const decryptedText = await encryptionService.decryptText('');
-    assert.strictEqual(decryptedText, '');
-    assert.strictEqual(createCipherivMock.mock.calls.length, 0);
+  it('should refuse to decrypt a text too short to hold a nonce and a tag', () => {
+    assert.throws(() => encryptionService.decryptText(Buffer.alloc(27).toString('base64')), {
+      message: 'Invalid encrypted text'
+    });
+  });
+
+  it('should refuse to decrypt a text not encrypted with its key', () => {
+    const cipher = crypto.createCipheriv('aes-256-cbc', securityKey, Buffer.alloc(16));
+    const otherText = cipher.update('a secret encrypted before OIBus 4.0', 'utf8', 'base64') + cipher.final('base64');
+
+    assert.throws(() => encryptionService.decryptText(otherText), { message: 'Unsupported state or unable to authenticate data' });
   });
 
   it('should throw error on decrypt when class is not initialized', () => {
@@ -319,7 +321,7 @@ describe('Encryption Service', () => {
 
   it('should properly encrypt connector secrets', async () => {
     const previousSettings = { field1: 'not a secret', field2: 'secret', field3: 'not a secret' };
-    mockCipher(createCipherivMock, 'encrypted secret');
+    mock.method(encryptionService, 'encryptText', () => 'encrypted secret');
 
     assert.deepStrictEqual(
       await encryptionService.encryptConnectorSecrets<Record<string, unknown>>(secretSettings, previousSettings, manifest),
@@ -328,7 +330,7 @@ describe('Encryption Service', () => {
   });
 
   it('should properly encrypt connector secrets when no secret provided', async () => {
-    mockCipher(createCipherivMock, 'encrypted secret');
+    mock.method(encryptionService, 'encryptText', () => 'encrypted secret');
 
     assert.deepStrictEqual(await encryptionService.encryptConnectorSecrets(secretSettings, null, manifest), encryptedSettings);
   });
@@ -360,7 +362,7 @@ describe('Encryption Service', () => {
         fieldGroup2: 'a group secret'
       }
     };
-    mockCipher(createCipherivMock, 'encrypted secret');
+    mock.method(encryptionService, 'encryptText', () => 'encrypted secret');
 
     assert.deepStrictEqual(
       await encryptionService.encryptConnectorSecrets<Record<string, unknown>>(newSettings, previousSettings, manifest),
@@ -369,7 +371,7 @@ describe('Encryption Service', () => {
   });
 
   it('should properly decrypt connector secrets', async () => {
-    mockCipher(createDecipherivMock, 'encrypted secret');
+    mock.method(encryptionService, 'decryptText', () => 'encrypted secret');
 
     assert.deepStrictEqual(await encryptionService.decryptConnectorSecrets(secretSettings, manifest), encryptedSettings);
   });

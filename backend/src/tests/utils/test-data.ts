@@ -2386,8 +2386,6 @@ export default Object.freeze({
   engine: {
     settings: engineSettings,
     crypto: {
-      algorithm: 'aes-256-cbc',
-      initVector: 'init-vector',
       securityKey: 'security-key'
     },
     command: engineSettingsCommand,
