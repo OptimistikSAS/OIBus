@@ -1,3 +1,8 @@
+import crypto from 'node:crypto';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
+import Database from 'better-sqlite3';
 import { Knex } from 'knex';
 
 // The configuration changes are shared with the config upgrade of the same version (applied to imported configurations)
@@ -129,7 +134,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   removePiAgentSettings,
   addErrorAndArchiveMaxSizes,
   addEngineDescription,
-  addRegistrationTokenRefresh
+  addRegistrationTokenRefresh,
+  encryptSecretsWithAesGcm
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -2044,4 +2050,160 @@ export async function addRegistrationTokenRefresh(knex: Knex): Promise<void> {
   });
   // OIBus now replaces its cipher keys by itself, along with its tokens: the command regenerating them is gone
   await knex(COMMANDS_TABLE).where('type', 'regenerate-cipher-keys').delete();
+}
+
+/**
+ * Secret fields of the connector settings in OIBus 4.0, by connector type. Kept here rather than read from the manifests,
+ * which describe the settings of the latest version, not the ones this migration finds. No item has a secret field.
+ */
+const SOUTH_SECRET_FIELDS: Record<string, Array<string>> = {
+  'folder-scanner': ['password'],
+  sftp: ['password', 'passphrase'],
+  ftp: ['password'],
+  opcua: ['authentication.password'],
+  mqtt: ['authentication.password'],
+  mssql: ['connectionSettings.password'],
+  mysql: ['connectionSettings.password'],
+  oracle: ['connectionSettings.password'],
+  postgresql: ['connectionSettings.password'],
+  influxdb: ['connectionSettings.password', 'connectionSettings.token'],
+  odbc: ['password'],
+  oledb: ['password'],
+  mongodb: ['password'],
+  rest: ['authentication.password', 'authentication.token', 'authentication.apiValue', 'proxy.proxyPassword'],
+  oianalytics: ['specificSettings.secretKey', 'specificSettings.clientSecret', 'specificSettings.proxyPassword']
+};
+const NORTH_SECRET_FIELDS: Record<string, Array<string>> = {
+  oianalytics: ['specificSettings.secretKey', 'specificSettings.clientSecret', 'specificSettings.proxyPassword'],
+  rest: ['authentication.password', 'authentication.token', 'authentication.apiValue', 'proxy.proxyPassword'],
+  'file-writer': ['password'],
+  sftp: ['password', 'passphrase'],
+  'azure-blob': ['accessKey', 'sasToken', 'clientSecret', 'proxyPassword'],
+  'aws-s3': ['secretKey', 'proxyPassword'],
+  opcua: ['authentication.password'],
+  mqtt: ['authentication.password'],
+  'azure-data-explorer': ['clientSecret', 'proxyPassword']
+};
+/** Columns holding a secret, outside the connector settings */
+const SECRET_COLUMNS: Array<{ table: string; columns: Array<string> }> = [
+  { table: ENGINES_TABLE, columns: ['forward_proxy_password', 'log_loki_password'] },
+  {
+    table: REGISTRATIONS_TABLE,
+    columns: ['token', 'refresh_token', 'private_key', 'previous_private_key', 'proxy_password', 'api_gateway_header_value']
+  },
+  { table: CERTIFICATES_TABLE, columns: ['private_key'] }
+];
+
+/**
+ * Until OIBus 4.0, the secrets were encrypted with AES-256-CBC, with the same IV for all of them and no integrity check.
+ * They are encrypted again with AES-256-GCM, with a random nonce each, and a key derived from the stored one (see
+ * EncryptionService).
+ * The key and the IV are read in crypto.db, next to oibus.db, and only when a secret is found: a new OIBus has none, and
+ * may have no crypto.db yet. The crypto migration of 4.0.0, which runs after the entity migrations, then removes the IV.
+ * A secret that cannot be decrypted is left as is (it could not be used either way), to be set again.
+ */
+export async function encryptSecretsWithAesGcm(knex: Knex): Promise<void> {
+  let reEncryptWithKeys: ((value: string) => string) | null | undefined;
+  const reEncrypt = async (value: string, location: string): Promise<string> => {
+    if (reEncryptWithKeys === undefined) {
+      reEncryptWithKeys = await loadLegacyReEncryption(knex);
+    }
+    if (!reEncryptWithKeys) return value;
+    try {
+      return reEncryptWithKeys(value);
+    } catch (error: unknown) {
+      console.warn(
+        `Secret of ${location} not encrypted again, as it cannot be decrypted (${(error as Error).message}): it must be set again`
+      );
+      return value;
+    }
+  };
+
+  for (const { table, columns } of SECRET_COLUMNS) {
+    for (const row of await knex(table).select('id', ...columns)) {
+      const changes: Record<string, string> = {};
+      for (const column of columns) {
+        if (!row[column]) continue;
+        const value = await reEncrypt(row[column], `${table}.${column} (${row.id})`);
+        if (value !== row[column]) changes[column] = value;
+      }
+      if (Object.keys(changes).length > 0) {
+        await knex(table).where('id', row.id).update(changes);
+      }
+    }
+  }
+
+  const reEncryptSettings = async (
+    table: string,
+    typeColumn: string,
+    settingsColumn: string,
+    secretFields: Record<string, Array<string>>
+  ) => {
+    for (const row of await knex(table).select('id', typeColumn, settingsColumn)) {
+      const fields = secretFields[row[typeColumn]];
+      if (!fields || !row[settingsColumn]) continue;
+      const settings = JSON.parse(row[settingsColumn]);
+      let changed = false;
+      for (const field of fields) {
+        const keys = field.split('.');
+        const parent = keys.slice(0, -1).reduce((object, key) => object?.[key], settings);
+        const lastKey = keys[keys.length - 1];
+        if (!parent || typeof parent[lastKey] !== 'string' || !parent[lastKey]) continue;
+        const value = await reEncrypt(parent[lastKey], `${table}.${settingsColumn}.${field} (${row.id})`);
+        if (value !== parent[lastKey]) {
+          parent[lastKey] = value;
+          changed = true;
+        }
+      }
+      if (changed) {
+        await knex(table)
+          .where('id', row.id)
+          .update({ [settingsColumn]: JSON.stringify(settings) });
+      }
+    }
+  };
+  await reEncryptSettings(SOUTH_CONNECTORS_TABLE, 'type', 'settings', SOUTH_SECRET_FIELDS);
+  await reEncryptSettings(NORTH_CONNECTORS_TABLE, 'type', 'settings', NORTH_SECRET_FIELDS);
+  await reEncryptSettings(HISTORY_QUERIES_TABLE, 'south_type', 'south_settings', SOUTH_SECRET_FIELDS);
+  await reEncryptSettings(HISTORY_QUERIES_TABLE, 'north_type', 'north_settings', NORTH_SECRET_FIELDS);
+}
+
+/**
+ * Read the AES-256-CBC key and IV in crypto.db, next to oibus.db, and return the function decrypting a secret with them
+ * and encrypting it again with AES-256-GCM. Null when they are missing: the secrets can no longer be decrypted.
+ */
+async function loadLegacyReEncryption(knex: Knex): Promise<((value: string) => string) | null> {
+  const engine = await knex(ENGINES_TABLE).first('id');
+  // An in-memory database (a test) has no crypto.db next to it
+  const filename: unknown = (knex.client.config.connection as { filename?: unknown } | undefined)?.filename;
+  const cryptoDatabasePath =
+    typeof filename === 'string' && filename !== ':memory:' ? path.resolve(path.dirname(filename), 'crypto.db') : null;
+  let settings: { init_vector: string; security_key: string } | undefined;
+  if (engine && cryptoDatabasePath && existsSync(cryptoDatabasePath)) {
+    const database = new Database(cryptoDatabasePath, { readonly: true });
+    try {
+      const columns = (database.prepare('PRAGMA table_info(crypto);').all() as Array<{ name: string }>).map(column => column.name);
+      if (columns.includes('init_vector')) {
+        settings = database.prepare('SELECT init_vector, security_key FROM crypto WHERE id = ?;').get(engine.id) as typeof settings;
+      }
+    } finally {
+      database.close();
+    }
+  }
+  if (!settings) {
+    console.warn('No crypto settings to decrypt the secrets and encrypt them again: they must be set again');
+    return null;
+  }
+
+  const securityKey = Buffer.from(settings.security_key, 'base64');
+  const initVector = Buffer.from(settings.init_vector, 'base64');
+  const key = Buffer.from(crypto.hkdfSync('sha256', securityKey, Buffer.alloc(0), 'oibus-secret-encryption-aes-256-gcm', 32));
+  return (value: string): string => {
+    const decipher = crypto.createDecipheriv('aes-256-cbc', securityKey, initVector);
+    const plainText = decipher.update(value, 'base64', 'utf8') + decipher.final('utf8');
+    const nonce = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, nonce, { authTagLength: 16 });
+    const encrypted = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
+    return Buffer.concat([nonce, encrypted, cipher.getAuthTag()]).toString('base64');
+  };
 }

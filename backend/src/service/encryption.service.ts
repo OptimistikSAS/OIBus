@@ -16,10 +16,25 @@ export const CERT_PRIVATE_KEY_FILE_NAME = 'private.pem';
 export const CERT_PUBLIC_KEY_FILE_NAME = 'public.pem';
 export const CERT_FILE_NAME = 'cert.pem';
 
+const SECRET_ENCRYPTION_ALGORITHM = 'aes-256-gcm';
+// An encrypted secret is the base64 of nonce | ciphertext | authentication tag
+const NONCE_LENGTH = 12;
+const AUTH_TAG_LENGTH = 16;
+/**
+ * HKDF context of the AES-256-GCM key, derived from the stored key: before OIBus 4.0, the stored key itself encrypted the
+ * secrets with AES-256-CBC, and a key must not be used with two modes
+ */
+const SECRET_KEY_INFO = 'oibus-secret-encryption-aes-256-gcm';
+
+/**
+ * Derive the AES-256-GCM key of the secrets from the key stored in crypto.db (base64)
+ */
+const deriveSecretKey = (securityKey: string): Buffer =>
+  Buffer.from(crypto.hkdfSync('sha256', Buffer.from(securityKey, 'base64'), Buffer.alloc(0), SECRET_KEY_INFO, 32));
+
 interface CryptoSettingsInternal {
-  algorithm: string;
-  initVector: Buffer;
-  securityKey: Buffer;
+  /** AES-256-GCM key of the secrets */
+  key: Buffer;
 }
 
 /**
@@ -90,11 +105,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
 
   async init(cryptoSettings: CryptoSettings, certsFolder: string) {
     this._certsFolder = certsFolder;
-    this._cryptoSettings = {
-      algorithm: cryptoSettings.algorithm,
-      initVector: Buffer.from(cryptoSettings.initVector, 'base64'),
-      securityKey: Buffer.from(cryptoSettings.securityKey, 'base64')
-    };
+    this._cryptoSettings = { key: deriveSecretKey(cryptoSettings.securityKey) };
 
     await createFolder(this._certsFolder);
 
@@ -283,7 +294,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
   }
 
   /**
-   * Returns the encrypted text or an empty string when the parameter is falsy
+   * Returns the text encrypted with AES-256-GCM and a random nonce, or an empty string when the parameter is falsy
    */
   encryptText(plainText?: string | null): string {
     if (!this.isInitialized()) {
@@ -295,14 +306,14 @@ export default class EncryptionService<TInitialized extends boolean = false> {
       return '';
     }
 
-    const cipher = crypto.createCipheriv(this.cryptoSettings.algorithm, this.cryptoSettings.securityKey, this.cryptoSettings.initVector);
-    let encryptedData = cipher.update(plainText, 'utf8', 'base64');
-    encryptedData += cipher.final('base64');
-    return encryptedData;
+    const nonce = crypto.randomBytes(NONCE_LENGTH);
+    const cipher = crypto.createCipheriv(SECRET_ENCRYPTION_ALGORITHM, this.cryptoSettings.key, nonce, { authTagLength: AUTH_TAG_LENGTH });
+    const encryptedData = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
+    return Buffer.concat([nonce, encryptedData, cipher.getAuthTag()]).toString('base64');
   }
 
   /**
-   * Returns the decrypted text or an empty string when the parameter is falsy
+   * Returns the decrypted text or an empty string when the parameter is falsy. Throws when the text was altered.
    */
   decryptText(encryptedText?: string | null): string {
     if (!this.isInitialized()) {
@@ -314,15 +325,15 @@ export default class EncryptionService<TInitialized extends boolean = false> {
       return '';
     }
 
-    const decipher = crypto.createDecipheriv(
-      this.cryptoSettings.algorithm,
-      this.cryptoSettings.securityKey,
-      this.cryptoSettings.initVector
-    );
-
-    let decryptedData = decipher.update(encryptedText, 'base64', 'utf8');
-    decryptedData += decipher.final('utf8');
-    return decryptedData;
+    const data = Buffer.from(encryptedText, 'base64');
+    if (data.length < NONCE_LENGTH + AUTH_TAG_LENGTH) {
+      throw Error('Invalid encrypted text');
+    }
+    const decipher = crypto.createDecipheriv(SECRET_ENCRYPTION_ALGORITHM, this.cryptoSettings.key, data.subarray(0, NONCE_LENGTH), {
+      authTagLength: AUTH_TAG_LENGTH
+    });
+    decipher.setAuthTag(data.subarray(data.length - AUTH_TAG_LENGTH));
+    return Buffer.concat([decipher.update(data.subarray(NONCE_LENGTH, data.length - AUTH_TAG_LENGTH)), decipher.final()]).toString('utf8');
   }
 
   /**

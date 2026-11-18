@@ -27,8 +27,6 @@ describe('CryptoRepository', () => {
     const result = repository.getCryptoSettings(testData.engine.settings.id);
 
     assert.ok(result !== null);
-    assert.strictEqual(result!.algorithm, testData.engine.crypto.algorithm);
-    assert.strictEqual(result!.initVector, testData.engine.crypto.initVector);
     assert.strictEqual(result!.securityKey, testData.engine.crypto.securityKey);
   });
 
@@ -59,8 +57,6 @@ describe('CryptoRepository', () => {
 
     const result = repository.getCryptoSettings(newId);
     assert.ok(result !== null);
-    assert.strictEqual(result!.algorithm, 'aes-256-cbc');
-    assert.ok(result!.initVector.length > 0);
     assert.ok(result!.securityKey.length > 0);
   });
 });

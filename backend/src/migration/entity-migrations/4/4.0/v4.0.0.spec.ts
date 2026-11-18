@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import Database from 'better-sqlite3';
 import { Knex } from 'knex';
 
 import { COMPRESSED_FILE_OPTIONS, toOIAnalyticsItemFileOptions } from '../../../../service/config-transfer/config-upgrades/4.0/v4.0.0';
+import EncryptionService from '../../../../service/encryption.service';
 import {
   buildSchemaBefore,
   createMigrationFileCloneHarness,
@@ -25,6 +29,7 @@ import {
   convertFileWriterLinks,
   convertOIAnalyticsSouths,
   down,
+  encryptSecretsWithAesGcm,
   groupOIAnalyticsOptions,
   mergeSetpointsIntoRecordLists,
   moveCompressionToNorths,
@@ -5229,5 +5234,209 @@ describe('Entity migration v4.0.0: addRegistrationTokenRefresh', () => {
       assert.ok(!columns.includes(column), column);
     }
     assert.strictEqual((await db('registrations').select('id')).length, 1);
+  });
+});
+
+const securityKey = crypto.randomBytes(32);
+const initVector = crypto.randomBytes(16);
+
+/** Encrypts a text like OIBus did before 4.0: AES-256-CBC with the IV of the crypto settings */
+const encryptLegacy = (text: string): string => {
+  const cipher = crypto.createCipheriv('aes-256-cbc', securityKey, initVector);
+  return cipher.update(text, 'utf8', 'base64') + cipher.final('base64');
+};
+
+describe('Entity migration v4.0.0: encryptSecretsWithAesGcm', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(encryptSecretsWithAesGcm, db),
+    mode: 'file'
+  });
+  const encryptionService = new EncryptionService();
+  let db: Knex;
+  let cryptoDatabasePath: string;
+
+  // GCM authenticates what it decrypts: a value it decrypts was encrypted with AES-256-GCM and the derived key
+  const decrypt = (value: string): string => encryptionService.decryptText(value);
+  const settingsOf = async (table: string, id: string, column = 'settings') =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+
+  before(async () => {
+    await harness.before();
+    // The service decrypts what the migration encrypts: it must derive the same key
+    mock.method(fs, 'stat', async () => undefined);
+    mock.method(fs, 'mkdir', async () => undefined);
+    await encryptionService.init({ securityKey: securityKey.toString('base64') }, 'certs');
+    mock.restoreAll();
+  });
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    cryptoDatabasePath = path.resolve(path.dirname((db.client.config.connection as { filename: string }).filename), 'crypto.db');
+    mock.method(console, 'warn', () => undefined);
+    const cryptoDatabase = new Database(cryptoDatabasePath);
+    cryptoDatabase.exec('CREATE TABLE crypto (id TEXT PRIMARY KEY, algorithm TEXT, init_vector TEXT, security_key TEXT);');
+    cryptoDatabase
+      .prepare('INSERT INTO crypto VALUES (?, ?, ?, ?);')
+      .run('oibus-id', 'aes-256-cbc', initVector.toString('base64'), securityKey.toString('base64'));
+    cryptoDatabase.close();
+
+    await db('scan_modes').insert({ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' });
+    await db('engines').insert({
+      id: 'oibus-id',
+      name: 'OIBus',
+      port: 2223,
+      auth_token_duration: '7d',
+      log_console_level: 'silent',
+      log_file_level: 'silent',
+      log_file_max_file_size: 50,
+      log_file_number_of_files: 5,
+      log_database_level: 'silent',
+      log_database_max_number_of_logs: 100000,
+      log_loki_level: 'silent',
+      log_loki_interval: 60,
+      log_oia_level: 'silent',
+      log_oia_interval: 10,
+      proxy_enabled: 0,
+      proxy_port: 9000,
+      oibus_version: '3.9.0',
+      forward_proxy_password: encryptLegacy('forward password'),
+      log_loki_password: '',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z'
+    });
+    await db('registrations').insert({
+      id: 'registration-id',
+      host: 'http://localhost:4200',
+      status: 'REGISTERED',
+      token: encryptLegacy('token'),
+      refresh_token: encryptLegacy('refresh token'),
+      private_key: encryptLegacy('private key'),
+      previous_private_key: null,
+      api_gateway_header_value: 'not a ciphertext'
+    });
+    await db('certificates').insert({
+      id: 'certificate-id',
+      name: 'Certificate',
+      public_key: 'public key',
+      private_key: encryptLegacy('certificate key'),
+      certificate: 'certificate',
+      expiry: '2026-01-01T00:00:00Z'
+    });
+    await db('south_connectors').insert([
+      {
+        id: 'south-mssql',
+        name: 'MSSQL',
+        type: 'mssql',
+        enabled: true,
+        settings: JSON.stringify({ connectionSettings: { host: 'host', username: 'user', password: encryptLegacy('south password') } })
+      },
+      {
+        id: 'south-modbus',
+        name: 'Modbus',
+        type: 'modbus',
+        enabled: true,
+        settings: JSON.stringify({ host: 'host', password: 'not a secret field' })
+      }
+    ]);
+    await db('north_connectors').insert({
+      ...caching,
+      id: 'north-azure',
+      name: 'Azure',
+      type: 'azure-blob',
+      enabled: true,
+      settings: JSON.stringify({ account: 'account', sasToken: encryptLegacy('sas token'), proxyPassword: '' })
+    });
+    await db('history_queries').insert({
+      ...caching,
+      id: 'history-id',
+      name: 'History',
+      start_time: '2026-01-01T00:00:00Z',
+      end_time: '2026-01-01T00:00:00Z',
+      south_type: 'rest',
+      north_type: 'sftp',
+      south_settings: JSON.stringify({ authentication: { type: 'bearer', token: encryptLegacy('rest token') } }),
+      north_settings: JSON.stringify({ password: encryptLegacy('sftp password'), passphrase: null })
+    });
+  });
+
+  afterEach(async () => {
+    mock.restoreAll();
+    await fs.rm(cryptoDatabasePath, { force: true });
+    await harness.afterEach();
+  });
+
+  it('encrypts the legacy secrets again with AES-256-GCM', async () => {
+    await encryptSecretsWithAesGcm(db);
+
+    const engine = await db('engines').where('id', 'oibus-id').first();
+    assert.strictEqual(decrypt(engine.forward_proxy_password), 'forward password');
+    assert.strictEqual(engine.log_loki_password, '');
+
+    const registration = await db('registrations').where('id', 'registration-id').first();
+    assert.strictEqual(decrypt(registration.token), 'token');
+    assert.strictEqual(decrypt(registration.refresh_token), 'refresh token');
+    assert.strictEqual(decrypt(registration.private_key), 'private key');
+    assert.strictEqual(registration.previous_private_key, null);
+    // not decryptable: left as is, with a warning
+    assert.strictEqual(registration.api_gateway_header_value, 'not a ciphertext');
+    assert.strictEqual((console.warn as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+
+    assert.strictEqual(decrypt((await db('certificates').where('id', 'certificate-id').first()).private_key), 'certificate key');
+
+    const southSettings = await settingsOf('south_connectors', 'south-mssql');
+    assert.strictEqual(decrypt(southSettings.connectionSettings.password), 'south password');
+    assert.strictEqual(southSettings.connectionSettings.username, 'user');
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'south-modbus'), { host: 'host', password: 'not a secret field' });
+
+    const northSettings = await settingsOf('north_connectors', 'north-azure');
+    assert.strictEqual(decrypt(northSettings.sasToken), 'sas token');
+    assert.strictEqual(northSettings.proxyPassword, '');
+
+    assert.strictEqual(decrypt((await settingsOf('history_queries', 'history-id', 'south_settings')).authentication.token), 'rest token');
+    const historyNorthSettings = await settingsOf('history_queries', 'history-id', 'north_settings');
+    assert.strictEqual(decrypt(historyNorthSettings.password), 'sftp password');
+    assert.strictEqual(historyNorthSettings.passphrase, null);
+  });
+
+  it('encrypts each secret with its own nonce', async () => {
+    await db('certificates').insert({
+      id: 'other-certificate-id',
+      name: 'Other certificate',
+      public_key: 'public key',
+      private_key: encryptLegacy('certificate key'),
+      certificate: 'certificate',
+      expiry: '2026-01-01T00:00:00Z'
+    });
+
+    await encryptSecretsWithAesGcm(db);
+
+    const [first, second] = (await db('certificates').select('private_key').orderBy('id')).map(row => row.private_key);
+    assert.notStrictEqual(first, second);
+  });
+
+  it('leaves the secrets as they are without crypto settings', async () => {
+    await fs.rm(cryptoDatabasePath);
+    const before = await db('certificates').where('id', 'certificate-id').first();
+
+    await encryptSecretsWithAesGcm(db);
+
+    assert.deepStrictEqual(await db('certificates').where('id', 'certificate-id').first(), before);
+    assert.strictEqual((console.warn as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+  });
+
+  it('does not read crypto.db without any secret', async () => {
+    await fs.rm(cryptoDatabasePath);
+    await db('engines').update({ forward_proxy_password: null });
+    await db('registrations').delete();
+    await db('certificates').delete();
+    await db('south_connectors').delete();
+    await db('north_connectors').delete();
+    await db('history_queries').delete();
+
+    await encryptSecretsWithAesGcm(db);
+
+    assert.strictEqual((console.warn as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 });

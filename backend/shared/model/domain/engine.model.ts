@@ -186,18 +186,6 @@ export interface RegistrationCommandPermissions {
  */
 export interface CryptoSettings {
   /**
-   * The encryption algorithm.
-   * @example "aes-256-cbc"
-   */
-  algorithm: string;
-
-  /**
-   * The initialization vector for encryption.
-   * @example "1234567890abcdef"
-   */
-  initVector: string;
-
-  /**
    * The security key for encryption.
    * @example "abcdef1234567890abcdef1234567890"
    */

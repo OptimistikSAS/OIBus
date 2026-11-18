@@ -14,13 +14,16 @@ and GPU-accelerated attacks.
 
 ### Connector Secrets {#connector-secrets}
 
-Passwords, tokens, and API keys configured in South and North connectors are encrypted at rest using
-**AES-256-CBC**:
+Passwords, tokens, and API keys configured in South and North connectors — as well as the OIAnalytics
+registration tokens and keys, the forward proxy and Loki passwords, and the private keys of the
+certificates — are encrypted at rest using **AES-256-GCM**:
 
-- A 256-bit key and a 128-bit initialisation vector (IV) are generated with a cryptographically secure
-  random number generator during OIBus initialisation.
-- The key and IV are stored as base64 strings in **`crypto.db`** — a separate SQLite database from the
-  main configuration database.
+- A 256-bit key is generated with a cryptographically secure random number generator during OIBus
+  initialisation, and stored as a base64 string in **`crypto.db`** — a separate SQLite database from the
+  main configuration database. The encryption key is derived from it with HKDF-SHA256.
+- Each secret is encrypted with its own random 96-bit nonce, so two identical secrets never give the same
+  encrypted value, and carries an authentication tag, so an altered value is rejected instead of being
+  decrypted.
 - Encrypted secrets are stored in **`oibus.db`** and can only be decrypted when both databases are
   present.
 
@@ -36,7 +39,7 @@ OIBus uses five SQLite databases:
 | Database         | Contents                                                                                                                   |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **`oibus.db`**   | All configuration: connectors, items, scan modes, IP filters, users (hashed passwords), encrypted secrets.                 |
-| **`crypto.db`**  | AES-256-CBC key and IV used to encrypt/decrypt connector secrets.                                                          |
+| **`crypto.db`**  | Key from which the AES-256-GCM key that encrypts/decrypts the secrets is derived.                                          |
 | **`logs.db`**    | Runtime log entries. Stored under the `logs/` subfolder.                                                                   |
 | **`metrics.db`** | South/North/history-query runtime metrics, updated on every scan and every North send. Stored under the `logs/` subfolder. |
 | **`cache.db`**   | South connector cache (values pending transmission to North connectors). Stored under the `cache/` subfolder.              |

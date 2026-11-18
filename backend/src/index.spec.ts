@@ -40,8 +40,6 @@ const fakeEngineSettings = {
 
 const fakeCryptoSettings = {
   id: 'oibus-id-1',
-  algorithm: 'aes-256-cbc',
-  initVector: 'iv',
   securityKey: 'sk'
 };
 
