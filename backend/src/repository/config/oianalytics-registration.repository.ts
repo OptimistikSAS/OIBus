@@ -219,24 +219,16 @@ export default class OIAnalyticsRegistrationRepository {
   }
 
   /**
-   * Replace the key pair, keeping the current private key as the previous one
+   * Replace the key pair, keeping the current private key as the previous one. OIBus rotates its keys by itself, like it
+   * renews its tokens: no user is involved, so neither the audit fields nor the audit trail are updated.
    * @param privateKey the new private key, encrypted
    * @param rotationDate when the new key pair must be replaced
    */
   rotateKeys(publicKey: string, privateKey: string, rotationDate: Instant | null): void {
-    const before = this.get();
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET previous_private_key = private_key, private_key = ?, public_key = ?, cipher_key_rotation_date = ? ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database.prepare(query).run(privateKey, publicKey, rotationDate);
-    const after = this.get();
-    this.auditService.record(
-      'oianalytics_registration',
-      after!.id,
-      'UPDATE',
-      ...redactAuditSnapshots(before, after, r => this.redact(r)),
-      'system'
-    );
   }
 
   protected createDefault(command: OIAnalyticsRegistrationEditCommand): void {

@@ -38,13 +38,13 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
   });
 
   /** Checks the test recorded a single update of the registration, and returns its snapshots. */
-  const onlyRegistrationUpdate = (registrationId: string, expectedUserId = testData.users.list[0].id) => {
+  const onlyRegistrationUpdate = (registrationId: string) => {
     assert.strictEqual(auditService.record.mock.callCount(), 1);
     const [entityType, entityId, action, previousState, newState, userId] = auditService.record.mock.calls[0].arguments;
     assert.strictEqual(entityType, 'oianalytics_registration');
     assert.strictEqual(entityId, registrationId);
     assert.strictEqual(action, 'UPDATE');
-    assert.strictEqual(userId, expectedUserId);
+    assert.strictEqual(userId, testData.users.list[0].id);
     return { previousState: previousState!, newState: newState! };
   };
 
@@ -179,24 +179,30 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.strictEqual(newState.proxyUsername, specificCommand.proxyUsername);
   });
 
-  it('should rotate keys, keeping the current private key as the previous one', () => {
-    const currentPrivateKey = repository.get()!.privateCipherKey;
+  it('should rotate keys, keeping the current private key as the previous one, without auditing it', () => {
+    const before = repository.get()!;
 
     repository.rotateKeys('new public key', 'new private key', testData.constants.dates.DATE_3);
 
     const result = repository.get()!;
     assert.strictEqual(result.publicCipherKey, 'new public key');
     assert.strictEqual(result.privateCipherKey, 'new private key');
-    assert.strictEqual(result.previousPrivateCipherKey, currentPrivateKey);
+    assert.strictEqual(result.previousPrivateCipherKey, before.privateCipherKey);
     assert.strictEqual(result.cipherKeyRotationDate, testData.constants.dates.DATE_3);
+    // OIBus rotates its keys by itself: no user is involved
+    assert.strictEqual(result.updatedBy, before.updatedBy);
+    assert.strictEqual(result.updatedAt, before.updatedAt);
+    assert.strictEqual(auditService.record.mock.callCount(), 0);
+  });
 
-    const { previousState, newState } = onlyRegistrationUpdate(result.id, 'system');
-    assert.strictEqual(previousState.publicCipherKey, '');
-    assert.strictEqual(previousState.privateCipherKey, '');
+  it('should redact the previous private key from the audit trail', () => {
+    repository.rotateKeys('new public key', 'new private key', testData.constants.dates.DATE_3);
+
+    repository.update(testData.oIAnalytics.registration.command, testData.users.list[0].id);
+
+    const { previousState, newState } = onlyRegistrationUpdate(repository.get()!.id);
     assert.strictEqual(previousState.previousPrivateCipherKey, '');
-    assert.strictEqual(newState.publicCipherKey, '<changed>');
-    assert.strictEqual(newState.privateCipherKey, '<changed>');
-    assert.strictEqual(newState.previousPrivateCipherKey, '<changed>');
+    assert.strictEqual(newState.previousPrivateCipherKey, '');
   });
 });
 
