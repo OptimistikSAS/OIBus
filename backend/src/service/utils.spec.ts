@@ -263,6 +263,48 @@ describe('Service utils', () => {
     });
   });
 
+  describe('makeExecutable', () => {
+    let platform: PropertyDescriptor | undefined;
+
+    beforeEach(() => {
+      platform = Object.getOwnPropertyDescriptor(process, 'platform');
+    });
+
+    afterEach(() => {
+      Object.defineProperty(process, 'platform', platform!);
+    });
+
+    // Windows reports every file as 0o666 whatever chmod sets: the mode can only be checked elsewhere
+    it('should make a file executable', { skip: process.platform === 'win32' }, async () => {
+      const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-executable-'));
+      const filePath = path.join(folder, 'oibus');
+      await fs.writeFile(filePath, 'binary', { mode: 0o644 });
+
+      await utils.makeExecutable(filePath);
+
+      assert.strictEqual((await fs.stat(filePath)).mode & 0o777, 0o755);
+      await fs.rm(folder, { recursive: true, force: true });
+    });
+
+    it('should throw when the file cannot be made executable', async () => {
+      Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
+      mock.method(fs, 'chmod', async () => {
+        throw Object.assign(new Error('no such file or directory'), { code: 'ENOENT' });
+      });
+
+      await assert.rejects(() => utils.makeExecutable('oibus'), { code: 'ENOENT' });
+    });
+
+    it('should do nothing on Windows', async () => {
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      const chmod = mock.method(fs, 'chmod', async () => undefined);
+
+      await utils.makeExecutable('oibus.exe');
+
+      assert.strictEqual(chmod.mock.callCount(), 0);
+    });
+  });
+
   describe('unzip', () => {
     it('should properly unzip file', async () => {
       const source = new PassThrough();

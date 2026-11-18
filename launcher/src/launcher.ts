@@ -158,6 +158,11 @@ export default class Launcher {
 
     console.info(`Updating OIBus: ${oibusUpdatePath} -> ${oibusBinaryPath}`);
     await fs.rename(oibusUpdatePath, oibusBinaryPath);
+    // The extraction of the update may not have kept the permissions of the binary (OIBus up to 3.9 did not restore them):
+    // without them, it could not be started
+    if (os.type() !== 'Windows_NT') {
+      await fs.chmod(oibusBinaryPath, 0o755);
+    }
 
     for (const file of await fs.readdir(this.updateDir)) {
       try {

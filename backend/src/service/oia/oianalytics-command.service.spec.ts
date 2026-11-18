@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 import os from 'node:os';
+import path from 'node:path';
 
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, flushPromises, seq } from '../../tests/utils/test-utils';
@@ -110,6 +111,7 @@ const encryptionService = new EncryptionServiceMock('', '');
 const mockUtils = {
   delay: mock.fn(async () => undefined),
   getOIBusInfo: mock.fn(() => testData.engine.oIBusInfo),
+  makeExecutable: mock.fn(async (_filePath: string) => undefined),
   unzip: mock.fn(),
   getErrorMessage
 };
@@ -622,6 +624,11 @@ describe('OIAnalytics Command Service', () => {
     assert.ok(oIBusService.getEngineSettings.mock.calls.length > 0);
     assert.strictEqual(oIAnalyticsClient.downloadFile.mock.calls.length, 1);
     assert.strictEqual(mockUtils.unzip.mock.calls.length, 1);
+    // the new binary is made executable, but not the launcher, which is not updated
+    assert.deepStrictEqual(
+      mockUtils.makeExecutable.mock.calls.map(call => call.arguments),
+      [[path.resolve('binaryFolder', '..', 'update', 'binaries', 'oibus')]]
+    );
     assert.strictEqual(mockUtils.delay.mock.calls.length, 1);
     assert.strictEqual(exitMock.mock.calls.length, 1);
   });
@@ -665,6 +672,14 @@ describe('OIAnalytics Command Service', () => {
       (fsFsMock.mock.calls as Array<{ arguments: [string, string] }>).some(
         c => c.arguments[0].includes('oibus-launcher') && c.arguments[1].includes('oibus-launcher_backup')
       )
+    );
+    // the new binary and launcher are made executable before replacing the current launcher
+    assert.deepStrictEqual(
+      mockUtils.makeExecutable.mock.calls.map(call => call.arguments),
+      [
+        [path.resolve('binaryFolder', '..', 'update', 'binaries', 'oibus')],
+        [path.resolve('binaryFolder', '..', 'update', 'oibus-launcher')]
+      ]
     );
     assert.strictEqual(osTypeMock.mock.calls.length, 1);
     assert.strictEqual(killMock.mock.calls.length, 1);

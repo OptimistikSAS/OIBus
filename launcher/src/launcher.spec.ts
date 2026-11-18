@@ -631,6 +631,39 @@ describe('Launcher', () => {
       assert.ok(fs.existsSync(oibusPath));
     });
 
+    // Windows reports every file as 0o666 whatever chmod sets: the mode can only be checked elsewhere
+    it('makes the new binary executable', { skip: process.platform === 'win32' }, async () => {
+      const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
+      const oibusPath = path.resolve(workDir, 'oibus');
+      const updatePath = path.resolve(updateDir, 'binaries', 'oibus');
+      fs.mkdirSync(path.dirname(updatePath), { recursive: true });
+      // extracted without its permissions
+      fs.writeFileSync(updatePath, 'new binary', { mode: 0o644 });
+      fs.chmodSync(updatePath, 0o644);
+      fs.mkdirSync(workDir, { recursive: true });
+      fs.writeFileSync(oibusPath, 'old binary');
+
+      await launcher.update();
+
+      assert.strictEqual(fs.statSync(oibusPath).mode & 0o777, 0o755);
+    });
+
+    it('does not change the permissions of the binary on Windows', async () => {
+      mock.method(os, 'type', () => 'Windows_NT');
+      const chmodMock = mock.method(fsp, 'chmod', () => Promise.resolve());
+      const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
+      const oibusPath = path.resolve(workDir, 'oibus.exe');
+      const updatePath = path.resolve(updateDir, 'binaries', 'oibus.exe');
+      fs.mkdirSync(path.dirname(updatePath), { recursive: true });
+      fs.writeFileSync(updatePath, 'new binary');
+      fs.mkdirSync(workDir, { recursive: true });
+      fs.writeFileSync(oibusPath, 'old binary');
+
+      await launcher.update();
+
+      assert.strictEqual(chmodMock.mock.callCount(), 0);
+    });
+
     it('performs update with custom backup folders from update.json', async () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
