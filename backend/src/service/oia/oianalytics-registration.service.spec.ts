@@ -16,6 +16,7 @@ import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { getErrorMessage } from '../utils';
+import { OIAnalyticsInvalidGrantError, OIAnalyticsTokenRefreshUnsupportedError } from './oianalytics-client.service';
 import type OIAnalyticsRegistrationServiceType from './oianalytics-registration.service';
 import type { toOIAnalyticsRegistrationDTO as toOIAnalyticsRegistrationDTOType } from './oianalytics-registration.service';
 
@@ -95,21 +96,33 @@ describe('OIAnalytics Registration Service', () => {
     mock.restoreAll();
   });
 
-  it('should start with completed registration', () => {
-    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(
-      seq(
-        () => testData.oIAnalytics.registration.completed,
-        () => testData.oIAnalytics.registration.pending
-      )
-    );
+  it('should start with pending registration, checking the registration without renewing any token', () => {
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+    const checkRegistrationMock = mock.fn(async () => undefined);
+    service.checkRegistration = checkRegistrationMock;
 
     service.start();
+    mock.timers.tick(10_000);
 
-    assert.strictEqual(oIAnalyticsRegistrationRepository.get.mock.calls.length, 1);
+    assert.strictEqual(checkRegistrationMock.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls.length, 0);
+    assert.strictEqual(oIAnalyticsClient.exchangeToken.mock.calls.length, 0);
+  });
+
+  it('should start with completed registration, renewing the tokens right away and then regularly', async () => {
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+    const refreshTokenIfNeeded = mock.method(service, 'refreshTokenIfNeeded', async () => undefined);
 
     service.start();
+    service.start();
 
-    assert.strictEqual(oIAnalyticsRegistrationRepository.get.mock.calls.length, 2);
+    assert.strictEqual(refreshTokenIfNeeded.mock.calls.length, 2);
+    mock.timers.tick(60_000);
+    // a second start does not run a second interval
+    assert.strictEqual(refreshTokenIfNeeded.mock.calls.length, 3);
+    service.stop();
+    mock.timers.tick(60_000);
+    assert.strictEqual(refreshTokenIfNeeded.mock.calls.length, 3);
   });
 
   it('should get registration settings', () => {
@@ -208,6 +221,9 @@ describe('OIAnalytics Registration Service', () => {
       apiGatewayBaseEndpoint: '/oianalytics',
       activationCode: null,
       token: null,
+      refreshToken: null,
+      tokenExpirationDate: null,
+      refreshTokenExpirationDate: null,
       publicCipherKey: null,
       privateCipherKey: null,
       checkUrl: null,
@@ -360,23 +376,52 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should check registration', async () => {
-    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(
-      seq(
-        () => testData.oIAnalytics.registration.pending,
-        () => testData.oIAnalytics.registration.pending
-      )
-    );
-    const result = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+    const result = {
+      status: 'COMPLETED',
+      expired: true,
+      accessToken: 'access_token',
+      accessTokenExpiresIn: 3600,
+      refreshToken: 'refresh_token',
+      refreshTokenExpiresIn: 7_776_000
+    };
     oIAnalyticsClient.checkRegistration.mock.mockImplementationOnce(async () => result);
+    const updatedListener = mock.fn();
+    service.registrationEvent.on('updated', updatedListener);
 
     service.start(); // start with pending registration to set interval
     await service.checkRegistration();
 
     assert.strictEqual(oIAnalyticsClient.checkRegistration.mock.calls.length, 1);
-    assert.deepStrictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls[0].arguments, ['access_token']);
+    assert.deepStrictEqual(
+      mockEncryptionService.encryptionService.encryptText.mock.calls.map(call => call.arguments),
+      [['access_token'], ['refresh_token']]
+    );
     assert.deepStrictEqual(oIAnalyticsRegistrationRepository.activate.mock.calls[0].arguments, [
       testData.constants.dates.FAKE_NOW,
-      'access_token'
+      {
+        token: 'access_token',
+        refreshToken: 'refresh_token',
+        tokenExpirationDate: '2021-01-02T01:00:00.000Z',
+        refreshTokenExpirationDate: '2021-04-02T00:00:00.000Z'
+      }
+    ]);
+    assert.strictEqual(updatedListener.mock.calls.length, 1);
+  });
+
+  it('should check registration and keep the long-lived token of an OIAnalytics which cannot refresh tokens', async () => {
+    oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsClient.checkRegistration.mock.mockImplementationOnce(async () => ({
+      status: 'COMPLETED',
+      expired: false,
+      accessToken: 'long_lived_token'
+    }));
+
+    await service.checkRegistration();
+
+    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.activate.mock.calls[0].arguments, [
+      testData.constants.dates.FAKE_NOW,
+      { token: 'long_lived_token', refreshToken: null, tokenExpirationDate: null, refreshTokenExpirationDate: null }
     ]);
   });
 
@@ -431,6 +476,168 @@ describe('OIAnalytics Registration Service', () => {
     assert.ok(
       logger.error.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200'))
     );
+  });
+
+  describe('token renewal', () => {
+    const expiringRegistration = (overrides: Partial<OIAnalyticsRegistration> = {}): OIAnalyticsRegistration => ({
+      ...testData.oIAnalytics.registration.completed,
+      tokenExpirationDate: '2021-01-02T00:09:59.000Z', // FAKE_NOW + 9min59s
+      ...overrides
+    });
+    const tokens = {
+      accessToken: 'new_access_token',
+      accessTokenExpiresIn: 3600,
+      refreshToken: 'new_refresh_token',
+      refreshTokenExpiresIn: 7_776_000
+    };
+    const expectedTokens = {
+      token: 'new_access_token',
+      refreshToken: 'new_refresh_token',
+      tokenExpirationDate: '2021-01-02T01:00:00.000Z',
+      refreshTokenExpirationDate: '2021-04-02T00:00:00.000Z'
+    };
+
+    it('should not renew the tokens when not registered', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+
+      await service.refreshTokenIfNeeded();
+
+      assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsClient.exchangeToken.mock.calls.length, 0);
+    });
+
+    it('should not renew the access token while it is valid for more than 10 minutes', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() =>
+        expiringRegistration({ tokenExpirationDate: '2021-01-02T00:10:01.000Z' })
+      );
+
+      await service.refreshTokenIfNeeded();
+
+      assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsRegistrationRepository.updateTokens.mock.calls.length, 0);
+    });
+
+    it('should renew the access token when it expires within 10 minutes', async () => {
+      const registration = expiringRegistration();
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => registration);
+      oIAnalyticsClient.refreshToken.mock.mockImplementationOnce(async () => tokens);
+
+      await service.refreshTokenIfNeeded();
+
+      assert.deepStrictEqual(oIAnalyticsClient.refreshToken.mock.calls[0].arguments, [registration]);
+      assert.strictEqual(oIAnalyticsClient.exchangeToken.mock.calls.length, 0);
+      assert.deepStrictEqual(oIAnalyticsRegistrationRepository.updateTokens.mock.calls[0].arguments, [expectedTokens]);
+      assert.ok(logger.debug.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'OIAnalytics access token refreshed'));
+    });
+
+    it('should renew the access token when its expiration date is unknown', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => expiringRegistration({ tokenExpirationDate: null }));
+      oIAnalyticsClient.refreshToken.mock.mockImplementationOnce(async () => tokens);
+
+      await service.refreshTokenIfNeeded();
+
+      assert.deepStrictEqual(oIAnalyticsRegistrationRepository.updateTokens.mock.calls[0].arguments, [expectedTokens]);
+    });
+
+    it('should exchange the long-lived token of a registration without refresh token', async () => {
+      const registration = expiringRegistration({ refreshToken: null, tokenExpirationDate: null, refreshTokenExpirationDate: null });
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => registration);
+      oIAnalyticsClient.exchangeToken.mock.mockImplementationOnce(async () => tokens);
+
+      await service.refreshTokenIfNeeded();
+
+      assert.deepStrictEqual(oIAnalyticsClient.exchangeToken.mock.calls[0].arguments, [registration]);
+      assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls.length, 0);
+      assert.deepStrictEqual(oIAnalyticsRegistrationRepository.updateTokens.mock.calls[0].arguments, [expectedTokens]);
+    });
+
+    it('should run a single renewal at a time', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => expiringRegistration());
+      oIAnalyticsClient.refreshToken.mock.mockImplementationOnce(async () => tokens);
+
+      const first = service.refreshTokenIfNeeded();
+      const second = service.refreshTokenIfNeeded();
+      assert.strictEqual(first, second);
+      await first;
+      await service.refreshTokenIfNeeded(); // a later call runs a new renewal
+
+      assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls.length, 2);
+    });
+
+    it('should unregister when OIAnalytics refuses the refresh token', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => expiringRegistration());
+      oIAnalyticsClient.refreshToken.mock.mockImplementationOnce(async () => {
+        throw new OIAnalyticsInvalidGrantError('401 - {"error":"invalid_grant"}');
+      });
+      const updatedListener = mock.fn();
+      service.registrationEvent.on('updated', updatedListener);
+
+      await service.refreshTokenIfNeeded();
+
+      assert.strictEqual(oIAnalyticsRegistrationRepository.updateTokens.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsRegistrationRepository.unregister.mock.calls.length, 1);
+      assert.strictEqual(updatedListener.mock.calls.length, 1);
+      assert.ok(
+        logger.error.mock.calls.some((c: { arguments: Array<string> }) =>
+          c.arguments[0].startsWith('OIAnalytics refused to renew the access token of OIBus: its tokens were revoked or expired.')
+        )
+      );
+    });
+
+    it('should retry later when the renewal fails for another reason', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => expiringRegistration());
+      oIAnalyticsClient.refreshToken.mock.mockImplementationOnce(async () => {
+        throw new Error('502 - Bad Gateway');
+      });
+
+      await service.refreshTokenIfNeeded();
+
+      assert.strictEqual(oIAnalyticsRegistrationRepository.unregister.mock.calls.length, 0);
+      assert.ok(
+        logger.warn.mock.calls.some(
+          (c: { arguments: Array<string> }) =>
+            c.arguments[0] === 'Could not renew the OIAnalytics access token, retrying later: 502 - Bad Gateway'
+        )
+      );
+    });
+
+    it('should keep the long-lived token when OIAnalytics cannot exchange it yet', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() =>
+        expiringRegistration({ refreshToken: null, tokenExpirationDate: null, refreshTokenExpirationDate: null })
+      );
+      oIAnalyticsClient.exchangeToken.mock.mockImplementationOnce(async () => {
+        throw new OIAnalyticsTokenRefreshUnsupportedError('404 - Not Found');
+      });
+
+      await service.refreshTokenIfNeeded();
+
+      assert.strictEqual(oIAnalyticsRegistrationRepository.updateTokens.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsRegistrationRepository.unregister.mock.calls.length, 0);
+      assert.strictEqual(logger.warn.mock.calls.length, 0);
+      assert.strictEqual(logger.error.mock.calls.length, 0);
+    });
+
+    it('should ignore the renewal outcome when the registration changed meanwhile', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(
+        seq(
+          () => expiringRegistration(),
+          () => testData.oIAnalytics.registration.pending,
+          () => expiringRegistration(),
+          () => expiringRegistration({ refreshToken: 'another refresh token' })
+        )
+      );
+      oIAnalyticsClient.refreshToken.mock.mockImplementationOnce(async () => tokens);
+      oIAnalyticsClient.refreshToken.mock.mockImplementationOnce(async () => {
+        throw new OIAnalyticsInvalidGrantError('401 - {"error":"invalid_grant"}');
+      }, 1);
+
+      await service.refreshTokenIfNeeded();
+      await service.refreshTokenIfNeeded();
+
+      assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls.length, 2);
+      assert.strictEqual(oIAnalyticsRegistrationRepository.updateTokens.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsRegistrationRepository.unregister.mock.calls.length, 0);
+    });
   });
 
   it('should test connection', async () => {

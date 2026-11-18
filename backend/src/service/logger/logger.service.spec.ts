@@ -84,7 +84,7 @@ describe('Logger', () => {
     encryptionExports.encryptionService = encryptionService;
 
     service = new LoggerService();
-    service.init('folder');
+    service.init('folder', 'oibus.db');
   });
 
   afterEach(() => {
@@ -115,6 +115,7 @@ describe('Logger', () => {
         options: {
           interval: engineSettings.logger.oia.interval,
           registrationSettings: registration,
+          configDatabasePath: 'oibus.db',
           certsFolder: '',
           cryptoSettings: {}
         },
@@ -187,6 +188,7 @@ describe('Logger', () => {
         options: {
           interval: specificSettings.logger.oia.interval,
           registrationSettings: specificRegistration,
+          configDatabasePath: 'oibus.db',
           certsFolder: '',
           cryptoSettings: {}
         },

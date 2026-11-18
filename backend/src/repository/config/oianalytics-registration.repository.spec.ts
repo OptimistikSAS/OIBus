@@ -58,7 +58,10 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
       activationCode: '123ABC',
       checkUrl: 'http://localhost:4200/api/oianalytics/oibus/registration?id=id',
       activationExpirationDate: testData.constants.dates.FAKE_NOW,
-      token: ''
+      token: '',
+      refreshToken: null,
+      tokenExpirationDate: null,
+      refreshTokenExpirationDate: null
     });
 
     repository.register(
@@ -81,12 +84,36 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
       checkUrl: '',
       activationDate: testData.constants.dates.FAKE_NOW,
       activationCode: '',
-      token: 'token'
+      token: 'token',
+      refreshToken: 'refresh token',
+      tokenExpirationDate: testData.constants.dates.DATE_1,
+      refreshTokenExpirationDate: testData.constants.dates.DATE_2
     });
 
-    repository.activate(testData.constants.dates.FAKE_NOW, 'token');
+    repository.activate(testData.constants.dates.FAKE_NOW, {
+      token: 'token',
+      refreshToken: 'refresh token',
+      tokenExpirationDate: testData.constants.dates.DATE_1,
+      refreshTokenExpirationDate: testData.constants.dates.DATE_2
+    });
 
     assert.deepStrictEqual(stripAuditFields(repository.get()), stripAuditFields(expectedResult));
+  });
+
+  it('should update the tokens', () => {
+    repository.updateTokens({
+      token: 'new token',
+      refreshToken: 'new refresh token',
+      tokenExpirationDate: testData.constants.dates.DATE_3,
+      refreshTokenExpirationDate: testData.constants.dates.FAKE_NOW
+    });
+
+    const result = repository.get()!;
+    assert.strictEqual(result.token, 'new token');
+    assert.strictEqual(result.refreshToken, 'new refresh token');
+    assert.strictEqual(result.tokenExpirationDate, testData.constants.dates.DATE_3);
+    assert.strictEqual(result.refreshTokenExpirationDate, testData.constants.dates.FAKE_NOW);
+    assert.strictEqual(result.status, 'REGISTERED');
   });
 
   it('should unregister', () => {
@@ -96,7 +123,10 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
       checkUrl: '',
       activationDate: '',
       activationCode: '',
-      token: ''
+      token: '',
+      refreshToken: null,
+      tokenExpirationDate: null,
+      refreshTokenExpirationDate: null
     });
 
     repository.unregister();
@@ -129,9 +159,11 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     // The token, proxy password and api gateway header value must never be persisted in the audit trail:
     // only a change of the proxy password is recorded
     assert.strictEqual(previousState.token, '');
+    assert.strictEqual(previousState.refreshToken, '');
     assert.strictEqual(previousState.proxyPassword, '');
     assert.strictEqual(previousState.apiGatewayHeaderValue, '');
     assert.strictEqual(newState.token, '');
+    assert.strictEqual(newState.refreshToken, '');
     assert.strictEqual(newState.proxyPassword, '<changed>');
     assert.strictEqual(newState.apiGatewayHeaderValue, '');
     // Unrelated fields pass through unchanged

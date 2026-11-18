@@ -194,12 +194,35 @@ OIAnalytics must be re-entered since the old ciphertext can no longer be decrypt
 Once on the OIBus machine, secrets are stored using the [OIBus security model](../advanced/oibus-security.md).
 :::
 
+### Authentication Tokens {#authentication-tokens}
+
+When the registration completes, OIAnalytics issues two tokens to OIBus, both stored encrypted on the OIBus machine:
+
+- an **access token**, sent with every request to OIAnalytics (data, logs, commands, configuration). It expires after
+  one hour;
+- a **refresh token**, only used to get a new access token before the current one expires. Each use replaces it with
+  a new one, and it expires after 90 days without use.
+
+OIBus renews its access token automatically. In OIAnalytics, the tokens of each OIBus are listed on its configuration
+page, with the IP address they were issued to and the IP address they were last used from. Revoking a token there
+immediately rejects the requests of the OIBus using it. Registering OIBus again revokes its previous tokens.
+
+If the refresh token is revoked or expired (OIBus offline for more than 90 days, for example), OIAnalytics refuses to
+renew the access token: OIBus logs an error and goes back to the **Not registered** status, keeping its registration
+settings. Register it again to restore the connection.
+
+:::info Upgrade from OIBus 3.x
+An OIBus upgraded from 3.x holds a single long-lived token. On its first start, OIBus 4.0 exchanges it for an access
+token and a refresh token, and OIAnalytics refuses the long-lived token afterward.
+:::
+
 ## Troubleshooting {#troubleshooting}
 
-| Issue                  | What to check                                                 |
-| ---------------------- | ------------------------------------------------------------- |
-| Registration fails     | Network connectivity and firewall rules to OIAnalytics.       |
-| Code not accepted      | Ensure the 6-character code matches and has not expired.      |
-| Commands not executing | [Command permissions](#command-permissions) granted in OIBus. |
-| Upgrade fails          | Available disk space and write permissions on data folder.    |
-| Connection errors      | Proxy settings, certificate trust, and firewall rules.        |
+| Issue                        | What to check                                                                            |
+| ---------------------------- | ---------------------------------------------------------------------------------------- |
+| Registration fails           | Network connectivity and firewall rules to OIAnalytics.                                  |
+| Code not accepted            | Ensure the 6-character code matches and has not expired.                                 |
+| Commands not executing       | [Command permissions](#command-permissions) granted in OIBus.                            |
+| Upgrade fails                | Available disk space and write permissions on data folder.                               |
+| Connection errors            | Proxy settings, certificate trust, and firewall rules.                                   |
+| OIBus not registered anymore | Its tokens were revoked or expired: see [Authentication Tokens](#authentication-tokens). |

@@ -126,6 +126,7 @@ class LoggerService {
   private static instance: LoggerService | null = null;
 
   private _folder = '';
+  private _configDatabasePath = '';
   private _rawLogger: pino.Logger | null = null;
   private _transport: ReturnType<typeof pino.transport> | null = null;
   private _stopInFlight: Promise<void> | null = null;
@@ -146,9 +147,13 @@ class LoggerService {
     return this.instance;
   }
 
-  /** Called once at application startup to set the log folder before start(). */
-  init(folder: string): void {
+  /**
+   * Called once at application startup to set the log folder, and the path of oibus.db (where the OIAnalytics
+   * transport reads the current access token), before start().
+   */
+  init(folder: string, configDatabasePath: string): void {
     this._folder = folder;
+    this._configDatabasePath = configDatabasePath;
   }
 
   /** The bare pino root instance. Read by LoggerProxy to (re-)create child loggers. */
@@ -195,6 +200,7 @@ class LoggerService {
         options: {
           interval: engineSettings.logger.oia.interval,
           registrationSettings: registration,
+          configDatabasePath: this._configDatabasePath,
           cryptoSettings: encryptionService.cryptoSettings,
           certsFolder: encryptionService.certsFolder
         },

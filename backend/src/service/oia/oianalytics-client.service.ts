@@ -11,10 +11,11 @@ import {
 
 import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { HTTPRequest, ReqOptions } from '../http-request.utils';
+import { encryptionService } from '../encryption.service';
+import { HTTPRequest, ReqOptions, ReqResponse } from '../http-request.utils';
 import { generateRandomId } from '../utils';
 import { buildHttpOptions, getHeaders, getProxyOptions, getUrl } from '../utils-oianalytics';
-import { OIAnalyticsFetchCommandDTO } from './oianalytics.model';
+import { OIAnalyticsCheckRegistrationDTO, OIAnalyticsFetchCommandDTO, OIAnalyticsTokensDTO } from './oianalytics.model';
 
 const OIANALYTICS_TIMEOUT = 30_000;
 const OIANALYTICS_DOWNLOAD_TIMEOUT = 900_000; // 15 minutes
@@ -22,6 +23,8 @@ const COMMAND_STATUS_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/commands/sta
 const RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/commands/list-by-ids`;
 const RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/commands/pending`;
 const REGISTRATION_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/registration`;
+const REFRESH_TOKEN_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/registration/token`;
+const EXCHANGE_TOKEN_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/token/exchange`;
 const SEND_CONFIGURATION_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration`;
 const HISTORY_QUERY_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration/history-query`;
 const SYNC_METADATA_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/sync-metadata`;
@@ -40,6 +43,38 @@ async function* multipartStream(boundary: string, filename: string, dataStream: 
     yield chunk;
   }
   yield Buffer.from(`\r\n--${boundary}--\r\n`);
+}
+
+/**
+ * Thrown when OIAnalytics refuses to issue new tokens (refresh token unknown, expired or revoked): OIBus must be
+ * registered again.
+ */
+export class OIAnalyticsInvalidGrantError extends Error {}
+
+/**
+ * Thrown when the OIAnalytics instance doesn't know the token endpoints yet (it has not been upgraded): OIBus keeps
+ * using its long-lived token.
+ */
+export class OIAnalyticsTokenRefreshUnsupportedError extends Error {}
+
+/**
+ * Turn a failed token request into an error, telling apart the refusal of the grant from a transient failure
+ */
+async function tokenRequestError(response: ReqResponse): Promise<Error> {
+  const text = await response.body.text();
+  if (response.statusCode === 404) {
+    return new OIAnalyticsTokenRefreshUnsupportedError(`${response.statusCode} - ${text}`);
+  }
+  if (response.statusCode === 401) {
+    try {
+      if ((JSON.parse(text) as { error?: string }).error === 'invalid_grant') {
+        return new OIAnalyticsInvalidGrantError(`${response.statusCode} - ${text}`);
+      }
+    } catch {
+      // not a JSON body: a transient failure (an API gateway refusing the request for example)
+    }
+  }
+  return new Error(`${response.statusCode} - ${text}`);
 }
 
 export default class OIAnalyticsClient {
@@ -116,7 +151,8 @@ export default class OIAnalyticsClient {
         oibusVersion: oibusInfo.version,
         oibusOs: oibusInfo.operatingSystem,
         oibusArch: oibusInfo.architecture,
-        publicKey
+        publicKey,
+        tokenRefresh: true
       }),
       acceptUnauthorized,
       proxy,
@@ -135,9 +171,7 @@ export default class OIAnalyticsClient {
     };
   }
 
-  async checkRegistration(
-    registrationSettings: OIAnalyticsRegistration
-  ): Promise<{ status: string; expired: boolean; accessToken: string }> {
+  async checkRegistration(registrationSettings: OIAnalyticsRegistration): Promise<OIAnalyticsCheckRegistrationDTO> {
     if (registrationSettings.checkUrl === null) {
       throw new Error('No check url specified');
     }
@@ -161,7 +195,54 @@ export default class OIAnalyticsClient {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
 
-    return (await response.body.json()) as { status: string; expired: boolean; accessToken: string };
+    return (await response.body.json()) as OIAnalyticsCheckRegistrationDTO;
+  }
+
+  /**
+   * Get a new access token (and a new refresh token, the current one becoming invalid) with the refresh token
+   * @throws OIAnalyticsInvalidGrantError when OIAnalytics refuses the refresh token
+   */
+  async refreshToken(registrationSettings: OIAnalyticsRegistration): Promise<OIAnalyticsTokensDTO> {
+    const url = getUrl(REFRESH_TOKEN_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
+    const headers = await getHeaders(true, registrationSettings);
+    headers['Content-Type'] = 'application/json';
+    const { proxy, acceptUnauthorized } = getProxyOptions(true, registrationSettings, null);
+    const httpOptions: ReqOptions = {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ refreshToken: await encryptionService.decryptText(registrationSettings.refreshToken!) }),
+      acceptUnauthorized,
+      proxy,
+      timeout: OIANALYTICS_TIMEOUT
+    };
+
+    const response = await HTTPRequest(url, httpOptions);
+    if (!response.ok) {
+      throw await tokenRequestError(response);
+    }
+    return (await response.body.json()) as OIAnalyticsTokensDTO;
+  }
+
+  /**
+   * Exchange the long-lived token of a registration made before the tokens could be refreshed for an access token and
+   * a refresh token. OIAnalytics refuses the long-lived token afterward.
+   * @throws OIAnalyticsInvalidGrantError when OIAnalytics refuses the long-lived token
+   */
+  async exchangeToken(registrationSettings: OIAnalyticsRegistration): Promise<OIAnalyticsTokensDTO> {
+    const url = getUrl(EXCHANGE_TOKEN_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
+    const httpOptions = await buildHttpOptions('POST', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+
+    const response = await HTTPRequest(url, httpOptions);
+    if (!response.ok) {
+      throw await tokenRequestError(response);
+    }
+    return (await response.body.json()) as OIAnalyticsTokensDTO;
   }
 
   async sendConfiguration(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {

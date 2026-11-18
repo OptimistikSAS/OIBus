@@ -8,7 +8,11 @@ import {
   RegistrationStatus
 } from '../../../shared/model/domain/engine.model';
 
-import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
+import {
+  OIAnalyticsRegistration,
+  OIAnalyticsRegistrationEditCommand,
+  OIAnalyticsRegistrationTokens
+} from '../../model/oianalytics-registration.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { generateRandomId } from '../../service/utils';
 
@@ -74,7 +78,7 @@ export default class OIAnalyticsRegistrationRepository {
 
   get(): OIAnalyticsRegistration | null {
     const query =
-      `SELECT id, host, token, public_key, private_key, activation_code, status, activation_date, check_url, ` +
+      `SELECT id, host, token, refresh_token, token_expiration_date, refresh_token_expiration_date, public_key, private_key, activation_code, status, activation_date, check_url, ` +
       `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, accept_unauthorized, use_api_gateway, api_gateway_header_key, api_gateway_header_value, api_gateway_base_endpoint, ` +
       `command_refresh_interval, command_retry_interval, message_retry_interval, ${PERMISSION_COLUMNS_SELECT}, ` +
       `created_by, updated_by, created_at, updated_at ` +
@@ -105,7 +109,7 @@ export default class OIAnalyticsRegistrationRepository {
     updatedBy: string
   ): void {
     const query =
-      `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, ` +
+      `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', refresh_token = NULL, token_expiration_date = NULL, refresh_token_expiration_date = NULL, activation_code = ?, ` +
       `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
       `use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?,` +
       `accept_unauthorized = ?, public_key = ?, private_key = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
@@ -140,15 +144,31 @@ export default class OIAnalyticsRegistrationRepository {
 
   /**
    * When OIBus has an answer from OIAnalytics saying that the user correctly entered the activation code,
-   * OIAnalytics also answer with the token that can be used to authenticate to OIAnalytics to send data, logs, settings etc.
+   * OIAnalytics also answer with the tokens that can be used to authenticate to OIAnalytics to send data, logs, settings etc.
    */
-  activate(activationDate: Instant, token: string) {
-    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', check_url = '', activation_date = ?, token = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
-    this.database.prepare(query).run(activationDate, token);
+  activate(activationDate: Instant, tokens: OIAnalyticsRegistrationTokens) {
+    const query =
+      `UPDATE ${REGISTRATIONS_TABLE} SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', check_url = '', activation_date = ?, ` +
+      `token = ?, refresh_token = ?, token_expiration_date = ?, refresh_token_expiration_date = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database
+      .prepare(query)
+      .run(activationDate, tokens.token, tokens.refreshToken, tokens.tokenExpirationDate, tokens.refreshTokenExpirationDate);
+  }
+
+  /**
+   * Store the tokens OIAnalytics issued when refreshing the access token (or exchanging a long-lived one)
+   */
+  updateTokens(tokens: OIAnalyticsRegistrationTokens) {
+    const query =
+      `UPDATE ${REGISTRATIONS_TABLE} SET token = ?, refresh_token = ?, token_expiration_date = ?, refresh_token_expiration_date = ? ` +
+      `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database.prepare(query).run(tokens.token, tokens.refreshToken, tokens.tokenExpirationDate, tokens.refreshTokenExpirationDate);
   }
 
   unregister() {
-    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'NOT_REGISTERED', activation_expiration_date = '', check_url = '', activation_date = '', activation_code = '', token = '' WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    const query =
+      `UPDATE ${REGISTRATIONS_TABLE} SET status = 'NOT_REGISTERED', activation_expiration_date = '', check_url = '', activation_date = '', activation_code = '', ` +
+      `token = '', refresh_token = NULL, token_expiration_date = NULL, refresh_token_expiration_date = NULL WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database.prepare(query).run();
   }
 
@@ -247,6 +267,7 @@ export default class OIAnalyticsRegistrationRepository {
       publicCipherKey: '',
       privateCipherKey: '',
       token: '',
+      refreshToken: '',
       proxyPassword: '',
       apiGatewayHeaderValue: ''
     };
@@ -262,6 +283,9 @@ export default class OIAnalyticsRegistrationRepository {
       host: result.host as string,
       activationCode: result.activation_code as string,
       token: result.token as string,
+      refreshToken: (result.refresh_token as string | null) ?? null,
+      tokenExpirationDate: (result.token_expiration_date as string | null) ?? null,
+      refreshTokenExpirationDate: (result.refresh_token_expiration_date as string | null) ?? null,
       publicCipherKey: result.public_key as string,
       privateCipherKey: result.private_key as string,
       status: result.status as RegistrationStatus,

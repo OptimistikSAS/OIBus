@@ -268,8 +268,8 @@
         "oIBusInternalId": "southId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.321Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.321Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.278Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.278Z",
         "type": "folder-scanner",
         "settings": {
           "type": "folder-scanner",
@@ -287,8 +287,8 @@
               "id": "southItemId1",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": "fixture",
-              "oIBusCreatedAt": "2026-11-17T13:36:03.322Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.279Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35Z",
               "name": "item1",
               "description": null,
               "enabled": false,
@@ -317,8 +317,8 @@
               "id": "southItemId2",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.323Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.323Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.279Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.279Z",
               "name": "item2",
               "description": null,
               "enabled": true,
@@ -370,7 +370,9 @@
               "discoveryScope": {
                 "rootNodeId": "ns=1;s=Root"
               },
-              "identityKeyFields": ["nodeId"],
+              "identityKeyFields": [
+                "nodeId"
+              ],
               "fieldProcesses": [
                 {
                   "field": "name",
@@ -415,8 +417,8 @@
         "oIBusInternalId": "southId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.323Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.323Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.280Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.280Z",
         "type": "mssql",
         "settings": {
           "type": "mssql",
@@ -443,8 +445,8 @@
               "id": "southItemId3",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.324Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.324Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.280Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.280Z",
               "name": "item3",
               "description": "Temperature of the reactor inlet",
               "enabled": true,
@@ -479,8 +481,8 @@
               "id": "southItemId4",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.324Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.324Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.281Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.281Z",
               "name": "item4",
               "description": null,
               "enabled": true,
@@ -527,7 +529,10 @@
               "eligibilityFilter": [],
               "itemFieldMapping": null,
               "pushToOIAnalytics": true,
-              "pushedFields": ["tag_name", "unit"],
+              "pushedFields": [
+                "tag_name",
+                "unit"
+              ],
               "scanModeId": null,
               "enabled": false
             }
@@ -538,8 +543,8 @@
         "oIBusInternalId": "southId3",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.325Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.325Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.281Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.281Z",
         "type": "opcua",
         "settings": {
           "type": "opcua",
@@ -571,8 +576,8 @@
               "id": "southItemId7",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.327Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.327Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.285Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.285Z",
               "name": "opcua da",
               "description": null,
               "enabled": true,
@@ -603,8 +608,8 @@
               "id": "southItemId5",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.326Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.326Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.282Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.282Z",
               "name": "opcua ha",
               "description": null,
               "enabled": true,
@@ -635,8 +640,8 @@
               "id": "southItemId8",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.327Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.327Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.285Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.285Z",
               "name": "opcua ha 2",
               "description": null,
               "enabled": true,
@@ -667,8 +672,8 @@
               "id": "southItemId6",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.326Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.326Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.284Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.284Z",
               "name": "opcua sub",
               "description": null,
               "enabled": true,
@@ -706,8 +711,8 @@
         "oIBusInternalId": "northId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.328Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.328Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.286Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.286Z",
         "type": "file-writer",
         "settings": {
           "type": "file-writer",
@@ -794,8 +799,8 @@
         "oIBusInternalId": "northId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.332Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.332Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.295Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.295Z",
         "type": "oianalytics",
         "settings": {
           "type": "oianalytics",
@@ -869,7 +874,7 @@
     ],
     "transformers": [
       {
-        "oIBusInternalId": "4LBikt",
+        "oIBusInternalId": "9vu9Nk",
         "type": "standard",
         "settings": {
           "functionName": "file-to-mqtt",
@@ -893,17 +898,23 @@
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "delimiter",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "hasHeader",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "rowIteratorPath",
-                  "values": ["json"]
+                  "values": [
+                    "json"
+                  ]
                 }
               ],
               "validators": [
@@ -918,7 +929,10 @@
                   "key": "fileType",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.file-type",
                   "defaultValue": "csv",
-                  "selectableValues": ["csv", "json"],
+                  "selectableValues": [
+                    "csv",
+                    "json"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -936,7 +950,15 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": [
+                    "DOT",
+                    "SEMI_COLON",
+                    "COLON",
+                    "COMMA",
+                    "SLASH",
+                    "TAB",
+                    "PIPE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1007,7 +1029,10 @@
               "key": "payloadType",
               "translationKey": "configuration.oibus.manifest.transformers.file-to-mqtt.payload-type",
               "defaultValue": "object",
-              "selectableValues": ["value", "object"],
+              "selectableValues": [
+                "value",
+                "object"
+              ],
               "validators": [
                 {
                   "type": "REQUIRED",
@@ -1116,17 +1141,23 @@
             {
               "referralPathFromRoot": "payloadType",
               "targetPathFromRoot": "objectFields",
-              "values": ["object"]
+              "values": [
+                "object"
+              ]
             },
             {
               "referralPathFromRoot": "payloadType",
               "targetPathFromRoot": "valueField",
-              "values": ["value"]
+              "values": [
+                "value"
+              ]
             },
             {
               "referralPathFromRoot": "payloadType",
               "targetPathFromRoot": "valueProcess",
-              "values": ["value"]
+              "values": [
+                "value"
+              ]
             }
           ],
           "validators": [],
@@ -1137,7 +1168,7 @@
         }
       },
       {
-        "oIBusInternalId": "ABI0ht",
+        "oIBusInternalId": "RyF93D",
         "type": "standard",
         "settings": {
           "functionName": "file-to-record-list",
@@ -1161,17 +1192,23 @@
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "delimiter",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "hasHeader",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "rowIteratorPath",
-                  "values": ["json"]
+                  "values": [
+                    "json"
+                  ]
                 }
               ],
               "validators": [
@@ -1186,7 +1223,10 @@
                   "key": "fileType",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.file-type",
                   "defaultValue": "csv",
-                  "selectableValues": ["csv", "json"],
+                  "selectableValues": [
+                    "csv",
+                    "json"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1204,7 +1244,15 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": [
+                    "DOT",
+                    "SEMI_COLON",
+                    "COLON",
+                    "COMMA",
+                    "SLASH",
+                    "TAB",
+                    "PIPE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1263,7 +1311,7 @@
         }
       },
       {
-        "oIBusInternalId": "TcfHFW",
+        "oIBusInternalId": "3Vw1cK",
         "type": "standard",
         "settings": {
           "functionName": "file-to-file",
@@ -1287,17 +1335,23 @@
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "delimiter",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "hasHeader",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "rowIteratorPath",
-                  "values": ["json"]
+                  "values": [
+                    "json"
+                  ]
                 }
               ],
               "validators": [
@@ -1312,7 +1366,11 @@
                   "key": "fileType",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.file-type",
                   "defaultValue": "other",
-                  "selectableValues": ["csv", "json", "other"],
+                  "selectableValues": [
+                    "csv",
+                    "json",
+                    "other"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1330,7 +1388,15 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": [
+                    "DOT",
+                    "SEMI_COLON",
+                    "COLON",
+                    "COMMA",
+                    "SLASH",
+                    "TAB",
+                    "PIPE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1391,32 +1457,44 @@
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "header",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "delimiter",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "newline",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "quoteChar",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "escapeChar",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "nullValue",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 }
               ],
               "validators": [
@@ -1431,7 +1509,10 @@
                   "key": "fileType",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.file-type",
                   "defaultValue": "csv",
-                  "selectableValues": ["csv", "json"],
+                  "selectableValues": [
+                    "csv",
+                    "json"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1449,7 +1530,12 @@
                   "key": "encoding",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.encoding",
                   "defaultValue": "UTF_8",
-                  "selectableValues": ["UTF_8", "UTF_8_BOM", "LATIN_1", "UTF_16_LE"],
+                  "selectableValues": [
+                    "UTF_8",
+                    "UTF_8_BOM",
+                    "LATIN_1",
+                    "UTF_16_LE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1501,7 +1587,15 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.delimiter",
                   "defaultValue": "COMMA",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": [
+                    "DOT",
+                    "SEMI_COLON",
+                    "COLON",
+                    "COMMA",
+                    "SLASH",
+                    "TAB",
+                    "PIPE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1519,7 +1613,11 @@
                   "key": "newline",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.newline",
                   "defaultValue": "LF",
-                  "selectableValues": ["CRLF", "LF", "CR"],
+                  "selectableValues": [
+                    "CRLF",
+                    "LF",
+                    "CR"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1537,7 +1635,11 @@
                   "key": "quoteChar",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.quote-char",
                   "defaultValue": "NONE",
-                  "selectableValues": ["DOUBLE_QUOTE", "SINGLE_QUOTE", "NONE"],
+                  "selectableValues": [
+                    "DOUBLE_QUOTE",
+                    "SINGLE_QUOTE",
+                    "NONE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1555,7 +1657,10 @@
                   "key": "escapeChar",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.escape-char",
                   "defaultValue": "DOUBLE_QUOTE",
-                  "selectableValues": ["BACKSLASH", "DOUBLE_QUOTE"],
+                  "selectableValues": [
+                    "BACKSLASH",
+                    "DOUBLE_QUOTE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -1704,22 +1809,33 @@
             {
               "referralPathFromRoot": "input.fileType",
               "targetPathFromRoot": "output",
-              "values": ["csv", "json"]
+              "values": [
+                "csv",
+                "json"
+              ]
             },
             {
               "referralPathFromRoot": "input.fileType",
               "targetPathFromRoot": "keepOtherFields",
-              "values": ["csv", "json"]
+              "values": [
+                "csv",
+                "json"
+              ]
             },
             {
               "referralPathFromRoot": "input.fileType",
               "targetPathFromRoot": "fields",
-              "values": ["csv", "json"]
+              "values": [
+                "csv",
+                "json"
+              ]
             },
             {
               "referralPathFromRoot": "input.fileType",
               "targetPathFromRoot": "compression",
-              "values": ["other"]
+              "values": [
+                "other"
+              ]
             }
           ],
           "validators": [],
@@ -1730,7 +1846,7 @@
         }
       },
       {
-        "oIBusInternalId": "oymquL",
+        "oIBusInternalId": "Dcmxys",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-modbus",
@@ -1838,7 +1954,10 @@
                     "key": "modbusType",
                     "translationKey": "configuration.oibus.manifest.transformers.record-list-to-modbus.mapping.modbus-type",
                     "defaultValue": "register",
-                    "selectableValues": ["coil", "register"],
+                    "selectableValues": [
+                      "coil",
+                      "register"
+                    ],
                     "validators": [
                       {
                         "type": "REQUIRED",
@@ -1864,7 +1983,7 @@
         }
       },
       {
-        "oIBusInternalId": "CJzjuz",
+        "oIBusInternalId": "S20RKV",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-mqtt",
@@ -1898,7 +2017,10 @@
               "key": "payload",
               "translationKey": "configuration.oibus.manifest.transformers.record-list-to-mqtt.payload",
               "defaultValue": "record",
-              "selectableValues": ["record", "value"],
+              "selectableValues": [
+                "record",
+                "value"
+              ],
               "validators": [
                 {
                   "type": "REQUIRED",
@@ -1993,7 +2115,9 @@
             {
               "referralPathFromRoot": "payload",
               "targetPathFromRoot": "valueColumn",
-              "values": ["value"]
+              "values": [
+                "value"
+              ]
             }
           ],
           "validators": [],
@@ -2004,7 +2128,7 @@
         }
       },
       {
-        "oIBusInternalId": "CosVkH",
+        "oIBusInternalId": "3l4UGm",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-oianalytics",
@@ -2167,7 +2291,7 @@
         }
       },
       {
-        "oIBusInternalId": "FuAQNI",
+        "oIBusInternalId": "KgSN5A",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-opcua",
@@ -2283,7 +2407,7 @@
         }
       },
       {
-        "oIBusInternalId": "H2Or1V",
+        "oIBusInternalId": "sbqGTu",
         "type": "standard",
         "settings": {
           "functionName": "record-list-to-file",
@@ -2307,32 +2431,44 @@
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "header",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "delimiter",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "newline",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "quoteChar",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "escapeChar",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "nullValue",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 }
               ],
               "validators": [
@@ -2347,7 +2483,10 @@
                   "key": "fileType",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.file-type",
                   "defaultValue": "csv",
-                  "selectableValues": ["csv", "json"],
+                  "selectableValues": [
+                    "csv",
+                    "json"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2365,7 +2504,12 @@
                   "key": "encoding",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.encoding",
                   "defaultValue": "UTF_8",
-                  "selectableValues": ["UTF_8", "UTF_8_BOM", "LATIN_1", "UTF_16_LE"],
+                  "selectableValues": [
+                    "UTF_8",
+                    "UTF_8_BOM",
+                    "LATIN_1",
+                    "UTF_16_LE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2417,7 +2561,15 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.delimiter",
                   "defaultValue": "COMMA",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": [
+                    "DOT",
+                    "SEMI_COLON",
+                    "COLON",
+                    "COMMA",
+                    "SLASH",
+                    "TAB",
+                    "PIPE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2435,7 +2587,11 @@
                   "key": "newline",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.newline",
                   "defaultValue": "LF",
-                  "selectableValues": ["CRLF", "LF", "CR"],
+                  "selectableValues": [
+                    "CRLF",
+                    "LF",
+                    "CR"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2453,7 +2609,11 @@
                   "key": "quoteChar",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.quote-char",
                   "defaultValue": "NONE",
-                  "selectableValues": ["DOUBLE_QUOTE", "SINGLE_QUOTE", "NONE"],
+                  "selectableValues": [
+                    "DOUBLE_QUOTE",
+                    "SINGLE_QUOTE",
+                    "NONE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2471,7 +2631,10 @@
                   "key": "escapeChar",
                   "translationKey": "configuration.oibus.manifest.transformers.file-output.escape-char",
                   "defaultValue": "DOUBLE_QUOTE",
-                  "selectableValues": ["BACKSLASH", "DOUBLE_QUOTE"],
+                  "selectableValues": [
+                    "BACKSLASH",
+                    "DOUBLE_QUOTE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2611,8 +2774,8 @@
         "oIBusInternalId": "transformerId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.319Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.319Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.277Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.277Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 1",
@@ -2640,8 +2803,8 @@
         "oIBusInternalId": "transformerId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.320Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.320Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.277Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.277Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 2",
@@ -2669,8 +2832,8 @@
         "oIBusInternalId": "transformerId3",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.320Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.320Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.278Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.278Z",
         "type": "custom",
         "settings": {
           "name": "my transformer 3",
@@ -2695,7 +2858,7 @@
         }
       },
       {
-        "oIBusInternalId": "kwwYFn",
+        "oIBusInternalId": "WTLHfm",
         "type": "standard",
         "settings": {
           "functionName": "file-to-modbus",
@@ -2719,17 +2882,23 @@
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "delimiter",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "hasHeader",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "rowIteratorPath",
-                  "values": ["json"]
+                  "values": [
+                    "json"
+                  ]
                 }
               ],
               "validators": [
@@ -2744,7 +2913,10 @@
                   "key": "fileType",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.file-type",
                   "defaultValue": "csv",
-                  "selectableValues": ["csv", "json"],
+                  "selectableValues": [
+                    "csv",
+                    "json"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2762,7 +2934,15 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": [
+                    "DOT",
+                    "SEMI_COLON",
+                    "COLON",
+                    "COMMA",
+                    "SLASH",
+                    "TAB",
+                    "PIPE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -2907,7 +3087,10 @@
                     "key": "modbusType",
                     "translationKey": "configuration.oibus.manifest.transformers.record-list-to-modbus.mapping.modbus-type",
                     "defaultValue": "register",
-                    "selectableValues": ["coil", "register"],
+                    "selectableValues": [
+                      "coil",
+                      "register"
+                    ],
                     "validators": [
                       {
                         "type": "REQUIRED",
@@ -2933,7 +3116,7 @@
         }
       },
       {
-        "oIBusInternalId": "ll6VtI",
+        "oIBusInternalId": "j9WAhe",
         "type": "standard",
         "settings": {
           "functionName": "file-to-opcua",
@@ -2957,17 +3140,23 @@
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "delimiter",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "hasHeader",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "rowIteratorPath",
-                  "values": ["json"]
+                  "values": [
+                    "json"
+                  ]
                 }
               ],
               "validators": [
@@ -2982,7 +3171,10 @@
                   "key": "fileType",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.file-type",
                   "defaultValue": "csv",
-                  "selectableValues": ["csv", "json"],
+                  "selectableValues": [
+                    "csv",
+                    "json"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -3000,7 +3192,15 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": [
+                    "DOT",
+                    "SEMI_COLON",
+                    "COLON",
+                    "COMMA",
+                    "SLASH",
+                    "TAB",
+                    "PIPE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -3153,7 +3353,7 @@
         }
       },
       {
-        "oIBusInternalId": "36DAvQ",
+        "oIBusInternalId": "1nbvVa",
         "type": "standard",
         "settings": {
           "functionName": "file-to-oianalytics",
@@ -3177,17 +3377,23 @@
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "delimiter",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "hasHeader",
-                  "values": ["csv"]
+                  "values": [
+                    "csv"
+                  ]
                 },
                 {
                   "referralPathFromRoot": "fileType",
                   "targetPathFromRoot": "rowIteratorPath",
-                  "values": ["json"]
+                  "values": [
+                    "json"
+                  ]
                 }
               ],
               "validators": [
@@ -3202,7 +3408,10 @@
                   "key": "fileType",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.file-type",
                   "defaultValue": "csv",
-                  "selectableValues": ["csv", "json"],
+                  "selectableValues": [
+                    "csv",
+                    "json"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -3220,7 +3429,15 @@
                   "key": "delimiter",
                   "translationKey": "configuration.oibus.manifest.transformers.file-input.delimiter",
                   "defaultValue": "SEMI_COLON",
-                  "selectableValues": ["DOT", "SEMI_COLON", "COLON", "COMMA", "SLASH", "TAB", "PIPE"],
+                  "selectableValues": [
+                    "DOT",
+                    "SEMI_COLON",
+                    "COLON",
+                    "COMMA",
+                    "SLASH",
+                    "TAB",
+                    "PIPE"
+                  ],
                   "validators": [
                     {
                       "type": "REQUIRED",
@@ -3425,8 +3642,8 @@
         "oIBusInternalId": "historyId1",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.332Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.332Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.296Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.296Z",
         "settings": {
           "name": "my first History Query",
           "description": "description",
@@ -3488,8 +3705,8 @@
               "id": "historyQueryItem1",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.333Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.333Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.296Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.296Z",
               "name": "item1",
               "description": null,
               "enabled": true,
@@ -3505,8 +3722,8 @@
               "id": "historyQueryItem2",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.334Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.334Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.298Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.298Z",
               "name": "item2",
               "description": null,
               "enabled": true,
@@ -3531,8 +3748,8 @@
                   "enabled": true,
                   "createdBy": null,
                   "updatedBy": null,
-                  "createdAt": "2026-11-17T13:36:03.334Z",
-                  "updatedAt": "2026-11-17T13:36:03.334Z"
+                  "createdAt": "2026-11-18T10:30:35.298Z",
+                  "updatedAt": "2026-11-18T10:30:35.298Z"
                 }
               ]
             },
@@ -3549,8 +3766,8 @@
         "oIBusInternalId": "historyId2",
         "oIBusCreatedBy": null,
         "oIBusUpdatedBy": null,
-        "oIBusCreatedAt": "2026-11-17T13:36:03.336Z",
-        "oIBusUpdatedAt": "2026-11-17T13:36:03.336Z",
+        "oIBusCreatedAt": "2026-11-18T10:30:35.302Z",
+        "oIBusUpdatedAt": "2026-11-18T10:30:35.302Z",
         "settings": {
           "name": "My second History Query",
           "description": "description",
@@ -3613,8 +3830,8 @@
               "id": "historyQueryItem3",
               "oIBusCreatedBy": null,
               "oIBusUpdatedBy": null,
-              "oIBusCreatedAt": "2026-11-17T13:36:03.337Z",
-              "oIBusUpdatedAt": "2026-11-17T13:36:03.337Z",
+              "oIBusCreatedAt": "2026-11-18T10:30:35.304Z",
+              "oIBusUpdatedAt": "2026-11-18T10:30:35.304Z",
               "name": "item3",
               "description": "Flow of the reactor outlet",
               "enabled": true,

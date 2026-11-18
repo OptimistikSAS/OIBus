@@ -128,7 +128,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   useLocalOleDbDriver,
   removePiAgentSettings,
   addErrorAndArchiveMaxSizes,
-  addEngineDescription
+  addEngineDescription,
+  addRegistrationTokenRefresh
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -149,6 +150,7 @@ export async function up(knex: Knex): Promise<void> {
  * is enabled.
  */
 export async function down(knex: Knex): Promise<void> {
+  await dropColumns(knex, REGISTRATIONS_TABLE, ['refresh_token', 'token_expiration_date', 'refresh_token_expiration_date']);
   await dropColumns(knex, ENGINES_TABLE, ['description']);
   for (const table of [NORTH_CONNECTORS_TABLE, HISTORY_QUERIES_TABLE]) {
     await dropColumns(knex, table, ['caching_error_max_size', 'caching_archive_max_size']);
@@ -2015,5 +2017,18 @@ export async function addErrorAndArchiveMaxSizes(knex: Knex): Promise<void> {
 export async function addEngineDescription(knex: Knex): Promise<void> {
   await knex.schema.alterTable(ENGINES_TABLE, t => {
     t.text('description').nullable();
+  });
+}
+
+/**
+ * OIAnalytics now issues a short-lived access token with a refresh token to renew it. The registration stores the
+ * (encrypted) refresh token and the expiration dates of both tokens. They are null for an OIBus registered before:
+ * its long-lived token is exchanged for an access and refresh token pair at startup.
+ */
+export async function addRegistrationTokenRefresh(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
+    table.text('refresh_token').nullable();
+    table.string('token_expiration_date').nullable();
+    table.string('refresh_token_expiration_date').nullable();
   });
 }

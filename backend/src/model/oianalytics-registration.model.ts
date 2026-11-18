@@ -5,7 +5,12 @@ import { BaseEntity, Instant } from './types';
 export interface OIAnalyticsRegistration extends BaseEntity {
   host: string;
   activationCode: string | null;
+  /** Encrypted access token */
   token: string | null;
+  /** Encrypted refresh token, null for a registration made before the tokens could be refreshed */
+  refreshToken: string | null;
+  tokenExpirationDate: Instant | null;
+  refreshTokenExpirationDate: Instant | null;
   publicCipherKey: string | null;
   privateCipherKey: string | null;
   status: RegistrationStatus;
@@ -42,4 +47,16 @@ export interface OIAnalyticsRegistrationEditCommand {
   commandRetryInterval: number;
   messageRetryInterval: number;
   commandPermissions: RegistrationCommandPermissions;
+}
+
+/**
+ * The tokens OIAnalytics issues on registration, refresh or exchange, with their expiration dates computed by OIBus when
+ * it receives them. The tokens are encrypted. An OIAnalytics which can't refresh tokens yet only issues a long-lived
+ * access token: the other fields are then null.
+ */
+export interface OIAnalyticsRegistrationTokens {
+  token: string;
+  refreshToken: string | null;
+  tokenExpirationDate: Instant | null;
+  refreshTokenExpirationDate: Instant | null;
 }

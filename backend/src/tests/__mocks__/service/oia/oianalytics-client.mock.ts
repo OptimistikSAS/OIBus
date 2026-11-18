@@ -9,7 +9,11 @@ import {
 
 import { OIBusCommand } from '../../../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registration.model';
-import { OIAnalyticsFetchCommandDTO } from '../../../../service/oia/oianalytics.model';
+import {
+  OIAnalyticsCheckRegistrationDTO,
+  OIAnalyticsFetchCommandDTO,
+  OIAnalyticsTokensDTO
+} from '../../../../service/oia/oianalytics.model';
 
 /**
  * Create a mock object for OIAnalytics Client
@@ -33,13 +37,22 @@ export default class OIAnalyticsClientMock {
       activationCode: ''
     })
   );
-  checkRegistration = mock.fn(
-    async (_registrationSettings: OIAnalyticsRegistration): Promise<{ status: string; expired: boolean; accessToken: string }> => ({
-      status: '',
-      expired: false,
-      accessToken: ''
-    })
-  );
+  checkRegistration = mock.fn(async (_registrationSettings: OIAnalyticsRegistration): Promise<OIAnalyticsCheckRegistrationDTO> => ({
+    status: '',
+    expired: false
+  }));
+  refreshToken = mock.fn(async (_registrationSettings: OIAnalyticsRegistration): Promise<OIAnalyticsTokensDTO> => ({
+    accessToken: '',
+    accessTokenExpiresIn: 0,
+    refreshToken: '',
+    refreshTokenExpiresIn: 0
+  }));
+  exchangeToken = mock.fn(async (_registrationSettings: OIAnalyticsRegistration): Promise<OIAnalyticsTokensDTO> => ({
+    accessToken: '',
+    accessTokenExpiresIn: 0,
+    refreshToken: '',
+    refreshTokenExpiresIn: 0
+  }));
   sendConfiguration = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
   sendHistoryQuery = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
   sendSyncMetadata = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
