@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import { INPUT_TYPES, OUTPUT_TYPES } from '../../../../shared/model/connector/transformer-manifest.model';
 import { AUTH_TOKEN_DURATIONS, WEB_SERVER_CERTIFICATE_SOURCES } from '../../../../shared/model/domain/engine.model';
 import { INTERVAL_UNITS, SCAN_MODE_TYPES, ScanModeInterval } from '../../../../shared/model/domain/scan-mode.model';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../../../shared/model/domain/user.model';
 
 import { intervalToMs, MAX_INTERVAL_MS, MIN_INTERVAL_MS } from '../../../service/scan-mode.utils';
 import { validateCronExpression } from '../../../service/utils';
@@ -217,6 +218,17 @@ const userSchema: Joi.ObjectSchema = Joi.object({
   timezone: Joi.string().required()
 });
 
+const passwordSchema = Joi.string().required().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH);
+
+const userPasswordSchema: Joi.ObjectSchema = Joi.object({
+  password: passwordSchema
+});
+
+const changePasswordSchema: Joi.ObjectSchema = Joi.object({
+  currentPassword: Joi.string().required(),
+  newPassword: passwordSchema
+});
+
 const transformerSchema: Joi.ObjectSchema = Joi.object({
   type: Joi.string().required().allow('custom'),
   name: Joi.string().required(),
@@ -262,6 +274,7 @@ export {
   certificateImportSchema,
   certificatePrivateKeyExportSchema,
   certificateSchema,
+  changePasswordSchema,
   engineGeneralSchema,
   engineLoggerSchema,
   engineProxySchema,
@@ -271,5 +284,6 @@ export {
   registrationSchema,
   scanModeSchema,
   transformerSchema,
+  userPasswordSchema,
   userSchema
 };

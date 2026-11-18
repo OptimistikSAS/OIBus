@@ -16,3 +16,14 @@ export interface UserSearchParam {
    */
   page: number;
 }
+
+/**
+ * Minimum length of a user password. Following NIST SP 800-63B, the policy only sets a minimum and a (long) maximum length,
+ * without any composition rule.
+ */
+export const PASSWORD_MIN_LENGTH = 8;
+
+/**
+ * Maximum length of a user password.
+ */
+export const PASSWORD_MAX_LENGTH = 128;

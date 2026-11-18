@@ -864,6 +864,8 @@ const formatRegex = (ip: string) => {
 
 const LOCALHOST_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1', '::ffff:7f00:1', '0:0:0:0:0:0:0:1'];
 
+export const isLocalhostAddress = (ip: string): boolean => LOCALHOST_ADDRESSES.includes(ip);
+
 /**
  * Per-filter compiled regex cache. `testIPOnFilter` runs on every HTTP request
  * via the IP-filter middleware; The set of filters

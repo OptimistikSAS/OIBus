@@ -37,6 +37,7 @@ import SouthService from '../service/south.service';
 import TransformerService from '../service/transformer.service';
 import UserService from '../service/user.service';
 import authMiddleware from './middlewares/auth.middleware';
+import AuthenticationLimiter from './middlewares/authentication-limiter';
 import IpFilterMiddleware from './middlewares/ip-filter.middleware';
 import { createInjectServicesMiddleware } from './middlewares/services.middleware';
 import { RegisterRoutes } from './routes';
@@ -64,6 +65,8 @@ export default class WebServer {
   private _whiteList: Array<string> = [];
   private app: Express | null = null;
   private webServer: Http.Server | Https.Server | null = null;
+  // Kept across the restarts of the web server, so that they do not reset the failed authentications
+  private readonly authenticationLimiter = new AuthenticationLimiter();
 
   constructor(
     settings: EngineSettings['webServer'],
@@ -215,7 +218,7 @@ export default class WebServer {
     // Rate limiting for configuration API endpoints
     const apiRateLimiter = rateLimit({
       windowMs: 60 * 1000, // 1 minute
-      limit: 5_000, // max 100 requests per windowMs per IP
+      limit: 5_000, // max 5,000 requests per windowMs per IP
       message: { error: 'Too many requests, please try again later.' },
       standardHeaders: true,
       legacyHeaders: false,
@@ -241,7 +244,7 @@ export default class WebServer {
     // Authentication middleware for API routes. Ignore public path routes
     this.app.use((req, res, next) => {
       if (isApiRoute(req.path) && !PUBLIC_PATHS.includes(req.path)) {
-        return authMiddleware(this.userService, this.encryptionService, this.oIBusService)(req, res, next);
+        return authMiddleware(this.userService, this.encryptionService, this.oIBusService, this.authenticationLimiter)(req, res, next);
       }
       return next();
     });

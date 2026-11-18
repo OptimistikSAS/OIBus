@@ -111,6 +111,11 @@
 						"type": "string",
 						"description": "The friendly display name of the user.",
 						"example": "John Doe"
+					},
+					"mustChangePassword": {
+						"type": "boolean",
+						"description": "Whether the user must change their password before doing anything else: true for the default account while it still\nhas its default password.",
+						"example": false
 					}
 				},
 				"required": [
@@ -125,7 +130,8 @@
 					"email",
 					"language",
 					"timezone",
-					"friendlyName"
+					"friendlyName",
+					"mustChangePassword"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -244,12 +250,12 @@
 				"properties": {
 					"currentPassword": {
 						"type": "string",
-						"description": "The current password of the user.",
+						"description": "The current password of the authenticated user, confirming their identity: their own password when they change it,\nand theirs too (not the one of the user changed) when they change the password of another user.",
 						"example": "oldPassword123"
 					},
 					"newPassword": {
 						"type": "string",
-						"description": "The new password for the user.",
+						"description": "The new password for the user, from 8 to 128 characters.",
 						"example": "newSecurePassword456"
 					}
 				},
@@ -50175,7 +50181,7 @@
 						}
 					}
 				},
-				"description": "Creates a new user account with the provided details and password",
+				"description": "Creates a new user account with the provided details and password (from 8 to 128 characters)",
 				"summary": "Create user",
 				"tags": [
 					"Users"
@@ -50293,7 +50299,7 @@
 						"description": "Password updated successfully"
 					}
 				},
-				"description": "Updates a user's password",
+				"description": "Updates a user's password, from 8 to 128 characters. The current password is the one of the authenticated user: their\nown when they change it, and theirs too when they change the password of another user",
 				"summary": "Change password",
 				"tags": [
 					"Users"

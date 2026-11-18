@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import argon2 from 'argon2';
 import Database from 'better-sqlite3';
 import { Knex } from 'knex';
 
@@ -30,6 +31,7 @@ import {
   convertOIAnalyticsSouths,
   down,
   encryptSecretsWithAesGcm,
+  flagDefaultPasswords,
   groupOIAnalyticsOptions,
   mergeSetpointsIntoRecordLists,
   moveCompressionToNorths,
@@ -5438,5 +5440,44 @@ describe('Entity migration v4.0.0: encryptSecretsWithAesGcm', () => {
     await encryptSecretsWithAesGcm(db);
 
     assert.strictEqual((console.warn as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+  });
+});
+
+describe('Entity migration v4.0.0: flagDefaultPasswords', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(flagDefaultPasswords, db)
+  });
+  let db: Knex;
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('users').insert([
+      { id: 'admin-id', login: 'admin', password: await argon2.hash('pass') },
+      { id: 'other-id', login: 'other', password: await argon2.hash('a strong password') },
+      { id: 'invalid-id', login: 'invalid', password: 'not an argon2 hash' }
+    ]);
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should flag the users still having the default password', async () => {
+    await flagDefaultPasswords(db);
+
+    assert.deepStrictEqual(await db('users').select('id', 'must_change_password').orderBy('id'), [
+      { id: 'admin-id', must_change_password: 1 },
+      { id: 'invalid-id', must_change_password: 0 },
+      { id: 'other-id', must_change_password: 0 }
+    ]);
+  });
+
+  it('should drop the column on down', async () => {
+    await runStepsFrom(flagDefaultPasswords, db);
+    await down(db);
+
+    assert.ok(!(await columnNames(db, 'users')).includes('must_change_password'));
+    assert.strictEqual((await db('users').select('id')).length, 3);
   });
 });

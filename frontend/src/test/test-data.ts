@@ -2033,6 +2033,7 @@ const userList: Array<UserDTO> = [
     language: 'en',
     timezone: 'Europe/Paris',
     friendlyName: 'Admin',
+    mustChangePassword: false,
     createdBy: {
       id: '',
       friendlyName: ''
@@ -2053,6 +2054,7 @@ const userList: Array<UserDTO> = [
     language: 'fr',
     timezone: 'Europe/Paris',
     friendlyName: 'first name last name (secondUser)',
+    mustChangePassword: false,
     createdBy: {
       id: '',
       friendlyName: ''

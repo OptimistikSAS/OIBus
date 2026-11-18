@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
 
-import argon2 from 'argon2';
 import basicAuth, { BasicAuthResult } from 'basic-auth';
 import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
@@ -9,11 +8,13 @@ import EncryptionService from '../../service/encryption.service';
 import type OIBusService from '../../service/oibus.service';
 import UserService from '../../service/user.service';
 import { CustomExpressRequest } from '../express';
+import AuthenticationLimiter from './authentication-limiter';
 
 interface AuthConfig {
   userService: UserService;
   encryptionService: EncryptionService;
   oIBusService: OIBusService;
+  authenticationLimiter: AuthenticationLimiter;
 }
 
 /**
@@ -23,6 +24,13 @@ interface AuthConfig {
  */
 export const passwordFingerprint = (hashedPassword: string): string =>
   crypto.createHash('sha256').update(hashedPassword).digest('base64url');
+
+/**
+ * The requests a user who must change their password can still make: changing it, and reading the OIBus information
+ * shown around the form (the current user is answered before)
+ */
+const isAllowedBeforePasswordChange = (req: Request, userId: string): boolean =>
+  (req.method === 'GET' && req.path === '/api/engine/info') || (req.method === 'POST' && req.path === `/api/users/${userId}/password`);
 
 // Helper function for authentication errors
 const createAuthError = (res: Response, message = 'Unauthorized', status = 401, challenge = true) => {
@@ -57,13 +65,18 @@ const createAuthMiddleware = (config: AuthConfig) => {
           return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
         }
 
-        const hashedPassword = config.userService.getHashedPasswordByLogin(basicUser.name);
-        if (!hashedPassword) {
-          return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
+        // Checked before verifying the password: a blocked address or login does not cost a password verification
+        const ip = req.ip ?? '';
+        const retryAfter = config.authenticationLimiter.retryAfter(ip, basicUser.name);
+        if (retryAfter > 0) {
+          res.set('Retry-After', retryAfter.toString());
+          return createAuthError(res, 'Too many failed authentications, try again later', 429, false);
         }
 
-        const passwordVerified = await argon2.verify(hashedPassword, basicUser.pass);
-        if (!passwordVerified) {
+        const passwordVerified = await config.userService.verifyPassword(basicUser.name, basicUser.pass);
+        const hashedPassword = config.userService.getHashedPasswordByLogin(basicUser.name);
+        if (!passwordVerified || !hashedPassword) {
+          config.authenticationLimiter.recordFailure(ip, basicUser.name);
           return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
         }
 
@@ -121,6 +134,9 @@ const createAuthMiddleware = (config: AuthConfig) => {
       }
 
       const currentUser = config.userService.findByLogin(headerUser.name);
+      if (currentUser.mustChangePassword && !isAllowedBeforePasswordChange(req, currentUser.id)) {
+        return createAuthError(res, 'The password must be changed first', 403, false);
+      }
       (req as CustomExpressRequest).user = { id: currentUser.id, login: currentUser.login };
       return next();
     } catch (err) {
@@ -131,8 +147,13 @@ const createAuthMiddleware = (config: AuthConfig) => {
 };
 
 // Factory function to create the middleware with dependencies
-export const authMiddleware = (userService: UserService, encryptionService: EncryptionService, oIBusService: OIBusService) => {
-  return createAuthMiddleware({ userService, encryptionService, oIBusService });
+export const authMiddleware = (
+  userService: UserService,
+  encryptionService: EncryptionService,
+  oIBusService: OIBusService,
+  authenticationLimiter: AuthenticationLimiter
+) => {
+  return createAuthMiddleware({ userService, encryptionService, oIBusService, authenticationLimiter });
 };
 
 export default authMiddleware;
