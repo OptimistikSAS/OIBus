@@ -187,6 +187,14 @@ export const unzip = async (input: string, output: string): Promise<void> => {
 };
 
 /**
+ * Makes a file executable by everyone (mode 0o755) on Linux and macOS. Windows has no such permission.
+ */
+export const makeExecutable = async (filePath: string): Promise<void> => {
+  if (process.platform === 'win32') return;
+  await fs.chmod(filePath, 0o755);
+};
+
+/**
  * Zips (deflate) a single file, stored in the archive under the given entry name.
  */
 export const zipFile = (input: string, entryName: string, output: string): Promise<void> => {

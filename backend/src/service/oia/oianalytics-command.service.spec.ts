@@ -107,10 +107,11 @@ import type OIAnalyticsSessionService from './oianalytics-session.service';
 const nodeRequire = createRequire(import.meta.url);
 
 const realUtils: typeof Utils = nodeRequire('../utils');
-// Only the waits, the OIBus info and the (un)zipping are controlled by the tests
+// Only the waits, the OIBus info, the (un)zipping and the permissions of the binaries are controlled by the tests
 const createUtilsMocks = () => ({
   delay: mock.fn<typeof Utils.delay>(async () => undefined),
   getOIBusInfo: mock.fn<typeof Utils.getOIBusInfo>(() => testData.engine.oIBusInfo),
+  makeExecutable: mock.fn<typeof Utils.makeExecutable>(async () => undefined),
   unzip: mock.fn<typeof Utils.unzip>(async () => undefined),
   zipFile: mock.fn<typeof Utils.zipFile>(async (_input, _entryName, output) => fs.writeFile(output, 'zip'))
 });
@@ -1319,6 +1320,11 @@ describe('OIAnalytics Command Service', () => {
     assert.ok(oIBusService.getEngineSettings.mock.calls.length > 0);
     assert.strictEqual(oIAnalyticsClient.downloadFile.mock.calls.length, 1);
     assert.strictEqual(utilsExports.unzip.mock.calls.length, 1);
+    // the new binary is made executable, but not the launcher, which is not updated
+    assert.deepStrictEqual(
+      utilsExports.makeExecutable.mock.calls.map(call => call.arguments),
+      [[path.resolve('binaryFolder', '..', 'update', 'binaries', 'oibus')]]
+    );
     assert.strictEqual(utilsExports.delay.mock.calls.length, 1);
     assert.strictEqual(exitMock.mock.calls.length, 1);
   });
@@ -1346,6 +1352,14 @@ describe('OIAnalytics Command Service', () => {
     assert.strictEqual(utilsExports.unzip.mock.calls.length, 1);
     assert.strictEqual(renameMock.mock.calls.length, 2);
     assert.ok(renamed().some(([from, to]) => from.includes('oibus-launcher') && to.includes('oibus-launcher_backup')));
+    // the new binary and launcher are made executable before replacing the current launcher
+    assert.deepStrictEqual(
+      utilsExports.makeExecutable.mock.calls.map(call => call.arguments),
+      [
+        [path.resolve('binaryFolder', '..', 'update', 'binaries', 'oibus')],
+        [path.resolve('binaryFolder', '..', 'update', 'oibus-launcher')]
+      ]
+    );
     assert.strictEqual(osTypeMock.mock.calls.length, 1);
     assert.strictEqual(killMock.mock.calls.length, 1);
 

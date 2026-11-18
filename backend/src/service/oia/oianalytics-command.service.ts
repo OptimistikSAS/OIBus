@@ -93,7 +93,7 @@ import type ScanModeService from '../scan-mode.service';
 import type SouthService from '../south.service';
 import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
 import type TransformerService from '../transformer.service';
-import { delay, getErrorMessage, getOIBusInfo, sanitizeFilename, unzip, withTimeout, zipFile } from '../utils';
+import { delay, getErrorMessage, getOIBusInfo, makeExecutable, sanitizeFilename, unzip, withTimeout, zipFile } from '../utils';
 import { applyRemoteCommandPermissions, isCommandAllowed } from './command-permissions.utils';
 import { OIANALYTICS_FETCH_COMMAND_TYPES } from './oianalytics.model';
 import OIAnalyticsClient from './oianalytics-client.service';
@@ -643,14 +643,19 @@ export default class OIAnalyticsCommandService {
 
     const duration = DateTime.now().toMillis() - runStart.toMillis();
     try {
+      // The extraction does not keep the permissions of the archived files: the new binaries are made executable, or the
+      // launcher could not start the new OIBus binary, nor the service the new launcher
+      await makeExecutable(path.resolve(updateDir, 'binaries', 'oibus'));
       if (command.commandContent.updateLauncher) {
         this.logger.info(`Updating OIBus launcher`);
         const extension = os.type() === 'Windows_NT' ? '.exe' : '';
         const launcherPath = path.resolve(this.binaryFolder, '..', `oibus-launcher${extension}`);
         const launcherBackupPath = path.resolve(this.binaryFolder, '..', `oibus-launcher_backup${extension}`);
+        const updatedLauncherPath = path.resolve(updateDir, `oibus-launcher${extension}`);
+        await makeExecutable(updatedLauncherPath);
         await fs.rename(launcherPath, launcherBackupPath);
         try {
-          await fs.rename(path.resolve(updateDir, `oibus-launcher${extension}`), launcherPath);
+          await fs.rename(updatedLauncherPath, launcherPath);
         } catch (err) {
           await fs
             .rename(launcherBackupPath, launcherPath)
