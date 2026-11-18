@@ -8,9 +8,30 @@ sidebar_position: 3
 
 ### Mots de passe de connexion {#login-passwords}
 
-Les mots de passe utilisateurs sont hachés avec **Argon2** avant d'être stockés dans `oibus.db`. Le mot de passe en clair n'est
-jamais persisté — seul le hash l'est. Argon2 est une fonction de hachage exigeante en mémoire, conçue pour résister aux attaques
-par force brute et aux attaques accélérées par GPU.
+Les mots de passe utilisateurs sont hachés avec **Argon2id** (64 Mio de mémoire, 3 itérations, 4 voies, un sel aléatoire de
+16 octets) avant d'être stockés dans `oibus.db`. Le mot de passe en clair n'est jamais persisté — seul le hash l'est. Argon2 est
+une fonction de hachage exigeante en mémoire, conçue pour résister aux attaques par force brute et aux attaques accélérées par
+GPU. Quand une version plus récente d'OIBus hache les mots de passe avec des paramètres plus forts, un mot de passe est haché à
+nouveau avec eux à la connexion suivante de son utilisateur.
+
+### Politique de mot de passe {#password-policy}
+
+Conformément à la [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html), un mot de passe doit comporter **de 8 à
+128 caractères**, de toute nature. OIBus n'impose aucune règle de composition (majuscule, chiffre, caractère spécial…) : une
+longue phrase de passe est à la fois plus facile à retenir et plus difficile à deviner.
+
+Changer un mot de passe demande le mot de passe actuel de l'utilisateur qui le change : le sien, et le sien aussi quand il change
+le mot de passe d'un autre utilisateur via l'API.
+
+### Compte par défaut {#default-account}
+
+À son premier démarrage, OIBus crée un compte **admin** avec le mot de passe **pass**, sauf si l'installation définit d'autres
+identifiants (les options `-u` et `-p` des scripts d'installation, ou les variables d'environnement `ADMIN_USERNAME` et
+`ADMIN_PASSWORD`). L'option `--reset-password` du launcher redonne aussi ce mot de passe par défaut au compte **admin**.
+
+Tant qu'un compte a le mot de passe par défaut, OIBus ne le laisse que changer son mot de passe : l'interface web ouvre le
+changement de mot de passe dès la connexion, et l'API refuse toute autre requête avec une réponse HTTP 403. Cela s'applique aussi
+aux comptes qui ont encore le mot de passe par défaut lors de la mise à jour d'OIBus.
 
 ### Secrets des connecteurs {#connector-secrets}
 
@@ -70,6 +91,25 @@ d'automatisation basés sur curl (voir [installation automatisée](../installati
 Pour un accès scripté, privilégiez une approche API dédiée et exécutez toujours les scripts sur l'hôte OIBus lui-même
 (`localhost`) afin que les identifiants ne soient pas transmis sur le réseau sans chiffrement.
 :::
+
+### Limites des authentifications échouées {#failed-authentication-limits}
+
+Vérifier un mot de passe prend volontairement du temps et de la mémoire : OIBus limite donc les authentifications échouées,
+depuis la page de connexion ou avec l'authentification Basic :
+
+- une adresse IP peut échouer **10 fois en 15 minutes** ;
+- un identifiant peut échouer **100 fois en 15 minutes**, depuis n'importe quelle adresse.
+
+Au-delà, les authentifications de l'adresse ou de l'identifiant sont refusées avec une réponse HTTP 429 (avec un en-tête
+`Retry-After`), sans vérifier le mot de passe, jusqu'à ce que 15 minutes se soient écoulées depuis leur premier échec. Les
+authentifications réussies ne sont pas comptées : un client de l'API utilisant les bons identifiants n'est jamais ralenti, sauf si
+son adresse ou son identifiant est bloqué. La limite plus élevée sur un identifiant arrête une tentative répartie sur de
+nombreuses adresses, sans permettre à quelques-unes d'entre elles de bloquer un compte.
+Les adresses de l'hôte lui-même (loopback) ne sont limitées que par identifiant, puisque tous les clients d'un proxy inverse
+exécuté sur l'hôte en proviennent.
+
+Une authentification échouée prend autant de temps, et reçoit la même réponse, que l'identifiant existe ou non : elle ne révèle
+pas quels identifiants existent.
 
 ## Filtrage IP {#ip-filtering}
 

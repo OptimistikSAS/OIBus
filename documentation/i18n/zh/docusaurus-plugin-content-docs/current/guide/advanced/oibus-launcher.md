@@ -114,8 +114,8 @@ oibus-launcher --reset-password --config /path/to/OIBusData
 1. 停止 OIBus 服务。
 2. 运行上述命令。
 3. 重启服务。
-4. 使用 `admin` / `pass` 登录，并立即在
-   [用户设置](../installation/first-access.mdx#user-settings)中修改密码。
+4. 使用 `admin` / `pass` 登录：OIBus 会立即要求修改密码（参见
+   [默认账户](./oibus-security.md#default-account)）。
 
 :::caution
 `--reset-password` 仅由 launcher 处理，永远不会被转发给 `oibus` 二进制文件。

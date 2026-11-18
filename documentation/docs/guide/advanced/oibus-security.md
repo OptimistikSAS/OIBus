@@ -8,9 +8,30 @@ sidebar_position: 3
 
 ### Login Passwords {#login-passwords}
 
-User passwords are hashed with **Argon2** before being stored in `oibus.db`. The plaintext password is
-never persisted — only the hash. Argon2 is a memory-hard hashing function designed to resist brute-force
-and GPU-accelerated attacks.
+User passwords are hashed with **Argon2id** (64 MiB of memory, 3 iterations, 4 lanes, a random 16-byte salt)
+before being stored in `oibus.db`. The plaintext password is never persisted — only the hash. Argon2 is a
+memory-hard hashing function designed to resist brute-force and GPU-accelerated attacks. When a newer OIBus
+hashes passwords with stronger parameters, a password is hashed again with them the next time its user logs in.
+
+### Password Policy {#password-policy}
+
+Following [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html), a password must have from **8 to 128
+characters**, of any kind. OIBus imposes no composition rule (uppercase letter, digit, special character…): a
+long passphrase is both easier to remember and harder to guess.
+
+Changing a password requires the current password of the user who changes it: their own, and theirs too when
+they change the password of another user through the API.
+
+### Default Account {#default-account}
+
+At its first start, OIBus creates an **admin** account with the password **pass**, unless the installation sets
+other credentials (the `-u` and `-p` options of the installation scripts, or the `ADMIN_USERNAME` and
+`ADMIN_PASSWORD` environment variables). The launcher option `--reset-password` also gives the **admin** account
+this default password back.
+
+As long as an account has the default password, OIBus only lets it change its password: the web interface opens
+the password change right after login, and the API refuses any other request with an HTTP 403 response. This also
+applies to the accounts that still have the default password when OIBus is upgraded.
 
 ### Connector Secrets {#connector-secrets}
 
@@ -70,6 +91,25 @@ HTTP Basic Authentication is also accepted on every API endpoint except the publ
 For scripted access, prefer a dedicated API approach and always run scripts on the OIBus host itself
 (`localhost`) so credentials are not transmitted over the network unencrypted.
 :::
+
+### Failed Authentication Limits {#failed-authentication-limits}
+
+Verifying a password takes time and memory on purpose, so OIBus limits the failed authentications, from the login
+page or with Basic Authentication:
+
+- an IP address may fail **10 times in 15 minutes**;
+- a login may fail **100 times in 15 minutes**, from any address.
+
+Beyond that, the authentications of the address or of the login are refused with an HTTP 429 response (with a
+`Retry-After` header), without checking the password, until 15 minutes have passed since their first failure.
+Successful authentications are not counted: an API client using the right credentials is never slowed down, unless
+its address or its login is blocked. The higher limit on a login stops a guessing spread over many addresses,
+without letting a few of them lock an account out.
+The host's own addresses (loopback) are only limited per login, since all the clients of a reverse proxy running on
+the host come from them.
+
+A failed authentication takes as long, and gets the same response, whether the login exists or not: it does not
+tell which logins exist.
 
 ## IP Filtering {#ip-filtering}
 
