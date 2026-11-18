@@ -57,8 +57,8 @@ After a successful login, OIBus issues a **JWT signed with RS256** (RSA-SHA256).
 - Has a **7-day lifetime by default**, configurable in engine settings from 1 hour up to 30 days.
 - Is signed with an RSA private key held by OIBus.
 - Is verified on every API request using the corresponding public key.
-- Contains the user's login and a hash of their password — the token is automatically invalidated if the
-  password changes.
+- Contains the user's login and a fingerprint of their password hash (never the hash itself) — the token is
+  automatically invalidated if the password changes.
 
 ### Basic Auth (API / CLI) {#basic-auth-api--cli}
 
