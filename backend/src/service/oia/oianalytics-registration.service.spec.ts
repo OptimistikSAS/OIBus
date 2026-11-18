@@ -18,7 +18,10 @@ import JoiValidator from '../../web-server/controllers/validators/joi.validator'
 import { getErrorMessage } from '../utils';
 import { OIAnalyticsInvalidGrantError, OIAnalyticsTokenRefreshUnsupportedError } from './oianalytics-client.service';
 import type OIAnalyticsRegistrationServiceType from './oianalytics-registration.service';
-import type { toOIAnalyticsRegistrationDTO as toOIAnalyticsRegistrationDTOType } from './oianalytics-registration.service';
+import type {
+  getPrivateCipherKeys as getPrivateCipherKeysType,
+  toOIAnalyticsRegistrationDTO as toOIAnalyticsRegistrationDTOType
+} from './oianalytics-registration.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -31,6 +34,7 @@ let OIAnalyticsRegistrationService: new (
   ...args: ConstructorParameters<typeof OIAnalyticsRegistrationServiceType>
 ) => InstanceType<typeof OIAnalyticsRegistrationServiceType>;
 let toOIAnalyticsRegistrationDTO: typeof toOIAnalyticsRegistrationDTOType;
+let getPrivateCipherKeys: typeof getPrivateCipherKeysType;
 
 before(() => {
   mockUtils = {
@@ -55,9 +59,11 @@ before(() => {
       ...args: ConstructorParameters<typeof OIAnalyticsRegistrationServiceType>
     ) => InstanceType<typeof OIAnalyticsRegistrationServiceType>;
     toOIAnalyticsRegistrationDTO: typeof toOIAnalyticsRegistrationDTOType;
+    getPrivateCipherKeys: typeof getPrivateCipherKeysType;
   }>(nodeRequire, './oianalytics-registration.service');
   OIAnalyticsRegistrationService = mod.default;
   toOIAnalyticsRegistrationDTO = mod.toOIAnalyticsRegistrationDTO;
+  getPrivateCipherKeys = mod.getPrivateCipherKeys;
 });
 
 describe('OIAnalytics Registration Service', () => {
@@ -226,6 +232,8 @@ describe('OIAnalytics Registration Service', () => {
       refreshTokenExpirationDate: null,
       publicCipherKey: null,
       privateCipherKey: null,
+      previousPrivateCipherKey: null,
+      cipherKeyRotationDate: null,
       checkUrl: null,
       commandRefreshInterval: 10,
       commandRetryInterval: 5,
@@ -300,18 +308,6 @@ describe('OIAnalytics Registration Service', () => {
 
     await assert.doesNotReject(service.editRegistrationSettings(command, testData.users.list[0].id));
     assert.strictEqual(oIAnalyticsRegistrationRepository.update.mock.calls.length, 1);
-  });
-
-  it('should update keys', async () => {
-    await service.updateKeys('private key', 'public key', testData.users.list[0].id);
-
-    assert.strictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls.length, 1);
-    assert.deepStrictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls[0].arguments, ['private key']);
-    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.updateKeys.mock.calls[0].arguments, [
-      'private key',
-      'public key',
-      testData.users.list[0].id
-    ]);
   });
 
   it('should edit registration with proxy', async () => {
@@ -617,6 +613,123 @@ describe('OIAnalytics Registration Service', () => {
       assert.strictEqual(logger.error.mock.calls.length, 0);
     });
 
+    describe('cipher key rotation', () => {
+      // a registration whose access token doesn't need to be refreshed yet
+      const validRegistration = (overrides: Partial<OIAnalyticsRegistration> = {}): OIAnalyticsRegistration =>
+        expiringRegistration({
+          tokenExpirationDate: '2021-01-02T01:00:00.000Z',
+          refreshTokenExpirationDate: '2021-04-01T23:00:00.000Z',
+          ...overrides
+        });
+      let current: OIAnalyticsRegistration;
+
+      beforeEach(() => {
+        oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => current);
+        oIAnalyticsRegistrationRepository.rotateKeys.mock.mockImplementation((publicKey, privateKey, rotationDate) => {
+          current = {
+            ...current,
+            publicCipherKey: publicKey,
+            privateCipherKey: privateKey,
+            previousPrivateCipherKey: current.privateCipherKey,
+            cipherKeyRotationDate: rotationDate
+          };
+        });
+        oIAnalyticsClient.refreshToken.mock.mockImplementation(async () => tokens);
+      });
+
+      const mockKeyPairGeneration = (error: Error | null = null) =>
+        mock.method(
+          crypto,
+          'generateKeyPair',
+          (_type: unknown, _options: unknown, cb: (err: Error | null, pub?: string, priv?: string) => void) => {
+            if (error) cb(error);
+            else cb(null, 'new public key', 'new private key');
+          }
+        );
+
+      it('should replace the keys when their rotation date has passed, and send the new public key with a refresh', async () => {
+        current = validRegistration({ cipherKeyRotationDate: testData.constants.dates.FAKE_NOW });
+        mockKeyPairGeneration();
+
+        await service.refreshTokenIfNeeded();
+
+        // the next rotation is due when the refresh token would have expired
+        assert.deepStrictEqual(oIAnalyticsRegistrationRepository.rotateKeys.mock.calls[0].arguments, [
+          'new public key',
+          'new private key',
+          '2021-04-01T23:00:00.000Z'
+        ]);
+        assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls.length, 1);
+        assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls[0].arguments[0].publicCipherKey, 'new public key');
+        assert.deepStrictEqual(oIAnalyticsRegistrationRepository.updateTokens.mock.calls[0].arguments, [expectedTokens]);
+        assert.ok(logger.info.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'OIAnalytics cipher keys replaced'));
+      });
+
+      it('should replace at the first refresh the keys of a registration without rotation date', async () => {
+        current = validRegistration({ cipherKeyRotationDate: null });
+        mockKeyPairGeneration();
+
+        await service.refreshTokenIfNeeded();
+
+        assert.strictEqual(oIAnalyticsRegistrationRepository.rotateKeys.mock.calls.length, 1);
+        assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls.length, 1);
+      });
+
+      it('should not replace the keys before their rotation date', async () => {
+        current = validRegistration({ cipherKeyRotationDate: '2021-01-02T00:00:01.000Z' });
+        const generateKeyPair = mockKeyPairGeneration();
+
+        await service.refreshTokenIfNeeded();
+
+        assert.strictEqual(generateKeyPair.mock.calls.length, 0);
+        assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls.length, 0);
+      });
+
+      it('should not replace the keys of a registration without refresh token', async () => {
+        current = validRegistration({ refreshToken: null, refreshTokenExpirationDate: null, cipherKeyRotationDate: null });
+        oIAnalyticsClient.exchangeToken.mock.mockImplementationOnce(async () => tokens);
+        const generateKeyPair = mockKeyPairGeneration();
+
+        await service.refreshTokenIfNeeded();
+
+        assert.strictEqual(generateKeyPair.mock.calls.length, 0);
+        assert.strictEqual(oIAnalyticsClient.exchangeToken.mock.calls.length, 1);
+      });
+
+      it('should refresh the token even when the keys cannot be replaced', async () => {
+        current = validRegistration({ cipherKeyRotationDate: null });
+        mockKeyPairGeneration(new Error('key pair generation failed'));
+
+        await service.refreshTokenIfNeeded();
+
+        assert.strictEqual(oIAnalyticsRegistrationRepository.rotateKeys.mock.calls.length, 0);
+        assert.strictEqual(oIAnalyticsClient.refreshToken.mock.calls[0].arguments[0].publicCipherKey, 'public key');
+        assert.ok(
+          logger.warn.mock.calls.some(
+            (c: { arguments: Array<string> }) =>
+              c.arguments[0] === 'Could not replace the OIAnalytics cipher keys, retrying later: key pair generation failed'
+          )
+        );
+      });
+
+      it('should not replace the keys of a registration changed during their generation', async () => {
+        current = validRegistration({ cipherKeyRotationDate: null });
+        mock.method(
+          crypto,
+          'generateKeyPair',
+          (_type: unknown, _options: unknown, cb: (err: Error | null, pub?: string, priv?: string) => void) => {
+            current = testData.oIAnalytics.registration.pending;
+            cb(null, 'new public key', 'new private key');
+          }
+        );
+
+        await service.refreshTokenIfNeeded();
+
+        assert.strictEqual(oIAnalyticsRegistrationRepository.rotateKeys.mock.calls.length, 0);
+        assert.strictEqual(oIAnalyticsRegistrationRepository.updateTokens.mock.calls.length, 0);
+      });
+    });
+
     it('should ignore the renewal outcome when the registration changed meanwhile', async () => {
       oIAnalyticsRegistrationRepository.get.mock.mockImplementation(
         seq(
@@ -653,6 +766,20 @@ describe('OIAnalytics Registration Service', () => {
       null,
       false
     ]);
+  });
+
+  it('should give the current private key, then the previous one, to decrypt the secrets from OIAnalytics', () => {
+    mockEncryptionService.encryptionService.decryptText.mock.mockImplementation(key => `decrypted ${key}`);
+
+    assert.deepStrictEqual(
+      getPrivateCipherKeys({
+        ...testData.oIAnalytics.registration.completed,
+        privateCipherKey: 'current',
+        previousPrivateCipherKey: 'previous'
+      }),
+      ['decrypted current', 'decrypted previous']
+    );
+    assert.deepStrictEqual(getPrivateCipherKeys(testData.oIAnalytics.registration.completed), ['decrypted private key']);
   });
 
   it('should properly convert to DTO', () => {

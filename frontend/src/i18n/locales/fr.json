@@ -2693,7 +2693,6 @@
     "oibus-command-type": {
       "update-version": "Mettre à niveau la version",
       "restart-engine": "Redémarrer",
-      "regenerate-cipher-keys": "Régénérer les clés de chiffrement",
       "update-engine-general": "Mettre à jour les paramètres généraux du moteur",
       "update-engine-web-server": "Mettre à jour les paramètres du serveur Web du moteur",
       "update-engine-proxy": "Mettre à jour les paramètres de proxy du moteur",
@@ -3457,7 +3456,7 @@
           },
           "manageRegistration": {
             "label": "Gérer l'enregistrement",
-            "description": "Modifier les paramètres d'enregistrement et régénérer ses clés de chiffrement. Les permissions ne peuvent qu'être retirées à distance"
+            "description": "Modifier les paramètres d'enregistrement. Les permissions ne peuvent qu'être retirées à distance"
           },
           "connectToDataSources": {
             "label": "Se connecter aux sources de données",

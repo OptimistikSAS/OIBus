@@ -245,7 +245,6 @@
     "oibus-command-type": {
       "update-version": "Upgrade version",
       "restart-engine": "Restart",
-      "regenerate-cipher-keys": "Regenerate cipher keys",
       "update-engine-general": "Update engine general settings",
       "update-engine-web-server": "Update engine web server settings",
       "update-engine-proxy": "Update engine proxy settings",
@@ -540,7 +539,7 @@
           },
           "manageRegistration": {
             "label": "Manage registration",
-            "description": "Change the registration settings and regenerate its cipher keys. Permissions can only be revoked remotely"
+            "description": "Change the registration settings. Permissions can only be revoked remotely"
           },
           "connectToDataSources": {
             "label": "Connect to data sources",

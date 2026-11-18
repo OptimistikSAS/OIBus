@@ -95,9 +95,10 @@ d'être transmis, en utilisant la clé publique RSA d'OIBus (RSA-OAEP, 4096 bits
 - Lorsque OIBus envoie sa configuration à OIAnalytics, tous les champs de secrets sont retirés avant
   la transmission.
 
-La paire de clés RSA est générée lors de l'enregistrement OIAnalytics et peut être renouvelée avec la
-commande à distance **Régénérer les clés de chiffrement**. Après le renouvellement, tout secret précédemment saisi via
-OIAnalytics doit être ressaisi car l'ancien texte chiffré ne peut plus être déchiffré.
+La paire de clés RSA est générée lors de l'enregistrement OIAnalytics, et OIBus la remplace lui-même tous
+les 90 jours, en même temps que ses jetons (voir [Jetons d'authentification](../installation/oianalytics.mdx#authentication-tokens)).
+OIBus conserve la clé privée précédente, afin de pouvoir encore déchiffrer les secrets saisis via OIAnalytics
+juste avant un remplacement.
 
 Séparément, OIBus génère sa propre paire certificat/clé RSA de 4096 bits au démarrage (`private.pem` /
 `public.pem` / `cert.pem`) — c'est ce qui signe les JWT décrits ci-dessus, et c'est également utilisé pour auto-signer

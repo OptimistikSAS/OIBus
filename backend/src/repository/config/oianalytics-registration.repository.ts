@@ -78,7 +78,7 @@ export default class OIAnalyticsRegistrationRepository {
 
   get(): OIAnalyticsRegistration | null {
     const query =
-      `SELECT id, host, token, refresh_token, token_expiration_date, refresh_token_expiration_date, public_key, private_key, activation_code, status, activation_date, check_url, ` +
+      `SELECT id, host, token, refresh_token, token_expiration_date, refresh_token_expiration_date, public_key, private_key, previous_private_key, cipher_key_rotation_date, activation_code, status, activation_date, check_url, ` +
       `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, accept_unauthorized, use_api_gateway, api_gateway_header_key, api_gateway_header_value, api_gateway_base_endpoint, ` +
       `command_refresh_interval, command_retry_interval, message_retry_interval, ${PERMISSION_COLUMNS_SELECT}, ` +
       `created_by, updated_by, created_at, updated_at ` +
@@ -112,7 +112,7 @@ export default class OIAnalyticsRegistrationRepository {
       `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', refresh_token = NULL, token_expiration_date = NULL, refresh_token_expiration_date = NULL, activation_code = ?, ` +
       `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
       `use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?,` +
-      `accept_unauthorized = ?, public_key = ?, private_key = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
+      `accept_unauthorized = ?, public_key = ?, private_key = ?, previous_private_key = NULL, cipher_key_rotation_date = NULL, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
       `${PERMISSION_COLUMNS_UPDATE}, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
@@ -145,14 +145,23 @@ export default class OIAnalyticsRegistrationRepository {
   /**
    * When OIBus has an answer from OIAnalytics saying that the user correctly entered the activation code,
    * OIAnalytics also answer with the tokens that can be used to authenticate to OIAnalytics to send data, logs, settings etc.
+   * The key pair generated for the registration is replaced when the refresh token would have expired.
    */
   activate(activationDate: Instant, tokens: OIAnalyticsRegistrationTokens) {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', check_url = '', activation_date = ?, ` +
-      `token = ?, refresh_token = ?, token_expiration_date = ?, refresh_token_expiration_date = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+      `token = ?, refresh_token = ?, token_expiration_date = ?, refresh_token_expiration_date = ?, cipher_key_rotation_date = ? ` +
+      `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
       .prepare(query)
-      .run(activationDate, tokens.token, tokens.refreshToken, tokens.tokenExpirationDate, tokens.refreshTokenExpirationDate);
+      .run(
+        activationDate,
+        tokens.token,
+        tokens.refreshToken,
+        tokens.tokenExpirationDate,
+        tokens.refreshTokenExpirationDate,
+        tokens.refreshTokenExpirationDate
+      );
   }
 
   /**
@@ -209,17 +218,24 @@ export default class OIAnalyticsRegistrationRepository {
     );
   }
 
-  updateKeys(privateKey: string, publicKey: string, updatedBy: string): void {
+  /**
+   * Replace the key pair, keeping the current private key as the previous one
+   * @param privateKey the new private key, encrypted
+   * @param rotationDate when the new key pair must be replaced
+   */
+  rotateKeys(publicKey: string, privateKey: string, rotationDate: Instant | null): void {
     const before = this.get();
-    const query = `UPDATE ${REGISTRATIONS_TABLE} SET private_key = ?, public_key = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
-    this.database.prepare(query).run(privateKey, publicKey);
+    const query =
+      `UPDATE ${REGISTRATIONS_TABLE} SET previous_private_key = private_key, private_key = ?, public_key = ?, cipher_key_rotation_date = ? ` +
+      `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database.prepare(query).run(privateKey, publicKey, rotationDate);
     const after = this.get();
     this.auditService.record(
       'oianalytics_registration',
       after!.id,
       'UPDATE',
       ...redactAuditSnapshots(before, after, r => this.redact(r)),
-      updatedBy
+      'system'
     );
   }
 
@@ -266,6 +282,7 @@ export default class OIAnalyticsRegistrationRepository {
       ...registration,
       publicCipherKey: '',
       privateCipherKey: '',
+      previousPrivateCipherKey: '',
       token: '',
       refreshToken: '',
       proxyPassword: '',
@@ -288,6 +305,8 @@ export default class OIAnalyticsRegistrationRepository {
       refreshTokenExpirationDate: (result.refresh_token_expiration_date as string | null) ?? null,
       publicCipherKey: result.public_key as string,
       privateCipherKey: result.private_key as string,
+      previousPrivateCipherKey: (result.previous_private_key as string | null) ?? null,
+      cipherKeyRotationDate: (result.cipher_key_rotation_date as string | null) ?? null,
       status: result.status as RegistrationStatus,
       activationDate: result.activation_date as string,
       activationExpirationDate: result.activation_expiration_date as string,

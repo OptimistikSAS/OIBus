@@ -49,6 +49,41 @@ export const toRegistrationTokens = async (
   };
 };
 
+/**
+ * The private keys to decrypt the secrets OIAnalytics sends: the current one, then the one replaced by the last key
+ * rotation, with which OIAnalytics may still have encrypted secrets before it received the new public key
+ */
+export const getPrivateCipherKeys = (registration: OIAnalyticsRegistration): Array<string> =>
+  [registration.privateCipherKey, registration.previousPrivateCipherKey]
+    .filter((key): key is string => !!key)
+    .map(key => encryptionService.decryptText(key));
+
+/**
+ * Generate the RSA key pair with which OIAnalytics encrypts the secrets it sends, asynchronously to avoid blocking the
+ * event loop
+ */
+const generateCipherKeys = (): Promise<{ publicKey: string; privateKey: string }> =>
+  new Promise((resolve, reject) =>
+    crypto.generateKeyPair(
+      'rsa',
+      {
+        modulusLength: 4096,
+        publicKeyEncoding: {
+          type: 'spki', // Recommended format for a public key
+          format: 'pem' // Output format for the key
+        },
+        privateKeyEncoding: {
+          type: 'pkcs8', // Recommended format for a private key
+          format: 'pem' // Output format for the key
+        }
+      },
+      (err, publicKey, privateKey) => {
+        if (err) reject(err);
+        else resolve({ publicKey, privateKey });
+      }
+    )
+  );
+
 export default class OIAnalyticsRegistrationService {
   private intervalCheckRegistration: NodeJS.Timeout | null = null;
   private ongoingCheckRegistration = false;
@@ -107,27 +142,7 @@ export default class OIAnalyticsRegistrationService {
     }
 
     const oibusInfo = getOIBusInfo(engineSettings);
-    // Generate an RSA key pair asynchronously to avoid blocking the event loop
-    const { publicKey, privateKey } = await new Promise<{ publicKey: string; privateKey: string }>((resolve, reject) =>
-      crypto.generateKeyPair(
-        'rsa',
-        {
-          modulusLength: 4096,
-          publicKeyEncoding: {
-            type: 'spki', // Recommended format for a public key
-            format: 'pem' // Output format for the key
-          },
-          privateKeyEncoding: {
-            type: 'pkcs8', // Recommended format for a private key
-            format: 'pem' // Output format for the key
-          }
-        },
-        (err, pub, priv) => {
-          if (err) reject(err);
-          else resolve({ publicKey: pub, privateKey: priv });
-        }
-      )
-    );
+    const { publicKey, privateKey } = await generateCipherKeys();
 
     const result = await this.oIAnalyticsClient.register(command, oibusInfo, publicKey);
     this.oIAnalyticsRegistrationRepository.register(
@@ -180,6 +195,8 @@ export default class OIAnalyticsRegistrationService {
   /**
    * Renew the access token when it is about to expire, with the refresh token. A registration made before the tokens
    * could be refreshed has a long-lived token and no refresh token: its token is exchanged for a refreshable pair.
+   * The cipher key pair is replaced when the refresh token issued with it would have expired, right before a refresh,
+   * which sends the new public key to OIAnalytics (each refresh sends the current one).
    * Only one renewal runs at a time: a call during a renewal waits for it.
    */
   refreshTokenIfNeeded(): Promise<void> {
@@ -192,17 +209,30 @@ export default class OIAnalyticsRegistrationService {
   }
 
   private async refreshToken(): Promise<void> {
-    const registration = this.oIAnalyticsRegistrationRepository.get()!;
+    let registration = this.oIAnalyticsRegistrationRepository.get()!;
     if (registration.status !== 'REGISTERED') return;
     const exchange = !registration.refreshToken;
+    // an OIAnalytics which can't refresh tokens can't receive a new public key either: the keys are only replaced along
+    // with refreshable tokens
+    const rotateKeys =
+      !exchange && (!registration.cipherKeyRotationDate || DateTime.fromISO(registration.cipherKeyRotationDate) <= DateTime.now());
     if (
       !exchange &&
+      !rotateKeys &&
       registration.tokenExpirationDate &&
       DateTime.fromISO(registration.tokenExpirationDate).toMillis() - DateTime.now().toMillis() > TOKEN_REFRESH_MARGIN_MS
     ) {
       return;
     }
 
+    if (rotateKeys) {
+      try {
+        registration = await this.rotateCipherKeys(registration);
+      } catch (error: unknown) {
+        // the token must be refreshed anyway: the rotation is retried at the next renewal
+        this.logger.warn(`Could not replace the OIAnalytics cipher keys, retrying later: ${getErrorMessage(error)}`);
+      }
+    }
     try {
       const tokens = exchange
         ? await this.oIAnalyticsClient.exchangeToken(registration)
@@ -225,6 +255,23 @@ export default class OIAnalyticsRegistrationService {
         this.logger.warn(`Could not renew the OIAnalytics access token, retrying later: ${getErrorMessage(error)}`);
       }
     }
+  }
+
+  /**
+   * Replace the cipher key pair, before the refresh which sends the new public key to OIAnalytics. If the refresh fails,
+   * the next one sends it: meanwhile, the secrets encrypted with the former public key are decrypted with the previous
+   * private key. The next rotation is due when the refresh token would have expired.
+   */
+  private async rotateCipherKeys(registration: OIAnalyticsRegistration): Promise<OIAnalyticsRegistration> {
+    const { publicKey, privateKey } = await generateCipherKeys();
+    if (!this.isSameRegistration(registration)) return registration;
+    this.oIAnalyticsRegistrationRepository.rotateKeys(
+      publicKey,
+      await encryptionService.encryptText(privateKey),
+      registration.refreshTokenExpirationDate
+    );
+    this.logger.info('OIAnalytics cipher keys replaced');
+    return this.oIAnalyticsRegistrationRepository.get()!;
   }
 
   /**
@@ -253,10 +300,6 @@ export default class OIAnalyticsRegistrationService {
     }
     this.oIAnalyticsRegistrationRepository.update(command, updatedBy);
     this.registrationEvent.emit('updated');
-  }
-
-  async updateKeys(privateKey: string, publicKey: string, updatedBy: string): Promise<void> {
-    this.oIAnalyticsRegistrationRepository.updateKeys(await encryptionService.encryptText(privateKey), publicKey, updatedBy);
   }
 
   async testConnection(command: RegistrationSettingsCommandDTO): Promise<void> {

@@ -373,6 +373,8 @@ const createOIAnalyticsRegistration = async (database: knex.Knex, registration: 
       accept_unauthorized: registration.acceptUnauthorized,
       public_key: registration.publicCipherKey,
       private_key: registration.privateCipherKey,
+      previous_private_key: registration.previousPrivateCipherKey,
+      cipher_key_rotation_date: registration.cipherKeyRotationDate,
       command_refresh_interval: registration.commandRefreshInterval,
       command_retry_interval: registration.commandRetryInterval,
       message_retry_interval: registration.messageRetryInterval,

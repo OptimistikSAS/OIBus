@@ -79,7 +79,7 @@ en accorder une : une permission retirée à distance ne peut être accordée à
 | Configuration          | **Flux de données**                     | Créer, modifier ou supprimer les connecteurs South et North, les requêtes d'historique (et leurs items), les modes de scan et les certificats. | Accordée   |
 | Configuration          | **Code personnalisé**                   | Créer, modifier, supprimer ou tester les transformateurs personnalisés, qui exécutent du code envoyé par OIAnalytics.                          | Retirée    |
 | Sécurité               | **Gérer les accès**                     | Mettre à jour les paramètres du serveur web et les filtres IP.                                                                                 | Accordée   |
-| Sécurité               | **Gérer l'enregistrement**              | Mettre à jour les paramètres d'enregistrement, régénérer les clés de chiffrement.                                                              | Accordée   |
+| Sécurité               | **Gérer l'enregistrement**              | Mettre à jour les paramètres d'enregistrement.                                                                                                 | Accordée   |
 | Données et équipements | **Se connecter aux sources de données** | Tester une connexion ou un item, tester un transformateur, ouvrir une session interactive pour explorer une source de données.                 | Accordée   |
 | Données et équipements | **Gérer le cache**                      | Rechercher, récupérer, déplacer ou supprimer le contenu en cache des connecteurs North et des requêtes d'historique.                           | Accordée   |
 | Données et équipements | **Diagnostic**                          | Dump mémoire, base des journaux.                                                                                                               | Retirée    |
@@ -137,7 +137,6 @@ requise.
 | **Dump mémoire**                                  | Écrire un dump mémoire (instantané du tas V8) et le téléverser, compressé en zip, vers OIAnalytics. Les flux de données sont en pause pendant l'écriture de l'instantané, et le dump peut contenir des secrets en clair issus de la mémoire d'OIBus.                                           |
 | **Base des logs**                                 | Téléverser vers OIAnalytics une copie compressée en zip de la base des logs (`logs.db`).                                                                                                                                                                                                       |
 | **Mettre à jour les paramètres d'enregistrement** | Appliquer de nouveaux paramètres d'enregistrement OIAnalytics (réseau, temporisation, permissions…).                                                                                                                                                                                           |
-| **Régénérer les clés de chiffrement**             | Générer une nouvelle paire de clés RSA pour le chiffrement des secrets.                                                                                                                                                                                                                        |
 | **Gestion des modes de scan**                     | Créer, mettre à jour ou supprimer des modes de scan.                                                                                                                                                                                                                                           |
 | **Connecteur North**                              | Créer, mettre à jour, supprimer ou tester des connecteurs North.                                                                                                                                                                                                                               |
 | **Cache du connecteur North**                     | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'un connecteur North. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver.                                                                                   |
@@ -193,8 +192,8 @@ jamais la machine OIBus en clair :
 - Sur la machine OIBus, les secrets sont stockés avec un chiffrement local. La clé privée ne quitte jamais l'instance
   OIBus.
 
-Utilisez la commande **Régénérer les clés de chiffrement** pour faire pivoter la paire de clés RSA. Après régénération, les
-secrets stockés dans OIAnalytics doivent être ressaisis puisque l'ancien texte chiffré ne peut plus être déchiffré.
+OIBus remplace lui-même sa paire de clés RSA tous les 90 jours, en même temps que ses jetons (voir
+[Jetons d'authentification](#authentication-tokens)).
 
 :::info Détails cryptographiques
 **Algorithme** : RSA-OAEP — une paire de clés unique est générée par instance OIBus lors de l'enregistrement.
@@ -217,6 +216,12 @@ OIBus renouvelle son jeton d'accès automatiquement. Dans OIAnalytics, les jeton
 de configuration, avec l'adresse IP à laquelle ils ont été délivrés et celle depuis laquelle ils ont été utilisés en
 dernier. Y révoquer un jeton rejette immédiatement les requêtes de l'OIBus qui l'utilise. Enregistrer à nouveau OIBus
 révoque ses jetons précédents.
+
+Chaque fois que son jeton de rafraîchissement aurait expiré, soit tous les 90 jours, OIBus remplace aussi la paire de
+clés RSA avec laquelle OIAnalytics chiffre les [secrets](#secret-management) qu'il lui envoie, et envoie la nouvelle clé
+publique lors du renouvellement suivant de ses jetons. Il conserve la clé privée précédente, afin de pouvoir encore
+déchiffrer les secrets saisis dans OIAnalytics juste avant le remplacement. Un OIBus mis à niveau depuis la version 3.x
+remplace sa paire de clés juste après l'échange de son jeton longue durée.
 
 Si le jeton de rafraîchissement est révoqué ou expiré (OIBus hors ligne plus de 90 jours, par exemple), OIAnalytics
 refuse de renouveler le jeton d'accès : OIBus journalise une erreur et repasse au statut **Non enregistré**, en

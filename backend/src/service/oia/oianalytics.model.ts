@@ -43,7 +43,6 @@ export interface OIAnalyticsCheckRegistrationDTO extends Partial<OIAnalyticsToke
 export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'update-version',
   'restart-engine',
-  'regenerate-cipher-keys',
   'update-engine-general',
   'update-engine-web-server',
   'update-engine-proxy',
@@ -111,10 +110,6 @@ export interface OIAnalyticsFetchUpdateVersionCommandDTO extends BaseOIAnalytics
 
 export interface OIAnalyticsFetchRestartEngineCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'restart-engine';
-}
-
-export interface OIAnalyticsFetchRegenerateCipherKeysCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
-  type: 'regenerate-cipher-keys';
 }
 
 export interface OIAnalyticsFetchUpdateEngineGeneralCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -426,7 +421,6 @@ export interface OIAnalyticsFetchTestTransformerCommandDTO extends BaseOIAnalyti
 export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
-  | OIAnalyticsFetchRegenerateCipherKeysCommandDTO
   | OIAnalyticsFetchUpdateEngineGeneralCommandDTO
   | OIAnalyticsFetchUpdateEngineWebServerCommandDTO
   | OIAnalyticsFetchUpdateEngineProxyCommandDTO

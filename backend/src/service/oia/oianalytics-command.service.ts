@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -48,7 +47,6 @@ import {
   OIBusGetNorthCacheFileContentCommand,
   OIBusImportConfigurationCommand,
   OIBusOpenInteractiveSessionCommand,
-  OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
   OIBusRetrieveLogsDatabaseCommand,
   OIBusSearchHistoryCacheContentCommand,
@@ -97,9 +95,10 @@ import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
 import type TransformerService from '../transformer.service';
 import { delay, getErrorMessage, getOIBusInfo, sanitizeFilename, unzip, withTimeout, zipFile } from '../utils';
 import { applyRemoteCommandPermissions, isCommandAllowed } from './command-permissions.utils';
+import { OIANALYTICS_FETCH_COMMAND_TYPES } from './oianalytics.model';
 import OIAnalyticsClient from './oianalytics-client.service';
 import type OIAnalyticsMessageService from './oianalytics-message.service';
-import OIAnalyticsRegistrationService from './oianalytics-registration.service';
+import OIAnalyticsRegistrationService, { getPrivateCipherKeys } from './oianalytics-registration.service';
 import type OIAnalyticsSessionService from './oianalytics-session.service';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
@@ -331,6 +330,12 @@ export default class OIAnalyticsCommandService {
       if (newCommands.length > 0) {
         this.logger.trace(`${newCommands.length} commands to add`);
         for (const command of newCommands) {
+          // a command this version doesn't know (one removed, or sent by mistake) can't be stored: it is skipped rather
+          // than failing the retrieval of the others
+          if (!(OIANALYTICS_FETCH_COMMAND_TYPES as ReadonlyArray<string>).includes(command.type)) {
+            this.logger.warn(`Command ${command.id} of unknown type ${command.type} ignored`);
+            continue;
+          }
           this.oIAnalyticsCommandRepository.create(command);
         }
       }
@@ -385,9 +390,6 @@ export default class OIAnalyticsCommandService {
         case 'restart-engine':
           await this.executeRestartCommand(command);
           break;
-        case 'regenerate-cipher-keys':
-          await this.executeRegenerateCipherKeysCommand(command);
-          break;
         case 'update-engine-general':
           await this.executeUpdateEngineGeneralCommand(command);
           break;
@@ -399,8 +401,8 @@ export default class OIAnalyticsCommandService {
           break;
         case 'update-engine-logger':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeUpdateEngineLoggerCommand(command, privateKey);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await this.executeUpdateEngineLoggerCommand(command, privateKeys);
           }
           break;
         case 'import-configuration':
@@ -447,14 +449,14 @@ export default class OIAnalyticsCommandService {
           break;
         case 'create-south':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeCreateSouthCommand(command, privateKey);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await this.executeCreateSouthCommand(command, privateKeys);
           }
           break;
         case 'update-south':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeUpdateSouthCommand(command, privateKey);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await this.executeUpdateSouthCommand(command, privateKeys);
           }
           break;
         case 'delete-south':
@@ -465,26 +467,26 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-south-connection':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await withTimeout(this.executeTestSouthConnectionCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await withTimeout(this.executeTestSouthConnectionCommand(command, privateKeys), TEST_COMMAND_TIMEOUT_MS, command.type);
           }
           break;
         case 'test-south-item':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await withTimeout(this.executeTestSouthItemCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await withTimeout(this.executeTestSouthItemCommand(command, privateKeys), TEST_COMMAND_TIMEOUT_MS, command.type);
           }
           break;
         case 'create-north':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeCreateNorthCommand(command, privateKey);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await this.executeCreateNorthCommand(command, privateKeys);
           }
           break;
         case 'update-north':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeUpdateNorthCommand(command, privateKey);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await this.executeUpdateNorthCommand(command, privateKeys);
           }
           break;
         case 'delete-north':
@@ -492,20 +494,20 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-north-connection':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await withTimeout(this.executeTestNorthConnectionCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await withTimeout(this.executeTestNorthConnectionCommand(command, privateKeys), TEST_COMMAND_TIMEOUT_MS, command.type);
           }
           break;
         case 'create-history-query':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeCreateHistoryQueryCommand(command, privateKey);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await this.executeCreateHistoryQueryCommand(command, privateKeys);
           }
           break;
         case 'update-history-query':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeUpdateHistoryQueryCommand(command, privateKey);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await this.executeUpdateHistoryQueryCommand(command, privateKeys);
           }
           break;
         case 'delete-history-query':
@@ -516,9 +518,9 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-history-query-north-connection':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKeys = getPrivateCipherKeys(registration);
             await withTimeout(
-              this.executeTestHistoryQueryNorthConnectionCommand(command, privateKey),
+              this.executeTestHistoryQueryNorthConnectionCommand(command, privateKeys),
               TEST_COMMAND_TIMEOUT_MS,
               command.type
             );
@@ -526,9 +528,9 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-history-query-south-connection':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKeys = getPrivateCipherKeys(registration);
             await withTimeout(
-              this.executeTestHistoryQuerySouthConnectionCommand(command, privateKey),
+              this.executeTestHistoryQuerySouthConnectionCommand(command, privateKeys),
               TEST_COMMAND_TIMEOUT_MS,
               command.type
             );
@@ -536,8 +538,8 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-history-query-south-item':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await withTimeout(this.executeTestHistoryQuerySouthItemCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await withTimeout(this.executeTestHistoryQuerySouthItemCommand(command, privateKeys), TEST_COMMAND_TIMEOUT_MS, command.type);
           }
           break;
         case 'update-history-query-status':
@@ -578,8 +580,8 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-transformer':
           {
-            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
-            await withTimeout(this.executeTestTransformerCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
+            const privateKeys = getPrivateCipherKeys(registration);
+            await withTimeout(this.executeTestTransformerCommand(command, privateKeys), TEST_COMMAND_TIMEOUT_MS, command.type);
           }
           break;
       }
@@ -675,26 +677,6 @@ export default class OIAnalyticsCommandService {
     }
   }
 
-  private async executeRegenerateCipherKeysCommand(command: OIBusRegenerateCipherKeysCommand) {
-    this.logger.info(`Reloading OIAnalytics keys...`);
-
-    // Generate RSA key pair
-    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 4096,
-      publicKeyEncoding: {
-        type: 'spki', // Recommended format for public key
-        format: 'pem' // Output format for the key
-      },
-      privateKeyEncoding: {
-        type: 'pkcs8', // Recommended format for private key
-        format: 'pem' // Output format for the key
-      }
-    });
-    await this.oIAnalyticsRegistrationService.updateKeys(privateKey, publicKey, 'oianalytics');
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'OIAnalytics keys reloaded');
-  }
-
   private async executeRestartCommand(command: OIBusRestartEngineCommand) {
     this.logger.info(`Restarting OIBus...`);
     await delay(1500);
@@ -729,9 +711,9 @@ export default class OIAnalyticsCommandService {
     );
   }
 
-  private async executeUpdateEngineLoggerCommand(command: OIBusUpdateEngineLoggerCommand, privateKey: string) {
+  private async executeUpdateEngineLoggerCommand(command: OIBusUpdateEngineLoggerCommand, privateKeys: Array<string>) {
     command.commandContent.loki.password = command.commandContent.loki.password
-      ? await encryptionService.decryptTextWithPrivateKey(command.commandContent.loki.password, privateKey)
+      ? await encryptionService.decryptTextWithPrivateKey(command.commandContent.loki.password, privateKeys)
       : '';
     await this.oIBusService.updateEngineLogger(command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(
@@ -938,7 +920,7 @@ export default class OIAnalyticsCommandService {
 
   private async decryptSouthSettings(
     command: OIBusCreateSouthConnectorCommand | OIBusUpdateSouthConnectorCommand | OIBusTestSouthConnectorCommand,
-    privateKey: string
+    privateKeys: Array<string>
   ) {
     const manifest = this.southService.listManifest().find(element => element.id === command.commandContent.type)!;
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -947,7 +929,7 @@ export default class OIAnalyticsCommandService {
     command.commandContent.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.settings,
       manifest.settings,
-      privateKey
+      privateKeys
     );
     // Type assertion is safe because we know the items match the connector type at runtime
     command.commandContent.items = (await Promise.all(
@@ -956,7 +938,7 @@ export default class OIAnalyticsCommandService {
         enabled: item.enabled,
         name: item.name,
         description: item.description ?? null,
-        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey),
+        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKeys),
         scanModeId: item.scanModeId,
         scanModeName: item.scanModeName,
         groupId: item.groupId,
@@ -978,7 +960,7 @@ export default class OIAnalyticsCommandService {
     )) as typeof command.commandContent.items;
   }
 
-  private async decryptSouthItemSettings(command: OIBusTestSouthConnectorItemCommand, privateKey: string) {
+  private async decryptSouthItemSettings(command: OIBusTestSouthConnectorItemCommand, privateKeys: Array<string>) {
     const manifest = this.southService.listManifest().find(element => element.id === command.commandContent.southCommand.type)!;
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
@@ -986,23 +968,23 @@ export default class OIAnalyticsCommandService {
     command.commandContent.southCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.southCommand.settings,
       manifest.settings,
-      privateKey
+      privateKeys
     );
     command.commandContent.itemCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.itemCommand.settings,
       itemSettingsManifest,
-      privateKey
+      privateKeys
     );
   }
 
-  private async executeCreateSouthCommand(command: OIBusCreateSouthConnectorCommand, privateKey: string) {
-    await this.decryptSouthSettings(command, privateKey);
+  private async executeCreateSouthCommand(command: OIBusCreateSouthConnectorCommand, privateKeys: Array<string>) {
+    await this.decryptSouthSettings(command, privateKeys);
     await this.southService.create(command.commandContent, command.southConnectorId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector created successfully');
   }
 
-  private async executeUpdateSouthCommand(command: OIBusUpdateSouthConnectorCommand, privateKey: string) {
-    await this.decryptSouthSettings(command, privateKey);
+  private async executeUpdateSouthCommand(command: OIBusUpdateSouthConnectorCommand, privateKeys: Array<string>) {
+    await this.decryptSouthSettings(command, privateKeys);
     await this.southService.update(command.southConnectorId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector updated successfully');
   }
@@ -1067,8 +1049,8 @@ export default class OIAnalyticsCommandService {
     );
   }
 
-  private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand, privateKey: string) {
-    await this.decryptSouthSettings(command, privateKey);
+  private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand, privateKeys: Array<string>) {
+    await this.decryptSouthSettings(command, privateKeys);
     const result = await this.southService.testSouth(
       command.southConnectorId,
       command.commandContent.type,
@@ -1077,8 +1059,8 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
-  private async executeTestSouthItemCommand(command: OIBusTestSouthConnectorItemCommand, privateKey: string) {
-    await this.decryptSouthItemSettings(command, privateKey);
+  private async executeTestSouthItemCommand(command: OIBusTestSouthConnectorItemCommand, privateKeys: Array<string>) {
+    await this.decryptSouthItemSettings(command, privateKeys);
 
     const result = await this.southService.testItem(
       command.southConnectorId,
@@ -1093,24 +1075,24 @@ export default class OIAnalyticsCommandService {
 
   private async decryptNorthSettings(
     command: OIBusCreateNorthConnectorCommand | OIBusUpdateNorthConnectorCommand | OIBusTestNorthConnectorCommand,
-    privateKey: string
+    privateKeys: Array<string>
   ) {
     const manifest = this.northService.listManifest().find(element => element.id === command.commandContent.type)!;
     command.commandContent.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.settings,
       manifest.settings,
-      privateKey
+      privateKeys
     );
   }
 
-  private async executeCreateNorthCommand(command: OIBusCreateNorthConnectorCommand, privateKey: string) {
-    await this.decryptNorthSettings(command, privateKey);
+  private async executeCreateNorthCommand(command: OIBusCreateNorthConnectorCommand, privateKeys: Array<string>) {
+    await this.decryptNorthSettings(command, privateKeys);
     await this.northService.create(command.commandContent, command.northConnectorId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector created successfully');
   }
 
-  private async executeUpdateNorthCommand(command: OIBusUpdateNorthConnectorCommand, privateKey: string) {
-    await this.decryptNorthSettings(command, privateKey);
+  private async executeUpdateNorthCommand(command: OIBusUpdateNorthConnectorCommand, privateKeys: Array<string>) {
+    await this.decryptNorthSettings(command, privateKeys);
     await this.northService.update(command.northConnectorId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector updated successfully');
   }
@@ -1120,8 +1102,8 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector deleted successfully');
   }
 
-  private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand, privateKey: string) {
-    await this.decryptNorthSettings(command, privateKey);
+  private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand, privateKeys: Array<string>) {
+    await this.decryptNorthSettings(command, privateKeys);
     const result = await this.northService.testNorth(
       command.northConnectorId,
       command.commandContent.type,
@@ -1130,14 +1112,22 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
-  private async decryptHistoryQuerySettings(command: HistoryQueryCommandDTO, privateKey: string) {
+  private async decryptHistoryQuerySettings(command: HistoryQueryCommandDTO, privateKeys: Array<string>) {
     const northManifest = this.northService.listManifest().find(element => element.id === command.northType)!;
     const southManifest = this.southService.listManifest().find(element => element.id === command.southType)!;
     const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
-    command.northSettings = await encryptionService.decryptSecretsWithPrivateKey(command.northSettings, northManifest.settings, privateKey);
-    command.southSettings = await encryptionService.decryptSecretsWithPrivateKey(command.southSettings, southManifest.settings, privateKey);
+    command.northSettings = await encryptionService.decryptSecretsWithPrivateKey(
+      command.northSettings,
+      northManifest.settings,
+      privateKeys
+    );
+    command.southSettings = await encryptionService.decryptSecretsWithPrivateKey(
+      command.southSettings,
+      southManifest.settings,
+      privateKeys
+    );
     // Type assertion is safe because we know the items match the history query type at runtime
     command.items = (await Promise.all(
       command.items.map(async item => ({
@@ -1145,12 +1135,12 @@ export default class OIAnalyticsCommandService {
         enabled: item.enabled,
         name: item.name,
         description: item.description ?? null,
-        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey)
+        settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKeys)
       }))
     )) as typeof command.items;
   }
 
-  private async decryptHistoryQuerySouthItemSettings(command: OIBusTestHistoryQuerySouthItemCommand, privateKey: string) {
+  private async decryptHistoryQuerySouthItemSettings(command: OIBusTestHistoryQuerySouthItemCommand, privateKeys: Array<string>) {
     const manifest = this.southService.listManifest().find(element => element.id === command.commandContent.historyCommand.southType)!;
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
@@ -1158,17 +1148,17 @@ export default class OIAnalyticsCommandService {
     command.commandContent.historyCommand.southSettings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.historyCommand.southSettings,
       manifest.settings,
-      privateKey
+      privateKeys
     );
     command.commandContent.itemCommand.settings = await encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.itemCommand.settings,
       itemSettingsManifest,
-      privateKey
+      privateKeys
     );
   }
 
-  private async executeCreateHistoryQueryCommand(command: OIBusCreateHistoryQueryCommand, privateKey: string) {
-    await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
+  private async executeCreateHistoryQueryCommand(command: OIBusCreateHistoryQueryCommand, privateKeys: Array<string>) {
+    await this.decryptHistoryQuerySettings(command.commandContent, privateKeys);
     await this.historyQueryService.create(
       command.commandContent,
       command.southConnectorId,
@@ -1179,8 +1169,8 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query created successfully');
   }
 
-  private async executeUpdateHistoryQueryCommand(command: OIBusUpdateHistoryQueryCommand, privateKey: string) {
-    await this.decryptHistoryQuerySettings(command.commandContent.historyQuery, privateKey);
+  private async executeUpdateHistoryQueryCommand(command: OIBusUpdateHistoryQueryCommand, privateKeys: Array<string>) {
+    await this.decryptHistoryQuerySettings(command.commandContent.historyQuery, privateKeys);
     await this.historyQueryService.update(
       command.historyQueryId,
       command.commandContent.historyQuery,
@@ -1228,8 +1218,11 @@ export default class OIAnalyticsCommandService {
     );
   }
 
-  private async executeTestHistoryQueryNorthConnectionCommand(command: OIBusTestHistoryQueryNorthConnectionCommand, privateKey: string) {
-    await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
+  private async executeTestHistoryQueryNorthConnectionCommand(
+    command: OIBusTestHistoryQueryNorthConnectionCommand,
+    privateKeys: Array<string>
+  ) {
+    await this.decryptHistoryQuerySettings(command.commandContent, privateKeys);
     const result = await this.historyQueryService.testNorth(
       command.historyQueryId,
       command.commandContent.northType,
@@ -1239,8 +1232,11 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
-  private async executeTestHistoryQuerySouthConnectionCommand(command: OIBusTestHistoryQuerySouthConnectionCommand, privateKey: string) {
-    await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
+  private async executeTestHistoryQuerySouthConnectionCommand(
+    command: OIBusTestHistoryQuerySouthConnectionCommand,
+    privateKeys: Array<string>
+  ) {
+    await this.decryptHistoryQuerySettings(command.commandContent, privateKeys);
     const result = await this.historyQueryService.testSouth(
       command.historyQueryId,
       command.commandContent.southType,
@@ -1250,8 +1246,8 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
-  private async executeTestHistoryQuerySouthItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, privateKey: string) {
-    await this.decryptHistoryQuerySouthItemSettings(command, privateKey);
+  private async executeTestHistoryQuerySouthItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, privateKeys: Array<string>) {
+    await this.decryptHistoryQuerySouthItemSettings(command, privateKeys);
 
     const result = await this.historyQueryService.testItem(
       command.historyQueryId,
@@ -1310,16 +1306,16 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
-  private async decryptTestTransformerItemSettings(content: OIBusTestTransformerItemCommandContent, privateKey: string) {
+  private async decryptTestTransformerItemSettings(content: OIBusTestTransformerItemCommandContent, privateKeys: Array<string>) {
     const manifest = this.southService.listManifest().find(element => element.id === content.southType)!;
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
-    content.southSettings = await encryptionService.decryptSecretsWithPrivateKey(content.southSettings, manifest.settings, privateKey);
-    content.itemSettings = await encryptionService.decryptSecretsWithPrivateKey(content.itemSettings, itemSettingsManifest, privateKey);
+    content.southSettings = await encryptionService.decryptSecretsWithPrivateKey(content.southSettings, manifest.settings, privateKeys);
+    content.itemSettings = await encryptionService.decryptSecretsWithPrivateKey(content.itemSettings, itemSettingsManifest, privateKeys);
   }
 
-  private async executeTestTransformerCommand(command: OIBusTestTransformerCommand, privateKey: string) {
+  private async executeTestTransformerCommand(command: OIBusTestTransformerCommand, privateKeys: Array<string>) {
     // Two ways to test a transformer, mirroring the UI: with pasted input data, or by running an
     // actual south item read through it.
     let result: SouthConnectorItemTestResult;
@@ -1330,7 +1326,7 @@ export default class OIAnalyticsCommandService {
         command.commandContent.inputData
       );
     } else {
-      await this.decryptTestTransformerItemSettings(command.commandContent, privateKey);
+      await this.decryptTestTransformerItemSettings(command.commandContent, privateKeys);
       result = await this.southService.testItem(
         command.commandContent.southId,
         command.commandContent.southType,
@@ -1542,8 +1538,6 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
         commandContent: command.commandContent
       };
     case 'restart-engine':
-      return { ...toBaseOIBusCommandDTO(command), type: command.type };
-    case 'regenerate-cipher-keys':
       return { ...toBaseOIBusCommandDTO(command), type: command.type };
     case 'update-engine-general':
       return {

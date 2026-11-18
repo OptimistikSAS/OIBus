@@ -38,13 +38,13 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
   });
 
   /** Checks the test recorded a single update of the registration, and returns its snapshots. */
-  const onlyRegistrationUpdate = (registrationId: string) => {
+  const onlyRegistrationUpdate = (registrationId: string, expectedUserId = testData.users.list[0].id) => {
     assert.strictEqual(auditService.record.mock.callCount(), 1);
     const [entityType, entityId, action, previousState, newState, userId] = auditService.record.mock.calls[0].arguments;
     assert.strictEqual(entityType, 'oianalytics_registration');
     assert.strictEqual(entityId, registrationId);
     assert.strictEqual(action, 'UPDATE');
-    assert.strictEqual(userId, testData.users.list[0].id);
+    assert.strictEqual(userId, expectedUserId);
     return { previousState: previousState!, newState: newState! };
   };
 
@@ -61,7 +61,10 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
       token: '',
       refreshToken: null,
       tokenExpirationDate: null,
-      refreshTokenExpirationDate: null
+      refreshTokenExpirationDate: null,
+      // new keys, replaced when the tokens of the registration would expire (set on activation)
+      previousPrivateCipherKey: null,
+      cipherKeyRotationDate: null
     });
 
     repository.register(
@@ -87,7 +90,9 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
       token: 'token',
       refreshToken: 'refresh token',
       tokenExpirationDate: testData.constants.dates.DATE_1,
-      refreshTokenExpirationDate: testData.constants.dates.DATE_2
+      refreshTokenExpirationDate: testData.constants.dates.DATE_2,
+      // the key pair is replaced when the refresh token would have expired
+      cipherKeyRotationDate: testData.constants.dates.DATE_2
     });
 
     repository.activate(testData.constants.dates.FAKE_NOW, {
@@ -126,7 +131,9 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
       token: '',
       refreshToken: null,
       tokenExpirationDate: null,
-      refreshTokenExpirationDate: null
+      refreshTokenExpirationDate: null,
+      // the keys are kept (a new registration replaces them), with the rotation date set by the activation
+      cipherKeyRotationDate: testData.constants.dates.DATE_2
     });
 
     repository.unregister();
@@ -172,18 +179,24 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.strictEqual(newState.proxyUsername, specificCommand.proxyUsername);
   });
 
-  it('should update keys', () => {
-    repository.updateKeys('new private key', 'new public key', testData.users.list[0].id);
+  it('should rotate keys, keeping the current private key as the previous one', () => {
+    const currentPrivateKey = repository.get()!.privateCipherKey;
+
+    repository.rotateKeys('new public key', 'new private key', testData.constants.dates.DATE_3);
 
     const result = repository.get()!;
-    assert.strictEqual(result.privateCipherKey, 'new private key');
     assert.strictEqual(result.publicCipherKey, 'new public key');
+    assert.strictEqual(result.privateCipherKey, 'new private key');
+    assert.strictEqual(result.previousPrivateCipherKey, currentPrivateKey);
+    assert.strictEqual(result.cipherKeyRotationDate, testData.constants.dates.DATE_3);
 
-    const { previousState, newState } = onlyRegistrationUpdate(result.id);
+    const { previousState, newState } = onlyRegistrationUpdate(result.id, 'system');
     assert.strictEqual(previousState.publicCipherKey, '');
     assert.strictEqual(previousState.privateCipherKey, '');
+    assert.strictEqual(previousState.previousPrivateCipherKey, '');
     assert.strictEqual(newState.publicCipherKey, '<changed>');
     assert.strictEqual(newState.privateCipherKey, '<changed>');
+    assert.strictEqual(newState.previousPrivateCipherKey, '<changed>');
   });
 });
 

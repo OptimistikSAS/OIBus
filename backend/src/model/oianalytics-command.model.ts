@@ -47,10 +47,6 @@ export interface OIBusRestartEngineCommand extends BaseOIBusCommand {
   type: 'restart-engine';
 }
 
-export interface OIBusRegenerateCipherKeysCommand extends BaseOIBusCommand {
-  type: 'regenerate-cipher-keys';
-}
-
 export interface OIBusUpdateEngineGeneralCommand extends BaseOIBusCommand {
   type: 'update-engine-general';
   commandContent: EngineGeneralCommandDTO;
@@ -367,7 +363,6 @@ export interface OIBusTestTransformerCommand extends BaseOIBusCommand {
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
-  | OIBusRegenerateCipherKeysCommand
   | OIBusUpdateEngineGeneralCommand
   | OIBusUpdateEngineWebServerCommand
   | OIBusUpdateEngineProxyCommand

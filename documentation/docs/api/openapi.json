@@ -23183,7 +23183,6 @@
 				"enum": [
 					"update-version",
 					"restart-engine",
-					"regenerate-cipher-keys",
 					"update-engine-general",
 					"update-engine-web-server",
 					"update-engine-proxy",
@@ -23345,76 +23344,6 @@
 					"result",
 					"targetVersion",
 					"commandContent"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusRegenerateCipherKeysCommandDTO": {
-				"description": "Command DTO for regenerating cipher keys.",
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier of the command.",
-						"example": "cmd123"
-					},
-					"type": {
-						"type": "string",
-						"enum": [
-							"regenerate-cipher-keys"
-						],
-						"nullable": false,
-						"description": "The type of the command."
-					},
-					"status": {
-						"$ref": "#/components/schemas/OIBusCommandStatus",
-						"description": "The current status of the command."
-					},
-					"ack": {
-						"type": "boolean",
-						"description": "Whether the command has been acknowledged.",
-						"example": true
-					},
-					"retrievedDate": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Instant"
-							}
-						],
-						"nullable": true,
-						"description": "The date and time when the command was retrieved.",
-						"example": "2023-10-31T12:34:56.789Z"
-					},
-					"completedDate": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Instant"
-							}
-						],
-						"nullable": true,
-						"description": "The date and time when the command was completed.",
-						"example": "2023-10-31T12:35:56.789Z"
-					},
-					"result": {
-						"type": "string",
-						"nullable": true,
-						"description": "The result of the command execution.",
-						"example": "Success"
-					},
-					"targetVersion": {
-						"type": "string",
-						"description": "The OIBus version the command was issued for.",
-						"example": "3.7.0"
-					}
-				},
-				"required": [
-					"id",
-					"type",
-					"status",
-					"ack",
-					"retrievedDate",
-					"completedDate",
-					"result",
-					"targetVersion"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -39970,9 +39899,6 @@
 						"$ref": "#/components/schemas/OIBusUpdateVersionCommandDTO"
 					},
 					{
-						"$ref": "#/components/schemas/OIBusRegenerateCipherKeysCommandDTO"
-					},
-					{
 						"$ref": "#/components/schemas/OIBusRestartEngineCommandDTO"
 					},
 					{
@@ -50182,7 +50108,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "4.0.0",
+		"version": "3.9.7",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"

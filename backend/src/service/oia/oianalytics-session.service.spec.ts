@@ -81,7 +81,7 @@ describe('OIAnalytics Session Service', () => {
     now = 0;
     mock.method(Date, 'now', () => now);
     encryptionService = encryptionServiceExports.encryptionService = new EncryptionServiceMock('', '');
-    encryptionService.decryptText = mock.fn(() => 'private key') as unknown as EncryptionServiceMock['decryptText'];
+    encryptionService.decryptText.mock.mockImplementation(() => 'private key');
     encryptionService.decryptSecretsWithPrivateKey.mock.mockImplementation(
       async <T>(settings: T) => ({ ...(settings as object), decrypted: true }) as T
     );
@@ -214,7 +214,7 @@ describe('OIAnalytics Session Service', () => {
       assert.deepStrictEqual(encryptionService.decryptSecretsWithPrivateKey.mock.calls[0].arguments, [
         SOUTH_SETTINGS,
         testData.south.manifest.settings,
-        'private key'
+        ['private key']
       ]);
       assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
         'create',

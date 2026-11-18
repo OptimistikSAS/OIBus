@@ -12,7 +12,18 @@ export interface OIAnalyticsRegistration extends BaseEntity {
   tokenExpirationDate: Instant | null;
   refreshTokenExpirationDate: Instant | null;
   publicCipherKey: string | null;
+  /** Encrypted private key */
   privateCipherKey: string | null;
+  /**
+   * Encrypted private key replaced by the last key rotation, to decrypt the secrets OIAnalytics encrypted with the
+   * previous public key before it received the new one
+   */
+  previousPrivateCipherKey: string | null;
+  /**
+   * When the key pair must be replaced: when the refresh token issued with it would have expired. Null when it must be
+   * replaced at the next refresh (key pair of a registration made before the tokens could be refreshed).
+   */
+  cipherKeyRotationDate: Instant | null;
   status: RegistrationStatus;
   activationDate: Instant;
   activationExpirationDate?: Instant;

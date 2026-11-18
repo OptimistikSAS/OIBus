@@ -78,7 +78,7 @@ granted again from OIBus.
 | Configuration      | **Data flow**               | Create, update or delete the South and North connectors, the history queries (and their items), the scan modes and the certificates. | Granted |
 | Configuration      | **Custom code**             | Create, update, delete or test custom transformers, which run code sent by OIAnalytics.                                              | Revoked |
 | Security           | **Manage access**           | Update the web server settings and the IP filters.                                                                                   | Granted |
-| Security           | **Manage registration**     | Update registration settings, regenerate cipher keys.                                                                                | Granted |
+| Security           | **Manage registration**     | Update registration settings.                                                                                                        | Granted |
 | Data and equipment | **Connect to data sources** | Test a connection or an item, test a transformer, open an interactive session to explore a data source.                              | Granted |
 | Data and equipment | **Manage cache**            | Search, retrieve, move or delete the cached content of the North connectors and history queries.                                     | Granted |
 | Data and equipment | **Diagnostics**             | Memory dump, logs database.                                                                                                          | Revoked |
@@ -133,7 +133,6 @@ Only **outbound HTTPS (TCP 443)** to the OIAnalytics domain needs to be allowed.
 | **Memory dump**                  | Write a memory dump (V8 heap snapshot) and upload it, zipped, to OIAnalytics. Data flows are paused while the snapshot is written, and the dump may contain secrets in clear text from OIBus memory.                                                           |
 | **Logs database**                | Upload a zipped copy of the logs database (`logs.db`) to OIAnalytics.                                                                                                                                                                                          |
 | **Update registration settings** | Apply new OIAnalytics registration settings (network, timing, permissions…).                                                                                                                                                                                   |
-| **Regenerate cipher keys**       | Generate a new RSA key pair for secret encryption.                                                                                                                                                                                                             |
 | **Scan mode management**         | Create, update, or delete scan modes.                                                                                                                                                                                                                          |
 | **North connector**              | Create, update, delete, or test North connectors.                                                                                                                                                                                                              |
 | **North connector cache**        | Search, retrieve, move, or delete cached content in a North connector's cache. Moving covers retrying an errored file (back to the cache) or archiving one.                                                                                                    |
@@ -185,8 +184,8 @@ in plaintext:
   (RSA-OAEP) in the browser before being transmitted. OIAnalytics never sees the plaintext value.
 - On the OIBus machine, secrets are stored with local encryption. The private key never leaves the OIBus instance.
 
-Use the **Regenerate cipher keys** command to rotate the RSA key pair. After regeneration, secrets stored in
-OIAnalytics must be re-entered since the old ciphertext can no longer be decrypted.
+OIBus replaces its RSA key pair by itself every 90 days, along with its tokens (see
+[Authentication Tokens](#authentication-tokens)).
 
 :::info Cryptographic details
 **Algorithm**: RSA-OAEP — a unique key pair is generated per OIBus instance during registration.
@@ -206,6 +205,11 @@ When the registration completes, OIAnalytics issues two tokens to OIBus, both st
 OIBus renews its access token automatically. In OIAnalytics, the tokens of each OIBus are listed on its configuration
 page, with the IP address they were issued to and the IP address they were last used from. Revoking a token there
 immediately rejects the requests of the OIBus using it. Registering OIBus again revokes its previous tokens.
+
+Each time its refresh token would have expired, every 90 days, OIBus also replaces the RSA key pair with which
+OIAnalytics encrypts the [secrets](#secret-management) it sends, and sends the new public key with its next token
+renewal. It keeps the previous private key, so that the secrets entered in OIAnalytics just before the replacement can
+still be decrypted. An OIBus upgraded from 3.x replaces its key pair right after exchanging its long-lived token.
 
 If the refresh token is revoked or expired (OIBus offline for more than 90 days, for example), OIAnalytics refuses to
 renew the access token: OIBus logs an error and goes back to the **Not registered** status, keeping its registration

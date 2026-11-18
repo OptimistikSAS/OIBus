@@ -238,7 +238,6 @@ export default class OIAnalyticsCommandRepository {
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'restart-engine':
-      case 'regenerate-cipher-keys':
       case 'dump-memory':
       case 'retrieve-logs-database':
         insertQuery += `(id, retrieved_date, type, status, ack, target_version) VALUES (?, ?, ?, ?, ?, ?);`;
@@ -441,11 +440,6 @@ export default class OIAnalyticsCommandRepository {
         return {
           ...baseCommandFields(command),
           type: 'retrieve-logs-database'
-        };
-      case 'regenerate-cipher-keys':
-        return {
-          ...baseCommandFields(command),
-          type: 'regenerate-cipher-keys'
         };
       case 'update-engine-general':
         return {

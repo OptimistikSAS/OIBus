@@ -230,7 +230,7 @@ describe('OIAnalytics Client', () => {
   describe('refreshToken', () => {
     const tokens = { accessToken: 'access', accessTokenExpiresIn: 3600, refreshToken: 'refresh', refreshTokenExpiresIn: 7_776_000 };
 
-    it('should post the decrypted refresh token without bearer authentication', async () => {
+    it('should post the decrypted refresh token and the public key without bearer authentication', async () => {
       respondWith(200, tokens);
 
       const result = await service.refreshToken(testData.oIAnalytics.registration.completed);
@@ -240,7 +240,7 @@ describe('OIAnalytics Client', () => {
       assert.deepStrictEqual(calledOptions, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: 'decrypted refresh token' }),
+        body: JSON.stringify({ refreshToken: 'decrypted refresh token', publicKey: 'public key' }),
         acceptUnauthorized: false,
         proxy: undefined,
         timeout: 30000

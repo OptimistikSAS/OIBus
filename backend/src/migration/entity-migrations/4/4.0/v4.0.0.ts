@@ -150,7 +150,13 @@ export async function up(knex: Knex): Promise<void> {
  * is enabled.
  */
 export async function down(knex: Knex): Promise<void> {
-  await dropColumns(knex, REGISTRATIONS_TABLE, ['refresh_token', 'token_expiration_date', 'refresh_token_expiration_date']);
+  await dropColumns(knex, REGISTRATIONS_TABLE, [
+    'refresh_token',
+    'token_expiration_date',
+    'refresh_token_expiration_date',
+    'previous_private_key',
+    'cipher_key_rotation_date'
+  ]);
   await dropColumns(knex, ENGINES_TABLE, ['description']);
   for (const table of [NORTH_CONNECTORS_TABLE, HISTORY_QUERIES_TABLE]) {
     await dropColumns(knex, table, ['caching_error_max_size', 'caching_archive_max_size']);
@@ -2024,11 +2030,18 @@ export async function addEngineDescription(knex: Knex): Promise<void> {
  * OIAnalytics now issues a short-lived access token with a refresh token to renew it. The registration stores the
  * (encrypted) refresh token and the expiration dates of both tokens. They are null for an OIBus registered before:
  * its long-lived token is exchanged for an access and refresh token pair at startup.
+ * OIBus also replaces its cipher key pair each time its refresh token would have expired: it keeps the previous private
+ * key, to decrypt the secrets OIAnalytics encrypted just before, and the date of the next replacement (null replaces it
+ * at the first refresh). The command regenerating the key pair is removed.
  */
 export async function addRegistrationTokenRefresh(knex: Knex): Promise<void> {
   await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
     table.text('refresh_token').nullable();
     table.string('token_expiration_date').nullable();
     table.string('refresh_token_expiration_date').nullable();
+    table.text('previous_private_key').nullable();
+    table.string('cipher_key_rotation_date').nullable();
   });
+  // OIBus now replaces its cipher keys by itself, along with its tokens: the command regenerating them is gone
+  await knex(COMMANDS_TABLE).where('type', 'regenerate-cipher-keys').delete();
 }
