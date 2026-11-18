@@ -182,6 +182,14 @@ export const getFilenameWithoutRandomId = (filename: string): string => {
 };
 
 /**
+ * Makes a file executable by everyone (mode 0o755) on Linux and macOS. Windows has no such permission.
+ */
+export const makeExecutable = async (filePath: string): Promise<void> => {
+  if (process.platform === 'win32') return;
+  await fs.chmod(filePath, 0o755);
+};
+
+/**
  * Compress the specified file
  */
 export const compress = (input: string, output: string): Promise<void> => {

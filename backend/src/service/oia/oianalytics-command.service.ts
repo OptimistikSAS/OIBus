@@ -104,7 +104,7 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import type { HistoryQueryEntity } from '../../model/histor-query.model';
 import { CustomTransformerCommandDTO, TransformerTestRequest, TransformerTestResponse } from '../../../shared/model/transformer.model';
 import type { ILogger } from '../../model/logger.model';
-import { delay, getOIBusInfo, unzip, getErrorMessage } from '../utils';
+import { delay, getOIBusInfo, makeExecutable, unzip, getErrorMessage } from '../utils';
 
 interface ICertificateService {
   create(command: CertificateCommandDTO, createdBy: string): Promise<unknown>;
@@ -779,14 +779,19 @@ export default class OIAnalyticsCommandService {
 
     const duration = DateTime.now().toMillis() - runStart.toMillis();
     try {
+      // The extraction does not keep the permissions of the archived files: the new binaries are made executable, or the
+      // launcher could not start the new OIBus binary, nor the service the new launcher
+      await makeExecutable(path.resolve(updateDir, 'binaries', 'oibus'));
       if (command.commandContent.updateLauncher) {
         this.logger.info(`Updating OIBus launcher`);
         const extension = os.type() === 'Windows_NT' ? '.exe' : '';
         const launcherPath = path.resolve(this.binaryFolder, '..', `oibus-launcher${extension}`);
         const launcherBackupPath = path.resolve(this.binaryFolder, '..', `oibus-launcher_backup${extension}`);
+        const updatedLauncherPath = path.resolve(updateDir, `oibus-launcher${extension}`);
+        await makeExecutable(updatedLauncherPath);
         await fs.rename(launcherPath, launcherBackupPath);
         try {
-          await fs.rename(path.resolve(updateDir, `oibus-launcher${extension}`), launcherPath);
+          await fs.rename(updatedLauncherPath, launcherPath);
         } catch (err) {
           await fs
             .rename(launcherBackupPath, launcherPath)
