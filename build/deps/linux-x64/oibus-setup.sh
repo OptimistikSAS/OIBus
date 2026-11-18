@@ -58,8 +58,10 @@ if [[ ! "$my_data_directory" ]]; then
   read -rp "Enter the directory in which you want to save all your OIBus related data, caches, and logs (default: ./OIBusData): " my_data_directory
   my_data_directory="${my_data_directory:=./OIBusData}"
 fi
+# A new data directory holds the configuration, the key of the secrets and the private key of OIBus: only for the user
+# running it (the permissions of an existing one are left to the administrator)
 if [[ ! -d "$my_data_directory" ]]; then
-  if ! mkdir "$my_data_directory"; then
+  if ! mkdir -m 700 "$my_data_directory"; then
     printf "ERROR: Could not create data directory. Terminating installation process."
     exit 1
   fi

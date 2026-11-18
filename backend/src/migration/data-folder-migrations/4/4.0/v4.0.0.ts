@@ -61,6 +61,32 @@ export async function up(knex: Knex): Promise<void> {
   if (converted > 0) {
     console.info(`Converted ${converted} cached file(s) to the 4.0.0 content types and names`);
   }
+  await restrictKeyMaterial(DATA_FOLDER_PATH);
+}
+
+/**
+ * OIBus now creates its configuration, its crypto database and its private key for the user running it only. Those
+ * created before are restricted once, here: afterwards, their permissions are left to the administrator. Only on Linux
+ * and macOS, Windows ignoring these modes (its installers restrict the data folder with ACLs). A failure is reported
+ * without stopping the migration: OIBus keeps working with the current permissions.
+ */
+export async function restrictKeyMaterial(dataFolder: string): Promise<void> {
+  if (process.platform === 'win32') return;
+  const restrictions: Array<[string, number]> = [
+    ['oibus.db', 0o600],
+    ['crypto.db', 0o600],
+    ['certs', 0o700],
+    [path.join('certs', 'private.pem'), 0o600]
+  ];
+  for (const [file, mode] of restrictions) {
+    try {
+      await fs.chmod(path.resolve(dataFolder, file), mode);
+    } catch (error: unknown) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        console.warn(`Could not restrict the access to ${file}: ${(error as Error).message}`);
+      }
+    }
+  }
 }
 
 /** A time value as cached before 4.0.0: the value and its extra fields (e.g. the quality) nested in `data`. */

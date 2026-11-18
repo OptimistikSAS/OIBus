@@ -67,6 +67,26 @@ OIBus uses five SQLite databases:
 
 Backing up both `oibus.db` and `crypto.db` together is necessary for a complete, restorable snapshot.
 
+### File Permissions {#file-permissions}
+
+The data folder holds the configuration (password hashes, encrypted secrets), the key of the secrets and the private
+key of OIBus. Its access is restricted to the account running OIBus when it is created, and then left to the
+administrator, who may change it (for instance to let a backup agent read it):
+
+- The installers create a new data folder for that account only: mode `700` on Linux, and on Windows an access
+  control list granting full control to the OIBus service (`SYSTEM`) and the administrators only, without the
+  permissions inherited from its parent folder. An existing data folder is left as it is.
+- On Linux and macOS, OIBus creates `oibus.db`, `crypto.db` and `certs/private.pem` for its user only (mode `600`),
+  and the `certs/` folder (mode `700`). The upgrade to OIBus 4.0 restricts those created before once.
+
+On Windows, restrict an existing data folder the same way from an administrator command prompt:
+
+```bat
+icacls "C:\OIBusData" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F"
+```
+
+Running OIBus interactively (`go.bat`) then requires an administrator command prompt.
+
 ## Web Interface Authentication {#web-interface-authentication}
 
 The OIBus web interface supports two authentication methods:

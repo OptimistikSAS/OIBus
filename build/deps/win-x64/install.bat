@@ -94,7 +94,17 @@ if not ERRORLEVEL 1 (
     exit /b 1
 )
 
-if not exist "%DATA_FOLDER_PATH%" mkdir "%DATA_FOLDER_PATH%"
+if exist "%DATA_FOLDER_PATH%" goto DATA_FOLDER_READY
+mkdir "%DATA_FOLDER_PATH%"
+rem A new data folder holds the configuration, the key of the secrets and the private key of OIBus: restrict it to the
+rem service (LocalSystem) and the administrators, removing the inherited permissions (such as the read access of the
+rem users). Well-known SIDs, so that it also works on a localized Windows. The permissions of an existing data folder
+rem are left to the administrator. A trailing backslash would escape the closing quote of the icacls argument.
+set "ACL_DATA_FOLDER=%DATA_FOLDER_PATH%"
+if "%ACL_DATA_FOLDER:~-1%"=="\" set "ACL_DATA_FOLDER=%ACL_DATA_FOLDER:~0,-1%"
+icacls "%ACL_DATA_FOLDER%" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" >nul
+if ERRORLEVEL 1 echo WARNING: Could not restrict the access to "%DATA_FOLDER_PATH%" to the administrators. Restrict it in its security properties.
+:DATA_FOLDER_READY
 
 rem Every OIBus instance must have its own binaries folder and its own data folder. Check
 rem the machine-wide instance registry (HKLM\SOFTWARE\OIBus\Instances, shared with the

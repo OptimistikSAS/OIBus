@@ -232,6 +232,46 @@ describe('Service utils', () => {
     });
   });
 
+  describe('createOwnerOnlyFile', () => {
+    let folder: string;
+
+    beforeEach(async () => {
+      folder = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-owner-only-'));
+    });
+
+    afterEach(async () => {
+      await fs.rm(folder, { recursive: true, force: true });
+    });
+
+    it('should create an empty file only its owner can access', async () => {
+      const filePath = path.join(folder, 'crypto.db');
+
+      await utils.createOwnerOnlyFile(filePath);
+
+      assert.strictEqual(await fs.readFile(filePath, 'utf8'), '');
+      if (process.platform !== 'win32') {
+        assert.strictEqual((await fs.stat(filePath)).mode & 0o777, 0o600);
+      }
+    });
+
+    it('should leave an existing file and its permissions as they are', async () => {
+      const filePath = path.join(folder, 'oibus.db');
+      await fs.writeFile(filePath, 'database');
+      await fs.chmod(filePath, 0o640);
+
+      await utils.createOwnerOnlyFile(filePath);
+
+      assert.strictEqual(await fs.readFile(filePath, 'utf8'), 'database');
+      if (process.platform !== 'win32') {
+        assert.strictEqual((await fs.stat(filePath)).mode & 0o777, 0o640);
+      }
+    });
+
+    it('should throw the other errors', async () => {
+      await assert.rejects(() => utils.createOwnerOnlyFile(path.join(folder, 'missing', 'oibus.db')), { code: 'ENOENT' });
+    });
+  });
+
   describe('createFolder', () => {
     it('should properly create folder when it exists', async () => {
       const mkdirMock = mock.method(fs, 'mkdir', async () => null);
