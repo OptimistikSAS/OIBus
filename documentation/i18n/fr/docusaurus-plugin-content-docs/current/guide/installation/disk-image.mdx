@@ -65,9 +65,10 @@ tout automatiquement.
    utile pour le débogage.
 
 Ce script est appelé par `mass-install.bat` avec les paramètres appropriés, donc aucune interaction manuelle
-n'est nécessaire dans un contexte d'image disque. `mass-install.bat` ne passe que `-c` et `-n` — il s'appuie
-sur les identifiants administrateur par défaut d'OIBus (voir la Phase 1 ci-dessous) plutôt que de les
-configurer via `-u`/`-p`.
+n'est nécessaire dans un contexte d'image disque. `mass-install.bat` passe `-c`, `-n`, `-u` et `-p` : OIBus
+démarre avec les identifiants de la Phase 1 ci-dessous plutôt qu'avec ses identifiants par défaut, dont il exige
+de changer le mot de passe avant d'accepter tout autre appel à l'API (voir
+[Compte par défaut](../advanced/oibus-security.md#default-account)).
 
 ## Le script `mass-install.bat` {#the-mass-installbat-script}
 
@@ -80,7 +81,7 @@ ci-dessous.
 set INSTALL_SCRIPT_PATH=%~dp0install.bat
 
 set USERNAME=admin
-set PASSWORD=pass
+set PASSWORD=
 set OIANALYTICS_URL=https://instance.optimistik.fr/
 
 set SERVICE_NAME=OIBus
@@ -90,9 +91,10 @@ set DATA_FOLDER_PATH=C:\OIBusData
 `%~dp0` se résout au répertoire contenant `mass-install.bat`, donc `INSTALL_SCRIPT_PATH` pointe toujours
 vers `install.bat` dans le même dossier, quel que soit l'endroit d'où le script est lancé.
 
-Les cinq variables sont des valeurs par défaut. Chacune d'elles peut être remplacée au moment de l'appel via
-un paramètre en ligne de commande (voir Phase 2). Les identifiants par défaut (`admin` / `pass`) correspondent
-à une installation OIBus fraîche.
+Chacune des cinq variables peut être remplacée au moment de l'appel via un paramètre en ligne de commande (voir
+Phase 2). Le mot de passe n'a pas de valeur par défaut : donnez-le avec `-p`, de 8 à 128 caractères. Il devient
+le mot de passe du compte administrateur d'OIBus, qui refuse les appels à l'API d'un compte ayant encore son mot
+de passe par défaut `pass`.
 
 ### Phase 2 — Analyse des paramètres {#phase-2--parameter-parsing}
 
@@ -148,6 +150,12 @@ Phase 1.
 ### Phase 3 — Validation des entrées {#phase-3--input-validation}
 
 ```batch
+:: OIBus refuses the API calls of an account having its default password: another one is required
+if "%PASSWORD%"=="" (
+    echo ERROR: The OIBus password is required ^(-p^).
+    exit /b 1
+)
+
 :: The service name ends up as a raw, unquoted argument in several commands below (sc.exe,
 :: echo), so anything outside this safe set - especially shell metacharacters like & | > < ^ -
 :: could inject arbitrary commands. Reject it outright rather than trying to quote/escape it
@@ -175,7 +183,8 @@ Sans cela, une valeur `-n` malveillante pourrait injecter des commandes arbitrai
 tant qu'Administrateur), et une valeur `-u`/`-p`/`-o` contenant `&`, `|`, ou `"` — tout à fait plausible pour
 un vrai mot de passe — corromprait ou détournerait les appels `curl` dans les phases suivantes. À partir
 d'ici, utilisez `%ESCAPED_USERNAME%`, `%ESCAPED_PASSWORD%`, et `%ESCAPED_OIANALYTICS_URL%` au lieu des
-variables brutes partout où elles sont intégrées dans une commande ou un corps JSON.
+variables brutes partout où elles sont intégrées dans une commande ou un corps JSON. Le script s'arrête aussi
+quand aucun mot de passe n'est donné.
 
 ### Phase 4 — Vérification des droits Administrateur {#phase-4--administrator-check}
 
@@ -227,7 +236,7 @@ appels API échouent en raison d'un réseau manquant.
 ```batch
 if not exist "%DATA_FOLDER_PATH%" mkdir "%DATA_FOLDER_PATH%"
 
-call "%INSTALL_SCRIPT_PATH%" -c "%DATA_FOLDER_PATH%" -n "%SERVICE_NAME%"
+call "%INSTALL_SCRIPT_PATH%" -c "%DATA_FOLDER_PATH%" -n "%SERVICE_NAME%" -u "%USERNAME%" -p "%PASSWORD%"
 if %errorlevel% neq 0 (
     echo Error: %SERVICE_NAME% installation failed.
     exit /b %errorlevel%
@@ -343,11 +352,11 @@ set INSTALL_SCRIPT_PATH=%~dp0install.bat
 
 setlocal enabledelayedexpansion
 
-:: Default values — all can be overridden via command-line parameters
+:: Default values — all can be overridden via command-line parameters. The password has none: give it with -p
 set SERVICE_NAME=OIBus
 set DATA_FOLDER_PATH=C:\OIBusData
 set USERNAME=admin
-set PASSWORD=pass
+set PASSWORD=
 set OIANALYTICS_URL=https://instance.optimistik.fr/
 
 :PARSE_PARAMETERS
@@ -385,6 +394,12 @@ if "%~1"=="-o" (
 shift
 goto PARSE_PARAMETERS
 :PARSE_PARAMETERS_DONE
+
+:: OIBus refuses the API calls of an account having its default password: another one is required
+if "%PASSWORD%"=="" (
+    echo ERROR: The OIBus password is required ^(-p^).
+    exit /b 1
+)
 
 :: The service name ends up as a raw, unquoted argument in several commands below (sc.exe,
 :: echo), so anything outside this safe set - especially shell metacharacters like & | > < ^ -
@@ -436,7 +451,7 @@ echo Network service is running.
 if not exist "%DATA_FOLDER_PATH%" mkdir "%DATA_FOLDER_PATH%"
 
 :: Install OIBus as a Windows service
-call "%INSTALL_SCRIPT_PATH%" -c "%DATA_FOLDER_PATH%" -n "%SERVICE_NAME%"
+call "%INSTALL_SCRIPT_PATH%" -c "%DATA_FOLDER_PATH%" -n "%SERVICE_NAME%" -u "%USERNAME%" -p "%PASSWORD%"
 if %errorlevel% neq 0 (
     echo Error: %SERVICE_NAME% installation failed.
     exit /b %errorlevel%

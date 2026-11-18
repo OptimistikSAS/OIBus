@@ -115,8 +115,8 @@ oibus-launcher --reset-password --config /path/to/OIBusData
 1. Stop the OIBus service.
 2. Run the command above.
 3. Restart the service.
-4. Log in with `admin` / `pass` and change the password immediately in
-   [User Settings](../installation/first-access.mdx#user-settings).
+4. Log in with `admin` / `pass`: OIBus asks you to change the password right away (see
+   [Default Account](./oibus-security.md#default-account)).
 
 :::caution
 `--reset-password` is processed by the launcher only and is never forwarded to the `oibus` binary.
