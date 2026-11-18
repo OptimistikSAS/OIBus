@@ -7,7 +7,7 @@ import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../.
 import { GetUserInfo } from '../../../shared/model/common/types';
 
 import type { ILogger } from '../../model/logger.model';
-import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { OIAnalyticsRegistration, OIAnalyticsRegistrationTokens } from '../../model/oianalytics-registration.model';
 import { NotFoundError } from '../../model/types';
 import EngineRepository from '../../repository/config/engine.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -16,12 +16,44 @@ import { registrationSchema } from '../../web-server/controllers/validators/oibu
 import { encryptionService } from '../encryption.service';
 import { getErrorMessage, getOIBusInfo } from '../utils';
 import { testOIAnalyticsConnection } from '../utils-oianalytics';
-import OIAnalyticsClient from './oianalytics-client.service';
+import { OIAnalyticsTokensDTO } from './oianalytics.model';
+import OIAnalyticsClient, { OIAnalyticsInvalidGrantError, OIAnalyticsTokenRefreshUnsupportedError } from './oianalytics-client.service';
 
 const CHECK_REGISTRATION_INTERVAL = 10_000;
+const TOKEN_REFRESH_INTERVAL = 60_000;
+// The access token is renewed when it expires in less than this delay
+const TOKEN_REFRESH_MARGIN_MS = 10 * 60_000;
+
+/**
+ * Encrypt the tokens issued by OIAnalytics, and compute their expiration dates from their lifetimes: OIAnalytics
+ * gives lifetimes rather than dates so that the clock of OIBus doesn't need to match its own.
+ * An OIAnalytics which can't refresh tokens yet only gives a long-lived access token: it is then the only one stored.
+ */
+export const toRegistrationTokens = async (
+  tokens: Pick<OIAnalyticsTokensDTO, 'accessToken'> & Partial<OIAnalyticsTokensDTO>
+): Promise<OIAnalyticsRegistrationTokens> => {
+  const now = DateTime.now().toUTC();
+  if (!tokens.refreshToken) {
+    return {
+      token: await encryptionService.encryptText(tokens.accessToken),
+      refreshToken: null,
+      tokenExpirationDate: null,
+      refreshTokenExpirationDate: null
+    };
+  }
+  return {
+    token: await encryptionService.encryptText(tokens.accessToken),
+    refreshToken: await encryptionService.encryptText(tokens.refreshToken),
+    tokenExpirationDate: now.plus({ seconds: tokens.accessTokenExpiresIn! }).toISO()!,
+    refreshTokenExpirationDate: now.plus({ seconds: tokens.refreshTokenExpiresIn! }).toISO()!
+  };
+};
+
 export default class OIAnalyticsRegistrationService {
   private intervalCheckRegistration: NodeJS.Timeout | null = null;
   private ongoingCheckRegistration = false;
+  private intervalTokenRefresh: NodeJS.Timeout | null = null;
+  private ongoingTokenRefresh: Promise<void> | null = null;
   public registrationEvent: EventEmitter = new EventEmitter(); // Used to trigger logger on (un)registration
 
   constructor(
@@ -37,6 +69,12 @@ export default class OIAnalyticsRegistrationService {
     if (registrationSettings.checkUrl && registrationSettings.status === 'PENDING') {
       this.intervalCheckRegistration = setInterval(this.checkRegistration.bind(this), CHECK_REGISTRATION_INTERVAL);
     }
+    // The tokens are only refreshed when registered: the interval runs whatever the status, to keep them up to date
+    // whenever OIBus gets registered
+    if (!this.intervalTokenRefresh) {
+      this.intervalTokenRefresh = setInterval(this.refreshTokenIfNeeded.bind(this), TOKEN_REFRESH_INTERVAL);
+    }
+    this.refreshTokenIfNeeded();
   }
 
   getRegistrationSettings(): OIAnalyticsRegistration {
@@ -122,8 +160,10 @@ export default class OIAnalyticsRegistrationService {
       if (result.status !== 'COMPLETED') {
         this.logger.warn(`Registration not completed. Status: ${result.status}`);
       } else {
-        const encryptedToken = await encryptionService.encryptText(result.accessToken);
-        this.oIAnalyticsRegistrationRepository.activate(DateTime.now().toUTC().toISO()!, encryptedToken);
+        this.oIAnalyticsRegistrationRepository.activate(
+          DateTime.now().toUTC().toISO()!,
+          await toRegistrationTokens({ ...result, accessToken: result.accessToken! })
+        );
         if (this.intervalCheckRegistration) {
           clearInterval(this.intervalCheckRegistration);
           this.intervalCheckRegistration = null;
@@ -135,6 +175,65 @@ export default class OIAnalyticsRegistrationService {
       this.logger.error(`Error while checking registration: ${getErrorMessage(error)}`);
     }
     this.ongoingCheckRegistration = false;
+  }
+
+  /**
+   * Renew the access token when it is about to expire, with the refresh token. A registration made before the tokens
+   * could be refreshed has a long-lived token and no refresh token: its token is exchanged for a refreshable pair.
+   * Only one renewal runs at a time: a call during a renewal waits for it.
+   */
+  refreshTokenIfNeeded(): Promise<void> {
+    if (!this.ongoingTokenRefresh) {
+      this.ongoingTokenRefresh = this.refreshToken().finally(() => {
+        this.ongoingTokenRefresh = null;
+      });
+    }
+    return this.ongoingTokenRefresh;
+  }
+
+  private async refreshToken(): Promise<void> {
+    const registration = this.oIAnalyticsRegistrationRepository.get()!;
+    if (registration.status !== 'REGISTERED') return;
+    const exchange = !registration.refreshToken;
+    if (
+      !exchange &&
+      registration.tokenExpirationDate &&
+      DateTime.fromISO(registration.tokenExpirationDate).toMillis() - DateTime.now().toMillis() > TOKEN_REFRESH_MARGIN_MS
+    ) {
+      return;
+    }
+
+    try {
+      const tokens = exchange
+        ? await this.oIAnalyticsClient.exchangeToken(registration)
+        : await this.oIAnalyticsClient.refreshToken(registration);
+      const registrationTokens = await toRegistrationTokens(tokens);
+      if (!this.isSameRegistration(registration)) return;
+      this.oIAnalyticsRegistrationRepository.updateTokens(registrationTokens);
+      this.logger.debug(exchange ? 'OIAnalytics long-lived token exchanged for a refreshable one' : 'OIAnalytics access token refreshed');
+    } catch (error: unknown) {
+      if (!this.isSameRegistration(registration)) return;
+      if (error instanceof OIAnalyticsInvalidGrantError) {
+        this.logger.error(
+          `OIAnalytics refused to renew the access token of OIBus: its tokens were revoked or expired. OIBus must be registered again. ${getErrorMessage(error)}`
+        );
+        this.unregister();
+      } else if (error instanceof OIAnalyticsTokenRefreshUnsupportedError) {
+        // the OIAnalytics instance has not been upgraded yet: the long-lived token keeps working
+        this.logger.trace(`OIAnalytics cannot refresh tokens yet, keeping the long-lived token: ${getErrorMessage(error)}`);
+      } else {
+        this.logger.warn(`Could not renew the OIAnalytics access token, retrying later: ${getErrorMessage(error)}`);
+      }
+    }
+  }
+
+  /**
+   * Whether the registration is still the one whose tokens were being renewed: OIBus may have been unregistered or
+   * registered again meanwhile, in which case the renewal outcome is ignored
+   */
+  private isSameRegistration(registration: OIAnalyticsRegistration): boolean {
+    const current = this.oIAnalyticsRegistrationRepository.get()!;
+    return current.status === 'REGISTERED' && current.token === registration.token && current.refreshToken === registration.refreshToken;
   }
 
   async editRegistrationSettings(command: RegistrationSettingsCommandDTO, updatedBy: string): Promise<void> {
@@ -185,6 +284,10 @@ export default class OIAnalyticsRegistrationService {
     if (this.intervalCheckRegistration) {
       clearInterval(this.intervalCheckRegistration);
       this.intervalCheckRegistration = null;
+    }
+    if (this.intervalTokenRefresh) {
+      clearInterval(this.intervalTokenRefresh);
+      this.intervalTokenRefresh = null;
     }
 
     this.registrationEvent.removeAllListeners();

@@ -20,6 +20,7 @@ import {
   addItemAndWorkflowDescriptions,
   addOIAnalyticsReferenceProcess,
   addOPCUATimeoutsAndSubscriptionSettings,
+  addRegistrationTokenRefresh,
   convertFieldProcessesToOperations,
   convertFileWriterLinks,
   convertOIAnalyticsSouths,
@@ -5142,5 +5143,48 @@ describe('Entity migration v4.0.0: addEngineDescription', () => {
 
     assert.ok(!(await columnNames(db, 'engines')).includes('description'));
     assert.strictEqual((await db('engines').select('id')).length, 1);
+  });
+});
+
+describe('Entity migration v4.0.0: addRegistrationTokenRefresh', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addRegistrationTokenRefresh, db)
+  });
+  let db: Knex;
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('registrations').insert({ id: 'registration-id', host: 'http://localhost:4200', status: 'REGISTERED', token: 'long-lived' });
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should add the refresh token and expiration date columns, null for an existing registration', async () => {
+    await addRegistrationTokenRefresh(db);
+
+    const columns = await columnNames(db, 'registrations');
+    for (const column of ['refresh_token', 'token_expiration_date', 'refresh_token_expiration_date']) {
+      assert.ok(columns.includes(column), column);
+    }
+    assert.deepStrictEqual(
+      await db('registrations')
+        .where('id', 'registration-id')
+        .first('token', 'refresh_token', 'token_expiration_date', 'refresh_token_expiration_date'),
+      { token: 'long-lived', refresh_token: null, token_expiration_date: null, refresh_token_expiration_date: null }
+    );
+  });
+
+  it('should drop the refresh token and expiration date columns on down', async () => {
+    await runStepsFrom(addRegistrationTokenRefresh, db);
+    await down(db);
+
+    const columns = await columnNames(db, 'registrations');
+    for (const column of ['refresh_token', 'token_expiration_date', 'refresh_token_expiration_date']) {
+      assert.ok(!columns.includes(column), column);
+    }
+    assert.strictEqual((await db('registrations').select('id')).length, 1);
   });
 });

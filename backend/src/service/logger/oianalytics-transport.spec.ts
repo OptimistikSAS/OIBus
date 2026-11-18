@@ -7,12 +7,13 @@ import type { CryptoSettings } from '../../../shared/model/domain/engine.model';
 import type { PinoLog } from '../../model/logs.model';
 import type { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import testData from '../../tests/utils/test-data';
-import { reloadModule } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
 interface OIAnalyticsOptions {
   registrationSettings: OIAnalyticsRegistration;
+  configDatabasePath: string;
   interval: number;
   batchLimit?: number;
   cryptoSettings: CryptoSettings;
@@ -27,6 +28,10 @@ let mockHTTPRequest: ReturnType<typeof mock.fn>;
 let mockBuildHttpOptions: ReturnType<typeof mock.fn>;
 let mockGetUrl: ReturnType<typeof mock.fn>;
 let mockEncryptionInit: ReturnType<typeof mock.fn>;
+let mockDatabase: ReturnType<typeof mock.fn>;
+let mockSelectToken: ReturnType<typeof mock.fn>;
+let mockPrepare: ReturnType<typeof mock.fn>;
+let mockDatabaseClose: ReturnType<typeof mock.fn>;
 
 let capturedSourceFn: ((source: AsyncIterable<PinoLog>) => Promise<void>) | null = null;
 let capturedCloseFn: (() => Promise<void>) | null = null;
@@ -36,6 +41,7 @@ const baseCrypto: CryptoSettings = testData.engine.crypto;
 
 const defaultOpts: OIAnalyticsOptions = {
   registrationSettings: baseRegistration,
+  configDatabasePath: '/data/oibus.db',
   interval: 30,
   cryptoSettings: baseCrypto,
   certsFolder: '/certs'
@@ -82,6 +88,14 @@ before(() => {
     getUrl: (...args: Array<unknown>) => mockGetUrl(...args)
   };
 
+  // better-sqlite3: the transport reads the current access token from oibus.db
+  mockModule(nodeRequire, 'better-sqlite3', {
+    __esModule: true,
+    default: function Database(...args: Array<unknown>) {
+      return mockDatabase(...args);
+    }
+  });
+
   createTransport = reloadModule<{ default: CreateTransport }>(nodeRequire, './oianalytics-transport').default;
 });
 
@@ -90,6 +104,10 @@ beforeEach(() => {
   mockBuildHttpOptions = mock.fn(async () => ({ headers: {} as Record<string, string>, body: null }));
   mockGetUrl = mock.fn(() => 'http://example.com/api/oianalytics/oibus/logs');
   mockEncryptionInit = mock.fn(async () => undefined);
+  mockSelectToken = mock.fn(() => ({ token: 'current token' }));
+  mockPrepare = mock.fn(() => ({ get: mockSelectToken }));
+  mockDatabaseClose = mock.fn();
+  mockDatabase = mock.fn(() => ({ prepare: mockPrepare, close: mockDatabaseClose }));
   capturedSourceFn = null;
   capturedCloseFn = null;
   mock.timers.enable({ apis: ['setInterval'] });
@@ -133,6 +151,37 @@ describe('OianalyticsTransport (createTransport)', () => {
     assert.ok(capturedSourceFn !== null, 'source handler should be captured');
     assert.ok(capturedCloseFn !== null, 'close handler should be captured');
     assert.strictEqual(mockEncryptionInit.mock.calls.length, 1);
+  });
+
+  it('should open oibus.db read-only', async () => {
+    await createTransport(defaultOpts);
+
+    assert.deepStrictEqual(mockDatabase.mock.calls[0].arguments, ['/data/oibus.db', { readonly: true, fileMustExist: true }]);
+  });
+
+  it('should send the logs with the access token currently stored, and close oibus.db at the end', async () => {
+    await createTransport(defaultOpts);
+    await capturedSourceFn!(makeSource([makeLog('hello')]));
+    mock.timers.tick(30000);
+    await drainMicrotasks();
+    mockSelectToken.mock.mockImplementation(() => ({ token: 'renewed token' }));
+    await capturedSourceFn!(makeSource([makeLog('hello again')]));
+
+    await capturedCloseFn!();
+
+    assert.deepStrictEqual(
+      mockBuildHttpOptions.mock.calls.map(call => (call.arguments[2] as OIAnalyticsRegistration).token),
+      ['current token', 'renewed token']
+    );
+    assert.strictEqual(mockDatabaseClose.mock.calls.length, 1);
+  });
+
+  it('should close oibus.db at the end even without logs to send', async () => {
+    await createTransport(defaultOpts);
+
+    await capturedCloseFn!();
+
+    assert.strictEqual(mockDatabaseClose.mock.calls.length, 1);
   });
 
   it('should trim a trailing slash from the host on construction', async () => {

@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { createWriteStream, existsSync, readFileSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -210,10 +211,14 @@ export const filesExists = async (filePath: string): Promise<boolean> => {
 const CHARACTER_SET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const RANDOM_LENGTH = 16;
 
+/**
+ * Generate a random identifier, with a cryptographically secure generator: some identifiers act as secrets (the
+ * activation code of the OIAnalytics registration for example)
+ */
 export const generateRandomId = (size = RANDOM_LENGTH): string => {
   let randomId = '';
   for (let i = 0; i < size; i += 1) {
-    randomId += CHARACTER_SET[Math.floor(Math.random() * CHARACTER_SET.length)];
+    randomId += CHARACTER_SET[randomInt(CHARACTER_SET.length)];
   }
   return randomId;
 };

@@ -9,6 +9,10 @@ import testData from '../../tests/utils/test-data';
 import { assertContains, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type { ReqOptions, ReqResponse } from '../http-request.utils';
 import type OIAnalyticsClientType from './oianalytics-client.service';
+import type {
+  OIAnalyticsInvalidGrantError as OIAnalyticsInvalidGrantErrorType,
+  OIAnalyticsTokenRefreshUnsupportedError as OIAnalyticsTokenRefreshUnsupportedErrorType
+} from './oianalytics-client.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -30,18 +34,32 @@ const createUtilsOIAnalyticsMocks = () => ({
   getProxyOptions: mock.fn(() => ({ acceptUnauthorized: false, proxy: undefined })),
   getUrl: mock.fn((endpoint: string, host: string) => new URL(endpoint, host))
 });
+const createEncryptionMocks = () => ({
+  encryptionService: { decryptText: mock.fn((text: string) => `decrypted ${text}`) }
+});
 const httpRequestExports = createHttpRequestMocks();
+const encryptionExports = createEncryptionMocks();
 const utilsExports = createUtilsMocks();
 const utilsOIAnalyticsExports = createUtilsOIAnalyticsMocks();
 
 let OIAnalyticsClient: typeof OIAnalyticsClientType;
+let OIAnalyticsInvalidGrantError: typeof OIAnalyticsInvalidGrantErrorType;
+let OIAnalyticsTokenRefreshUnsupportedError: typeof OIAnalyticsTokenRefreshUnsupportedErrorType;
 
 before(() => {
+  mockModule(nodeRequire, '../encryption.service', encryptionExports);
   mockModule(nodeRequire, '../http-request.utils', httpRequestExports);
   mockModule(nodeRequire, '../utils', utilsExports);
   mockModule(nodeRequire, '../utils-oianalytics', utilsOIAnalyticsExports);
 
-  OIAnalyticsClient = reloadModule<{ default: typeof OIAnalyticsClientType }>(nodeRequire, './oianalytics-client.service').default;
+  const clientModule = reloadModule<{
+    default: typeof OIAnalyticsClientType;
+    OIAnalyticsInvalidGrantError: typeof OIAnalyticsInvalidGrantErrorType;
+    OIAnalyticsTokenRefreshUnsupportedError: typeof OIAnalyticsTokenRefreshUnsupportedErrorType;
+  }>(nodeRequire, './oianalytics-client.service');
+  OIAnalyticsClient = clientModule.default;
+  OIAnalyticsInvalidGrantError = clientModule.OIAnalyticsInvalidGrantError;
+  OIAnalyticsTokenRefreshUnsupportedError = clientModule.OIAnalyticsTokenRefreshUnsupportedError;
 });
 
 describe('OIAnalytics Client', () => {
@@ -53,6 +71,7 @@ describe('OIAnalytics Client', () => {
 
   beforeEach(() => {
     Object.assign(httpRequestExports, createHttpRequestMocks());
+    Object.assign(encryptionExports, createEncryptionMocks());
     Object.assign(utilsExports, createUtilsMocks());
     Object.assign(utilsOIAnalyticsExports, createUtilsOIAnalyticsMocks());
 
@@ -152,7 +171,8 @@ describe('OIAnalytics Client', () => {
           oibusVersion: testData.engine.oIBusInfo.version,
           oibusOs: testData.engine.oIBusInfo.operatingSystem,
           oibusArch: testData.engine.oIBusInfo.architecture,
-          publicKey: 'public key'
+          publicKey: 'public key',
+          tokenRefresh: true
         })
       );
       assert.deepStrictEqual(result, mockResponse);
@@ -169,7 +189,14 @@ describe('OIAnalytics Client', () => {
 
   describe('checkRegistration', () => {
     it('should call checkUrl', async () => {
-      const mockResponse = { status: 'REGISTERED', expired: false, accessToken: 'token' };
+      const mockResponse = {
+        status: 'COMPLETED',
+        expired: false,
+        accessToken: 'token',
+        accessTokenExpiresIn: 3600,
+        refreshToken: 'refresh',
+        refreshTokenExpiresIn: 7_776_000
+      };
       respondWith(200, mockResponse);
 
       const result = await service.checkRegistration(testData.oIAnalytics.registration.completed);
@@ -197,6 +224,89 @@ describe('OIAnalytics Client', () => {
     it('should throw on error response', async () => {
       respondWith(400, 'Bad Request');
       await assert.rejects(() => service.checkRegistration(testData.oIAnalytics.registration.completed), /400 - Bad Request/);
+    });
+  });
+
+  describe('refreshToken', () => {
+    const tokens = { accessToken: 'access', accessTokenExpiresIn: 3600, refreshToken: 'refresh', refreshTokenExpiresIn: 7_776_000 };
+
+    it('should post the decrypted refresh token without bearer authentication', async () => {
+      respondWith(200, tokens);
+
+      const result = await service.refreshToken(testData.oIAnalytics.registration.completed);
+
+      const [calledUrl, calledOptions] = sentRequest();
+      assert.ok(calledUrl.href.endsWith('/api/oianalytics/oibus/registration/token'));
+      assert.deepStrictEqual(calledOptions, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: 'decrypted refresh token' }),
+        acceptUnauthorized: false,
+        proxy: undefined,
+        timeout: 30000
+      });
+      assert.deepStrictEqual(result, tokens);
+    });
+
+    it('should throw an invalid grant error when OIAnalytics refuses the refresh token', async () => {
+      respondWith(401, { error: 'invalid_grant' });
+      await assert.rejects(() => service.refreshToken(testData.oIAnalytics.registration.completed), OIAnalyticsInvalidGrantError);
+    });
+
+    for (const [statusCode, body] of [
+      [401, 'Unauthorized'],
+      [401, { error: 'invalid_token' }],
+      [400, { error: 'invalid_grant' }],
+      [502, 'Bad Gateway']
+    ] as const) {
+      it(`should throw a transient error on ${statusCode} - ${JSON.stringify(body)}`, async () => {
+        respondWith(statusCode, body);
+        const error = await service.refreshToken(testData.oIAnalytics.registration.completed).catch((e: unknown) => e);
+        assert.ok(error instanceof Error);
+        assert.ok(!(error instanceof OIAnalyticsInvalidGrantError));
+        assert.ok(error.message.startsWith(`${statusCode} - `));
+      });
+    }
+  });
+
+  describe('exchangeToken', () => {
+    const tokens = { accessToken: 'access', accessTokenExpiresIn: 3600, refreshToken: 'refresh', refreshTokenExpiresIn: 7_776_000 };
+
+    it('should post with the long-lived token as bearer', async () => {
+      respondWith(200, tokens);
+
+      const result = await service.exchangeToken(testData.oIAnalytics.registration.completed);
+
+      assert.deepStrictEqual(utilsOIAnalyticsExports.buildHttpOptions.mock.calls[0].arguments, [
+        'POST',
+        true,
+        testData.oIAnalytics.registration.completed,
+        null,
+        30_000,
+        null
+      ]);
+      const [calledUrl, calledOptions] = sentRequest();
+      assert.ok(calledUrl.href.endsWith('/api/oianalytics/oibus/token/exchange'));
+      assert.strictEqual(calledOptions.method, 'POST');
+      assert.deepStrictEqual(result, tokens);
+    });
+
+    it('should throw an invalid grant error when OIAnalytics refuses the long-lived token', async () => {
+      respondWith(401, { error: 'invalid_grant' });
+      await assert.rejects(() => service.exchangeToken(testData.oIAnalytics.registration.completed), OIAnalyticsInvalidGrantError);
+    });
+
+    it('should throw an unsupported error when OIAnalytics does not know the endpoint yet', async () => {
+      respondWith(404, 'Not Found');
+      await assert.rejects(
+        () => service.exchangeToken(testData.oIAnalytics.registration.completed),
+        OIAnalyticsTokenRefreshUnsupportedError
+      );
+    });
+
+    it('should throw a transient error otherwise', async () => {
+      respondWith(503, 'Service Unavailable');
+      await assert.rejects(() => service.exchangeToken(testData.oIAnalytics.registration.completed), /503 - Service Unavailable/);
     });
   });
 

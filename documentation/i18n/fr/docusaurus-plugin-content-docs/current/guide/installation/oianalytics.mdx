@@ -203,12 +203,37 @@ Une fois sur la machine OIBus, les secrets sont stockés selon le
 [modèle de sécurité OIBus](../advanced/oibus-security.md).
 :::
 
+### Jetons d'authentification {#authentication-tokens}
+
+Quand l'enregistrement aboutit, OIAnalytics délivre deux jetons à OIBus, tous deux stockés chiffrés sur la machine
+OIBus :
+
+- un **jeton d'accès**, envoyé avec chaque requête vers OIAnalytics (données, logs, commandes, configuration). Il expire
+  au bout d'une heure ;
+- un **jeton de rafraîchissement**, utilisé uniquement pour obtenir un nouveau jeton d'accès avant que le jeton courant
+  n'expire. Chaque utilisation le remplace par un nouveau, et il expire après 90 jours sans utilisation.
+
+OIBus renouvelle son jeton d'accès automatiquement. Dans OIAnalytics, les jetons de chaque OIBus sont listés sur sa page
+de configuration, avec l'adresse IP à laquelle ils ont été délivrés et celle depuis laquelle ils ont été utilisés en
+dernier. Y révoquer un jeton rejette immédiatement les requêtes de l'OIBus qui l'utilise. Enregistrer à nouveau OIBus
+révoque ses jetons précédents.
+
+Si le jeton de rafraîchissement est révoqué ou expiré (OIBus hors ligne plus de 90 jours, par exemple), OIAnalytics
+refuse de renouveler le jeton d'accès : OIBus journalise une erreur et repasse au statut **Non enregistré**, en
+conservant ses paramètres d'enregistrement. Enregistrez-le à nouveau pour rétablir la connexion.
+
+:::info Mise à niveau depuis OIBus 3.x
+Un OIBus mis à niveau depuis la version 3.x détient un unique jeton longue durée. À son premier démarrage, OIBus 4.0
+l'échange contre un jeton d'accès et un jeton de rafraîchissement, et OIAnalytics refuse ensuite le jeton longue durée.
+:::
+
 ## Dépannage {#troubleshooting}
 
-| Problème                         | Ce qu'il faut vérifier                                                        |
-| -------------------------------- | ----------------------------------------------------------------------------- |
-| L'enregistrement échoue          | Connectivité réseau et règles de pare-feu vers OIAnalytics.                   |
-| Code non accepté                 | Vérifiez que le code à 6 caractères correspond et n'a pas expiré.             |
-| Les commandes ne s'exécutent pas | [Permissions des commandes](#command-permissions) accordées dans OIBus.       |
-| La mise à niveau échoue          | Espace disque disponible et permissions d'écriture sur le dossier de données. |
-| Erreurs de connexion             | Paramètres de proxy, confiance du certificat, et règles de pare-feu.          |
+| Problème                         | Ce qu'il faut vérifier                                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| L'enregistrement échoue          | Connectivité réseau et règles de pare-feu vers OIAnalytics.                                           |
+| Code non accepté                 | Vérifiez que le code à 6 caractères correspond et n'a pas expiré.                                     |
+| Les commandes ne s'exécutent pas | [Permissions des commandes](#command-permissions) accordées dans OIBus.                               |
+| La mise à niveau échoue          | Espace disque disponible et permissions d'écriture sur le dossier de données.                         |
+| Erreurs de connexion             | Paramètres de proxy, confiance du certificat, et règles de pare-feu.                                  |
+| OIBus n'est plus enregistré      | Ses jetons ont été révoqués ou ont expiré : voir [Jetons d'authentification](#authentication-tokens). |

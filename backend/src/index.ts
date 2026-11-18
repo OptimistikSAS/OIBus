@@ -118,7 +118,7 @@ export async function bootstrap(): Promise<void> {
   }
 
   await createFolder(LOG_FOLDER_NAME);
-  loggerService.init(path.resolve(LOG_FOLDER_NAME));
+  loggerService.init(path.resolve(LOG_FOLDER_NAME), path.resolve(CONFIG_DATABASE));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
 
   const oIAnalyticsClient = new OIAnalyticsClient();

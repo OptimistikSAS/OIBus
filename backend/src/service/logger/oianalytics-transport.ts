@@ -1,3 +1,4 @@
+import Database from 'better-sqlite3';
 import build from 'pino-abstract-transport';
 
 import { CryptoSettings } from '../../../shared/model/domain/engine.model';
@@ -47,6 +48,8 @@ const SCOPE_TYPE_FORMAT: Record<ScopeType, 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' |
 
 interface OIAnalyticsOptions {
   registrationSettings: OIAnalyticsRegistration;
+  /** Path of oibus.db, where the current access token is read: it is renewed while the transport runs */
+  configDatabasePath: string;
   interval: number;
   batchLimit?: number;
   cryptoSettings: CryptoSettings;
@@ -61,9 +64,13 @@ class OianalyticsTransport {
   private sendOIALogsInterval: NodeJS.Timeout | null = null;
   private batchLogs: Array<OIAnalyticsLog> = [];
   private stopping = false;
+  private readonly configDatabase: Database.Database;
+  private readonly selectToken: Database.Statement<[], { token: string | null }>;
 
   constructor(options: OIAnalyticsOptions) {
     this.options = options;
+    this.configDatabase = new Database(this.options.configDatabasePath, { readonly: true, fileMustExist: true });
+    this.selectToken = this.configDatabase.prepare('SELECT token FROM registrations WHERE rowid=(SELECT MIN(rowid) FROM registrations);');
     if (this.options.registrationSettings.host.endsWith('/')) {
       this.options.registrationSettings.host = this.options.registrationSettings.host.slice(
         0,
@@ -91,7 +98,7 @@ class OianalyticsTransport {
     const dataBuffer = JSON.stringify(this.batchLogs);
     this.batchLogs = [];
 
-    const httpOptions = await buildHttpOptions('POST', true, this.options.registrationSettings, null, timeout, null);
+    const httpOptions = await buildHttpOptions('POST', true, this.currentRegistrationSettings(), null, timeout, null);
     httpOptions.body = dataBuffer;
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
 
@@ -149,6 +156,13 @@ class OianalyticsTransport {
   };
 
   /**
+   * The registration settings with the access token currently stored: the main thread renews it while the transport runs
+   */
+  private currentRegistrationSettings(): OIAnalyticsRegistration {
+    return { ...this.options.registrationSettings, token: this.selectToken.get()?.token ?? null };
+  }
+
+  /**
    * Clear timeout and interval and send last logs before closing the transport
    */
   end = async (): Promise<void> => {
@@ -157,8 +171,12 @@ class OianalyticsTransport {
       clearInterval(this.sendOIALogsInterval);
       this.sendOIALogsInterval = null;
     }
-    if (this.batchLogs.length === 0) return;
-    await this.sendOIALogs(FINAL_SEND_TIMEOUT_MS);
+    try {
+      if (this.batchLogs.length === 0) return;
+      await this.sendOIALogs(FINAL_SEND_TIMEOUT_MS);
+    } finally {
+      this.configDatabase.close();
+    }
   };
 }
 

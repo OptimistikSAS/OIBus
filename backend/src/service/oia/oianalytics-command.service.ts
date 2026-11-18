@@ -410,10 +410,10 @@ export default class OIAnalyticsCommandService {
           this.executeOpenInteractiveSessionCommand(command);
           break;
         case 'dump-memory':
-          await this.executeDumpMemoryCommand(command, registration);
+          await this.executeDumpMemoryCommand(command);
           break;
         case 'retrieve-logs-database':
-          await this.executeRetrieveLogsDatabaseCommand(command, registration);
+          await this.executeRetrieveLogsDatabaseCommand(command);
           break;
         case 'update-registration-settings':
           await this.executeUpdateRegistrationSettingsCommand(command, registration);
@@ -788,9 +788,9 @@ export default class OIAnalyticsCommandService {
    * Writes a V8 heap snapshot and uploads it (zipped) to OIAnalytics. The snapshot is synchronous: every data flow is
    * paused until it is written.
    */
-  private async executeDumpMemoryCommand(command: OIBusDumpMemoryCommand, registration: OIAnalyticsRegistration) {
+  private async executeDumpMemoryCommand(command: OIBusDumpMemoryCommand) {
     const basename = this.commandFileBasename('heapdump');
-    await this.uploadZippedFile(command, registration, basename, `${basename}.heapsnapshot`, filePath => {
+    await this.uploadZippedFile(command, basename, `${basename}.heapsnapshot`, filePath => {
       this.logger.warn(`Writing memory dump for command ${command.id}. Data flows are paused until the dump completes`);
       v8.writeHeapSnapshot(filePath);
     });
@@ -800,8 +800,8 @@ export default class OIAnalyticsCommandService {
    * Uploads a copy (zipped) of the logs database to OIAnalytics. The copy is made with the SQLite backup API, consistent
    * while the logger keeps writing in the database.
    */
-  private async executeRetrieveLogsDatabaseCommand(command: OIBusRetrieveLogsDatabaseCommand, registration: OIAnalyticsRegistration) {
-    await this.uploadZippedFile(command, registration, this.commandFileBasename('logs'), 'logs.db', async filePath => {
+  private async executeRetrieveLogsDatabaseCommand(command: OIBusRetrieveLogsDatabaseCommand) {
+    await this.uploadZippedFile(command, this.commandFileBasename('logs'), 'logs.db', async filePath => {
       const logsDatabase = new Database(this.logsDatabasePath, { readonly: true, fileMustExist: true });
       try {
         await logsDatabase.backup(filePath);
@@ -822,7 +822,6 @@ export default class OIAnalyticsCommandService {
    */
   private async uploadZippedFile(
     command: OIBusCommand,
-    registration: OIAnalyticsRegistration,
     basename: string,
     entryName: string,
     writeFile: (filePath: string) => Promise<void> | void
@@ -837,6 +836,8 @@ export default class OIAnalyticsCommandService {
       await zipFile(filePath, entryName, zipPath);
       const uncompressedSize = (await fs.stat(filePath)).size;
       const compressedSize = (await fs.stat(zipPath)).size;
+      // Read the registration once the file is written: writing it may take longer than the access token lives
+      const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings();
       const fileId = await this.oIAnalyticsClient.uploadCommandFile(registration, command.id, zipPath, filename);
       const result: OIBusUploadedFileCommandResult = { fileId, filename, compressedSize, uncompressedSize };
       this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));

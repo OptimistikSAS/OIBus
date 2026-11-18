@@ -22,6 +22,24 @@ import { OIBusTestTransformerItemCommandContent } from '../../../shared/model/oi
 //
 // DTO fetch from OIAnalytics
 //
+/**
+ * Tokens issued by OIAnalytics. The lifetimes are in seconds, from the reception of the answer.
+ */
+export interface OIAnalyticsTokensDTO {
+  accessToken: string;
+  accessTokenExpiresIn: number;
+  refreshToken: string;
+  refreshTokenExpiresIn: number;
+}
+
+/**
+ * Answer of OIAnalytics when checking a registration: the tokens are only set once it has been approved
+ */
+export interface OIAnalyticsCheckRegistrationDTO extends Partial<OIAnalyticsTokensDTO> {
+  status: string;
+  expired: boolean;
+}
+
 export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'update-version',
   'restart-engine',
