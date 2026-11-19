@@ -1714,10 +1714,18 @@ function addOPCUATimeoutsAndSubscriptionSettings(config: JsonObject): void {
   });
 }
 
-/** The OPC UA connectors and history queries no longer read the certificate of their user from files (see `withoutUserCertificateFiles`) */
+/**
+ * The OPC UA connectors and history queries no longer read the certificate of their user from files (see
+ * `withoutUserCertificateFiles`), and select the certificate they present to the server in the certificate store,
+ * required in the Sign modes: a configuration exported before has none to refer to, so it is to be selected once imported
+ * (null, as their secrets are empty)
+ */
 function removeOPCUAUserCertificateFiles(config: JsonObject): void {
   const update = (owner: JsonObject, key: string): void => {
-    if (owner[key]) owner[key] = withoutUserCertificateFiles(owner[key] as JsonObject);
+    if (!owner[key]) return;
+    const settings = withoutUserCertificateFiles(owner[key] as JsonObject);
+    if (settings.securityMode === 'sign' || settings.securityMode === 'sign-and-encrypt') setMissing(settings, 'certificateId', null);
+    owner[key] = settings;
   };
   forEachSouth(config, 'opcua', south => update(south.settings as JsonObject, 'settings'));
   forEachNorth(config, 'opcua', north => update(north.settings as JsonObject, 'settings'));
@@ -1868,7 +1876,8 @@ export const upgrade: ConfigUpgrade = {
     'add the setting enabling the content endpoints of the web server, enabled when a North transformer applies to the OIBus API; ' +
     'give the error and archive folders of the North connectors and history queries their own maximum size; ' +
     'add the description of the engine; ' +
-    'remove the paths of the user certificate of the OPC UA connectors, which select it in the certificate store',
+    'remove the paths of the user certificate of the OPC UA connectors, which select it in the certificate store, as their ' +
+    'communication certificate',
   apply: config => {
     const catalog = transformerCatalog(config);
 

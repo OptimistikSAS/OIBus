@@ -3,8 +3,12 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
+import { OIBusAttribute } from '../../../shared/model/connector/form.model';
+
 import { Certificate } from '../../model/certificate.model';
 import AuditService from '../../service/audit.service';
+import { northManifestList } from '../../service/north-manifests';
+import { southManifestList } from '../../service/south-manifests';
 import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, Mocked, stripAuditFields } from '../../tests/utils/test-utils';
@@ -32,6 +36,53 @@ describe('CertificateRepository', () => {
 
   /** The arguments of every audit record made in the test. */
   const recorded = () => auditService.record.mock.calls.map(call => call.arguments);
+
+  it('should find what uses a certificate, by the certificateId of the settings at any depth', () => {
+    const certificateId = testData.certificates.list[0].id;
+    const setSettings = (table: string, column: string, id: string, settings: object) =>
+      database.prepare(`UPDATE ${table} SET ${column} = ? WHERE id = ?;`).run(JSON.stringify(settings), id);
+    setSettings('south_connectors', 'settings', testData.south.list[0].id, { certificateId });
+    setSettings('south_connectors', 'settings', testData.south.list[1].id, { authentication: { type: 'cert', certificateId } });
+    // another certificate, or the same value under another key
+    setSettings('south_connectors', 'settings', testData.south.list[2].id, { certificateId: 'other', name: certificateId });
+    setSettings('north_connectors', 'settings', testData.north.list[0].id, { specificSettings: { certificateId } });
+    setSettings('history_queries', 'north_settings', testData.historyQueries.list[0].id, { certificateId });
+    database.prepare(`UPDATE engines SET https_certificate_source = 'store', https_certificate_id = ?;`).run(certificateId);
+
+    assert.deepStrictEqual(repository.findUsages(certificateId), [
+      { type: 'south', name: testData.south.list[0].name },
+      { type: 'south', name: testData.south.list[1].name },
+      { type: 'north', name: testData.north.list[0].name },
+      { type: 'history-query', name: testData.historyQueries.list[0].name },
+      { type: 'web-server', name: testData.engine.settings.general.name }
+    ]);
+    assert.deepStrictEqual(repository.findUsages('unused'), []);
+
+    database.prepare(`UPDATE engines SET https_certificate_source = 'file';`).run();
+    assert.ok(!repository.findUsages(certificateId).some(usage => usage.type === 'web-server'));
+  });
+
+  it('should rely on manifests naming every certificate field certificateId, and giving none to the items', () => {
+    const certificateKeys = (attribute: OIBusAttribute): Array<string> => {
+      switch (attribute.type) {
+        case 'certificate':
+          return [attribute.key];
+        case 'object':
+          return attribute.attributes.flatMap(certificateKeys);
+        case 'array':
+          return certificateKeys(attribute.rootAttribute);
+        default:
+          return [];
+      }
+    };
+    const manifests = [...southManifestList, ...northManifestList];
+    assert.ok(manifests.flatMap(manifest => certificateKeys(manifest.settings)).length > 0);
+    assert.deepStrictEqual([...new Set(manifests.flatMap(manifest => certificateKeys(manifest.settings)))], ['certificateId']);
+    assert.deepStrictEqual(
+      southManifestList.flatMap(manifest => certificateKeys(manifest.items.rootAttribute)),
+      []
+    );
+  });
 
   it('should properly find all certificates', () => {
     const result = repository.list().map(stripAuditFields);

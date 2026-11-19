@@ -40,6 +40,7 @@ PKCS#12 / `.pfx` bundles are not supported. Extract the certificate and key firs
 openssl pkcs12 -in bundle.pfx -clcerts -nokeys -out certificate.pem
 openssl pkcs12 -in bundle.pfx -nocerts -nodes -out private-key.pem
 ```
+
 :::
 
 ## Downloading a certificate {#downloading-a-certificate}
@@ -66,3 +67,8 @@ You can inspect or convert the downloaded key with:
 ```bash
 openssl pkcs8 -in private-key.pem -passin pass:yourpassphrase -noout
 ```
+
+## Deleting a certificate {#deleting-a-certificate}
+
+A certificate used by a connector, a history query or the web server (HTTPS) cannot be deleted: OIBus lists what uses
+it, so that another certificate is selected there first.

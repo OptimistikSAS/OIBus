@@ -35,6 +35,7 @@ CA 证书链将按提供的原样存储；OIBus 不会验证它是否实际链�
 openssl pkcs12 -in bundle.pfx -clcerts -nokeys -out certificate.pem
 openssl pkcs12 -in bundle.pfx -nocerts -nodes -out private-key.pem
 ```
+
 :::
 
 ## 下载证书 {#downloading-a-certificate}
@@ -59,3 +60,7 @@ OIBus 从不存储该口令 — 如果您丢失了口令，下载的文件将无
 ```bash
 openssl pkcs8 -in private-key.pem -passin pass:yourpassphrase -noout
 ```
+
+## 删除证书 {#deleting-a-certificate}
+
+被连接器、历史查询或 Web 服务器（HTTPS）使用的证书无法删除：OIBus 会列出使用它的对象，以便先在其中选择另一个证书。

@@ -106,6 +106,9 @@ Because secrets are never exported, an imported configuration is not immediately
   public key, certificate, certificate chain, expiry) is recreated under its original ID so anything
   referencing it keeps resolving, but the private key must be re-imported manually before the
   certificate can be used for TLS.
+- **OPC UA connectors exported by OIBus 3.x are imported without their certificates**, which OIBus 3.x did not keep in
+  the certificate store: select the certificate presented to the server (`Sign` modes) and the user certificate
+  (`Certificate` authentication) in their settings.
 - **HTTPS is imported disabled.** The web server settings, including the HTTPS certificate settings, are imported,
   but HTTPS is not enabled: the imported certificates have no private key, and certificate files may not exist on this
   machine. A warning asks to enable it again in the web server settings once its certificate is available.
