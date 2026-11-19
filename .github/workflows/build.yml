@@ -270,14 +270,18 @@ jobs:
         uses: actions/cache@v6
         with:
           path: C:\is.exe
-          key: inno-setup-6
+          key: inno-setup-6.7.4
 
       - name: Install InnoSetup
         if: ${{ matrix.config['platform'] == 'win-x64' }}
         shell: pwsh
         run: |
           if (-Not (Test-Path "C:\is.exe")) {
-            Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile C:\\is.exe
+            Invoke-WebRequest -Uri https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe -OutFile C:\\is.exe
+          }
+          $hash = (Get-FileHash -Path C:\\is.exe -Algorithm SHA256).Hash
+          if ($hash -ne "A549929319F9120716677C685535CA4671E4B937B5FDC87E2585F32D8EB30E8C") {
+            throw "Unexpected Inno Setup installer hash: $hash"
           }
           if (-Not (Test-Path "C:\Program Files (x86)\Inno Setup 6\iscc.exe")) {
             Start-Process -FilePath C:\\is.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
