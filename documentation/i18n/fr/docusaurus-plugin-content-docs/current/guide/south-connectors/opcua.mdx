@@ -285,9 +285,11 @@ Si le serveur le rejette, OIBus enregistre `BadIdentityTokenRejected (0x80210000
 rejetés atterrissent dans `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\rejected\` — déplacez-les vers
 le dossier `certs\` situé à côté.
 
-:::tip Utiliser un seul certificat pour les deux
-Sélectionnez le même certificat du magasin dans les paramètres **Certificat** et **Certificat utilisateur** pour utiliser
-un seul certificat à la fois pour la sécurité au niveau du transport et l'authentification de l'utilisateur.
+:::warning Utilisez un certificat dédié à l'utilisateur
+Ne sélectionnez pas le certificat de communication comme **Certificat utilisateur** : l'utilisateur serait alors
+authentifié par la même clé que l'application, sans apporter de preuve propre, et les droits de l'utilisateur ne
+pourraient pas être révoqués sans rompre le canal sécurisé. Créez un certificat pour l'utilisateur, comme indiqué
+ci-dessous.
 :::
 
 ## Créer un certificat d'authentification personnalisé pour Prosys {#creating-a-custom-authentication-certificate-for-prosys}
