@@ -19,9 +19,9 @@ import {
 
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
-import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CacheService from '../service/cache/cache.service';
+import type CertificateService from '../service/certificate.service';
 import { loggerService } from '../service/logger/logger.service';
 import { createFolder } from '../service/utils';
 import NorthAmazonS3 from './north-amazon-s3/north-amazon-s3';
@@ -39,7 +39,7 @@ import NorthSFTP from './north-sftp/north-sftp';
 
 export const buildNorth = (
   settings: NorthConnectorEntity<NorthSettings>,
-  certificateRepository: CertificateRepository,
+  certificateService: CertificateService,
   oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
   orchestrator: CacheService
 ): NorthConnector<NorthSettings> => {
@@ -49,11 +49,7 @@ export const buildNorth = (
     case 'azure-blob':
       return new NorthAzureBlob(settings as NorthConnectorEntity<NorthAzureBlobSettings>, orchestrator);
     case 'azure-data-explorer':
-      return new NorthAzureDataExplorer(
-        settings as NorthConnectorEntity<NorthAzureDataExplorerSettings>,
-        orchestrator,
-        certificateRepository
-      );
+      return new NorthAzureDataExplorer(settings as NorthConnectorEntity<NorthAzureDataExplorerSettings>, orchestrator, certificateService);
     case 'console':
       return new NorthConsole(settings as NorthConnectorEntity<NorthConsoleSettings>, orchestrator);
     case 'file-writer':
@@ -66,11 +62,11 @@ export const buildNorth = (
       return new NorthOIAnalytics(
         settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
         orchestrator,
-        certificateRepository,
+        certificateService,
         oIAnalyticsRegistrationRepository
       );
     case 'opcua':
-      return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, orchestrator, certificateRepository);
+      return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, orchestrator, certificateService);
     case 'rest':
       return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, orchestrator);
     case 'sftp':

@@ -17,7 +17,6 @@ import TransformerRepository from '../../repository/config/transformer.repositor
 import UserRepository from '../../repository/config/user.repository';
 import ConfigTransferService from '../../service/config-transfer/config-transfer.service';
 import ConfigTransferBuilderService from '../../service/config-transfer/config-transfer-builder.service';
-import EncryptionService from '../../service/encryption.service';
 import OIAnalyticsRegistrationService from '../../service/oia/oianalytics-registration.service';
 import { createAuditServiceMock } from '../utils/test-utils';
 
@@ -59,7 +58,6 @@ export function exportConfigDatabase(database: Database, oibusVersion: string): 
     new HistoryQueryRepository(database, auditService),
     new TransformerRepository(database, auditService),
     new ConfigurationWorkflowRepository(database, auditService),
-    new EncryptionService(),
     false,
     false
   );

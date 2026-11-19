@@ -11,7 +11,6 @@ import type { NorthConnectorEntityLight } from '../model/north-connector.model';
 import type { SouthConnectorItemEntityLight, SouthItemGroupEntity } from '../model/south-connector.model';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import type CertificateRepository from '../repository/config/certificate.repository';
 import type NorthConnectorRepository from '../repository/config/north-connector.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import type ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -25,6 +24,7 @@ import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type JoiValidator from '../web-server/controllers/validators/joi.validator';
+import type CertificateService from './certificate.service';
 import type NorthConnectorMetricsService from './metrics/north-connector-metrics.service';
 import type NorthServiceType from './north.service';
 import type {
@@ -180,7 +180,7 @@ describe('North Service', () => {
       northMetricsRepository,
       createMock<ScanModeRepository>({ findAll: () => testData.scanMode.list }),
       logRepository,
-      createMock<CertificateRepository>(),
+      createMock<CertificateService>(),
       createMock<OIAnalyticsRegistrationRepository>(),
       oIAnalyticsMessageService,
       transformerService,

@@ -9,8 +9,8 @@ import type { SouthItemSettings, SouthSettings } from '../../shared/model/connec
 
 import type { SouthConnectorEntity } from '../model/south-connector.model';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
-import type CertificateRepository from '../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import type CertificateService from '../service/certificate.service';
 import { createMock, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type * as SouthConnectorFactory from './south-connector-factory';
 
@@ -83,7 +83,7 @@ describe('South Connector Factory', () => {
       mock.fn(async () => undefined),
       '/tmp/cache',
       createMock<SouthCacheRepository>(),
-      createMock<CertificateRepository>(),
+      createMock<CertificateService>(),
       createMock<OIAnalyticsRegistrationRepository>()
     );
 

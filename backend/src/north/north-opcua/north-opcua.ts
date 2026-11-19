@@ -16,8 +16,8 @@ import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/
 
 import { OIBusError } from '../../model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import CertificateRepository from '../../repository/config/certificate.repository';
 import type CacheService from '../../service/cache/cache.service';
+import type CertificateService from '../../service/certificate.service';
 import { streamToString } from '../../service/utils';
 import { createOPCUASession, createSessionConfigs } from '../../service/utils-opcua';
 import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
@@ -34,7 +34,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   constructor(
     connector: NorthConnectorEntity<NorthOPCUASettings>,
     cacheService: CacheService,
-    private readonly certificateRepository: CertificateRepository
+    private readonly certificateService: CertificateService
   ) {
     super(connector, cacheService);
   }
@@ -189,7 +189,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       this.connector.name,
       this.connector.settings,
       this.connector.settings.writeTimeout,
-      this.certificateRepository
+      this.certificateService
     );
     this.logger.debug(`Connecting to OPC UA on ${this.connector.settings.url}`);
     return await createOPCUASession(this.connector.settings.url, userIdentity, options, this.connector.settings.connectionTimeout);

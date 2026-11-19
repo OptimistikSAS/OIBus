@@ -1,7 +1,7 @@
 import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat } from '../../shared/model/api/certificate.model';
 import { GetUserInfo } from '../../shared/model/common/types';
 
-import { Certificate, CertificateImportCommand } from '../model/certificate.model';
+import { Certificate, CertificateImportCommand, CertificateKeyPair } from '../model/certificate.model';
 import type { ILogger } from '../model/logger.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -11,7 +11,7 @@ import {
   certificatePrivateKeyExportSchema,
   certificateSchema
 } from '../web-server/controllers/validators/oibus-validation-schema';
-import EncryptionService from './encryption.service';
+import { encryptionService } from './encryption.service';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { generateRandomId } from './utils';
 import {
@@ -28,7 +28,6 @@ export default class CertificateService {
   constructor(
     protected readonly validator: JoiValidator,
     private certificateRepository: CertificateRepository,
-    private encryptionService: EncryptionService,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private logger: ILogger
   ) {}
@@ -45,9 +44,23 @@ export default class CertificateService {
     return certificate;
   }
 
+  /**
+   * The certificate with its private key decrypted, for the connectors and the web server which authenticate with it:
+   * they read the certificates of the store through this service only
+   */
+  getKeyPair(certificateId: string): CertificateKeyPair {
+    const certificate = this.findById(certificateId);
+    return {
+      name: certificate.name,
+      certificate: certificate.certificate,
+      certificateChain: certificate.certificateChain,
+      privateKey: encryptionService.decryptText(certificate.privateKey)
+    };
+  }
+
   async create(command: CertificateCommandDTO, createdBy: string): Promise<Certificate> {
     await this.validator.validate(certificateSchema, command);
-    const cert = await this.encryptionService.generateSelfSignedCertificate({
+    const cert = await encryptionService.generateSelfSignedCertificate({
       commonName: command.options!.commonName,
       organizationName: command.options!.organizationName,
       countryName: command.options!.countryName,
@@ -62,7 +75,7 @@ export default class CertificateService {
       name: command.name,
       description: command.description,
       publicKey: cert.public,
-      privateKey: this.encryptionService.encryptText(cert.private),
+      privateKey: encryptionService.encryptText(cert.private),
       certificate: cert.cert,
       certificateChain: null,
       expiry: readCertificate(cert.cert).expiry,
@@ -77,7 +90,7 @@ export default class CertificateService {
     await this.validator.validate(certificateSchema, command);
     const certificate = this.findById(certificateId);
     if (command.regenerateCertificate) {
-      const cert = await this.encryptionService.generateSelfSignedCertificate({
+      const cert = await encryptionService.generateSelfSignedCertificate({
         commonName: command.options!.commonName,
         organizationName: command.options!.organizationName,
         countryName: command.options!.countryName,
@@ -91,7 +104,7 @@ export default class CertificateService {
         name: command.name,
         description: command.description,
         publicKey: cert.public,
-        privateKey: this.encryptionService.encryptText(cert.private),
+        privateKey: encryptionService.encryptText(cert.private),
         certificate: cert.cert,
         certificateChain: null,
         expiry: readCertificate(cert.cert).expiry,
@@ -119,7 +132,7 @@ export default class CertificateService {
       name: command.name,
       description: command.description,
       publicKey: parsed.publicKeyPem,
-      privateKey: this.encryptionService.encryptText(privateKeyPem),
+      privateKey: encryptionService.encryptText(privateKeyPem),
       certificate: parsed.pem,
       certificateChain,
       expiry: parsed.expiry,
@@ -157,8 +170,7 @@ export default class CertificateService {
   async exportPrivateKey(certificateId: string, passphrase: string, requestedBy: string): Promise<string> {
     await this.validator.validate(certificatePrivateKeyExportSchema, { passphrase });
     const certificate = this.findById(certificateId);
-    // awaited like the neighbouring encryptText call: EncryptionServiceMock declares these async
-    const privateKeyPem = this.encryptionService.decryptText(certificate.privateKey);
+    const privateKeyPem = encryptionService.decryptText(certificate.privateKey);
     const content = privateKeyToEncryptedPkcs8Pem(privateKeyPem, passphrase);
     this.logger.info(`Private key of certificate "${certificate.name}" (${certificate.id}) exported by ${requestedBy}`);
     return content;

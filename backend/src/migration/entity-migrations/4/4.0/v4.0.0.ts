@@ -67,6 +67,7 @@ import {
   withoutOdbcAgentSettings,
   withoutOpcAgentSettings,
   withoutPiAgentSettings,
+  withoutUserCertificateFiles,
   withPiValueFilter,
   withPrefixAndSuffix
 } from '../../../../service/config-transfer/config-upgrades/4.0/v4.0.0';
@@ -139,7 +140,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   addRegistrationTokenRefresh,
   encryptSecretsWithAesGcm,
   flagDefaultPasswords,
-  moveOPCUACertificateToStore
+  moveOPCUACertificateToStore,
+  removeOPCUAUserCertificateFiles
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -2298,6 +2300,28 @@ export async function moveOPCUACertificateToStore(knex: Knex): Promise<void> {
       await knex(table)
         .where('id', row.id)
         .update({ [settingsColumn]: JSON.stringify({ ...settings, certificateId }) });
+    }
+  }
+}
+
+/**
+ * The OPC UA connectors and history queries authenticating their user with a certificate read it from two files (paths
+ * of the certificate and of its private key): they now select it in the certificate store. The files cannot be imported
+ * for them (they may be anywhere, or out of reach of the migration), so their paths are removed: the certificate must be
+ * imported into the store and selected again (see What's new in OIBus 4). As in the config upgrade, with
+ * `withoutUserCertificateFiles`.
+ */
+export async function removeOPCUAUserCertificateFiles(knex: Knex): Promise<void> {
+  for (const [table, typeColumn, settingsColumn] of [
+    [SOUTH_CONNECTORS_TABLE, 'type', 'settings'],
+    [NORTH_CONNECTORS_TABLE, 'type', 'settings'],
+    [HISTORY_QUERIES_TABLE, 'south_type', 'south_settings'],
+    [HISTORY_QUERIES_TABLE, 'north_type', 'north_settings']
+  ]) {
+    for (const row of await knex(table).where(typeColumn, 'opcua').select('id', settingsColumn)) {
+      await knex(table)
+        .where('id', row.id)
+        .update({ [settingsColumn]: JSON.stringify(withoutUserCertificateFiles(JSON.parse(row[settingsColumn]))) });
     }
   }
 }

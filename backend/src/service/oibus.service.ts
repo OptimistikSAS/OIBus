@@ -33,10 +33,10 @@ import {
 } from '../../shared/model/domain/engine.model';
 
 import DataStreamEngine from '../engine/data-stream-engine';
+import type { CertificateKeyPair } from '../model/certificate.model';
 import { EngineSettings } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
-import { OIBusValidationError } from '../model/types';
-import CertificateRepository from '../repository/config/certificate.repository';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 import EngineRepository from '../repository/config/engine.repository';
 import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -48,11 +48,12 @@ import {
   engineWebServerSchema
 } from '../web-server/controllers/validators/oibus-validation-schema';
 import ProxyServer from '../web-server/proxy-server';
+import type CertificateService from './certificate.service';
 import { encryptionService } from './encryption.service';
 import { toEngineLoggerCommand, toEngineProxyCommand, toEngineSettingsCommand, toEngineWebServerCommand } from './engine-command.utils';
 import HistoryQueryService from './history-query.service';
 import IPFilterService from './ip-filter.service';
-import LoggerService from './logger/logger.service';
+import { loggerService } from './logger/logger.service';
 import NorthService from './north.service';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
@@ -84,10 +85,9 @@ export default class OIBusService {
     protected readonly validator: JoiValidator,
     private engineRepository: EngineRepository,
     private engineMetricsRepository: EngineMetricsRepository,
-    private certificateRepository: CertificateRepository,
+    private certificateService: CertificateService,
     private ipFilterService: IPFilterService,
     private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
-    private loggerService: LoggerService,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private southService: SouthService,
     private northService: NorthService,
@@ -98,7 +98,7 @@ export default class OIBusService {
     private readonly ignoreRemoteUpdate: boolean
   ) {
     this.metrics = this.engineMetricsRepository.getMetrics(this.getEngineSettings().id)!;
-    this.logger = this.loggerService.createChildLogger('internal');
+    this.logger = loggerService.createChildLogger('internal');
     this.proxyServer = new ProxyServer(this.ignoreIpFilters);
 
     this.oIAnalyticsRegistrationService.registrationEvent.on('updated', async () => {
@@ -227,19 +227,31 @@ export default class OIBusService {
    * store or from PEM files (a relative path is resolved from the data folder, the working directory of OIBus). Throws an
    * OIBusValidationError when they can't be read or don't match.
    */
+  /** The certificate of the store serving HTTPS with its private key: missing, it is a validation error of the settings */
+  private getStoreKeyPair(certificateId: string | null): CertificateKeyPair {
+    if (!certificateId) {
+      throw new OIBusValidationError(`Certificate "${certificateId}" not found`);
+    }
+    try {
+      return this.certificateService.getKeyPair(certificateId);
+    } catch (error: unknown) {
+      if (error instanceof NotFoundError) {
+        throw new OIBusValidationError(`Certificate "${certificateId}" not found`);
+      }
+      throw error;
+    }
+  }
+
   async getWebServerCredentials(https: WebServerHttpsSettings): Promise<{ cert: string; key: string }> {
     let cert: string;
     let key: string;
     if (https.certificateSource === 'store') {
-      const certificate = https.certificateId ? this.certificateRepository.findById(https.certificateId) : null;
-      if (!certificate) {
-        throw new OIBusValidationError(`Certificate "${https.certificateId}" not found`);
+      const keyPair = this.getStoreKeyPair(https.certificateId);
+      if (!keyPair.privateKey) {
+        throw new OIBusValidationError(`Certificate "${keyPair.name}" has no private key`);
       }
-      if (!certificate.privateKey) {
-        throw new OIBusValidationError(`Certificate "${certificate.name}" has no private key`);
-      }
-      cert = [certificate.certificate, certificate.certificateChain].filter(Boolean).join('\n');
-      key = encryptionService.decryptText(certificate.privateKey);
+      cert = [keyPair.certificate, keyPair.certificateChain].filter(Boolean).join('\n');
+      key = keyPair.privateKey;
     } else {
       cert = await readPemFile(https.certificatePath, 'certificate');
       key = await readPemFile(https.privateKeyPath, 'private key');
@@ -316,10 +328,10 @@ export default class OIBusService {
   }
 
   async resetLogger(settings: EngineSettings) {
-    await this.loggerService.stop();
+    await loggerService.stop();
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings();
-    await this.loggerService.start(settings, registration);
-    this.loggerEvent.emit('updated', this.loggerService.createChildLogger('internal', 'web-server'));
+    await loggerService.start(settings, registration);
+    this.loggerEvent.emit('updated', loggerService.createChildLogger('internal', 'web-server'));
   }
 
   restart(): void {

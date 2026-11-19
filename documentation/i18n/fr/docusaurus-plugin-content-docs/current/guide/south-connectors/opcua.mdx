@@ -135,13 +135,12 @@ lecture** n'est pas utilisé pour les souscriptions.
 
 ### Méthodes d'authentification {#authentication-methods}
 
-| Paramètre                       | Description                                                                   | Exemple de valeur                          |
-| ------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------ |
-| Authentification                | Méthode d'authentification pour la connexion au serveur OPC UA.               | `None`, `Username/Password`, `Certificate` |
-| Nom d'utilisateur               | Nom d'utilisateur pour l'authentification par nom d'utilisateur/mot de passe. | `opc_user`                                 |
-| Mot de passe                    | Mot de passe pour l'authentification par nom d'utilisateur/mot de passe.      | `••••••••`                                 |
-| Chemin du fichier de certificat | Fichier de certificat client pour l'authentification par certificat.          | `/path/to/cert.pem`                        |
-| Chemin du fichier de clé        | Clé privée pour l'authentification par certificat.                            | `/path/to/key.pem`                         |
+| Paramètre              | Description                                                                                                                                                   | Exemple de valeur                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Authentification       | Méthode d'authentification pour la connexion au serveur OPC UA.                                                                                               | `None`, `Username/Password`, `Certificate` |
+| Nom d'utilisateur      | Nom d'utilisateur pour l'authentification par nom d'utilisateur/mot de passe.                                                                                 | `opc_user`                                 |
+| Mot de passe           | Mot de passe pour l'authentification par nom d'utilisateur/mot de passe.                                                                                      | `••••••••`                                 |
+| Certificat utilisateur | Certificat identifiant l'utilisateur, sélectionné dans le [magasin de certificats](../engine/certificates.md). Requis pour l'authentification par certificat. | `OIBus user`                               |
 
 ## Paramètres du groupe {#group-settings}
 
@@ -272,9 +271,9 @@ OIBus présente un certificat qu'il génère en mémoire au démarrage.
 
 ### Certificat d'authentification {#authentication-certificate}
 
-Lorsque l'**Authentification** est définie sur `Certificate`, vous devez fournir un certificat d'identité distinct et sa
-clé privée dans les paramètres du connecteur (champs **Chemin du fichier de certificat** et **Chemin du fichier de clé**). Ce certificat
-identifie l'_utilisateur_, indépendamment du certificat de sécurité de transport ci-dessus.
+Lorsque l'**Authentification** est définie sur `Certificate`, sélectionnez le certificat identifiant l'_utilisateur_
+dans le paramètre **Certificat utilisateur**, depuis le [magasin de certificats](../engine/certificates.md), où il est
+importé avec sa clé privée. Il identifie l'utilisateur, indépendamment du certificat de communication ci-dessus.
 
 Le serveur doit également faire confiance à ce certificat d'identité. Pour Prosys, importez-le dans :
 
@@ -286,11 +285,9 @@ Si le serveur le rejette, OIBus enregistre `BadIdentityTokenRejected (0x80210000
 rejetés atterrissent dans `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\rejected\` — déplacez-les vers
 le dossier `certs\` situé à côté.
 
-:::tip Réutiliser le certificat généré par OIBus pour l'authentification
-Vous pouvez [télécharger le certificat](../engine/certificates.md#downloading-a-certificate) d'OIBus et
-[sa clé privée](../engine/certificates.md#downloading-the-private-key) depuis le magasin de certificats, et y faire
-pointer les champs de connecteur **Chemin du fichier de certificat** et **Chemin du fichier de clé**, pour utiliser un
-seul certificat à la fois pour la sécurité au niveau du transport et l'authentification de l'utilisateur.
+:::tip Utiliser un seul certificat pour les deux
+Sélectionnez le même certificat du magasin dans les paramètres **Certificat** et **Certificat utilisateur** pour utiliser
+un seul certificat à la fois pour la sécurité au niveau du transport et l'authentification de l'utilisateur.
 :::
 
 ## Créer un certificat d'authentification personnalisé pour Prosys {#creating-a-custom-authentication-certificate-for-prosys}
@@ -347,4 +344,6 @@ openssl x509 -inform PEM -outform DER -in oibus.pem -out oibus.der
 cp oibus.der ".prosysopc/prosys-opc-ua-simulation-server/USERS_PKI/CA/certs/"
 ```
 
-Ensuite, dans les paramètres du connecteur OIBus, définissez **Chemin du fichier de certificat** sur `oibus.pem` et **Chemin du fichier de clé** sur `oibus.key`.
+Ensuite, [importez](../engine/certificates.md#importing-a-certificate-signed-by-your-own-ca) `oibus.pem` et `oibus.key`
+dans le magasin de certificats, et sélectionnez le certificat dans le paramètre **Certificat utilisateur** du connecteur
+OIBus.

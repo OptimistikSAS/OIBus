@@ -20,7 +20,7 @@ import { DateTime } from 'luxon';
 import { OIBusPointRecord } from '../../shared/model/common/content.model';
 
 import { Instant } from '../model/types';
-import CertificateRepository from '../repository/config/certificate.repository';
+import type CertificateService from './certificate.service';
 import { encryptionService } from './encryption.service';
 import { getErrorMessage } from './utils';
 
@@ -47,7 +47,7 @@ export const getAuthorizationOptions = async (
   useOIAnalyticsRegistration: boolean,
   registrationSettings: OIAnalyticsRegistration,
   specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null,
-  certificateRepository: CertificateRepository
+  certificateService: CertificateService
 ): Promise<ReqAuthOptions | undefined> => {
   if (useOIAnalyticsRegistration) {
     return {
@@ -84,15 +84,12 @@ export const getAuthorizationOptions = async (
     }
 
     case 'aad-certificate': {
-      const certificate = certificateRepository.findById(specificSettings!.certificateId!);
-      if (certificate === null) return;
-
       const cacheKey = `aad-certificate|${specificSettings!.tenantId}|${specificSettings!.clientId}|${specificSettings!.certificateId}|${specificSettings!.scope}`;
       let credential = credentialCache.get(cacheKey);
       if (!credential) {
-        const decryptedPrivateKey = encryptionService.decryptText(certificate.privateKey);
+        const { certificate, privateKey } = certificateService.getKeyPair(specificSettings!.certificateId!);
         credential = new ClientCertificateCredential(specificSettings!.tenantId!, specificSettings!.clientId!, {
-          certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
+          certificate: `${certificate}\n${privateKey}`
         });
         credentialCache.set(cacheKey, credential);
       }
@@ -195,7 +192,7 @@ export const buildHttpOptions = async (
   registrationSettings: OIAnalyticsRegistration,
   specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null,
   timeout: number,
-  certificateRepository: CertificateRepository | null,
+  certificateService: CertificateService | null,
   acceptNotRegistered = false
 ): Promise<ReqOptions> => {
   if (!acceptNotRegistered && useOIAnalyticsRegistration && registrationSettings.status !== 'REGISTERED') {
@@ -203,7 +200,7 @@ export const buildHttpOptions = async (
   }
 
   const headers = getHeaders(useOIAnalyticsRegistration, registrationSettings);
-  const auth = await getAuthorizationOptions(useOIAnalyticsRegistration, registrationSettings, specificSettings, certificateRepository!);
+  const auth = await getAuthorizationOptions(useOIAnalyticsRegistration, registrationSettings, specificSettings, certificateService!);
   const { proxy, acceptUnauthorized } = getProxyOptions(useOIAnalyticsRegistration, registrationSettings, specificSettings);
   return {
     method,
@@ -289,7 +286,7 @@ export const testOIAnalyticsConnection = async (
   registrationSettings: OIAnalyticsRegistration,
   specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null,
   timeout: number,
-  certificateRepository: CertificateRepository | null,
+  certificateService: CertificateService | null,
   acceptNotRegistered: boolean
 ): Promise<void> => {
   const httpOptions = await buildHttpOptions(

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import type { SouthItemGroupEntity } from '../../model/south-connector.model';
@@ -17,7 +17,7 @@ import type UserRepository from '../../repository/config/user.repository';
 import testData from '../../tests/utils/test-data';
 import { createMock, Mocked } from '../../tests/utils/test-utils';
 import FileToFileTransformer from '../../transformers/file/file-to-file/file-to-file-transformer';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
 
 const standardTransformer: StandardTransformer = {
@@ -39,7 +39,7 @@ describe('Config Transfer Builder Service', () => {
   let historyQueryRepository: Mocked<HistoryQueryRepository>;
   let transformerRepository: Mocked<TransformerRepository>;
   let configurationWorkflowRepository: Mocked<ConfigurationWorkflowRepository>;
-  let encryptionService: Mocked<EncryptionService>;
+  let filterSecrets: Mock<typeof encryptionService.filterSecrets>;
   let service: ConfigTransferBuilderService;
 
   beforeEach(() => {
@@ -53,7 +53,7 @@ describe('Config Transfer Builder Service', () => {
     historyQueryRepository = createMock<HistoryQueryRepository>();
     transformerRepository = createMock<TransformerRepository>();
     configurationWorkflowRepository = createMock<ConfigurationWorkflowRepository>({ findAll: () => [] });
-    encryptionService = createMock<EncryptionService>({ filterSecrets: secrets => secrets });
+    filterSecrets = mock.method(encryptionService, 'filterSecrets', <T>(secrets: T) => secrets);
 
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
@@ -80,10 +80,13 @@ describe('Config Transfer Builder Service', () => {
       historyQueryRepository,
       transformerRepository,
       configurationWorkflowRepository,
-      encryptionService,
       false,
       false
     );
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('should attach each south connector its configuration workflows, and each item the workflow owning it', () => {
@@ -298,7 +301,7 @@ describe('Config Transfer Builder Service', () => {
   it('should build the south connectors command and filter secrets from settings', () => {
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
     assert.strictEqual(configuration.southConnectors.length, testData.south.list.length);
-    assert.strictEqual(encryptionService.filterSecrets.mock.calls.length > 0, true);
+    assert.strictEqual(filterSecrets.mock.calls.length > 0, true);
   });
 
   it('should build south connector groups, item scanMode/group ids and north transformer south group id', () => {

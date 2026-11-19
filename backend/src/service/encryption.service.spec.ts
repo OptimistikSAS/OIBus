@@ -15,7 +15,7 @@ import {
 import testData from '../tests/utils/test-data';
 import EncryptionService from './encryption.service';
 
-const encryptionService = EncryptionService.getInstance();
+const encryptionService = new EncryptionService();
 
 const securityKey = Buffer.from('0123456789abcdef0123456789abcdef');
 const tokenSecret = Buffer.from('fedcba9876543210fedcba9876543210');

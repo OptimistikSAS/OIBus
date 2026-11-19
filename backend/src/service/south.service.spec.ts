@@ -20,7 +20,6 @@ import type DataStreamEngine from '../engine/data-stream-engine';
 import { SouthConnectorEntityLight, SouthConnectorItemEntity, SouthItemGroupEntity } from '../model/south-connector.model';
 import { NotFoundError, OIBusExploreError, OIBusValidationError } from '../model/types';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
-import type CertificateRepository from '../repository/config/certificate.repository';
 import type NorthConnectorRepository from '../repository/config/north-connector.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import type ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -35,6 +34,7 @@ import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import testData from '../tests/utils/test-data';
 import { createMock, Mocked, mockModule, reloadModule, seq } from '../tests/utils/test-utils';
 import type JoiValidator from '../web-server/controllers/validators/joi.validator';
+import type CertificateService from './certificate.service';
 import type SouthConnectorMetricsService from './metrics/south-connector-metrics.service';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode.service';
@@ -282,7 +282,7 @@ describe('South Service', () => {
       southCacheRepository,
       createMock<ScanModeRepository>({ findAll: () => testData.scanMode.list }),
       createMock<OIAnalyticsRegistrationRepository>(),
-      createMock<CertificateRepository>(),
+      createMock<CertificateService>(),
       oIAnalyticsMessageService,
       engine,
       southItemGroupRepository,

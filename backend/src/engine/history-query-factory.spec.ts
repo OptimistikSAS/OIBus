@@ -9,9 +9,9 @@ import type { NorthSettings } from '../../shared/model/connector/north-settings.
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
 import type NorthConnector from '../north/north-connector';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
-import type CertificateRepository from '../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import type CacheService from '../service/cache/cache.service';
+import type CertificateService from '../service/certificate.service';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { assertContains, createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
@@ -35,7 +35,7 @@ describe('HistoryQueryFactory', () => {
 
   let factory: typeof HistoryQueryFactory;
   let southCacheRepository: SouthCacheRepository;
-  let certificateRepository: CertificateRepository;
+  let certificateService: CertificateService;
   let oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository;
   let orchestrator: CacheService;
 
@@ -83,7 +83,7 @@ describe('HistoryQueryFactory', () => {
     Object.assign(mocks.north, fresh.north);
     Object.assign(mocks.south, fresh.south);
     southCacheRepository = createMock<SouthCacheRepository>();
-    certificateRepository = createMock<CertificateRepository>();
+    certificateService = createMock<CertificateService>();
     oIAnalyticsRegistrationRepository = createMock<OIAnalyticsRegistrationRepository>();
     orchestrator = createMock<CacheService>();
   });
@@ -103,7 +103,7 @@ describe('HistoryQueryFactory', () => {
         mock.fn(async () => undefined),
         baseFolder,
         southCacheRepository,
-        certificateRepository,
+        certificateService,
         oIAnalyticsRegistrationRepository,
         orchestrator
       );
@@ -132,7 +132,7 @@ describe('HistoryQueryFactory', () => {
         (northArg as { transformers: Array<{ id: string }> }).transformers.some(t => t.id === settings.northTransformers[0].id),
         'transformers should contain the history query transformer'
       );
-      assert.deepStrictEqual(northRepositories, [certificateRepository, oIAnalyticsRegistrationRepository, orchestrator]);
+      assert.deepStrictEqual(northRepositories, [certificateService, oIAnalyticsRegistrationRepository, orchestrator]);
 
       // Verify buildSouth args
       assert.strictEqual(mocks.south.buildSouth.mock.calls.length, 1);
@@ -147,7 +147,7 @@ describe('HistoryQueryFactory', () => {
       });
       assert.strictEqual(typeof callback, 'function', 'second arg to buildSouth should be addContent callback');
       assert.strictEqual(southCachePath, path.join(baseFolder, 'cache', historyPath, 'south'));
-      assert.deepStrictEqual(southRepositories, [southCacheRepository, certificateRepository, oIAnalyticsRegistrationRepository]);
+      assert.deepStrictEqual(southRepositories, [southCacheRepository, certificateService, oIAnalyticsRegistrationRepository]);
 
       // Verify HistoryQuery constructor call and result type
       assert.deepStrictEqual(historyQueryCtorCalls, [[settings, northConnector, southConnector]]);

@@ -71,6 +71,10 @@ PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
 
 - Le serveur web peut servir en [**HTTPS**](./engine/engine-settings.mdx#https), avec un certificat du magasin de
   certificats ou des fichiers PEM.
+- Les [**connecteurs OPC UA**](./south-connectors/opcua.mdx#security-configuration) présentent un certificat du
+  magasin de certificats, sélectionné dans chacun d'eux, au lieu d'un certificat généré dans le dossier de données
+  (celui utilisé jusqu'ici est importé dans le magasin lors de la mise à niveau, pour que les serveurs continuent de faire
+  confiance à OIBus), et authentifient leur utilisateur avec un certificat du magasin également.
 - Les [**points d'accès de contenu**](./engine/engine-settings.mdx#content-endpoints) de l'API OIBus (`/api/content`)
   peuvent être désactivés.
 - Le moteur a une [**description**](./engine/engine-settings.mdx#description).
@@ -130,6 +134,10 @@ PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
   `value.split('/').pop()`) est supprimée avec un avertissement dans les logs.
 - **Installez les pilotes sur la machine d'OIBus** pour les connecteurs South OPC Classic, ODBC, OLE DB et PI, qui
   n'utilisent plus l'agent OIBus (les paramètres de l'agent sont supprimés lors de la mise à niveau).
+- **Sélectionnez le certificat utilisateur de vos connecteurs OPC UA** : les connecteurs et requêtes d'historique OPC UA
+  qui authentifient leur utilisateur par certificat ne le lisent plus depuis des fichiers. Les chemins de ses fichiers
+  sont supprimés lors de la mise à niveau : importez le certificat et sa clé privée dans le
+  [magasin de certificats](./engine/certificates.md), et sélectionnez-le dans leur paramètre **Certificat utilisateur**.
 - **API REST** : les paramètres généraux du moteur se mettent à jour avec `PUT /api/engine/general` (au lieu de
   `PUT /api/engine/name`), et les points d'accès de contenu sont désactivés quand aucun transformateur North ne
   s'appliquait à l'API OIBus.

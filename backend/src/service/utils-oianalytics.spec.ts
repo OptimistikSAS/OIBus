@@ -4,12 +4,12 @@ import { afterEach, beforeEach, describe, it, type Mock, mock } from 'node:test'
 
 import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/connector/north-settings.model';
 
-import { Certificate } from '../model/certificate.model';
 import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
-import CertificateRepository from '../repository/config/certificate.repository';
+import { NotFoundError } from '../model/types';
 import { createMockResponse } from '../tests/__mocks__/undici.mock';
 import testData from '../tests/utils/test-data';
 import { createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
+import type CertificateService from './certificate.service';
 import { encryptionService } from './encryption.service';
 import type { ReqResponse } from './http-request.utils';
 import type { OIATimeValues } from './utils-oianalytics';
@@ -48,14 +48,14 @@ const {
 } = reloadModule<typeof import('./utils-oianalytics')>(nodeRequire, './utils-oianalytics');
 
 describe('utils-oianalytics', () => {
-  let certificateRepository: Mocked<CertificateRepository>;
+  let certificateService: Mocked<CertificateService>;
   let encryptTextMock: Mock<typeof encryptionService.encryptText>;
   let decryptTextMock: Mock<typeof encryptionService.decryptText>;
 
   beforeEach(() => {
     encryptTextMock = mock.method(encryptionService, 'encryptText', (_plainText?: string | null) => 'encrypted-token');
     decryptTextMock = mock.method(encryptionService, 'decryptText', (encryptedText?: string | null) => `decrypted-${encryptedText}`);
-    certificateRepository = createMock<CertificateRepository>();
+    certificateService = createMock<CertificateService>();
 
     mockGetTokenCSC = mock.fn(async () => ({ token: 'azure-token' }));
     mockGetTokenCCC = mock.fn(async () => ({ token: 'azure-token' }));
@@ -70,19 +70,19 @@ describe('utils-oianalytics', () => {
     const mockRegistration: OIAnalyticsRegistration = { token: 'reg-token' } as OIAnalyticsRegistration;
 
     it('should return bearer token from registration settings if useOIAnalyticsRegistration is true', async () => {
-      const result = await getAuthorizationOptions(true, mockRegistration, null, certificateRepository);
+      const result = await getAuthorizationOptions(true, mockRegistration, null, certificateService);
       assert.deepStrictEqual(result, { type: 'bearer', token: 'reg-token' });
     });
 
     it('should return basic auth options', async () => {
       const settings = { authentication: 'basic', accessKey: 'user', secretKey: 'pass' } as NorthOIAnalyticsSettingsSpecificSettings;
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
+      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateService);
       assert.deepStrictEqual(result, { type: 'basic', username: 'user', password: 'pass' });
     });
 
     it('should return undefined for basic auth if accessKey is missing', async () => {
       const settings = { authentication: 'basic', accessKey: '' } as NorthOIAnalyticsSettingsSpecificSettings;
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
+      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateService);
       assert.strictEqual(result, undefined);
     });
 
@@ -95,7 +95,7 @@ describe('utils-oianalytics', () => {
         scope: 'scope'
       } as NorthOIAnalyticsSettingsSpecificSettings;
 
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
+      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateService);
 
       assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['secret']);
       assert.strictEqual(mockGetTokenCSC.mock.calls.length, 1);
@@ -113,24 +113,32 @@ describe('utils-oianalytics', () => {
         scope: 'scope'
       } as NorthOIAnalyticsSettingsSpecificSettings;
 
-      certificateRepository.findById.mock.mockImplementation(() => ({ certificate: 'cert-content', privateKey: 'pk' }) as Certificate);
+      certificateService.getKeyPair.mock.mockImplementation(() => ({
+        name: 'certificate',
+        certificate: 'cert-content',
+        certificateChain: null,
+        privateKey: 'pk'
+      }));
 
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
+      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateService);
 
-      assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, ['cert-1']);
-      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['pk']);
+      // the private key comes decrypted from the certificate service
+      assert.deepStrictEqual(certificateService.getKeyPair.mock.calls[0].arguments, ['cert-1']);
       assert.strictEqual(mockGetTokenCCC.mock.calls.length, 1);
       assert.deepStrictEqual(mockGetTokenCCC.mock.calls[0].arguments, ['scope']);
       assert.deepStrictEqual(encryptTextMock.mock.calls[0].arguments, ['Bearer azure-token']);
       assert.deepStrictEqual(result, { type: 'bearer', token: 'encrypted-token' });
     });
 
-    it('should return undefined for aad-certificate if certificate is not found', async () => {
+    it('should reject for aad-certificate if certificate is not found', async () => {
       const settings = { authentication: 'aad-certificate', certificateId: 'missing' } as NorthOIAnalyticsSettingsSpecificSettings;
-      certificateRepository.findById.mock.mockImplementation(() => null);
+      certificateService.getKeyPair.mock.mockImplementation(() => {
+        throw new NotFoundError('Certificate "missing" not found');
+      });
 
-      const result = await getAuthorizationOptions(false, mockRegistration, settings, certificateRepository);
-      assert.strictEqual(result, undefined);
+      await assert.rejects(() => getAuthorizationOptions(false, mockRegistration, settings, certificateService), {
+        message: 'Certificate "missing" not found'
+      });
     });
   });
 
@@ -236,7 +244,7 @@ describe('utils-oianalytics', () => {
         acceptUnauthorized: false
       } as OIAnalyticsRegistration;
 
-      const result = await buildHttpOptions('POST', true, reg, null, 5000, certificateRepository);
+      const result = await buildHttpOptions('POST', true, reg, null, 5000, certificateService);
 
       assert.deepStrictEqual(result, {
         method: 'POST',

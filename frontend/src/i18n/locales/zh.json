@@ -196,8 +196,7 @@
             },
             "username": "用户名",
             "password": "密码",
-            "cert-file-path": "证书文件路径",
-            "key-file-path": "密钥文件路径"
+            "authentication-certificate-id": "用户证书"
           },
           "rest": {
             "host": "主机",
@@ -938,8 +937,7 @@
             },
             "username": "用户名",
             "password": "密码",
-            "cert-file-path": "证书文件路径",
-            "key-file-path": "密钥文件路径",
+            "authentication-certificate-id": "用户证书",
             "subscription": {
               "title": "订阅",
               "publishing-interval": "服务器发送新值的间隔（发布间隔）",

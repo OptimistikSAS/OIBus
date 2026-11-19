@@ -24,7 +24,6 @@ import { ConfigImportError } from '../service/config-transfer/config-import.serv
 import type ConfigTransferService from '../service/config-transfer/config-transfer.service';
 import type ConfigurationWorkflowService from '../service/configuration-workflow.service';
 import type ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
-import type EncryptionService from '../service/encryption.service';
 import type HistoryQueryService from '../service/history-query.service';
 import type IPFilterService from '../service/ip-filter.service';
 import type LogService from '../service/log.service';
@@ -180,7 +179,6 @@ describe('WebServer', () => {
   function buildWebServer(port: number, httpsSettings = testData.engine.settings.webServer.https): WebServerClass {
     return new WebServer(
       { ...testData.engine.settings.webServer, port, https: httpsSettings },
-      createMock<EncryptionService>(),
       createMock<AuditService>(),
       createMock<ScanModeService>(),
       ipFilterService,

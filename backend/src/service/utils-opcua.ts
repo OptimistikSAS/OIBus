@@ -1,7 +1,5 @@
 import crypto from 'node:crypto';
-import fs from 'node:fs/promises';
 import os from 'node:os';
-import path from 'node:path';
 
 import { DateTime } from 'luxon';
 import {
@@ -37,9 +35,9 @@ import {
   SouthOPCUASettingsSecurityPolicy
 } from '../../shared/model/connector/south-settings.model';
 
-import type { Certificate } from '../model/certificate.model';
+import type { CertificateKeyPair } from '../model/certificate.model';
 import type { ILogger } from '../model/logger.model';
-import type CertificateRepository from '../repository/config/certificate.repository';
+import type CertificateService from './certificate.service';
 import { encryptionService } from './encryption.service';
 
 const NUM_VALUES_PER_NODE = 1000;
@@ -113,33 +111,18 @@ const getEphemeralProvider = (): Promise<InMemoryCertificateKeyPairProvider> => 
  * announce, or the server warns (W06) and may reject the session.
  */
 export const getOPCUACertificate = async (
-  certificate: Certificate | null
+  keyPair: CertificateKeyPair | null
 ): Promise<{ provider: InMemoryCertificateKeyPairProvider; applicationUri: string | undefined }> => {
-  if (!certificate) {
+  if (!keyPair) {
     return { provider: await getEphemeralProvider(), applicationUri: EPHEMERAL_APPLICATION_URI };
   }
-  const certificateDer = convertPEMtoDER(certificate.certificate);
-  const chain = certificate.certificateChain ? split_der(convertPEMtoDER(certificate.certificateChain)) : [];
-  const privateKey = { hidden: crypto.createPrivateKey(encryptionService.decryptText(certificate.privateKey)) };
+  const certificateDer = convertPEMtoDER(keyPair.certificate);
+  const chain = keyPair.certificateChain ? split_der(convertPEMtoDER(keyPair.certificateChain)) : [];
+  const privateKey = { hidden: crypto.createPrivateKey(keyPair.privateKey) };
   return {
     provider: new InMemoryCertificateKeyPairProvider([certificateDer, ...chain], privateKey),
     applicationUri: exploreCertificate(certificateDer).tbsCertificate.extensions?.subjectAltName?.uniformResourceIdentifier?.[0]
   };
-};
-
-/**
- * The certificate of the store selected by the settings, if any
- */
-const findCertificate = (
-  settings: SouthOPCUASettings | NorthOPCUASettings,
-  certificateRepository: CertificateRepository
-): Certificate | null => {
-  if (!settings.certificateId) return null;
-  const certificate = certificateRepository.findById(settings.certificateId);
-  if (!certificate) {
-    throw new Error(`Could not find certificate "${settings.certificateId}"`);
-  }
-  return certificate;
 };
 
 export const createSessionConfigs = async (
@@ -147,9 +130,11 @@ export const createSessionConfigs = async (
   connectorName: string,
   settings: SouthOPCUASettings | NorthOPCUASettings,
   requestTimeout: number,
-  certificateRepository: CertificateRepository
+  certificateService: CertificateService
 ) => {
-  const { provider, applicationUri } = await getOPCUACertificate(findCertificate(settings, certificateRepository));
+  const { provider, applicationUri } = await getOPCUACertificate(
+    settings.certificateId ? certificateService.getKeyPair(settings.certificateId) : null
+  );
   const options: OPCUAClientOptions = {
     applicationName: 'OIBus',
     applicationUri,
@@ -184,15 +169,16 @@ export const createSessionConfigs = async (
         password: encryptionService.decryptText(settings.authentication.password!)
       };
       break;
-    case 'cert':
-      const certContent = await fs.readFile(path.resolve(settings.authentication.certFilePath!));
-      const privateKeyContent = await fs.readFile(path.resolve(settings.authentication.keyFilePath!));
+    case 'cert': {
+      // The certificate identifying the user, from the store: it is not the one securing the connection
+      const { certificate, privateKey } = certificateService.getKeyPair(settings.authentication.certificateId!);
       userIdentity = {
         type: UserTokenType.Certificate,
-        certificateData: certContent,
-        privateKey: privateKeyContent.toString('utf8')
+        certificateData: convertPEMtoDER(certificate),
+        privateKey
       };
       break;
+    }
     default:
       userIdentity = { type: UserTokenType.Anonymous };
   }

@@ -285,12 +285,7 @@ const manifest: SouthConnectorManifest = {
           },
           {
             referralPathFromRoot: 'type',
-            targetPathFromRoot: 'certFilePath',
-            values: ['cert']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'keyFilePath',
+            targetPathFromRoot: 'certificateId',
             values: ['cert']
           }
         ],
@@ -348,33 +343,10 @@ const manifest: SouthConnectorManifest = {
             }
           },
           {
-            type: 'string',
-            key: 'certFilePath',
-            translationKey: 'configuration.oibus.manifest.south.opcua.cert-file-path',
-            defaultValue: null,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'string',
-            key: 'keyFilePath',
-            translationKey: 'configuration.oibus.manifest.south.opcua.key-file-path',
-            defaultValue: null,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
+            type: 'certificate',
+            key: 'certificateId',
+            translationKey: 'configuration.oibus.manifest.south.opcua.authentication-certificate-id',
+            validators: [],
             displayProperties: {
               row: 0,
               columns: 4,

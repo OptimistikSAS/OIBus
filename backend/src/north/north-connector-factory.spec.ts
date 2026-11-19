@@ -8,8 +8,8 @@ import type { OIBusNorthType } from '../../shared/model/connector/north-manifest
 import type { NorthSettings } from '../../shared/model/connector/north-settings.model';
 
 import type { NorthConnectorEntity } from '../model/north-connector.model';
-import type CertificateRepository from '../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import type CertificateService from '../service/certificate.service';
 import type * as Utils from '../service/utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { buildNorthEntity, createMock, mockModule, reloadModule } from '../tests/utils/test-utils';
@@ -18,7 +18,7 @@ import type * as NorthConnectorFactory from './north-connector-factory';
 const nodeRequire = createRequire(import.meta.url);
 
 describe('North Connector Factory', () => {
-  const certificateRepository = createMock<CertificateRepository>();
+  const certificateService = createMock<CertificateService>();
   const oIAnalyticsRegistrationRepository = createMock<OIAnalyticsRegistrationRepository>();
 
   let factory: typeof NorthConnectorFactory;
@@ -81,7 +81,7 @@ describe('North Connector Factory', () => {
   });
 
   const callBuildNorth = (settings: NorthConnectorEntity<NorthSettings>) =>
-    factory.buildNorth(settings, certificateRepository, oIAnalyticsRegistrationRepository, {} as never);
+    factory.buildNorth(settings, certificateService, oIAnalyticsRegistrationRepository, {} as never);
 
   describe('buildNorth', () => {
     for (const [type, className, , NorthMock] of simpleNorths) {
@@ -97,7 +97,7 @@ describe('North Connector Factory', () => {
       assert.strictEqual(ctorCalls['azure-data-explorer']?.length, 1);
       const args = ctorCalls['azure-data-explorer'][0];
       assert.deepStrictEqual(args[1], {}); // orchestrator
-      assert.strictEqual(args[2], certificateRepository);
+      assert.strictEqual(args[2], certificateService);
       assert.ok(result instanceof MockNorthAzureDataExplorer);
     });
 
@@ -106,7 +106,7 @@ describe('North Connector Factory', () => {
       assert.strictEqual(ctorCalls['oianalytics']?.length, 1);
       const args = ctorCalls['oianalytics'][0];
       assert.deepStrictEqual(args[1], {}); // orchestrator
-      assert.strictEqual(args[2], certificateRepository);
+      assert.strictEqual(args[2], certificateService);
       assert.strictEqual(args[3], oIAnalyticsRegistrationRepository);
       assert.ok(result instanceof MockNorthOIAnalytics);
     });

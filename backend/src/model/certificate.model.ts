@@ -12,6 +12,16 @@ export interface Certificate extends BaseEntity {
   expiry: Instant;
 }
 
+/**
+ * A certificate of the store with its private key decrypted, to authenticate with it
+ */
+export interface CertificateKeyPair {
+  name: string;
+  certificate: string;
+  certificateChain: string | null;
+  privateKey: string;
+}
+
 export interface CertificateImportCommand {
   name: string;
   description: string;

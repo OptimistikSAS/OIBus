@@ -12,8 +12,8 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import type CertificateService from '../../service/certificate.service';
 import { HTTPRequest } from '../../service/http-request.utils';
 import { formatQueryParams, workUnitLogCtx } from '../../service/utils';
 import { buildHttpOptions, getHost, getUrl, OIATimeValues, parseData, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
@@ -37,7 +37,7 @@ export default class SouthOIAnalytics
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     cacheFolderPath: string,
-    private readonly certificateRepository: CertificateRepository,
+    private readonly certificateService: CertificateService,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
@@ -50,7 +50,7 @@ export default class SouthOIAnalytics
       registrationSettings,
       this.connector.settings.specificSettings,
       this.connector.settings.timeout * 1000,
-      this.certificateRepository,
+      this.certificateService,
       false
     );
     return { items: [] };
@@ -113,7 +113,7 @@ export default class SouthOIAnalytics
       registrationSettings,
       this.connector.settings.specificSettings,
       this.connector.settings.timeout * 1000,
-      this.certificateRepository
+      this.certificateService
     );
     httpOptions.query = formatQueryParams(startTime, endTime, item.settings.queryParams);
     const url = getUrl(

@@ -50,10 +50,9 @@ UA, ce connecteur North **envoie des données** depuis OIBus vers des serveurs O
 
 ### Authentification {#authentication}
 
-| Paramètre                           | Description                                                                            | Exemple de valeur                                        |
-| ----------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| **Authentification**                | Méthode d'authentification.                                                            | `Aucune`, `Nom d'utilisateur/Mot de passe`, `Certificat` |
-| **Nom d'utilisateur**               | Nom d'utilisateur pour l'authentification par nom d'utilisateur/mot de passe.          | `opc_user`                                               |
-| **Mot de passe**                    | Mot de passe pour l'authentification par nom d'utilisateur/mot de passe.               | `••••••••`                                               |
-| **Chemin du fichier de certificat** | Chemin du fichier de certificat client. Requis pour l'authentification par certificat. | `/path/to/cert.pem`                                      |
-| **Chemin du fichier de clé**        | Chemin du fichier de clé privée. Requis pour l'authentification par certificat.        | `/path/to/key.pem`                                       |
+| Paramètre                  | Description                                                                                                                                                   | Exemple de valeur                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Authentification**       | Méthode d'authentification.                                                                                                                                   | `Aucune`, `Nom d'utilisateur/Mot de passe`, `Certificat` |
+| **Nom d'utilisateur**      | Nom d'utilisateur pour l'authentification par nom d'utilisateur/mot de passe.                                                                                 | `opc_user`                                               |
+| **Mot de passe**           | Mot de passe pour l'authentification par nom d'utilisateur/mot de passe.                                                                                      | `••••••••`                                               |
+| **Certificat utilisateur** | Certificat identifiant l'utilisateur, sélectionné dans le [magasin de certificats](../engine/certificates.md). Requis pour l'authentification par certificat. | `OIBus user`                                             |

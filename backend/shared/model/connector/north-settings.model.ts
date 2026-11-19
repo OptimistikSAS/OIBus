@@ -96,8 +96,7 @@ export interface NorthOPCUASettingsAuthentication {
   type: NorthOPCUASettingsAuthenticationType;
   username?: string;
   password?: string | null;
-  certFilePath?: string;
-  keyFilePath?: string;
+  certificateId?: string | null;
 }
 
 export interface NorthRESTSettingsAuthentication {

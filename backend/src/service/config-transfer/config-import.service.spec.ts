@@ -18,7 +18,6 @@ import type UserRepository from '../../repository/config/user.repository';
 import testData from '../../tests/utils/test-data';
 import { createMock } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
-import EncryptionService from '../encryption.service';
 import type OIAnalyticsRegistrationService from '../oia/oianalytics-registration.service';
 import ConfigImportService, { ConfigImportError } from './config-import.service';
 import ConfigTransferService from './config-transfer.service';
@@ -60,9 +59,8 @@ describe('Config Import Service', () => {
     transformerRepository.list.mock.mockImplementation(() => testData.transformers.list);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
-    // Use the real, pure EncryptionService and JoiValidator (both need no init) so the pipeline is
-    // exercised end to end against the same manifests/validation the create/update endpoints use.
-    const encryptionService = new EncryptionService();
+    // The real encryption service (its filterSecrets needs no init) and JoiValidator, so that the secrets are stripped
+    // and the settings validated for real, as the export and import endpoints do
     const builderService = new ConfigTransferBuilderService(
       engineRepository,
       scanModeRepository,
@@ -74,7 +72,6 @@ describe('Config Import Service', () => {
       historyQueryRepository,
       transformerRepository,
       createMock<ConfigurationWorkflowRepository>({ findAll: () => [] }),
-      encryptionService,
       false,
       false
     );

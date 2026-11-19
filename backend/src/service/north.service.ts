@@ -19,7 +19,6 @@ import { SouthConnectorItemEntityLight, SouthItemGroupEntity, SouthItemGroupEnti
 import { NorthTransformerWithOptions, TransformerSource } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';
-import CertificateRepository from '../repository/config/certificate.repository';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -28,6 +27,7 @@ import SouthItemGroupRepository from '../repository/config/south-item-group.repo
 import LogRepository from '../repository/logs/log.repository';
 import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import type CertificateService from './certificate.service';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode.service';
 import { toSouthConnectorLightDTO, toSouthItemLightDTO } from './south.service';
@@ -43,7 +43,7 @@ export default class NorthService {
     private northMetricsRepository: NorthConnectorMetricsRepository,
     private scanModeRepository: ScanModeRepository,
     private logRepository: LogRepository,
-    private readonly certificateRepository: CertificateRepository,
+    private readonly certificateService: CertificateService,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly transformerService: TransformerService,
@@ -244,7 +244,7 @@ export default class NorthService {
 
     const north = buildNorth(
       testToRun,
-      this.certificateRepository,
+      this.certificateService,
       this.oIAnalyticsRegistrationRepository,
       createNorthOrchestrator(this.engine.baseFolder, 'test', testToRun.name)
     );

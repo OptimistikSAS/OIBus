@@ -11,9 +11,9 @@ import { EngineSettingsCommandDTO } from '../../shared/model/api/engine.model';
 import { CacheContentUpdateCommand } from '../../shared/model/domain/engine.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
+import type { Certificate, CertificateKeyPair } from '../model/certificate.model';
 import { EngineSettings } from '../model/engine.model';
-import { OIBusValidationError } from '../model/types';
-import type CertificateRepository from '../repository/config/certificate.repository';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 import type EngineRepository from '../repository/config/engine.repository';
 import type EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
@@ -21,6 +21,7 @@ import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import { createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type JoiValidator from '../web-server/controllers/validators/joi.validator';
+import type CertificateService from './certificate.service';
 import type HistoryQueryService from './history-query.service';
 import type IPFilterService from './ip-filter.service';
 import type LoggerService from './logger/logger.service';
@@ -51,6 +52,18 @@ const realUtils: typeof Utils = nodeRequire('./utils');
 const utilsExports = { ...realUtils, getOIBusInfo: mock.fn(realUtils.getOIBusInfo) };
 const utilsCertificateExports = { assertTlsCredentials: mock.fn() };
 const encryptionExports = { __esModule: true, encryptionService: new EncryptionServiceMock() };
+const loggerExports: { __esModule: true; loggerService: Mocked<LoggerService> } = {
+  __esModule: true,
+  loggerService: createMock<LoggerService>()
+};
+
+/** The key pair the certificate service gives for a certificate of the store (its private key decrypted) */
+const toKeyPair = (certificate: Certificate): CertificateKeyPair => ({
+  name: certificate.name,
+  certificate: certificate.certificate,
+  certificateChain: certificate.certificateChain,
+  privateKey: certificate.privateKey
+});
 
 let OIBusService: typeof OIBusServiceType;
 let toEngineSettingsDTO: typeof toEngineSettingsDTOType;
@@ -60,6 +73,7 @@ before(() => {
   mockModule(nodeRequire, './utils-certificate', utilsCertificateExports);
   mockModule(nodeRequire, '../web-server/proxy-server', { __esModule: true, default: MockProxyServer });
   mockModule(nodeRequire, './encryption.service', encryptionExports);
+  mockModule(nodeRequire, './logger/logger.service', loggerExports);
   mockModule(nodeRequire, 'argon2', {
     __esModule: true,
     default: { hash: mock.fn(async (pass: string) => `argon2hash:${pass}`) }
@@ -77,7 +91,7 @@ describe('OIBus Service', () => {
   let service: OIBusServiceType;
   let engineRepository: Mocked<EngineRepository>;
   let engineMetricsRepository: Mocked<EngineMetricsRepository>;
-  let certificateRepository: Mocked<CertificateRepository>;
+  let certificateService: Mocked<CertificateService>;
   let ipFilterService: Mocked<IPFilterService>;
   let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
   let loggerService: Mocked<LoggerService>;
@@ -101,10 +115,14 @@ describe('OIBus Service', () => {
     logger = new LoggerMock();
     engineRepository = createMock<EngineRepository>({ get: () => testData.engine.settings });
     engineMetricsRepository = createMock<EngineMetricsRepository>({ getMetrics: () => testData.engine.metrics });
-    certificateRepository = createMock<CertificateRepository>();
+    certificateService = createMock<CertificateService>({
+      getKeyPair: (id: string) => {
+        throw new NotFoundError(`Certificate "${id}" not found`);
+      }
+    });
     ipFilterService = createMock<IPFilterService>({ whiteListEvent: new EventEmitter(), list: () => testData.ipFilters.list });
     oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({ registrationEvent: new EventEmitter() });
-    loggerService = createMock<LoggerService>({ createChildLogger: () => logger });
+    loggerService = loggerExports.loggerService = createMock<LoggerService>({ createChildLogger: () => logger });
     oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
     southService = createMock<SouthService>();
     northService = createMock<NorthService>();
@@ -125,10 +143,9 @@ describe('OIBus Service', () => {
       createMock<JoiValidator>(),
       engineRepository,
       engineMetricsRepository,
-      certificateRepository,
+      certificateService,
       ipFilterService,
       oIAnalyticsRegistrationService,
-      loggerService,
       oIAnalyticsMessageService,
       southService,
       northService,
@@ -400,12 +417,12 @@ describe('OIBus Service', () => {
     });
 
     it('should read the certificate, its chain and its decrypted private key from the store', async () => {
-      certificateRepository.findById.mock.mockImplementation(() => certificate);
+      certificateService.getKeyPair.mock.mockImplementation(() => toKeyPair(certificate));
 
       const credentials = await service.getWebServerCredentials(storeHttps);
 
       assert.deepStrictEqual(credentials, { cert: `${certificate.certificate}\nca chain`, key: 'encrypted key' });
-      assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, [certificate.id]);
+      assert.deepStrictEqual(certificateService.getKeyPair.mock.calls[0].arguments, [certificate.id]);
       assert.deepStrictEqual(utilsCertificateExports.assertTlsCredentials.mock.calls[0].arguments, [credentials.cert, credentials.key]);
     });
 
@@ -418,7 +435,7 @@ describe('OIBus Service', () => {
         () => service.getWebServerCredentials({ ...storeHttps, certificateId: null }),
         new OIBusValidationError('Certificate "null" not found')
       );
-      certificateRepository.findById.mock.mockImplementation(() => ({ ...certificate, privateKey: '' }));
+      certificateService.getKeyPair.mock.mockImplementation(() => toKeyPair({ ...certificate, privateKey: '' }));
       await assert.rejects(
         () => service.getWebServerCredentials(storeHttps),
         new OIBusValidationError(`Certificate "${certificate.name}" has no private key`)
@@ -464,7 +481,7 @@ describe('OIBus Service', () => {
     });
 
     it('should enable https and redirect to it', async () => {
-      certificateRepository.findById.mock.mockImplementation(() => certificate);
+      certificateService.getKeyPair.mock.mockImplementation(() => toKeyPair(certificate));
       engineRepository.get.mock.mockImplementation(() => withHttps(storeHttps));
       engineRepository.get.mock.mockImplementationOnce(() => testData.engine.settings);
       const webServerChangeEmitSpy = mock.method(service.webServerChangeEvent, 'emit', mock.fn());
@@ -485,7 +502,7 @@ describe('OIBus Service', () => {
     it('should restart the web server without redirect when only its certificate changes', async () => {
       const previous = withHttps(storeHttps);
       const next = withHttps({ ...storeHttps, certificateId: 'other' });
-      certificateRepository.findById.mock.mockImplementation(() => certificate);
+      certificateService.getKeyPair.mock.mockImplementation(() => toKeyPair(certificate));
       engineRepository.get.mock.mockImplementation(() => next);
       engineRepository.get.mock.mockImplementationOnce(() => previous);
       const webServerChangeEmitSpy = mock.method(service.webServerChangeEvent, 'emit', mock.fn());
@@ -510,7 +527,7 @@ describe('OIBus Service', () => {
       );
 
       assert.deepStrictEqual(result, { needsRedirect: false, newPort: null, newProtocol: null });
-      assert.strictEqual(certificateRepository.findById.mock.calls.length, 0);
+      assert.strictEqual(certificateService.getKeyPair.mock.calls.length, 0);
       assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 1);
     });
   });

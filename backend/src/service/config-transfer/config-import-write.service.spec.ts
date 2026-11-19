@@ -25,7 +25,6 @@ import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, createMock } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
-import EncryptionService from '../encryption.service';
 import { toEngineLoggerCommand } from '../engine-command.utils';
 import type OIAnalyticsRegistrationService from '../oia/oianalytics-registration.service';
 import ConfigImportService, { ConfigImportError } from './config-import.service';
@@ -79,10 +78,8 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     transformerRepository = new TransformerRepository(database, auditService);
     configurationWorkflowRepository = new ConfigurationWorkflowRepository(database, auditService);
 
-    // The real, pure EncryptionService/JoiValidator (neither needs init) so secret-stripping and
-    // manifest validation are exercised for real, matching how the export/import endpoints actually
-    // run.
-    const encryptionService = new EncryptionService();
+    // The real encryption service (its filterSecrets needs no init) and JoiValidator, so that the secrets are stripped
+    // and the settings validated for real, as the export and import endpoints do
     const builderService = new ConfigTransferBuilderService(
       engineRepository,
       scanModeRepository,
@@ -94,7 +91,6 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       historyQueryRepository,
       transformerRepository,
       configurationWorkflowRepository,
-      encryptionService,
       false,
       false
     );

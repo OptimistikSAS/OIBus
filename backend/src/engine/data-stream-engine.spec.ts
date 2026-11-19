@@ -15,7 +15,6 @@ import type { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/n
 import type { ScanMode } from '../model/scan-mode.model';
 import type { SouthConnectorEntity, SouthConnectorEntityLight } from '../model/south-connector.model';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
-import type CertificateRepository from '../repository/config/certificate.repository';
 import type ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
 import type HistoryQueryRepository from '../repository/config/history-query.repository';
 import type NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -25,6 +24,7 @@ import type SouthConnectorRepository from '../repository/config/south-connector.
 import type HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import type NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import type SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
+import type CertificateService from '../service/certificate.service';
 import type HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
 import type NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import type SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
@@ -180,7 +180,7 @@ describe('DataStreamEngine', () => {
       historyQueryRepository,
       createMock<HistoryQueryMetricsRepository>(),
       createMock<SouthCacheRepository>(),
-      createMock<CertificateRepository>(),
+      createMock<CertificateService>(),
       createMock<OIAnalyticsRegistrationRepository>(),
       oianalyticsMessageService,
       scanModeRepository,
