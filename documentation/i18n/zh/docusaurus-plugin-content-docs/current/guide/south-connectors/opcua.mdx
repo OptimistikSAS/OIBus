@@ -257,8 +257,9 @@ The connection may have been rejected by the server
 证书会存放在 `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\rejected\` 中 —— 请将它们移动到
 旁边的 `certs\` 文件夹中。
 
-:::tip 两者使用同一证书
-在**证书**和**用户证书**设置中选择存储中的同一证书，即可使同一证书同时用于传输层安全和用户身份验证。
+:::warning 为用户使用专用证书
+不要将通信证书选作**用户证书**：否则用户将由与应用程序相同的密钥进行身份验证，无法提供独立的证明，
+并且在吊销用户权限时必然会中断安全通道。请按下文所示为用户创建证书。
 :::
 
 ## 为 Prosys 创建自定义身份验证证书 {#creating-a-custom-authentication-certificate-for-prosys}
