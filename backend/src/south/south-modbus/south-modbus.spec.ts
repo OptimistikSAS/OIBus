@@ -704,6 +704,143 @@ describe('South Modbus', () => {
     await assert.rejects(south.directQuery(configuration.items), new Error('Could not read address: Modbus client not set'));
   });
 
+  // Shape of the rejection jsmodbus produces when the device answers with a Modbus exception response
+  const modbusExceptionRejection = (code?: number, message?: string) => ({
+    err: 'ModbusException',
+    message: 'A Modbus Exception Occurred - See Response Body',
+    response: code === undefined ? undefined : { body: { code, message } }
+  });
+
+  it('should keep the connection and the other values when the device rejects a batched register read', async () => {
+    // holding-register batches: [id6@3720] and [id1@20096 + id2@20097]; the second one is rejected
+    const readHoldingRegistersMock = mock.fn(async (addr: number, count: number) => {
+      if (addr === 20096) throw modbusExceptionRejection(2, 'ILLEGAL DATA ADDRESS');
+      return { response: { body: { valuesAsBuffer: Buffer.alloc(count * 2) } } };
+    });
+    const modbusClient = {
+      readHoldingRegisters: readHoldingRegistersMock,
+      readInputRegisters: mock.fn(async (_addr: number, count: number) => ({
+        response: { body: { valuesAsBuffer: Buffer.alloc(count * 2) } }
+      })),
+      readCoils: mock.fn(async (_addr: number, count: number) => ({ response: { body: { valuesAsArray: Array(count).fill(0) } } })),
+      readDiscreteInputs: mock.fn(async (_addr: number, count: number) => ({ response: { body: { valuesAsArray: Array(count).fill(1) } } }))
+    };
+    (south as unknown as Record<string, unknown>)['socket'] = mockedEmitter;
+    (south as unknown as Record<string, unknown>)['modbusClient'] = modbusClient;
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true }
+    };
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    const addContentMock = mock.fn(
+      async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+        undefined
+    );
+    south.disconnect = disconnectMock;
+    south.addContent = addContentMock;
+
+    await assert.rejects(
+      south.directQuery(configuration.items),
+      new Error(
+        '1 read(s) rejected by the device: Modbus exception 2 (ILLEGAL DATA ADDRESS) when reading 2 holding-register word(s) ' +
+          'at protocol address 20096 for item(s) "HoldingRegister", "HoldingRegister"'
+      )
+    );
+
+    // The 4 other items still produce their values
+    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    assert.strictEqual(addContentMock.mock.calls[0].arguments[0].content!.length, 4);
+    // The connection is kept and no reconnection is scheduled
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['modbusClient'], modbusClient);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], null);
+    mock.timers.tick(configuration.settings.retryInterval);
+    assert.strictEqual(socketMock.mock.calls.length, 0);
+  });
+
+  it('should keep the connection when the device rejects a batched coil read without exception code', async () => {
+    const modbusClient = {
+      readCoils: mock.fn(async (): Promise<never> => {
+        throw modbusExceptionRejection();
+      })
+    };
+    (south as unknown as Record<string, unknown>)['modbusClient'] = modbusClient;
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true }
+    };
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    const addContentMock = mock.fn(async (_data: OIBusContent): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
+    south.addContent = addContentMock;
+
+    await assert.rejects(
+      south.directQuery([configuration.items[4]]),
+      new Error(
+        '1 read(s) rejected by the device: Modbus exception unknown code when reading 1 coil bit(s) at protocol address 3715 for item(s) "Coil"'
+      )
+    );
+    assert.strictEqual(addContentMock.mock.calls[0].arguments[0].content!.length, 0);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['modbusClient'], modbusClient);
+  });
+
+  it('should list only the first item names when a rejected batch holds many items', async () => {
+    const makeItem = (index: number) => ({
+      ...configuration.items[0],
+      id: `var${index}`,
+      name: `var${index}`,
+      settings: { ...configuration.items[0].settings, address: `${100 + index}` }
+    });
+    const items = [1, 2, 3, 4, 5, 6, 7].map(makeItem);
+    (south as unknown as Record<string, unknown>)['modbusClient'] = {
+      readHoldingRegisters: mock.fn(async (): Promise<never> => {
+        throw modbusExceptionRejection(6);
+      })
+    };
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true }
+    };
+    south.disconnect = mock.fn(async (): Promise<void> => undefined);
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
+
+    await assert.rejects(
+      south.directQuery(items),
+      new Error(
+        '1 read(s) rejected by the device: Modbus exception 6 (unknown) when reading 7 holding-register word(s) at protocol address 101 ' +
+          'for item(s) "var1", "var2", "var3", "var4", "var5" and 2 more'
+      )
+    );
+  });
+
+  it('should keep the connection and the other values when the device rejects an individual read', async () => {
+    utilsModbusExports.readHoldingRegister = mock.fn(async (_client: unknown, address: number): Promise<string> => {
+      if (address === 20096) throw modbusExceptionRejection(2, 'ILLEGAL DATA ADDRESS');
+      return '100';
+    }) as unknown as typeof utilsModbusExports.readHoldingRegister;
+    utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string> => '200');
+    utilsModbusExports.readCoil = mock.fn(async (): Promise<string> => '1');
+    utilsModbusExports.readDiscreteInputRegister = mock.fn(async (): Promise<string> => '0');
+    const modbusClient = {};
+    (south as unknown as Record<string, unknown>)['modbusClient'] = modbusClient;
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    const addContentMock = mock.fn(async (_data: OIBusContent): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
+    south.addContent = addContentMock;
+
+    await assert.rejects(
+      south.directQuery(configuration.items),
+      new Error(
+        '1 read(s) rejected by the device: Modbus exception 2 (ILLEGAL DATA ADDRESS) when reading 1 holding-register word(s) ' +
+          'at protocol address 20096 for item(s) "HoldingRegister"'
+      )
+    );
+    assert.strictEqual(addContentMock.mock.calls[0].arguments[0].content!.length, 5);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['modbusClient'], modbusClient);
+  });
+
   it('should not keep resetting the reconnect timer when directQuery keeps failing while disconnected', async () => {
     // Regression test: previously, every failed directQuery call unconditionally called disconnect()
     // (which clears any pending reconnectTimeout) and then re-armed a brand new timer. If the scan
@@ -891,6 +1028,24 @@ describe('South Modbus', () => {
     assert.strictEqual(socketMock.mock.calls.length, 1);
     assert.strictEqual(result.connectionDuration, 15);
     assert.strictEqual(result.queryDuration, 25);
+  });
+
+  it('should report the Modbus exception when the device rejects the tested item', async () => {
+    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<never> => {
+      throw modbusExceptionRejection(2, 'ILLEGAL DATA ADDRESS');
+    });
+    // An earlier test leaves the shared configuration on the jbus offset: pin the modbus offset here
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, addressOffset: 'modbus' }
+    };
+
+    await assert.rejects(
+      south.testItem(configuration.items[0], testData.south.itemTestingSettings),
+      new Error(
+        'Modbus exception 2 (ILLEGAL DATA ADDRESS) when reading 1 holding-register word(s) at protocol address 20096 for item(s) "HoldingRegister"'
+      )
+    );
   });
 
   it('should properly manage error on test item failure', async () => {
