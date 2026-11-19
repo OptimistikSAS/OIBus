@@ -28,6 +28,7 @@ import type { HistoryQueryItemEntity } from '../model/histor-query.model';
 import type NorthConnectorClass from './north-connector';
 import type NorthFileWriterClass from './north-file-writer/north-file-writer';
 import { OIBusError } from '../model/engine.model';
+import type { ScanMode } from '../model/scan-mode.model';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 
@@ -328,25 +329,109 @@ describe('NorthConnector', () => {
     assert.strictEqual(runMock.mock.calls.length, 1);
   });
 
-  it('should properly run a task', async () => {
+  it('should properly run a task and queue a wait task after it', async () => {
+    north['taskJobQueue'] = [{ id: 'scanModeId1', name: 'scan' }];
     const handleContentWrapperMock = mock.fn(async () => undefined);
     north.handleContentWrapper = handleContentWrapperMock;
-    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    const triggerRunIfNecessaryMock = mock.fn(() => undefined);
     north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.run({ id: 'scanModeId1', name: 'scan' });
 
     assert.strictEqual(handleContentWrapperMock.mock.calls.length, 1);
-    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
-    assert.deepStrictEqual(triggerRunIfNecessaryMock.mock.calls[0].arguments[0], north['connector'].caching.throttling.runMinDelay);
+    const runMinDelay = north['connector'].caching.throttling.runMinDelay;
+    assert.deepStrictEqual(north['taskJobQueue'], [{ id: 'wait', name: `Wait ${runMinDelay} ms before the next run` }]);
+    // The next check comes after the wait
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 0);
   });
 
-  it('should properly run a task and trigger next after error', async () => {
+  it('should queue a wait task of the retry interval after an error', async () => {
+    north['taskJobQueue'] = [{ id: 'scanModeId1', name: 'scan' }];
     north['errorCount'] = 1;
     north.handleContentWrapper = mock.fn(async () => undefined);
-    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    await north.run({ id: 'scanModeId1', name: 'scan' });
+
+    const retryInterval = north['connector'].caching.error.retryInterval;
+    assert.deepStrictEqual(north['taskJobQueue'], [{ id: 'wait', name: `Wait ${retryInterval} ms before the next run` }]);
+  });
+
+  it('should not queue a wait task without run min delay', async () => {
+    const connector = north['connector'];
+    north.connectorConfiguration = {
+      ...connector,
+      caching: { ...connector.caching, throttling: { ...connector.caching.throttling, runMinDelay: 0 } }
+    };
+    north['taskJobQueue'] = [{ id: 'scanModeId1', name: 'scan' }];
+    north.handleContentWrapper = mock.fn(async () => undefined);
+    const triggerRunIfNecessaryMock = mock.fn(() => undefined);
     north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.run({ id: 'scanModeId1', name: 'scan' });
-    assert.deepStrictEqual(triggerRunIfNecessaryMock.mock.calls[0].arguments[0], north['connector'].caching.error.retryInterval);
+
+    assert.deepStrictEqual(north['taskJobQueue'], []);
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
+  });
+
+  it('should only wait when running a wait task, then check for a next run', async () => {
+    const waitTask = { id: 'wait', name: 'Wait' };
+    north['taskJobQueue'] = [waitTask];
+    const handleContentWrapperMock = mock.fn(async () => undefined);
+    north.handleContentWrapper = handleContentWrapperMock;
+    const triggerRunIfNecessaryMock = mock.fn(() => undefined);
+    north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
+
+    const run = north.run(waitTask);
+    mock.timers.tick(north['connector'].caching.throttling.runMinDelay - 1);
+    await flushPromises();
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 0);
+    mock.timers.tick(1);
+    await run;
+
+    assert.strictEqual(handleContentWrapperMock.mock.calls.length, 0);
+    assert.deepStrictEqual(north['taskJobQueue'], []);
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
+  });
+
+  it('should keep a single run loop whatever the number of triggers', async () => {
+    await north.start();
+    const handleContentWrapperMock = mock.fn(async () => undefined);
+    north.handleContentWrapper = handleContentWrapperMock;
+    const scanMode = north['connector'].caching.trigger.scanMode;
+
+    north.trigger(scanMode as ScanMode);
+    await flushPromises();
+    assert.strictEqual(handleContentWrapperMock.mock.calls.length, 1);
+
+    // Triggers arriving during the wait run after it, once: they used to each start a run loop of their own
+    north.trigger(scanMode as ScanMode);
+    north.trigger(scanMode as ScanMode);
+    north.addTaskToQueue({ id: 'limit-reach', name: 'limit reach' });
+    north.addTaskToQueue({ id: 'limit-reach', name: 'limit reach' });
+    await flushPromises();
+    assert.strictEqual(handleContentWrapperMock.mock.calls.length, 1);
+
+    mock.timers.tick(north['connector'].caching.throttling.runMinDelay);
+    await flushPromises();
+    assert.strictEqual(handleContentWrapperMock.mock.calls.length, 2);
+    mock.timers.tick(north['connector'].caching.throttling.runMinDelay);
+    await flushPromises();
+    assert.strictEqual(handleContentWrapperMock.mock.calls.length, 3);
+    await north.stop();
+  });
+
+  it('should end the wait task in progress when stopping', async () => {
+    const waitTask = { id: 'wait', name: 'Wait' };
+    north['taskJobQueue'] = [waitTask];
+    north['errorCount'] = 1;
+    const addTaskToQueueMock = mock.fn((_taskDescription: { id: string; name: string }) => undefined);
+    north.addTaskToQueue = addTaskToQueueMock;
+
+    const run = north.run(waitTask);
+    // Resolves without the retry interval elapsing
+    await north.stop();
+    await run;
+
+    assert.strictEqual(north['runProgress$'], null);
+    // A stopping connector does not queue the retry
+    assert.strictEqual(addTaskToQueueMock.mock.calls.length, 0);
   });
 
   it('should clean up queue and deferred promise when run() throws unexpectedly', async () => {
@@ -377,9 +462,16 @@ describe('NorthConnector', () => {
     ];
     const handleContentWrapperMock = mock.fn(async () => undefined);
     north.handleContentWrapper = handleContentWrapperMock;
-    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    const triggerRunIfNecessaryMock = mock.fn(() => undefined);
     north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.run({ id: 'scanModeId1', name: 'scan' });
+    // The queued task runs after the wait following the first one
+    assert.strictEqual(handleContentWrapperMock.mock.calls.length, 1);
+    mock.timers.tick(north['connector'].caching.throttling.runMinDelay);
+    await flushPromises();
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 0);
+    mock.timers.tick(north['connector'].caching.throttling.runMinDelay);
+    await flushPromises();
     assert.ok(
       logger.trace.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `North run triggered by task "scan" (scanModeId1)`
@@ -509,8 +601,7 @@ describe('NorthConnector', () => {
     const runMock = mock.fn(async (_taskDescription: { id: string; name: string }) => undefined);
     north.run = runMock;
     north['errorCount'] = 1;
-    await north['triggerRunIfNecessary'](0);
-    assert.strictEqual(utilsExports.delay.mock.calls.length, 0);
+    north['triggerRunIfNecessary']();
     assert.strictEqual(addTaskToQueueMock.mock.calls.length, 1);
     assert.deepStrictEqual(addTaskToQueueMock.mock.calls[0].arguments[0], {
       id: 'retry',
@@ -530,8 +621,7 @@ describe('NorthConnector', () => {
     north.addTaskToQueue = addTaskToQueueMock;
     const runMock = mock.fn(async (_taskDescription: { id: string; name: string }) => undefined);
     north.run = runMock;
-    await north['triggerRunIfNecessary'](0);
-    assert.strictEqual(utilsExports.delay.mock.calls.length, 0);
+    north['triggerRunIfNecessary']();
     assert.strictEqual(addTaskToQueueMock.mock.calls.length, 1);
     assert.deepStrictEqual(addTaskToQueueMock.mock.calls[0].arguments[0], {
       id: 'limit-reach',
@@ -859,19 +949,18 @@ describe('NorthConnector', () => {
 
   it('should trigger a run check after caching content', async () => {
     north['handleNoTransformer'] = mock.fn(async (_data: OIBusContent) => undefined);
-    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    const triggerRunIfNecessaryMock = mock.fn(() => undefined);
     north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
     assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
-    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls[0].arguments[0], 0);
   });
 
   it('should not trigger an immediate retry after caching content while a send is failing', async () => {
     north['errorCount'] = 1;
     const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
     north['handleNoTransformer'] = handleNoTransformerMock;
-    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    const triggerRunIfNecessaryMock = mock.fn(() => undefined);
     north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 

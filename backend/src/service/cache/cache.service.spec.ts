@@ -471,6 +471,40 @@ describe('CacheService', () => {
     );
   });
 
+  it('should not queue again at startup an entry already removed whose files are still locked', async () => {
+    mockDisk({
+      [service.cacheFolder]: { file1: fileList[0].metadata, sent: fileList[1].metadata },
+      [service.errorFolder]: {},
+      [service.archiveFolder]: {}
+    });
+    priv()['pendingRemovals'] = {
+      cache: new Map([
+        ['sent', fileList[1].metadata.contentSize],
+        // Its metadata is already gone: nothing left to remove or count
+        ['gone', 100]
+      ]),
+      error: new Map(),
+      archive: new Map()
+    };
+    rmMock.mock.mockImplementation(async () => {
+      throw new Error('EBUSY');
+    });
+
+    await service.start();
+
+    assert.deepStrictEqual(
+      (priv()['queue'] as Array<{ filename: string }>).map(element => element.filename),
+      ['file1']
+    );
+    assert.deepStrictEqual([...(priv()['pendingRemovals'] as Record<string, Map<string, number>>).cache.keys()], ['sent']);
+    // Still on disk: still counted
+    assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 200, error: 0, archive: 0 });
+    assert.deepStrictEqual(
+      rmMock.mock.calls.map(c => c.arguments[0]),
+      [path.join(service.cacheFolder, METADATA_FOLDER, 'sent')]
+    );
+  });
+
   it('should remove the metadata files without content at startup', async () => {
     const metadataFiles: Record<string, Array<string>> = {
       // "added" got its content and metadata written between the two listings: it is not an orphan
@@ -1353,18 +1387,88 @@ describe('CacheService', () => {
       assert.ok(logger.trace.mock.calls.some(c => String(c.arguments[0]).includes('removed from cache')));
     });
 
-    it('should handle errors during removal', async () => {
-      const filename = 'file.json';
-      const metadata = { contentSize: 100 };
+    it('should remove the metadata before the content', async () => {
+      priv()['readCacheMetadataFile'] = mock.fn(async () => ({ contentSize: 100 }) as CacheMetadata);
 
-      priv()['readCacheMetadataFile'] = mock.fn(async () => metadata);
-      priv()['deleteCacheEntry'] = mock.fn(async () => {
-        throw new Error('Rm Error');
+      await (priv()['removeContent'] as unknown as (folder: string, filename: string) => Promise<void>)('cache', 'file.json');
+
+      const rmOptions = { recursive: true, force: true, maxRetries: 5, retryDelay: 100 };
+      assert.deepStrictEqual(
+        rmMock.mock.calls.map(c => c.arguments),
+        [
+          [path.join(service.cacheFolder, METADATA_FOLDER, 'file.json'), rmOptions],
+          [path.join(service.cacheFolder, CONTENT_FOLDER, 'file.json'), rmOptions]
+        ]
+      );
+    });
+
+    it('should keep a removed entry out of the queue and retry deleting its files when they are locked', async () => {
+      const filename = 'file.json';
+      const metadata = { ...fileList[2].metadata, contentSize: 100 };
+      priv()['queue'] = [{ filename, metadata }];
+      service['recomputeQueueCounters']();
+      priv()['cacheSize'] = { cache: 100, error: 0, archive: 0 };
+      readFileMock.mock.mockImplementation(async () => JSON.stringify(metadata));
+      // The content file is locked (antivirus...) on the first attempt only
+      let contentLocked = true;
+      rmMock.mock.mockImplementation(async (filePath: string) => {
+        if (filePath.includes(CONTENT_FOLDER) && contentLocked) {
+          contentLocked = false;
+          throw new Error('EBUSY');
+        }
+      });
+      const removeCommand = {
+        cache: { remove: [filename], move: [] },
+        error: { remove: [], move: [] },
+        archive: { remove: [], move: [] }
+      } as CacheContentUpdateCommand;
+
+      await service.updateCacheContent(removeCommand);
+
+      // Never sent again, but not forgotten: its size is still counted and the cache is not empty
+      assert.strictEqual((priv()['queue'] as Array<unknown>).length, 0);
+      assert.strictEqual(service.getNumberOfRawFilesInQueue(), 0);
+      assert.strictEqual(service.getCacheSize(), 100);
+      assert.strictEqual(service.cacheIsEmpty(), false);
+      assert.deepStrictEqual(
+        logger.warn.mock.calls.map(c => c.arguments[0]),
+        [
+          `Could not remove file "${path.join(service.cacheFolder, CONTENT_FOLDER, filename)}" from cache, the removal will be retried: EBUSY`
+        ]
+      );
+
+      // The next send retries the removal
+      assert.strictEqual(await service.getCacheContentToSend(100), null);
+
+      assert.strictEqual(service.getCacheSize(), 0);
+      assert.strictEqual(service.cacheIsEmpty(), true);
+      assert.strictEqual((priv()['pendingRemovals'] as Record<string, Map<string, number>>).cache.size, 0);
+      assert.ok(logger.info.mock.calls.some(c => c.arguments[0] === '1 file(s) that previously could not be removed are now removed'));
+    });
+
+    it('should log the failed retries of a removal as trace', async () => {
+      priv()['pendingRemovals'] = { cache: new Map(), error: new Map([['file.json', 100]]), archive: new Map() };
+      priv()['cacheSize'] = { cache: 0, error: 100, archive: 0 };
+      rmMock.mock.mockImplementation(async () => {
+        throw new Error('EPERM');
       });
 
-      await (priv()['removeContent'] as unknown as (folder: string, filename: string) => Promise<void>)('archive', filename);
+      await (priv()['retryPendingRemovals'] as unknown as () => Promise<void>)();
 
-      assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while removing file')));
+      assert.strictEqual(logger.warn.mock.calls.length, 0);
+      assert.ok(logger.trace.mock.calls.some(c => String(c.arguments[0]).includes('the removal will be retried: EPERM')));
+      assert.strictEqual(service.getCacheSize(), 100);
+      // A removal pending in the error folder leaves nothing to send or clean in the cache folder
+      assert.strictEqual(service.cacheIsEmpty(), true);
+    });
+
+    it('should not retry the removals while a retry is already running', async () => {
+      priv()['pendingRemovals'] = { cache: new Map([['file.json', 100]]), error: new Map(), archive: new Map() };
+      priv()['retryingRemovals'] = true;
+
+      await (priv()['retryPendingRemovals'] as unknown as () => Promise<void>)();
+
+      assert.strictEqual(rmMock.mock.calls.length, 0);
     });
 
     it('should handle empty metadata', async () => {

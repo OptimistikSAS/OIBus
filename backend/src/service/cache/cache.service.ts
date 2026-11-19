@@ -34,6 +34,7 @@ const ORPHAN_CONTENT_MIN_AGE_MS = 60_000;
 const RM_OPTIONS = { recursive: true, force: true, maxRetries: 5, retryDelay: 100 };
 // Number of metadata files read before checking whether a search already has enough results
 const SEARCH_READ_CHUNK_SIZE = 1_000;
+const DATA_FOLDERS: ReadonlyArray<DataFolderType> = ['cache', 'error', 'archive'];
 
 /** Creation time in ms, to sort the queue without parsing dates in the comparator. Unparsable dates sort first. */
 const createdAtMillis = (metadata: CacheMetadata): number => {
@@ -76,6 +77,11 @@ export default class CacheService {
 
   private updateCache$: DeferredPromise | null = null;
   private queue: Array<{ filename: string; metadata: CacheMetadata }> = [];
+  // Entries removed (sent, or removed by the user) whose files could not be deleted yet, typically because an antivirus
+  // briefly locks them on Windows. They must never be sent again: the deletion is retried on every send and cache update
+  // Content size of each of these entries, by filename, in each folder
+  private pendingRemovals: Record<DataFolderType, Map<string, number>> = { cache: new Map(), error: new Map(), archive: new Map() };
+  private retryingRemovals = false;
   // Once started, the queue mirrors the cache folder: searches read it instead of every metadata file on disk
   private started = false;
 
@@ -126,9 +132,14 @@ export default class CacheService {
       this.scanCacheFolder(this.archiveFolder, 'archive')
     ]);
 
+    // Forget the removals the scan made pointless (metadata already gone: leftover content is handled as an orphan), and
+    // never queue an entry already removed whose files could not be deleted yet
+    this.syncPendingRemovals({ cache: cacheResult.entries, error: errorResult.entries, archive: archiveResult.entries });
+
     // Sort the queue to have the oldest file first. Each date is parsed once: parsing in the comparator blocks the
     // event loop for minutes when the cache holds millions of files
     this.queue = cacheResult.entries
+      .filter(entry => !this.pendingRemovals.cache.has(entry.filename))
       .map(entry => ({ entry, createdAt: createdAtMillis(entry.metadata) }))
       .sort((a, b) => a.createdAt - b.createdAt)
       .map(({ entry }) => entry);
@@ -160,6 +171,80 @@ export default class CacheService {
     // pre-existing backlog. Without this, currentCacheSize/ErrorSize/ArchiveSize stay
     // at 0 until the next add/move/remove, reporting wrong sizes right after startup.
     this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+    await this.retryPendingRemovals();
+  }
+
+  private hasPendingRemovals(): boolean {
+    return DATA_FOLDERS.some(folder => this.pendingRemovals[folder].size > 0);
+  }
+
+  /** Keep only the pending removals whose metadata file is still on disk: the others have nothing left to remove or count. */
+  private syncPendingRemovals(scannedEntries: Record<DataFolderType, Array<{ filename: string }>>): void {
+    for (const folder of DATA_FOLDERS) {
+      const pending = this.pendingRemovals[folder];
+      if (pending.size === 0) {
+        continue;
+      }
+      const scannedFilenames = new Set(scannedEntries[folder].map(entry => entry.filename));
+      for (const filename of pending.keys()) {
+        if (!scannedFilenames.has(filename)) {
+          pending.delete(filename);
+        }
+      }
+    }
+  }
+
+  /**
+   * Retry deleting the files of the entries already removed. Without this, a sent file that could not be deleted (locked
+   * by an antivirus...) stayed in the cache folder forever, and was sent again after a restart.
+   */
+  private async retryPendingRemovals(): Promise<void> {
+    if (this.retryingRemovals || !this.hasPendingRemovals()) {
+      return;
+    }
+    this.retryingRemovals = true;
+    let removedEntries = 0;
+    try {
+      for (const folder of DATA_FOLDERS) {
+        const pending = this.pendingRemovals[folder];
+        for (const [filename, contentSize] of pending) {
+          if (await this.removeEntryFiles(folder, filename, true)) {
+            pending.delete(filename);
+            this.cacheSize[folder] -= contentSize;
+            removedEntries++;
+          }
+        }
+      }
+    } finally {
+      this.retryingRemovals = false;
+    }
+    if (removedEntries > 0) {
+      this.logger.info(`${removedEntries} file(s) that previously could not be removed are now removed`);
+      this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+    }
+  }
+
+  /**
+   * Delete the files of an entry being removed, and return whether both are gone. The metadata goes first: once it is
+   * gone, the entry can no longer be sent again, even after a restart, and a content file left behind is removed by the
+   * startup scan as an orphan.
+   */
+  private async removeEntryFiles(folder: DataFolderType, filename: string, isRetry: boolean): Promise<boolean> {
+    for (const subFolder of [METADATA_FOLDER, CONTENT_FOLDER]) {
+      const filePath = path.join(this.getFolder(folder), subFolder, filename);
+      try {
+        await fs.rm(filePath, RM_OPTIONS);
+      } catch (error: unknown) {
+        const message = `Could not remove file "${filePath}" from ${folder}, the removal will be retried: ${(error as Error).message}`;
+        if (isRetry) {
+          this.logger.trace(message);
+        } else {
+          this.logger.warn(message);
+        }
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -317,6 +402,7 @@ export default class CacheService {
 
   async getCacheContentToSend(maxGroupCount: number): Promise<{ filename: string; metadata: CacheMetadata } | null> {
     await this.waitCacheUpdateTasks();
+    await this.retryPendingRemovals();
 
     // Return null when there is no file in the queue
     while (this.queue.length > 0) {
@@ -476,8 +562,9 @@ export default class CacheService {
     }
   }
 
+  /** Empty once nothing is left to send nor to remove from the cache folder (a finished history query stops its north). */
   cacheIsEmpty(): boolean {
-    return this.queue.length === 0;
+    return this.queue.length === 0 && this.pendingRemovals.cache.size === 0;
   }
 
   cacheIsFull(maxSize: number): boolean {
@@ -576,6 +663,7 @@ export default class CacheService {
     this.updateCache$ = new DeferredPromise();
 
     try {
+      await this.retryPendingRemovals();
       // REMOVE
       for (const filename of updateCommand.cache.remove) {
         await this.removeContent('cache', filename);
@@ -705,12 +793,12 @@ export default class CacheService {
     if (!metadata) {
       return;
     }
-    try {
-      await this.deleteCacheEntry(from, filename);
+    if (await this.removeEntryFiles(from, filename, false)) {
       this.cacheSize[from] -= metadata.contentSize;
       this.logger.trace(`File "${filename}" removed from ${from}`);
-    } catch (error: unknown) {
-      this.logger.error(`Error while removing file "${filename}" from ${from}: ${(error as Error).message}`);
+    } else {
+      // Out of the queue already: never sent again. Its size is still counted until its files are actually removed
+      this.pendingRemovals[from].set(filename, metadata.contentSize);
     }
   }
 
@@ -744,6 +832,9 @@ export default class CacheService {
         }
       }
       this.queue = [];
+      for (const folder of DATA_FOLDERS) {
+        this.pendingRemovals[folder].clear();
+      }
       this._queuedElementsCount = 0;
       this._queuedRawFilesCount = 0;
       this.cacheSize = {

@@ -18,7 +18,7 @@ import { DateTime } from 'luxon';
 import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { createOIBusError, delay } from '../service/utils';
+import { createOIBusError } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import type { ICacheService } from '../model/cache.service.model';
@@ -30,6 +30,9 @@ import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { CacheSize, CONTENT_FOLDER } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
 import { loggerService } from '../service/logger/logger.service';
+
+// Id of the queued task that only waits between two sends, see NorthConnector.queueWaitTask
+const WAIT_TASK_ID = 'wait';
 
 /** Events published by a North connector's {@link NorthConnector.metricsEvent}. */
 export interface NorthMetricsEvents {
@@ -92,6 +95,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private taskJobQueue: Array<{ id: string; name: string }> = [];
   private taskRunnerEvent: EventEmitter = new EventEmitter();
   public metricsEvent: TypedEventEmitter<NorthMetricsEvents> = new TypedEventEmitter<NorthMetricsEvents>();
+  // Timer and resolver of the wait task in progress, to cancel it when stopping
+  private waitTimeout: NodeJS.Timeout | null = null;
+  private resolveWait: (() => void) | null = null;
 
   private stopping = false;
 
@@ -239,14 +245,15 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * destination. Overrides should call `super.connect()` so the initial
    * trigger sweep runs.
    */
-  async connect(): Promise<void> {
+  connect(): Promise<void> {
     this.metricsEvent.emit('connect', {
       lastConnection: DateTime.now().toUTC().toISO()!
     });
     // Check at startup if a run must be triggered
-    await this.triggerRunIfNecessary(this.connector.caching.throttling.runMinDelay);
+    this.triggerRunIfNecessary();
 
     this.logger.info(`North connector "${this.connector.name}" of type ${this.connector.type} started`);
+    return Promise.resolve();
   }
 
   /**
@@ -269,6 +276,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *   - the cron (scan-mode tick, via `trigger`),
    *   - `triggerRunIfNecessary` (file count / element count threshold reached),
    *   - retry after `errorCount > 0`.
+   * The wait tasks pacing the sends are inserted by `queueWaitTask`, not here.
    */
   addTaskToQueue(taskDescription: { id: string; name: string }): void {
     const foundJob = this.taskJobQueue.find(element => element.id === taskDescription.id);
@@ -295,11 +303,14 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * `stop()` can be cleanly awaited and this connector is never left
    * permanently locked out of future runs.
    *
-   * After the run, decides what to do next:
+   * A send task is followed by a wait task (see `queueWaitTask`), which only
+   * waits for the retry interval (if the last attempt errored) or the
+   * configured throttling minimum.
+   *
+   * After the task, decides what to do next:
    *  - more tasks queued → emit `'run'` to keep draining.
-   *  - queue empty → call `triggerRunIfNecessary` with either the retry
-   *    interval (if the last attempt errored) or the configured throttling
-   *    minimum, which may re-enqueue if cache thresholds are breached.
+   *  - queue empty → call `triggerRunIfNecessary`, which may re-enqueue if
+   *    cache thresholds are breached or the last attempt errored.
    */
   async run(taskDescription: { id: string; name: string }): Promise<void> {
     this.logger.trace(`North run triggered by task "${taskDescription.name}" (${taskDescription.id})`);
@@ -309,7 +320,12 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
     this.runProgress$ = new DeferredPromise();
     try {
-      await this.handleContentWrapper();
+      if (taskDescription.id === WAIT_TASK_ID) {
+        await this.wait(this.errorCount ? this.connector.caching.error.retryInterval : this.connector.caching.throttling.runMinDelay);
+      } else {
+        await this.handleContentWrapper();
+        this.queueWaitTask();
+      }
       this.taskJobQueue.shift();
       this.runProgress$!.resolve();
       this.runProgress$ = null;
@@ -317,15 +333,47 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         this.taskRunnerEvent.emit('run', this.taskJobQueue[0]);
       } else {
         // If the task queue is empty, add one task if necessary, otherwise, it will be added by the cron
-        await this.triggerRunIfNecessary(
-          this.errorCount ? this.connector.caching.error.retryInterval : this.connector.caching.throttling.runMinDelay
-        );
+        this.triggerRunIfNecessary();
       }
     } catch (error: unknown) {
       this.logger.error(`Unhandled error in North task runner: ${(error as Error).message}`);
       this.taskJobQueue.shift();
       this.runProgress$!.resolve();
       this.runProgress$ = null;
+    }
+  }
+
+  /**
+   * Pace the next send, whatever triggers it (cron, limit reach, retry): a wait task is queued right after the send task
+   * that just ran, so the tasks added meanwhile run after it. Waiting in the queue keeps a single run loop: the delay
+   * used to be awaited outside of it, and every trigger arriving while the north was idle started one more loop, so the
+   * number of runs per `runMinDelay` kept growing.
+   */
+  private queueWaitTask(): void {
+    const waitTime = this.errorCount ? this.connector.caching.error.retryInterval : this.connector.caching.throttling.runMinDelay;
+    if (!waitTime) {
+      return;
+    }
+    this.taskJobQueue.splice(1, 0, { id: WAIT_TASK_ID, name: `Wait ${waitTime} ms before the next run` });
+  }
+
+  private wait(waitTime: number): Promise<void> {
+    return new Promise(resolve => {
+      this.resolveWait = resolve;
+      this.waitTimeout = setTimeout(() => this.cancelWait(), waitTime);
+    });
+  }
+
+  /** End the wait task in progress, if any. */
+  private cancelWait(): void {
+    if (this.waitTimeout) {
+      clearTimeout(this.waitTimeout);
+      this.waitTimeout = null;
+    }
+    if (this.resolveWait) {
+      const resolve = this.resolveWait;
+      this.resolveWait = null;
+      resolve();
     }
   }
 
@@ -459,7 +507,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *  - Transformer is the standard `'iso'` → cache as-is (pass-through).
    *  - Otherwise → run the transformer and cache its output.
    *
-   * After caching, `triggerRunIfNecessary(0)` is called so a configured
+   * After caching, `triggerRunIfNecessary()` is called so a configured
    * trigger threshold (file count, element count) can promote this batch to
    * an immediate send instead of waiting for the next cron tick. Skipped while
    * a send is failing: the retry is paced by `caching.error.retryInterval`.
@@ -482,8 +530,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     if (this.errorCount > 0) {
       return;
     }
-    // No delay needed here, we check for trigger right now, once the cache is updated for every group
-    await this.triggerRunIfNecessary(0);
+    // Check for trigger right now, once the cache is updated for every group
+    this.triggerRunIfNecessary();
   }
 
   /**
@@ -728,6 +776,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.stopping = true;
     this.logger.debug(`Stopping "${this.connector.name}" (${this.connector.id})...`);
     this.taskRunnerEvent.removeAllListeners();
+    // Do not keep the shutdown waiting for the end of a wait task
+    this.cancelWait();
 
     if (this.runProgress$) {
       this.logger.debug('Waiting for task to finish');
@@ -764,16 +814,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *  2. Raw-file queue depth past `caching.trigger.numberOfFiles` → flush.
    *  3. Element queue depth past `caching.trigger.numberOfElements` → flush.
    *
-   * `timeToWait` lets the caller defer the check (used by `run()` to honour
-   * `caching.throttling.runMinDelay` between back-to-back sends). The
-   * `stopping` flag short-circuits after the wait so a shutdown during the
-   * delay doesn't re-arm the queue.
+   * The pace between sends is kept by the wait tasks of the queue, not here.
    */
-  private async triggerRunIfNecessary(timeToWait: number): Promise<void> {
-    if (timeToWait) {
-      await delay(timeToWait);
-    }
-    // If the connector is stopping during the time the process was waiting, it must exit
+  private triggerRunIfNecessary(): void {
+    // A stopping connector must not re-arm the queue
     if (this.stopping) {
       return;
     }
