@@ -39,7 +39,7 @@ import { toTransformerDTO } from './transformer.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
-const encryptionService = new EncryptionServiceMock('', '');
+const encryptionService = new EncryptionServiceMock();
 const northConnectorFactoryExports: Record<string, unknown> = { __esModule: true, createNorthOrchestrator: mock.fn() };
 const getUserInfo = (id: string) => ({ id, friendlyName: id });
 

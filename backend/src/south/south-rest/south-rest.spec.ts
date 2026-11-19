@@ -110,7 +110,7 @@ describe('SouthRestAPI connector', () => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
     mockModule(nodeRequire, '../../service/encryption.service', {
-      encryptionService: new EncryptionServiceMock('', '')
+      encryptionService: new EncryptionServiceMock()
     });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: () => logger },

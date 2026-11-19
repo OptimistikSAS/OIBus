@@ -19,6 +19,7 @@ import type { SouthHistoryEmptyIntervalStrategy, SouthHistoryRecoveryStrategy } 
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
+import type CertificateRepository from '../repository/config/certificate.repository';
 import type * as Utils from '../service/utils';
 import nodeOpcuaMock from '../tests/__mocks__/node-opcua.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
@@ -115,7 +116,7 @@ describe('SouthConnector', () => {
     mockModule(nodeRequire, '../service/utils', utilsExports);
     mockModule(nodeRequire, '../service/encryption.service', {
       __esModule: true,
-      encryptionService: new EncryptionServiceMock('', '')
+      encryptionService: new EncryptionServiceMock()
     });
     mockModule(nodeRequire, 'mssql', mssqlExports);
     mockModule(nodeRequire, 'node-opcua', {
@@ -1150,7 +1151,8 @@ describe('SouthConnector', () => {
         testData.south.list[2] as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
         addContentCallback,
         southCacheRepository,
-        'cacheFolder'
+        'cacheFolder',
+        createMock<CertificateRepository>()
       );
 
       south.connect = mock.fn(async (): Promise<void> => undefined);

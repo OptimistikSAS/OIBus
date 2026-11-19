@@ -47,7 +47,7 @@ before(() => {
     testOIAnalyticsConnection: mock.fn()
   };
   mockEncryptionService = {
-    encryptionService: new EncryptionServiceMock('', '')
+    encryptionService: new EncryptionServiceMock()
   };
 
   mockModule(nodeRequire, '../utils', mockUtils);
@@ -81,7 +81,7 @@ describe('OIAnalytics Registration Service', () => {
     mockUtils.getOIBusInfo = mock.fn(() => testData.engine.oIBusInfo);
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     // Reset encryptionService mock fns
-    mockEncryptionService.encryptionService = new EncryptionServiceMock('', '');
+    mockEncryptionService.encryptionService = new EncryptionServiceMock();
     mockUtilsOianalytics.testOIAnalyticsConnection = mock.fn();
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });

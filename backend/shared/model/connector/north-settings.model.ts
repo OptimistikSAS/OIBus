@@ -230,6 +230,7 @@ export interface NorthOPCUASettings {
   retryInterval: number;
   securityMode: NorthOPCUASettingsSecurityMode;
   securityPolicy?: NorthOPCUASettingsSecurityPolicy;
+  certificateId?: string | null;
   authentication: NorthOPCUASettingsAuthentication;
 }
 

@@ -160,7 +160,7 @@ describe('SouthPostgreSQL', () => {
     mockModule(nodeRequire, 'pg', pgExports);
     mockModule(nodeRequire, '../../service/encryption.service', {
       __esModule: true,
-      encryptionService: new EncryptionServiceMock('', '')
+      encryptionService: new EncryptionServiceMock()
     });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: () => logger },

@@ -13,6 +13,7 @@ import { DataType } from 'node-opcua-variant';
 import type { NorthOPCUASettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
+import type CertificateRepository from '../../repository/config/certificate.repository';
 import type * as Utils from '../../service/utils';
 import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -36,6 +37,7 @@ const metadata: CacheMetadata = {
 type AsyncMock = Mock<(...args: Array<unknown>) => Promise<unknown>>;
 
 describe('NorthOPCUA', () => {
+  let certificateRepository: CertificateRepository;
   let NorthOPCUA: typeof NorthOPCUAClass;
   let north: NorthOPCUAClass;
   let logger: PinoLogger;
@@ -93,6 +95,7 @@ describe('NorthOPCUA', () => {
     Object.assign(utilsExports, { streamToString, delay: async () => undefined });
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
+    certificateRepository = createMock<CertificateRepository>();
     north = new NorthOPCUA(
       buildNorthEntity<NorthOPCUASettings>('opcua', {
         url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
@@ -104,7 +107,8 @@ describe('NorthOPCUA', () => {
         securityPolicy: 'none',
         keepSessionAlive: false
       }),
-      createCacheServiceMock()
+      createCacheServiceMock(),
+      certificateRepository
     );
   });
 
@@ -138,6 +142,8 @@ describe('NorthOPCUA', () => {
 
     assert.strictEqual(createSessionConfigs.mock.calls.length, 1);
     assert.strictEqual(createSessionConfigs.mock.calls[0].arguments[3], north['connector'].settings.writeTimeout);
+    // the certificate of the store selected in the settings
+    assert.strictEqual(createSessionConfigs.mock.calls[0].arguments[4], certificateRepository);
     assert.strictEqual(createOPCUASession.mock.calls.length, 1);
     assert.strictEqual(createOPCUASession.mock.calls[0].arguments[3], north['connector'].settings.connectionTimeout);
     assert.ok(logger.info.mock.calls.some(c => (c.arguments[0] as string).includes('connected')));

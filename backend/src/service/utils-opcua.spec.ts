@@ -1,13 +1,16 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
-import { createRequire } from 'node:module';
+import os from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import { DateTime } from 'luxon';
 import {
   ClientSession,
   DataType,
   DataValue,
+  InMemoryCertificateKeyPairProvider,
   InMemoryCertificateStore,
   OPCUAClient,
   ReadProcessedDetails,
@@ -15,14 +18,21 @@ import {
   UserTokenType,
   Variant
 } from 'node-opcua';
+import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import { NorthOPCUASettings } from '../../shared/model/connector/north-settings.model';
+import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../shared/model/connector/south-settings.model';
+
+import type { Certificate } from '../model/certificate.model';
+import type CertificateRepository from '../repository/config/certificate.repository';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import { createMock, Mocked } from '../tests/utils/test-utils';
 import { encryptionService } from './encryption.service';
 import {
   createOPCUASession,
   createSessionConfigs,
   getHistoryReadRequest,
-  getOPCUAApplicationUri,
+  getOPCUACertificate,
   getResamplingValue,
   getTimestamp,
   logMessages,
@@ -31,16 +41,6 @@ import {
   toOPCUASecurityMode,
   toOPCUASecurityPolicy
 } from './utils-opcua';
-
-const nodeRequire = createRequire(import.meta.url);
-const nodeOpcuaCryptoModule = nodeRequire('node-opcua-crypto');
-import { DateTime } from 'luxon';
-import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
-
-import { NorthOPCUASettings } from '../../shared/model/connector/north-settings.model';
-import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../shared/model/connector/south-settings.model';
-
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 
 describe('Service utils OPCUA', () => {
   describe('createOPCUASession', () => {
@@ -172,64 +172,120 @@ describe('Service utils OPCUA', () => {
     });
   });
 
-  describe('getOPCUAApplicationUri', () => {
-    // node-opcua-crypto is ESM-only: its namespace object is immutable, so the module is replaced in the
-    // require cache and utils-opcua is reloaded to pick up the mocked exports.
-    let exploreCertificateMock: ReturnType<typeof mock.fn>;
-    let getApplicationUri: typeof getOPCUAApplicationUri;
+  describe('OPC UA certificate', () => {
+    let certificate: Certificate;
+    let otherCertificate: { cert: string };
+    let certificateRepository: Mocked<CertificateRepository>;
+
+    const baseSettings: SouthOPCUASettings = {
+      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+      authentication: { type: 'none' },
+      securityMode: 'sign',
+      securityPolicy: 'basic256-sha256',
+      certificateId: 'certificate-id',
+      keepSessionAlive: false,
+      connectionTimeout: 15_000,
+      retryInterval: 10_000,
+      readTimeout: 15_000,
+      maxParallelRun: 1,
+      subscription: {
+        publishingInterval: 150,
+        maxKeepAliveCount: 10,
+        numberOfMessageBeforeFlush: 1000,
+        delayBetweenFlush: 1000
+      }
+    };
+    const options = {
+      commonName: 'OIBus',
+      countryName: 'FR',
+      stateOrProvinceName: '',
+      localityName: '',
+      organizationName: '',
+      keySize: 2048,
+      daysBeforeExpiry: 365
+    };
+
+    before(async () => {
+      const generated = await encryptionService.generateSelfSignedCertificate(options);
+      otherCertificate = await encryptionService.generateSelfSignedCertificate({ ...options, commonName: 'CA' });
+      certificate = {
+        id: 'certificate-id',
+        name: 'OIBus OPC UA',
+        description: '',
+        publicKey: generated.public,
+        // "encrypted": decryptText is mocked to return it as it is
+        privateKey: generated.private,
+        certificate: generated.cert,
+        certificateChain: null,
+        expiry: '2030-01-01T00:00:00.000Z',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+    });
 
     beforeEach(() => {
-      exploreCertificateMock = mock.fn();
-      mockModule(nodeRequire, 'node-opcua-crypto', {
-        ...nodeOpcuaCryptoModule,
-        convertPEMtoDER: mock.fn(() => Buffer.from('der')),
-        exploreCertificate: exploreCertificateMock
-      });
-      getApplicationUri = reloadModule<{ getOPCUAApplicationUri: typeof getOPCUAApplicationUri }>(
-        nodeRequire,
-        './utils-opcua'
-      ).getOPCUAApplicationUri;
+      mock.method(encryptionService, 'decryptText', (text: unknown) => text);
+      certificateRepository = createMock<CertificateRepository>({ findById: () => certificate });
     });
 
     afterEach(() => {
-      mockModule(nodeRequire, 'node-opcua-crypto', nodeOpcuaCryptoModule);
       mock.restoreAll();
     });
 
-    it('should return undefined when the certificate cannot be read/parsed', async () => {
-      mock.method(fs, 'readFile', async () => {
-        throw new Error('ENOENT');
+    it('should give the certificate of the store and its key to node-opcua, with its applicationUri', async () => {
+      const { provider, applicationUri } = await getOPCUACertificate(certificate);
+
+      assert.ok(provider.getCertificate().equals(new crypto.X509Certificate(certificate.certificate).raw));
+      assert.strictEqual(provider.getCertificateChain().length, 1);
+      const privateKey = provider.getPrivateKey() as { hidden: crypto.KeyObject };
+      assert.ok(new crypto.X509Certificate(certificate.certificate).checkPrivateKey(privateKey.hidden));
+      // the URI of the subjectAltName of the certificate, which the server checks
+      assert.strictEqual(applicationUri, `urn:${os.hostname()}:OIBus`);
+    });
+
+    it('should add the chain of the certificate', async () => {
+      const { provider } = await getOPCUACertificate({ ...certificate, certificateChain: otherCertificate.cert });
+
+      const chain = provider.getCertificateChain();
+      assert.strictEqual(chain.length, 2);
+      assert.ok(chain[1].equals(new crypto.X509Certificate(otherCertificate.cert).raw));
+    });
+
+    it('should generate one certificate in memory for the connectors without certificate', async () => {
+      const { provider, applicationUri } = await getOPCUACertificate(null);
+      const { provider: sameProvider } = await getOPCUACertificate(null);
+
+      assert.ok(provider instanceof InMemoryCertificateKeyPairProvider);
+      assert.strictEqual(sameProvider, provider);
+      assert.ok(provider.getCertificate().length > 0);
+      assert.strictEqual(applicationUri, `urn:${os.hostname()}:OIBus`);
+    });
+
+    it('should create session configs with the certificate selected in the settings', async () => {
+      const { options: sessionOptions } = await createSessionConfigs(
+        'connectorId',
+        'connectorName',
+        baseSettings,
+        15_000,
+        certificateRepository
+      );
+
+      assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, ['certificate-id']);
+      const provider = sessionOptions.certificateKeyPairProvider as InMemoryCertificateKeyPairProvider;
+      assert.ok(provider.getCertificate().equals(new crypto.X509Certificate(certificate.certificate).raw));
+      assert.strictEqual(sessionOptions.applicationUri, `urn:${os.hostname()}:OIBus`);
+      assert.strictEqual(sessionOptions.certificateFile, undefined);
+      assert.strictEqual(sessionOptions.privateKeyFile, undefined);
+    });
+
+    it('should not create session configs when the selected certificate no longer exists', async () => {
+      certificateRepository.findById.mock.mockImplementation(() => null);
+
+      await assert.rejects(() => createSessionConfigs('connectorId', 'connectorName', baseSettings, 15_000, certificateRepository), {
+        message: 'Could not find certificate "certificate-id"'
       });
-      const result = await getApplicationUri();
-      assert.strictEqual(result, undefined);
-    });
-
-    it('should return the applicationUri extracted from the certificate subjectAltName', async () => {
-      mock.method(fs, 'readFile', async () => 'pem-content');
-      exploreCertificateMock.mock.mockImplementation(() => ({
-        tbsCertificate: {
-          extensions: {
-            subjectAltName: {
-              uniformResourceIdentifier: ['urn:oibus:test']
-            }
-          }
-        }
-      }));
-
-      const result = await getApplicationUri();
-      assert.strictEqual(result, 'urn:oibus:test');
-    });
-
-    it('should return undefined when the certificate has no subjectAltName', async () => {
-      mock.method(fs, 'readFile', async () => 'pem-content');
-      exploreCertificateMock.mock.mockImplementation(() => ({
-        tbsCertificate: {
-          extensions: {}
-        }
-      }));
-
-      const result = await getApplicationUri();
-      assert.strictEqual(result, undefined);
     });
   });
 
@@ -237,11 +293,15 @@ describe('Service utils OPCUA', () => {
     let decryptTextMock: ReturnType<typeof mock.fn>;
     let readFileMock: ReturnType<typeof mock.fn>;
 
-    beforeEach(() => {
+    let certificateRepository: Mocked<CertificateRepository>;
+    let ephemeralProvider: InMemoryCertificateKeyPairProvider;
+
+    beforeEach(async () => {
       decryptTextMock = mock.method(encryptionService, 'decryptText', (text: unknown) => text) as ReturnType<typeof mock.fn>;
       readFileMock = mock.method(fs, 'readFile', async () => '') as ReturnType<typeof mock.fn>;
-      mock.method(encryptionService, 'getCertPath', () => path.resolve('cert_path'));
-      mock.method(encryptionService, 'getPrivateKeyPath', () => path.resolve('private_key_path'));
+      certificateRepository = createMock<CertificateRepository>();
+      // without certificate, the one generated in memory
+      ephemeralProvider = (await getOPCUACertificate(null)).provider;
     });
 
     afterEach(() => {
@@ -266,13 +326,11 @@ describe('Service utils OPCUA', () => {
           delayBetweenFlush: 1000
         }
       };
-      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000), {
+      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000, certificateRepository), {
         options: {
           applicationName: 'OIBus',
-          // Cert read returns '' (mocked), so getOPCUAApplicationUri falls back to undefined.
-          applicationUri: undefined,
-          certificateFile: path.resolve('cert_path'),
-          privateKeyFile: path.resolve('private_key_path'),
+          applicationUri: `urn:${os.hostname()}:OIBus`,
+          certificateKeyPairProvider: ephemeralProvider,
           clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
           clientName: 'connectorName-connectorId',
           connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
@@ -306,12 +364,11 @@ describe('Service utils OPCUA', () => {
           delayBetweenFlush: 1000
         }
       };
-      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000), {
+      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000, certificateRepository), {
         options: {
           applicationName: 'OIBus',
-          applicationUri: undefined,
-          certificateFile: path.resolve('cert_path'),
-          privateKeyFile: path.resolve('private_key_path'),
+          applicationUri: `urn:${os.hostname()}:OIBus`,
+          certificateKeyPairProvider: ephemeralProvider,
           clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
           clientName: 'connectorName-connectorId',
           connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
@@ -348,34 +405,36 @@ describe('Service utils OPCUA', () => {
         if (String(filePath).endsWith('key_file.pem')) return 'privateKey';
         return '';
       });
-      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', northSettings, northSettings.writeTimeout), {
-        options: {
-          applicationName: 'OIBus',
-          applicationUri: undefined,
-          certificateFile: path.resolve('cert_path'),
-          privateKeyFile: path.resolve('private_key_path'),
-          clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
-          clientName: 'connectorName-connectorId',
-          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-          endpointMustExist: false,
-          keepPendingSessionsOnDisconnect: false,
-          keepSessionAlive: false,
-          transportTimeout: 20000,
-          defaultTransactionTimeout: 5000,
-          securityMode: 1,
-          securityPolicy: 'none'
-        },
-        userIdentity: {
-          type: UserTokenType.Certificate,
-          certificateData: 'cert',
-          privateKey: 'privateKey'
+      assert.deepStrictEqual(
+        await createSessionConfigs('connectorId', 'connectorName', northSettings, northSettings.writeTimeout, certificateRepository),
+        {
+          options: {
+            applicationName: 'OIBus',
+            applicationUri: `urn:${os.hostname()}:OIBus`,
+            certificateKeyPairProvider: ephemeralProvider,
+            clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
+            clientName: 'connectorName-connectorId',
+            connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+            endpointMustExist: false,
+            keepPendingSessionsOnDisconnect: false,
+            keepSessionAlive: false,
+            transportTimeout: 20000,
+            defaultTransactionTimeout: 5000,
+            securityMode: 1,
+            securityPolicy: 'none'
+          },
+          userIdentity: {
+            type: UserTokenType.Certificate,
+            certificateData: 'cert',
+            privateKey: 'privateKey'
+          }
         }
-      });
-      // getOPCUAApplicationUri reads the OIBus cert (1 call), and cert-auth reads 2 user files.
-      assert.strictEqual(readFileMock.mock.calls.length, 3);
-      assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], path.resolve('cert_path'));
-      assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], path.resolve(northSettings.authentication.certFilePath!));
-      assert.deepStrictEqual(readFileMock.mock.calls[2].arguments[0], path.resolve(northSettings.authentication.keyFilePath!));
+      );
+      // only the files of the user certificate are read: the certificate of OIBus comes from the store
+      assert.strictEqual(readFileMock.mock.calls.length, 2);
+      assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], path.resolve(northSettings.authentication.certFilePath!));
+      assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], path.resolve(northSettings.authentication.keyFilePath!));
+      assert.strictEqual(certificateRepository.findById.mock.callCount(), 0);
     });
   });
 

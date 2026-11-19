@@ -24,10 +24,11 @@ the [OPC UA South Connector](../south-connectors/opcua.mdx) which reads data fro
 
 ### Security Settings {#security-settings}
 
-| Setting             | Description                                                                                                                                                                  | Example Value                                       |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| **Security Mode**   | Security mode for the connection.                                                                                                                                            | `None`, `Sign`, `Sign and encrypt`                  |
-| **Security Policy** | Security policy for the connection. Only shown when **Security Mode** is `Sign` or `Sign and encrypt` — not used when Security Mode is `None`. See note below for full list. | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
+| Setting             | Description                                                                                                                                                                                                                                                                                                           | Example Value                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **Security Mode**   | Security mode for the connection.                                                                                                                                                                                                                                                                                     | `None`, `Sign`, `Sign and encrypt`                  |
+| **Security Policy** | Security policy for the connection. Only shown when **Security Mode** is `Sign` or `Sign and encrypt` — not used when Security Mode is `None`. See note below for full list.                                                                                                                                          | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
+| **Certificate**     | Certificate of OIBus presented to the server, selected from the [certificate store](../engine/certificates.md). Only shown, and required, when **Security Mode** is `Sign` or `Sign and encrypt`. The server must trust it: see [Communication Certificate](../south-connectors/opcua.mdx#communication-certificate). | `OIBus OPC UA`                                      |
 
 :::note Security Policy values
 

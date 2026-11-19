@@ -17,9 +17,8 @@ interface OIAnalyticsOptions {
   interval: number;
   batchLimit?: number;
   cryptoSettings: CryptoSettings;
-  certsFolder: string;
 }
-type CreateTransport = (opts: OIAnalyticsOptions) => Promise<unknown>;
+type CreateTransport = (opts: OIAnalyticsOptions) => unknown;
 
 let createTransport: CreateTransport;
 
@@ -43,8 +42,7 @@ const defaultOpts: OIAnalyticsOptions = {
   registrationSettings: baseRegistration,
   configDatabasePath: '/data/oibus.db',
   interval: 30,
-  cryptoSettings: baseCrypto,
-  certsFolder: '/certs'
+  cryptoSettings: baseCrypto
 };
 
 // Drain microtasks without using setImmediate (which mock.timers also intercepts)
@@ -150,7 +148,8 @@ describe('OianalyticsTransport (createTransport)', () => {
 
     assert.ok(capturedSourceFn !== null, 'source handler should be captured');
     assert.ok(capturedCloseFn !== null, 'close handler should be captured');
-    assert.strictEqual(mockEncryptionInit.mock.calls.length, 1);
+    // the settings read in crypto.db, from which the service derives its keys
+    assert.deepStrictEqual(mockEncryptionInit.mock.calls[0].arguments, [baseCrypto]);
   });
 
   it('should open oibus.db read-only', async () => {

@@ -156,7 +156,7 @@ describe('SouthSFTP', () => {
     logger = new PinoLogger();
     addContentCallback = mock.fn(async () => undefined);
     southCacheRepository = createMock<SouthCacheRepository>();
-    encryptionService = new EncryptionServiceMock('', '');
+    encryptionService = new EncryptionServiceMock();
     encryptionExports.encryptionService = encryptionService;
     sftpClient = createMock<SftpClient>({ list: async () => [] });
     lastSftpCallbacks = undefined;

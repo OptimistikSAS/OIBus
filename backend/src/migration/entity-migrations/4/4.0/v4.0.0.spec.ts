@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
@@ -36,7 +37,9 @@ import {
   mergeSetpointsIntoRecordLists,
   moveCompressionToNorths,
   moveFilenamePrefixAndSuffixToTransformers,
+  moveOPCUACertificateToStore,
   moveSqlSerializationToTransformers,
+  OPCUA_CERTIFICATE_NAME,
   removeOdbcAgentSettings,
   removeOpcAgentSettings,
   removePiAgentSettings,
@@ -5265,10 +5268,7 @@ describe('Entity migration v4.0.0: encryptSecretsWithAesGcm', () => {
   before(async () => {
     await harness.before();
     // The service decrypts what the migration encrypts: it must derive the same key
-    mock.method(fs, 'stat', async () => undefined);
-    mock.method(fs, 'mkdir', async () => undefined);
-    await encryptionService.init({ securityKey: securityKey.toString('base64') }, 'certs');
-    mock.restoreAll();
+    encryptionService.init({ securityKey: securityKey.toString('base64'), tokenSecret: '' });
   });
   after(() => harness.after());
 
@@ -5479,5 +5479,155 @@ describe('Entity migration v4.0.0: flagDefaultPasswords', () => {
 
     assert.ok(!(await columnNames(db, 'users')).includes('must_change_password'));
     assert.strictEqual((await db('users').select('id')).length, 3);
+  });
+});
+
+describe('Entity migration v4.0.0: moveOPCUACertificateToStore', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(moveOPCUACertificateToStore, db),
+    mode: 'file'
+  });
+  const encryptionService = new EncryptionService();
+  let db: Knex;
+  let dataFolder: string;
+  let oibusCertificate: { private: string; public: string; cert: string };
+
+  const settingsOf = async (table: string, id: string, column = 'settings') =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+
+  before(async () => {
+    await harness.before();
+    encryptionService.init({ securityKey: securityKey.toString('base64'), tokenSecret: '' });
+    oibusCertificate = await encryptionService.generateSelfSignedCertificate({
+      commonName: 'OIBus',
+      countryName: 'FR',
+      stateOrProvinceName: '',
+      localityName: '',
+      organizationName: '',
+      keySize: 2048,
+      daysBeforeExpiry: 36500
+    });
+  });
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    dataFolder = path.dirname((db.client.config.connection as { filename: string }).filename);
+    mock.method(console, 'warn', () => undefined);
+    const cryptoDatabase = new Database(path.join(dataFolder, 'crypto.db'));
+    cryptoDatabase.exec('CREATE TABLE crypto (id TEXT PRIMARY KEY, algorithm TEXT, init_vector TEXT, security_key TEXT);');
+    cryptoDatabase
+      .prepare('INSERT INTO crypto VALUES (?, ?, ?, ?);')
+      .run('oibus-id', 'aes-256-cbc', initVector.toString('base64'), securityKey.toString('base64'));
+    cryptoDatabase.close();
+    // certs/, as OIBus up to 3.9 created it
+    await fs.mkdir(path.join(dataFolder, 'certs'));
+    await fs.writeFile(path.join(dataFolder, 'certs', 'cert.pem'), oibusCertificate.cert);
+    await fs.writeFile(path.join(dataFolder, 'certs', 'private.pem'), oibusCertificate.private);
+    await fs.writeFile(path.join(dataFolder, 'certs', 'public.pem'), oibusCertificate.public);
+
+    await db('scan_modes').insert({ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' });
+    await db('engines').insert({
+      id: 'oibus-id',
+      name: 'OIBus',
+      port: 2223,
+      auth_token_duration: '7d',
+      log_console_level: 'silent',
+      log_file_level: 'silent',
+      log_file_max_file_size: 50,
+      log_file_number_of_files: 5,
+      log_database_level: 'silent',
+      log_database_max_number_of_logs: 100000,
+      log_loki_level: 'silent',
+      log_loki_interval: 60,
+      log_oia_level: 'silent',
+      log_oia_interval: 10,
+      proxy_enabled: 0,
+      proxy_port: 9000,
+      oibus_version: '3.9.0',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z'
+    });
+    await db('south_connectors').insert([
+      { id: 'south-opcua', name: 'OPC UA', type: 'opcua', enabled: true, settings: JSON.stringify({ url: 'opc.tcp://server' }) },
+      { id: 'south-mqtt', name: 'MQTT', type: 'mqtt', enabled: true, settings: JSON.stringify({ url: 'mqtt://broker' }) }
+    ]);
+    await db('north_connectors').insert({
+      ...caching,
+      id: 'north-opcua',
+      name: 'OPC UA',
+      type: 'opcua',
+      enabled: true,
+      settings: JSON.stringify({ url: 'opc.tcp://server', securityMode: 'sign' })
+    });
+    await db('history_queries').insert({
+      ...caching,
+      id: 'history-id',
+      name: 'History',
+      start_time: NOW,
+      end_time: NOW,
+      south_type: 'opcua',
+      north_type: 'file-writer',
+      south_settings: JSON.stringify({ url: 'opc.tcp://server' }),
+      north_settings: JSON.stringify({ outputFolder: 'output' })
+    });
+  });
+
+  afterEach(async () => {
+    mock.restoreAll();
+    await fs.rm(path.join(dataFolder, 'crypto.db'), { force: true });
+    await fs.rm(path.join(dataFolder, 'certs'), { recursive: true, force: true });
+    await harness.afterEach();
+  });
+
+  it('should import the certificate of OIBus into the store as it is, and select it in the OPC UA connectors', async () => {
+    await moveOPCUACertificateToStore(db);
+
+    const certificate = await db('certificates').where('name', OPCUA_CERTIFICATE_NAME).first();
+    // the same certificate, so that the OPC UA servers which trust it keep trusting OIBus
+    assert.strictEqual(certificate.certificate, oibusCertificate.cert);
+    assert.strictEqual(encryptionService.decryptText(certificate.private_key), oibusCertificate.private);
+    assert.strictEqual(certificate.public_key, oibusCertificate.public);
+    assert.strictEqual(certificate.expiry, new crypto.X509Certificate(oibusCertificate.cert).validToDate.toISOString());
+    assert.strictEqual(certificate.certificate_chain, null);
+    assert.strictEqual(certificate.created_by, 'system');
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'south-opcua'), { url: 'opc.tcp://server', certificateId: certificate.id });
+    assert.deepStrictEqual(await settingsOf('north_connectors', 'north-opcua'), {
+      url: 'opc.tcp://server',
+      securityMode: 'sign',
+      certificateId: certificate.id
+    });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'history-id', 'south_settings'), {
+      url: 'opc.tcp://server',
+      certificateId: certificate.id
+    });
+    // not OPC UA
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'south-mqtt'), { url: 'mqtt://broker' });
+    assert.deepStrictEqual(await settingsOf('history_queries', 'history-id', 'north_settings'), { outputFolder: 'output' });
+    // removed by the crypto migration, which runs once this one is committed
+    assert.ok(existsSync(path.join(dataFolder, 'certs', 'private.pem')));
+  });
+
+  it('should do nothing without the certificate of OIBus', async () => {
+    await fs.rm(path.join(dataFolder, 'certs'), { recursive: true });
+
+    await moveOPCUACertificateToStore(db);
+
+    assert.strictEqual((await db('certificates').select('id')).length, 0);
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'south-opcua'), { url: 'opc.tcp://server' });
+  });
+
+  it('should not import the certificate without the key to encrypt its private key', async () => {
+    await fs.rm(path.join(dataFolder, 'crypto.db'));
+
+    await moveOPCUACertificateToStore(db);
+
+    assert.strictEqual((await db('certificates').select('id')).length, 0);
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'south-opcua'), { url: 'opc.tcp://server' });
+    assert.deepStrictEqual((console.warn as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      'No crypto settings to encrypt the private key of the OPC UA certificate: select a certificate in the OPC UA connectors'
+    ]);
   });
 });

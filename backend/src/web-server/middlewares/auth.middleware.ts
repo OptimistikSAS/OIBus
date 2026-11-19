@@ -86,8 +86,8 @@ const createAuthMiddleware = (config: AuthConfig) => {
       else if (req.headers?.authorization?.startsWith('Bearer')) {
         try {
           const token = req.headers.authorization.replace('Bearer ', '');
-          const verifiedToken: JwtPayload = jwt.verify(token, await config.encryptionService.getPublicKey(), {
-            algorithms: ['RS256'],
+          const verifiedToken: JwtPayload = jwt.verify(token, config.encryptionService.getTokenSecret(), {
+            algorithms: ['HS256'],
             issuer: 'oibus'
           }) as JwtPayload;
 
@@ -123,9 +123,9 @@ const createAuthMiddleware = (config: AuthConfig) => {
         const authTokenDuration = config.oIBusService.getEngineSettings().webServer.authTokenDuration;
         const token = jwt.sign(
           { login: headerUser.name, passwordFingerprint: passwordFingerprint(headerUser.pass) },
-          { key: await config.encryptionService.getPrivateKey(), passphrase: '' },
+          config.encryptionService.getTokenSecret(),
           {
-            algorithm: 'RS256',
+            algorithm: 'HS256',
             expiresIn: authTokenDuration,
             issuer: 'oibus'
           }

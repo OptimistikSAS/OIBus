@@ -13,7 +13,7 @@ export default class CryptoRepository {
   constructor(private readonly database: Database) {}
 
   getCryptoSettings(oibusId: string): CryptoSettings | null {
-    const query = `SELECT security_key FROM ${CRYPTO_TABLE} WHERE id = ?;`;
+    const query = `SELECT security_key, token_secret FROM ${CRYPTO_TABLE} WHERE id = ?;`;
 
     const result = this.database.prepare(query).get(oibusId);
     if (!result) return null;
@@ -28,16 +28,18 @@ export default class CryptoRepository {
       return;
     }
 
-    // secret key generate 32 bytes of random data
+    // 32 bytes of random data each: the key of the secrets, and the secret signing the authentication tokens
     const securityKey = crypto.randomBytes(32);
+    const tokenSecret = crypto.randomBytes(32);
 
-    const query = `INSERT INTO ${CRYPTO_TABLE} (id, security_key) VALUES (?, ?);`;
-    this.database.prepare(query).run(oibusId, securityKey.toString('base64'));
+    const query = `INSERT INTO ${CRYPTO_TABLE} (id, security_key, token_secret) VALUES (?, ?, ?);`;
+    this.database.prepare(query).run(oibusId, securityKey.toString('base64'), tokenSecret.toString('base64'));
   }
 
   private toCryptoSettings(result: Record<string, string>): CryptoSettings {
     return {
-      securityKey: result.security_key
+      securityKey: result.security_key,
+      tokenSecret: result.token_secret
     };
   }
 }

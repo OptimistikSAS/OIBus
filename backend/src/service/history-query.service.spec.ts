@@ -84,7 +84,7 @@ describe('History Query service', () => {
 
   before(() => {
     mockModule(nodeRequire, './utils', utilsExports);
-    mockModule(nodeRequire, './encryption.service', { encryptionService: new EncryptionServiceMock('', '') });
+    mockModule(nodeRequire, './encryption.service', { encryptionService: new EncryptionServiceMock() });
     mockModule(nodeRequire, './transformer.service', { default: class {}, toTransformerDTO });
 
     const mod = reloadModule<{

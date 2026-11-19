@@ -98,10 +98,11 @@ OIBus 会将其视为已丢失并重新连接。**读取超时**不用于订阅�
 
 ### 安全设置 {#security-settings}
 
-| 设置         | 描述                                 | 示例值                                              |
-| ------------ | ------------------------------------ | --------------------------------------------------- |
-| **安全模式** | 连接的安全模式。                     | `None`、`Sign`、`Sign and encrypt`                  |
-| **安全策略** | 连接的安全策略。完整列表见下方说明。 | `None`、`Basic256-SHA256`、`AES128-SHA256-RSA-OAEP` |
+| 设置         | 描述                                                                                                                                           | 示例值                                              |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **安全模式** | 连接的安全模式。                                                                                                                               | `None`、`Sign`、`Sign and encrypt`                  |
+| **安全策略** | 连接的安全策略。完整列表见下方说明。                                                                                                           | `None`、`Basic256-SHA256`、`AES128-SHA256-RSA-OAEP` |
+| **证书**     | OIBus 向服务器出示的证书，从证书存储中选择。当**安全模式**为 `Sign` 或 `Sign and encrypt` 时必填。参见[通信证书](#communication-certificate)。 | `OIBus OPC UA`                                      |
 
 :::note 安全策略值
 
@@ -218,10 +219,10 @@ OIBus 会将其视为已丢失并重新连接。**读取超时**不用于订阅�
 
 ### 通信证书 {#communication-certificate}
 
-当**安全模式**设置为 `Sign` 或 `Sign and Encrypt` 时，OIBus 使用证书向 OPC UA 服务器进行身份验证。该证书：
-
-- 由 OIBus 在首次启动时**自动生成**（4096 位 RSA，自签名）
-- **存放位置**：`<OIBusData>/certs/cert.pem` —— 私钥位于：`<OIBusData>/certs/private.pem`
+当**安全模式**设置为 `Sign` 或 `Sign and Encrypt` 时，OIBus 使用在**证书**设置中选择的证书向 OPC UA 服务器进行身份验证，
+该证书来自 OIBus 的[证书存储](../engine/certificates.md)：可在其中生成自签名证书，或导入由您自己的 CA 签名的证书。
+每个 OPC UA 连接器可以出示各自的证书，也可以与其他连接器共用一个。其私钥在 OIBus 的配置中保持加密，绝不会写入磁盘。
+从之前版本升级的 OIBus 会出示其之前使用的证书，该证书在存储中名为 `OIBus OPC UA`。
 
 在建立安全连接之前，**OPC UA 服务器必须信任该证书**。如果它不在服务器的信任存储中，OIBus 将记录以下日志：
 
@@ -229,7 +230,10 @@ OIBus 会将其视为已丢失并重新连接。**读取超时**不用于订阅�
 The connection may have been rejected by the server
 ```
 
-要授权该证书，请将 `<OIBusData>/certs/cert.pem` 导入或复制到服务器的可信证书存储中。
+要授权该证书，请从证书存储中[下载证书](../engine/certificates.md#downloading-a-certificate)，并将其导入服务器的
+可信证书存储中。在存储中重新生成证书会替换它：服务器随后必须信任新证书。
+
+当**安全模式**为 `None` 时，服务器不会检查 OIBus 的证书：若未选择证书，OIBus 会出示其启动时在内存中生成的证书。
 
 ![Prosys 证书示例](@site/static/img/guide/south/opcua/prosys-opcua-simulation-server-certificates.png)
 
@@ -255,9 +259,9 @@ The connection may have been rejected by the server
 旁边的 `certs\` 文件夹中。
 
 :::tip 复用 OIBus 生成的证书用于身份验证
-您可以将连接器的**证书文件路径**和**密钥文件路径**字段指向 OIBus 自己的证书
-（`<OIBusData>/certs/cert.pem` 和 `<OIBusData>/certs/private.pem`），以便同一证书
-同时用于传输层安全和用户身份验证。
+您可以从证书存储中[下载 OIBus 的证书](../engine/certificates.md#downloading-a-certificate)及
+[其私钥](../engine/certificates.md#downloading-the-private-key)，并将连接器的**证书文件路径**和**密钥文件路径**字段
+指向它们，以便同一证书同时用于传输层安全和用户身份验证。
 :::
 
 ## 为 Prosys 创建自定义身份验证证书 {#creating-a-custom-authentication-certificate-for-prosys}

@@ -1194,6 +1194,7 @@
               "pub-sub-aes-128-ctr": "PubSub AES-128-CTR",
               "pub-sub-aes-256-ctr": "PubSub AES-256-CTR"
             },
+            "certificate-id": "Certificate",
             "authentication": {
               "title": "Authentication",
               "none": "None",
@@ -1935,6 +1936,7 @@
               "pub-sub-aes-128-ctr": "PubSub AES-128-CTR",
               "pub-sub-aes-256-ctr": "PubSub AES-256-CTR"
             },
+            "certificate-id": "Certificate",
             "authentication": {
               "title": "Authentication",
               "none": "None",

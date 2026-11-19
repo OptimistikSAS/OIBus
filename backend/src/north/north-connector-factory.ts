@@ -70,7 +70,7 @@ export const buildNorth = (
         oIAnalyticsRegistrationRepository
       );
     case 'opcua':
-      return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, orchestrator);
+      return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, orchestrator, certificateRepository);
     case 'rest':
       return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, orchestrator);
     case 'sftp':

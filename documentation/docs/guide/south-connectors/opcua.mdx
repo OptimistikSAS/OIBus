@@ -107,10 +107,11 @@ long, OIBus considers it lost and reconnects. The **Read timeout** is not used f
 
 ### Security Settings {#security-settings}
 
-| Setting             | Description                                                       | Example Value                                       |
-| ------------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
-| **Security Mode**   | Security mode for the connection.                                 | `None`, `Sign`, `Sign and encrypt`                  |
-| **Security Policy** | Security policy for the connection. See note below for full list. | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
+| Setting             | Description                                                                                                                                                                                                      | Example Value                                       |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **Security Mode**   | Security mode for the connection.                                                                                                                                                                                | `None`, `Sign`, `Sign and encrypt`                  |
+| **Security Policy** | Security policy for the connection. See note below for full list.                                                                                                                                                | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
+| **Certificate**     | Certificate of OIBus presented to the server, selected from the certificate store. Required when **Security Mode** is `Sign` or `Sign and encrypt`. See [Communication Certificate](#communication-certificate). | `OIBus OPC UA`                                      |
 
 :::note Security Policy values
 
@@ -236,10 +237,11 @@ than record incomplete metadata.
 ### Communication Certificate {#communication-certificate}
 
 When **Security Mode** is set to `Sign` or `Sign and Encrypt`, OIBus authenticates itself to the OPC UA server
-using a certificate. This certificate is:
-
-- **Auto-generated** by OIBus on first startup (4096-bit RSA, self-signed)
-- **Location**: `<OIBusData>/certs/cert.pem` — private key: `<OIBusData>/certs/private.pem`
+using the certificate selected in the **Certificate** setting, from OIBus's
+[certificate store](../engine/certificates.md): generate a self-signed certificate there, or import one signed by your
+own CA. Each OPC UA connector can present its own certificate, or share one with the others. Its private key stays
+encrypted in OIBus's configuration and is never written to disk. An OIBus updated from a previous version presents the
+certificate it used before, named `OIBus OPC UA` in the store.
 
 Before a secured connection can be established, **the OPC UA server must trust this certificate**. If it is
 not in the server's trusted store, OIBus will log:
@@ -248,7 +250,12 @@ not in the server's trusted store, OIBus will log:
 The connection may have been rejected by the server
 ```
 
-To authorise it, import or copy `<OIBusData>/certs/cert.pem` into the server's trusted certificate store.
+To authorise it, [download the certificate](../engine/certificates.md#downloading-a-certificate) from the certificate
+store and import it into the server's trusted certificate store. Regenerating the certificate in the store replaces it:
+the server must then trust the new one.
+
+When **Security Mode** is `None`, the server does not check the certificate of OIBus: without one selected, OIBus
+presents a certificate it generates in memory at startup.
 
 ![Prosys Certificate Example](@site/static/img/guide/south/opcua/prosys-opcua-simulation-server-certificates.png)
 
@@ -275,9 +282,10 @@ certificates land in `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\re
 the `certs\` folder next to it.
 
 :::tip Reuse OIBus's generated certificate for authentication
-You can point the **Cert file path** and **Key file path** connector fields to OIBus's own certificate
-(`<OIBusData>/certs/cert.pem` and `<OIBusData>/certs/private.pem`) to use a single certificate for
-both transport-level security and user authentication.
+You can [download the certificate](../engine/certificates.md#downloading-a-certificate) of OIBus and
+[its private key](../engine/certificates.md#downloading-the-private-key) from the certificate store, and point the
+**Cert file path** and **Key file path** connector fields to them, to use a single certificate for both transport-level
+security and user authentication.
 :::
 
 ## Creating a Custom Authentication Certificate for Prosys {#creating-a-custom-authentication-certificate-for-prosys}
