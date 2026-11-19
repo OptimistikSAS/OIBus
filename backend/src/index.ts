@@ -1,3 +1,4 @@
+import './pkg-subpath-imports';
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 import WebServer from './web-server/web-server';
