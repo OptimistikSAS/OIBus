@@ -32,6 +32,19 @@ const SECRET_KEY_INFO = 'oibus-secret-encryption-aes-256-gcm';
 const deriveSecretKey = (securityKey: string): Buffer =>
   Buffer.from(crypto.hkdfSync('sha256', Buffer.from(securityKey, 'base64'), Buffer.alloc(0), SECRET_KEY_INFO, 32));
 
+const generateRsaKeyPair = (modulusLength: number): Promise<{ publicKey: string; privateKey: string }> =>
+  new Promise((resolve, reject) =>
+    crypto.generateKeyPair(
+      'rsa',
+      {
+        modulusLength,
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+        privateKeyEncoding: { type: 'pkcs1', format: 'pem' }
+      },
+      (error, publicKey, privateKey) => (error ? reject(error) : resolve({ publicKey, privateKey }))
+    )
+  );
+
 interface CryptoSettingsInternal {
   /** AES-256-GCM key of the secrets */
   key: Buffer;
@@ -132,13 +145,14 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     this.initialized = true;
   }
 
-  generateSelfSignedCertificate(options: CertificateOptions): { private: string; public: string; cert: string } {
-    // 1. Generate Key Pair (RSA)
-    const keys = forge.pki.rsa.generateKeyPair(options.keySize);
+  async generateSelfSignedCertificate(options: CertificateOptions): Promise<{ private: string; public: string; cert: string }> {
+    // 1. Generate Key Pair (RSA), natively and off the event loop: node-forge generates it in JavaScript, blocking OIBus for
+    // seconds. The private key stays in PKCS#1 and the public key in SPKI, as node-forge exported them.
+    const keys = await generateRsaKeyPair(options.keySize);
 
-    // 2. Create Certificate
+    // 2. Create Certificate (Node cannot build one)
     const cert = forge.pki.createCertificate();
-    cert.publicKey = keys.publicKey;
+    cert.publicKey = forge.pki.publicKeyFromPem(keys.publicKey);
 
     // 3. Set Serial Number (random hex)
     cert.serialNumber = '01' + forge.util.bytesToHex(forge.random.getBytesSync(19));
@@ -197,17 +211,17 @@ export default class EncryptionService<TInitialized extends boolean = false> {
 
     // 7. Self-Sign the Certificate
     // SHA-256 is standard for OPC UA
-    cert.sign(keys.privateKey, forge.md.sha256.create());
+    cert.sign(forge.pki.privateKeyFromPem(keys.privateKey), forge.md.sha256.create());
 
     // 8. Export to PEM format
     return {
-      private: forge.pki.privateKeyToPem(keys.privateKey),
-      public: forge.pki.publicKeyToPem(keys.publicKey),
+      private: keys.privateKey,
+      public: keys.publicKey,
       cert: forge.pki.certificateToPem(cert)
     };
   }
 
-  async encryptConnectorSecrets<T>(newSettings: T, oldSettings: T | null, formSettings: OIBusObjectAttribute): Promise<T> {
+  encryptConnectorSecrets<T>(newSettings: T, oldSettings: T | null, formSettings: OIBusObjectAttribute): T {
     const encryptedSettings: Record<string, string | object | Array<object>> = JSON.parse(JSON.stringify(newSettings)) as Record<
       string,
       string | object | Array<object>
@@ -220,13 +234,13 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     for (const fieldSettings of formSettings.attributes) {
       if (fieldSettings.type === 'secret') {
         if (encryptedSettings[fieldSettings.key]) {
-          encryptedSettings[fieldSettings.key] = await this.encryptText(encryptedSettings[fieldSettings.key] as string);
+          encryptedSettings[fieldSettings.key] = this.encryptText(encryptedSettings[fieldSettings.key] as string);
         } else {
           encryptedSettings[fieldSettings.key] = previousSettings ? (previousSettings[fieldSettings.key] as string) || '' : '';
         }
       } else if (fieldSettings.type === 'array' && encryptedSettings[fieldSettings.key]) {
         for (let i = 0; i < (encryptedSettings[fieldSettings.key] as Array<object>).length; i++) {
-          (encryptedSettings[fieldSettings.key] as Array<object>)[i] = await this.encryptConnectorSecrets<object>(
+          (encryptedSettings[fieldSettings.key] as Array<object>)[i] = this.encryptConnectorSecrets<object>(
             (encryptedSettings[fieldSettings.key] as Array<object>)[i],
             previousSettings && previousSettings[fieldSettings.key] && Array.isArray(previousSettings[fieldSettings.key])
               ? (previousSettings[fieldSettings.key] as Array<object>)[i]
@@ -235,7 +249,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
           );
         }
       } else if (fieldSettings.type === 'object' && encryptedSettings[fieldSettings.key]) {
-        encryptedSettings[fieldSettings.key] = await this.encryptConnectorSecrets<object>(
+        encryptedSettings[fieldSettings.key] = this.encryptConnectorSecrets<object>(
           encryptedSettings[fieldSettings.key] as object,
           previousSettings ? (previousSettings[fieldSettings.key] as object) || null : null,
           fieldSettings
@@ -245,7 +259,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     return encryptedSettings as T;
   }
 
-  async decryptConnectorSecrets<T>(newSettings: T, formSettings: OIBusObjectAttribute): Promise<T> {
+  decryptConnectorSecrets<T>(newSettings: T, formSettings: OIBusObjectAttribute): T {
     const decryptedSettings: Record<string, string | object | Array<object>> = JSON.parse(JSON.stringify(newSettings)) as Record<
       string,
       string | object | Array<object>
@@ -254,17 +268,17 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     for (const fieldSettings of formSettings.attributes) {
       if (fieldSettings.type === 'secret') {
         decryptedSettings[fieldSettings.key] = decryptedSettings[fieldSettings.key]
-          ? await this.decryptText(decryptedSettings[fieldSettings.key] as string)
+          ? this.decryptText(decryptedSettings[fieldSettings.key] as string)
           : '';
       } else if (fieldSettings.type === 'array' && decryptedSettings[fieldSettings.key]) {
         for (let i = 0; i < (decryptedSettings[fieldSettings.key] as Array<object>).length; i++) {
-          (decryptedSettings[fieldSettings.key] as Array<object>)[i] = await this.decryptConnectorSecrets<object>(
+          (decryptedSettings[fieldSettings.key] as Array<object>)[i] = this.decryptConnectorSecrets<object>(
             (decryptedSettings[fieldSettings.key] as Array<object>)[i],
             fieldSettings.rootAttribute
           );
         }
       } else if (fieldSettings.type === 'object' && decryptedSettings[fieldSettings.key]) {
-        decryptedSettings[fieldSettings.key] = await this.decryptConnectorSecrets<object>(
+        decryptedSettings[fieldSettings.key] = this.decryptConnectorSecrets<object>(
           decryptedSettings[fieldSettings.key] as object,
           fieldSettings
         );
@@ -363,7 +377,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     throw lastError;
   }
 
-  async decryptSecretsWithPrivateKey<T>(newSettings: T, formSettings: OIBusObjectAttribute, privateKeys: Array<string>): Promise<T> {
+  decryptSecretsWithPrivateKey<T>(newSettings: T, formSettings: OIBusObjectAttribute, privateKeys: Array<string>): T {
     const encryptedSettings: Record<string, string | object | Array<object>> = JSON.parse(JSON.stringify(newSettings)) as Record<
       string,
       string | object | Array<object>
@@ -372,7 +386,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     for (const fieldSettings of formSettings.attributes) {
       if (fieldSettings.type === 'secret') {
         if (encryptedSettings[fieldSettings.key]) {
-          encryptedSettings[fieldSettings.key] = await this.decryptTextWithPrivateKey(
+          encryptedSettings[fieldSettings.key] = this.decryptTextWithPrivateKey(
             encryptedSettings[fieldSettings.key] as string,
             privateKeys
           );
@@ -381,14 +395,14 @@ export default class EncryptionService<TInitialized extends boolean = false> {
         }
       } else if (fieldSettings.type === 'array' && encryptedSettings[fieldSettings.key]) {
         for (let i = 0; i < (encryptedSettings[fieldSettings.key] as Array<object>).length; i++) {
-          (encryptedSettings[fieldSettings.key] as Array<object>)[i] = await this.decryptSecretsWithPrivateKey<object>(
+          (encryptedSettings[fieldSettings.key] as Array<object>)[i] = this.decryptSecretsWithPrivateKey<object>(
             (encryptedSettings[fieldSettings.key] as Array<object>)[i],
             fieldSettings.rootAttribute,
             privateKeys
           );
         }
       } else if (fieldSettings.type === 'object' && encryptedSettings[fieldSettings.key]) {
-        encryptedSettings[fieldSettings.key] = await this.decryptSecretsWithPrivateKey<object>(
+        encryptedSettings[fieldSettings.key] = this.decryptSecretsWithPrivateKey<object>(
           encryptedSettings[fieldSettings.key] as object,
           fieldSettings,
           privateKeys

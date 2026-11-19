@@ -66,7 +66,7 @@ describe('NorthSFTP', () => {
   beforeEach(() => {
     logger = new PinoLogger();
     sftpClient = createMock<SftpClient>({ exists: async () => 'd' });
-    encryptionService = createMock<EncryptionService>({ decryptText: async text => text });
+    encryptionService = createMock<EncryptionService>({ decryptText: text => text });
     encryptionExports.encryptionService = encryptionService;
     readFileMock = mockReadFile();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });

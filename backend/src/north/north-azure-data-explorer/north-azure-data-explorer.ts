@@ -43,14 +43,14 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
 
   override async start(): Promise<void> {
     await super.start();
-    await this.prepareConnection(this.connector.settings);
+    this.prepareConnection(this.connector.settings);
   }
 
-  async prepareConnection(settings: NorthAzureDataExplorerSettings): Promise<void> {
+  prepareConnection(settings: NorthAzureDataExplorerSettings): void {
     this.logger.info(`Connecting to Azure Data Explorer cluster ${settings.clusterUrl} using ${settings.authentication} authentication`);
 
-    const proxy = await this.buildProxy(settings);
-    const credential = await this.buildCredential(settings, proxy?.identityOptions);
+    const proxy = this.buildProxy(settings);
+    const credential = this.buildCredential(settings, proxy?.identityOptions);
 
     // Two separate connection string builders: IngestClient's autoCorrectEndpoint rewrites `dataSource` in place to
     // the `ingest-` DM endpoint, which would otherwise leave the management client pointing at the wrong host.
@@ -72,7 +72,7 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
    *   `@azure/core-rest-pipeline` HTTP stack and would otherwise bypass the agent entirely, leaving the
    *   token request to Entra ID (`login.microsoftonline.com`) unproxied.
    */
-  private async buildProxy(settings: NorthAzureDataExplorerSettings): Promise<ProxyConfiguration | null> {
+  private buildProxy(settings: NorthAzureDataExplorerSettings): ProxyConfiguration | null {
     if (!settings.useProxy) {
       return null;
     }
@@ -86,7 +86,7 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
     };
     if (settings.proxyUsername && settings.proxyPassword) {
       identityOptions.username = settings.proxyUsername;
-      identityOptions.password = await encryptionService.decryptText(settings.proxyPassword);
+      identityOptions.password = encryptionService.decryptText(settings.proxyPassword);
       url.username = identityOptions.username;
       url.password = identityOptions.password;
     }
@@ -113,10 +113,10 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
     }
   }
 
-  private async buildCredential(settings: NorthAzureDataExplorerSettings, proxyOptions?: ProxySettings): Promise<TokenCredential> {
+  private buildCredential(settings: NorthAzureDataExplorerSettings, proxyOptions?: ProxySettings): TokenCredential {
     switch (settings.authentication) {
       case 'aad-app-secret': {
-        const clientSecret = await encryptionService.decryptText(settings.clientSecret!);
+        const clientSecret = encryptionService.decryptText(settings.clientSecret!);
         return proxyOptions
           ? new ClientSecretCredential(settings.tenantId!, settings.clientId!, clientSecret, { proxyOptions })
           : new ClientSecretCredential(settings.tenantId!, settings.clientId!, clientSecret);
@@ -126,7 +126,7 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
         if (!certificate) {
           throw new Error(`Could not find certificate "${settings.certificateId}"`);
         }
-        const privateKey = await encryptionService.decryptText(certificate.privateKey);
+        const privateKey = encryptionService.decryptText(certificate.privateKey);
         const configuration = { certificate: `${certificate.certificate}\n${privateKey}` };
         return proxyOptions
           ? new ClientCertificateCredential(settings.tenantId!, settings.clientId!, configuration, { proxyOptions })
@@ -158,7 +158,7 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
       throw new Error(`Invalid table name "${table}"`);
     }
 
-    await this.prepareConnection(this.connector.settings);
+    this.prepareConnection(this.connector.settings);
 
     try {
       // Bracket-quoted so identifiers containing `-` or `.` (valid in Azure Data Explorer table names) are parsed

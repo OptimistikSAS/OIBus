@@ -29,11 +29,11 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
 
   async start(): Promise<void> {
     await super.start();
-    await this.prepareConnection(this.connector.settings);
+    this.prepareConnection(this.connector.settings);
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
-    await this.prepareConnection(this.connector.settings);
+    this.prepareConnection(this.connector.settings);
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${TEST_FILE}` : TEST_FILE;
 
     let testSuccess;
@@ -92,7 +92,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     }
   }
 
-  async prepareConnection(settings: NorthAzureBlobSettings): Promise<void> {
+  prepareConnection(settings: NorthAzureBlobSettings): void {
     this.logger.info(
       `Connecting to ${settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'} for the account ${settings.account} and the container ${settings.container} using ${settings.authentication} authentication`
     );
@@ -103,7 +103,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         host: proxyHost,
         port: proxyPort,
         username: settings.proxyUsername || undefined,
-        password: (await encryptionService.decryptText(settings.proxyPassword)) || undefined
+        password: encryptionService.decryptText(settings.proxyPassword) || undefined
       };
     }
     const url = settings.useADLS
@@ -115,7 +115,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         : `https://${settings.account}.blob.core.windows.net`;
     switch (settings.authentication) {
       case 'sas-token':
-        const decryptedToken = await encryptionService.decryptText(settings.sasToken!);
+        const decryptedToken = encryptionService.decryptText(settings.sasToken!);
         if (settings.useADLS) {
           this.dataLakeClient = new DataLakeServiceClient(`${url}?${decryptedToken}`, undefined, { proxyOptions });
         } else {
@@ -123,7 +123,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         }
         break;
       case 'access-key':
-        const decryptedAccessKey = await encryptionService.decryptText(settings.accessKey!);
+        const decryptedAccessKey = encryptionService.decryptText(settings.accessKey!);
         if (settings.useADLS) {
           const dataLakeSharedKeyCredential = new DataLakeStorageSharedKeyCredential(settings.account!, decryptedAccessKey);
           this.dataLakeClient = new DataLakeServiceClient(url, dataLakeSharedKeyCredential, {
@@ -140,7 +140,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         const clientSecretCredential = new ClientSecretCredential(
           settings.tenantId!,
           settings.clientId!,
-          await encryptionService.decryptText(settings.clientSecret!)
+          encryptionService.decryptText(settings.clientSecret!)
         );
         if (settings.useADLS) {
           this.dataLakeClient = new DataLakeServiceClient(url, clientSecretCredential, { proxyOptions });

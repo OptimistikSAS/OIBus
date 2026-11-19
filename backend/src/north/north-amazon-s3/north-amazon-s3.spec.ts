@@ -54,7 +54,7 @@ describe('NorthAmazonS3', () => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/encryption.service', {
       __esModule: true,
-      encryptionService: { decryptText: async (text: string) => text }
+      encryptionService: { decryptText: (text: string) => text }
     });
     // No transformation here: don't pay for loading every transformer
     mockModule(nodeRequire, '../../service/transformer.service', {});
@@ -131,21 +131,21 @@ describe('NorthAmazonS3', () => {
   });
 
   it('should properly prepare connection with proxy', async () => {
-    await north.prepareConnection(north.connectorConfiguration.settings);
+    north.prepareConnection(north.connectorConfiguration.settings);
 
     assert.strictEqual(HttpsProxyAgent.mock.calls.length, 1);
     assert.deepStrictEqual(HttpsProxyAgent.mock.calls[0].arguments, ['http://proxy-user:proxy-password@localhost/']);
   });
 
   it('should properly prepare connection with proxy without credentials', async () => {
-    await north.prepareConnection(buildSettings({ proxyUsername: '', proxyPassword: '' }));
+    north.prepareConnection(buildSettings({ proxyUsername: '', proxyPassword: '' }));
 
     assert.strictEqual(HttpsProxyAgent.mock.calls.length, 1);
     assert.deepStrictEqual(HttpsProxyAgent.mock.calls[0].arguments, ['http://localhost']);
   });
 
   it('should properly prepare connection without proxy', async () => {
-    await north.prepareConnection(buildSettings({ useProxy: false }));
+    north.prepareConnection(buildSettings({ useProxy: false }));
 
     assert.strictEqual(HttpsProxyAgent.mock.calls.length, 0);
   });

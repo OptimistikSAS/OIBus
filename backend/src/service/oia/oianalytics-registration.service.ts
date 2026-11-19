@@ -29,21 +29,21 @@ const TOKEN_REFRESH_MARGIN_MS = 10 * 60_000;
  * gives lifetimes rather than dates so that the clock of OIBus doesn't need to match its own.
  * An OIAnalytics which can't refresh tokens yet only gives a long-lived access token: it is then the only one stored.
  */
-export const toRegistrationTokens = async (
+export const toRegistrationTokens = (
   tokens: Pick<OIAnalyticsTokensDTO, 'accessToken'> & Partial<OIAnalyticsTokensDTO>
-): Promise<OIAnalyticsRegistrationTokens> => {
+): OIAnalyticsRegistrationTokens => {
   const now = DateTime.now().toUTC();
   if (!tokens.refreshToken) {
     return {
-      token: await encryptionService.encryptText(tokens.accessToken),
+      token: encryptionService.encryptText(tokens.accessToken),
       refreshToken: null,
       tokenExpirationDate: null,
       refreshTokenExpirationDate: null
     };
   }
   return {
-    token: await encryptionService.encryptText(tokens.accessToken),
-    refreshToken: await encryptionService.encryptText(tokens.refreshToken),
+    token: encryptionService.encryptText(tokens.accessToken),
+    refreshToken: encryptionService.encryptText(tokens.refreshToken),
     tokenExpirationDate: now.plus({ seconds: tokens.accessTokenExpiresIn! }).toISO()!,
     refreshTokenExpirationDate: now.plus({ seconds: tokens.refreshTokenExpiresIn! }).toISO()!
   };
@@ -132,13 +132,13 @@ export default class OIAnalyticsRegistrationService {
     if (!command.proxyPassword) {
       command.proxyPassword = registrationSettings.proxyPassword;
     } else {
-      command.proxyPassword = await encryptionService.encryptText(command.proxyPassword);
+      command.proxyPassword = encryptionService.encryptText(command.proxyPassword);
     }
 
     if (!command.apiGatewayHeaderValue) {
       command.apiGatewayHeaderValue = registrationSettings.apiGatewayHeaderValue;
     } else {
-      command.apiGatewayHeaderValue = await encryptionService.encryptText(command.apiGatewayHeaderValue);
+      command.apiGatewayHeaderValue = encryptionService.encryptText(command.apiGatewayHeaderValue);
     }
 
     const oibusInfo = getOIBusInfo(engineSettings);
@@ -151,7 +151,7 @@ export default class OIAnalyticsRegistrationService {
       result.redirectUrl,
       result.expirationDate,
       publicKey,
-      await encryptionService.encryptText(privateKey),
+      encryptionService.encryptText(privateKey),
       updatedBy
     );
     if (!this.intervalCheckRegistration) {
@@ -177,7 +177,7 @@ export default class OIAnalyticsRegistrationService {
       } else {
         this.oIAnalyticsRegistrationRepository.activate(
           DateTime.now().toUTC().toISO()!,
-          await toRegistrationTokens({ ...result, accessToken: result.accessToken! })
+          toRegistrationTokens({ ...result, accessToken: result.accessToken! })
         );
         if (this.intervalCheckRegistration) {
           clearInterval(this.intervalCheckRegistration);
@@ -237,7 +237,7 @@ export default class OIAnalyticsRegistrationService {
       const tokens = exchange
         ? await this.oIAnalyticsClient.exchangeToken(registration)
         : await this.oIAnalyticsClient.refreshToken(registration);
-      const registrationTokens = await toRegistrationTokens(tokens);
+      const registrationTokens = toRegistrationTokens(tokens);
       if (!this.isSameRegistration(registration)) return;
       this.oIAnalyticsRegistrationRepository.updateTokens(registrationTokens);
       this.logger.debug(exchange ? 'OIAnalytics long-lived token exchanged for a refreshable one' : 'OIAnalytics access token refreshed');
@@ -267,7 +267,7 @@ export default class OIAnalyticsRegistrationService {
     if (!this.isSameRegistration(registration)) return registration;
     this.oIAnalyticsRegistrationRepository.rotateKeys(
       publicKey,
-      await encryptionService.encryptText(privateKey),
+      encryptionService.encryptText(privateKey),
       registration.refreshTokenExpirationDate
     );
     this.logger.info('OIAnalytics cipher keys replaced');
@@ -291,12 +291,12 @@ export default class OIAnalyticsRegistrationService {
     if (!command.proxyPassword) {
       command.proxyPassword = currentRegistration.proxyPassword;
     } else {
-      command.proxyPassword = await encryptionService.encryptText(command.proxyPassword);
+      command.proxyPassword = encryptionService.encryptText(command.proxyPassword);
     }
     if (!command.apiGatewayHeaderValue) {
       command.apiGatewayHeaderValue = currentRegistration.apiGatewayHeaderValue;
     } else {
-      command.apiGatewayHeaderValue = await encryptionService.encryptText(command.apiGatewayHeaderValue);
+      command.apiGatewayHeaderValue = encryptionService.encryptText(command.apiGatewayHeaderValue);
     }
     this.oIAnalyticsRegistrationRepository.update(command, updatedBy);
     this.registrationEvent.emit('updated');

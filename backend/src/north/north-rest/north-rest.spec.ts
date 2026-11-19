@@ -70,7 +70,7 @@ describe('NorthREST', () => {
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
     mockModule(nodeRequire, '../../service/encryption.service', {
       __esModule: true,
-      encryptionService: { decryptText: async (text: string) => text }
+      encryptionService: { decryptText: (text: string) => text }
     });
     // No transformation here: don't pay for loading every transformer
     mockModule(nodeRequire, '../../service/transformer.service', {});

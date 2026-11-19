@@ -80,7 +80,7 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
           port: this.connector.settings.port,
           username: this.connector.settings.username,
           privateKey: await fs.readFile(this.connector.settings.privateKey!, 'utf8'),
-          passphrase: await encryptionService.decryptText(this.connector.settings.passphrase)
+          passphrase: encryptionService.decryptText(this.connector.settings.passphrase)
         };
       case 'password':
       default:
@@ -88,7 +88,7 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
           host: this.connector.settings.host,
           port: this.connector.settings.port,
           username: this.connector.settings.username,
-          password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : ''
+          password: this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : ''
         };
     }
   }

@@ -79,7 +79,7 @@ describe('NorthAzureBlob', () => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/encryption.service', {
       __esModule: true,
-      encryptionService: { decryptText: async (text: string) => text }
+      encryptionService: { decryptText: (text: string) => text }
     });
     // No transformation here: don't pay for loading every transformer
     mockModule(nodeRequire, '../../service/transformer.service', {});
@@ -279,7 +279,7 @@ describe('NorthAzureBlob', () => {
   it('should properly prepare Azure Blob Storage connection without proxy and standard url', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
     const settings = buildSettings({ sasToken: 'my token' });
-    await north.prepareConnection(settings);
+    north.prepareConnection(settings);
     assertConnectingLog('Azure Blob Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(BlobServiceClientMock.mock.calls.length, 1);
@@ -301,7 +301,7 @@ describe('NorthAzureBlob', () => {
       proxyUsername: '',
       proxyPassword: ''
     });
-    await north.prepareConnection(settings);
+    north.prepareConnection(settings);
     assertConnectingLog('Azure Data Lake Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 1);
     assert.deepStrictEqual(parseProxyUrlMock.mock.calls[0].arguments, [settings.proxyUrl]);
@@ -330,7 +330,7 @@ describe('NorthAzureBlob', () => {
       proxyUsername: 'username',
       proxyPassword: 'password'
     });
-    await north.prepareConnection(settings);
+    north.prepareConnection(settings);
     assertConnectingLog('Azure Data Lake Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 1);
     assert.deepStrictEqual(parseProxyUrlMock.mock.calls[0].arguments, [settings.proxyUrl]);
@@ -357,7 +357,7 @@ describe('NorthAzureBlob', () => {
       sasToken: '',
       accessKey: 'my access key'
     });
-    await north.prepareConnection(settings);
+    north.prepareConnection(settings);
     assertConnectingLog('Azure Blob Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(StorageSharedKeyCredentialMock.mock.calls.length, 1);
@@ -378,7 +378,7 @@ describe('NorthAzureBlob', () => {
   it('should properly prepare Azure Blob Storage connection without proxy, standard url and aad', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
     const settings = buildSettings(aadSettings);
-    await north.prepareConnection(settings);
+    north.prepareConnection(settings);
     assertConnectingLog('Azure Blob Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
@@ -394,7 +394,7 @@ describe('NorthAzureBlob', () => {
   it('should properly prepare Azure Data Lake Storage connection without proxy, standard url and aad', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
     const settings = buildSettings({ ...aadSettings, useADLS: true });
-    await north.prepareConnection(settings);
+    north.prepareConnection(settings);
     assertConnectingLog('Azure Data Lake Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
@@ -410,7 +410,7 @@ describe('NorthAzureBlob', () => {
   it('should properly prepare Azure Blob Storage connection without proxy, standard url and external', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
     const settings = buildSettings({ customUrl: 'custom-url', authentication: 'external', sasToken: '' });
-    await north.prepareConnection(settings);
+    north.prepareConnection(settings);
     assertConnectingLog('Azure Blob Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);
@@ -421,7 +421,7 @@ describe('NorthAzureBlob', () => {
   it('should properly prepare Azure Data Lake Storage connection without proxy, standard url and external', async () => {
     const parseProxyUrlMock = mock.method(north, 'parseProxyUrl', () => ({ proxyHost: '', proxyPort: 80 }));
     const settings = buildSettings({ useADLS: true, customUrl: 'custom-url', authentication: 'external', sasToken: '' });
-    await north.prepareConnection(settings);
+    north.prepareConnection(settings);
     assertConnectingLog('Azure Data Lake Storage', settings);
     assert.strictEqual(parseProxyUrlMock.mock.calls.length, 0);
     assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);

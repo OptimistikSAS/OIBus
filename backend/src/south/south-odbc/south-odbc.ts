@@ -81,7 +81,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
     let connection;
     try {
-      const connectionConfig = await this.createConnectionConfig(this.connector.settings);
+      const connectionConfig = this.createConnectionConfig(this.connector.settings);
       connection = await odbc.connect(connectionConfig);
     } catch (error: unknown) {
       const { odbcErrors } = error as {
@@ -195,7 +195,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
     let connection;
     try {
-      const connectionConfig = await this.createConnectionConfig(this.connector.settings);
+      const connectionConfig = this.createConnectionConfig(this.connector.settings);
       connection = await odbc.connect(connectionConfig);
       // The driver returns the rows in an array also carrying statement metadata (count, columns...): only keep the rows
       const result: Array<OIBusRecord> = [...(await connection.query(query))];
@@ -213,10 +213,10 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
   }
 
-  async createConnectionConfig(settings: SouthODBCSettings): Promise<{
+  createConnectionConfig(settings: SouthODBCSettings): {
     connectionString: string;
     connectionTimeout?: number;
-  }> {
+  } {
     let connectionString = settings.connectionString;
 
     if (settings.password) {
@@ -224,7 +224,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       if (!connectionString.endsWith(';')) {
         connectionString += ';';
       }
-      connectionString += `PWD=${await encryptionService.decryptText(settings.password)};`;
+      connectionString += `PWD=${encryptionService.decryptText(settings.password)};`;
     } else {
       this.logger.debug(`Connecting with connection string ${connectionString}`);
     }

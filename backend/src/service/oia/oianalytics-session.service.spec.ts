@@ -83,7 +83,7 @@ describe('OIAnalytics Session Service', () => {
     encryptionService = encryptionServiceExports.encryptionService = new EncryptionServiceMock('', '');
     encryptionService.decryptText.mock.mockImplementation(() => 'private key');
     encryptionService.decryptSecretsWithPrivateKey.mock.mockImplementation(
-      async <T>(settings: T) => ({ ...(settings as object), decrypted: true }) as T
+      <T>(settings: T) => ({ ...(settings as object), decrypted: true }) as T
     );
     logger = new LoggerMock();
     registration = { ...REGISTRATION };

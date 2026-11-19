@@ -65,11 +65,11 @@ export default class SouthMSSQL
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
-  async createConnectionOptions(): Promise<config> {
+  createConnectionOptions(): config {
     const settings = this.connector.settings.connectionSettings;
     const config: config = {
       user: settings.username || undefined,
-      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
+      password: settings.password ? encryptionService.decryptText(settings.password) : undefined,
       server: settings.host,
       port: settings.port,
       database: settings.database,
@@ -117,7 +117,7 @@ export default class SouthMSSQL
    */
   private async withPool<T>(fn: (pool: ConnectionPool) => Promise<T>): Promise<T> {
     if (!this.poolEnabled) {
-      const pool = await new mssql.ConnectionPool(await this.createConnectionOptions()).connect();
+      const pool = await new mssql.ConnectionPool(this.createConnectionOptions()).connect();
       try {
         return await fn(pool);
       } finally {
@@ -135,9 +135,9 @@ export default class SouthMSSQL
     return fn(await this.pool);
   }
 
-  private async connectPool(): Promise<ConnectionPool> {
+  private connectPool(): Promise<ConnectionPool> {
     const pool = new mssql.ConnectionPool({
-      ...(await this.createConnectionOptions()),
+      ...this.createConnectionOptions(),
       pool: { min: 0, max: this.getMaxParallelRun(), idleTimeoutMillis: this.connector.settings.connectionSettings.idleTimeout }
     });
     // Without a listener, a connection error raised outside a query would crash the process
@@ -146,7 +146,7 @@ export default class SouthMSSQL
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const config = await this.createConnectionOptions();
+    const config = this.createConnectionOptions();
 
     let pool;
     let request;

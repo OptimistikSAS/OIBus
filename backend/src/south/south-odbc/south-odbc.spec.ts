@@ -155,7 +155,7 @@ describe('SouthODBC', () => {
     it('should not add ; if present', async () => {
       const settingsCopy = JSON.parse(JSON.stringify(south.connectorConfiguration.settings));
       settingsCopy.connectionString += ';';
-      const result = await south.createConnectionConfig(settingsCopy);
+      const result = south.createConnectionConfig(settingsCopy);
       assert.deepStrictEqual(result, {
         connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;PWD=password;',
         connectionTimeout: 1000

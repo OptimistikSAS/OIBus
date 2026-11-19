@@ -89,7 +89,7 @@ export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promis
   }
 
   if (options.auth) {
-    const { token, url: authUrl } = await getAuthorization(options.auth, url.toString());
+    const { token, url: authUrl } = getAuthorization(options.auth, url.toString());
     url = authUrl;
 
     if (token) {
@@ -105,7 +105,7 @@ export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promis
   }
 
   if (options.proxy) {
-    options.dispatcher = await createProxy(options.proxy, options.acceptUnauthorized || false);
+    options.dispatcher = createProxy(options.proxy, options.acceptUnauthorized || false);
     delete options.proxy; // remove non-standard option
     delete options.acceptUnauthorized;
   } else if (options.acceptUnauthorized) {
@@ -152,19 +152,19 @@ export const retryableHttpStatusCodes = [
  *
  * URL is always returned, and is left unchanged when the auth type is not 'url'
  */
-async function getAuthorization(options: ReqAuthOptions, url: string) {
+function getAuthorization(options: ReqAuthOptions, url: string) {
   const auth: { token?: string; url: string } = { url };
 
   switch (options.type) {
     case 'basic': {
       const username = options.username;
-      const password = await encryptionService.decryptText(options.password);
+      const password = encryptionService.decryptText(options.password);
 
       auth.token = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
       break;
     }
     case 'bearer': {
-      let token = await encryptionService.decryptText(options.token);
+      let token = encryptionService.decryptText(options.token);
 
       // Make sure to include "Bearer " in front of the token, if the token provided does not have it
       if (!token.startsWith('Bearer ')) {
@@ -178,7 +178,7 @@ async function getAuthorization(options: ReqAuthOptions, url: string) {
     case 'url': {
       const urlObj = new URL(url);
       urlObj.username = options.username;
-      urlObj.password = await encryptionService.decryptText(options.password);
+      urlObj.password = encryptionService.decryptText(options.password);
       auth.url = urlObj.toString();
       break;
     }
@@ -187,7 +187,7 @@ async function getAuthorization(options: ReqAuthOptions, url: string) {
   return auth;
 }
 
-async function createProxy(options: NonNullable<ReqOptions['proxy']>, acceptUnauthorized: boolean): Promise<ProxyAgent> {
+function createProxy(options: NonNullable<ReqOptions['proxy']>, acceptUnauthorized: boolean): ProxyAgent {
   const proxyOptions: ProxyAgent.Options = { uri: options.url };
 
   if (acceptUnauthorized) {
@@ -195,7 +195,7 @@ async function createProxy(options: NonNullable<ReqOptions['proxy']>, acceptUnau
   }
 
   if (options.auth) {
-    const { token, url } = await getAuthorization(options.auth, options.url);
+    const { token, url } = getAuthorization(options.auth, options.url);
     proxyOptions.token = token;
     proxyOptions.uri = url;
   }

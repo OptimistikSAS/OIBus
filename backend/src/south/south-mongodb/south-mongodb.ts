@@ -45,21 +45,21 @@ export default class SouthMongoDB extends SouthConnector<SouthMongoDBSettings, S
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
-  private async createClientOptions(): Promise<MongoClientOptions> {
+  private createClientOptions(): MongoClientOptions {
     return {
       connectTimeoutMS: this.connector.settings.connectionTimeout,
       serverSelectionTimeoutMS: this.connector.settings.connectionTimeout,
       auth: this.connector.settings.username
         ? {
             username: this.connector.settings.username,
-            password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined
+            password: this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : undefined
           }
         : undefined
     };
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const options = await this.createClientOptions();
+    const options = this.createClientOptions();
 
     let client;
     try {
@@ -202,7 +202,7 @@ export default class SouthMongoDB extends SouthConnector<SouthMongoDBSettings, S
   ): Promise<Array<Document>> {
     const queryDocument = substituteQueryPlaceholders(item.settings.query, startTime, endTime);
     const sortSpec = JSON.parse(item.settings.sort) as Document;
-    const options = await this.createClientOptions();
+    const options = this.createClientOptions();
 
     let client;
     try {

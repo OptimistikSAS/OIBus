@@ -62,7 +62,7 @@ export default class CertificateService {
       name: command.name,
       description: command.description,
       publicKey: cert.public,
-      privateKey: await this.encryptionService.encryptText(cert.private),
+      privateKey: this.encryptionService.encryptText(cert.private),
       certificate: cert.cert,
       certificateChain: null,
       expiry: readCertificate(cert.cert).expiry,
@@ -91,7 +91,7 @@ export default class CertificateService {
         name: command.name,
         description: command.description,
         publicKey: cert.public,
-        privateKey: await this.encryptionService.encryptText(cert.private),
+        privateKey: this.encryptionService.encryptText(cert.private),
         certificate: cert.cert,
         certificateChain: null,
         expiry: readCertificate(cert.cert).expiry,
@@ -119,7 +119,7 @@ export default class CertificateService {
       name: command.name,
       description: command.description,
       publicKey: parsed.publicKeyPem,
-      privateKey: await this.encryptionService.encryptText(privateKeyPem),
+      privateKey: this.encryptionService.encryptText(privateKeyPem),
       certificate: parsed.pem,
       certificateChain,
       expiry: parsed.expiry,
@@ -158,7 +158,7 @@ export default class CertificateService {
     await this.validator.validate(certificatePrivateKeyExportSchema, { passphrase });
     const certificate = this.findById(certificateId);
     // awaited like the neighbouring encryptText call: EncryptionServiceMock declares these async
-    const privateKeyPem = await this.encryptionService.decryptText(certificate.privateKey);
+    const privateKeyPem = this.encryptionService.decryptText(certificate.privateKey);
     const content = privateKeyToEncryptedPkcs8Pem(privateKeyPem, passphrase);
     this.logger.info(`Private key of certificate "${certificate.name}" (${certificate.id}) exported by ${requestedBy}`);
     return content;

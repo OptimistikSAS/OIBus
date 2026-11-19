@@ -59,7 +59,7 @@ export default class SouthPostgreSQL
 {
   // Connection pool shared by the queries while the connector runs, sized to getMaxParallelRun(). Its clients are
   // connected on demand. Null when the connector is not running: the queries of a test then connect their own client.
-  private pool: Promise<pg.Pool> | null = null;
+  private pool: pg.Pool | null = null;
   private poolEnabled = false;
 
   constructor(
@@ -76,13 +76,13 @@ export default class SouthPostgreSQL
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
-  async createConnectionOptions(): Promise<ClientConfig> {
+  createConnectionOptions(): ClientConfig {
     const settings = this.connector.settings.connectionSettings;
     return {
       host: settings.host,
       port: settings.port,
       user: settings.username || undefined,
-      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
+      password: settings.password ? encryptionService.decryptText(settings.password) : undefined,
       database: settings.database,
       query_timeout: DEFAULT_REQUEST_TIMEOUT,
       connectionTimeoutMillis: settings.connectionTimeout,
@@ -100,7 +100,7 @@ export default class SouthPostgreSQL
     const pool = this.pool;
     this.pool = null;
     if (pool) {
-      await (await pool).end();
+      await pool.end();
     }
     await super.disconnect();
   }
@@ -116,7 +116,7 @@ export default class SouthPostgreSQL
    */
   private async withClient<T>(fn: (client: pg.ClientBase) => Promise<T>): Promise<T> {
     if (!this.poolEnabled) {
-      const client = new pg.Client(await this.createConnectionOptions());
+      const client = new pg.Client(this.createConnectionOptions());
       try {
         await client.connect();
         return await fn(client);
@@ -125,7 +125,7 @@ export default class SouthPostgreSQL
       }
     }
     this.pool ??= this.createPool();
-    const client = await (await this.pool).connect();
+    const client = await this.pool.connect();
     try {
       const result = await fn(client);
       client.release();
@@ -137,9 +137,9 @@ export default class SouthPostgreSQL
     }
   }
 
-  private async createPool(): Promise<pg.Pool> {
+  private createPool(): pg.Pool {
     const pool = new pg.Pool({
-      ...(await this.createConnectionOptions()),
+      ...this.createConnectionOptions(),
       max: this.getMaxParallelRun(),
       idleTimeoutMillis: this.connector.settings.connectionSettings.idleTimeout
     });
@@ -149,7 +149,7 @@ export default class SouthPostgreSQL
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const config = await this.createConnectionOptions();
+    const config = this.createConnectionOptions();
 
     let connection;
     try {

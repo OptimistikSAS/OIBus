@@ -82,7 +82,7 @@ export default class SouthFolderScanner
     await this.deleteNetworkSession(shareRoot);
     let password = '';
     try {
-      password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
+      password = this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : '';
       // Authenticate against the actual target share (not just the server's IPC$ pseudo-share)
       // rather than storing credentials via cmdkey: `net use` establishes a live, session-scoped
       // SMB session for the calling process's own logon session, so subsequent UNC access to

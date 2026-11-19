@@ -89,7 +89,7 @@ export default class NorthService {
     }
 
     const northEntity = {} as NorthConnectorEntity<NorthSettings>;
-    await copyNorthConnectorCommandToNorthEntity(
+    copyNorthConnectorCommandToNorthEntity(
       northEntity,
       command,
       this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
@@ -134,7 +134,7 @@ export default class NorthService {
     }
 
     const northEntity = { id: previousSettings.id } as NorthConnectorEntity<NorthSettings>;
-    await copyNorthConnectorCommandToNorthEntity(northEntity, command, previousSettings, this.scanModeRepository.findAll());
+    copyNorthConnectorCommandToNorthEntity(northEntity, command, previousSettings, this.scanModeRepository.findAll());
     northEntity.createdBy = previousSettings.createdBy;
     northEntity.updatedBy = updatedBy;
     const transformers = this.transformerService.findAll();
@@ -202,7 +202,7 @@ export default class NorthService {
       type: northType,
       description: '',
       enabled: false,
-      settings: await encryptionService.encryptConnectorSecrets(settingsToTest, northConnector?.settings || null, manifest.settings),
+      settings: encryptionService.encryptConnectorSecrets(settingsToTest, northConnector?.settings || null, manifest.settings),
       name: `${northType}:test-connection`,
       transformers: [],
       caching: {
@@ -441,17 +441,17 @@ export const toTransformerSourceDTO = (source: TransformerSource, getUserInfo: G
   }
 };
 
-export const copyNorthConnectorCommandToNorthEntity = async (
+export const copyNorthConnectorCommandToNorthEntity = (
   northEntity: NorthConnectorEntity<NorthSettings>,
   command: NorthConnectorCommandDTO,
   currentSettings: NorthConnectorEntity<NorthSettings> | null,
   scanModes: Array<ScanMode>
-): Promise<void> => {
+): void => {
   northEntity.name = command.name;
   northEntity.type = command.type;
   northEntity.description = command.description;
   northEntity.enabled = command.enabled;
-  northEntity.settings = await encryptionService.encryptConnectorSecrets(
+  northEntity.settings = encryptionService.encryptConnectorSecrets(
     command.settings,
     currentSettings?.settings || null,
     northManifestList.find(element => element.id === northEntity.type)!.settings

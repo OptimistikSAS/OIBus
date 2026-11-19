@@ -238,7 +238,7 @@ describe('Service utils OPCUA', () => {
     let readFileMock: ReturnType<typeof mock.fn>;
 
     beforeEach(() => {
-      decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => text) as ReturnType<typeof mock.fn>;
+      decryptTextMock = mock.method(encryptionService, 'decryptText', (text: unknown) => text) as ReturnType<typeof mock.fn>;
       readFileMock = mock.method(fs, 'readFile', async () => '') as ReturnType<typeof mock.fn>;
       mock.method(encryptionService, 'getCertPath', () => path.resolve('cert_path'));
       mock.method(encryptionService, 'getPrivateKeyPath', () => path.resolve('private_key_path'));

@@ -109,7 +109,7 @@ describe('NorthAzureDataExplorer', () => {
   /** Creates the connector with these settings and prepares its connection */
   const prepareConnection = async (settings: Partial<NorthAzureDataExplorerSettings>) => {
     createNorth(settings);
-    await north.prepareConnection(north.connectorConfiguration.settings);
+    north.prepareConnection(north.connectorConfiguration.settings);
   };
 
   before(() => {
@@ -134,7 +134,7 @@ describe('NorthAzureDataExplorer', () => {
 
   beforeEach(() => {
     logger = new PinoLogger();
-    encryptionService = createMock<EncryptionService>({ decryptText: async text => text });
+    encryptionService = createMock<EncryptionService>({ decryptText: text => text });
     certificateRepository = createMock<CertificateRepository>();
     kustoClient = createKustoClient();
     ingestResourceManagerKustoClient = createKustoClient();
@@ -185,19 +185,19 @@ describe('NorthAzureDataExplorer', () => {
   });
 
   it('should build credential with aad-app-secret authentication', async () => {
-    await prepareConnection({ clientSecret: 'mySecret' });
+    prepareConnection({ clientSecret: 'mySecret' });
     assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(ClientSecretCredentialMock.mock.calls[0].arguments, ['tenantId', 'clientId', 'mySecret']);
   });
 
   it('should build credential with aad-app-secret authentication and proxyOptions when useProxy is true', async () => {
-    await prepareConnection({ clientSecret: 'mySecret', ...proxyWithCredentials });
+    prepareConnection({ clientSecret: 'mySecret', ...proxyWithCredentials });
     assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(ClientSecretCredentialMock.mock.calls[0].arguments, ['tenantId', 'clientId', 'mySecret', expectedProxyOptions]);
   });
 
   it('should build credential with aad-app-secret authentication and proxyOptions using default https port', async () => {
-    await prepareConnection({
+    prepareConnection({
       clientSecret: 'mySecret',
       useProxy: true,
       proxyUrl: 'https://myproxy',
@@ -214,7 +214,7 @@ describe('NorthAzureDataExplorer', () => {
   });
 
   it('should build credential with aad-app-secret authentication and proxyOptions using default http port', async () => {
-    await prepareConnection({ clientSecret: 'mySecret', useProxy: true, proxyUrl: 'http://myproxy', proxyUsername: '', proxyPassword: '' });
+    prepareConnection({ clientSecret: 'mySecret', useProxy: true, proxyUrl: 'http://myproxy', proxyUsername: '', proxyPassword: '' });
     assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(ClientSecretCredentialMock.mock.calls[0].arguments, [
       'tenantId',
@@ -226,7 +226,7 @@ describe('NorthAzureDataExplorer', () => {
 
   it('should build credential with aad-app-certificate authentication', async () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
-    await prepareConnection({ authentication: 'aad-app-certificate', clientSecret: undefined, certificateId: 'certificate1' });
+    prepareConnection({ authentication: 'aad-app-certificate', clientSecret: undefined, certificateId: 'certificate1' });
     assert.strictEqual(certificateRepository.findById.mock.calls.length, 1);
     assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, ['certificate1']);
     assert.strictEqual(ClientCertificateCredentialMock.mock.calls.length, 1);
@@ -235,7 +235,7 @@ describe('NorthAzureDataExplorer', () => {
 
   it('should build credential with aad-app-certificate authentication and proxyOptions when useProxy is true', async () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
-    await prepareConnection({
+    prepareConnection({
       authentication: 'aad-app-certificate',
       clientSecret: undefined,
       certificateId: 'certificate1',
@@ -266,27 +266,27 @@ describe('NorthAzureDataExplorer', () => {
   };
 
   it('should build credential with managed-identity authentication', async () => {
-    await prepareConnection(managedIdentity);
+    prepareConnection(managedIdentity);
     assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(DefaultAzureCredentialMock.mock.calls[0].arguments, []);
     assert.strictEqual(encryptionService.decryptText.mock.calls.length, 0);
   });
 
   it('should build credential with managed-identity authentication and proxyOptions when useProxy is true', async () => {
-    await prepareConnection({ ...managedIdentity, ...proxyWithCredentials });
+    prepareConnection({ ...managedIdentity, ...proxyWithCredentials });
     assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(DefaultAzureCredentialMock.mock.calls[0].arguments, [expectedProxyOptions]);
   });
 
   it('should build credential without proxyOptions when useProxy is false', async () => {
-    await prepareConnection(managedIdentity);
+    prepareConnection(managedIdentity);
     assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(DefaultAzureCredentialMock.mock.calls[0].arguments, []);
   });
 
   it('should build two distinct connection string builders for management and ingest clients', async () => {
     const settings = north.connectorConfiguration.settings;
-    await north.prepareConnection(settings);
+    north.prepareConnection(settings);
     assert.strictEqual(withTokenCredentialMock.mock.calls.length, 2);
     assert.strictEqual(withTokenCredentialMock.mock.calls[0].arguments[0], settings.clusterUrl);
     assert.strictEqual(withTokenCredentialMock.mock.calls[1].arguments[0], settings.clusterUrl);
@@ -298,7 +298,7 @@ describe('NorthAzureDataExplorer', () => {
   });
 
   it('should not build or apply a proxy agent when useProxy is false', async () => {
-    await north.prepareConnection(north.connectorConfiguration.settings);
+    north.prepareConnection(north.connectorConfiguration.settings);
     assert.strictEqual(HttpsProxyAgentMock.mock.calls.length, 0);
     assert.strictEqual(kustoClient.axiosInstance.defaults.httpsAgent, undefined);
     assert.strictEqual(ingestResourceManagerKustoClient.axiosInstance.defaults.httpsAgent, undefined);
@@ -308,7 +308,7 @@ describe('NorthAzureDataExplorer', () => {
   });
 
   it('should build and apply a proxy agent on both clients, logging only the host, when useProxy is true with credentials', async () => {
-    await prepareConnection({ ...managedIdentity, ...proxyWithCredentials });
+    prepareConnection({ ...managedIdentity, ...proxyWithCredentials });
 
     assert.strictEqual(HttpsProxyAgentMock.mock.calls.length, 1);
     const authenticatedUrl = HttpsProxyAgentMock.mock.calls[0].arguments[0] as string;
@@ -330,7 +330,7 @@ describe('NorthAzureDataExplorer', () => {
   });
 
   it('should build a proxy agent from a credential-less url when useProxy is true without username/password', async () => {
-    await prepareConnection({
+    prepareConnection({
       ...managedIdentity,
       useProxy: true,
       proxyUrl: 'http://myproxy:8080',

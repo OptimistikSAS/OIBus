@@ -30,7 +30,7 @@ const createHttpRequestMocks = () => ({
 const createUtilsMocks = () => ({ generateRandomId: mock.fn(() => '123ABC') });
 const createUtilsOIAnalyticsMocks = () => ({
   buildHttpOptions: mock.fn(async (method: string) => ({ ...mockHttpOptions, method })),
-  getHeaders: mock.fn(async () => ({})),
+  getHeaders: mock.fn(() => ({})),
   getProxyOptions: mock.fn(() => ({ acceptUnauthorized: false, proxy: undefined })),
   getUrl: mock.fn((endpoint: string, host: string) => new URL(endpoint, host))
 });
