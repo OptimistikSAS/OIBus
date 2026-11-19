@@ -45,7 +45,7 @@ export default class SouthMySQL
 {
   // Connection pool shared by the queries while the connector runs, sized to getMaxParallelRun(). Its connections are
   // opened on demand. Null when the connector is not running: the queries of a test then open their own connection.
-  private pool: Promise<mysql.Pool> | null = null;
+  private pool: mysql.Pool | null = null;
   private poolEnabled = false;
 
   constructor(
@@ -62,13 +62,13 @@ export default class SouthMySQL
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
-  async createConnectionOptions(): Promise<mysql.ConnectionOptions> {
+  createConnectionOptions(): mysql.ConnectionOptions {
     const settings = this.connector.settings.connectionSettings;
     return {
       host: settings.host,
       port: settings.port,
       user: settings.username || undefined,
-      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
+      password: settings.password ? encryptionService.decryptText(settings.password) : undefined,
       database: settings.database,
       connectTimeout: settings.connectionTimeout,
       timezone: 'Z'
@@ -85,7 +85,7 @@ export default class SouthMySQL
     const pool = this.pool;
     this.pool = null;
     if (pool) {
-      await (await pool).end();
+      await pool.end();
     }
     await super.disconnect();
   }
@@ -101,7 +101,7 @@ export default class SouthMySQL
    */
   private async withConnection<T>(fn: (connection: mysql.Connection) => Promise<T>): Promise<T> {
     if (!this.poolEnabled) {
-      const connection = await mysql.createConnection(await this.createConnectionOptions());
+      const connection = await mysql.createConnection(this.createConnectionOptions());
       try {
         return await fn(connection);
       } finally {
@@ -109,7 +109,7 @@ export default class SouthMySQL
       }
     }
     this.pool ??= this.createPool();
-    const connection = await (await this.pool).getConnection();
+    const connection = await this.pool.getConnection();
     try {
       return await fn(connection);
     } finally {
@@ -117,10 +117,10 @@ export default class SouthMySQL
     }
   }
 
-  private async createPool(): Promise<mysql.Pool> {
+  private createPool(): mysql.Pool {
     const maxConnections = this.getMaxParallelRun();
     return mysql.createPool({
-      ...(await this.createConnectionOptions()),
+      ...this.createConnectionOptions(),
       connectionLimit: maxConnections,
       maxIdle: maxConnections,
       idleTimeout: this.connector.settings.connectionSettings.idleTimeout,
@@ -130,7 +130,7 @@ export default class SouthMySQL
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const config = await this.createConnectionOptions();
+    const config = this.createConnectionOptions();
     let connection;
     try {
       connection = await mysql.createConnection(config);

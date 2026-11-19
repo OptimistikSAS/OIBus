@@ -28,11 +28,11 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
 
   async start(): Promise<void> {
     await super.start();
-    await this.prepareConnection(this.connector.settings);
+    this.prepareConnection(this.connector.settings);
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
-    await this.prepareConnection(this.connector.settings);
+    this.prepareConnection(this.connector.settings);
 
     try {
       await this.s3!.send(
@@ -61,7 +61,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     await this.s3!.send(new PutObjectCommand(params));
   }
 
-  async prepareConnection(settings: NorthAmazonS3Settings): Promise<void> {
+  prepareConnection(settings: NorthAmazonS3Settings): void {
     let proxyAgent;
     if (settings.useProxy) {
       let proxyUrl = settings.proxyUrl!;
@@ -69,7 +69,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
         // Insert username and password into the proxy URL
         const url = new URL(proxyUrl);
         url.username = settings.proxyUsername;
-        url.password = await encryptionService.decryptText(settings.proxyPassword);
+        url.password = encryptionService.decryptText(settings.proxyPassword);
         proxyUrl = url.toString();
       }
       proxyAgent = new HttpsProxyAgent(proxyUrl);
@@ -79,7 +79,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
       region: settings.region,
       credentials: {
         accessKeyId: settings.accessKey,
-        secretAccessKey: await encryptionService.decryptText(settings.secretKey)
+        secretAccessKey: encryptionService.decryptText(settings.secretKey)
       },
       requestHandler: proxyAgent
         ? new NodeHttpHandler({

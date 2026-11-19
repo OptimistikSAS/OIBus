@@ -140,7 +140,7 @@ export const createSessionConfigs = async (
       userIdentity = {
         type: UserTokenType.UserName,
         userName: settings.authentication.username!,
-        password: await encryptionService.decryptText(settings.authentication.password!)
+        password: encryptionService.decryptText(settings.authentication.password!)
       };
       break;
     case 'cert':

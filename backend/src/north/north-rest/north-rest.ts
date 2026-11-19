@@ -63,7 +63,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
         body: this.connector.settings.test.body && ['POST', 'PUT'].includes(testMethod) ? this.connector.settings.test.body : undefined
       };
 
-      await this.handleApiKeyAuth(fetchOptions, requestUrl);
+      this.handleApiKeyAuth(fetchOptions, requestUrl);
 
       response = await HTTPRequest(requestUrl, fetchOptions);
     } catch (error: unknown) {
@@ -138,7 +138,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       acceptUnauthorized
     };
 
-    await this.handleApiKeyAuth(fetchOptions, requestUrl);
+    this.handleApiKeyAuth(fetchOptions, requestUrl);
 
     let response: ReqResponse;
     try {
@@ -217,11 +217,11 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     }
   }
 
-  private async handleApiKeyAuth(options: ReqOptions, url: URL): Promise<void> {
+  private handleApiKeyAuth(options: ReqOptions, url: URL): void {
     const settings = this.connector.settings;
 
     if (settings.authentication.type === 'api-key' && settings.authentication.apiKey && settings.authentication.apiValue) {
-      const apiValue = await encryptionService.decryptText(settings.authentication.apiValue);
+      const apiValue = encryptionService.decryptText(settings.authentication.apiValue);
 
       if (settings.authentication.addTo === 'header') {
         if (!options.headers) options.headers = {};

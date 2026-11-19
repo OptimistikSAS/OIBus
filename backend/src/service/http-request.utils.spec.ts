@@ -50,7 +50,7 @@ describe('HTTPRequest Service', () => {
     proxyAgentInstances = [];
     agentInstances = [];
 
-    decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => (text ? `${text}-decrypted` : ''));
+    decryptTextMock = mock.method(encryptionService, 'decryptText', (text: unknown) => (text ? `${text}-decrypted` : ''));
     abortSignalTimeoutMock = mock.method(AbortSignal, 'timeout', (_ms: number) => mockAbortSignal);
 
     requestMock = mock.method(undiciModule, 'request', async () => createMockResponse(200, { success: true })) as typeof requestMock;

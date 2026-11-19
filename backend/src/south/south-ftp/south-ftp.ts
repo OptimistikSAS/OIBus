@@ -54,7 +54,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
       this.logger.debug(`Connecting to FTP server ${this.connector.settings.host}:${this.connector.settings.port}`);
       const client = new FTPClient();
       const connectStart = DateTime.now().toMillis();
-      await client.access(await this.createConnectionOptions());
+      await client.access(this.createConnectionOptions());
       const connectDuration = DateTime.now().toMillis() - connectStart;
       this.client = client;
       this.logger.info(`Connected to FTP server ${this.connector.settings.host}:${this.connector.settings.port} in ${connectDuration} ms`);
@@ -95,7 +95,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     try {
       this.logger.debug(`Connecting to FTP server ${this.connector.settings.host}:${this.connector.settings.port}`);
       const connectStart = DateTime.now().toMillis();
-      await client.access(await this.createConnectionOptions());
+      await client.access(this.createConnectionOptions());
       this.logger.info(
         `Connected to FTP server ${this.connector.settings.host}:${this.connector.settings.port} in ${DateTime.now().toMillis() - connectStart} ms`
       );
@@ -121,7 +121,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     try {
       this.logger.debug(`Connecting to FTP server ${this.connector.settings.host}:${this.connector.settings.port}`);
       const connectStart = DateTime.now().toMillis();
-      await client.access(await this.createConnectionOptions());
+      await client.access(this.createConnectionOptions());
       const connectionDuration = DateTime.now().toMillis() - connectStart;
       this.logger.info(
         `Connected to FTP server ${this.connector.settings.host}:${this.connector.settings.port} in ${connectionDuration} ms`
@@ -373,12 +373,12 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     }
   }
 
-  private async createConnectionOptions(): Promise<AccessOptions> {
+  private createConnectionOptions(): AccessOptions {
     return {
       host: this.connector.settings.host,
       port: this.connector.settings.port,
       user: this.connector.settings.username || '',
-      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '',
+      password: this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : '',
       secure: false // FTP is not secure by default
     };
   }

@@ -149,7 +149,7 @@ describe('utils-oianalytics', () => {
   describe('getHeaders', () => {
     it('should return empty headers if useApiGateway is false', async () => {
       const reg = { useApiGateway: false } as OIAnalyticsRegistration;
-      const result = await getHeaders(true, reg);
+      const result = getHeaders(true, reg);
       assert.deepStrictEqual(result, {});
     });
 
@@ -161,7 +161,7 @@ describe('utils-oianalytics', () => {
         apiGatewayHeaderValue: 'encrypted-val'
       } as OIAnalyticsRegistration;
 
-      const result = await getHeaders(true, reg);
+      const result = getHeaders(true, reg);
 
       assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['encrypted-val']);
       assert.deepStrictEqual(result, { 'x-key': 'decrypted-encrypted-val' });

@@ -178,7 +178,7 @@ describe('SouthMSSQL', () => {
     input = mock.fn();
     close = mock.fn();
     request = mock.fn(() => ({ input, query }));
-    connect = mock.fn(() => ({ request, close }));
+    connect = mock.fn(() => Promise.resolve({ request, close }));
     connectionPool = mock.fn(function () {
       return { connect };
     });

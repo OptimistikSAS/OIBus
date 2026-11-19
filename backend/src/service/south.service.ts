@@ -152,7 +152,7 @@ export default class SouthService {
     // Create a minimal south entity first to get the ID, then create groups
     const southEntity = {} as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
     const scanModes = this.scanModeRepository.findAll();
-    await copySouthConnectorCommandToSouthEntity(
+    copySouthConnectorCommandToSouthEntity(
       southEntity,
       command,
       this.retrieveSecretsFromSouth(retrieveSecretsFromSouth, manifest),
@@ -207,7 +207,7 @@ export default class SouthService {
 
     const southEntity = { id: previousSettings.id } as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
     const scanModes = this.scanModeRepository.findAll();
-    await copySouthConnectorCommandToSouthEntity(
+    copySouthConnectorCommandToSouthEntity(
       southEntity,
       command,
       previousSettings,
@@ -331,11 +331,7 @@ export default class SouthService {
     const manifest = this.getManifest(southType);
     await this.validator.validateSettings(manifest.settings, settingsToTest);
 
-    const testSettings = await encryptionService.encryptConnectorSecrets(
-      settingsToTest,
-      southConnector?.settings || null,
-      manifest.settings
-    );
+    const testSettings = encryptionService.encryptConnectorSecrets(settingsToTest, southConnector?.settings || null, manifest.settings);
 
     const runningSouth = this.findRunningSouth(southConnector, testSettings);
     if (runningSouth) {
@@ -539,7 +535,7 @@ export default class SouthService {
         createdAt: '',
         updatedAt: ''
       },
-      settings: await encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest),
+      settings: encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest),
       maxReadInterval: null,
       readDelay: 0,
       startTimeOffset: null,
@@ -557,7 +553,7 @@ export default class SouthService {
       createdAt: '',
       updatedAt: ''
     };
-    const testConnectorSettings = await encryptionService.encryptConnectorSecrets(
+    const testConnectorSettings = encryptionService.encryptConnectorSecrets(
       southSettings,
       southConnector?.settings || null,
       manifest.settings
@@ -713,7 +709,7 @@ export default class SouthService {
     this.checkNorthTransformers([command]);
 
     const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-    await copySouthItemCommandToSouthItemEntity(
+    copySouthItemCommandToSouthItemEntity(
       southItemEntity,
       command,
       null,
@@ -745,7 +741,7 @@ export default class SouthService {
     this.checkNorthTransformers([command]);
 
     const southItemEntity = { id: existingItem.id } as SouthConnectorItemEntity<SouthItemSettings>;
-    await copySouthItemCommandToSouthItemEntity(
+    copySouthItemCommandToSouthItemEntity(
       southItemEntity,
       command,
       existingItem,
@@ -1114,7 +1110,7 @@ export default class SouthService {
     for (const itemCommand of updatedItems) {
       await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
       const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-      await copySouthItemCommandToSouthItemEntity(southItemEntity, itemCommand, null, southConnector.type, scanModes, groups, false);
+      copySouthItemCommandToSouthItemEntity(southItemEntity, itemCommand, null, southConnector.type, scanModes, groups, false);
       southItemEntity.createdBy = user;
       southItemEntity.updatedBy = user;
       itemsToAdd.push(southItemEntity);
@@ -1295,40 +1291,34 @@ export default class SouthService {
   }
 }
 
-const copySouthConnectorCommandToSouthEntity = async (
+const copySouthConnectorCommandToSouthEntity = (
   southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
   command: SouthConnectorCommandDTO,
   currentSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null,
   scanModes: Array<ScanMode>,
   groups: Array<SouthItemGroupEntity>,
   retrieveSecretsFromSouth: boolean
-): Promise<void> => {
+): void => {
   const manifest = southManifestList.find(element => element.id === command.type)!;
   southEntity.name = command.name;
   southEntity.type = command.type;
   southEntity.description = command.description;
   southEntity.enabled = command.enabled;
-  southEntity.settings = await encryptionService.encryptConnectorSecrets(
-    command.settings,
-    currentSettings?.settings || null,
-    manifest.settings
-  );
+  southEntity.settings = encryptionService.encryptConnectorSecrets(command.settings, currentSettings?.settings || null, manifest.settings);
   const currentItems = new Map((currentSettings?.items ?? []).map(item => [item.id, item]));
-  southEntity.items = await Promise.all(
-    command.items.map(async itemCommand => {
-      const itemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-      await copySouthItemCommandToSouthItemEntity(
-        itemEntity,
-        itemCommand,
-        (itemCommand.id && currentItems.get(itemCommand.id)) || null,
-        southEntity.type,
-        scanModes,
-        groups,
-        retrieveSecretsFromSouth
-      );
-      return itemEntity;
-    })
-  );
+  southEntity.items = command.items.map(itemCommand => {
+    const itemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
+    copySouthItemCommandToSouthItemEntity(
+      itemEntity,
+      itemCommand,
+      (itemCommand.id && currentItems.get(itemCommand.id)) || null,
+      southEntity.type,
+      scanModes,
+      groups,
+      retrieveSecretsFromSouth
+    );
+    return itemEntity;
+  });
   southEntity.groups = command.groups.map(group => {
     const groupEntity = {} as SouthItemGroupEntityLight;
     copyGroupCommandToGroupEntity(groupEntity, group, scanModes);
@@ -1366,7 +1356,7 @@ const copyGroupCommandToGroupEntity = (
   groupEntity.scanMode = checkScanMode(scanModes, command.standardSettings.scanModeId, null)!;
 };
 
-export const copySouthItemCommandToSouthItemEntity = async (
+export const copySouthItemCommandToSouthItemEntity = (
   southItemEntity: SouthConnectorItemEntity<SouthItemSettings>,
   command: SouthConnectorItemCommandDTO,
   currentSettings: SouthConnectorItemEntity<SouthItemSettings> | null,
@@ -1374,7 +1364,7 @@ export const copySouthItemCommandToSouthItemEntity = async (
   scanModes: Array<ScanMode>,
   groups: Array<SouthItemGroupEntity>,
   retrieveSecretsFromSouth = false
-): Promise<void> => {
+): void => {
   assertCachingStrategyValidForType(southType, command.cachingStrategy ?? null);
   const manifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -1384,7 +1374,7 @@ export const copySouthItemCommandToSouthItemEntity = async (
   southItemEntity.name = command.name;
   southItemEntity.description = command.description ?? null;
   southItemEntity.enabled = command.enabled;
-  southItemEntity.settings = await encryptionService.encryptConnectorSecrets(
+  southItemEntity.settings = encryptionService.encryptConnectorSecrets(
     command.settings,
     currentSettings?.settings || null,
     itemSettingsManifest

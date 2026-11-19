@@ -41,7 +41,7 @@ describe('NorthFileWriter', () => {
   let pipelineMock: Mock<typeof streamPromises.pipeline>;
 
   before(() => {
-    mockModule(nodeRequire, '../../service/encryption.service', { encryptionService: { decryptText: async () => 'decrypted-password' } });
+    mockModule(nodeRequire, '../../service/encryption.service', { encryptionService: { decryptText: () => 'decrypted-password' } });
     // No transformation here: don't pay for loading every transformer
     mockModule(nodeRequire, '../../service/transformer.service', {});
     mockModule(nodeRequire, '../../service/logger/logger.service', {

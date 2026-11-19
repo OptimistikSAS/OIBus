@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
-import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import { DateTime } from 'luxon';
 
 import {
   OIBusArrayAttribute,
@@ -16,9 +17,6 @@ import {
 import testData from '../tests/utils/test-data';
 import { seq } from '../tests/utils/test-utils';
 import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
-
-const nodeRequire = createRequire(import.meta.url);
-const forgeModule = nodeRequire('node-forge');
 
 const encryptionService = EncryptionService.getInstance();
 
@@ -123,25 +121,12 @@ const encryptedSettings = {
 
 const certFolder = 'certFolder';
 
-// Certificate object created by forge, to spy on its methods
-const createCertMock = () => ({
-  publicKey: null,
-  serialNumber: null,
-  validity: {},
-  setSubject: mock.fn(),
-  setIssuer: mock.fn(),
-  setExtensions: mock.fn(),
-  sign: mock.fn()
-});
-
 describe('Encryption Service', () => {
   let statMock: ReturnType<typeof mock.fn>;
   let readFileMock: ReturnType<typeof mock.fn>;
   let writeFileMock: ReturnType<typeof mock.fn>;
   let mkdirMock: ReturnType<typeof mock.fn>;
   let privateDecryptMock: ReturnType<typeof mock.fn>;
-  let generateKeyPairMock: ReturnType<typeof mock.fn>;
-  let mockCert: ReturnType<typeof createCertMock>;
 
   beforeEach(async () => {
     // Derive the keys from the crypto settings, with the certificate files reported as existing
@@ -166,19 +151,6 @@ describe('Encryption Service', () => {
 
     // Mock crypto functions
     privateDecryptMock = mock.method(crypto, 'privateDecrypt', () => Buffer.from(''));
-
-    mockCert = createCertMock();
-    generateKeyPairMock = mock.method(forgeModule.pki.rsa, 'generateKeyPair', () => ({
-      privateKey: 'MOCK_PRIV_KEY',
-      publicKey: 'MOCK_PUB_KEY'
-    }));
-    mock.method(forgeModule.pki, 'createCertificate', () => mockCert);
-    mock.method(forgeModule.pki, 'privateKeyToPem', () => '-----BEGIN PRIVATE KEY-----');
-    mock.method(forgeModule.pki, 'publicKeyToPem', () => '-----BEGIN PUBLIC KEY-----');
-    mock.method(forgeModule.pki, 'certificateToPem', () => '-----BEGIN CERTIFICATE-----');
-    mock.method(forgeModule.util, 'bytesToHex', () => 'HEX123');
-    mock.method(forgeModule.random, 'getBytesSync', () => 'RANDOM');
-    mock.method(forgeModule.md.sha256, 'create', () => 'SHA256_MOCK');
   });
 
   afterEach(() => {
@@ -329,7 +301,7 @@ describe('Encryption Service', () => {
     mock.method(encryptionService, 'encryptText', () => 'encrypted secret');
 
     assert.deepStrictEqual(
-      await encryptionService.encryptConnectorSecrets<Record<string, unknown>>(secretSettings, previousSettings, manifest),
+      encryptionService.encryptConnectorSecrets<Record<string, unknown>>(secretSettings, previousSettings, manifest),
       encryptedSettings
     );
   });
@@ -337,7 +309,7 @@ describe('Encryption Service', () => {
   it('should properly encrypt connector secrets when no secret provided', async () => {
     mock.method(encryptionService, 'encryptText', () => 'encrypted secret');
 
-    assert.deepStrictEqual(await encryptionService.encryptConnectorSecrets(secretSettings, null, manifest), encryptedSettings);
+    assert.deepStrictEqual(encryptionService.encryptConnectorSecrets(secretSettings, null, manifest), encryptedSettings);
   });
 
   it('should properly keep existing and encrypted connector secrets', async () => {
@@ -369,16 +341,16 @@ describe('Encryption Service', () => {
     };
     mock.method(encryptionService, 'encryptText', () => 'encrypted secret');
 
-    assert.deepStrictEqual(
-      await encryptionService.encryptConnectorSecrets<Record<string, unknown>>(newSettings, previousSettings, manifest),
-      { ...encryptedSettings, field5: { fieldGroup1: 'not a group secret', fieldGroup2: 'a group secret' } }
-    );
+    assert.deepStrictEqual(encryptionService.encryptConnectorSecrets<Record<string, unknown>>(newSettings, previousSettings, manifest), {
+      ...encryptedSettings,
+      field5: { fieldGroup1: 'not a group secret', fieldGroup2: 'a group secret' }
+    });
   });
 
   it('should properly decrypt connector secrets', async () => {
     mock.method(encryptionService, 'decryptText', () => 'encrypted secret');
 
-    assert.deepStrictEqual(await encryptionService.decryptConnectorSecrets(secretSettings, manifest), encryptedSettings);
+    assert.deepStrictEqual(encryptionService.decryptConnectorSecrets(secretSettings, manifest), encryptedSettings);
   });
 
   it('should properly filter out secret', () => {
@@ -402,10 +374,7 @@ describe('Encryption Service', () => {
   it('should properly decrypt connector secrets with private key', async () => {
     privateDecryptMock.mock.mockImplementation(() => Buffer.from('encrypted secret'));
 
-    assert.deepStrictEqual(
-      await encryptionService.decryptSecretsWithPrivateKey(secretSettings, manifest, ['private key']),
-      encryptedSettings
-    );
+    assert.deepStrictEqual(encryptionService.decryptSecretsWithPrivateKey(secretSettings, manifest, ['private key']), encryptedSettings);
   });
 
   it('should decrypt a text with the previous private key when the current one fails', () => {
@@ -432,8 +401,8 @@ describe('Encryption Service', () => {
     assert.throws(() => encryptionService.decryptTextWithPrivateKey('encrypted', []), { message: 'No private key to decrypt the text' });
   });
 
-  it('should generate a certificate with correct extensions and SANs', async () => {
-    const options = {
+  it('should generate a self-signed certificate with its RSA key pair', async () => {
+    const result = await encryptionService.generateSelfSignedCertificate({
       commonName: 'Test CN',
       countryName: 'FR',
       stateOrProvinceName: 'Savoie',
@@ -441,50 +410,29 @@ describe('Encryption Service', () => {
       organizationName: 'Test Org',
       keySize: 2048,
       daysBeforeExpiry: 365
-    };
-
-    const result = await encryptionService.generateSelfSignedCertificate(options);
-
-    assert.strictEqual(generateKeyPairMock.mock.calls.length, 1);
-    assert.deepStrictEqual(generateKeyPairMock.mock.calls[0].arguments, [2048]);
-
-    const expectedAttrs = [
-      { shortName: 'CN', value: 'Test CN' },
-      { shortName: 'C', value: 'FR' },
-      { shortName: 'ST', value: 'Savoie' },
-      { shortName: 'L', value: 'Chambery' },
-      { shortName: 'O', value: 'Test Org' }
-    ];
-    assert.deepStrictEqual(mockCert.setSubject.mock.calls[0].arguments, [expectedAttrs]);
-    assert.deepStrictEqual(mockCert.setIssuer.mock.calls[0].arguments, [expectedAttrs]);
-
-    const extensionsArg = mockCert.setExtensions.mock.calls[0].arguments[0];
-
-    const basicConstraints = extensionsArg.find((e: { name: string; cA: boolean; critical: boolean }) => e.name === 'basicConstraints');
-    assert.deepStrictEqual(basicConstraints, { name: 'basicConstraints', cA: false, critical: true });
-
-    const san = extensionsArg.find((e: { name: string; altNames: Array<{ type: number; value: string }> }) => e.name === 'subjectAltName');
-    assert.ok(san);
-    assert.deepStrictEqual(san.altNames, [
-      {
-        type: 6,
-        value: `urn:${os.hostname()}:OIBus`
-      },
-      {
-        type: 2,
-        value: os.hostname()
-      }
-    ]);
-
-    assert.deepStrictEqual(result, {
-      private: '-----BEGIN PRIVATE KEY-----',
-      public: '-----BEGIN PUBLIC KEY-----',
-      cert: '-----BEGIN CERTIFICATE-----'
     });
+
+    // the same PEM formats as node-forge exported them
+    assert.match(result.private, /^-----BEGIN RSA PRIVATE KEY-----/);
+    assert.match(result.public, /^-----BEGIN PUBLIC KEY-----/);
+    const certificate = new crypto.X509Certificate(result.cert);
+    assert.strictEqual(certificate.publicKey.asymmetricKeyDetails?.modulusLength, 2048);
+    assert.ok(certificate.checkPrivateKey(crypto.createPrivateKey(result.private)));
+    assert.strictEqual(certificate.publicKey.export({ type: 'spki', format: 'pem' }), result.public);
+    // self-signed
+    assert.ok(certificate.verify(certificate.publicKey));
+    assert.strictEqual(certificate.subject, 'CN=Test CN\nC=FR\nST=Savoie\nL=Chambery\nO=Test Org');
+    assert.strictEqual(certificate.issuer, certificate.subject);
+    assert.strictEqual(certificate.ca, false);
+    assert.strictEqual(certificate.subjectAltName, `URI:urn:${os.hostname()}:OIBus, DNS:${os.hostname()}`);
+    assert.deepStrictEqual(certificate.keyUsage, ['1.3.6.1.5.5.7.3.1', '1.3.6.1.5.5.7.3.2']);
+    const now = DateTime.fromISO(testData.constants.dates.FAKE_NOW).set({ millisecond: 0 });
+    assert.strictEqual(certificate.validFromDate.toISOString(), now.toUTC().toISO());
+    assert.strictEqual(certificate.validToDate.toISOString(), now.plus({ days: 365 }).toUTC().toISO());
   });
 
-  it('should filter out empty attributes', async () => {
-    const options = {
+  it('should leave the empty attributes out of the subject', async () => {
+    const result = await encryptionService.generateSelfSignedCertificate({
       commonName: 'Test CN',
       countryName: 'FR',
       stateOrProvinceName: '',
@@ -492,16 +440,10 @@ describe('Encryption Service', () => {
       organizationName: '',
       keySize: 2048,
       daysBeforeExpiry: 365
-    };
+    });
 
-    await encryptionService.generateSelfSignedCertificate(options);
-
-    const expectedAttrs = [
-      { shortName: 'CN', value: 'Test CN' },
-      { shortName: 'C', value: 'FR' }
-    ];
-
-    assert.deepStrictEqual(mockCert.setSubject.mock.calls[0].arguments, [expectedAttrs]);
-    assert.deepStrictEqual(mockCert.setIssuer.mock.calls[0].arguments, [expectedAttrs]);
+    const certificate = new crypto.X509Certificate(result.cert);
+    assert.strictEqual(certificate.subject, 'CN=Test CN\nC=FR');
+    assert.strictEqual(certificate.issuer, 'CN=Test CN\nC=FR');
   });
 });

@@ -288,7 +288,7 @@ describe('Service utils MQTT', () => {
 
   beforeEach(() => {
     logger = new PinoLogger();
-    decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => text) as ReturnType<typeof mock.fn>;
+    decryptTextMock = mock.method(encryptionService, 'decryptText', (text: unknown) => text) as ReturnType<typeof mock.fn>;
     readFileMock = mock.method(fs, 'readFile', async () => '') as ReturnType<typeof mock.fn>;
   });
 

@@ -97,7 +97,7 @@ export default class HistoryQueryService {
     }
 
     const historyQuery = {} as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
-    await copyHistoryQueryCommandToHistoryQueryEntity(
+    copyHistoryQueryCommandToHistoryQueryEntity(
       historyQuery,
       command,
       this.retrieveSecrets(
@@ -187,7 +187,7 @@ export default class HistoryQueryService {
     }
 
     const historyQuery = { id: previousSettings.id } as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
-    await copyHistoryQueryCommandToHistoryQueryEntity(historyQuery, command, previousSettings, this.scanModeRepository.findAll());
+    copyHistoryQueryCommandToHistoryQueryEntity(historyQuery, command, previousSettings, this.scanModeRepository.findAll());
     historyQuery.createdBy = previousSettings.createdBy;
     historyQuery.updatedBy = updatedBy;
     for (const item of historyQuery.items) {
@@ -293,8 +293,8 @@ export default class HistoryQueryService {
     return await this.northService.testNorth(
       'history',
       northType,
-      await encryptionService.decryptConnectorSecrets(
-        await encryptionService.encryptConnectorSecrets(settingsToTest, northSettings, northManifest.settings),
+      encryptionService.decryptConnectorSecrets(
+        encryptionService.encryptConnectorSecrets(settingsToTest, northSettings, northManifest.settings),
         northManifest.settings
       )
     );
@@ -346,8 +346,8 @@ export default class HistoryQueryService {
     }
     const southManifest = this.southService.getManifest(southType);
     await this.validator.validateSettings(southManifest.settings, settingsToTest);
-    return await encryptionService.decryptConnectorSecrets(
-      await encryptionService.encryptConnectorSecrets(settingsToTest, southSettings, southManifest.settings),
+    return encryptionService.decryptConnectorSecrets(
+      encryptionService.encryptConnectorSecrets(settingsToTest, southSettings, southManifest.settings),
       southManifest.settings
     );
   }
@@ -381,8 +381,8 @@ export default class HistoryQueryService {
       'history',
       southType,
       itemName,
-      await encryptionService.decryptConnectorSecrets(
-        await encryptionService.encryptConnectorSecrets(southSettings, southSettingsFrom, southManifest.settings),
+      encryptionService.decryptConnectorSecrets(
+        encryptionService.encryptConnectorSecrets(southSettings, southSettingsFrom, southManifest.settings),
         southManifest.settings
       ),
       itemSettings,
@@ -420,7 +420,7 @@ export default class HistoryQueryService {
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
     const historyQueryItemEntity = {} as HistoryQueryItemEntity<SouthItemSettings>;
-    await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, null, historyQuery.southType);
+    copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, null, historyQuery.southType);
     historyQueryItemEntity.createdBy = createdBy;
     historyQueryItemEntity.updatedBy = createdBy;
     this.historyQueryRepository.saveItem(historyQuery.id, historyQueryItemEntity);
@@ -439,7 +439,7 @@ export default class HistoryQueryService {
     await this.validator.validateSettings(itemSettingsManifest, command.settings);
 
     const historyQueryItemEntity = { id: existingItem.id } as HistoryQueryItemEntity<SouthItemSettings>;
-    await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, existingItem, historyQuery.southType);
+    copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, existingItem, historyQuery.southType);
     historyQueryItemEntity.createdBy = existingItem.createdBy;
     historyQueryItemEntity.updatedBy = updatedBy;
     this.historyQueryRepository.saveItem(historyQuery.id, historyQueryItemEntity);
@@ -591,7 +591,7 @@ export default class HistoryQueryService {
     for (const itemCommand of items) {
       await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
       const historyQueryItemEntity = {} as HistoryQueryItemEntity<SouthItemSettings>;
-      await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, itemCommand, null, historyQuery.southType);
+      copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, itemCommand, null, historyQuery.southType);
       historyQueryItemEntity.createdBy = user;
       historyQueryItemEntity.updatedBy = user;
       itemsToAdd.push(historyQueryItemEntity);
@@ -670,12 +670,12 @@ export default class HistoryQueryService {
   }
 }
 
-const copyHistoryQueryCommandToHistoryQueryEntity = async (
+const copyHistoryQueryCommandToHistoryQueryEntity = (
   historyQueryEntity: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
   command: HistoryQueryCommandDTO,
   currentSettings: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null,
   scanModes: Array<ScanMode>
-): Promise<void> => {
+): void => {
   const southManifest = southManifestList.find(element => element.id === command.southType)!;
   const northManifest = northManifestList.find(element => element.id === command.northType)!;
   historyQueryEntity.name = command.name;
@@ -689,12 +689,12 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async (
     maxReadInterval: command.queryTimeRange.maxReadInterval,
     readDelay: command.queryTimeRange.readDelay
   };
-  historyQueryEntity.northSettings = await encryptionService.encryptConnectorSecrets(
+  historyQueryEntity.northSettings = encryptionService.encryptConnectorSecrets(
     command.northSettings,
     currentSettings?.northSettings || null,
     northManifest.settings
   );
-  historyQueryEntity.southSettings = await encryptionService.encryptConnectorSecrets(
+  historyQueryEntity.southSettings = encryptionService.encryptConnectorSecrets(
     command.southSettings,
     currentSettings?.southSettings || null,
     southManifest.settings
@@ -723,26 +723,24 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async (
     }
   };
   const currentItems = new Map((currentSettings?.items ?? []).map(item => [item.id, item]));
-  historyQueryEntity.items = await Promise.all(
-    command.items.map(async itemCommand => {
-      const itemEntity = { id: itemCommand.id } as HistoryQueryItemEntity<SouthItemSettings>;
-      await copyHistoryQueryItemCommandToHistoryQueryItemEntity(
-        itemEntity,
-        itemCommand,
-        (itemCommand.id && currentItems.get(itemCommand.id)) || null,
-        historyQueryEntity.southType
-      );
-      return itemEntity;
-    })
-  );
+  historyQueryEntity.items = command.items.map(itemCommand => {
+    const itemEntity = { id: itemCommand.id } as HistoryQueryItemEntity<SouthItemSettings>;
+    copyHistoryQueryItemCommandToHistoryQueryItemEntity(
+      itemEntity,
+      itemCommand,
+      (itemCommand.id && currentItems.get(itemCommand.id)) || null,
+      historyQueryEntity.southType
+    );
+    return itemEntity;
+  });
 };
 
-const copyHistoryQueryItemCommandToHistoryQueryItemEntity = async (
+const copyHistoryQueryItemCommandToHistoryQueryItemEntity = (
   historyQueryItemEntity: HistoryQueryItemEntity<SouthItemSettings>,
   command: HistoryQueryItemCommandDTO,
   currentSettings: HistoryQueryItemEntity<SouthItemSettings> | null,
   southType: string
-): Promise<void> => {
+): void => {
   const southManifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
     attribute => attribute.key === 'settings'
@@ -751,7 +749,7 @@ const copyHistoryQueryItemCommandToHistoryQueryItemEntity = async (
   historyQueryItemEntity.name = command.name;
   historyQueryItemEntity.description = command.description ?? null;
   historyQueryItemEntity.enabled = command.enabled;
-  historyQueryItemEntity.settings = await encryptionService.encryptConnectorSecrets(
+  historyQueryItemEntity.settings = encryptionService.encryptConnectorSecrets(
     command.settings,
     currentSettings?.settings || null,
     itemSettingsManifest

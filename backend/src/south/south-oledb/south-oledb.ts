@@ -323,12 +323,12 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
    * `@oibus/oledb` is an optional, Windows-only dependency (see oledb-loader.ts): it is not installed on other
    * platforms, where any connection attempt fails here.
    */
-  private async openConnection(): Promise<OleDbConnection> {
+  private openConnection(): Promise<OleDbConnection> {
     const oledb = loadOleDb();
     if (!oledb) {
       throw new Error('OLE DB library not available: the OLEDB south connector only runs on Windows');
     }
-    const { connectionString, logValue } = await this.buildConnectionString(this.connector.settings);
+    const { connectionString, logValue } = this.buildConnectionString(this.connector.settings);
     this.logger.debug(`Connecting to the OLE DB data source with "${logValue}"`);
     return oledb.OleDbConnection.connect(connectionString, { connectionTimeout: this.connector.settings.connectionTimeout });
   }
@@ -338,7 +338,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     return `the OLE DB data source ${dataSource}${database ? `/${database}` : ''} (provider ${provider})`;
   }
 
-  private async buildConnectionString(settings: SouthOLEDBSettings): Promise<{ connectionString: string; logValue: string }> {
+  private buildConnectionString(settings: SouthOLEDBSettings): { connectionString: string; logValue: string } {
     let connectionString = settings.connectionString.trimEnd();
     let logValue = connectionString;
 
@@ -347,7 +347,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
         connectionString += ';';
         logValue += ';';
       }
-      const decryptedPassword = await encryptionService.decryptText(settings.password);
+      const decryptedPassword = encryptionService.decryptText(settings.password);
       connectionString += `Password=${decryptedPassword};`;
       logValue += 'Password=<secret>;';
     }

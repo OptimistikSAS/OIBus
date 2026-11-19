@@ -138,7 +138,7 @@ export default class OIAnalyticsClient {
       apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint
     });
 
-    const headers = await getHeaders(true, registration as OIAnalyticsRegistration);
+    const headers = getHeaders(true, registration as OIAnalyticsRegistration);
     headers['Content-Type'] = 'application/json';
     const { proxy, acceptUnauthorized } = getProxyOptions(true, registration as OIAnalyticsRegistration, null);
     const httpOptions: ReqOptions = {
@@ -179,7 +179,7 @@ export default class OIAnalyticsClient {
       useApiGateway: registrationSettings.useApiGateway,
       apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
     });
-    const headers = await getHeaders(true, registrationSettings);
+    const headers = getHeaders(true, registrationSettings);
     headers['Content-Type'] = 'application/json';
     const { proxy, acceptUnauthorized } = getProxyOptions(true, registrationSettings, null);
     const httpOptions: ReqOptions = {
@@ -207,7 +207,7 @@ export default class OIAnalyticsClient {
       useApiGateway: registrationSettings.useApiGateway,
       apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
     });
-    const headers = await getHeaders(true, registrationSettings);
+    const headers = getHeaders(true, registrationSettings);
     headers['Content-Type'] = 'application/json';
     const { proxy, acceptUnauthorized } = getProxyOptions(true, registrationSettings, null);
     const httpOptions: ReqOptions = {
@@ -215,7 +215,7 @@ export default class OIAnalyticsClient {
       headers,
       // the current public key is sent with each refresh, so that OIAnalytics gets the new one after a key rotation
       body: JSON.stringify({
-        refreshToken: await encryptionService.decryptText(registrationSettings.refreshToken!),
+        refreshToken: encryptionService.decryptText(registrationSettings.refreshToken!),
         publicKey: registrationSettings.publicCipherKey
       }),
       acceptUnauthorized,

@@ -113,7 +113,7 @@ describe('SouthFTP', () => {
   let southCacheRepository: Mocked<SouthCacheRepository>;
   let ftpClient: Mocked<FTPClient>;
   let ftpClientConstructor: Mock<() => FTPClient>;
-  let decryptText: Mock<(text?: string | null) => Promise<string>>;
+  let decryptText: Mock<(text?: string | null) => string>;
   let unlink: Mock<typeof fs.unlink>;
 
   const ftpExports: Record<string, unknown> = { __esModule: true, Client: undefined };
@@ -149,7 +149,7 @@ describe('SouthFTP', () => {
       return ftpClient;
     });
     ftpExports.Client = ftpClientConstructor;
-    decryptText = mock.fn(async () => 'decrypted-password');
+    decryptText = mock.fn(() => 'decrypted-password');
     encryptionExports.encryptionService = { decryptText };
     Object.assign(utilsExports, createUtilsMocks());
     mock.method(fs, 'mkdir', async () => undefined);

@@ -210,7 +210,7 @@ export default class OIAnalyticsSessionService {
   ): Promise<unknown> {
     switch (request.type) {
       case 'START_EXPLORE': {
-        const content = await this.decryptSouthContent(request.content as OIBusInteractiveSessionSouthContent, registration);
+        const content = this.decryptSouthContent(request.content as OIBusInteractiveSessionSouthContent, registration);
         const explore = await this.southService.startExplore(content.southId, content.southType, content.settings);
         if (session.closed) {
           // The session was closed while connecting: its explores have already been closed
@@ -234,15 +234,15 @@ export default class OIAnalyticsSessionService {
         return null;
       }
       case 'TEST_SOUTH_CONNECTION': {
-        const content = await this.decryptSouthContent(request.content as OIBusInteractiveSessionSouthContent, registration);
+        const content = this.decryptSouthContent(request.content as OIBusInteractiveSessionSouthContent, registration);
         return await this.southService.testSouth(content.southId, content.southType, content.settings);
       }
       case 'TEST_SOUTH_ITEM': {
-        const content = (await this.decryptSouthContent(
+        const content = this.decryptSouthContent(
           request.content as OIBusTestSouthItemRequestContent,
           registration
-        )) as OIBusTestSouthItemRequestContent & { southId: string };
-        const itemSettings = await this.decryptItemSettings(content, registration);
+        ) as OIBusTestSouthItemRequestContent & { southId: string };
+        const itemSettings = this.decryptItemSettings(content, registration);
         return await this.southService.testItem(
           content.southId,
           content.southType,
@@ -253,10 +253,10 @@ export default class OIAnalyticsSessionService {
         );
       }
       case 'PREVIEW_WORKFLOW': {
-        const content = (await this.decryptSouthContent(
+        const content = this.decryptSouthContent(
           request.content as OIBusPreviewWorkflowRequestContent,
           registration
-        )) as OIBusPreviewWorkflowRequestContent & { southId: string };
+        ) as OIBusPreviewWorkflowRequestContent & { southId: string };
         return await this.configurationWorkflowRunService.previewCommand(
           content.southId,
           content.southType,
@@ -280,12 +280,12 @@ export default class OIAnalyticsSessionService {
    * Decrypts the secrets of the settings sent by OIAnalytics (encrypted with the public key of OIBus), and resolves the
    * connector ID the South service expects for a connector not saved yet.
    */
-  private async decryptSouthContent<T extends OIBusInteractiveSessionSouthContent>(
+  private decryptSouthContent<T extends OIBusInteractiveSessionSouthContent>(
     content: T,
     registration: OIAnalyticsRegistration
-  ): Promise<Omit<T, 'southId'> & { southId: string; settings: SouthSettings }> {
+  ): Omit<T, 'southId'> & { southId: string; settings: SouthSettings } {
     const manifest = this.southService.getManifest(content.southType);
-    const settings = await encryptionService.decryptSecretsWithPrivateKey(
+    const settings = encryptionService.decryptSecretsWithPrivateKey(
       content.settings,
       manifest.settings,
       getPrivateCipherKeys(registration)
@@ -293,19 +293,12 @@ export default class OIAnalyticsSessionService {
     return { ...content, southId: content.southId ?? 'create', settings };
   }
 
-  private async decryptItemSettings(
-    content: OIBusTestSouthItemRequestContent,
-    registration: OIAnalyticsRegistration
-  ): Promise<SouthItemSettings> {
+  private decryptItemSettings(content: OIBusTestSouthItemRequestContent, registration: OIAnalyticsRegistration): SouthItemSettings {
     const manifest = this.southService.getManifest(content.southType);
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
-    return await encryptionService.decryptSecretsWithPrivateKey(
-      content.itemSettings,
-      itemSettingsManifest,
-      getPrivateCipherKeys(registration)
-    );
+    return encryptionService.decryptSecretsWithPrivateKey(content.itemSettings, itemSettingsManifest, getPrivateCipherKeys(registration));
   }
 
   private async closeLocally(session: InteractiveSession): Promise<void> {

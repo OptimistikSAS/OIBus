@@ -31,7 +31,7 @@ export const createConnectionOptions = async (
   };
   if (connectionSettings.authentication.type === 'basic') {
     options.username = connectionSettings.authentication.username;
-    options.password = Buffer.from(await encryptionService.decryptText(connectionSettings.authentication.password!)).toString();
+    options.password = Buffer.from(encryptionService.decryptText(connectionSettings.authentication.password!)).toString();
   } else if (connectionSettings.authentication.type === 'cert') {
     options.cert = connectionSettings.authentication.certFilePath
       ? await fs.readFile(path.resolve(connectionSettings.authentication.certFilePath))

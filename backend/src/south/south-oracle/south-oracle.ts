@@ -113,7 +113,7 @@ export default class SouthOracle
     process.env.ORA_SDTZ = 'UTC';
     oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
     if (!this.poolEnabled) {
-      const connection = await oracledb.getConnection(await this.createConnectionAttributes());
+      const connection = await oracledb.getConnection(this.createConnectionAttributes());
       try {
         return await fn(connection);
       } finally {
@@ -139,9 +139,9 @@ export default class SouthOracle
     }
   }
 
-  private async createPool(): Promise<oracledb.Pool> {
+  private createPool(): Promise<oracledb.Pool> {
     return oracledb.createPool({
-      ...(await this.createConnectionAttributes()),
+      ...this.createConnectionAttributes(),
       poolMin: 0,
       poolMax: this.getMaxParallelRun(),
       poolIncrement: 1,
@@ -151,7 +151,7 @@ export default class SouthOracle
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const config = await this.createConnectionAttributes();
+    const config = this.createConnectionAttributes();
 
     let connection;
     try {
@@ -304,7 +304,7 @@ export default class SouthOracle
   }
 
   /** The connection to the database, as the connector settings describe it. */
-  private async createConnectionAttributes(): Promise<ConnectionAttributes> {
+  private createConnectionAttributes(): ConnectionAttributes {
     const settings = this.connector.settings.connectionSettings;
     let connectString = `${settings.host}:${settings.port}/${settings.database}`;
     if (settings.connectionTimeout) {
@@ -312,7 +312,7 @@ export default class SouthOracle
     }
     return {
       user: settings.username || undefined,
-      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
+      password: settings.password ? encryptionService.decryptText(settings.password) : undefined,
       connectString
     };
   }

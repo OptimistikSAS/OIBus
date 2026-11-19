@@ -2399,7 +2399,7 @@ describe('South Service', () => {
           southType = testData.south.list[0].type
         ) => {
           const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-          await copySouthItemCommandToSouthItemEntity(
+          copySouthItemCommandToSouthItemEntity(
             southItemEntity,
             { ...testData.south.itemCommand, id: 'testItemId', ...command },
             null,
@@ -2414,7 +2414,7 @@ describe('South Service', () => {
         it('should use default value for retrieveSecretsFromSouth when undefined is passed', async () => {
           const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
 
-          await copySouthItemCommandToSouthItemEntity(
+          copySouthItemCommandToSouthItemEntity(
             southItemEntity,
             { ...testData.south.itemCommand, id: 'testItemId' },
             null,

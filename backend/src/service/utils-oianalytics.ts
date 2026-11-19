@@ -74,12 +74,12 @@ export const getAuthorizationOptions = async (
         credential = new ClientSecretCredential(
           specificSettings!.tenantId!,
           specificSettings!.clientId!,
-          await encryptionService.decryptText(specificSettings!.clientSecret!)
+          encryptionService.decryptText(specificSettings!.clientSecret!)
         );
         credentialCache.set(cacheKey, credential);
       }
       const result = await credential.getToken(specificSettings!.scope!);
-      const token = await encryptionService.encryptText(`Bearer ${result!.token}`);
+      const token = encryptionService.encryptText(`Bearer ${result!.token}`);
       return { type: 'bearer', token };
     }
 
@@ -90,14 +90,14 @@ export const getAuthorizationOptions = async (
       const cacheKey = `aad-certificate|${specificSettings!.tenantId}|${specificSettings!.clientId}|${specificSettings!.certificateId}|${specificSettings!.scope}`;
       let credential = credentialCache.get(cacheKey);
       if (!credential) {
-        const decryptedPrivateKey = await encryptionService.decryptText(certificate.privateKey);
+        const decryptedPrivateKey = encryptionService.decryptText(certificate.privateKey);
         credential = new ClientCertificateCredential(specificSettings!.tenantId!, specificSettings!.clientId!, {
           certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
         });
         credentialCache.set(cacheKey, credential);
       }
       const result = await credential.getToken(specificSettings!.scope!);
-      const token = await encryptionService.encryptText(`Bearer ${result!.token}`);
+      const token = encryptionService.encryptText(`Bearer ${result!.token}`);
       return { type: 'bearer', token };
     }
   }
@@ -117,14 +117,11 @@ export const getHost = (
   return host;
 };
 
-export const getHeaders = async (
-  useOIAnalyticsRegistration: boolean,
-  registrationSettings: OIAnalyticsRegistration
-): Promise<Record<string, string>> => {
+export const getHeaders = (useOIAnalyticsRegistration: boolean, registrationSettings: OIAnalyticsRegistration): Record<string, string> => {
   const headers: Record<string, string> = {};
 
   if (useOIAnalyticsRegistration && registrationSettings.useApiGateway) {
-    headers[registrationSettings.apiGatewayHeaderKey!] = await encryptionService.decryptText(registrationSettings.apiGatewayHeaderValue!);
+    headers[registrationSettings.apiGatewayHeaderKey!] = encryptionService.decryptText(registrationSettings.apiGatewayHeaderValue!);
   }
   return headers;
 };
@@ -205,7 +202,7 @@ export const buildHttpOptions = async (
     throw new Error('OIBus not registered in OIAnalytics');
   }
 
-  const headers = await getHeaders(useOIAnalyticsRegistration, registrationSettings);
+  const headers = getHeaders(useOIAnalyticsRegistration, registrationSettings);
   const auth = await getAuthorizationOptions(useOIAnalyticsRegistration, registrationSettings, specificSettings, certificateRepository!);
   const { proxy, acceptUnauthorized } = getProxyOptions(useOIAnalyticsRegistration, registrationSettings, specificSettings);
   return {

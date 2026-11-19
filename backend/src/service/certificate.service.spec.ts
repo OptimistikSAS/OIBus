@@ -75,8 +75,8 @@ describe('Certificate Service', () => {
     certificateRepository = createMock<CertificateRepository>();
     encryptionService = createMock<EncryptionService>({
       generateSelfSignedCertificate: async () => ({ public: 'public', private: 'private', cert: certPem }),
-      encryptText: async text => text,
-      decryptText: async text => text
+      encryptText: text => text,
+      decryptText: text => text
     });
     oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
     logger = new LoggerMock();

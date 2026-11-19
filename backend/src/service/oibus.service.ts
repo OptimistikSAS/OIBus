@@ -239,7 +239,7 @@ export default class OIBusService {
         throw new OIBusValidationError(`Certificate "${certificate.name}" has no private key`);
       }
       cert = [certificate.certificate, certificate.certificateChain].filter(Boolean).join('\n');
-      key = await encryptionService.decryptText(certificate.privateKey);
+      key = encryptionService.decryptText(certificate.privateKey);
     } else {
       cert = await readPemFile(https.certificatePath, 'certificate');
       key = await readPemFile(https.privateKeyPath, 'private key');

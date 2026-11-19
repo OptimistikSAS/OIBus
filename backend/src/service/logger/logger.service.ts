@@ -223,9 +223,7 @@ class LoggerService {
 
     if (engineSettings.logger.loki.address && engineSettings.logger.loki.level !== 'silent') {
       try {
-        const lokiPassword = engineSettings.logger.loki.password
-          ? await encryptionService.decryptText(engineSettings.logger.loki.password)
-          : '';
+        const lokiPassword = engineSettings.logger.loki.password ? encryptionService.decryptText(engineSettings.logger.loki.password) : '';
         targets.push({
           target: 'pino-loki',
           options: {
