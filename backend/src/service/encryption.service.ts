@@ -48,21 +48,12 @@ interface CryptoSettingsInternal {
  * Service used to manage encryption and decryption of secrets in the config file, and to generate self-signed certificates
  */
 export default class EncryptionService<TInitialized extends boolean = false> {
-  private static instance: EncryptionService | null = null;
   private initialized = false;
   private _cryptoSettings: CryptoSettingsInternal | null = null;
   private _storedSettings: CryptoSettings | null = null;
 
   get cryptoSettings() {
     return this._cryptoSettings as TInitialized extends true ? CryptoSettingsInternal : CryptoSettingsInternal | null;
-  }
-
-  static getInstance() {
-    if (!this.instance) {
-      this.instance = new EncryptionService();
-    }
-
-    return this.instance;
   }
 
   isInitialized(): this is EncryptionService<true> {
@@ -363,4 +354,8 @@ export default class EncryptionService<TInitialized extends boolean = false> {
   }
 }
 
-export const encryptionService = EncryptionService.getInstance();
+/**
+ * The service of the application: imported where it is used, never passed as a parameter (a module is loaded once, so
+ * this constant is the only instance). Another thread (a pino transport) loads the module again, and must init its own.
+ */
+export const encryptionService = new EncryptionService();

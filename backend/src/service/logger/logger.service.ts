@@ -123,8 +123,6 @@ class LoggerProxy implements ILogger {
  * that automatically reconnect to the new pino root after a restart.
  */
 class LoggerService {
-  private static instance: LoggerService | null = null;
-
   private _folder = '';
   private _configDatabasePath = '';
   private _rawLogger: pino.Logger | null = null;
@@ -138,13 +136,6 @@ class LoggerService {
 
   constructor() {
     this.logger = new LoggerProxy(this, { scopeType: 'internal' });
-  }
-
-  static getInstance(): LoggerService {
-    if (!this.instance) {
-      this.instance = new LoggerService();
-    }
-    return this.instance;
   }
 
   /**
@@ -320,5 +311,9 @@ class LoggerService {
   }
 }
 
-export const loggerService = LoggerService.getInstance();
+/**
+ * The service of the application: imported where it is used, never passed as a parameter (a module is loaded once, so
+ * this constant is the only instance)
+ */
+export const loggerService = new LoggerService();
 export default LoggerService;

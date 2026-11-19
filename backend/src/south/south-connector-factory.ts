@@ -57,8 +57,8 @@ import {
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
 import { Instant } from '../model/types';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import type CertificateService from '../service/certificate.service';
 import { createFolder } from '../service/utils';
 import SouthADS from '../south/south-ads/south-ads';
 import SouthBACnet from '../south/south-bacnet/south-bacnet';
@@ -94,7 +94,7 @@ export const buildSouth = (
   ) => Promise<void>,
   southCacheFolder: string,
   southCacheRepository: SouthCacheRepository,
-  certificateRepository: CertificateRepository,
+  certificateService: CertificateService,
   oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
 ): SouthConnector<SouthSettings, SouthItemSettings> => {
   switch (settings.type) {
@@ -174,7 +174,7 @@ export const buildSouth = (
         addContent,
         southCacheRepository,
         southCacheFolder,
-        certificateRepository,
+        certificateService,
         oIAnalyticsRegistrationRepository
       );
     case 'oledb':
@@ -197,7 +197,7 @@ export const buildSouth = (
         addContent,
         southCacheRepository,
         southCacheFolder,
-        certificateRepository
+        certificateService
       );
     case 'oracle':
       return new SouthOracle(

@@ -4,7 +4,7 @@ import basicAuth, { BasicAuthResult } from 'basic-auth';
 import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
-import EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import type OIBusService from '../../service/oibus.service';
 import UserService from '../../service/user.service';
 import { CustomExpressRequest } from '../express';
@@ -12,7 +12,6 @@ import AuthenticationLimiter from './authentication-limiter';
 
 interface AuthConfig {
   userService: UserService;
-  encryptionService: EncryptionService;
   oIBusService: OIBusService;
   authenticationLimiter: AuthenticationLimiter;
 }
@@ -86,7 +85,7 @@ const createAuthMiddleware = (config: AuthConfig) => {
       else if (req.headers?.authorization?.startsWith('Bearer')) {
         try {
           const token = req.headers.authorization.replace('Bearer ', '');
-          const verifiedToken: JwtPayload = jwt.verify(token, config.encryptionService.getTokenSecret(), {
+          const verifiedToken: JwtPayload = jwt.verify(token, encryptionService.getTokenSecret(), {
             algorithms: ['HS256'],
             issuer: 'oibus'
           }) as JwtPayload;
@@ -123,7 +122,7 @@ const createAuthMiddleware = (config: AuthConfig) => {
         const authTokenDuration = config.oIBusService.getEngineSettings().webServer.authTokenDuration;
         const token = jwt.sign(
           { login: headerUser.name, passwordFingerprint: passwordFingerprint(headerUser.pass) },
-          config.encryptionService.getTokenSecret(),
+          encryptionService.getTokenSecret(),
           {
             algorithm: 'HS256',
             expiresIn: authTokenDuration,
@@ -147,13 +146,8 @@ const createAuthMiddleware = (config: AuthConfig) => {
 };
 
 // Factory function to create the middleware with dependencies
-export const authMiddleware = (
-  userService: UserService,
-  encryptionService: EncryptionService,
-  oIBusService: OIBusService,
-  authenticationLimiter: AuthenticationLimiter
-) => {
-  return createAuthMiddleware({ userService, encryptionService, oIBusService, authenticationLimiter });
+export const authMiddleware = (userService: UserService, oIBusService: OIBusService, authenticationLimiter: AuthenticationLimiter) => {
+  return createAuthMiddleware({ userService, oIBusService, authenticationLimiter });
 };
 
 export default authMiddleware;

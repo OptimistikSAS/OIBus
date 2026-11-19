@@ -50,10 +50,9 @@ the [OPC UA South Connector](../south-connectors/opcua.mdx) which reads data fro
 
 ### Authentication {#authentication}
 
-| Setting            | Description                                                            | Example Value                              |
-| ------------------ | ---------------------------------------------------------------------- | ------------------------------------------ |
-| **Authentication** | Authentication method.                                                 | `None`, `Username/Password`, `Certificate` |
-| **Username**       | Username for Username/Password authentication.                         | `opc_user`                                 |
-| **Password**       | Password for Username/Password authentication.                         | `••••••••`                                 |
-| **Cert file path** | Client certificate file path. Required for Certificate authentication. | `/path/to/cert.pem`                        |
-| **Key file path**  | Private key file path. Required for Certificate authentication.        | `/path/to/key.pem`                         |
+| Setting              | Description                                                                                                                                  | Example Value                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Authentication**   | Authentication method.                                                                                                                       | `None`, `Username/Password`, `Certificate` |
+| **Username**         | Username for Username/Password authentication.                                                                                               | `opc_user`                                 |
+| **Password**         | Password for Username/Password authentication.                                                                                               | `••••••••`                                 |
+| **User certificate** | Certificate identifying the user, selected from the [certificate store](../engine/certificates.md). Required for Certificate authentication. | `OIBus user`                               |

@@ -11894,11 +11894,9 @@
 						"type": "string",
 						"nullable": true
 					},
-					"certFilePath": {
-						"type": "string"
-					},
-					"keyFilePath": {
-						"type": "string"
+					"certificateId": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
@@ -33896,11 +33894,9 @@
 						"type": "string",
 						"nullable": true
 					},
-					"certFilePath": {
-						"type": "string"
-					},
-					"keyFilePath": {
-						"type": "string"
+					"certificateId": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [

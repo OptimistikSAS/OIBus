@@ -28,7 +28,7 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import TransformerRepository from '../../repository/config/transformer.repository';
 import UserRepository from '../../repository/config/user.repository';
-import EncryptionService from '../encryption.service';
+import { encryptionService } from '../encryption.service';
 import { northManifestList } from '../north-manifests';
 import { getAllowedCommands } from '../oia/command-permissions.utils';
 import { southManifestList } from '../south-manifests';
@@ -64,7 +64,6 @@ export default class ConfigTransferBuilderService {
     private historyQueryRepository: HistoryQueryRepository,
     private transformerRepository: TransformerRepository,
     private configurationWorkflowRepository: ConfigurationWorkflowRepository,
-    private encryptionService: EncryptionService,
     private readonly ignoreIpFilters: boolean,
     private readonly ignoreRemoteUpdate: boolean
   ) {}
@@ -103,7 +102,7 @@ export default class ConfigTransferBuilderService {
             description: historyQuery.description,
             status: historyQuery.status,
             southType: historyQuery.southType,
-            southSettings: this.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
+            southSettings: encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
             queryTimeRange: {
               startTime: historyQuery.queryTimeRange.startTime,
               endTime: historyQuery.queryTimeRange.endTime,
@@ -111,7 +110,7 @@ export default class ConfigTransferBuilderService {
               readDelay: historyQuery.queryTimeRange.readDelay
             },
             northType: historyQuery.northType,
-            northSettings: this.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
+            northSettings: encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
             caching: this.buildCachingCommand(historyQuery.caching),
             items: historyQuery.items.map(item => ({
               id: item.id,
@@ -122,7 +121,7 @@ export default class ConfigTransferBuilderService {
               name: item.name,
               description: item.description,
               enabled: item.enabled,
-              settings: this.encryptionService.filterSecrets(item.settings, itemSettingsManifest)
+              settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest)
             })),
             northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
               id: transformerWithOptions.id,
@@ -359,7 +358,7 @@ export default class ConfigTransferBuilderService {
           name: south.name,
           description: south.description,
           enabled: south.enabled,
-          settings: this.encryptionService.filterSecrets(south.settings, manifest.settings),
+          settings: encryptionService.filterSecrets(south.settings, manifest.settings),
           items: south.items.map(item => ({
             id: item.id,
             oIBusCreatedBy: item.createdBy,
@@ -373,7 +372,7 @@ export default class ConfigTransferBuilderService {
             scanModeName: null,
             groupId: item.group?.id || null,
             groupName: null,
-            settings: this.encryptionService.filterSecrets(item.settings, itemSettingsManifest),
+            settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest),
             syncWithGroup: item.syncWithGroup,
             maxReadInterval: item.maxReadInterval,
             readDelay: item.readDelay,
@@ -452,7 +451,7 @@ export default class ConfigTransferBuilderService {
           name: north.name,
           description: north.description,
           enabled: north.enabled,
-          settings: this.encryptionService.filterSecrets(north.settings, manifest.settings),
+          settings: encryptionService.filterSecrets(north.settings, manifest.settings),
           caching: this.buildCachingCommand(north.caching),
           transformers: north.transformers.map(transformerWithOptions => ({
             id: transformerWithOptions.id,

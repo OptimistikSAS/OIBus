@@ -124,13 +124,12 @@ OIBus 会将其视为已丢失并重新连接。**读取超时**不用于订阅�
 
 ### 身份验证方式 {#authentication-methods}
 
-| 设置         | 描述                               | 示例值                                     |
-| ------------ | ---------------------------------- | ------------------------------------------ |
-| 认证         | OPC UA 服务器连接的身份验证方式。  | `None`、`Username/Password`、`Certificate` |
-| 用户名       | 用户名/密码身份验证的用户名。      | `opc_user`                                 |
-| 密码         | 用户名/密码身份验证的密码。        | `••••••••`                                 |
-| 证书文件路径 | 证书身份验证所用的客户端证书文件。 | `/path/to/cert.pem`                        |
-| 密钥文件路径 | 证书身份验证所用的私钥文件。       | `/path/to/key.pem`                         |
+| 设置     | 描述                                                                                  | 示例值                                     |
+| -------- | ------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 认证     | OPC UA 服务器连接的身份验证方式。                                                     | `None`、`Username/Password`、`Certificate` |
+| 用户名   | 用户名/密码身份验证的用户名。                                                         | `opc_user`                                 |
+| 密码     | 用户名/密码身份验证的密码。                                                           | `••••••••`                                 |
+| 用户证书 | 标识用户的证书，从[证书存储](../engine/certificates.md)中选择。证书身份验证方式必填。 | `OIBus user`                               |
 
 ## 分组设置 {#group-settings}
 
@@ -245,8 +244,8 @@ The connection may have been rejected by the server
 
 ### 身份验证证书 {#authentication-certificate}
 
-当**认证**设置为 `Certificate` 时，您必须在连接器设置中（**证书文件路径**和**密钥文件路径**字段）提供一个单独的身份证书及其
-私钥。该证书用于标识*用户*，与上文的传输安全证书相互独立。
+当**认证**设置为 `Certificate` 时，请在**用户证书**设置中，从[证书存储](../engine/certificates.md)中选择标识*用户*的证书，
+该证书连同其私钥导入到证书存储中。它用于标识用户，与上文的通信证书相互独立。
 
 服务器同样必须信任该身份证书。对于 Prosys，请将其导入到：
 
@@ -258,10 +257,8 @@ The connection may have been rejected by the server
 证书会存放在 `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\rejected\` 中 —— 请将它们移动到
 旁边的 `certs\` 文件夹中。
 
-:::tip 复用 OIBus 生成的证书用于身份验证
-您可以从证书存储中[下载 OIBus 的证书](../engine/certificates.md#downloading-a-certificate)及
-[其私钥](../engine/certificates.md#downloading-the-private-key)，并将连接器的**证书文件路径**和**密钥文件路径**字段
-指向它们，以便同一证书同时用于传输层安全和用户身份验证。
+:::tip 两者使用同一证书
+在**证书**和**用户证书**设置中选择存储中的同一证书，即可使同一证书同时用于传输层安全和用户身份验证。
 :::
 
 ## 为 Prosys 创建自定义身份验证证书 {#creating-a-custom-authentication-certificate-for-prosys}
@@ -318,4 +315,5 @@ openssl x509 -inform PEM -outform DER -in oibus.pem -out oibus.der
 cp oibus.der ".prosysopc/prosys-opc-ua-simulation-server/USERS_PKI/CA/certs/"
 ```
 
-然后，在 OIBus 连接器设置中，将**证书文件路径**设置为 `oibus.pem`，将**密钥文件路径**设置为 `oibus.key`。
+然后，将 `oibus.pem` 和 `oibus.key` [导入](../engine/certificates.md#importing-a-certificate-signed-by-your-own-ca)到证书存储中，
+并在 OIBus 连接器的**用户证书**设置中选择该证书。

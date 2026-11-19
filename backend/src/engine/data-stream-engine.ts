@@ -26,7 +26,6 @@ import { Instant, NotFoundError } from '../model/types';
 import NorthConnector from '../north/north-connector';
 import { buildNorth, createNorthOrchestrator, deleteNorthCache, initNorthCache } from '../north/north-connector-factory';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
 import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -36,6 +35,7 @@ import SouthConnectorRepository from '../repository/config/south-connector.repos
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
+import type CertificateService from '../service/certificate.service';
 import { clearProxyAgentCache } from '../service/http-request.utils';
 import { loggerService } from '../service/logger/logger.service';
 import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
@@ -91,7 +91,7 @@ export default class DataStreamEngine {
     private historyQueryRepository: HistoryQueryRepository,
     private historyQueryMetricsRepository: HistoryQueryMetricsRepository,
     private southCacheRepository: SouthCacheRepository,
-    private certificateRepository: CertificateRepository,
+    private certificateService: CertificateService,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oianalyticsMessageService: OIAnalyticsMessageService,
     private scanModeRepository: ScanModeRepository,
@@ -344,7 +344,7 @@ export default class DataStreamEngine {
     const configuration = this.northConnectorRepository.findNorthById(northId)!;
     const north = buildNorth(
       configuration,
-      this.certificateRepository,
+      this.certificateService,
       this.oIAnalyticsRegistrationRepository,
       createNorthOrchestrator(this.baseFolder, northId, configuration.name)
     );
@@ -423,7 +423,7 @@ export default class DataStreamEngine {
       this.addContent.bind(this),
       path.join(this.baseFolder, 'cache', `south-${configuration.id}`),
       this.southCacheRepository,
-      this.certificateRepository,
+      this.certificateService,
       this.oIAnalyticsRegistrationRepository
     );
     await initSouthCache(configuration.id, configuration.type, this.baseFolder);
@@ -526,7 +526,7 @@ export default class DataStreamEngine {
       this.addContent.bind(this),
       this.baseFolder,
       this.southCacheRepository,
-      this.certificateRepository,
+      this.certificateService,
       this.oIAnalyticsRegistrationRepository,
       createHistoryQueryOrchestrator(this.baseFolder, configuration.id, configuration.name)
     );

@@ -68,6 +68,10 @@ Archive through the PI AF Client, and can filter the values on the PI Data Archi
 
 - The web server can serve [**HTTPS**](./engine/engine-settings.mdx#https), with a certificate of the certificate
   store or PEM files.
+- The [**OPC UA connectors**](./south-connectors/opcua.mdx#security-configuration) present a certificate of the
+  certificate store, selected in each of them, instead of a certificate generated in the data folder (the one used
+  until now is imported into the store on upgrade, so the servers keep trusting OIBus), and authenticate their user with
+  a certificate of the store too.
 - The [**content endpoints**](./engine/engine-settings.mdx#content-endpoints) of the OIBus API (`/api/content`) can be
   disabled.
 - The engine has a [**description**](./engine/engine-settings.mdx#description).
@@ -121,5 +125,9 @@ Archive through the PI AF Client, and can filter the values on the PI Data Archi
   the logs.
 - **Install the drivers on the OIBus machine** for the OPC Classic, ODBC, OLE DB and PI South connectors, which no
   longer use the OIBus Agent (the agent settings are removed on upgrade).
+- **Select the user certificate of your OPC UA connectors**: the OPC UA connectors and history queries authenticating
+  their user with a certificate no longer read it from files. The paths of its files are removed on upgrade: import the
+  certificate and its private key into the [certificate store](./engine/certificates.md), and select it in their
+  **User certificate** setting.
 - **REST API**: the engine general settings are updated with `PUT /api/engine/general` (instead of
   `PUT /api/engine/name`), and the content endpoints are disabled when no North transformer applied to the OIBus API.

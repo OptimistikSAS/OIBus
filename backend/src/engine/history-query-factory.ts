@@ -13,9 +13,9 @@ import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { Instant } from '../model/types';
 import { buildNorth } from '../north/north-connector-factory';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CacheService from '../service/cache/cache.service';
+import type CertificateService from '../service/certificate.service';
 import { loggerService } from '../service/logger/logger.service';
 import { createFolder } from '../service/utils';
 import { buildSouth } from '../south/south-connector-factory';
@@ -31,7 +31,7 @@ export const buildHistoryQuery = (
   ) => Promise<void>,
   baseFolderPath: string,
   southCacheRepository: SouthCacheRepository,
-  certificateRepository: CertificateRepository,
+  certificateService: CertificateService,
   oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
   orchestrator: CacheService
 ): HistoryQuery => {
@@ -71,7 +71,7 @@ export const buildHistoryQuery = (
       createdAt: settings.createdAt,
       updatedAt: settings.updatedAt
     },
-    certificateRepository,
+    certificateService,
     oIAnalyticsRegistrationRepository,
     orchestrator
   );
@@ -110,7 +110,7 @@ export const buildHistoryQuery = (
       }),
     path.join(baseFolderPath, 'cache', `history-${settings.id}`, 'south'),
     southCacheRepository,
-    certificateRepository,
+    certificateService,
     oIAnalyticsRegistrationRepository
   );
 

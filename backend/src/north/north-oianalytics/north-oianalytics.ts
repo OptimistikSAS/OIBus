@@ -8,9 +8,9 @@ import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/
 import { OIBusError } from '../../model/engine.model';
 import type { ILogger } from '../../model/logger.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import type CacheService from '../../service/cache/cache.service';
+import type CertificateService from '../../service/certificate.service';
 import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
 import { getErrorMessage } from '../../service/utils';
 import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
@@ -51,7 +51,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
     cacheService: CacheService,
-    private readonly certificateRepository: CertificateRepository,
+    private readonly certificateService: CertificateService,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
   ) {
     super(connector, cacheService);
@@ -68,7 +68,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       registrationSettings,
       this.connector.settings.specificSettings,
       this.connector.settings.timeout * 1000,
-      this.certificateRepository,
+      this.certificateService,
       false
     );
     return { items: [] };
@@ -99,7 +99,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       registrationSettings,
       this.connector.settings.specificSettings,
       this.connector.settings.timeout * 1000,
-      this.certificateRepository
+      this.certificateService
     );
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     const endpoint = this.connector.settings.compress
@@ -145,7 +145,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       registrationSettings,
       this.connector.settings.specificSettings,
       this.connector.settings.timeout * 1000,
-      this.certificateRepository
+      this.certificateService
     );
     const url = getUrl(
       '/api/oianalytics/oibus/file',

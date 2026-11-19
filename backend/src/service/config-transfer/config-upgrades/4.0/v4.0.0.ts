@@ -526,6 +526,18 @@ export function toOPCUANorthSettings(settings: Record<string, unknown>): Record<
   };
 }
 
+/**
+ * The OPC UA connectors authenticating their user with a certificate select it in the certificate store, instead of
+ * reading it from two files (the paths of the certificate and of its private key): the paths are removed, the
+ * certificate is to be imported into the store and selected again.
+ */
+export function withoutUserCertificateFiles(settings: Record<string, unknown>): Record<string, unknown> {
+  const authentication = settings.authentication as Record<string, unknown> | undefined;
+  if (!authentication || !('certFilePath' in authentication || 'keyFilePath' in authentication)) return settings;
+  const { certFilePath: _certFilePath, keyFilePath: _keyFilePath, ...rest } = authentication;
+  return { ...settings, authentication: { ...rest, certificateId: null } };
+}
+
 /** The database souths whose work-units can now query in parallel, gaining a `maxParallelRun` setting */
 export const MAX_PARALLEL_RUN_SOUTH_TYPES = ['influxdb', 'mssql', 'mysql', 'odbc', 'oracle', 'postgresql'];
 
@@ -1702,6 +1714,19 @@ function addOPCUATimeoutsAndSubscriptionSettings(config: JsonObject): void {
   });
 }
 
+/** The OPC UA connectors and history queries no longer read the certificate of their user from files (see `withoutUserCertificateFiles`) */
+function removeOPCUAUserCertificateFiles(config: JsonObject): void {
+  const update = (owner: JsonObject, key: string): void => {
+    if (owner[key]) owner[key] = withoutUserCertificateFiles(owner[key] as JsonObject);
+  };
+  forEachSouth(config, 'opcua', south => update(south.settings as JsonObject, 'settings'));
+  forEachNorth(config, 'opcua', north => update(north.settings as JsonObject, 'settings'));
+  forEachHistoryQuery(config, 'opcua', settings => update(settings, 'southSettings'));
+  forEachHistoryQuery(config, null, settings => {
+    if (settings.northType === 'opcua') update(settings, 'northSettings');
+  });
+}
+
 /**
  * The database South settings gain a `maxParallelRun` and a `connectionSettings` group (see `toDatabaseSouthSettings`), for
  * the connectors and the history queries. The request timeout of the MSSQL and PostgreSQL ones moves to their items.
@@ -1842,7 +1867,8 @@ export const upgrade: ConfigUpgrade = {
     'move the request timeout of the MSSQL and PostgreSQL souths to their items; ' +
     'add the setting enabling the content endpoints of the web server, enabled when a North transformer applies to the OIBus API; ' +
     'give the error and archive folders of the North connectors and history queries their own maximum size; ' +
-    'add the description of the engine',
+    'add the description of the engine; ' +
+    'remove the paths of the user certificate of the OPC UA connectors, which select it in the certificate store',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1949,6 +1975,7 @@ export const upgrade: ConfigUpgrade = {
     replaceFileTransformer(config);
     moveFilenamePrefixAndSuffixToTransformers(config);
     addOPCUATimeoutsAndSubscriptionSettings(config);
+    removeOPCUAUserCertificateFiles(config);
     addDatabaseConnectionSettings(config);
     convertFieldProcessesToOperations(config);
     removeOdbcAgentSettings(config);

@@ -9,7 +9,9 @@ import type { IngestClient } from 'azure-kusto-ingest';
 import type { NorthAzureDataExplorerSettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
-import type CertificateRepository from '../../repository/config/certificate.repository';
+import type { Certificate, CertificateKeyPair } from '../../model/certificate.model';
+import { NotFoundError } from '../../model/types';
+import type CertificateService from '../../service/certificate.service';
 import type EncryptionService from '../../service/encryption.service';
 import type * as Utils from '../../service/utils';
 import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
@@ -49,13 +51,21 @@ type AxiosInstance = KustoClient['axiosInstance'];
 const createKustoClient = (overrides: Partial<Record<'executeMgmt' | 'close', () => unknown>> = {}) =>
   createMock<KustoClient>({ axiosInstance: createMock<AxiosInstance>({ defaults: {} as AxiosInstance['defaults'] }), ...overrides });
 
+/** The key pair the certificate service gives for a certificate of the store (its private key decrypted) */
+const toKeyPair = (certificate: Certificate): CertificateKeyPair => ({
+  name: certificate.name,
+  certificate: certificate.certificate,
+  certificateChain: certificate.certificateChain,
+  privateKey: certificate.privateKey
+});
+
 describe('NorthAzureDataExplorer', () => {
   let NorthAzureDataExplorer: typeof NorthAzureDataExplorerClass;
   let north: NorthAzureDataExplorerClass;
 
   let logger: PinoLogger;
   let encryptionService: Mocked<EncryptionService>;
-  let certificateRepository: Mocked<CertificateRepository>;
+  let certificateService: Mocked<CertificateService>;
   let kustoClient: Mocked<KustoClient>;
   let ingestResourceManagerKustoClient: Mocked<KustoClient>;
   let ingestClient: Mocked<IngestClient>;
@@ -102,7 +112,7 @@ describe('NorthAzureDataExplorer', () => {
     north = new NorthAzureDataExplorer(
       buildNorthEntity<NorthAzureDataExplorerSettings>('azure-data-explorer', buildSettings(settings)),
       createCacheServiceMock(),
-      certificateRepository
+      certificateService
     );
   };
 
@@ -135,7 +145,7 @@ describe('NorthAzureDataExplorer', () => {
   beforeEach(() => {
     logger = new PinoLogger();
     encryptionService = createMock<EncryptionService>({ decryptText: text => text });
-    certificateRepository = createMock<CertificateRepository>();
+    certificateService = createMock<CertificateService>();
     kustoClient = createKustoClient();
     ingestResourceManagerKustoClient = createKustoClient();
     ingestClient = createMock<IngestClient>({
@@ -225,16 +235,16 @@ describe('NorthAzureDataExplorer', () => {
   });
 
   it('should build credential with aad-app-certificate authentication', async () => {
-    certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
+    certificateService.getKeyPair.mock.mockImplementationOnce(() => toKeyPair(testData.certificates.list[0]));
     prepareConnection({ authentication: 'aad-app-certificate', clientSecret: undefined, certificateId: 'certificate1' });
-    assert.strictEqual(certificateRepository.findById.mock.calls.length, 1);
-    assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, ['certificate1']);
+    assert.strictEqual(certificateService.getKeyPair.mock.calls.length, 1);
+    assert.deepStrictEqual(certificateService.getKeyPair.mock.calls[0].arguments, ['certificate1']);
     assert.strictEqual(ClientCertificateCredentialMock.mock.calls.length, 1);
     assert.deepStrictEqual(ClientCertificateCredentialMock.mock.calls[0].arguments, ['tenantId', 'clientId', expectedCertificate]);
   });
 
   it('should build credential with aad-app-certificate authentication and proxyOptions when useProxy is true', async () => {
-    certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
+    certificateService.getKeyPair.mock.mockImplementationOnce(() => toKeyPair(testData.certificates.list[0]));
     prepareConnection({
       authentication: 'aad-app-certificate',
       clientSecret: undefined,
@@ -251,10 +261,12 @@ describe('NorthAzureDataExplorer', () => {
   });
 
   it('should reject with aad-app-certificate authentication when certificate is not found', async () => {
-    certificateRepository.findById.mock.mockImplementationOnce(() => null);
+    certificateService.getKeyPair.mock.mockImplementationOnce(() => {
+      throw new NotFoundError('Certificate "unknownCertificate" not found');
+    });
     await assert.rejects(
       prepareConnection({ authentication: 'aad-app-certificate', clientSecret: undefined, certificateId: 'unknownCertificate' }),
-      new Error('Could not find certificate "unknownCertificate"')
+      new NotFoundError('Certificate "unknownCertificate" not found')
     );
   });
 

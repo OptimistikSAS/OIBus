@@ -1203,8 +1203,7 @@
             },
             "username": "Username",
             "password": "Password",
-            "cert-file-path": "Cert file path",
-            "key-file-path": "Key file path"
+            "authentication-certificate-id": "User certificate"
           },
           "rest": {
             "host": "Host",
@@ -1945,8 +1944,7 @@
             },
             "username": "Username",
             "password": "Password",
-            "cert-file-path": "Cert file path",
-            "key-file-path": "Key file path",
+            "authentication-certificate-id": "User certificate",
             "subscription": {
               "title": "Subscription",
               "publishing-interval": "How often the server sends new values (publishing interval)",

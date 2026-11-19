@@ -24,7 +24,6 @@ import ConfigImportService, { ConfigImportError } from '../service/config-transf
 import ConfigTransferService from '../service/config-transfer/config-transfer.service';
 import ConfigurationWorkflowService from '../service/configuration-workflow.service';
 import ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
-import EncryptionService from '../service/encryption.service';
 import HistoryQueryService from '../service/history-query.service';
 import IPFilterService from '../service/ip-filter.service';
 import LogService from '../service/log.service';
@@ -70,7 +69,6 @@ export default class WebServer {
 
   constructor(
     settings: EngineSettings['webServer'],
-    private readonly encryptionService: EncryptionService,
     private readonly auditService: AuditService,
     private readonly scanModeService: ScanModeService,
     private readonly ipFilterService: IPFilterService,
@@ -244,7 +242,7 @@ export default class WebServer {
     // Authentication middleware for API routes. Ignore public path routes
     this.app.use((req, res, next) => {
       if (isApiRoute(req.path) && !PUBLIC_PATHS.includes(req.path)) {
-        return authMiddleware(this.userService, this.encryptionService, this.oIBusService, this.authenticationLimiter)(req, res, next);
+        return authMiddleware(this.userService, this.oIBusService, this.authenticationLimiter)(req, res, next);
       }
       return next();
     });

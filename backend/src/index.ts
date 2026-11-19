@@ -154,7 +154,6 @@ export async function bootstrap(): Promise<void> {
     repositoryService.historyQueryRepository,
     repositoryService.transformerRepository,
     repositoryService.configurationWorkflowRepository,
-    encryptionService,
     ignoreIpFilters,
     ignoreRemoteUpdate
   );
@@ -164,6 +163,14 @@ export async function bootstrap(): Promise<void> {
     oIAnalyticsRegistrationService,
     oIAnalyticsClient,
     configTransferBuilderService
+  );
+
+  // The connectors and the web server read the certificates of the store through it
+  const certificateService = new CertificateService(
+    new JoiValidator(),
+    repositoryService.certificateRepository,
+    oIAnalyticsMessageService,
+    loggerService.createChildLogger('internal')
   );
 
   const configTransferService = new ConfigTransferService(
@@ -195,7 +202,7 @@ export async function bootstrap(): Promise<void> {
     repositoryService.historyQueryRepository,
     repositoryService.historyQueryMetricsRepository,
     repositoryService.southCacheRepository,
-    repositoryService.certificateRepository,
+    certificateService,
     repositoryService.oianalyticsRegistrationRepository,
     oIAnalyticsMessageService,
     repositoryService.scanModeRepository,
@@ -217,7 +224,7 @@ export async function bootstrap(): Promise<void> {
     repositoryService.northMetricsRepository,
     repositoryService.scanModeRepository,
     repositoryService.logRepository,
-    repositoryService.certificateRepository,
+    certificateService,
     repositoryService.oianalyticsRegistrationRepository,
     oIAnalyticsMessageService,
     transformerService,
@@ -231,7 +238,7 @@ export async function bootstrap(): Promise<void> {
     repositoryService.southCacheRepository,
     repositoryService.scanModeRepository,
     repositoryService.oianalyticsRegistrationRepository,
-    repositoryService.certificateRepository,
+    certificateService,
     oIAnalyticsMessageService,
     dataStreamEngine,
     repositoryService.southItemGroupRepository,
@@ -282,10 +289,9 @@ export async function bootstrap(): Promise<void> {
     new JoiValidator(),
     repositoryService.engineRepository,
     repositoryService.engineMetricsRepository,
-    repositoryService.certificateRepository,
+    certificateService,
     ipFilterService,
     oIAnalyticsRegistrationService,
-    loggerService,
     oIAnalyticsMessageService,
     southService,
     northService,
@@ -305,14 +311,6 @@ export async function bootstrap(): Promise<void> {
     oIAnalyticsMessageService,
     dataStreamEngine
   );
-  const certificateService = new CertificateService(
-    new JoiValidator(),
-    repositoryService.certificateRepository,
-    encryptionService,
-    oIAnalyticsMessageService,
-    loggerService.createChildLogger('internal')
-  );
-
   const oIAnalyticsSessionService = new OIAnalyticsSessionService(
     oIAnalyticsRegistrationService,
     oIAnalyticsClient,
@@ -363,7 +361,6 @@ export async function bootstrap(): Promise<void> {
 
   const server = new WebServer(
     oibusSettings.webServer,
-    encryptionService,
     repositoryService.auditService,
     scanModeService,
     ipFilterService,

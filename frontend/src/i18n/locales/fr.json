@@ -196,8 +196,7 @@
             },
             "username": "Nom d'utilisateur",
             "password": "Mot de passe",
-            "cert-file-path": "Chemin du fichier de certificat",
-            "key-file-path": "Chemin du fichier de clé"
+            "authentication-certificate-id": "Certificat utilisateur"
           },
           "rest": {
             "host": "Hôte",
@@ -938,8 +937,7 @@
             },
             "username": "Nom d'utilisateur",
             "password": "Mot de passe",
-            "cert-file-path": "Chemin du fichier de certificat",
-            "key-file-path": "Chemin du fichier de clé",
+            "authentication-certificate-id": "Certificat utilisateur",
             "subscription": {
               "title": "Souscription",
               "publishing-interval": "Fréquence d'envoi des nouvelles valeurs par le serveur (intervalle de publication)",

@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 
 import type { EngineSettings } from '../../model/engine.model';
 import type { User } from '../../model/user.model';
-import type EncryptionService from '../../service/encryption.service';
+import { encryptionService } from '../../service/encryption.service';
 import type OIBusService from '../../service/oibus.service';
 import type UserService from '../../service/user.service';
 import testData from '../../tests/utils/test-data';
@@ -25,14 +25,14 @@ const FINGERPRINT = passwordFingerprint(HASHED);
 
 describe('authMiddleware', () => {
   let userService: Mocked<UserService>;
-  let encryptionService: Mocked<EncryptionService>;
+  let getTokenSecret: Mock<() => Buffer>;
   let oIBusService: Mocked<OIBusService>;
   let authenticationLimiter: Mocked<AuthenticationLimiter>;
   let mockNext: Mock<NextFunction>;
 
   beforeEach(() => {
     userService = createMock<UserService>();
-    encryptionService = createMock<EncryptionService>({ getTokenSecret: () => crypto.randomBytes(32) });
+    getTokenSecret = mock.method(encryptionService, 'getTokenSecret', () => crypto.randomBytes(32));
     oIBusService = createMock<OIBusService>({ getEngineSettings: () => ({ webServer: { authTokenDuration: '7d' } }) as EngineSettings });
     authenticationLimiter = createMock<AuthenticationLimiter>({ retryAfter: () => 0 });
     mockNext = mock.fn();
@@ -53,7 +53,7 @@ describe('authMiddleware', () => {
     const req = createMock<CustomExpressRequest>({ path, url, headers, query, method, ip: '1.2.3.4' });
     const res = createMock<Response>();
     res.status.mock.mockImplementation(() => res);
-    await authMiddleware(userService, encryptionService, oIBusService, authenticationLimiter)(req, res, mockNext);
+    await authMiddleware(userService, oIBusService, authenticationLimiter)(req, res, mockNext);
     return { req, res };
   };
 
@@ -273,7 +273,7 @@ describe('authMiddleware', () => {
 
     it('should accept the token it issued until the password changes', async () => {
       const tokenSecret = crypto.randomBytes(32);
-      encryptionService.getTokenSecret.mock.mockImplementation(() => tokenSecret);
+      getTokenSecret.mock.mockImplementation(() => tokenSecret);
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
       userService.findByLogin.mock.mockImplementation(() => FAKE_USER);
       userService.verifyPassword.mock.mockImplementation(async () => true);
@@ -294,7 +294,7 @@ describe('authMiddleware', () => {
     });
 
     it('should refuse a token signed with another secret, or with another algorithm', async () => {
-      encryptionService.getTokenSecret.mock.mockImplementation(() => Buffer.from('token secret of OIBus'));
+      getTokenSecret.mock.mockImplementation(() => Buffer.from('token secret of OIBus'));
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
       const payload = { login: 'alice', passwordFingerprint: FINGERPRINT };
       const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });

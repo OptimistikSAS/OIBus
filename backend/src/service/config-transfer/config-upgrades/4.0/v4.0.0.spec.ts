@@ -702,6 +702,46 @@ describe('4.0.0 config upgrade', () => {
     });
   });
 
+  describe('OPC UA user certificate', () => {
+    const userCertificate = { type: 'cert', certFilePath: 'user.pem', keyFilePath: 'user.key' };
+    const buildConfig = (): JsonObject => ({
+      southConnectors: [
+        { type: 'opcua', settings: { name: 'South', settings: { url: 'u', authentication: userCertificate } } },
+        { type: 'mqtt', settings: { name: 'MQTT', settings: { authentication: userCertificate } } }
+      ],
+      northConnectors: [{ type: 'opcua', settings: { name: 'North', settings: { url: 'u', authentication: { type: 'none' } } } }],
+      historyQueries: [
+        {
+          settings: {
+            southType: 'opcua',
+            northType: 'opcua',
+            southSettings: { url: 'u', authentication: userCertificate },
+            northSettings: { url: 'u', authentication: userCertificate }
+          }
+        }
+      ]
+    });
+
+    it('removes the paths of the user certificate of the OPC UA connectors and history queries', () => {
+      const config = upgrade.apply(buildConfig());
+
+      const authenticationOf = (connectors: unknown) =>
+        (connectors as Array<JsonObject>).map(c => ((c.settings as JsonObject).settings as JsonObject).authentication);
+      assert.deepStrictEqual(authenticationOf(config.southConnectors), [{ type: 'cert', certificateId: null }, userCertificate]);
+      // without user certificate, nothing to remove
+      assert.deepStrictEqual(authenticationOf(config.northConnectors), [{ type: 'none' }]);
+      const [historyQuery] = (config.historyQueries as Array<JsonObject>).map(h => h.settings as JsonObject);
+      assert.deepStrictEqual((historyQuery.southSettings as JsonObject).authentication, { type: 'cert', certificateId: null });
+      assert.deepStrictEqual((historyQuery.northSettings as JsonObject).authentication, { type: 'cert', certificateId: null });
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
   describe('OPC UA timeouts and subscription settings', () => {
     const subscription = {
       publishingInterval: 150,

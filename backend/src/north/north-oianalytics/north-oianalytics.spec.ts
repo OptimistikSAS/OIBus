@@ -7,8 +7,8 @@ import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'no
 
 import type { NorthOIAnalyticsSettings } from '../../../shared/model/connector/north-settings.model';
 
-import type CertificateRepository from '../../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import type CertificateService from '../../service/certificate.service';
 import type * as HttpRequestUtils from '../../service/http-request.utils';
 import type * as UtilsOIAnalytics from '../../service/utils-oianalytics';
 import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
@@ -34,7 +34,7 @@ describe('NorthOIAnalytics', () => {
   let NorthOIAnalytics: typeof NorthOIAnalyticsClass;
   let north: NorthOIAnalyticsClass;
 
-  let certificateRepository: Mocked<CertificateRepository>;
+  let certificateService: Mocked<CertificateService>;
   let configuration: ReturnType<typeof buildNorthEntity<NorthOIAnalyticsSettings>>;
   let HTTPRequest: Mock<typeof HttpRequestUtils.HTTPRequest>;
   let createGzipMock: Mock<typeof zlib.createGzip>;
@@ -93,11 +93,11 @@ describe('NorthOIAnalytics', () => {
         useProxy: false
       }
     });
-    certificateRepository = createMock<CertificateRepository>();
+    certificateService = createMock<CertificateService>();
     north = new NorthOIAnalytics(
       configuration,
       createCacheServiceMock(),
-      certificateRepository,
+      certificateService,
       createMock<OIAnalyticsRegistrationRepository>({ get: () => testData.oIAnalytics.registration.completed })
     );
   });
@@ -123,7 +123,7 @@ describe('NorthOIAnalytics', () => {
       testData.oIAnalytics.registration.completed,
       configuration.settings.specificSettings,
       configuration.settings.timeout * 1000,
-      certificateRepository,
+      certificateService,
       false
     ]);
   });

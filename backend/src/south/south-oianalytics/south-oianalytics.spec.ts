@@ -12,8 +12,8 @@ import type { SouthConnectorItemTestingSettings } from '../../../shared/model/do
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type CertificateRepository from '../../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import type CertificateService from '../../service/certificate.service';
 import type { ReqOptions, ReqResponse, ReqURL } from '../../service/http-request.utils';
 import type * as Utils from '../../service/utils';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -95,7 +95,7 @@ describe('SouthOIAnalytics', () => {
   >;
 
   let logger: PinoLogger;
-  let certificateRepository: Mocked<CertificateRepository>;
+  let certificateService: Mocked<CertificateService>;
   let HTTPRequest: Mock<(url: ReqURL, options?: ReqOptions) => Promise<ReqResponse>>;
 
   const httpRequestExports: Record<string, unknown> = {};
@@ -133,7 +133,7 @@ describe('SouthOIAnalytics', () => {
 
   beforeEach(() => {
     logger = new PinoLogger();
-    certificateRepository = createMock<CertificateRepository>();
+    certificateService = createMock<CertificateService>();
     HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
     httpRequestExports.HTTPRequest = HTTPRequest;
     Object.assign(utilsOianalyticsExports, createUtilsOianalyticsMocks());
@@ -150,7 +150,7 @@ describe('SouthOIAnalytics', () => {
       addContentCallback,
       createMock<SouthCacheRepository>(),
       'cacheFolder',
-      certificateRepository,
+      certificateService,
       createMock<OIAnalyticsRegistrationRepository>({ get: () => testData.oIAnalytics.registration.completed })
     );
   });
@@ -170,7 +170,7 @@ describe('SouthOIAnalytics', () => {
         testData.oIAnalytics.registration.completed,
         baseConfiguration.settings.specificSettings,
         baseConfiguration.settings.timeout * 1000,
-        certificateRepository,
+        certificateService,
         false
       ]);
     });

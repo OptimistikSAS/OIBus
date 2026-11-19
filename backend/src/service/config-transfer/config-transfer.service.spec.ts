@@ -15,7 +15,6 @@ import type TransformerRepository from '../../repository/config/transformer.repo
 import type UserRepository from '../../repository/config/user.repository';
 import testData from '../../tests/utils/test-data';
 import { createMock, Mocked } from '../../tests/utils/test-utils';
-import EncryptionService from '../encryption.service';
 import { northManifestList } from '../north-manifests';
 import type OIAnalyticsRegistrationService from '../oia/oianalytics-registration.service';
 import { southManifestList } from '../south-manifests';
@@ -63,10 +62,8 @@ describe('Config Transfer Service', () => {
     transformerRepository.list.mock.mockImplementation(() => testData.transformers.list);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
-    // Use the real EncryptionService (filterSecrets is a pure, synchronous, manifest-driven
-    // function that needs no init) so the secret-stripping is exercised for real, not mocked away.
-    const encryptionService = new EncryptionService();
-
+    // The real encryption service (its filterSecrets needs no init) and JoiValidator, so that the secrets are stripped
+    // and the settings validated for real, as the export and import endpoints do
     builderService = new ConfigTransferBuilderService(
       engineRepository,
       scanModeRepository,
@@ -78,7 +75,6 @@ describe('Config Transfer Service', () => {
       historyQueryRepository,
       transformerRepository,
       createMock<ConfigurationWorkflowRepository>({ findAll: () => [] }),
-      encryptionService,
       false,
       false
     );

@@ -56,7 +56,6 @@ import {
 } from '../model/south-connector.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -67,6 +66,7 @@ import SouthConnectorMetricsRepository from '../repository/metrics/south-connect
 import { toExploreError } from '../south/explore-error';
 import { buildSouth } from '../south/south-connector-factory';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import type CertificateService from './certificate.service';
 import {
   checkAddedFields,
   checkPushedIdentityKeyFields,
@@ -92,7 +92,7 @@ export default class SouthService {
     private readonly southCacheRepository: SouthCacheRepository,
     private readonly scanModeRepository: ScanModeRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private readonly certificateRepository: CertificateRepository,
+    private readonly certificateService: CertificateService,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly engine: DataStreamEngine,
     private readonly southItemGroupRepository: SouthItemGroupRepository,
@@ -360,7 +360,7 @@ export default class SouthService {
       mockedAddContent,
       '',
       this.southCacheRepository,
-      this.certificateRepository,
+      this.certificateService,
       this.oIAnalyticsRegistrationRepository
     );
   }
@@ -586,7 +586,7 @@ export default class SouthService {
         mockedAddContent,
         '',
         this.southCacheRepository,
-        this.certificateRepository,
+        this.certificateService,
         this.oIAnalyticsRegistrationRepository
       );
       queryResult = await south.testItem(testItemToRun, testingSettings);

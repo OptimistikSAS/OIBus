@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import * as forge from 'node-forge';
 
 import { CertificateCommandDTO } from '../../shared/model/api/certificate.model';
 
 import type { CertificateImportCommand } from '../model/certificate.model';
+import { NotFoundError } from '../model/types';
 import type CertificateRepository from '../repository/config/certificate.repository';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
@@ -17,7 +18,7 @@ import {
   certificateSchema
 } from '../web-server/controllers/validators/oibus-validation-schema';
 import CertificateService, { toCertificateDTO } from './certificate.service';
-import type EncryptionService from './encryption.service';
+import { encryptionService } from './encryption.service';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { certificateContentToPem, certificatePemToDer, readCertificate, splitPemChain } from './utils-certificate';
 
@@ -37,9 +38,9 @@ const generateSelfSignedCertificate = (commonName: string): { pem: string; priva
 };
 
 describe('Certificate Service', () => {
+  let decryptTextMock: Mock<(text: string) => string>;
   let validator: Mocked<JoiValidator>;
   let certificateRepository: Mocked<CertificateRepository>;
-  let encryptionService: Mocked<EncryptionService>;
   let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
   let logger: LoggerMock;
   let service: CertificateService;
@@ -73,21 +74,42 @@ describe('Certificate Service', () => {
   beforeEach(() => {
     validator = createMock<JoiValidator>();
     certificateRepository = createMock<CertificateRepository>();
-    encryptionService = createMock<EncryptionService>({
-      generateSelfSignedCertificate: async () => ({ public: 'public', private: 'private', cert: certPem }),
-      encryptText: text => text,
-      decryptText: text => text
-    });
+    mock.method(encryptionService, 'generateSelfSignedCertificate', async () => ({ public: 'public', private: 'private', cert: certPem }));
+    mock.method(encryptionService, 'encryptText', (text: string) => text);
+    decryptTextMock = mock.method(encryptionService, 'decryptText', (text: string) => text);
     oIAnalyticsMessageService = createMock<OIAnalyticsMessageService>();
     logger = new LoggerMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    service = new CertificateService(validator, certificateRepository, encryptionService, oIAnalyticsMessageService, logger);
+    service = new CertificateService(validator, certificateRepository, oIAnalyticsMessageService, logger);
   });
 
   afterEach(() => {
     mock.timers.reset();
     mock.restoreAll();
+  });
+
+  it('should give a certificate with its private key decrypted', () => {
+    certificateRepository.findById.mock.mockImplementation(() => ({
+      ...testData.certificates.list[0],
+      certificateChain: 'chain',
+      privateKey: 'encrypted private key'
+    }));
+
+    assert.deepStrictEqual(service.getKeyPair(testData.certificates.list[0].id), {
+      name: testData.certificates.list[0].name,
+      certificate: testData.certificates.list[0].certificate,
+      certificateChain: 'chain',
+      privateKey: 'encrypted private key'
+    });
+    // decrypted by the encryption service
+    assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['encrypted private key']);
+  });
+
+  it('should not give a certificate which does not exist', () => {
+    certificateRepository.findById.mock.mockImplementation(() => null);
+
+    assert.throws(() => service.getKeyPair('unknown'), new NotFoundError('Certificate "unknown" not found'));
   });
 
   it('should list all certificated', () => {

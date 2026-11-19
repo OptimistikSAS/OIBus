@@ -10,8 +10,8 @@ import { NorthAzureDataExplorerSettings } from '../../../shared/model/connector/
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import CertificateRepository from '../../repository/config/certificate.repository';
 import type CacheService from '../../service/cache/cache.service';
+import type CertificateService from '../../service/certificate.service';
 import { encryptionService } from '../../service/encryption.service';
 import NorthConnector from '../north-connector';
 
@@ -32,7 +32,7 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
   constructor(
     connector: NorthConnectorEntity<NorthAzureDataExplorerSettings>,
     cacheService: CacheService,
-    private readonly certificateRepository: CertificateRepository
+    private readonly certificateService: CertificateService
   ) {
     super(connector, cacheService);
   }
@@ -122,12 +122,8 @@ export default class NorthAzureDataExplorer extends NorthConnector<NorthAzureDat
           : new ClientSecretCredential(settings.tenantId!, settings.clientId!, clientSecret);
       }
       case 'aad-app-certificate': {
-        const certificate = this.certificateRepository.findById(settings.certificateId!);
-        if (!certificate) {
-          throw new Error(`Could not find certificate "${settings.certificateId}"`);
-        }
-        const privateKey = encryptionService.decryptText(certificate.privateKey);
-        const configuration = { certificate: `${certificate.certificate}\n${privateKey}` };
+        const { certificate, privateKey } = this.certificateService.getKeyPair(settings.certificateId!);
+        const configuration = { certificate: `${certificate}\n${privateKey}` };
         return proxyOptions
           ? new ClientCertificateCredential(settings.tenantId!, settings.clientId!, configuration, { proxyOptions })
           : new ClientCertificateCredential(settings.tenantId!, settings.clientId!, configuration);

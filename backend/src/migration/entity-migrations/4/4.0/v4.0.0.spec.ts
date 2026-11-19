@@ -42,6 +42,7 @@ import {
   OPCUA_CERTIFICATE_NAME,
   removeOdbcAgentSettings,
   removeOpcAgentSettings,
+  removeOPCUAUserCertificateFiles,
   removePiAgentSettings,
   renameAnyDataType,
   replaceCsvAndJsonReaders,
@@ -5629,5 +5630,90 @@ describe('Entity migration v4.0.0: moveOPCUACertificateToStore', () => {
     assert.deepStrictEqual((console.warn as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       'No crypto settings to encrypt the private key of the OPC UA certificate: select a certificate in the OPC UA connectors'
     ]);
+  });
+});
+
+describe('Entity migration v4.0.0: removeOPCUAUserCertificateFiles', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(removeOPCUAUserCertificateFiles, db)
+  });
+  let db: Knex;
+
+  const settingsOf = async (table: string, id: string, column = 'settings') =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert({ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' });
+    const userCertificate = { type: 'cert', certFilePath: 'C:\\certs\\user.pem', keyFilePath: 'C:\\certs\\user.key' };
+    await db('south_connectors').insert([
+      {
+        id: 'south-cert',
+        name: 'OPC UA with a user certificate',
+        type: 'opcua',
+        enabled: true,
+        settings: JSON.stringify({ url: 'opc.tcp://server', authentication: userCertificate })
+      },
+      {
+        id: 'south-basic',
+        name: 'OPC UA with a user name',
+        type: 'opcua',
+        enabled: true,
+        settings: JSON.stringify({ url: 'opc.tcp://server', authentication: { type: 'basic', username: 'user', password: 'secret' } })
+      },
+      {
+        id: 'south-mqtt',
+        name: 'MQTT',
+        type: 'mqtt',
+        enabled: true,
+        settings: JSON.stringify({ authentication: { type: 'cert', certFilePath: 'cert.pem', keyFilePath: 'key.pem' } })
+      }
+    ]);
+    await db('north_connectors').insert({
+      ...caching,
+      id: 'north-cert',
+      name: 'OPC UA',
+      type: 'opcua',
+      enabled: true,
+      settings: JSON.stringify({ url: 'opc.tcp://server', authentication: userCertificate })
+    });
+    await db('history_queries').insert({
+      ...caching,
+      id: 'history-id',
+      name: 'History',
+      start_time: NOW,
+      end_time: NOW,
+      south_type: 'opcua',
+      north_type: 'opcua',
+      south_settings: JSON.stringify({ url: 'opc.tcp://server', authentication: userCertificate }),
+      north_settings: JSON.stringify({ url: 'opc.tcp://server', authentication: { type: 'none' } })
+    });
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should remove the paths of the user certificate of the OPC UA connectors, to be selected in the store', async () => {
+    await removeOPCUAUserCertificateFiles(db);
+
+    const expected = { url: 'opc.tcp://server', authentication: { type: 'cert', certificateId: null } };
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'south-cert'), expected);
+    assert.deepStrictEqual(await settingsOf('north_connectors', 'north-cert'), expected);
+    assert.deepStrictEqual(await settingsOf('history_queries', 'history-id', 'south_settings'), expected);
+    // without user certificate, nothing to remove
+    assert.deepStrictEqual(await settingsOf('history_queries', 'history-id', 'north_settings'), {
+      url: 'opc.tcp://server',
+      authentication: { type: 'none' }
+    });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'south-basic'), {
+      url: 'opc.tcp://server',
+      authentication: { type: 'basic', username: 'user', password: 'secret' }
+    });
+    // not OPC UA
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'south-mqtt'), {
+      authentication: { type: 'cert', certFilePath: 'cert.pem', keyFilePath: 'key.pem' }
+    });
   });
 });
