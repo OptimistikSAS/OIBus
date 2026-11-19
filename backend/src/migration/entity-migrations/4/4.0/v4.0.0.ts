@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import argon2 from 'argon2';
@@ -138,7 +138,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   addEngineDescription,
   addRegistrationTokenRefresh,
   encryptSecretsWithAesGcm,
-  flagDefaultPasswords
+  flagDefaultPasswords,
+  moveOPCUACertificateToStore
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -2173,42 +2174,59 @@ export async function encryptSecretsWithAesGcm(knex: Knex): Promise<void> {
 }
 
 /**
- * Read the AES-256-CBC key and IV in crypto.db, next to oibus.db, and return the function decrypting a secret with them
- * and encrypting it again with AES-256-GCM. Null when they are missing: the secrets can no longer be decrypted.
+ * The data folder, holding oibus.db: null for an in-memory database (a test)
+ */
+const getDataFolder = (knex: Knex): string | null => {
+  const filename: unknown = (knex.client.config.connection as { filename?: unknown } | undefined)?.filename;
+  return typeof filename === 'string' && filename !== ':memory:' ? path.dirname(filename) : null;
+};
+
+/**
+ * The AES-256-CBC key and IV of OIBus, in crypto.db next to oibus.db. Null when they are missing.
+ */
+async function readCryptoSettings(knex: Knex): Promise<{ securityKey: Buffer; initVector: Buffer } | null> {
+  const engine = await knex(ENGINES_TABLE).first('id');
+  const dataFolder = getDataFolder(knex);
+  const cryptoDatabasePath = dataFolder ? path.resolve(dataFolder, 'crypto.db') : null;
+  if (!engine || !cryptoDatabasePath || !existsSync(cryptoDatabasePath)) return null;
+  const database = new Database(cryptoDatabasePath, { readonly: true });
+  try {
+    const columns = (database.prepare('PRAGMA table_info(crypto);').all() as Array<{ name: string }>).map(column => column.name);
+    if (!columns.includes('init_vector')) return null;
+    const settings = database.prepare('SELECT init_vector, security_key FROM crypto WHERE id = ?;').get(engine.id) as
+      { init_vector: string; security_key: string } | undefined;
+    if (!settings) return null;
+    return { securityKey: Buffer.from(settings.security_key, 'base64'), initVector: Buffer.from(settings.init_vector, 'base64') };
+  } finally {
+    database.close();
+  }
+}
+
+/**
+ * Encrypt a text with AES-256-GCM, as EncryptionService does: the base64 of a random nonce, the ciphertext and the
+ * authentication tag, with a key derived from the stored one
+ */
+const encryptWithAesGcm = (securityKey: Buffer, plainText: string): string => {
+  const key = Buffer.from(crypto.hkdfSync('sha256', securityKey, Buffer.alloc(0), 'oibus-secret-encryption-aes-256-gcm', 32));
+  const nonce = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, nonce, { authTagLength: 16 });
+  const encrypted = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
+  return Buffer.concat([nonce, encrypted, cipher.getAuthTag()]).toString('base64');
+};
+
+/**
+ * Return the function decrypting a secret with the AES-256-CBC key and IV and encrypting it again with AES-256-GCM. Null
+ * when they are missing: the secrets can no longer be decrypted.
  */
 async function loadLegacyReEncryption(knex: Knex): Promise<((value: string) => string) | null> {
-  const engine = await knex(ENGINES_TABLE).first('id');
-  // An in-memory database (a test) has no crypto.db next to it
-  const filename: unknown = (knex.client.config.connection as { filename?: unknown } | undefined)?.filename;
-  const cryptoDatabasePath =
-    typeof filename === 'string' && filename !== ':memory:' ? path.resolve(path.dirname(filename), 'crypto.db') : null;
-  let settings: { init_vector: string; security_key: string } | undefined;
-  if (engine && cryptoDatabasePath && existsSync(cryptoDatabasePath)) {
-    const database = new Database(cryptoDatabasePath, { readonly: true });
-    try {
-      const columns = (database.prepare('PRAGMA table_info(crypto);').all() as Array<{ name: string }>).map(column => column.name);
-      if (columns.includes('init_vector')) {
-        settings = database.prepare('SELECT init_vector, security_key FROM crypto WHERE id = ?;').get(engine.id) as typeof settings;
-      }
-    } finally {
-      database.close();
-    }
-  }
+  const settings = await readCryptoSettings(knex);
   if (!settings) {
     console.warn('No crypto settings to decrypt the secrets and encrypt them again: they must be set again');
     return null;
   }
-
-  const securityKey = Buffer.from(settings.security_key, 'base64');
-  const initVector = Buffer.from(settings.init_vector, 'base64');
-  const key = Buffer.from(crypto.hkdfSync('sha256', securityKey, Buffer.alloc(0), 'oibus-secret-encryption-aes-256-gcm', 32));
   return (value: string): string => {
-    const decipher = crypto.createDecipheriv('aes-256-cbc', securityKey, initVector);
-    const plainText = decipher.update(value, 'base64', 'utf8') + decipher.final('utf8');
-    const nonce = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv('aes-256-gcm', key, nonce, { authTagLength: 16 });
-    const encrypted = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
-    return Buffer.concat([nonce, encrypted, cipher.getAuthTag()]).toString('base64');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', settings.securityKey, settings.initVector);
+    return encryptWithAesGcm(settings.securityKey, decipher.update(value, 'base64', 'utf8') + decipher.final('utf8'));
   };
 }
 
@@ -2228,6 +2246,58 @@ export async function flagDefaultPasswords(knex: Knex): Promise<void> {
   for (const user of users) {
     if (await argon2.verify(user.password, DEFAULT_PASSWORD).catch(() => false)) {
       await knex(USERS_TABLE).where('id', user.id).update({ must_change_password: true });
+    }
+  }
+}
+
+/** Name of the certificate imported in the store for the OPC UA connectors */
+export const OPCUA_CERTIFICATE_NAME = 'OIBus OPC UA';
+
+/**
+ * The OPC UA connectors used the certificate of OIBus, in certs/ (whose key also signed the authentication tokens): they
+ * now use a certificate of the store, selected in their settings. The certificate of OIBus is imported into the store as
+ * it is, so that the OPC UA servers which trust it keep trusting OIBus, and selected by the existing OPC UA connectors
+ * and history queries. The crypto migration of 4.0.0 then removes certs/, no longer used.
+ */
+export async function moveOPCUACertificateToStore(knex: Knex): Promise<void> {
+  const dataFolder = getDataFolder(knex);
+  if (!dataFolder) return;
+  const certificatePath = path.resolve(dataFolder, 'certs', 'cert.pem');
+  const privateKeyPath = path.resolve(dataFolder, 'certs', 'private.pem');
+  if (!existsSync(certificatePath) || !existsSync(privateKeyPath)) return; // a new OIBus
+  const cryptoSettings = await readCryptoSettings(knex);
+  if (!cryptoSettings) {
+    console.warn('No crypto settings to encrypt the private key of the OPC UA certificate: select a certificate in the OPC UA connectors');
+    return;
+  }
+
+  const certificate = readFileSync(certificatePath, 'utf8');
+  const x509 = new crypto.X509Certificate(certificate);
+  const certificateId = generateRandomId(6);
+  await knex(CERTIFICATES_TABLE).insert({
+    id: certificateId,
+    name: OPCUA_CERTIFICATE_NAME,
+    description: 'Certificate of OIBus for the OPC UA servers, from certs/cert.pem',
+    public_key: x509.publicKey.export({ type: 'spki', format: 'pem' }) as string,
+    private_key: encryptWithAesGcm(cryptoSettings.securityKey, readFileSync(privateKeyPath, 'utf8')),
+    certificate,
+    certificate_chain: null,
+    expiry: x509.validToDate.toISOString(),
+    created_by: 'system',
+    updated_by: 'system'
+  });
+
+  for (const [table, typeColumn, settingsColumn] of [
+    [SOUTH_CONNECTORS_TABLE, 'type', 'settings'],
+    [NORTH_CONNECTORS_TABLE, 'type', 'settings'],
+    [HISTORY_QUERIES_TABLE, 'south_type', 'south_settings'],
+    [HISTORY_QUERIES_TABLE, 'north_type', 'north_settings']
+  ]) {
+    for (const row of await knex(table).where(typeColumn, 'opcua').select('id', settingsColumn)) {
+      const settings = JSON.parse(row[settingsColumn]);
+      await knex(table)
+        .where('id', row.id)
+        .update({ [settingsColumn]: JSON.stringify({ ...settings, certificateId }) });
     }
   }
 }

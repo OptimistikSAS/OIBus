@@ -17,6 +17,11 @@ const manifest: NorthConnectorManifest = {
         referralPathFromRoot: 'securityMode',
         targetPathFromRoot: 'securityPolicy',
         values: ['sign', 'sign-and-encrypt']
+      },
+      {
+        referralPathFromRoot: 'securityMode',
+        targetPathFromRoot: 'certificateId',
+        values: ['sign', 'sign-and-encrypt']
       }
     ],
     validators: [],
@@ -151,7 +156,7 @@ const manifest: NorthConnectorManifest = {
         ],
         displayProperties: {
           row: 2,
-          columns: 6,
+          columns: 4,
           displayInViewMode: true
         }
       },
@@ -181,7 +186,18 @@ const manifest: NorthConnectorManifest = {
         ],
         displayProperties: {
           row: 2,
-          columns: 6,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'certificate',
+        key: 'certificateId',
+        translationKey: 'configuration.oibus.manifest.north.opcua.certificate-id',
+        validators: [],
+        displayProperties: {
+          row: 2,
+          columns: 4,
           displayInViewMode: true
         }
       },

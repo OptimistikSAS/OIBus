@@ -196,7 +196,8 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
         addContent,
         southCacheRepository,
-        southCacheFolder
+        southCacheFolder,
+        certificateRepository
       );
     case 'oracle':
       return new SouthOracle(

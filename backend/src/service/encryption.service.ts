@@ -1,7 +1,5 @@
 import crypto from 'node:crypto';
-import fs from 'node:fs/promises';
 import os from 'node:os';
-import path from 'node:path';
 
 import { DateTime } from 'luxon';
 import * as forge from 'node-forge';
@@ -9,12 +7,6 @@ import * as forge from 'node-forge';
 import { CertificateOptions } from '../../shared/model/api/certificate.model';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { CryptoSettings } from '../../shared/model/domain/engine.model';
-
-import { filesExists } from './utils';
-
-export const CERT_PRIVATE_KEY_FILE_NAME = 'private.pem';
-export const CERT_PUBLIC_KEY_FILE_NAME = 'public.pem';
-export const CERT_FILE_NAME = 'cert.pem';
 
 const SECRET_ENCRYPTION_ALGORITHM = 'aes-256-gcm';
 // An encrypted secret is the base64 of nonce | ciphertext | authentication tag
@@ -48,27 +40,21 @@ const generateRsaKeyPair = (modulusLength: number): Promise<{ publicKey: string;
 interface CryptoSettingsInternal {
   /** AES-256-GCM key of the secrets */
   key: Buffer;
+  /** HS256 secret signing the authentication tokens of the web server */
+  tokenSecret: Buffer;
 }
 
 /**
- * Service used to manage encryption and decryption of secrets in the config file
- * Also responsible to create private and public key used for encrypting the secrets
+ * Service used to manage encryption and decryption of secrets in the config file, and to generate self-signed certificates
  */
 export default class EncryptionService<TInitialized extends boolean = false> {
   private static instance: EncryptionService | null = null;
   private initialized = false;
   private _cryptoSettings: CryptoSettingsInternal | null = null;
-  private _certsFolder = ''; // resolved path of cert folders, passed from the init call
-  private _publicKey: string | null = null;
-  private _privateKey: string | null = null;
-  private _certFile: string | null = null;
+  private _storedSettings: CryptoSettings | null = null;
 
   get cryptoSettings() {
     return this._cryptoSettings as TInitialized extends true ? CryptoSettingsInternal : CryptoSettingsInternal | null;
-  }
-
-  get certsFolder() {
-    return this._certsFolder;
   }
 
   static getInstance() {
@@ -83,66 +69,30 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     return this.initialized;
   }
 
-  getCertPath(): string {
-    return path.resolve(this._certsFolder, CERT_FILE_NAME);
+  /**
+   * The settings read in crypto.db, to initialize the service of another thread (such as the OIAnalytics log transport)
+   */
+  get storedSettings(): CryptoSettings | null {
+    return this._storedSettings;
   }
 
-  getPrivateKeyPath(): string {
-    return path.resolve(this._certsFolder, CERT_PRIVATE_KEY_FILE_NAME);
-  }
-
-  getPublicKeyPath(): string {
-    return path.resolve(this._certsFolder, CERT_PUBLIC_KEY_FILE_NAME);
-  }
-
-  async getCert(): Promise<string> {
-    if (!this._certFile) {
-      this._certFile = await fs.readFile(this.getCertPath(), 'utf8');
-    }
-    return this._certFile;
-  }
-
-  async getPrivateKey(): Promise<string> {
-    if (!this._privateKey) {
-      this._privateKey = await fs.readFile(this.getPrivateKeyPath(), 'utf8');
-    }
-    return this._privateKey;
-  }
-
-  async getPublicKey(): Promise<string> {
-    if (!this._publicKey) {
-      this._publicKey = await fs.readFile(this.getPublicKeyPath(), 'utf8');
-    }
-    return this._publicKey;
-  }
-
-  async init(cryptoSettings: CryptoSettings, certsFolder: string) {
-    this._certsFolder = certsFolder;
-    this._cryptoSettings = { key: deriveSecretKey(cryptoSettings.securityKey) };
-
-    // Created for the user running OIBus only, like the private key (an existing folder is left as it is)
-    await fs.mkdir(this._certsFolder, { recursive: true, mode: 0o700 });
-
-    if (
-      !(await filesExists(this.getCertPath())) ||
-      !(await filesExists(this.getPrivateKeyPath())) ||
-      !(await filesExists(this.getPublicKeyPath()))
-    ) {
-      const certificate = await this.generateSelfSignedCertificate({
-        commonName: 'OIBus',
-        countryName: 'FR',
-        stateOrProvinceName: 'Savoie',
-        localityName: 'Chambery',
-        organizationName: 'Optimistik',
-        keySize: 4096,
-        daysBeforeExpiry: 36500
-      });
-      await fs.writeFile(this.getPrivateKeyPath(), certificate.private, { mode: 0o600 });
-      await fs.writeFile(this.getPublicKeyPath(), certificate.public);
-      await fs.writeFile(this.getCertPath(), certificate.cert);
-    }
-
+  init(cryptoSettings: CryptoSettings): void {
+    this._storedSettings = cryptoSettings;
+    this._cryptoSettings = {
+      key: deriveSecretKey(cryptoSettings.securityKey),
+      tokenSecret: Buffer.from(cryptoSettings.tokenSecret, 'base64')
+    };
     this.initialized = true;
+  }
+
+  /**
+   * The HS256 secret signing the authentication tokens of the web server
+   */
+  getTokenSecret(): Buffer {
+    if (!this.isInitialized()) {
+      throw Error('EncryptionService not initialized');
+    }
+    return this.cryptoSettings.tokenSecret;
   }
 
   async generateSelfSignedCertificate(options: CertificateOptions): Promise<{ private: string; public: string; cert: string }> {

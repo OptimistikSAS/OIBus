@@ -201,8 +201,7 @@ class LoggerService {
           interval: engineSettings.logger.oia.interval,
           registrationSettings: registration,
           configDatabasePath: this._configDatabasePath,
-          cryptoSettings: encryptionService.cryptoSettings,
-          certsFolder: encryptionService.certsFolder
+          cryptoSettings: encryptionService.storedSettings
         },
         level: engineSettings.logger.oia.level
       });

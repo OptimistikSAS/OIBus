@@ -190,6 +190,12 @@ export interface CryptoSettings {
    * @example "abcdef1234567890abcdef1234567890"
    */
   securityKey: string;
+
+  /**
+   * The secret (base64) signing the authentication tokens of the web server.
+   * @example "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
+   */
+  tokenSecret: string;
 }
 
 /**

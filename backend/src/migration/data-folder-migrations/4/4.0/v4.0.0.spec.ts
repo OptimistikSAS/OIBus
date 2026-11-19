@@ -364,9 +364,7 @@ describe('Data folder migration v4.0.0', () => {
         chmod.mock.calls.map(call => call.arguments),
         [
           [path.resolve(tmpRoot, 'oibus.db'), 0o600],
-          [path.resolve(tmpRoot, 'crypto.db'), 0o600],
-          [path.resolve(tmpRoot, 'certs'), 0o700],
-          [path.resolve(tmpRoot, 'certs', 'private.pem'), 0o600]
+          [path.resolve(tmpRoot, 'crypto.db'), 0o600]
         ]
       );
     });
@@ -387,7 +385,7 @@ describe('Data folder migration v4.0.0', () => {
 
       await assert.doesNotReject(() => migration.restrictKeyMaterial(tmpRoot));
 
-      assert.strictEqual(chmod.mock.callCount(), 4);
+      assert.strictEqual(chmod.mock.callCount(), 2);
       assert.deepStrictEqual(warn.mock.calls[0].arguments, ['Could not restrict the access to oibus.db: operation not permitted']);
     });
 
@@ -403,8 +401,7 @@ describe('Data folder migration v4.0.0', () => {
     // Windows reports every file as 0o666 whatever chmod sets: the modes can only be checked elsewhere
     it('should set the modes of the files', { skip: process.platform === 'win32' }, async () => {
       const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-key-material-'));
-      await fs.mkdir(path.join(folder, 'certs'), { mode: 0o755 });
-      for (const file of ['oibus.db', 'logs.db', path.join('certs', 'private.pem'), path.join('certs', 'cert.pem')]) {
+      for (const file of ['oibus.db', 'crypto.db', 'logs.db']) {
         await fs.writeFile(path.join(folder, file), '', { mode: 0o644 });
         await fs.chmod(path.join(folder, file), 0o644);
       }
@@ -413,11 +410,9 @@ describe('Data folder migration v4.0.0', () => {
       await migration.restrictKeyMaterial(folder);
 
       assert.strictEqual(await modeOf('oibus.db'), 0o600);
-      assert.strictEqual(await modeOf('certs'), 0o700);
-      assert.strictEqual(await modeOf(path.join('certs', 'private.pem')), 0o600);
+      assert.strictEqual(await modeOf('crypto.db'), 0o600);
       // not key material
       assert.strictEqual(await modeOf('logs.db'), 0o644);
-      assert.strictEqual(await modeOf(path.join('certs', 'cert.pem')), 0o644);
       await fs.rm(folder, { recursive: true, force: true });
     });
   });

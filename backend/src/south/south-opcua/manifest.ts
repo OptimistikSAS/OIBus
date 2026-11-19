@@ -54,6 +54,11 @@ const manifest: SouthConnectorManifest = {
         referralPathFromRoot: 'securityMode',
         targetPathFromRoot: 'securityPolicy',
         values: ['sign', 'sign-and-encrypt']
+      },
+      {
+        referralPathFromRoot: 'securityMode',
+        targetPathFromRoot: 'certificateId',
+        values: ['sign', 'sign-and-encrypt']
       }
     ],
     validators: [],
@@ -162,7 +167,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 2,
-          columns: 6,
+          columns: 4,
           displayInViewMode: true
         }
       },
@@ -192,7 +197,18 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 2,
-          columns: 6,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'certificate',
+        key: 'certificateId',
+        translationKey: 'configuration.oibus.manifest.south.opcua.certificate-id',
+        validators: [],
+        displayProperties: {
+          row: 2,
+          columns: 4,
           displayInViewMode: true
         }
       },

@@ -32,7 +32,7 @@ describe('authMiddleware', () => {
 
   beforeEach(() => {
     userService = createMock<UserService>();
-    encryptionService = createMock<EncryptionService>({ getPrivateKey: async () => 'privateKey' });
+    encryptionService = createMock<EncryptionService>({ getTokenSecret: () => crypto.randomBytes(32) });
     oIBusService = createMock<OIBusService>({ getEngineSettings: () => ({ webServer: { authTokenDuration: '7d' } }) as EngineSettings });
     authenticationLimiter = createMock<AuthenticationLimiter>({ retryAfter: () => 0 });
     mockNext = mock.fn();
@@ -272,13 +272,8 @@ describe('authMiddleware', () => {
     });
 
     it('should accept the token it issued until the password changes', async () => {
-      const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
-        modulusLength: 2048,
-        privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
-        publicKeyEncoding: { type: 'spki', format: 'pem' }
-      });
-      encryptionService.getPrivateKey.mock.mockImplementation(async () => privateKey);
-      encryptionService.getPublicKey.mock.mockImplementation(async () => publicKey);
+      const tokenSecret = crypto.randomBytes(32);
+      encryptionService.getTokenSecret.mock.mockImplementation(() => tokenSecret);
       userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
       userService.findByLogin.mock.mockImplementation(() => FAKE_USER);
       userService.verifyPassword.mock.mockImplementation(async () => true);
@@ -287,6 +282,8 @@ describe('authMiddleware', () => {
       const token = (res.json.mock.calls[0].arguments[0] as { access_token: string }).access_token;
       assert.ok(!Buffer.from(token.split('.')[1], 'base64url').toString().includes(HASHED));
 
+      // signed with the secret of OIBus only
+      assert.strictEqual(JSON.parse(Buffer.from(token.split('.')[0], 'base64url').toString()).alg, 'HS256');
       await run('/api/data', { authorization: bearerHeader(token) });
       assert.strictEqual(mockNext.mock.calls.length, 1);
 
@@ -294,6 +291,22 @@ describe('authMiddleware', () => {
       const { res: afterChange } = await run('/api/data', { authorization: bearerHeader(token) });
       assert.strictEqual(afterChange.status.mock.calls[0].arguments[0], 401);
       assert.strictEqual(mockNext.mock.calls.length, 1);
+    });
+
+    it('should refuse a token signed with another secret, or with another algorithm', async () => {
+      encryptionService.getTokenSecret.mock.mockImplementation(() => Buffer.from('token secret of OIBus'));
+      userService.getHashedPasswordByLogin.mock.mockImplementation(() => HASHED);
+      const payload = { login: 'alice', passwordFingerprint: FINGERPRINT };
+      const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+
+      for (const token of [
+        jwt.sign(payload, 'another secret', { algorithm: 'HS256', issuer: 'oibus' }),
+        jwt.sign(payload, privateKey, { algorithm: 'RS256', issuer: 'oibus' })
+      ]) {
+        const { res } = await run('/api/data', { authorization: bearerHeader(token) });
+        assert.strictEqual(res.status.mock.calls[0].arguments[0], 403);
+      }
+      assert.strictEqual(mockNext.mock.calls.length, 0);
     });
 
     it('should return 401 when hashed password does not match token', async () => {

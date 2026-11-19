@@ -22,6 +22,7 @@ import { SouthConnectorExploreEntry } from '../../../shared/model/domain/south-c
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type CertificateRepository from '../../repository/config/certificate.repository';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, type Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
@@ -253,9 +254,10 @@ describe('SouthOPCUA', () => {
   let configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>;
   let logger: PinoLogger;
   let southCacheRepository: Mocked<SouthCacheRepository>;
+  let certificateRepository: Mocked<CertificateRepository>;
 
   const createUtilsOpcuaMocks = () => ({
-    createSessionConfigs: mock.fn(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity })),
+    createSessionConfigs: mock.fn((..._args: Array<unknown>) => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity })),
     createOPCUASession: mock.fn(async (..._args: Array<unknown>): Promise<ClientSession> => createMock<ClientSession>()),
     getHistoryReadRequest: mock.fn(() => new HistoryReadRequest()),
     getTimestamp: mock.fn(() => testData.constants.dates.FAKE_NOW),
@@ -298,6 +300,7 @@ describe('SouthOPCUA', () => {
   beforeEach(() => {
     logger = new PinoLogger();
     southCacheRepository = createMock<SouthCacheRepository>({ getItemsLastValues: () => new Map() });
+    certificateRepository = createMock<CertificateRepository>();
     Object.assign(utilsOpcuaExports, createUtilsOpcuaMocks());
     Object.assign(opcuaExports, createOpcuaMocks());
     configuration = buildConfiguration();
@@ -307,7 +310,8 @@ describe('SouthOPCUA', () => {
       configuration,
       mock.fn(async () => undefined),
       southCacheRepository,
-      'cacheFolder'
+      'cacheFolder',
+      certificateRepository
     );
   });
 
@@ -363,6 +367,8 @@ describe('SouthOPCUA', () => {
 
     assert.strictEqual(session, createdSession);
     assert.strictEqual(utilsOpcuaExports.createSessionConfigs.mock.calls.length, 1);
+    // the certificate of the store selected in the settings
+    assert.strictEqual(utilsOpcuaExports.createSessionConfigs.mock.calls[0].arguments[4], certificateRepository);
     assert.strictEqual(utilsOpcuaExports.createOPCUASession.mock.calls.length, 1);
     assert.deepStrictEqual(utilsOpcuaExports.createOPCUASession.mock.calls[0].arguments, [
       configuration.settings.url,

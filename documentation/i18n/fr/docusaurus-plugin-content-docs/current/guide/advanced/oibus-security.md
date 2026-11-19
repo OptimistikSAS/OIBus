@@ -57,13 +57,13 @@ Si `crypto.db` est supprimé ou perdu, OIBus ne peut plus déchiffrer aucun secr
 
 OIBus utilise cinq bases de données SQLite :
 
-| Base de données  | Contenu                                                                                                                    |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **`oibus.db`**   | Toute la configuration : connecteurs, éléments, modes de scan, filtres IP, utilisateurs (mots de passe hachés), secrets chiffrés. |
-| **`crypto.db`**  | Clé dont est dérivée la clé AES-256-GCM qui chiffre/déchiffre les secrets.                                                    |
-| **`logs.db`**    | Entrées de journal d'exécution. Stockées dans le sous-dossier `logs/`.                                                        |
+| Base de données  | Contenu                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`oibus.db`**   | Toute la configuration : connecteurs, éléments, modes de scan, filtres IP, utilisateurs (mots de passe hachés), secrets chiffrés.                |
+| **`crypto.db`**  | Clé dont est dérivée la clé AES-256-GCM qui chiffre/déchiffre les secrets.                                                                       |
+| **`logs.db`**    | Entrées de journal d'exécution. Stockées dans le sous-dossier `logs/`.                                                                           |
 | **`metrics.db`** | Métriques d'exécution South/North/requête d'historique, mises à jour à chaque scan et chaque envoi North. Stockées dans le sous-dossier `logs/`. |
-| **`cache.db`**   | Cache du connecteur South (valeurs en attente de transmission vers les connecteurs North). Stocké dans le sous-dossier `cache/`. |
+| **`cache.db`**   | Cache du connecteur South (valeurs en attente de transmission vers les connecteurs North). Stocké dans le sous-dossier `cache/`.                 |
 
 Sauvegarder à la fois `oibus.db` et `crypto.db` ensemble est nécessaire pour obtenir un instantané complet et restaurable.
 
@@ -76,8 +76,8 @@ peut le modifier (par exemple pour qu'un agent de sauvegarde puisse le lire) :
 - Les installeurs créent un nouveau dossier de données pour ce seul compte : mode `700` sous Linux, et sous Windows une
   liste de contrôle d'accès donnant le contrôle total au service OIBus (`SYSTEM`) et aux administrateurs uniquement,
   sans les permissions héritées de son dossier parent. Un dossier de données existant est laissé tel quel.
-- Sous Linux et macOS, OIBus crée `oibus.db`, `crypto.db` et `certs/private.pem` pour son seul utilisateur (mode `600`),
-  ainsi que le dossier `certs/` (mode `700`). La mise à jour vers OIBus 4.0 restreint une fois ceux créés auparavant.
+- Sous Linux et macOS, OIBus crée `oibus.db` et `crypto.db` pour son seul utilisateur (mode `600`). La mise à jour vers
+  OIBus 4.0 restreint une fois ceux créés auparavant.
 
 Sous Windows, restreignez de la même façon un dossier de données existant depuis une invite de commandes administrateur :
 
@@ -93,11 +93,12 @@ L'interface web d'OIBus prend en charge deux méthodes d'authentification :
 
 ### JWT (principal) {#jwt-primary}
 
-Après une connexion réussie, OIBus émet un **JWT signé avec RS256** (RSA-SHA256). Le jeton :
+Après une connexion réussie, OIBus émet un **JWT signé avec HS256** (HMAC-SHA256). Le jeton :
 
 - A une **durée de vie de 7 jours par défaut**, configurable dans les paramètres du moteur de 1 heure jusqu'à 30 jours.
-- Est signé avec une clé privée RSA détenue par OIBus.
-- Est vérifié à chaque requête API à l'aide de la clé publique correspondante.
+- Est signé avec un secret aléatoire de 256 bits généré par OIBus et stocké dans `crypto.db`, qui ne sert à rien d'autre.
+- Est vérifié à chaque requête API avec ce même secret : un jeton signé autrement, ou avec un autre algorithme, est
+  rejeté.
 - Contient l'identifiant de connexion de l'utilisateur et une empreinte du hash de son mot de passe (jamais le hash lui-même) —
   le jeton est automatiquement invalidé si le mot de passe change.
 
@@ -138,13 +139,13 @@ reçoivent une réponse HTTP 401 avant toute tentative d'authentification.
 
 Comportements clés :
 
-| Comportement               | Détail                                                                                                          |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **Contournement localhost** | `127.0.0.1`, `::1`, et les autres adresses de bouclage sont toujours autorisées, quelle que soit la liste de filtres. |
-| **Caractère générique**     | Une entrée `*` autorise toutes les adresses distantes.                                                              |
-| **IPv4 / IPv6**              | Les deux formats sont pris en charge. Les adresses IPv6 mappées IPv4 (par ex. `::ffff:192.168.1.1`) sont gérées de manière transparente. |
-| **Correspondance de motifs** | Les entrées prennent en charge `*` comme caractère générique (compilé en interne en expression régulière), permettant des règles de type sous-réseau. |
-| **Désactiver pour les tests** | Passez `--ignore-ip-filters` à `oibus-launcher` pour contourner tous les contrôles IP sans modifier la configuration. |
+| Comportement                  | Détail                                                                                                                                                |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Contournement localhost**   | `127.0.0.1`, `::1`, et les autres adresses de bouclage sont toujours autorisées, quelle que soit la liste de filtres.                                 |
+| **Caractère générique**       | Une entrée `*` autorise toutes les adresses distantes.                                                                                                |
+| **IPv4 / IPv6**               | Les deux formats sont pris en charge. Les adresses IPv6 mappées IPv4 (par ex. `::ffff:192.168.1.1`) sont gérées de manière transparente.              |
+| **Correspondance de motifs**  | Les entrées prennent en charge `*` comme caractère générique (compilé en interne en expression régulière), permettant des règles de type sous-réseau. |
+| **Désactiver pour les tests** | Passez `--ignore-ip-filters` à `oibus-launcher` pour contourner tous les contrôles IP sans modifier la configuration.                                 |
 
 Voir [Filtres IP](../engine/ip-filters.mdx) pour les détails de configuration.
 
@@ -163,10 +164,10 @@ les 90 jours, en même temps que ses jetons (voir [Jetons d'authentification](..
 OIBus conserve la clé privée précédente, afin de pouvoir encore déchiffrer les secrets saisis via OIAnalytics
 juste avant un remplacement.
 
-Séparément, OIBus génère sa propre paire certificat/clé RSA de 4096 bits au démarrage (`private.pem` /
-`public.pem` / `cert.pem`) — c'est ce qui signe les JWT décrits ci-dessus, et c'est également utilisé pour auto-signer
-le certificat présenté pour les connexions OPC UA®. Il s'agit d'une paire de clés distincte de celle utilisée pour
-l'échange de secrets OIAnalytics.
+Le certificat qu'OIBus présente aux serveurs OPC UA® est sélectionné dans chaque connecteur OPC UA, depuis le
+[magasin de certificats](../engine/certificates.md), où sa clé privée est chiffrée comme les autres secrets (voir
+[Certificat de communication](../south-connectors/opcua.mdx#communication-certificate)). Il est distinct de la paire de
+clés utilisée pour l'échange de secrets OIAnalytics, et du secret qui signe les JWT.
 
 ## Sécurité réseau {#network-security}
 

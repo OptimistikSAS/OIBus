@@ -116,7 +116,7 @@ const createUtilsMocks = () => ({
   zipFile: mock.fn<typeof Utils.zipFile>(async (_input, _entryName, output) => fs.writeFile(output, 'zip'))
 });
 const utilsExports = { ...realUtils, ...createUtilsMocks() };
-const encryptionServiceExports = { encryptionService: new EncryptionServiceMock('', '') };
+const encryptionServiceExports = { encryptionService: new EncryptionServiceMock() };
 
 const FAKE_NOW = testData.constants.dates.FAKE_NOW;
 const TEST_FOLDER = path.join(os.tmpdir(), `oibus-command-service-spec-${process.pid}`);
@@ -161,7 +161,7 @@ before(() => {
 beforeEach(() => {
   mock.method(Date, 'now', () => new Date(FAKE_NOW).getTime());
   Object.assign(utilsExports, createUtilsMocks());
-  encryptionService = encryptionServiceExports.encryptionService = new EncryptionServiceMock('', '');
+  encryptionService = encryptionServiceExports.encryptionService = new EncryptionServiceMock();
   logger = new LoggerMock();
   oIAnalyticsCommandRepository = createMock<OIAnalyticsCommandRepository>({
     // No command interrupted by an unexpected stop when the service is created

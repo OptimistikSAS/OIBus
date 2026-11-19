@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import fs from 'node:fs/promises';
 import os from 'node:os';
-import path from 'node:path';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
@@ -15,14 +13,15 @@ import {
 } from '../../shared/model/connector/form.model';
 
 import testData from '../tests/utils/test-data';
-import { seq } from '../tests/utils/test-utils';
-import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
+import EncryptionService from './encryption.service';
 
 const encryptionService = EncryptionService.getInstance();
 
 const securityKey = Buffer.from('0123456789abcdef0123456789abcdef');
+const tokenSecret = Buffer.from('fedcba9876543210fedcba9876543210');
 const cryptoSettings = {
-  securityKey: securityKey.toString('base64')
+  securityKey: securityKey.toString('base64'),
+  tokenSecret: tokenSecret.toString('base64')
 };
 
 const manifest: OIBusObjectAttribute = {
@@ -119,37 +118,12 @@ const encryptedSettings = {
   }
 };
 
-const certFolder = 'certFolder';
-
 describe('Encryption Service', () => {
-  let statMock: ReturnType<typeof mock.fn>;
-  let readFileMock: ReturnType<typeof mock.fn>;
-  let writeFileMock: ReturnType<typeof mock.fn>;
-  let mkdirMock: ReturnType<typeof mock.fn>;
   let privateDecryptMock: ReturnType<typeof mock.fn>;
 
-  beforeEach(async () => {
-    // Derive the keys from the crypto settings, with the certificate files reported as existing
-    mock.method(fs, 'stat', async () => undefined);
-    mock.method(fs, 'mkdir', async () => undefined);
-    await encryptionService.init(cryptoSettings, certFolder);
-    mock.restoreAll();
-
+  beforeEach(() => {
+    encryptionService.init(cryptoSettings);
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
-
-    // Reset service caches between tests
-    encryptionService['_certFile'] = null;
-    encryptionService['_privateKey'] = null;
-    encryptionService['_publicKey'] = null;
-    encryptionService['initialized'] = true;
-
-    // Mock fs functions
-    statMock = mock.method(fs, 'stat', async () => undefined);
-    mkdirMock = mock.method(fs, 'mkdir', async () => undefined);
-    readFileMock = mock.method(fs, 'readFile', async () => '');
-    writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
-
-    // Mock crypto functions
     privateDecryptMock = mock.method(crypto, 'privateDecrypt', () => Buffer.from(''));
   });
 
@@ -158,83 +132,14 @@ describe('Encryption Service', () => {
     mock.restoreAll();
   });
 
-  it('should not create certificate if it already exists', async () => {
-    // fs.stat resolves → filesExists returns true
-    const generateCertMock = mock.method(encryptionService, 'generateSelfSignedCertificate', mock.fn());
-
-    await encryptionService.init(cryptoSettings, certFolder);
-
-    // The certificate folder is created for the user running OIBus only, an existing one being left as it is
-    assert.deepStrictEqual(mkdirMock.mock.calls[0].arguments, [certFolder, { recursive: true, mode: 0o700 }]);
-    const statCalls = statMock.mock.calls.map(c => c.arguments[0]);
-    // Verify filesExists was called for cert paths
-    assert.ok(statCalls.includes(path.resolve(certFolder, CERT_FILE_NAME)));
-    assert.ok(statCalls.includes(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME)));
-    assert.ok(statCalls.includes(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME)));
-
-    assert.strictEqual(generateCertMock.mock.calls.length, 0);
-    assert.strictEqual(writeFileMock.mock.calls.length, 0);
-    assert.strictEqual(encryptionService.certsFolder, certFolder);
+  it('should keep the settings read in crypto.db, and give the secret signing the tokens', () => {
+    assert.deepStrictEqual(encryptionService.storedSettings, cryptoSettings);
+    assert.deepStrictEqual(encryptionService.getTokenSecret(), tokenSecret);
   });
 
-  it('should create certificate if it does not exist', async () => {
-    // Make filesExists return false by having fs.stat throw for file paths (but resolve for folder)
-    statMock.mock.mockImplementation(async (filePath: unknown) => {
-      if (String(filePath) === path.resolve(certFolder)) return; // folder exists
-      throw new Error('ENOENT'); // files don't exist
-    });
-
-    const generateCertMock = mock.method(
-      encryptionService,
-      'generateSelfSignedCertificate',
-      mock.fn(async () => ({
-        private: 'private',
-        public: 'public',
-        cert: 'cert'
-      }))
-    );
-
-    await encryptionService.init(cryptoSettings, certFolder);
-
-    assert.strictEqual(generateCertMock.mock.calls.length, 1);
-    assert.deepStrictEqual(generateCertMock.mock.calls[0].arguments, [
-      {
-        commonName: 'OIBus',
-        countryName: 'FR',
-        stateOrProvinceName: 'Savoie',
-        localityName: 'Chambery',
-        organizationName: 'Optimistik',
-        keySize: 4096,
-        daysBeforeExpiry: 36500
-      }
-    ]);
-    assert.deepStrictEqual(writeFileMock.mock.calls[0].arguments, [
-      path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME),
-      'private',
-      { mode: 0o600 }
-    ]);
-    assert.deepStrictEqual(writeFileMock.mock.calls[1].arguments, [path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'public']);
-    assert.deepStrictEqual(writeFileMock.mock.calls[2].arguments, [path.resolve(certFolder, CERT_FILE_NAME), 'cert']);
-  });
-
-  it('should properly retrieve files', async () => {
-    readFileMock.mock.mockImplementation(
-      seq(
-        async () => 'cert file content',
-        async () => 'private key file content',
-        async () => 'public key file content'
-      )
-    );
-
-    assert.strictEqual(await encryptionService.getCert(), 'cert file content');
-    assert.strictEqual(await encryptionService.getCert(), 'cert file content');
-    assert.strictEqual(readFileMock.mock.calls.length, 1);
-    assert.strictEqual(await encryptionService.getPrivateKey(), 'private key file content');
-    assert.strictEqual(await encryptionService.getPrivateKey(), 'private key file content');
-    assert.strictEqual(readFileMock.mock.calls.length, 2);
-    assert.strictEqual(await encryptionService.getPublicKey(), 'public key file content');
-    assert.strictEqual(await encryptionService.getPublicKey(), 'public key file content');
-    assert.strictEqual(readFileMock.mock.calls.length, 3);
+  it('should not give the secret signing the tokens when not initialized', () => {
+    encryptionService['initialized'] = false;
+    assert.throws(() => encryptionService.getTokenSecret(), { message: 'EncryptionService not initialized' });
   });
 
   it('should encrypt a text with AES-256-GCM and a random nonce', () => {

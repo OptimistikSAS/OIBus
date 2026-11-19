@@ -50,7 +50,7 @@ class MockProxyServer {
 const realUtils: typeof Utils = nodeRequire('./utils');
 const utilsExports = { ...realUtils, getOIBusInfo: mock.fn(realUtils.getOIBusInfo) };
 const utilsCertificateExports = { assertTlsCredentials: mock.fn() };
-const encryptionExports = { __esModule: true, encryptionService: new EncryptionServiceMock('', '') };
+const encryptionExports = { __esModule: true, encryptionService: new EncryptionServiceMock() };
 
 let OIBusService: typeof OIBusServiceType;
 let toEngineSettingsDTO: typeof toEngineSettingsDTOType;
@@ -113,7 +113,7 @@ describe('OIBus Service', () => {
 
     utilsExports.getOIBusInfo = mock.fn(realUtils.getOIBusInfo);
     utilsCertificateExports.assertTlsCredentials = mock.fn();
-    encryptionService = encryptionExports.encryptionService = new EncryptionServiceMock('', '');
+    encryptionService = encryptionExports.encryptionService = new EncryptionServiceMock();
 
     mock.method(process, 'cpuUsage', () => ({ user: 1000, system: 1000 }));
     mock.method(process, 'uptime', () => 10000);

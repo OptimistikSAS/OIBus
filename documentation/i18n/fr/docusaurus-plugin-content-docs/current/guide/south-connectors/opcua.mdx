@@ -109,10 +109,11 @@ lecture** n'est pas utilisé pour les souscriptions.
 
 ### Paramètres de sécurité {#security-settings}
 
-| Paramètre                 | Description                                                                              | Exemple de valeur                                   |
-| ------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| **Mode de sécurité**      | Mode de sécurité pour la connexion.                                                      | `None`, `Sign`, `Sign and encrypt`                  |
-| **Politique de sécurité** | Politique de sécurité pour la connexion. Voir la note ci-dessous pour la liste complète. | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
+| Paramètre                 | Description                                                                                                                                                                                                                  | Exemple de valeur                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **Mode de sécurité**      | Mode de sécurité pour la connexion.                                                                                                                                                                                          | `None`, `Sign`, `Sign and encrypt`                  |
+| **Politique de sécurité** | Politique de sécurité pour la connexion. Voir la note ci-dessous pour la liste complète.                                                                                                                                     | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
+| **Certificat**            | Certificat d'OIBus présenté au serveur, sélectionné dans le magasin de certificats. Requis lorsque le **Mode de sécurité** est `Sign` ou `Sign and encrypt`. Voir [Certificat de communication](#communication-certificate). | `OIBus OPC UA`                                      |
 
 :::note Valeurs de la politique de sécurité
 
@@ -240,10 +241,12 @@ synchronisation échoue plutôt que d'enregistrer des métadonnées incomplètes
 ### Certificat de communication {#communication-certificate}
 
 Lorsque le **Mode de sécurité** est défini sur `Sign` ou `Sign and Encrypt`, OIBus s'authentifie auprès du serveur OPC UA
-à l'aide d'un certificat. Ce certificat est :
-
-- **Généré automatiquement** par OIBus au premier démarrage (RSA 4096 bits, auto-signé)
-- **Emplacement** : `<OIBusData>/certs/cert.pem` — clé privée : `<OIBusData>/certs/private.pem`
+à l'aide du certificat sélectionné dans le paramètre **Certificat**, depuis le
+[magasin de certificats](../engine/certificates.md) d'OIBus : générez-y un certificat auto-signé, ou importez-en un signé
+par votre propre autorité de certification. Chaque connecteur OPC UA peut présenter son propre certificat, ou en partager
+un avec les autres. Sa clé privée reste chiffrée dans la configuration d'OIBus et n'est jamais écrite sur le disque. Un
+OIBus mis à jour depuis une version précédente présente le certificat qu'il utilisait auparavant, nommé `OIBus OPC UA`
+dans le magasin.
 
 Avant qu'une connexion sécurisée puisse être établie, **le serveur OPC UA doit faire confiance à ce certificat**. S'il n'est
 pas dans le magasin de confiance du serveur, OIBus enregistrera dans les journaux :
@@ -252,7 +255,12 @@ pas dans le magasin de confiance du serveur, OIBus enregistrera dans les journau
 The connection may have been rejected by the server
 ```
 
-Pour l'autoriser, importez ou copiez `<OIBusData>/certs/cert.pem` dans le magasin de certificats de confiance du serveur.
+Pour l'autoriser, [téléchargez le certificat](../engine/certificates.md#downloading-a-certificate) depuis le magasin de
+certificats et importez-le dans le magasin de certificats de confiance du serveur. Régénérer le certificat dans le
+magasin le remplace : le serveur doit alors faire confiance au nouveau.
+
+Lorsque le **Mode de sécurité** est `None`, le serveur ne vérifie pas le certificat d'OIBus : si aucun n'est sélectionné,
+OIBus présente un certificat qu'il génère en mémoire au démarrage.
 
 ![Exemple de certificat Prosys](@site/static/img/guide/south/opcua/prosys-opcua-simulation-server-certificates.png)
 
@@ -279,9 +287,10 @@ rejetés atterrissent dans `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI
 le dossier `certs\` situé à côté.
 
 :::tip Réutiliser le certificat généré par OIBus pour l'authentification
-Vous pouvez pointer les champs de connecteur **Chemin du fichier de certificat** et **Chemin du fichier de clé** vers le certificat propre à OIBus
-(`<OIBusData>/certs/cert.pem` et `<OIBusData>/certs/private.pem`) pour utiliser un seul certificat pour
-à la fois la sécurité au niveau du transport et l'authentification de l'utilisateur.
+Vous pouvez [télécharger le certificat](../engine/certificates.md#downloading-a-certificate) d'OIBus et
+[sa clé privée](../engine/certificates.md#downloading-the-private-key) depuis le magasin de certificats, et y faire
+pointer les champs de connecteur **Chemin du fichier de certificat** et **Chemin du fichier de clé**, pour utiliser un
+seul certificat à la fois pour la sécurité au niveau du transport et l'authentification de l'utilisateur.
 :::
 
 ## Créer un certificat d'authentification personnalisé pour Prosys {#creating-a-custom-authentication-certificate-for-prosys}

@@ -1,4 +1,6 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 
 import { DateTime } from 'luxon';
@@ -8,6 +10,7 @@ import {
   DataType,
   DataValue,
   HistoryReadRequest,
+  InMemoryCertificateKeyPairProvider,
   InMemoryCertificateStore,
   OPCUAClient,
   OPCUAClientOptions,
@@ -18,7 +21,7 @@ import {
   UserTokenType,
   Variant
 } from 'node-opcua';
-import { convertPEMtoDER, exploreCertificate } from 'node-opcua-crypto';
+import { convertPEMtoDER, exploreCertificate, split_der } from 'node-opcua-crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
 import { Instant } from '../../shared/model/common/types';
@@ -34,7 +37,9 @@ import {
   SouthOPCUASettingsSecurityPolicy
 } from '../../shared/model/connector/south-settings.model';
 
+import type { Certificate } from '../model/certificate.model';
 import type { ILogger } from '../model/logger.model';
+import type CertificateRepository from '../repository/config/certificate.repository';
 import { encryptionService } from './encryption.service';
 
 const NUM_VALUES_PER_NODE = 1000;
@@ -82,33 +87,72 @@ export const toOPCUASecurityPolicy = (
   }
 };
 
+/** applicationUri of the certificate generated when the connector uses none (node-opcua's default one) */
+const EPHEMERAL_APPLICATION_URI = `urn:${os.hostname()}:OIBus`;
+let ephemeralProvider: Promise<InMemoryCertificateKeyPairProvider> | null = null;
+
 /**
- * Read OIBus's certificate from disk and extract its applicationUri (the URN embedded
- * in subjectAltName when the cert was generated). We pass this explicitly to OPCUAClient
- * so it matches the cert — otherwise node-opcua auto-builds `urn:<hostname>:OIBus`,
- * which mismatches the cert on portable / virtualised installs and triggers W06.
+ * A certificate generated in memory once, for the connectors without certificate (security mode None, where the server
+ * does not check it): node-opcua would otherwise create one in a PKI folder on disk.
  */
-export const getOPCUAApplicationUri = async (): Promise<string | undefined> => {
-  try {
-    const certPem = await fs.readFile(encryptionService.getCertPath(), 'utf8');
-    const info = exploreCertificate(convertPEMtoDER(certPem));
-    return info.tbsCertificate.extensions?.subjectAltName?.uniformResourceIdentifier?.[0];
-  } catch {
-    // If the cert can't be parsed, fall back to node-opcua's hostname-derived default.
-    return undefined;
+const getEphemeralProvider = (): Promise<InMemoryCertificateKeyPairProvider> => {
+  ephemeralProvider ??= (async () => {
+    const provider = new InMemoryCertificateKeyPairProvider();
+    await provider.ensureCertificateExists({ applicationUri: EPHEMERAL_APPLICATION_URI, subject: '/CN=OIBus', dns: [os.hostname()] });
+    return provider;
+  })().catch((error: unknown) => {
+    ephemeralProvider = null;
+    throw error;
+  });
+  return ephemeralProvider;
+};
+
+/**
+ * The certificate OIBus presents to the OPC UA server, given to node-opcua in memory: the private key of a certificate of
+ * the store is never written to disk. With its applicationUri (the URN of its subjectAltName), which the client must
+ * announce, or the server warns (W06) and may reject the session.
+ */
+export const getOPCUACertificate = async (
+  certificate: Certificate | null
+): Promise<{ provider: InMemoryCertificateKeyPairProvider; applicationUri: string | undefined }> => {
+  if (!certificate) {
+    return { provider: await getEphemeralProvider(), applicationUri: EPHEMERAL_APPLICATION_URI };
   }
+  const certificateDer = convertPEMtoDER(certificate.certificate);
+  const chain = certificate.certificateChain ? split_der(convertPEMtoDER(certificate.certificateChain)) : [];
+  const privateKey = { hidden: crypto.createPrivateKey(encryptionService.decryptText(certificate.privateKey)) };
+  return {
+    provider: new InMemoryCertificateKeyPairProvider([certificateDer, ...chain], privateKey),
+    applicationUri: exploreCertificate(certificateDer).tbsCertificate.extensions?.subjectAltName?.uniformResourceIdentifier?.[0]
+  };
+};
+
+/**
+ * The certificate of the store selected by the settings, if any
+ */
+const findCertificate = (
+  settings: SouthOPCUASettings | NorthOPCUASettings,
+  certificateRepository: CertificateRepository
+): Certificate | null => {
+  if (!settings.certificateId) return null;
+  const certificate = certificateRepository.findById(settings.certificateId);
+  if (!certificate) {
+    throw new Error(`Could not find certificate "${settings.certificateId}"`);
+  }
+  return certificate;
 };
 
 export const createSessionConfigs = async (
   connectorId: string,
   connectorName: string,
   settings: SouthOPCUASettings | NorthOPCUASettings,
-  requestTimeout: number
+  requestTimeout: number,
+  certificateRepository: CertificateRepository
 ) => {
+  const { provider, applicationUri } = await getOPCUACertificate(findCertificate(settings, certificateRepository));
   const options: OPCUAClientOptions = {
     applicationName: 'OIBus',
-    // applicationUri must match the cert's subjectAltName URI (W06 warning + handshake rejection).
-    applicationUri: await getOPCUAApplicationUri(),
+    applicationUri,
     connectionStrategy: {
       initialDelay: 1000,
       maxRetry: 1
@@ -124,12 +168,9 @@ export const createSessionConfigs = async (
     defaultTransactionTimeout: requestTimeout,
     keepPendingSessionsOnDisconnect: false,
     clientName: `${connectorName}-${connectorId}`,
-    // Use OIBus's existing cert/key files directly — no PKI folder tree on disk, no copies.
-    // We do NOT use `certificateKeyPairProvider` because node-opcua-client's findEndpoint
-    // helper (used internally for endpoint discovery) doesn't propagate that option to its
-    // internal TmpClient. Disk paths get correctly forwarded and re-read by TmpClient.
-    certificateFile: encryptionService.getCertPath(),
-    privateKeyFile: encryptionService.getPrivateKeyPath(),
+    // The certificate and its key in memory: node-opcua also gives this provider to the client it uses to find the
+    // endpoint of the server
+    certificateKeyPairProvider: provider,
     // In-memory trust store with auto-accept — no rejected/, trusted/, issuers/ folders on disk.
     clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true })
   };

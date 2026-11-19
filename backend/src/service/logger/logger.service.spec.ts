@@ -26,7 +26,7 @@ const pinoInstance: { child: () => unknown } = { child: () => pinoInstance };
 
 // Mocked module exports: the same objects for the whole file, their values are replaced before each test
 const pinoExports: { __esModule: true; default: unknown } = { __esModule: true, default: undefined };
-const encryptionExports = { __esModule: true, encryptionService: new EncryptionServiceMock('', '') };
+const encryptionExports = { __esModule: true, encryptionService: new EncryptionServiceMock() };
 
 let LoggerService: typeof LoggerServiceType;
 
@@ -80,7 +80,7 @@ describe('Logger', () => {
     pinoTransport = mock.fn((_options: { targets: Array<{ target: string }> }) => transport);
     pino = mock.fn((_options: unknown) => pinoInstance);
     pinoExports.default = Object.assign(pino, { transport: pinoTransport, stdTimeFunctions: { isoTime } });
-    encryptionService = new EncryptionServiceMock('', '');
+    encryptionService = new EncryptionServiceMock();
     encryptionExports.encryptionService = encryptionService;
 
     service = new LoggerService();
@@ -116,7 +116,6 @@ describe('Logger', () => {
           interval: engineSettings.logger.oia.interval,
           registrationSettings: registration,
           configDatabasePath: 'oibus.db',
-          certsFolder: '',
           cryptoSettings: {}
         },
         level: engineSettings.logger.oia.level
@@ -189,7 +188,6 @@ describe('Logger', () => {
           interval: specificSettings.logger.oia.interval,
           registrationSettings: specificRegistration,
           configDatabasePath: 'oibus.db',
-          certsFolder: '',
           cryptoSettings: {}
         },
         level: specificSettings.logger.oia.level

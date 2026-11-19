@@ -36,6 +36,7 @@ import {
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import CertificateRepository from '../../repository/config/certificate.repository';
 import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 import {
@@ -239,7 +240,8 @@ export default class SouthOPCUA
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    cacheFolderPath: string
+    cacheFolderPath: string,
+    private readonly certificateRepository: CertificateRepository
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
@@ -512,7 +514,8 @@ export default class SouthOPCUA
       this.connector.id,
       this.connector.name,
       this.connector.settings,
-      this.connector.settings.readTimeout
+      this.connector.settings.readTimeout,
+      this.certificateRepository
     );
     this.logger.debug(`Connecting to OPC UA on ${this.connector.settings.url}`);
     const connectStart = DateTime.now().toMillis();

@@ -55,7 +55,6 @@ const CACHE_DATABASE = 'cache.db';
 const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'logs.db';
 const METRICS_DB_NAME = 'metrics.db';
-const CERT_FOLDER = 'certs';
 const HELPERS_FOLDER = 'helpers';
 // The Windows drivers (@oibus/oledb, @oibus/opc-classic, @oibus/pi) copy their helper executable out of the OIBus binary
 // before running it, and check its SHA-256 first. They copy it into the data folder rather than the temporary folder of
@@ -121,7 +120,7 @@ export async function bootstrap(): Promise<void> {
     console.error('Error while loading OIBus crypto settings from database');
     return;
   }
-  await encryptionService.init(cryptoSettings, path.resolve(CERT_FOLDER));
+  encryptionService.init(cryptoSettings);
 
   if (version) {
     console.info(`OIBus version: ${oibusSettings.version}`);

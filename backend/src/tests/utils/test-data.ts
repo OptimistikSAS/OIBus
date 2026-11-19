@@ -2388,7 +2388,8 @@ export default Object.freeze({
   engine: {
     settings: engineSettings,
     crypto: {
-      securityKey: 'security-key'
+      securityKey: 'security-key',
+      tokenSecret: 'token-secret'
     },
     command: engineSettingsCommand,
     generalCommand: engineGeneralCommand,

@@ -53,7 +53,6 @@ interface OIAnalyticsOptions {
   interval: number;
   batchLimit?: number;
   cryptoSettings: CryptoSettings;
-  certsFolder: string;
 }
 
 /**
@@ -180,9 +179,9 @@ class OianalyticsTransport {
   };
 }
 
-const createTransport = async (opts: OIAnalyticsOptions) => {
+const createTransport = (opts: OIAnalyticsOptions) => {
   const oianalyticsTransport = new OianalyticsTransport(opts);
-  await encryptionService.init(opts.cryptoSettings, opts.certsFolder);
+  encryptionService.init(opts.cryptoSettings);
   return build(
     async source => {
       for await (const log of source) {

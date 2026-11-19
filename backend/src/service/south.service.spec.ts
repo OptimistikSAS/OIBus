@@ -230,7 +230,7 @@ describe('South Service', () => {
   before(() => {
     mockModule(nodeRequire, './utils', utilsExports);
     mockModule(nodeRequire, '../south/south-connector-factory', southConnectorFactory);
-    mockModule(nodeRequire, './encryption.service', { encryptionService: new EncryptionServiceMock('', '') });
+    mockModule(nodeRequire, './encryption.service', { encryptionService: new EncryptionServiceMock() });
 
     const mod = reloadModule<{
       default: typeof SouthServiceType;

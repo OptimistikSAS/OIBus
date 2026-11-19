@@ -132,7 +132,7 @@ describe('SouthOLEDB', () => {
     mockModule(nodeRequire, './oledb-loader', loaderExports);
     mockModule(nodeRequire, '../../service/encryption.service', {
       __esModule: true,
-      encryptionService: new EncryptionServiceMock('', '')
+      encryptionService: new EncryptionServiceMock()
     });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: () => logger },

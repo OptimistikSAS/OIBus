@@ -65,8 +65,8 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 /**
- * OIBus now creates its configuration, its crypto database and its private key for the user running it only. Those
- * created before are restricted once, here: afterwards, their permissions are left to the administrator. Only on Linux
+ * OIBus now creates its configuration and its crypto database for the user running it only (its private key, in certs/,
+ * moves to the certificate store of oibus.db). Those created before are restricted once, here: afterwards, their permissions are left to the administrator. Only on Linux
  * and macOS, Windows ignoring these modes (its installers restrict the data folder with ACLs). A failure is reported
  * without stopping the migration: OIBus keeps working with the current permissions.
  */
@@ -74,9 +74,7 @@ export async function restrictKeyMaterial(dataFolder: string): Promise<void> {
   if (process.platform === 'win32') return;
   const restrictions: Array<[string, number]> = [
     ['oibus.db', 0o600],
-    ['crypto.db', 0o600],
-    ['certs', 0o700],
-    [path.join('certs', 'private.pem'), 0o600]
+    ['crypto.db', 0o600]
   ];
   for (const [file, mode] of restrictions) {
     try {

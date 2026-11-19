@@ -558,6 +558,7 @@ export interface SouthOPCUASettings {
   retryInterval: number;
   securityMode: SouthOPCUASettingsSecurityMode;
   securityPolicy?: SouthOPCUASettingsSecurityPolicy;
+  certificateId?: string | null;
   maxParallelRun: number;
   readTimeout: number;
   authentication: SouthOPCUASettingsAuthentication;

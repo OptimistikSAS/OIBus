@@ -22,7 +22,7 @@ type OIAnalyticsSessionServiceType = SessionModule.default;
 
 const nodeRequire = createRequire(import.meta.url);
 
-const encryptionServiceExports = { encryptionService: new EncryptionServiceMock('', '') };
+const encryptionServiceExports = { encryptionService: new EncryptionServiceMock() };
 const TMP_FOLDER = path.join(os.tmpdir(), `oibus-session-service-spec-${process.pid}`);
 const REGISTRATION = testData.oIAnalytics.registration.completed;
 const SOUTH_SETTINGS = { host: 'localhost' } as never;
@@ -80,7 +80,7 @@ describe('OIAnalytics Session Service', () => {
     mock.timers.enable({ apis: ['setTimeout'] });
     now = 0;
     mock.method(Date, 'now', () => now);
-    encryptionService = encryptionServiceExports.encryptionService = new EncryptionServiceMock('', '');
+    encryptionService = encryptionServiceExports.encryptionService = new EncryptionServiceMock();
     encryptionService.decryptText.mock.mockImplementation(() => 'private key');
     encryptionService.decryptSecretsWithPrivateKey.mock.mockImplementation(
       <T>(settings: T) => ({ ...(settings as object), decrypted: true }) as T

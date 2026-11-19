@@ -28,6 +28,7 @@ describe('CryptoRepository', () => {
 
     assert.ok(result !== null);
     assert.strictEqual(result!.securityKey, testData.engine.crypto.securityKey);
+    assert.strictEqual(result!.tokenSecret, testData.engine.crypto.tokenSecret);
   });
 
   it('should return null when crypto settings do not exist', () => {
@@ -58,5 +59,7 @@ describe('CryptoRepository', () => {
     const result = repository.getCryptoSettings(newId);
     assert.ok(result !== null);
     assert.ok(result!.securityKey.length > 0);
+    assert.ok(result!.tokenSecret.length > 0);
+    assert.notStrictEqual(result!.tokenSecret, result!.securityKey);
   });
 });

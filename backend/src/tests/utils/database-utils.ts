@@ -247,7 +247,8 @@ const createCryptoSettings = async (database: knex.Knex, oibusId: string, crypto
   await database
     .insert({
       id: oibusId,
-      security_key: cryptoSetting.securityKey
+      security_key: cryptoSetting.securityKey,
+      token_secret: cryptoSetting.tokenSecret
     })
     .into('crypto');
 };
