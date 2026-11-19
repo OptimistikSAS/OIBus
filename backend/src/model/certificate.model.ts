@@ -22,6 +22,14 @@ export interface CertificateKeyPair {
   privateKey: string;
 }
 
+/**
+ * What uses a certificate of the store: a connector, a history query or the web server (HTTPS)
+ */
+export interface CertificateUsage {
+  type: 'south' | 'north' | 'history-query' | 'web-server';
+  name: string;
+}
+
 export interface CertificateImportCommand {
   name: string;
   description: string;

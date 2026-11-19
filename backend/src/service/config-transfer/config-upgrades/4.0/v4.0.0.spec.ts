@@ -735,6 +735,28 @@ describe('4.0.0 config upgrade', () => {
       assert.deepStrictEqual((historyQuery.northSettings as JsonObject).authentication, { type: 'cert', certificateId: null });
     });
 
+    it('gives the OPC UA connectors and history queries in a Sign mode a communication certificate to select', () => {
+      const config = buildConfig();
+      const settingsOf = (connector: JsonObject) => (connector.settings as JsonObject).settings as JsonObject;
+      const [opcuaSouth, mqttSouth] = config.southConnectors as Array<JsonObject>;
+      const [opcuaNorth] = config.northConnectors as Array<JsonObject>;
+      Object.assign(settingsOf(opcuaSouth), { securityMode: 'sign' });
+      Object.assign(settingsOf(mqttSouth), { securityMode: 'sign' });
+      Object.assign(settingsOf(opcuaNorth), { securityMode: 'sign-and-encrypt', certificateId: 'certificate-id' });
+      const [historyQuery] = (config.historyQueries as Array<JsonObject>).map(h => h.settings as JsonObject);
+      Object.assign(historyQuery.southSettings as JsonObject, { securityMode: 'sign' });
+      Object.assign(historyQuery.northSettings as JsonObject, { securityMode: 'none' });
+
+      upgrade.apply(config);
+
+      // null, as their secrets: the certificate is selected once imported; an existing one is kept, a None mode needs none
+      assert.strictEqual(settingsOf(opcuaSouth).certificateId, null);
+      assert.strictEqual(settingsOf(mqttSouth).certificateId, undefined);
+      assert.strictEqual(settingsOf(opcuaNorth).certificateId, 'certificate-id');
+      assert.strictEqual((historyQuery.southSettings as JsonObject).certificateId, null);
+      assert.strictEqual((historyQuery.northSettings as JsonObject).certificateId, undefined);
+    });
+
     it('is safe to run twice', () => {
       const once = upgrade.apply(buildConfig());
 

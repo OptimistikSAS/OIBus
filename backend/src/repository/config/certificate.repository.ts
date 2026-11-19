@@ -1,6 +1,6 @@
 import { Database } from 'better-sqlite3';
 
-import { Certificate } from '../../model/certificate.model';
+import { Certificate, CertificateUsage } from '../../model/certificate.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 
 const CERTIFICATES_TABLE = 'certificates';
@@ -32,6 +32,21 @@ export default class CertificateRepository {
       .prepare(query)
       .all()
       .map(result => this.toCertificate(result as Record<string, string>));
+  }
+
+  /**
+   * What uses a certificate: the settings of the connectors and history queries refer to it by a `certificateId` key, at any
+   * depth (as their manifests name every certificate field), and the web server by its HTTPS certificate
+   */
+  findUsages(certificateId: string): Array<CertificateUsage> {
+    const referringTo = (column: string) =>
+      `EXISTS (SELECT 1 FROM json_tree(${column}) WHERE key = 'certificateId' AND type = 'text' AND atom = @certificateId)`;
+    const query =
+      `SELECT 'south' AS type, name FROM south_connectors WHERE ${referringTo('settings')} ` +
+      `UNION ALL SELECT 'north' AS type, name FROM north_connectors WHERE ${referringTo('settings')} ` +
+      `UNION ALL SELECT 'history-query' AS type, name FROM history_queries WHERE ${referringTo('south_settings')} OR ${referringTo('north_settings')} ` +
+      `UNION ALL SELECT 'web-server' AS type, name FROM engines WHERE https_certificate_source = 'store' AND https_certificate_id = @certificateId;`;
+    return this.database.prepare(query).all({ certificateId }) as Array<CertificateUsage>;
   }
 
   findById(id: string): Certificate | null {

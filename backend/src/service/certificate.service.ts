@@ -1,7 +1,7 @@
 import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat } from '../../shared/model/api/certificate.model';
 import { GetUserInfo } from '../../shared/model/common/types';
 
-import { Certificate, CertificateImportCommand, CertificateKeyPair } from '../model/certificate.model';
+import { Certificate, CertificateImportCommand, CertificateKeyPair, CertificateUsage } from '../model/certificate.model';
 import type { ILogger } from '../model/logger.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -176,12 +176,32 @@ export default class CertificateService {
     return content;
   }
 
+  /**
+   * Delete a certificate, unless a connector, a history query or the web server uses it: they could no longer connect, or
+   * serve HTTPS
+   */
   delete(certificateId: string, userId: string): void {
     const certificate = this.findById(certificateId);
+    const usages = this.certificateRepository.findUsages(certificate.id);
+    if (usages.length > 0) {
+      throw new OIBusValidationError(
+        `Certificate "${certificate.name}" is used by ${usages.map(describeUsage).join(', ')}: select another certificate there before deleting it`
+      );
+    }
     this.certificateRepository.delete(certificate.id, userId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }
+
+const USAGE_LABELS: Record<CertificateUsage['type'], string> = {
+  south: 'the South connector',
+  north: 'the North connector',
+  'history-query': 'the history query',
+  'web-server': 'the web server (HTTPS)'
+};
+
+const describeUsage = (usage: CertificateUsage): string =>
+  usage.type === 'web-server' ? USAGE_LABELS[usage.type] : `${USAGE_LABELS[usage.type]} "${usage.name}"`;
 
 export const toCertificateDTO = (certificate: Certificate, getUserInfo: GetUserInfo): CertificateDTO => {
   return {

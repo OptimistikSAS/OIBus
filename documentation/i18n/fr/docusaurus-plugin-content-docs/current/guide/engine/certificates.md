@@ -45,6 +45,7 @@ Les paquets PKCS#12 / `.pfx` ne sont pas pris en charge. Extrayez d'abord le cer
 openssl pkcs12 -in bundle.pfx -clcerts -nokeys -out certificate.pem
 openssl pkcs12 -in bundle.pfx -nocerts -nodes -out private-key.pem
 ```
+
 :::
 
 ## Télécharger un certificat {#downloading-a-certificate}
@@ -72,3 +73,8 @@ Vous pouvez inspecter ou convertir la clé téléchargée avec :
 ```bash
 openssl pkcs8 -in private-key.pem -passin pass:yourpassphrase -noout
 ```
+
+## Supprimer un certificat {#deleting-a-certificate}
+
+Un certificat utilisé par un connecteur, une requête d'historique ou le serveur web (HTTPS) ne peut pas être supprimé :
+OIBus indique ce qui l'utilise, pour qu'un autre certificat y soit d'abord sélectionné.

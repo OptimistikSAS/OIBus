@@ -6,7 +6,7 @@ import * as forge from 'node-forge';
 import { CertificateCommandDTO } from '../../shared/model/api/certificate.model';
 
 import type { CertificateImportCommand } from '../model/certificate.model';
-import { NotFoundError } from '../model/types';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 import type CertificateRepository from '../repository/config/certificate.repository';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
@@ -73,7 +73,7 @@ describe('Certificate Service', () => {
 
   beforeEach(() => {
     validator = createMock<JoiValidator>();
-    certificateRepository = createMock<CertificateRepository>();
+    certificateRepository = createMock<CertificateRepository>({ findUsages: () => [] });
     mock.method(encryptionService, 'generateSelfSignedCertificate', async () => ({ public: 'public', private: 'private', cert: certPem }));
     mock.method(encryptionService, 'encryptText', (text: string) => text);
     decryptTextMock = mock.method(encryptionService, 'decryptText', (text: string) => text);
@@ -197,6 +197,23 @@ describe('Certificate Service', () => {
       command.description,
       'userTest'
     ]);
+  });
+
+  it('should not delete a certificate in use', () => {
+    certificateRepository.findById.mock.mockImplementation(() => testData.certificates.list[0]);
+    certificateRepository.findUsages.mock.mockImplementation(() => [
+      { type: 'south', name: 'OPC UA' },
+      { type: 'web-server', name: 'OIBus' }
+    ]);
+
+    assert.throws(
+      () => service.delete(testData.certificates.list[0].id, 'userTest'),
+      new OIBusValidationError(
+        `Certificate "${testData.certificates.list[0].name}" is used by the South connector "OPC UA", the web server (HTTPS): ` +
+          'select another certificate there before deleting it'
+      )
+    );
+    assert.strictEqual(certificateRepository.delete.mock.callCount(), 0);
   });
 
   it('should delete a certificate', async () => {

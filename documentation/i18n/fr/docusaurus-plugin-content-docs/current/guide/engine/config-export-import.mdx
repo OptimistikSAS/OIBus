@@ -104,6 +104,9 @@ quelle :
   certificat, chaîne de certificats, expiration) est recréée sous son ID d'origine afin que tout ce qui y fait
   référence continue de fonctionner, mais la clé privée doit être réimportée manuellement avant que le certificat
   puisse être utilisé pour TLS.
+- **Les connecteurs OPC UA exportés par OIBus 3.x sont importés sans leurs certificats**, qu'OIBus 3.x ne conservait
+  pas dans le magasin de certificats : sélectionnez le certificat présenté au serveur (modes `Sign`) et le certificat
+  utilisateur (authentification `Certificate`) dans leurs paramètres.
 - **HTTPS est importé désactivé.** Les paramètres du serveur web, y compris ceux du certificat HTTPS, sont importés,
   mais HTTPS n'est pas activé : les certificats importés n'ont pas de clé privée, et les fichiers de certificat peuvent
   ne pas exister sur cette machine. Un avertissement invite à le réactiver dans les paramètres du serveur web une fois
