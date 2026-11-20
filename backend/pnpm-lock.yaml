@@ -39,8 +39,8 @@ importers:
         specifier: 0.45.2
         version: 0.45.2
       azure-kusto-data:
-        specifier: 7.2.0
-        version: 7.2.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
+        specifier: 8.0.0
+        version: 8.0.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
       azure-kusto-ingest:
         specifier: 7.2.0
         version: 7.2.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
@@ -398,6 +398,10 @@ packages:
     resolution: {integrity: sha512-eGwxD0AtncrxeBM4tG8R55Pc3rdX1hNW2WibJAgYpCVA6E93mvvVH+LcssoVjOBrSKWS55yEIHsk0X8ctHmfOQ==}
     engines: {node: '>=22.0.0'}
 
+  '@azure/core-util@1.13.1':
+    resolution: {integrity: sha512-XPArKLzsvl0Hf0CaGyKHUyVgF7oDnhKoP85Xv6M4StF/1AhfORhZudHtOyf2s+FcbuQ9dPRAjB8J2KvRRMUK2A==}
+    engines: {node: '>=20.0.0'}
+
   '@azure/core-util@1.14.0':
     resolution: {integrity: sha512-9n2pWK61veAuN0V20t9lOuoV4CFMdyAZ1ygZzvBGk/pBBJRib/PjL9PLXa/aI2CcPpyHfqVsxxqLCYl6uZlfDw==}
     engines: {node: '>=22.0.0'}
@@ -408,6 +412,10 @@ packages:
 
   '@azure/data-tables@13.3.2':
     resolution: {integrity: sha512-PZ8e4SnCpTQEbQ1P+CK6NR7Vhb86Jw1S1qJi2IcF1ij4qiPX2b4vIemwNPkYg/gZGMqKbxkPvGRpRmEbBYdXuA==}
+    engines: {node: '>=20.0.0'}
+
+  '@azure/identity@4.13.1':
+    resolution: {integrity: sha512-5C/2WD5Vb1lHnZS16dNQRPMjN6oV/Upba+C9nBIs15PmOi6A3ZGs4Lr2u60zw4S04gi+u3cEXiqTVP7M4Pz3kw==}
     engines: {node: '>=20.0.0'}
 
   '@azure/identity@4.14.1':
@@ -430,9 +438,17 @@ packages:
     resolution: {integrity: sha512-i2CKKyuCuOZEBZJiAoFK/viYZAP6CRaqqlkeHl3ViteDHOUE/tkI/Slq1cdGnwhkIB+k1OE0g00QGl9O0gAFNQ==}
     engines: {node: '>=0.8.0'}
 
+  '@azure/msal-common@16.13.0':
+    resolution: {integrity: sha512-rOAy0KUcyBbdwVJ+f3uPpthXatFLLZN+/KWAsTLzk1aB23Xl9DRmmXYwSvBFOZyXj4jUQQ5FKxxRkhAFW1fOow==}
+    engines: {node: '>=0.8.0'}
+
   '@azure/msal-common@16.15.0':
     resolution: {integrity: sha512-lwdLb1B9Q5nEhPLVIKe78XH5wFMN15fCiDkY7ylPDSWZuWcD93G3jpJajrKhO3CQld8SLKz0sHiOi24mxdvtsg==}
     engines: {node: '>=0.8.0'}
+
+  '@azure/msal-node@5.6.0':
+    resolution: {integrity: sha512-uFY9NxrWHw8PwZx7gAX6PDn+9vdfS05+levc/kwkx77IkjfaldnQbbcQzzDIZ5Hq5Zdr6/z92oAIoRWKp6MnOA==}
+    engines: {node: '>=20'}
 
   '@azure/msal-node@7.1.2':
     resolution: {integrity: sha512-52hKQLGpEQzwNufIXG1SPVU+wQ3RIe7Rp2+g+VdAmZojCAZ6yCdGEffzQEQ6RnBZGBEs40nl14rWBmfJpCoHsg==}
@@ -1445,6 +1461,10 @@ packages:
   azure-kusto-data@7.2.0:
     resolution: {integrity: sha512-uDB6rTxggq4sv7OvOzERm0N75zLUCj7BiDdBSdfOVrm05guMSR02hO94yxSCqkhZYQZEAlvwzp1OE1T+fONcaw==}
     engines: {node: '>= 20.0.0'}
+
+  azure-kusto-data@8.0.0:
+    resolution: {integrity: sha512-kSGKQMelMl8LYcwdvuNsYT0hYMDXCa602rESEFMQcj15bqqgr5YZgnfMrpGiGUiAKJNRygVAlT28qMXqHDaLHA==}
+    engines: {node: '>=22.12.0'}
 
   azure-kusto-ingest@7.2.0:
     resolution: {integrity: sha512-t++BRyPoV4KGNgQ8b21GrRt+d2bdG1Ul0OYzGHBgI/hzfU1NZ0Dz7aeZl4WcBkXfdCu1t+Kuey+C6NlHoAfUYg==}
@@ -3135,6 +3155,10 @@ packages:
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
 
+  open@10.2.0:
+    resolution: {integrity: sha512-YgBpdJHPyQ2UE5x+hlSXcnejzAvD0b22U2OuAP+8OnlJT+PjWPxtgmGqKKc+RgTM63U9gN0YzrYc71R2WT/hTA==}
+    engines: {node: '>=18'}
+
   open@11.0.4:
     resolution: {integrity: sha512-++Zlftm0kVLPmzC06t6epuWmcRMDbI4z5P3NNX979WA/k23+NtSOynEGzsVfZwguKw2mi5umVgnBlJQMwRz4Pg==}
     engines: {node: '>=20'}
@@ -3877,6 +3901,10 @@ packages:
   uuid-validate@0.0.3:
     resolution: {integrity: sha512-Fykw5U4eZESbq739BeLvEBFRuJODfrlmjx5eJux7W817LjRaq4b7/i4t2zxQmhcX+fAj4nMfRdTzO4tmwLKn0w==}
 
+  uuid@14.0.3:
+    resolution: {integrity: sha512-Sc5u1VVln93y1Xnz4R+CunOZc7R9LUcTmhj7Rc7Eg3HVcf7rVn2FOoa812fe0W8p3jD7xeoGSYbfqCGGH2B6xw==}
+    hasBin: true
+
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
@@ -3965,6 +3993,10 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  wsl-utils@0.1.0:
+    resolution: {integrity: sha512-h3Fbisa2nKGPxCpm89Hk33lBLsnaGBvctQopaBSOW/uIs6FTe1ATyAnKFJrzVs9vpGdsTe73WF3V4lIsk4Gacw==}
+    engines: {node: '>=18'}
 
   wsl-utils@1.0.1:
     resolution: {integrity: sha512-c16PKLIRxBYpR3jSWsdS7SFp0COm5SOQdiFjY818dYFHJbMGuLBszpF07LBWmOS1uzrHa9VGdynsEgoeKy0oOQ==}
@@ -4269,6 +4301,14 @@ snapshots:
     dependencies:
       tslib: 2.9.1
 
+  '@azure/core-util@1.13.1(supports-color@7.2.0)':
+    dependencies:
+      '@azure/abort-controller': 2.2.0
+      '@typespec/ts-http-runtime': 0.3.9(supports-color@7.2.0)
+      tslib: 2.9.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@azure/core-util@1.14.0(supports-color@7.2.0)':
     dependencies:
       '@azure/abort-controller': 2.2.0
@@ -4292,6 +4332,22 @@ snapshots:
       '@azure/core-util': 1.14.0(supports-color@7.2.0)
       '@azure/core-xml': 1.6.0
       '@azure/logger': 1.4.0(supports-color@7.2.0)
+      tslib: 2.9.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/identity@4.13.1(supports-color@7.2.0)':
+    dependencies:
+      '@azure/abort-controller': 2.2.0
+      '@azure/core-auth': 1.11.0(supports-color@7.2.0)
+      '@azure/core-client': 1.11.1(supports-color@7.2.0)
+      '@azure/core-rest-pipeline': 1.25.0(supports-color@7.2.0)
+      '@azure/core-tracing': 1.4.0
+      '@azure/core-util': 1.13.1(supports-color@7.2.0)
+      '@azure/logger': 1.4.0(supports-color@7.2.0)
+      '@azure/msal-browser': 5.27.0
+      '@azure/msal-node': 5.6.0
+      open: 10.2.0
       tslib: 2.9.1
     transitivePeerDependencies:
       - supports-color
@@ -4353,7 +4409,14 @@ snapshots:
     dependencies:
       '@azure/msal-common': 16.15.0
 
+  '@azure/msal-common@16.13.0': {}
+
   '@azure/msal-common@16.15.0': {}
+
+  '@azure/msal-node@5.6.0':
+    dependencies:
+      '@azure/msal-common': 16.13.0
+      jsonwebtoken: 9.0.3
 
   '@azure/msal-node@7.1.2':
     dependencies:
@@ -5612,6 +5675,20 @@ snapshots:
       https-browserify: 1.0.0
       stream-http: 3.2.0
       uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  azure-kusto-data@8.0.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0):
+    dependencies:
+      '@azure/core-auth': 1.11.0(supports-color@7.2.0)
+      '@azure/core-util': 1.13.1(supports-color@7.2.0)
+      '@azure/identity': 4.13.1(supports-color@7.2.0)
+      axios: 1.21.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
+      follow-redirects: 1.16.2(debug@4.4.3(supports-color@7.2.0))
+      https-browserify: 1.0.0
+      stream-http: 3.2.0
+      uuid: 14.0.3
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -7884,6 +7961,13 @@ snapshots:
     dependencies:
       wrappy: 1.0.2
 
+  open@10.2.0:
+    dependencies:
+      default-browser: 5.5.1
+      define-lazy-prop: 3.0.0
+      is-inside-container: 1.0.0
+      wsl-utils: 0.1.0
+
   open@11.0.4:
     dependencies:
       default-browser: 5.5.1
@@ -8753,6 +8837,8 @@ snapshots:
 
   uuid-validate@0.0.3: {}
 
+  uuid@14.0.3: {}
+
   uuid@8.3.2: {}
 
   v8-to-istanbul@9.3.0:
@@ -8847,6 +8933,10 @@ snapshots:
   wrappy@1.0.2: {}
 
   ws@8.22.1: {}
+
+  wsl-utils@0.1.0:
+    dependencies:
+      is-wsl: 3.1.1
 
   wsl-utils@1.0.1:
     dependencies:
