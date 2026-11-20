@@ -692,6 +692,28 @@ describe('SouthRestAPI connector', () => {
     assert.strictEqual(fsMock.unlink.mock.calls[0].arguments[0], (cbArgs[1] as { filePath: string }).filePath);
   });
 
+  it('should delete the temp file even when it cannot be cached', async () => {
+    const item1 = createItem({ endpoint: '/item1' });
+    mock.method(
+      south,
+      'queryData',
+      mock.fn(async () => ({ filename: 'REST-Test Item-random-id.json', content: 'content', maxInstant: null }))
+    );
+    addContentCallback.mock.mockImplementationOnce(async () => {
+      throw new Error('cache error');
+    });
+
+    await assert.rejects(south.historyQuery([item1], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2), {
+      message: 'cache error'
+    });
+
+    assert.strictEqual(fsMock.unlink.mock.calls.length, 1);
+    assert.strictEqual(
+      fsMock.unlink.mock.calls[0].arguments[0],
+      (addContentCallback.mock.calls[0].arguments[1] as { filePath: string }).filePath
+    );
+  });
+
   it('should log an error but not throw if deleting the temp file fails after caching', async () => {
     const item1 = createItem({ endpoint: '/item1' });
     mock.method(

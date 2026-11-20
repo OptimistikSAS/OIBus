@@ -558,6 +558,45 @@ describe('CacheService', () => {
     assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 200, error: 0, archive: 0 });
   });
 
+  it('should queue the content added while the cache folder is scanned', async () => {
+    generateRandomIdMock.mock.mockImplementation(() => 'added');
+    writeFileMock.mock.mockImplementation(async () => undefined);
+    readdirMock.mock.mockImplementation(async (folder: string) =>
+      folder === path.join(service.cacheFolder, METADATA_FOLDER) || folder === path.join(service.cacheFolder, CONTENT_FOLDER)
+        ? ['file1']
+        : []
+    );
+    // A south keeps sending data while the north restarts: content is added once the folders are listed
+    readFileMock.mock.mockImplementation(async () => {
+      await service.addCacheContent(Buffer.from('abc'), { contentType: 'any' });
+      return JSON.stringify(fileList[0].metadata);
+    });
+
+    await service.start();
+
+    // Missing from the scan, it used to stay in the cache folder, never sent nor removed
+    assert.deepStrictEqual(
+      (priv()['queue'] as Array<{ filename: string }>).map(element => element.filename),
+      ['file1', 'added']
+    );
+    assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 103, error: 0, archive: 0 });
+    assert.strictEqual(service.getNumberOfRawFilesInQueue(), 1);
+    assert.strictEqual(priv()['addedDuringScan'], null);
+  });
+
+  it('should wait for the end of the scan before updating the cache content', async () => {
+    readdirMock.mock.mockImplementation(async () => []);
+    const startPromise = service.start();
+    const order: Array<string> = [];
+    const updatePromise = service
+      .updateCacheContent({ cache: { remove: [], move: [] }, error: { remove: [], move: [] }, archive: { remove: [], move: [] } })
+      .then(() => order.push('update'));
+    await startPromise.then(() => order.push('start'));
+    await updatePromise;
+
+    assert.deepStrictEqual(order, ['start', 'update']);
+  });
+
   it('should drop the queued entries whose content is missing instead of sending them', async () => {
     const missing1 = { filename: 'missing1', metadata: { ...fileList[2].metadata, contentSize: 10 } };
     const missing2 = { filename: 'missing2', metadata: { ...fileList[4].metadata, contentSize: 20 } };
@@ -582,10 +621,10 @@ describe('CacheService', () => {
     assert.deepStrictEqual(
       rmMock.mock.calls.map(c => c.arguments[0]),
       [
-        path.join(service.cacheFolder, CONTENT_FOLDER, 'missing1'),
         path.join(service.cacheFolder, METADATA_FOLDER, 'missing1'),
-        path.join(service.cacheFolder, CONTENT_FOLDER, 'missing2'),
-        path.join(service.cacheFolder, METADATA_FOLDER, 'missing2')
+        path.join(service.cacheFolder, CONTENT_FOLDER, 'missing1'),
+        path.join(service.cacheFolder, METADATA_FOLDER, 'missing2'),
+        path.join(service.cacheFolder, CONTENT_FOLDER, 'missing2')
       ]
     );
     assert.ok(
@@ -773,7 +812,7 @@ describe('CacheService', () => {
 
     assert.deepStrictEqual(
       rmMock.mock.calls.map(c => c.arguments[0]),
-      [path.join(service.cacheFolder, CONTENT_FOLDER, 'random'), path.join(service.cacheFolder, METADATA_FOLDER, 'random')]
+      [path.join(service.cacheFolder, METADATA_FOLDER, 'random'), path.join(service.cacheFolder, CONTENT_FOLDER, 'random')]
     );
     assert.strictEqual(service.cacheIsEmpty(), true);
     assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 0, error: 0, archive: 0 });
@@ -1056,7 +1095,7 @@ describe('CacheService', () => {
         )
       );
 
-      priv()['deleteCacheEntry'] = mock.fn();
+      priv()['deleteCacheEntry'] = mock.fn(async () => true);
 
       const result = await (
         priv()['accumulateContent'] as unknown as (
@@ -1074,7 +1113,7 @@ describe('CacheService', () => {
 
       // Verify Error Handling
       assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while reading file')));
-      assert.deepStrictEqual(privMock('deleteCacheEntry').mock.calls[0].arguments, ['cache', 'bad.json']);
+      assert.deepStrictEqual(privMock('deleteCacheEntry').mock.calls[0].arguments, ['cache', 'bad.json', fileList[1].metadata.contentSize]);
       assert.strictEqual(
         (priv()['queue'] as Array<{ filename: string }>).find(f => f.filename === 'bad.json'),
         undefined
@@ -1188,7 +1227,7 @@ describe('CacheService', () => {
       }));
       // Merged file is smaller than the sum of its parts: one pair of JSON brackets is gone
       priv()['overwriteCacheFile'] = mock.fn(async () => 21);
-      priv()['deleteCacheEntry'] = mock.fn(async () => undefined);
+      priv()['deleteCacheEntry'] = mock.fn(async () => true);
 
       await service.compactQueue(100, 'typeB'); // nothing to do on this type
       assert.strictEqual(privMock('overwriteCacheFile').mock.calls.length, 0);
@@ -1216,6 +1255,40 @@ describe('CacheService', () => {
       // 6. Cache size resynced with what is now on disk
       assert.strictEqual((priv()['cacheSize'] as CacheSize).cache, 21);
       assert.strictEqual(cacheSizeListener.mock.calls.length, 1);
+    });
+
+    it('should keep counting a merged file that cannot be deleted yet, and retry its removal', async () => {
+      const item1 = { filename: '1.json', metadata: { contentType: 'typeA', contentSize: 10 } };
+      const item2 = { filename: '2.json', metadata: { contentType: 'typeA', contentSize: 12 } };
+      priv()['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
+      priv()['cacheSize'] = { cache: 22, error: 0, archive: 0 };
+      priv()['accumulateContent'] = mock.fn(async () => ({
+        newListOfContent: [{ a: 1 }, { b: 2 }],
+        remainder: [],
+        compactedFiles: [item1, item2]
+      }));
+      priv()['overwriteCacheFile'] = mock.fn(async () => 21);
+      // The merged file is locked: its metadata is removed, not its content
+      rmMock.mock.mockImplementation(async (filePath: string) => {
+        if (filePath === path.join(service.cacheFolder, CONTENT_FOLDER, '2.json')) {
+          throw Object.assign(new Error('EBUSY'), { code: 'EBUSY' });
+        }
+      });
+
+      await service.compactQueue(100, 'typeA');
+
+      // Out of the queue (its elements are in 1.json), but still on disk: counted until removed, so a history query
+      // does not finish with it left behind
+      assert.deepStrictEqual(priv()['queue'], [item1]);
+      assert.strictEqual((priv()['cacheSize'] as CacheSize).cache, 33);
+      assert.strictEqual(service.cacheIsEmpty(), false);
+
+      // Removed at the next send
+      rmMock.mock.mockImplementation(async () => undefined);
+      priv()['queue'] = [];
+      assert.strictEqual(await service.getCacheContentToSend(100), null);
+      assert.strictEqual((priv()['cacheSize'] as CacheSize).cache, 21);
+      assert.strictEqual(service.cacheIsEmpty(), true);
     });
 
     it('should handle remainder by writing to last file', async () => {
@@ -1483,36 +1556,51 @@ describe('CacheService', () => {
     });
   });
 
-  it('should delete cache entry content before its metadata', async () => {
-    await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string) => Promise<void>)('error', 'file');
+  it('should delete cache entry metadata before its content', async () => {
+    const deleted = await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string, size: number) => Promise<boolean>)(
+      'error',
+      'file',
+      10
+    );
 
     const rmOptions = { recursive: true, force: true, maxRetries: 5, retryDelay: 100 };
+    assert.strictEqual(deleted, true);
     assert.deepStrictEqual(
       rmMock.mock.calls.map(c => c.arguments),
       [
-        [path.join(service.errorFolder, CONTENT_FOLDER, 'file'), rmOptions],
-        [path.join(service.errorFolder, METADATA_FOLDER, 'file'), rmOptions]
+        [path.join(service.errorFolder, METADATA_FOLDER, 'file'), rmOptions],
+        [path.join(service.errorFolder, CONTENT_FOLDER, 'file'), rmOptions]
       ]
     );
     assert.strictEqual(logger.warn.mock.calls.length, 0);
+    assert.strictEqual((priv()['pendingRemovals'] as Record<string, Map<string, number>>).error.size, 0);
   });
 
-  it('should keep the metadata when the cache entry content cannot be deleted', async () => {
+  it('should retry deleting a cache entry whose files cannot be deleted yet', async () => {
+    priv()['cacheSize'] = { cache: 10, error: 0, archive: 0 };
     rmMock.mock.mockImplementation(async () => {
       throw new Error('EBUSY');
     });
 
-    await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string) => Promise<void>)('cache', 'file');
-
-    // The metadata still tracks the content left on disk
-    assert.deepStrictEqual(
-      rmMock.mock.calls.map(c => c.arguments[0]),
-      [path.join(service.cacheFolder, CONTENT_FOLDER, 'file')]
+    const deleted = await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string, size: number) => Promise<boolean>)(
+      'cache',
+      'file',
+      10
     );
+
+    assert.strictEqual(deleted, false);
     assert.deepStrictEqual(
       logger.warn.mock.calls.map(c => c.arguments[0]),
-      ['Could not delete cache entry "file" from cache: EBUSY']
+      [`Could not remove file "${path.join(service.cacheFolder, METADATA_FOLDER, 'file')}" from cache, the removal will be retried: EBUSY`]
     );
+    // Still counted, and keeps the cache from being reported empty, until removed
+    assert.deepStrictEqual([...(priv()['pendingRemovals'] as Record<string, Map<string, number>>).cache], [['file', 10]]);
+    assert.strictEqual(service.cacheIsEmpty(), false);
+
+    rmMock.mock.mockImplementation(async () => undefined);
+    assert.strictEqual(await service.getCacheContentToSend(100), null);
+    assert.strictEqual(service.cacheIsEmpty(), true);
+    assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 0, error: 0, archive: 0 });
   });
 
   it('should empty cache', async () => {

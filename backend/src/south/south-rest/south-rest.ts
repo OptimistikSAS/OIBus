@@ -128,12 +128,16 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     const stats = await fs.stat(filePath);
     if (stats.size > 0) {
       this.logger.info(logCtx, `Downloaded file (${stats.size} bytes) in ${requestDuration} ms`);
-      await this.addContent({ type: 'any', filePath }, startRequest.toUTC().toISO(), [items[0]]);
+      // Deleted even when it cannot be cached: the query is run again and the file would stay in the tmp folder forever
       try {
-        await fs.unlink(filePath);
-        this.logger.trace(logCtx, `File "${filePath}" deleted`);
-      } catch (unlinkError) {
-        this.logger.error(logCtx, `Error when deleting file "${filePath}" after caching it: ${getErrorMessage(unlinkError)}`);
+        await this.addContent({ type: 'any', filePath }, startRequest.toUTC().toISO(), [items[0]]);
+      } finally {
+        try {
+          await fs.unlink(filePath);
+          this.logger.trace(logCtx, `File "${filePath}" deleted`);
+        } catch (unlinkError) {
+          this.logger.error(logCtx, `Error when deleting file "${filePath}" after caching it: ${getErrorMessage(unlinkError)}`);
+        }
       }
     } else {
       this.logger.debug(logCtx, `Empty file downloaded. Request done in ${requestDuration} ms`);
