@@ -58,6 +58,7 @@ describe('HistoryQueryFactory', () => {
   // Constructor tracking for CacheService and HistoryQuery
   let cacheServiceCtorArgs: Array<unknown> | null = null;
   let historyQueryCtorCalls: Array<Array<unknown>> = [];
+  let historyQueryCacheContentCalls: Array<Array<unknown>> = [];
   let MockHistoryQuery: new (...args: Array<unknown>) => object;
 
   before(() => {
@@ -72,8 +73,16 @@ describe('HistoryQueryFactory', () => {
     mockModule(nodeRequire, '../service/cache/cache.service', cacheServiceExports);
 
     MockHistoryQuery = class {
+      private readonly north: { cacheContent: (...args: Array<unknown>) => Promise<void> };
       constructor(...args: Array<unknown>) {
         historyQueryCtorCalls.push([...args]);
+        this.north = args[1] as { cacheContent: (...args: Array<unknown>) => Promise<void> };
+      }
+
+      // The real one waits for cache space first
+      async cacheContent(...args: Array<unknown>): Promise<void> {
+        historyQueryCacheContentCalls.push(args);
+        await this.north.cacheContent(...args);
       }
     };
     mockModule(nodeRequire, './history-query', { __esModule: true, default: MockHistoryQuery });
@@ -99,6 +108,7 @@ describe('HistoryQueryFactory', () => {
   beforeEach(() => {
     cacheServiceCtorArgs = null;
     historyQueryCtorCalls = [];
+    historyQueryCacheContentCalls = [];
     utilsExports.createFolder.mock.resetCalls();
     (northFactoryExports.buildNorth as { mock: { resetCalls(): void } }).mock.resetCalls();
     (northFactoryExports.initNorthCache as { mock: { resetCalls(): void } }).mock.resetCalls();
@@ -256,6 +266,8 @@ describe('HistoryQueryFactory', () => {
 
       await southCallback('southId', mockData, mockQueryTime, mockItemIds);
 
+      // Through the history query, which waits for cache space instead of letting the north drop the content
+      assert.strictEqual(historyQueryCacheContentCalls.length, 1);
       assert.strictEqual(mockNorthConnector.cacheContent.mock.calls.length, 1);
       assert.deepStrictEqual(mockNorthConnector.cacheContent.mock.calls[0].arguments, [
         mockData,
@@ -321,6 +333,42 @@ describe('HistoryQueryFactory', () => {
 
   describe('initHistoryQueryCache', () => {
     const id = 'hq-1';
+    let rmMock: ReturnType<typeof mock.fn>;
+
+    beforeEach(() => {
+      rmMock = mock.method(
+        fs,
+        'rm',
+        mock.fn(async () => undefined)
+      );
+    });
+
+    afterEach(() => {
+      rmMock.mock.restore();
+    });
+
+    it('should empty the south tmp folder, left with the files of an interrupted run', async () => {
+      await initHistoryQueryCache(id, 'file-writer', 'modbus', baseFolder);
+
+      const tmpFolder = path.join(baseFolder, 'cache', `history-${id}`, 'south', 'tmp');
+      assert.deepStrictEqual(
+        rmMock.mock.calls.map(c => c.arguments),
+        [[tmpFolder, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }]]
+      );
+      assert.ok(utilsExports.createFolder.mock.calls.some(c => c.arguments[0] === tmpFolder));
+    });
+
+    it('should create the folders even when the south tmp folder cannot be emptied', async () => {
+      rmMock.mock.mockImplementation(async () => {
+        throw new Error('EBUSY');
+      });
+
+      await initHistoryQueryCache(id, 'file-writer', 'modbus', baseFolder);
+
+      assert.ok(
+        utilsExports.createFolder.mock.calls.some(c => c.arguments[0] === path.join(baseFolder, 'cache', `history-${id}`, 'south', 'tmp'))
+      );
+    });
 
     it('should create all necessary folders for standard types', async () => {
       await initHistoryQueryCache(id, 'file-writer', 'modbus', baseFolder);

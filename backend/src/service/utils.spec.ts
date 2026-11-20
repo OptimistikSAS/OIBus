@@ -641,6 +641,68 @@ describe('Service utils', () => {
         assert.strictEqual(unlinkMock.mock.calls.length, 1);
       });
 
+      it('should delete the written files even when they cannot be cached', async () => {
+        // Streams of the compressed cases
+        mock.method(fsSync, 'createReadStream', () => {
+          const source = new PassThrough();
+          source.end('some data');
+          return source as unknown as fsSync.ReadStream;
+        });
+        mock.method(fsSync, 'createWriteStream', () => {
+          const dest = new PassThrough();
+          dest.resume();
+          return dest as unknown as fsSync.WriteStream;
+        });
+        mock.method(zlib, 'createGzip', () => new PassThrough() as unknown as zlib.Gzip);
+        mock.method(fs, 'writeFile', async () => null);
+        const unlinkMock = mock.method(fs, 'unlink', async () => null);
+        const failingAddContent = mock.fn(async () => {
+          throw new Error('cache error');
+        });
+        const settings = [
+          { type: 'file', filename: 'myFilename.csv', compression: false },
+          { type: 'file', filename: 'myFilename.csv', compression: true },
+          {
+            type: 'csv',
+            delimiter: 'SEMI_COLON',
+            filename: 'myFilename.csv',
+            compression: false,
+            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimezone: 'UTC'
+          },
+          {
+            type: 'csv',
+            delimiter: 'SEMI_COLON',
+            filename: 'myFilename.csv',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimezone: 'UTC'
+          }
+        ] as Array<Parameters<typeof utils.persistResults>[1]>;
+
+        for (const serializationSettings of settings) {
+          unlinkMock.mock.resetCalls();
+          await assert.rejects(
+            utils.persistResults(
+              serializationSettings.type === 'file' ? 'content' : dataToWrite,
+              serializationSettings,
+              'connectorName',
+              testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
+              testData.constants.dates.FAKE_NOW,
+              'myTmpFolder',
+              failingAddContent as unknown as Parameters<typeof utils.persistResults>[6],
+              logger as unknown as Parameters<typeof utils.persistResults>[7]
+            ),
+            { message: 'cache error' }
+          );
+          // The file sent to the engine is not left in the tmp folder: a history query retrying the query wrote a new
+          // one at every retry
+          const filePath = path.join('myTmpFolder', 'myFilename.csv');
+          const sentFile = serializationSettings.compression ? `${filePath}.gz` : filePath;
+          assert.ok(unlinkMock.mock.calls.some(c => c.arguments[0] === sentFile));
+        }
+      });
+
       it('should properly write results into CSV without compression and log unlink errors', async () => {
         mock.method(fs, 'writeFile', async () => null);
         const unlinkMock = mock.method(fs, 'unlink', () => {

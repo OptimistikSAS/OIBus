@@ -487,21 +487,28 @@ export const persistResults = async (
         }
 
         logger.debug(logCtx, `Sending compressed file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
+        // Deleted even when it cannot be cached (see the csv case below)
         try {
-          await fs.unlink(gzipPath);
-          logger.trace(logCtx, `File "${gzipPath}" deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting compressed file "${gzipPath}" after caching it: ${getErrorMessage(unlinkError)}`);
+          await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
+        } finally {
+          try {
+            await fs.unlink(gzipPath);
+            logger.trace(logCtx, `File "${gzipPath}" deleted`);
+          } catch (unlinkError) {
+            logger.error(logCtx, `Error when deleting compressed file "${gzipPath}" after caching it: ${getErrorMessage(unlinkError)}`);
+          }
         }
       } else {
         logger.debug(logCtx, `Sending file "${filePath}" to Engine`);
-        await addContentFn({ type: 'any', filePath }, queryTime, [item]);
         try {
-          await fs.unlink(filePath);
-          logger.trace(logCtx, `File ${filePath} deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting file "${filePath}" after caching it: ${getErrorMessage(unlinkError)}`);
+          await addContentFn({ type: 'any', filePath }, queryTime, [item]);
+        } finally {
+          try {
+            await fs.unlink(filePath);
+            logger.trace(logCtx, `File ${filePath} deleted`);
+          } catch (unlinkError) {
+            logger.error(logCtx, `Error when deleting file "${filePath}" after caching it: ${getErrorMessage(unlinkError)}`);
+          }
         }
       }
       break;
@@ -525,23 +532,30 @@ export const persistResults = async (
         }
 
         logger.debug(logCtx, `Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
-
+        // Deleted even when it cannot be cached (see below)
         try {
-          await fs.unlink(gzipPath);
-          logger.trace(logCtx, `CSV file "${gzipPath}" deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting compressed CSV file "${gzipPath}" after caching it: ${getErrorMessage(unlinkError)}`);
+          await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
+        } finally {
+          try {
+            await fs.unlink(gzipPath);
+            logger.trace(logCtx, `CSV file "${gzipPath}" deleted`);
+          } catch (unlinkError) {
+            logger.error(logCtx, `Error when deleting compressed CSV file "${gzipPath}" after caching it: ${getErrorMessage(unlinkError)}`);
+          }
         }
       } else {
         logger.debug(logCtx, `Sending CSV file "${csvPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: csvPath }, queryTime, [item]);
-
+        // Deleted even when it cannot be cached: the query is run again and writes a new file (named after the current
+        // date), so a history query failing to cache its results left one more file in the tmp folder at every retry
         try {
-          await fs.unlink(csvPath);
-          logger.trace(logCtx, `CSV file ${csvPath} deleted`);
-        } catch (unlinkError) {
-          logger.error(logCtx, `Error when deleting CSV file "${csvPath}" after caching it: ${getErrorMessage(unlinkError)}`);
+          await addContentFn({ type: 'any', filePath: csvPath }, queryTime, [item]);
+        } finally {
+          try {
+            await fs.unlink(csvPath);
+            logger.trace(logCtx, `CSV file ${csvPath} deleted`);
+          } catch (unlinkError) {
+            logger.error(logCtx, `Error when deleting CSV file "${csvPath}" after caching it: ${getErrorMessage(unlinkError)}`);
+          }
         }
       }
       break;

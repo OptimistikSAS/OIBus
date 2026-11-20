@@ -33,6 +33,8 @@ import { loggerService } from '../service/logger/logger.service';
 
 // Id of the queued task that only waits between two sends, see NorthConnector.queueWaitTask
 const WAIT_TASK_ID = 'wait';
+// Minimum delay between two warnings about content waiting for cache space, see NorthConnector.waitForCacheSpace
+const CACHE_SPACE_WARNING_INTERVAL_MS = 60_000;
 
 /** Events published by a North connector's {@link NorthConnector.metricsEvent}. */
 export interface NorthMetricsEvents {
@@ -98,6 +100,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   // Timer and resolver of the wait task in progress, to cancel it when stopping
   private waitTimeout: NodeJS.Timeout | null = null;
   private resolveWait: (() => void) | null = null;
+  // Time of the last warning about content waiting for cache space, see logCacheSpaceWait
+  private lastCacheSpaceWarning = -Infinity;
 
   private stopping = false;
 
@@ -735,6 +739,64 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           numberOfElement: data.content.length
         });
       }
+    }
+  }
+
+  /**
+   * Wait until the cache is below its maximum size (`caching.throttling.maxSize`, no limit when 0). Used by history
+   * queries: unlike a live south, they can wait for the north to send instead of having their data dropped by
+   * `cacheContent` while they go on with the next interval. The cache size, which includes the error and archive
+   * folders, is checked again on every change of it (send, removal, compaction...).
+   *
+   * Throws when `signal` is aborted, so that a stopping history query does not wait for a cache that may never empty.
+   */
+  async waitForCacheSpace(signal: AbortSignal): Promise<void> {
+    signal.throwIfAborted();
+    if (!this.cacheExceedsMaxSize()) {
+      return;
+    }
+    this.logCacheSpaceWait();
+    await new Promise<void>((resolve, reject) => {
+      const cleanUp = () => {
+        this.cacheService.cacheSizeEventEmitter.off('cache-size', onCacheSize);
+        signal.removeEventListener('abort', onAbort);
+      };
+      const onCacheSize = () => {
+        if (!this.cacheExceedsMaxSize()) {
+          cleanUp();
+          resolve();
+        }
+      };
+      const onAbort = () => {
+        cleanUp();
+        reject(signal.reason);
+      };
+      this.cacheService.cacheSizeEventEmitter.on('cache-size', onCacheSize);
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
+    this.logger.debug('Cache below its maximum size: resuming');
+  }
+
+  /** Same check as `cacheIsFull`, without its warning, which announces data being discarded. */
+  private cacheExceedsMaxSize(): boolean {
+    const maxSize = this.connector.caching.throttling.maxSize;
+    return maxSize > 0 && this.cacheService.getCacheSize() >= maxSize * 1024 * 1024;
+  }
+
+  /** Warn at most once a minute: a cache kept full makes every new result wait for the next send. */
+  private logCacheSpaceWait(): void {
+    const sizes = this.cacheService.getCacheContentSizes();
+    const toMB = (size: number) => Math.floor((size / 1024 / 1024) * 100) / 100;
+    const message =
+      `Waiting for the cache to go below its maximum size (${this.connector.caching.throttling.maxSize} MB) before caching more ` +
+      `content. Cache: ${toMB(sizes.cache)} MB, error: ${toMB(sizes.error)} MB, archive: ${toMB(sizes.archive)} MB. ` +
+      'Error and archive files count too: remove them if the cache cannot empty itself';
+    const now = Date.now();
+    if (now - this.lastCacheSpaceWarning >= CACHE_SPACE_WARNING_INTERVAL_MS) {
+      this.lastCacheSpaceWarning = now;
+      this.logger.warn(message);
+    } else {
+      this.logger.trace(message);
     }
   }
 

@@ -74,6 +74,8 @@ export const buildHistoryQuery = (
     oIAnalyticsRegistrationRepository,
     orchestrator
   );
+  // Assigned once the south is built: its callback runs only once the history query is started
+  let historyQuery: HistoryQuery | null = null;
   const south = buildSouth(
     {
       id: settings.id,
@@ -96,14 +98,17 @@ export const buildHistoryQuery = (
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>,
       queryStartTime?: Instant | null,
       queryEndTime?: Instant | null
-    ) => await north.cacheContent(data, { source: 'south', southId: settings.id, queryTime, queryStartTime, queryEndTime, items }),
+    ) =>
+      // Through the history query, which waits for cache space instead of letting the north drop the content
+      await historyQuery!.cacheContent(data, { source: 'south', southId: settings.id, queryTime, queryStartTime, queryEndTime, items }),
     path.join(baseFolderPath, 'cache', `history-${settings.id}`, 'south'),
     southCacheRepository,
     certificateRepository,
     oIAnalyticsRegistrationRepository
   );
 
-  return new HistoryQuery(settings, north, south);
+  historyQuery = new HistoryQuery(settings, north, south);
+  return historyQuery;
 };
 
 export const initHistoryQueryCache = async (id: string, northType: OIBusNorthType, southType: OIBusSouthType, baseFolder: string) => {
@@ -124,6 +129,12 @@ export const initHistoryQueryCache = async (id: string, northType: OIBusNorthTyp
   await createFolder(path.join(baseFolder, 'archive', `history-${id}`, 'north', CONTENT_FOLDER));
 
   await createFolder(path.join(baseFolder, 'cache', `history-${id}`, 'south'));
+  // The south only writes transient files in its tmp folder, deleted once cached. Nothing runs yet for this history
+  // query: what is left was written by a run interrupted by a crash, and would otherwise stay there forever
+  await fs
+    .rm(path.join(baseFolder, 'cache', `history-${id}`, 'south', 'tmp'), { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
+    // What cannot be removed now is removed at the next start
+    .catch(() => undefined);
   await createFolder(path.join(baseFolder, 'cache', `history-${id}`, 'south', 'tmp'));
   if (southType === 'opcua') {
     await createFolder(path.join(baseFolder, 'cache', `history-${id}`, 'south', 'opcua'));
