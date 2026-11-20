@@ -42,8 +42,12 @@ export class LoginComponent {
     const value = this.form.getRawValue();
     this.currentUserService.loginWithPassword(value.login, value.password).subscribe({
       next: () => {
-        this.router.navigateByUrl(this.requestedUrlService.getRequestedUrl()).then(() => {
-          this.windowService.reload();
+        // A navigation refused by the guard opened the password change of a user who must change it first: reloading
+        // would close it, and show the login form again
+        this.router.navigateByUrl(this.requestedUrlService.getRequestedUrl()).then(navigated => {
+          if (navigated) {
+            this.windowService.reload();
+          }
         });
       },
       error: () => this.loginError.set(true)
