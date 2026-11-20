@@ -10,7 +10,7 @@ import type NorthConnector from '../north/north-connector';
 import type { NorthSettings } from '../../shared/model/north-settings.model';
 import type SouthConnector from '../south/south-connector';
 import type { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import type { CacheContentUpdateCommand } from '../../shared/model/engine.model';
+import type { CacheContentUpdateCommand, CacheMetadataSource, OIBusContent } from '../../shared/model/engine.model';
 import type HistoryQueryClass from './history-query';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -55,6 +55,9 @@ describe('HistoryQuery enabled', () => {
   beforeEach(async () => {
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     utilsExports.generateIntervals = mock.fn(() => []);
+    for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
+      fn.mock.resetCalls();
+    }
 
     mockedNorth1Mock = new NorthConnectorMock(testData.north.list[0]);
     mockedSouth1Mock = new SouthConnectorMock(testData.south.list[0]);
@@ -158,6 +161,71 @@ describe('HistoryQuery enabled', () => {
 
     assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 2);
     assert.strictEqual(mockedSouth1Mock.stop.mock.calls.length, 1);
+  });
+
+  it('should cache the content of the south once the north cache has space', async () => {
+    await historyQuery.start();
+    let releaseSpace!: () => void;
+    mockedNorth1Mock.waitForCacheSpace = mock.fn(() => new Promise<void>(resolve => (releaseSpace = resolve)));
+    const content = { type: 'time-values', content: [] } as OIBusContent;
+    const source = { source: 'south', southId: 'id', queryTime: '', items: [] } as unknown as CacheMetadataSource;
+
+    const caching = historyQuery.cacheContent(content, source);
+    await flushPromises();
+    // Held back while the cache is full, instead of being dropped by the north
+    assert.strictEqual(mockedNorth1Mock.cacheContent.mock.calls.length, 0);
+
+    releaseSpace();
+    await caching;
+    assert.deepStrictEqual(mockedNorth1Mock.cacheContent.mock.calls[0].arguments, [content, source]);
+  });
+
+  it('should stop waiting for cache space when stopping, before waiting for the south', async () => {
+    await historyQuery.start();
+    let signal!: AbortSignal;
+    mockedNorth1Mock.waitForCacheSpace = mock.fn(async (waitSignal: AbortSignal) => {
+      signal = waitSignal;
+    });
+    await historyQuery.cacheContent(
+      { type: 'time-values', content: [] } as OIBusContent,
+      {
+        source: 'south'
+      } as unknown as CacheMetadataSource
+    );
+    // The south waits for its run, itself waiting for a cache that may never empty
+    mockedSouth1Mock.stop = mock.fn(async () => {
+      assert.strictEqual(signal.aborted, true);
+    });
+
+    await historyQuery.stop();
+
+    assert.strictEqual(mockedSouth1Mock.stop.mock.calls.length, 1);
+    assert.match(String(signal.reason), /History query stopping/);
+
+    // A restart waits again
+    await historyQuery.start();
+    await historyQuery.cacheContent(
+      { type: 'time-values', content: [] } as OIBusContent,
+      {
+        source: 'south'
+      } as unknown as CacheMetadataSource
+    );
+    assert.strictEqual(signal.aborted, false);
+  });
+
+  it('should not report as an error a run interrupted by a stop', async () => {
+    let failRun!: (error: Error) => void;
+    mockedSouth1Mock.historyQueryHandler = mock.fn(() => new Promise<void>((_resolve, reject) => (failRun = reject)));
+    await historyQuery.start();
+    mockedSouth1Mock.connectedEvent.emit('connected');
+
+    await historyQuery.stop();
+    failRun(new Error('History query stopping: content not cached'));
+    await flushPromises();
+
+    assert.strictEqual(logger.error.mock.calls.length, 0);
+    assert.ok(logger.debug.mock.calls.some(c => String(c.arguments[0]).startsWith('History query interrupted by a stop')));
+    assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 1);
   });
 
   it('should not retry a failed run once the history query was stopped, even if restarted since', async () => {

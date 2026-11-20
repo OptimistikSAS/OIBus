@@ -847,6 +847,85 @@ describe('CacheService', () => {
     }
   });
 
+  it('should not send again after a restart an entry removed whose files could not be deleted', async () => {
+    // On a real disk: the removal to retry must survive a new instance of the service
+    mock.restoreAll();
+    generateRandomIdMock.mock.mockImplementation(() => 'locked');
+    const baseFolder = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-cache-'));
+    const [tmpFolder, errorFolder, archiveFolder] = ['cache', 'error', 'archive'].map(folder => path.join(baseFolder, folder));
+    try {
+      for (const folder of [tmpFolder, errorFolder, archiveFolder]) {
+        await fs.mkdir(path.join(folder, CONTENT_FOLDER), { recursive: true });
+        await fs.mkdir(path.join(folder, METADATA_FOLDER), { recursive: true });
+      }
+      service = new CacheService(logger, tmpFolder, errorFolder, archiveFolder);
+      await service.start();
+      await service.addCacheContent(Buffer.from('[1]'), { contentType: 'any' });
+
+      // Sent, but its metadata is locked (by an antivirus...) until OIBus restarts
+      const realRm = fs.rm;
+      const lockedMetadata = path.join(tmpFolder, METADATA_FOLDER, 'locked');
+      const lockedRm = mock.method(fs, 'rm', async (filePath: string, options: Parameters<typeof fs.rm>[1]) => {
+        if (filePath === lockedMetadata) {
+          throw Object.assign(new Error('EBUSY'), { code: 'EBUSY' });
+        }
+        return realRm(filePath, options);
+      });
+      await service.updateCacheContent({
+        cache: { remove: ['locked'], move: [] },
+        error: { remove: [], move: [] },
+        archive: { remove: [], move: [] }
+      });
+      assert.deepStrictEqual(JSON.parse(await fs.readFile(path.join(tmpFolder, 'pending-removals.json'), { encoding: 'utf8' })), {
+        cache: [['locked', 3]],
+        error: [],
+        archive: []
+      });
+      service.stop();
+      lockedRm.mock.restore();
+
+      const restarted = new CacheService(logger, tmpFolder, errorFolder, archiveFolder);
+      await restarted.start();
+
+      // Not queued again: removed at startup instead
+      assert.strictEqual(await restarted.getCacheContentToSend(100), null);
+      assert.strictEqual(restarted.cacheIsEmpty(), true);
+      assert.deepStrictEqual(restarted.getCacheContentSizes(), { cache: 0, error: 0, archive: 0 });
+      assert.deepStrictEqual(await fs.readdir(path.join(tmpFolder, METADATA_FOLDER)), []);
+      assert.deepStrictEqual(await fs.readdir(path.join(tmpFolder, CONTENT_FOLDER)), []);
+      assert.deepStrictEqual((await fs.readdir(tmpFolder)).sort(), [CONTENT_FOLDER, METADATA_FOLDER].sort());
+      restarted.stop();
+    } finally {
+      await fs.rm(baseFolder, { recursive: true, force: true });
+    }
+  });
+
+  it('should start even when the removals to retry cannot be read or saved', async () => {
+    readdirMock.mock.mockImplementation(async () => []);
+    readFileMock.mock.mockImplementation(async () => 'not json');
+
+    await service.start();
+
+    assert.ok(
+      logger.warn.mock.calls.some(c => String(c.arguments[0]).startsWith('Could not parse the removals to retry from')),
+      'a corrupted file is reported'
+    );
+    assert.strictEqual(service.cacheIsEmpty(), true);
+
+    // A failing save does not fail the removal
+    writeFileMock.mock.mockImplementation(async () => {
+      throw new Error('ENOSPC');
+    });
+    rmMock.mock.mockImplementation(async () => {
+      throw new Error('EBUSY');
+    });
+    assert.strictEqual(
+      await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string, size: number) => Promise<boolean>)('cache', 'file', 0),
+      false
+    );
+    assert.ok(logger.warn.mock.calls.some(c => String(c.arguments[0]).startsWith('Could not save the removals to retry into')));
+  });
+
   describe('Debounce Logging', () => {
     it('should debounce cache logs', () => {
       const metadata = fileList[0].metadata;
@@ -1622,7 +1701,9 @@ describe('CacheService', () => {
     await service.removeAllCacheContent();
 
     assert.strictEqual(readdirMock.mock.calls.length, 6);
-    assert.strictEqual(rmMock.mock.calls.length, 18);
+    // 18 files, then the removals to retry, none left
+    assert.strictEqual(rmMock.mock.calls.length, 19);
+    assert.strictEqual(rmMock.mock.calls[18].arguments[0], path.join(service.cacheFolder, 'pending-removals.json'));
     assert.strictEqual(logger.error.mock.calls.length, 6);
     assert.ok(emitEventMock.mock.calls.some(c => c.arguments[0] === 'cache-size'));
   });

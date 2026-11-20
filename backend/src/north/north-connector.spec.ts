@@ -936,6 +936,80 @@ describe('NorthConnector', () => {
     assert.strictEqual(findTransformerMock.mock.calls.length, 0);
   });
 
+  describe('waitForCacheSpace', () => {
+    const withMaxSize = (maxSize: number) => {
+      const configuration = testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>;
+      north.connectorConfiguration = {
+        ...configuration,
+        caching: { ...configuration.caching, throttling: { ...configuration.caching.throttling, maxSize } }
+      };
+    };
+
+    it('should not wait when the cache has no maximum size or is below it', async () => {
+      cacheService.getCacheSize.mock.mockImplementation(() => 10 * 1024 * 1024);
+      withMaxSize(0);
+      await north.waitForCacheSpace(new AbortController().signal);
+      withMaxSize(11);
+      await north.waitForCacheSpace(new AbortController().signal);
+
+      assert.strictEqual(cacheService.cacheSizeEventEmitter.listenerCount('cache-size'), 0);
+      assert.strictEqual(logger.warn.mock.calls.length, 0);
+    });
+
+    it('should wait until the cache goes below its maximum size', async () => {
+      withMaxSize(1);
+      let size = 2 * 1024 * 1024;
+      cacheService.getCacheSize.mock.mockImplementation(() => size);
+      let resumed = false;
+      const wait = north.waitForCacheSpace(new AbortController().signal).then(() => (resumed = true));
+      await flushPromises();
+
+      // Still full after a change
+      cacheService.cacheSizeEventEmitter.emit('cache-size', { cache: size, error: 0, archive: 0 });
+      await flushPromises();
+      assert.strictEqual(resumed, false);
+
+      size = 1024;
+      cacheService.cacheSizeEventEmitter.emit('cache-size', { cache: size, error: 0, archive: 0 });
+      await wait;
+
+      assert.strictEqual(cacheService.cacheSizeEventEmitter.listenerCount('cache-size'), 0);
+      // Never the warning of cacheIsFull, which announces data being discarded
+      assert.strictEqual(cacheService.cacheIsFull.mock.calls.length, 0);
+      assert.strictEqual(logger.warn.mock.calls.length, 1);
+      assert.ok(String(logger.warn.mock.calls[0].arguments[0]).startsWith('Waiting for the cache to go below its maximum size (1 MB)'));
+    });
+
+    it('should warn at most once a minute', async () => {
+      withMaxSize(1);
+      cacheService.getCacheSize.mock.mockImplementation(() => 2 * 1024 * 1024);
+      const controller = new AbortController();
+      const waits = [north.waitForCacheSpace(controller.signal), north.waitForCacheSpace(controller.signal)];
+      mock.timers.tick(60_000);
+      waits.push(north.waitForCacheSpace(controller.signal));
+      controller.abort(new Error('stopping'));
+      await Promise.allSettled(waits);
+
+      assert.strictEqual(logger.warn.mock.calls.length, 2);
+      assert.strictEqual(logger.trace.mock.calls.filter(c => String(c.arguments[0]).startsWith('Waiting for the cache')).length, 1);
+    });
+
+    it('should stop waiting when aborted', async () => {
+      withMaxSize(1);
+      cacheService.getCacheSize.mock.mockImplementation(() => 2 * 1024 * 1024);
+      const controller = new AbortController();
+      const wait = north.waitForCacheSpace(controller.signal);
+      await flushPromises();
+
+      controller.abort(new Error('stopping'));
+
+      await assert.rejects(wait, { message: 'stopping' });
+      assert.strictEqual(cacheService.cacheSizeEventEmitter.listenerCount('cache-size'), 0);
+      // Already aborted: does not wait at all
+      await assert.rejects(north.waitForCacheSpace(controller.signal), { message: 'stopping' });
+    });
+  });
+
   it('should cache json content and handle no transform', async () => {
     const findTransformerMock = mock.fn((_metadataSource: CacheMetadataSource) => undefined as NorthTransformerWithOptions | undefined);
     north['findTransformer'] = findTransformerMock;
