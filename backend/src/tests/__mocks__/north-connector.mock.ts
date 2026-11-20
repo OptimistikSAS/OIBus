@@ -34,6 +34,7 @@ export default class NorthConnectorMock extends NorthConnector<NorthSettings> {
   override handleContentWrapper = mock.fn(async (): Promise<void> => undefined);
   override resetCache = mock.fn(async (): Promise<void> => undefined);
   override cacheContent = mock.fn(async (): Promise<void> => undefined);
+  override waitForCacheSpace = mock.fn(async (_signal: AbortSignal): Promise<void> => undefined);
   override isCacheEmpty = mock.fn((): boolean => true);
   override disconnect = mock.fn(async (): Promise<void> => undefined);
   override stop = mock.fn(async (): Promise<void> => undefined);

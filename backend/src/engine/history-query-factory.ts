@@ -74,6 +74,8 @@ export const buildHistoryQuery = (
     oIAnalyticsRegistrationRepository,
     orchestrator
   );
+  // Assigned once the south is built: its callback runs only once the history query is started
+  let historyQuery: HistoryQuery | null = null;
   const south = buildSouth(
     {
       id: settings.id,
@@ -96,14 +98,17 @@ export const buildHistoryQuery = (
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>,
       queryStartTime?: Instant | null,
       queryEndTime?: Instant | null
-    ) => await north.cacheContent(data, { source: 'south', southId: settings.id, queryTime, queryStartTime, queryEndTime, items }),
+    ) =>
+      // Through the history query, which waits for cache space instead of letting the north drop the content
+      await historyQuery!.cacheContent(data, { source: 'south', southId: settings.id, queryTime, queryStartTime, queryEndTime, items }),
     path.join(baseFolderPath, 'cache', `history-${settings.id}`, 'south'),
     southCacheRepository,
     certificateRepository,
     oIAnalyticsRegistrationRepository
   );
 
-  return new HistoryQuery(settings, north, south);
+  historyQuery = new HistoryQuery(settings, north, south);
+  return historyQuery;
 };
 
 export const initHistoryQueryCache = async (id: string, northType: OIBusNorthType, southType: OIBusSouthType, baseFolder: string) => {

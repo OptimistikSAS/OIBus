@@ -58,6 +58,7 @@ describe('HistoryQueryFactory', () => {
   // Constructor tracking for CacheService and HistoryQuery
   let cacheServiceCtorArgs: Array<unknown> | null = null;
   let historyQueryCtorCalls: Array<Array<unknown>> = [];
+  let historyQueryCacheContentCalls: Array<Array<unknown>> = [];
   let MockHistoryQuery: new (...args: Array<unknown>) => object;
 
   before(() => {
@@ -72,8 +73,16 @@ describe('HistoryQueryFactory', () => {
     mockModule(nodeRequire, '../service/cache/cache.service', cacheServiceExports);
 
     MockHistoryQuery = class {
+      private readonly north: { cacheContent: (...args: Array<unknown>) => Promise<void> };
       constructor(...args: Array<unknown>) {
         historyQueryCtorCalls.push([...args]);
+        this.north = args[1] as { cacheContent: (...args: Array<unknown>) => Promise<void> };
+      }
+
+      // The real one waits for cache space first
+      async cacheContent(...args: Array<unknown>): Promise<void> {
+        historyQueryCacheContentCalls.push(args);
+        await this.north.cacheContent(...args);
       }
     };
     mockModule(nodeRequire, './history-query', { __esModule: true, default: MockHistoryQuery });
@@ -99,6 +108,7 @@ describe('HistoryQueryFactory', () => {
   beforeEach(() => {
     cacheServiceCtorArgs = null;
     historyQueryCtorCalls = [];
+    historyQueryCacheContentCalls = [];
     utilsExports.createFolder.mock.resetCalls();
     (northFactoryExports.buildNorth as { mock: { resetCalls(): void } }).mock.resetCalls();
     (northFactoryExports.initNorthCache as { mock: { resetCalls(): void } }).mock.resetCalls();
@@ -256,6 +266,8 @@ describe('HistoryQueryFactory', () => {
 
       await southCallback('southId', mockData, mockQueryTime, mockItemIds);
 
+      // Through the history query, which waits for cache space instead of letting the north drop the content
+      assert.strictEqual(historyQueryCacheContentCalls.length, 1);
       assert.strictEqual(mockNorthConnector.cacheContent.mock.calls.length, 1);
       assert.deepStrictEqual(mockNorthConnector.cacheContent.mock.calls[0].arguments, [
         mockData,
