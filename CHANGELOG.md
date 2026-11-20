@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.9.8](https://github.com/OptimistikSAS/OIBus/compare/v3.9.7...v3.9.8) (2026-11-20)
+
+
+### Bug Fixes
+
+* **ci:** download inno setup from its github releases ([2430015](https://github.com/OptimistikSAS/OIBus/commit/2430015762c24e52a213b9d2bdce3fbd27e8d818))
+* **modbus:** keep connection open when the device rejects a read ([5b2ed42](https://github.com/OptimistikSAS/OIBus/commit/5b2ed42b0dbcd97e85c8f62d19061f50396593ab))
+* **north:** pace sends with a wait task and retry removals of locked cache files ([17633ab](https://github.com/OptimistikSAS/OIBus/commit/17633abf3c5adf8ec1c28c0679704d6a5581a7b0))
+* **update:** make the binaries of an update executable ([ef0886d](https://github.com/OptimistikSAS/OIBus/commit/ef0886da2e918f007cfa75396ac74adfc13b89cc))
+
 ## [3.9.7](https://github.com/OptimistikSAS/OIBus/compare/v3.9.6...v3.9.7) (2026-11-12)
 
 
