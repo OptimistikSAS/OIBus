@@ -124,6 +124,12 @@ export const initHistoryQueryCache = async (id: string, northType: OIBusNorthTyp
   await createFolder(path.join(baseFolder, 'archive', `history-${id}`, 'north', CONTENT_FOLDER));
 
   await createFolder(path.join(baseFolder, 'cache', `history-${id}`, 'south'));
+  // The south only writes transient files in its tmp folder, deleted once cached. Nothing runs yet for this history
+  // query: what is left was written by a run interrupted by a crash, and would otherwise stay there forever
+  await fs
+    .rm(path.join(baseFolder, 'cache', `history-${id}`, 'south', 'tmp'), { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
+    // What cannot be removed now is removed at the next start
+    .catch(() => undefined);
   await createFolder(path.join(baseFolder, 'cache', `history-${id}`, 'south', 'tmp'));
   if (southType === 'opcua') {
     await createFolder(path.join(baseFolder, 'cache', `history-${id}`, 'south', 'opcua'));

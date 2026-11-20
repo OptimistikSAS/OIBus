@@ -160,6 +160,32 @@ describe('HistoryQuery enabled', () => {
     assert.strictEqual(mockedSouth1Mock.stop.mock.calls.length, 1);
   });
 
+  it('should not retry a failed run once the history query was stopped, even if restarted since', async () => {
+    let releaseDelay!: () => void;
+    utilsExports.delay = mock.fn(() => new Promise<undefined>(resolve => (releaseDelay = () => resolve(undefined))));
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => {
+      throw new Error('error');
+    });
+
+    await historyQuery.start();
+    mockedSouth1Mock.connectedEvent.emit('connected');
+    await flushPromises();
+
+    // Stopped and restarted (settings updated) while the failed run waits before its retry
+    await historyQuery.stop();
+    await historyQuery.start();
+    assert.strictEqual(mockedSouth1Mock.stop.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 2);
+
+    releaseDelay();
+    await flushPromises();
+
+    // The restart already queries again: restarting the south once more would run a second history query alongside it
+    assert.strictEqual(mockedSouth1Mock.stop.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 2);
+    utilsExports.delay = mock.fn(async () => undefined);
+  });
+
   it('should properly stop', async () => {
     const clearIntervalMock = mock.method(globalThis, 'clearInterval');
     // historyQueryHandler must return a promise so the connected event handler can set up setInterval

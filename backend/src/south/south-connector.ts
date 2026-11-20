@@ -91,11 +91,11 @@ import { loggerService } from '../service/logger/logger.service';
  *    `await` between checking for a free slot and claiming it — every time
  *    new work is queued or a task finishes, so a freed slot is picked up
  *    immediately.
- *  - `stop()` flips a `stopping` flag and awaits both any in-flight
- *    `runProgress$` deferred (used by one-shot History Query runs that call
- *    `historyQueryHandler` directly, bypassing this scheduler entirely) and
- *    every in-flight task from `runningTasks`, so the engine can shut down
- *    cleanly mid-scan regardless of how many queries are running at once.
+ *  - `stop()` flips a `stopping` flag and awaits every in-flight task from
+ *    `runningTasks` and every history query from `historyRuns` (including the
+ *    one-shot History Query runs that call `historyQueryHandler` directly,
+ *    bypassing this scheduler entirely), so the engine can shut down cleanly
+ *    mid-scan regardless of how many queries are running at once.
  */
 export default abstract class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
   protected logger!: ILogger;
@@ -112,6 +112,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   private taskQueue: Array<{ scanModeId: string; items: Array<SouthConnectorItemEntity<I>> }> = [];
   // Every currently-running task's promise. Its size is the current concurrency; stop() awaits all of them.
   private runningTasks = new Set<Promise<void>>();
+  // Every history query in flight, scheduled or driven directly (see HistoryQuery). stop() awaits all of them
+  private historyRuns = new Set<Promise<void>>();
   // Enabled items grouped via `groupItemsByGroup`, bucketed by their effective scan mode id (own
   // scan mode, or the group's when synced). Rebuilt once whenever `connector.items` changes (see
   // the constructor and the `connectorConfiguration` setter) so `trigger()` — called on every scan
@@ -565,6 +567,19 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       );
     }
     this.logger.trace(`History querying ${itemsToRead.length} items`);
+    const run = this.runHistoryQueries(itemsToRead, startTime, endTime);
+    // A history query driven directly (see HistoryQuery) is not a scheduled task: track it too, so that stop() waits
+    // for it. Otherwise the run outlived the stop and kept querying its remaining intervals, writing into a stopped north
+    const trackedRun = run.catch(() => undefined);
+    this.historyRuns.add(trackedRun);
+    try {
+      await run;
+    } finally {
+      this.historyRuns.delete(trackedRun);
+    }
+  }
+
+  private async runHistoryQueries(itemsToRead: Array<SouthConnectorItemEntity<I>>, startTime: Instant, endTime: Instant): Promise<void> {
     this.historyRunningCount++;
     this.historyIsRunning = true;
     try {
@@ -959,6 +974,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     if (this.runningTasks.size > 0) {
       this.logger.debug(`Waiting for ${this.runningTasks.size} South task(s) to finish`);
       await Promise.all(this.runningTasks);
+    }
+    // History queries end at the next interval once `stopping` is set
+    if (this.historyRuns.size > 0) {
+      this.logger.debug(`Waiting for ${this.historyRuns.size} history query(ies) to finish`);
+      await Promise.all(this.historyRuns);
     }
 
     await this.disconnect();

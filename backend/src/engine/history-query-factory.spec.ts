@@ -321,6 +321,42 @@ describe('HistoryQueryFactory', () => {
 
   describe('initHistoryQueryCache', () => {
     const id = 'hq-1';
+    let rmMock: ReturnType<typeof mock.fn>;
+
+    beforeEach(() => {
+      rmMock = mock.method(
+        fs,
+        'rm',
+        mock.fn(async () => undefined)
+      );
+    });
+
+    afterEach(() => {
+      rmMock.mock.restore();
+    });
+
+    it('should empty the south tmp folder, left with the files of an interrupted run', async () => {
+      await initHistoryQueryCache(id, 'file-writer', 'modbus', baseFolder);
+
+      const tmpFolder = path.join(baseFolder, 'cache', `history-${id}`, 'south', 'tmp');
+      assert.deepStrictEqual(
+        rmMock.mock.calls.map(c => c.arguments),
+        [[tmpFolder, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }]]
+      );
+      assert.ok(utilsExports.createFolder.mock.calls.some(c => c.arguments[0] === tmpFolder));
+    });
+
+    it('should create the folders even when the south tmp folder cannot be emptied', async () => {
+      rmMock.mock.mockImplementation(async () => {
+        throw new Error('EBUSY');
+      });
+
+      await initHistoryQueryCache(id, 'file-writer', 'modbus', baseFolder);
+
+      assert.ok(
+        utilsExports.createFolder.mock.calls.some(c => c.arguments[0] === path.join(baseFolder, 'cache', `history-${id}`, 'south', 'tmp'))
+      );
+    });
 
     it('should create all necessary folders for standard types', async () => {
       await initHistoryQueryCache(id, 'file-writer', 'modbus', baseFolder);

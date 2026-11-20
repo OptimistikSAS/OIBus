@@ -690,6 +690,37 @@ describe('SouthConnector', () => {
       });
     });
 
+    it('should wait for a history query driven directly, which stops at the next interval', async () => {
+      utilsExports.generateIntervals = mock.fn(() => [
+        { start: '2020-01-01T00:00:00.000Z', end: '2020-02-01T00:00:00.000Z' },
+        { start: '2020-02-01T00:00:00.000Z', end: '2020-03-01T00:00:00.000Z' },
+        { start: '2020-03-01T00:00:00.000Z', end: '2020-04-01T00:00:00.000Z' }
+      ]);
+      let releaseQuery!: () => void;
+      const historyQueryMock = mock.fn(async () => {
+        await new Promise<void>(resolve => (releaseQuery = resolve));
+        return { trackedInstant: null, value: null };
+      });
+      south.historyQuery = historyQueryMock;
+      const items = [testData.south.list[1].items[0]] as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
+
+      // Driven directly, as by a history query: not a scheduled task
+      const run = south.historyQueryHandler(items, '2020-01-01T00:00:00.000Z', '2020-04-01T00:00:00.000Z');
+      await flushPromises();
+      let stopped = false;
+      const stop = south.stop().then(() => (stopped = true));
+      await flushPromises();
+      assert.strictEqual(stopped, false);
+
+      releaseQuery();
+      await stop;
+      await run;
+
+      // The remaining intervals are not queried: they kept writing into the cache of a stopped north
+      assert.strictEqual(historyQueryMock.mock.calls.length, 1);
+      assert.strictEqual(south.historyIsRunning, false);
+    });
+
     it('should use independent cache entries per item for single-item connectors', async () => {
       const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
       utilsExports.generateIntervals = mock.fn(() => [interval]);

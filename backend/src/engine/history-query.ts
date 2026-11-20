@@ -51,6 +51,8 @@ export interface HistoryMetricsEvents {
 export default class HistoryQuery {
   private finishInterval: NodeJS.Timeout | null = null;
   private stopping = false;
+  // Incremented on every stop, so that the retry of a failed run does not restart a history query stopped meanwhile
+  private generation = 0;
   private logger!: ILogger;
   private intervals: Array<Interval> = [];
 
@@ -106,6 +108,7 @@ export default class HistoryQuery {
     await this.north.start();
 
     this.south.connectedEvent.on('connected', () => {
+      const generation = this.generation;
       this.metricsEvent.emit('south-history-query-start', { running: true });
       this.south!.historyQueryHandler(
         this.historyConfiguration.items
@@ -139,7 +142,9 @@ export default class HistoryQuery {
         .catch(async error => {
           this.logger.error(`Error while executing history query. ${error}`);
           await delay(FINISH_INTERVAL);
-          if (this.historyConfiguration.status === 'RUNNING' && !this.stopping) {
+          // Not when the history query was stopped meanwhile, even if restarted since: the restart already queries
+          // again, restarting the south once more would run a second history query alongside it
+          if (this.historyConfiguration.status === 'RUNNING' && !this.stopping && generation === this.generation) {
             await this.south!.stop();
             await this.south!.start();
           }
@@ -172,6 +177,7 @@ export default class HistoryQuery {
 
   async stop(): Promise<void> {
     this.stopping = true;
+    this.generation++;
     if (this.finishInterval) {
       clearInterval(this.finishInterval);
       this.finishInterval = null;
