@@ -87,6 +87,17 @@ describe('LoginComponent', () => {
     await expect.poll(() => windowService.reload).toHaveBeenCalled();
   });
 
+  test('should not reload when the guard refuses the navigation, to keep the password change open', async () => {
+    currentUserService.loginWithPassword.mockReturnValue(of(testData.users.list[0]));
+    router.navigateByUrl.mockResolvedValue(false);
+
+    await tester.submit('johndoe', 'passw0rd');
+
+    await expect.poll(() => router.navigateByUrl).toHaveBeenCalledWith('/about');
+    await Promise.resolve();
+    expect(windowService.reload).not.toHaveBeenCalled();
+  });
+
   test('should display an error if login fails, and hide it when retrying', async () => {
     currentUserService.loginWithPassword.mockReturnValue(throwError(() => 'oops'));
 
