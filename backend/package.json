@@ -57,7 +57,7 @@
     "ads-client": "2.2.0",
     "argon2": "0.45.2",
     "azure-kusto-data": "7.2.0",
-    "azure-kusto-ingest": "7.2.0",
+    "azure-kusto-ingest": "8.0.0",
     "basic-auth": "2.0.1",
     "basic-ftp": "6.2.6",
     "better-sqlite3": "13.0.3",
