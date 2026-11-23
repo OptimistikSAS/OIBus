@@ -1,10 +1,15 @@
 import { Routes } from '@angular/router';
 
-import { authenticationGuard } from './auth/authentication.guard';
+import { authenticationGuard, passwordChangeGuard } from './auth/authentication.guard';
 import { UnsavedChangesGuard } from './shared/unsaved-changes.guard';
 
 export const ROUTES: Routes = [
   { path: 'login', loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent) },
+  {
+    path: 'change-password',
+    canActivate: [passwordChangeGuard],
+    loadComponent: () => import('./auth/change-password/change-password.component').then(m => m.ChangePasswordComponent)
+  },
   {
     path: '',
     canActivateChild: [authenticationGuard],

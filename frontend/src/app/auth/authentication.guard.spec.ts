@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { of } from 'rxjs';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 import { UserDTO } from '@oibus/shared/api/user.model';
 
@@ -10,12 +10,10 @@ import { EmptyRouteComponent } from '../../test/empty-route.component';
 import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { CurrentUserService } from '../shared/current-user.service';
-import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { WindowService } from '../shared/window.service';
-import { ChangePasswordModalComponent } from '../user-settings/change-password-modal/change-password-modal.component';
-import { authenticationGuard, RequestedUrlService } from './authentication.guard';
+import { authenticationGuard, passwordChangeGuard, RequestedUrlService } from './authentication.guard';
 
-describe('authenticationGuard', () => {
+describe('authentication guards', () => {
   let windowService: MockObject<WindowService>;
   let currentUserService: MockObject<CurrentUserService>;
   let router: Router;
@@ -30,15 +28,18 @@ describe('authenticationGuard', () => {
       providers: [
         provideRouter([
           { path: 'login', component: EmptyRouteComponent },
+          { path: 'change-password', canActivate: [passwordChangeGuard], component: EmptyRouteComponent },
           {
             path: '',
             canActivateChild: [authenticationGuard],
-            children: [{ path: 'dashboards/:id', component: EmptyRouteComponent }]
+            children: [
+              { path: '', component: EmptyRouteComponent },
+              { path: 'dashboards/:id', component: EmptyRouteComponent }
+            ]
           }
         ]),
         { provide: WindowService, useValue: windowService },
-        { provide: CurrentUserService, useValue: currentUserService },
-        provideModalTesting()
+        { provide: CurrentUserService, useValue: currentUserService }
       ]
     });
     router = TestBed.inject(Router);
@@ -63,20 +64,39 @@ describe('authenticationGuard', () => {
     expect(TestBed.inject(RequestedUrlService).getRequestedUrl()).toBe('/');
   });
 
-  test('should open the password change instead of the page when the user must change their password', async () => {
+  test('should send a user who must change their password to the password change page', async () => {
     windowService.getStorageItem.mockReturnValue('fake.token');
     currentUserService.get.mockReturnValue(of({ ...user, mustChangePassword: true }));
-    const modalService: MockModalService<ChangePasswordModalComponent> = TestBed.inject(MockModalService);
-    const modalComponent = createMock(ChangePasswordModalComponent);
-    modalService.mockClosedModal(modalComponent);
-    const open = vi.spyOn(modalService, 'open');
 
     await router.navigateByUrl('/dashboards/42');
 
-    expect(router.url).toBe('/');
-    expect(open).toHaveBeenCalledWith(ChangePasswordModalComponent, { backdrop: 'static', keyboard: false });
-    expect(modalComponent.forceChange).toHaveBeenCalled();
-    // logged out once the password changed, to log in with the new one
-    expect(currentUserService.logout).toHaveBeenCalled();
+    expect(router.url).toBe('/change-password');
+  });
+
+  describe('password change page', () => {
+    test('should be opened by a user who must change their password', async () => {
+      windowService.getStorageItem.mockReturnValue('fake.token');
+      currentUserService.get.mockReturnValue(of({ ...user, mustChangePassword: true }));
+
+      await router.navigateByUrl('/change-password');
+
+      expect(router.url).toBe('/change-password');
+    });
+
+    test('should send a user who has nothing to change to the home page', async () => {
+      windowService.getStorageItem.mockReturnValue('fake.token');
+
+      await router.navigateByUrl('/change-password');
+
+      expect(router.url).toBe('/');
+    });
+
+    test('should send to the login page when no token is present', async () => {
+      windowService.getStorageItem.mockReturnValue(null);
+
+      await router.navigateByUrl('/change-password');
+
+      expect(router.url).toBe('/login?auto=true');
+    });
   });
 });
