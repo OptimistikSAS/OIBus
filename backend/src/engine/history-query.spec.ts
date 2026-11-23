@@ -12,6 +12,7 @@ import type SouthConnector from '../south/south-connector';
 import type { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import type { CacheContentUpdateCommand, CacheMetadataSource, OIBusContent } from '../../shared/model/engine.model';
 import type HistoryQueryClass from './history-query';
+import HistoryQueryStoppedError from './history-query-stopped-error';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -200,7 +201,8 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.stop();
 
     assert.strictEqual(mockedSouth1Mock.stop.mock.calls.length, 1);
-    assert.match(String(signal.reason), /History query stopping/);
+    // Recognised by the souths that go on reading after a cache error (OPC UA HA)
+    assert.ok(signal.reason instanceof HistoryQueryStoppedError);
 
     // A restart waits again
     await historyQuery.start();
@@ -219,13 +221,39 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.start();
     mockedSouth1Mock.connectedEvent.emit('connected');
 
+    const metricsListener = mock.fn();
+    historyQuery.metricsEvent.on('south-history-query-stop', metricsListener);
     await historyQuery.stop();
-    failRun(new Error('History query stopping: content not cached'));
+    failRun(new HistoryQueryStoppedError());
     await flushPromises();
 
     assert.strictEqual(logger.error.mock.calls.length, 0);
     assert.ok(logger.debug.mock.calls.some(c => String(c.arguments[0]).startsWith('History query interrupted by a stop')));
     assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 1);
+    // No longer shown as running
+    assert.deepStrictEqual(
+      metricsListener.mock.calls.map(c => c.arguments[0]),
+      [{ running: false }]
+    );
+  });
+
+  it('should not report a run interrupted by a stop as stopped once restarted', async () => {
+    let failRun!: (error: Error) => void;
+    mockedSouth1Mock.historyQueryHandler = mock.fn(() => new Promise<void>((_resolve, reject) => (failRun = reject)));
+    await historyQuery.start();
+    mockedSouth1Mock.connectedEvent.emit('connected');
+    const failFirstRun = failRun;
+    const metricsListener = mock.fn();
+    historyQuery.metricsEvent.on('south-history-query-stop', metricsListener);
+
+    // The first run outlives the stop (source not answering) and fails after the restart
+    await historyQuery.stop();
+    await historyQuery.start();
+    failFirstRun(new HistoryQueryStoppedError());
+    await flushPromises();
+
+    // The run of the restart is the one running now
+    assert.strictEqual(metricsListener.mock.calls.length, 0);
   });
 
   it('should not retry a failed run once the history query was stopped, even if restarted since', async () => {

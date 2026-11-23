@@ -795,6 +795,52 @@ describe('Service utils', () => {
         mock.method(fs, 'writeFile', async () => null);
       });
 
+      it('should remove the written files when they cannot be compressed', async () => {
+        // The compression fails midway
+        mock.method(fsSync, 'createReadStream', () => {
+          const source = new PassThrough();
+          setImmediate(() => source.destroy(new Error('compression error')));
+          return source as unknown as fsSync.ReadStream;
+        });
+        const rmMock = mock.method(fs, 'rm', async () => undefined);
+        const settings = [
+          { type: 'file', filename: 'myFilename.csv', compression: true },
+          {
+            type: 'csv',
+            delimiter: 'SEMI_COLON',
+            filename: 'myFilename.csv',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimezone: 'UTC'
+          }
+        ] as Array<Parameters<typeof utils.persistResults>[1]>;
+
+        for (const serializationSettings of settings) {
+          rmMock.mock.resetCalls();
+          addContent.mock.resetCalls();
+          await assert.rejects(
+            utils.persistResults(
+              serializationSettings.type === 'file' ? 'content' : dataToWrite,
+              serializationSettings,
+              'connectorName',
+              testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
+              testData.constants.dates.FAKE_NOW,
+              'myTmpFolder',
+              addContent as unknown as Parameters<typeof utils.persistResults>[6],
+              logger as unknown as Parameters<typeof utils.persistResults>[7]
+            ),
+            /compression error/
+          );
+          // Neither the file nor the partial compressed file stay in the tmp folder
+          const filePath = path.join('myTmpFolder', 'myFilename.csv');
+          assert.deepStrictEqual(
+            rmMock.mock.calls.map(c => c.arguments[0]),
+            [filePath, `${filePath}.gz`]
+          );
+          assert.strictEqual(addContent.mock.calls.length, 0);
+        }
+      });
+
       it('should properly persists results into CSV file', async () => {
         const unlinkMock = mock.method(fs, 'unlink', async () => null);
 

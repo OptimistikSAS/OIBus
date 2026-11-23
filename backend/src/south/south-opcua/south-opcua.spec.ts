@@ -14,6 +14,7 @@ import type { SouthOPCUAItemSettings, SouthOPCUASettings, SouthItemSettings } fr
 import type { OIBusContent } from '../../../shared/model/engine.model';
 import type SouthOPCUAClass from './south-opcua';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import HistoryQueryStoppedError from '../../engine/history-query-stopped-error';
 import {
   DataType,
   StatusCodes,
@@ -761,6 +762,48 @@ describe('SouthOPCUA', () => {
     );
 
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
+  });
+
+  it('should end the HA read without reconnecting when the history query is stopping', async () => {
+    const mockedSession = {} as unknown as ClientSession;
+    south['session'] = mockedSession;
+    south.getHAValues = mock.fn(() => Promise.reject(new HistoryQueryStoppedError()));
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    await assert.rejects(
+      south.historyQuery([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2),
+      HistoryQueryStoppedError
+    );
+
+    // Not a session failure
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual(south['session'], mockedSession);
+  });
+
+  it('should not go on reading HA values once the history query is stopping', async () => {
+    utilsOpcuaExports.getHistoryReadRequest.mock.mockImplementation(() => ({ requestHeader: {} }) as unknown as HistoryReadRequest);
+    nodeOPCUAMock.resolveNodeId.mock.mockImplementation((nodeId: unknown) => nodeId);
+    const historyRead = mock.fn(async () => ({
+      responseHeader: { serviceResult: { isNot: () => false } },
+      results: [{ statusCode: { value: -1, name: 'BadSomething', description: 'bad' } }]
+    }));
+    south.addContent = mock.fn(async () => {
+      throw new HistoryQueryStoppedError();
+    });
+
+    // Caught and logged like a cache error, the rest of the interval was read, discarded, and its progress saved
+    await assert.rejects(
+      south.getHAValues([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, {
+        historyRead
+      } as unknown as ClientSession),
+      HistoryQueryStoppedError
+    );
+
+    assert.strictEqual(historyRead.mock.calls.length, 1);
+    assert.ok(
+      !(logger.error as ReturnType<typeof mock.fn>).mock.calls.some(c => String(c.arguments[1]).startsWith('Error saving HA values'))
+    );
   });
 
   it('should reconnect only once when two concurrent queries hit the same non-device session failure', async () => {

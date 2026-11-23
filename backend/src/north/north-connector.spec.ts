@@ -1007,6 +1007,10 @@ describe('NorthConnector', () => {
       assert.strictEqual(cacheService.cacheSizeEventEmitter.listenerCount('cache-size'), 0);
       // Already aborted: does not wait at all
       await assert.rejects(north.waitForCacheSpace(controller.signal), { message: 'stopping' });
+
+      // With space left, the results of the interval ending during the stop are cached instead of being queried again
+      cacheService.getCacheSize.mock.mockImplementation(() => 0);
+      await north.waitForCacheSpace(controller.signal);
     });
   });
 

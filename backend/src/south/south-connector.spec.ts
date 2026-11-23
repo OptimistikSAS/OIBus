@@ -791,9 +791,10 @@ describe('SouthConnector', () => {
       const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
       const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
       utilsExports.generateIntervals = mock.fn(() => [interval1, interval2]);
+      let stop: Promise<void> | undefined;
       south.historyQuery = mock.fn(async () => {
-        // Simulate a stop being requested mid-run
-        (south as unknown as { stopping: boolean }).stopping = true;
+        // A stop requested mid-run
+        stop ??= south.stop();
         return { trackedInstant: '2021-02-02T02:02:02.222Z', value: null };
       });
 
@@ -801,11 +802,43 @@ describe('SouthConnector', () => {
         SouthConnectorItemEntity<SouthMSSQLItemSettings>
       >;
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
+      await stop;
 
       const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
       assert.strictEqual(saveCalls.length, 0);
-      // Reset stopping flag for subsequent tests
-      (south as unknown as { stopping: boolean }).stopping = false;
+      assert.strictEqual((south.historyQuery as Mock<() => unknown>).mock.calls.length, 1);
+    });
+
+    it('should stop waiting for a hung history query, which still ends at its next interval', async () => {
+      utilsExports.generateIntervals = mock.fn(() => [
+        { start: '2020-01-01T00:00:00.000Z', end: '2020-02-01T00:00:00.000Z' },
+        { start: '2020-02-01T00:00:00.000Z', end: '2020-03-01T00:00:00.000Z' }
+      ]);
+      let releaseQuery!: () => void;
+      const historyQueryMock = mock.fn(async () => {
+        await new Promise<void>(resolve => (releaseQuery = resolve));
+        return { trackedInstant: null, value: null };
+      });
+      south.historyQuery = historyQueryMock;
+      const items = [testData.south.list[1].items[0]] as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
+      const run = south.historyQueryHandler(items, '2020-01-01T00:00:00.000Z', '2020-03-01T00:00:00.000Z');
+      await flushPromises();
+
+      // The source does not answer: a pause, an update or the shutdown of OIBus must not wait for it forever
+      const stop = south.stop();
+      await flushPromises();
+      mock.timers.tick(10_000);
+      await stop;
+      assert.ok(
+        (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(c =>
+          String(c.arguments[0]).startsWith('1 history query(ies) still waiting for the source after 10 s')
+        )
+      );
+
+      // Once stop() returned, the run still does not go on with the next interval
+      releaseQuery();
+      await run;
+      assert.strictEqual(historyQueryMock.mock.calls.length, 1);
     });
   });
 

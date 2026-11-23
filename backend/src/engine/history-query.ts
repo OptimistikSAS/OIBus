@@ -23,6 +23,7 @@ import type { ILogger } from '../model/logger.model';
 import { loggerService } from '../service/logger/logger.service';
 import { Interval } from '../../shared/model/types';
 import { ScanMode } from '../model/scan-mode.model';
+import HistoryQueryStoppedError from './history-query-stopped-error';
 
 const FINISH_INTERVAL = 5000;
 
@@ -52,11 +53,9 @@ export interface HistoryMetricsEvents {
 
 export default class HistoryQuery {
   private finishInterval: NodeJS.Timeout | null = null;
-  private stopping = false;
-  // Incremented on every stop, so that the retry of a failed run does not restart a history query stopped meanwhile
-  private generation = 0;
-  // Aborted on stop, to end the wait for cache space of the run in progress (see cacheContent)
-  private cacheSpaceWait = new AbortController();
+  // Aborted on stop and renewed on start. Its signal ends the wait for cache space of the run in progress (see
+  // cacheContent), and tells a run whether the history query was stopped since it started
+  private stopController = new AbortController();
   private logger!: ILogger;
   private intervals: Array<Interval> = [];
 
@@ -96,12 +95,12 @@ export default class HistoryQuery {
    * interval, so the history query finished with gaps. Waiting holds the south back until the north catches up.
    */
   async cacheContent(data: OIBusContent, source: CacheMetadataSource): Promise<void> {
-    await this.north.waitForCacheSpace(this.cacheSpaceWait.signal);
+    await this.north.waitForCacheSpace(this.stopController.signal);
     await this.north.cacheContent(data, source);
   }
 
   async start(): Promise<void> {
-    this.cacheSpaceWait = new AbortController();
+    this.stopController = new AbortController();
     this.north.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
       this.metricsEvent.emit('north-connect', data);
     });
@@ -123,7 +122,8 @@ export default class HistoryQuery {
     await this.north.start();
 
     this.south.connectedEvent.on('connected', () => {
-      const generation = this.generation;
+      // Kept by this run: a restart of the history query renews the controller, not the retry below (south restart only)
+      const stopSignal = this.stopController.signal;
       this.metricsEvent.emit('south-history-query-start', { running: true });
       this.south!.historyQueryHandler(
         this.historyConfiguration.items
@@ -155,16 +155,20 @@ export default class HistoryQuery {
           this.metricsEvent.emit('south-history-query-stop', { running: false });
         })
         .catch(async error => {
-          if (generation !== this.generation) {
-            // Interrupted by a stop (pause, settings update...): not an error
+          if (stopSignal.aborted) {
+            // Interrupted by a stop (pause, settings update...): not an error, but no longer running
             this.logger.debug(`History query interrupted by a stop. ${error}`);
+            // Unless restarted since (renewed controller): the run of the restart is the one running now
+            if (stopSignal === this.stopController.signal) {
+              this.metricsEvent.emit('south-history-query-stop', { running: false });
+            }
             return;
           }
           this.logger.error(`Error while executing history query. ${error}`);
           await delay(FINISH_INTERVAL);
           // Not when the history query was stopped meanwhile, even if restarted since: the restart already queries
           // again, restarting the south once more would run a second history query alongside it
-          if (this.historyConfiguration.status === 'RUNNING' && !this.stopping && generation === this.generation) {
+          if (this.historyConfiguration.status === 'RUNNING' && !stopSignal.aborted) {
             await this.south!.stop();
             await this.south!.start();
           }
@@ -196,11 +200,9 @@ export default class HistoryQuery {
   }
 
   async stop(): Promise<void> {
-    this.stopping = true;
-    this.generation++;
     // Before stopping the south, which waits for its run: the north cache may never empty (destination down...). The run
     // ends without saving its progress, so the interval is queried again on restart
-    this.cacheSpaceWait.abort(new Error('History query stopping: content not cached'));
+    this.stopController.abort(new HistoryQueryStoppedError());
     if (this.finishInterval) {
       clearInterval(this.finishInterval);
       this.finishInterval = null;
@@ -211,8 +213,6 @@ export default class HistoryQuery {
     this.south.metricsEvent.removeAllListeners();
     await this.north.stop();
     this.north.metricsEvent.removeAllListeners();
-
-    this.stopping = false;
   }
 
   async resetCache(): Promise<void> {
