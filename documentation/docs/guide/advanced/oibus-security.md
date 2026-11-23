@@ -171,14 +171,17 @@ used for OIAnalytics secret exchange, and from the secret signing the JWTs.
 
 ## Network Security {#network-security}
 
-OIBus does **not** support HTTPS natively. The web interface runs on plain HTTP (port 2223 by default).
+A new OIBus serves its web interface over [HTTPS](../engine/engine-settings.mdx#https) (port 2223 by default), with
+a self-signed certificate it generates at its first start. Replace it with a certificate issued by a CA your browsers
+trust to avoid the browser warnings, and keep an OIBus upgraded from a version before 4.0, which keeps serving HTTP,
+from being reached over the network until HTTPS is enabled.
 
 For production environments where the interface is accessed remotely:
 
-1. Place OIBus behind a **reverse proxy** (nginx, Apache, Caddy) that terminates TLS.
-2. Configure the proxy to forward requests to `http://localhost:2223`.
-3. Use [IP filters](../engine/ip-filters.mdx) to prevent direct access on port 2223 from outside the host.
-4. For external access, prefer a **VPN** over exposing the reverse proxy to the public internet.
+1. Use [IP filters](../engine/ip-filters.mdx) to restrict who can reach port 2223.
+2. To terminate TLS in a **reverse proxy** (nginx, Apache, Caddy) instead, forward its requests to OIBus, and prevent
+   direct access to port 2223 from outside the host.
+3. For external access, prefer a **VPN** over exposing OIBus or the reverse proxy to the public internet.
 
 ## Data Source Access {#data-source-access}
 

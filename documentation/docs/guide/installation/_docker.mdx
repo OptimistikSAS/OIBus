@@ -26,7 +26,7 @@ When running in Docker, do not change the OIBus HTTP port (2223) from the web in
 only exposes port 2223 — changing it internally will make the interface unreachable.
 :::
 
-Open `http://localhost:2223` in a browser and follow the [first access guide](./first-access.mdx).
+Open `https://localhost:2223` in a browser and follow the [first access guide](./first-access.mdx).
 
 ## Initial Configuration (First Run) {#initial-configuration-first-run}
 
@@ -42,6 +42,7 @@ Windows and Linux installers.
 | `ADMIN_USERNAME_FILE` | Path (inside the container) to a file holding the admin username — for Docker Secrets; takes priority over `ADMIN_USERNAME` when set | omitted                         |
 | `ADMIN_PASSWORD_FILE` | Path (inside the container) to a file holding the admin password — for Docker Secrets; takes priority over `ADMIN_PASSWORD` when set | omitted                         |
 | `DEFAULT_PORT`        | Port OIBus listens on inside the container                                                                                           | omitted (OIBus default applies) |
+| `DEFAULT_HTTPS`       | `false` to serve the web interface over HTTP, for example behind a reverse proxy terminating TLS                                     | omitted (HTTPS)                 |
 
 <CodeBlock language="bash">
   {`docker run -d \\

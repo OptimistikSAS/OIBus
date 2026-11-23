@@ -97,7 +97,8 @@ export default class RepositoryService {
       this._auditService,
       launcherVersion,
       initConfig.port,
-      initConfig.engineName
+      initConfig.engineName,
+      initConfig.https
     );
     this._northConnectorRepository = new NorthConnectorRepository(this.oibusDatabase, this._auditService);
     this._southConnectorRepository = new SouthConnectorRepository(this.oibusDatabase, this._auditService);

@@ -9,6 +9,7 @@ while [[ $# -gt 0 ]]; do
     -u) admin_username="$2"; shift 2;;
     -p) admin_password="$2"; shift 2;;
     -port) oibus_port="$2"; shift 2;;
+    -https) oibus_https="$2"; shift 2;;
     *) shift;;
   esac
 done
@@ -28,6 +29,15 @@ fi
 # -port is embedded as a raw (unquoted) JSON number below, so it must be digits only.
 if [[ -n "$oibus_port" ]] && [[ ! "$oibus_port" =~ ^[0-9]+$ ]]; then
   printf 'ERROR: Port "%s" must contain digits only.\n' "$oibus_port"
+  exit 1
+fi
+
+# -https is embedded as a raw JSON boolean below. A new OIBus serves HTTPS by default, with a self-signed certificate
+# it generates at its first start.
+oibus_https="${oibus_https:-true}"
+oibus_https="${oibus_https,,}"
+if [[ "$oibus_https" != "true" && "$oibus_https" != "false" ]]; then
+  printf 'ERROR: -https "%s" must be true or false.\n' "$oibus_https"
   exit 1
 fi
 
@@ -157,6 +167,7 @@ if [[ ! -f "$conf_path/oibus.db" ]]; then
   if [[ -n "$oibus_port" ]]; then
     json_fields="$json_fields,\"port\":$oibus_port"
   fi
+  json_fields="$json_fields,\"https\":$oibus_https"
   printf '{%s}' "$json_fields" > "$conf_path/oibus.init.json"
   chmod 600 "$conf_path/oibus.init.json"
 fi

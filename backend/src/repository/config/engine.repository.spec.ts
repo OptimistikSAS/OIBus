@@ -343,6 +343,14 @@ describe('EngineRepository with empty database', () => {
       assert.strictEqual(result.auditRetentionDuration, 90);
       assert.strictEqual(result.general.name, 'OIBus');
       assert.strictEqual(result.webServer.port, 2223);
+      // A new OIBus serves HTTPS, with a certificate generated when it starts
+      assert.deepStrictEqual(result.webServer.https, {
+        enabled: true,
+        certificateSource: 'store',
+        certificateId: null,
+        certificatePath: null,
+        privateKeyPath: null
+      });
       assert.strictEqual(result.proxyServer.enabled, false);
       assert.strictEqual(result.proxyServer.port, 9000);
       assert.strictEqual(result.proxyServer.username, null);
@@ -382,8 +390,10 @@ describe('EngineRepository with custom default port', () => {
     await emptyDatabase('config', CUSTOM_PORT_DB_PATH);
   });
 
-  it('should seed engine settings with a custom port', () => {
-    const repository = new EngineRepository(db, createAuditServiceMock(), '3.5.0', 3000);
+  it('should seed engine settings with a custom port, name and https', () => {
+    const repository = new EngineRepository(db, createAuditServiceMock(), '3.5.0', 3000, 'My OIBus', false);
     assert.strictEqual(repository.get()!.webServer.port, 3000);
+    assert.strictEqual(repository.get()!.general.name, 'My OIBus');
+    assert.strictEqual(repository.get()!.webServer.https.enabled, false);
   });
 });

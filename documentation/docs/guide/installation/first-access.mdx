@@ -4,7 +4,13 @@ sidebar_position: 2
 
 # First Access
 
-Once OIBus is running, open a browser and navigate to `http://localhost:2223`.
+Once OIBus is running, open a browser and navigate to `https://localhost:2223`.
+
+:::note Self-signed certificate
+A new OIBus serves its web interface over HTTPS, with a self-signed certificate it generates at its first start.
+The browser warns about it until the certificate is trusted: accept the warning, or select another certificate in
+[Engine Settings](../engine/engine-settings.mdx#https).
+:::
 
 :::caution Default credentials
 The default login is **admin** with password **pass**.

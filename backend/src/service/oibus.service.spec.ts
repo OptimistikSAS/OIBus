@@ -416,6 +416,56 @@ describe('OIBus Service', () => {
       webServer: { ...testData.engine.settings.webServer, https }
     });
 
+    it('should generate a self-signed certificate for the web server of a new OIBus when it starts', async () => {
+      const newHttps = { ...storeHttps, certificateId: null };
+      engineRepository.get.mock.mockImplementation(() => withHttps(newHttps));
+      certificateService.createSelfSigned.mock.mockImplementation(async () => certificate);
+      mock.method(os, 'hostname', () => 'oibus-host');
+
+      await service.start();
+
+      assert.strictEqual(certificateService.createSelfSigned.mock.calls.length, 1);
+      const [name, , options, createdBy] = certificateService.createSelfSigned.mock.calls[0].arguments;
+      assert.strictEqual(name, 'OIBus web server');
+      assert.strictEqual(options.commonName, 'oibus-host');
+      assert.strictEqual(createdBy, 'system');
+      assert.deepStrictEqual(engineRepository.updateWebServer.mock.calls[0].arguments, [
+        { ...testData.engine.settings.webServer, https: { ...newHttps, certificateId: certificate.id } },
+        'system'
+      ]);
+      assert.strictEqual(engine.start.mock.calls.length, 1);
+    });
+
+    it('should start when the certificate of the web server cannot be generated', async () => {
+      engineRepository.get.mock.mockImplementation(() => withHttps({ ...storeHttps, certificateId: null }));
+      certificateService.createSelfSigned.mock.mockImplementation(async () => {
+        throw new Error('key generation failed');
+      });
+
+      await service.start();
+
+      assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 0);
+      assert.ok(
+        logger.error.mock.calls.some(c => c.arguments[0] === 'Could not generate the certificate of the web server: key generation failed')
+      );
+      assert.strictEqual(engine.start.mock.calls.length, 1);
+    });
+
+    for (const [label, https] of [
+      ['https is disabled', { ...storeHttps, enabled: false, certificateId: null }],
+      ['a certificate is selected', storeHttps],
+      ['the certificate is read from files', fileHttps]
+    ] as const) {
+      it(`should not generate a certificate for the web server when ${label}`, async () => {
+        engineRepository.get.mock.mockImplementation(() => withHttps(https));
+
+        await service.start();
+
+        assert.strictEqual(certificateService.createSelfSigned.mock.calls.length, 0);
+        assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 0);
+      });
+    }
+
     it('should read the certificate, its chain and its decrypted private key from the store', async () => {
       certificateService.getKeyPair.mock.mockImplementation(() => toKeyPair(certificate));
 

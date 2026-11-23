@@ -119,6 +119,7 @@ var
   AdminUsernameEdit: TNewEdit;
   AdminPasswordEdit: TNewEdit;
   PortEdit: TNewEdit;
+  HttpsCheckBox: TNewCheckBox;
 
   // Global variables to store user choices
   FinalServiceName: String;
@@ -126,6 +127,7 @@ var
   FinalAdminUsername: String;
   FinalAdminPassword: String;
   FinalPort: String;
+  FinalHttps: Boolean;
 
   // Other services sharing this (legacy) install folder that were running before the files
   // were replaced: they had to be stopped too, and are restarted once Setup is done.
@@ -549,7 +551,7 @@ begin
   DataDirEdit.Width := ConfigPage.SurfaceWidth - btnBrowse.Width - ScaleX(10);
 
   // Create Admin Credentials Page
-  AdminPage := CreateCustomPage(ConfigPage.ID, 'Admin Credentials', 'Set the initial admin username, password and port');
+  AdminPage := CreateCustomPage(ConfigPage.ID, 'Admin Credentials', 'Set the initial admin username, password, port and protocol');
 
   lblAdminUser := TNewStaticText.Create(AdminPage);
   lblAdminUser.Parent := AdminPage.Surface;
@@ -593,6 +595,16 @@ begin
   PortEdit.Top := lblPort.Top + lblPort.Height + ScaleY(8);
   PortEdit.Left := 0;
   PortEdit.Width := AdminPage.SurfaceWidth;
+
+  // A new OIBus serves HTTPS with a self-signed certificate it generates at its first start
+  HttpsCheckBox := TNewCheckBox.Create(AdminPage);
+  HttpsCheckBox.Parent := AdminPage.Surface;
+  HttpsCheckBox.Caption := 'Serve the web interface over HTTPS (self-signed certificate)';
+  HttpsCheckBox.Checked := True;
+  HttpsCheckBox.Top := PortEdit.Top + PortEdit.Height + ScaleY(16);
+  HttpsCheckBox.Left := 0;
+  HttpsCheckBox.Width := AdminPage.SurfaceWidth;
+  FinalHttps := True;
 end;
 
 // Escape a string for safe embedding in a JSON value.
@@ -614,6 +626,14 @@ begin
       Escaped := Escaped + C;
   end;
   Result := Escaped;
+end;
+
+function JsonBoolean(const Value: Boolean): String;
+begin
+  if Value then
+    Result := 'true'
+  else
+    Result := 'false';
 end;
 
 function IsValidPort(const S: String): Boolean;
@@ -757,6 +777,7 @@ begin
       Exit;
     end;
     FinalPort := IntToStr(StrToInt(FinalPort)); // no leading zeros, which JSON forbids
+    FinalHttps := HttpsCheckBox.Checked;
   end;
 end;
 
@@ -778,6 +799,10 @@ begin
   S := S + Space + 'Data Directory: ' + FinalDataDir + NewLine;
   S := S + Space + 'Admin Username: ' + FinalAdminUsername + NewLine;
   S := S + Space + 'Port: ' + FinalPort + NewLine;
+  if FinalHttps then
+    S := S + Space + 'Protocol: HTTPS' + NewLine
+  else
+    S := S + Space + 'Protocol: HTTP' + NewLine;
 
   Result := S;
 end;
@@ -942,7 +967,7 @@ begin
       if not FileExists(AddBackslash(FinalDataDir) + 'oibus.db') then
         SaveStringToFile(
           AddBackslash(FinalDataDir) + 'oibus.init.json',
-          '{"engineName":"' + EscapeJsonString(FinalServiceName) + '","adminUsername":"' + EscapeJsonString(FinalAdminUsername) + '","adminPassword":"' + EscapeJsonString(FinalAdminPassword) + '","port":' + FinalPort + '}',
+          '{"engineName":"' + EscapeJsonString(FinalServiceName) + '","adminUsername":"' + EscapeJsonString(FinalAdminUsername) + '","adminPassword":"' + EscapeJsonString(FinalAdminPassword) + '","port":' + FinalPort + ',"https":' + JsonBoolean(FinalHttps) + '}',
           False
         );
 

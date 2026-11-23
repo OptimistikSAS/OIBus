@@ -3,4 +3,5 @@ export interface OIBusInitConfig {
   adminPassword?: string;
   port?: number;
   engineName?: string;
+  https?: boolean;
 }

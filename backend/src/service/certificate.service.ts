@@ -1,4 +1,4 @@
-import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat } from '../../shared/model/api/certificate.model';
+import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat, CertificateOptions } from '../../shared/model/api/certificate.model';
 import { GetUserInfo } from '../../shared/model/common/types';
 
 import { Certificate, CertificateImportCommand, CertificateKeyPair, CertificateUsage } from '../model/certificate.model';
@@ -60,20 +60,28 @@ export default class CertificateService {
 
   async create(command: CertificateCommandDTO, createdBy: string): Promise<Certificate> {
     await this.validator.validate(certificateSchema, command);
+    return this.createSelfSigned(command.name, command.description, command.options!, createdBy);
+  }
+
+  /**
+   * Generates a self-signed certificate and adds it to the store, without validating the options: used by OIBus itself,
+   * whose options may leave the subject fields empty.
+   */
+  async createSelfSigned(name: string, description: string, options: CertificateOptions, createdBy: string): Promise<Certificate> {
     const cert = await encryptionService.generateSelfSignedCertificate({
-      commonName: command.options!.commonName,
-      organizationName: command.options!.organizationName,
-      countryName: command.options!.countryName,
-      localityName: command.options!.localityName,
-      stateOrProvinceName: command.options!.stateOrProvinceName,
-      daysBeforeExpiry: command.options!.daysBeforeExpiry,
-      keySize: command.options!.keySize
+      commonName: options.commonName,
+      organizationName: options.organizationName,
+      countryName: options.countryName,
+      localityName: options.localityName,
+      stateOrProvinceName: options.stateOrProvinceName,
+      daysBeforeExpiry: options.daysBeforeExpiry,
+      keySize: options.keySize
     });
 
     const certificate = this.certificateRepository.create({
       id: generateRandomId(6),
-      name: command.name,
-      description: command.description,
+      name,
+      description,
       publicKey: cert.public,
       privateKey: encryptionService.encryptText(cert.private),
       certificate: cert.cert,

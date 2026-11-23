@@ -106,7 +106,7 @@ nvm use
 ```bash
 cd backend
 npm install
-npm start  # Starts on http://localhost:2223
+npm start  # Starts on https://localhost:2223 (HTTP for a data folder older than 4.0)
 ```
 
 ### 4. Set Up the Frontend {#4-set-up-the-frontend}
@@ -148,7 +148,7 @@ installers — it's responsible for starting the OIBus runtime binary as a child
 
 ### 7. Verify Your Setup {#7-verify-your-setup}
 
-- Backend: [http://localhost:2223](http://localhost:2223)
+- Backend: [https://localhost:2223](https://localhost:2223), with a self-signed certificate; the frontend dev server proxies to it, or to `OIBUS_BACKEND_URL` when set
 - Documentation: [http://localhost:3000](http://localhost:3000)
 
 ## 🛠 Development Workflow {#-development-workflow}
