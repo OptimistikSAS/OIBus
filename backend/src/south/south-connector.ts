@@ -23,6 +23,13 @@ import path from 'node:path';
 import TypedEventEmitter from '../service/typed-event-emitter';
 
 type HistoryQueryWarning = 'missing-time-variable' | 'inline-offset';
+// State of a history query in flight. `cancelled` is set by stop() and, unlike `stopping`, stays set once stop() has
+// returned: a run that outlived the stop still ends after its current interval
+interface HistoryRunState {
+  cancelled: boolean;
+}
+// Maximum time stop() waits for the history queries in flight, see SouthConnector.waitForHistoryRuns
+const HISTORY_RUN_STOP_TIMEOUT_MS = 10_000;
 
 /** Events published by a South connector's {@link SouthConnector.metricsEvent}. */
 export interface SouthMetricsEvents {
@@ -92,7 +99,7 @@ import { loggerService } from '../service/logger/logger.service';
  *    new work is queued or a task finishes, so a freed slot is picked up
  *    immediately.
  *  - `stop()` flips a `stopping` flag and awaits every in-flight task from
- *    `runningTasks` and every history query from `historyRuns` (including the
+ *    `runningTasks` and (for a bounded time) every history query from `historyRuns` (including the
  *    one-shot History Query runs that call `historyQueryHandler` directly,
  *    bypassing this scheduler entirely), so the engine can shut down cleanly
  *    mid-scan regardless of how many queries are running at once.
@@ -112,8 +119,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   private taskQueue: Array<{ scanModeId: string; items: Array<SouthConnectorItemEntity<I>> }> = [];
   // Every currently-running task's promise. Its size is the current concurrency; stop() awaits all of them.
   private runningTasks = new Set<Promise<void>>();
-  // Every history query in flight, scheduled or driven directly (see HistoryQuery). stop() awaits all of them
-  private historyRuns = new Set<Promise<void>>();
+  // Every history query in flight, scheduled or driven directly (see HistoryQuery), with its state. stop() cancels and
+  // awaits all of them
+  private historyRuns = new Map<Promise<void>, HistoryRunState>();
   // Enabled items grouped via `groupItemsByGroup`, bucketed by their effective scan mode id (own
   // scan mode, or the group's when synced). Rebuilt once whenever `connector.items` changes (see
   // the constructor and the `connectorConfiguration` setter) so `trigger()` — called on every scan
@@ -567,19 +575,27 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       );
     }
     this.logger.trace(`History querying ${itemsToRead.length} items`);
-    const run = this.runHistoryQueries(itemsToRead, startTime, endTime);
     // A history query driven directly (see HistoryQuery) is not a scheduled task: track it too, so that stop() waits
-    // for it. Otherwise the run outlived the stop and kept querying its remaining intervals, writing into a stopped north
-    const trackedRun = run.catch(() => undefined);
-    this.historyRuns.add(trackedRun);
+    // for it. Otherwise the run outlived the stop and kept querying its remaining intervals, writing into a stopped north.
+    // Tracked before it starts, so that a stop requested at any point of the run cancels it
+    const state: HistoryRunState = { cancelled: false };
+    let settle!: () => void;
+    const trackedRun = new Promise<void>(resolve => (settle = resolve));
+    this.historyRuns.set(trackedRun, state);
     try {
-      await run;
+      await this.runHistoryQueries(itemsToRead, startTime, endTime, state);
     } finally {
       this.historyRuns.delete(trackedRun);
+      settle();
     }
   }
 
-  private async runHistoryQueries(itemsToRead: Array<SouthConnectorItemEntity<I>>, startTime: Instant, endTime: Instant): Promise<void> {
+  private async runHistoryQueries(
+    itemsToRead: Array<SouthConnectorItemEntity<I>>,
+    startTime: Instant,
+    endTime: Instant,
+    state: HistoryRunState
+  ): Promise<void> {
     this.historyRunningCount++;
     this.historyIsRunning = true;
     try {
@@ -587,13 +603,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         // Each item is queried independently so that each has its own cache entry and trackedInstant.
         // This mirrors how groupItemsByGroup() sends singleton arrays during normal scan flow.
         for (const item of itemsToRead) {
-          await this.runHistoryQueryForLead(item, [item], null, startTime, endTime);
-          if (this.stopping) break;
+          await this.runHistoryQueryForLead(item, [item], null, startTime, endTime, state);
+          if (state.cancelled) break;
         }
       } else {
         const lead = itemsToRead[0];
         const groupId = lead.group && lead.syncWithGroup ? lead.group.id : null;
-        await this.runHistoryQueryForLead(lead, itemsToRead, groupId, startTime, endTime);
+        await this.runHistoryQueryForLead(lead, itemsToRead, groupId, startTime, endTime, state);
       }
     } finally {
       // Guaranteed even if runHistoryQueryForLead throws, so a failed history query can't leave
@@ -614,7 +630,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<I>>,
     groupId: string | null,
     startTime: Instant,
-    endTime: Instant
+    endTime: Instant,
+    state: HistoryRunState
   ): Promise<void> {
     // A non-null groupId means this is a batched, synced group (the only caller that passes one —
     // see historyQueryHandler): the cache is shared by the whole group, keyed by group_id alone, so
@@ -649,7 +666,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     const { effectiveStartTime, effectiveEndTime } = queryWindow;
     const intervals = this.buildIntervals(lead, items, effectiveStartTime, effectiveEndTime, maxReadInterval, recoveryStrategy);
     this.logIntervals(intervals);
-    await this.queryIntervals(intervals, items, southCache, readDelay, recoveryStrategy);
+    await this.queryIntervals(intervals, items, southCache, readDelay, recoveryStrategy, state);
   }
 
   /**
@@ -729,7 +746,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: SouthCacheEntry,
     readDelay: number,
-    strategy: SouthHistoryRecoveryStrategy
+    strategy: SouthHistoryRecoveryStrategy,
+    state: HistoryRunState
   ) {
     // For 'newest' strategy, track the max trackedInstant seen across all intervals. Intervals are
     // queried newest-first (see generateIntervals), so this is expected to resolve on the first
@@ -776,7 +794,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         latestValue = lastValue;
       }
 
-      if (this.stopping) {
+      // The run state and not `stopping`, which is reset once stop() returns: a run that outlived the stop (see
+      // stop()) would otherwise go on with every remaining interval
+      if (state.cancelled) {
         this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
         return;
       }
@@ -789,7 +809,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // For 'newest' strategy: only advance trackedInstant once all intervals have been queried.
     // This prevents a mid-run restart from skipping the not-yet-queried older intervals.
     // Only save if data was actually found — otherwise leave the cache untouched.
-    if (strategy === 'newest' && !this.stopping && latestValue) {
+    if (strategy === 'newest' && !state.cancelled && latestValue) {
       this.logger.debug(
         workUnitLogCtx(items),
         `Saving last value ${this.truncateForLog(latestValue.value)}, trackedInstant ${latestValue.trackedInstant}`
@@ -963,27 +983,55 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Graceful shutdown. Flips `stopping`, awaits any in-flight direct-call history query via
-   * `runProgress$` and every in-flight scheduled task via `runningTasks`, then disconnects. Used
-   * by the engine on connector delete / config reload / OIBus shutdown.
+   * Graceful shutdown. Flips `stopping`, cancels the history queries in flight, awaits every in-flight
+   * scheduled task via `runningTasks` and the history queries (for a bounded time, see
+   * `waitForHistoryRuns`), then disconnects. Used by the engine on connector delete / config reload /
+   * OIBus shutdown.
    */
   async stop(): Promise<void> {
     this.stopping = true;
     this.logger.debug(`Stopping South "${this.connector.name}" (${this.connector.id})...`);
+    // History queries end at their next interval
+    for (const state of this.historyRuns.values()) {
+      state.cancelled = true;
+    }
 
     if (this.runningTasks.size > 0) {
       this.logger.debug(`Waiting for ${this.runningTasks.size} South task(s) to finish`);
       await Promise.all(this.runningTasks);
     }
-    // History queries end at the next interval once `stopping` is set
     if (this.historyRuns.size > 0) {
       this.logger.debug(`Waiting for ${this.historyRuns.size} history query(ies) to finish`);
-      await Promise.all(this.historyRuns);
+      await this.waitForHistoryRuns();
     }
 
     await this.disconnect();
     this.stopping = false;
     this.logger.info(`South connector "${this.connector.name}" stopped`);
+  }
+
+  /**
+   * Wait for the history queries in flight, for at most HISTORY_RUN_STOP_TIMEOUT_MS: a slow or hung source request must
+   * not block a pause, an update or the shutdown of OIBus. A run still in flight is cancelled already, so it ends after
+   * its current interval.
+   */
+  private async waitForHistoryRuns(): Promise<void> {
+    let timeout: NodeJS.Timeout | null = null;
+    const timedOut = await Promise.race([
+      Promise.all(this.historyRuns.keys()).then(() => false),
+      new Promise<boolean>(resolve => {
+        timeout = setTimeout(() => resolve(true), HISTORY_RUN_STOP_TIMEOUT_MS);
+      })
+    ]);
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    if (timedOut) {
+      this.logger.warn(
+        `${this.historyRuns.size} history query(ies) still waiting for the source after ${HISTORY_RUN_STOP_TIMEOUT_MS / 1000} s: ` +
+          'stopping without them. They end after their current interval'
+      );
+    }
   }
 
   refreshLogger(): void {

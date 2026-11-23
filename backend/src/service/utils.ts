@@ -457,6 +457,25 @@ export const convertNewline = (newline: 'DEFAULT' | 'CRLF' | 'LF' | 'CR'): strin
   }
 };
 
+/**
+ * Compress a file written to be cached. When compression fails, the file and the partial compressed file are removed
+ * before rethrowing: nothing else would remove them, and the query writes new ones at every retry.
+ */
+const compressOrRemove = async (filePath: string, gzipPath: string, logger: ILogger, logCtx: Record<string, string>): Promise<void> => {
+  try {
+    await compress(filePath, gzipPath);
+  } catch (error: unknown) {
+    for (const leftover of [filePath, gzipPath]) {
+      try {
+        await fs.rm(leftover, { force: true });
+      } catch (rmError: unknown) {
+        logger.error(logCtx, `Error when deleting file "${leftover}" after a failed compression: ${getErrorMessage(rmError)}`);
+      }
+    }
+    throw error;
+  }
+};
+
 export const persistResults = async (
   data: Array<unknown> | string,
   serializationSettings: SerializationSettings,
@@ -477,7 +496,7 @@ export const persistResults = async (
       if (serializationSettings.compression) {
         // Compress and send the compressed file
         const gzipPath = `${filePath}.gz`;
-        await compress(filePath, gzipPath);
+        await compressOrRemove(filePath, gzipPath, logger, logCtx);
 
         try {
           await fs.unlink(filePath);
@@ -522,7 +541,7 @@ export const persistResults = async (
       if (serializationSettings.compression) {
         // Compress and send the compressed file
         const gzipPath = `${csvPath}.gz`;
-        await compress(csvPath, gzipPath);
+        await compressOrRemove(csvPath, gzipPath, logger, logCtx);
 
         try {
           await fs.unlink(csvPath);

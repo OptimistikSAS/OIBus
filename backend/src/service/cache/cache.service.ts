@@ -88,8 +88,9 @@ export default class CacheService {
   private pendingRemovalsSave: Promise<void> = Promise.resolve();
   // Once started, the queue mirrors the cache folder: searches read it instead of every metadata file on disk
   private started = false;
-  // Entries added to the cache while start() scans it, by filename, to queue those the scan missed. Null outside a scan
-  private addedDuringScan: Map<string, { filename: string; metadata: CacheMetadata }> | null = null;
+  // Entries added to the cache while start() scans it or removeAllCacheContent() empties it, by filename, to queue those
+  // the scan missed or the reset did not remove. Null outside of them
+  private addedWhileRebuilding: Map<string, { filename: string; metadata: CacheMetadata }> | null = null;
 
   private _queuedElementsCount = 0;
   private _queuedRawFilesCount = 0;
@@ -131,7 +132,7 @@ export default class CacheService {
   async start(): Promise<void> {
     // Moves and removals wait for the end of the scan: the queue it rebuilds would not reflect them
     const lock = await this.acquireCacheLock();
-    this.addedDuringScan = new Map();
+    this.addedWhileRebuilding = new Map();
     // Loaded before the scan, so that an entry already removed is not queued (and sent) again after a restart
     await this.loadPendingRemovals();
     let cacheResult: Awaited<ReturnType<CacheService['scanCacheFolder']>>;
@@ -151,7 +152,7 @@ export default class CacheService {
       // completed after the folder was listed are missing from the scan. Without them, their files stayed in the cache
       // folder untracked, never sent nor removed, until the next restart
       const scannedFilenames = new Set(cacheResult.entries.map(entry => entry.filename));
-      for (const entry of this.addedDuringScan.values()) {
+      for (const entry of this.addedWhileRebuilding.values()) {
         if (!scannedFilenames.has(entry.filename)) {
           cacheResult.entries.push(entry);
           cacheResult.size += entry.metadata.contentSize;
@@ -179,7 +180,7 @@ export default class CacheService {
       };
       this.started = true;
     } finally {
-      this.addedDuringScan = null;
+      this.addedWhileRebuilding = null;
       this.releaseCacheLock(lock);
     }
 
@@ -273,6 +274,8 @@ export default class CacheService {
   }
 
   private async writePendingRemovals(): Promise<void> {
+    // Written aside then renamed, so that a crash never leaves a truncated file
+    const temporaryPath = `${this.pendingRemovalsPath}.tmp`;
     try {
       if (!this.hasPendingRemovals()) {
         await fs.rm(this.pendingRemovalsPath, RM_OPTIONS);
@@ -282,12 +285,12 @@ export default class CacheService {
       for (const folder of DATA_FOLDERS) {
         saved[folder] = Array.from(this.pendingRemovals[folder].entries());
       }
-      // Written aside then renamed, so that a crash never leaves a truncated file
-      const temporaryPath = `${this.pendingRemovalsPath}.tmp`;
       await fs.writeFile(temporaryPath, JSON.stringify(saved), { encoding: 'utf-8', flag: 'w' });
       await fs.rename(temporaryPath, this.pendingRemovalsPath);
     } catch (error: unknown) {
       this.logger.warn(`Could not save the removals to retry into "${this.pendingRemovalsPath}": ${(error as Error).message}`);
+      // Not left behind when the rename failed (file locked...): nothing else would remove it
+      await fs.rm(temporaryPath, RM_OPTIONS).catch(() => undefined);
     }
   }
 
@@ -657,14 +660,18 @@ export default class CacheService {
       // 5. Cleanup Intermediate Files
       // These are the files in the "middle" that were fully merged
       // A file that cannot be deleted yet is retried later, and stays counted in the cache size until then
+      // Saved once for the whole compaction, not once per file that cannot be deleted
       const deleted = await parallelMap(compactedFiles, STARTUP_SCAN_CONCURRENCY, element =>
-        this.deleteCacheEntry('cache', element.filename, element.metadata.contentSize)
+        this.deleteCacheEntry('cache', element.filename, element.metadata.contentSize, false)
       );
       compactedFiles.forEach((element, index) => {
         if (!deleted[index]) {
           newSize += element.metadata.contentSize;
         }
       });
+      if (deleted.includes(false)) {
+        await this.savePendingRemovals();
+      }
 
       // 6. Update Queue Reference
       // Remove the deleted files from the main queue and resync counters: this
@@ -868,7 +875,7 @@ export default class CacheService {
       throw error;
     }
     this.queue.push({ filename, metadata });
-    this.addedDuringScan?.set(filename, { filename, metadata });
+    this.addedWhileRebuilding?.set(filename, { filename, metadata });
     this.incrementQueueCounters(metadata);
     this.cacheSize.cache += contentSize;
     this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
@@ -929,45 +936,42 @@ export default class CacheService {
 
   async removeAllCacheContent(): Promise<void> {
     const lock = await this.acquireCacheLock();
+    this.addedWhileRebuilding = new Map();
     try {
-      const folderList: Array<DataFolderType> = ['cache', 'error', 'archive'];
-      for (const folder of folderList) {
-        const metadataFolder = path.join(this.getFolder(folder), METADATA_FOLDER);
-        const metadataFiles = await fs.readdir(metadataFolder);
-        for (const file of metadataFiles) {
-          await fs
-            .rm(path.join(metadataFolder, file), { force: true, recursive: true })
-            .catch(err =>
-              this.logger.error(
-                `Could not remove file "${file}" from ${path.join(this.getFolder(folder), METADATA_FOLDER)}: ${err.message}`
-              )
-            );
-        }
-
-        const contentFolder = path.join(this.getFolder(folder), CONTENT_FOLDER);
-        const contentFiles = await fs.readdir(contentFolder);
-        for (const file of contentFiles) {
-          await fs
-            .rm(path.join(contentFolder, file), { force: true, recursive: true })
-            .catch(err =>
-              this.logger.error(`Could not remove file "${file}" from ${path.join(this.getFolder(folder), CONTENT_FOLDER)}: ${err.message}`)
-            );
-        }
-      }
-      this.queue = [];
+      // Everything listed is removed, including the files of the removals to retry
       for (const folder of DATA_FOLDERS) {
         this.pendingRemovals[folder].clear();
       }
-      await this.savePendingRemovals();
-      this._queuedElementsCount = 0;
-      this._queuedRawFilesCount = 0;
+      const removedFromCache = new Set<string>();
+      for (const folder of DATA_FOLDERS) {
+        const filenames = new Set([
+          ...(await fs.readdir(path.join(this.getFolder(folder), METADATA_FOLDER))),
+          ...(await fs.readdir(path.join(this.getFolder(folder), CONTENT_FOLDER)))
+        ]);
+        for (const filename of filenames) {
+          // Retried when it cannot be removed (file locked...): it used to stay on disk and to be sent after the reset
+          // (scanned again at the next start). Nothing is counted any more after a reset, hence its size of 0
+          await this.deleteCacheEntry(folder, filename, 0, false);
+          if (folder === 'cache') {
+            removedFromCache.add(filename);
+          }
+        }
+      }
+
+      // Content keeps being added during the reset (souths still sending): the entries completed after the folder was
+      // listed are not removed. Dropping them from the queue left their files in the cache folder, never sent nor removed
+      const kept = Array.from(this.addedWhileRebuilding.values()).filter(entry => !removedFromCache.has(entry.filename));
+      this.queue = kept;
+      this.recomputeQueueCounters();
       this.cacheSize = {
-        cache: 0,
+        cache: kept.reduce((size, entry) => size + entry.metadata.contentSize, 0),
         error: 0,
         archive: 0
       };
+      await this.savePendingRemovals();
       this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
     } finally {
+      this.addedWhileRebuilding = null;
       // Always release, even if a folder cannot be listed: an unreleased lock blocks getCacheContentToSend
       // forever and the north stops sending
       this.releaseCacheLock(lock);
@@ -1166,12 +1170,14 @@ export default class CacheService {
    * `contentSize` is the size still counted for this entry: when the deletion fails, it stays counted until the retry
    * succeeds, and the caller must not subtract it. Pass 0 for an entry not counted.
    */
-  private async deleteCacheEntry(folder: DataFolderType, filename: string, contentSize: number): Promise<boolean> {
+  private async deleteCacheEntry(folder: DataFolderType, filename: string, contentSize: number, save = true): Promise<boolean> {
     if (await this.removeEntryFiles(folder, filename, false)) {
       return true;
     }
     this.pendingRemovals[folder].set(filename, contentSize);
-    await this.savePendingRemovals();
+    if (save) {
+      await this.savePendingRemovals();
+    }
     return false;
   }
 }

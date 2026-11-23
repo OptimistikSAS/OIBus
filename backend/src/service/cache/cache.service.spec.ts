@@ -581,7 +581,7 @@ describe('CacheService', () => {
     );
     assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 103, error: 0, archive: 0 });
     assert.strictEqual(service.getNumberOfRawFilesInQueue(), 1);
-    assert.strictEqual(priv()['addedDuringScan'], null);
+    assert.strictEqual(priv()['addedWhileRebuilding'], null);
   });
 
   it('should wait for the end of the scan before updating the cache content', async () => {
@@ -898,6 +898,44 @@ describe('CacheService', () => {
     } finally {
       await fs.rm(baseFolder, { recursive: true, force: true });
     }
+  });
+
+  it('should save the removals to retry once per compaction', async () => {
+    const items = ['1.json', '2.json', '3.json', '4.json'].map(filename => ({
+      filename,
+      metadata: { contentType: 'typeA', contentSize: 10 } as CacheMetadata
+    }));
+    priv()['queue'] = [...items];
+    priv()['cacheSize'] = { cache: 40, error: 0, archive: 0 };
+    priv()['accumulateContent'] = mock.fn(async () => ({ newListOfContent: [{ a: 1 }], remainder: [], compactedFiles: [...items] }));
+    priv()['overwriteCacheFile'] = mock.fn(async () => 10);
+    // Every merged file is locked
+    rmMock.mock.mockImplementation(async () => {
+      throw Object.assign(new Error('EBUSY'), { code: 'EBUSY' });
+    });
+
+    await service.compactQueue(100, 'typeA');
+
+    assert.strictEqual((priv()['pendingRemovals'] as Record<string, Map<string, number>>).cache.size, 3);
+    // Not once per locked file
+    assert.strictEqual(writeFileMock.mock.calls.length, 1);
+    assert.strictEqual(renameMock.mock.calls.length, 1);
+  });
+
+  it('should not leave the temporary file of the removals to retry behind', async () => {
+    renameMock.mock.mockImplementation(async () => {
+      throw Object.assign(new Error('EPERM'), { code: 'EPERM' });
+    });
+    rmMock.mock.mockImplementation(async (filePath: string) => {
+      if (!filePath.endsWith('.tmp')) {
+        throw Object.assign(new Error('EBUSY'), { code: 'EBUSY' });
+      }
+    });
+
+    await (priv()['deleteCacheEntry'] as unknown as (folder: string, file: string, size: number) => Promise<boolean>)('cache', 'file', 0);
+
+    assert.ok(logger.warn.mock.calls.some(c => String(c.arguments[0]).startsWith('Could not save the removals to retry into')));
+    assert.ok(rmMock.mock.calls.some(c => c.arguments[0] === path.join(service.cacheFolder, 'pending-removals.json.tmp')));
   });
 
   it('should start even when the removals to retry cannot be read or saved', async () => {
@@ -1701,11 +1739,55 @@ describe('CacheService', () => {
     await service.removeAllCacheContent();
 
     assert.strictEqual(readdirMock.mock.calls.length, 6);
-    // 18 files, then the removals to retry, none left
-    assert.strictEqual(rmMock.mock.calls.length, 19);
-    assert.strictEqual(rmMock.mock.calls[18].arguments[0], path.join(service.cacheFolder, 'pending-removals.json'));
-    assert.strictEqual(logger.error.mock.calls.length, 6);
+    // Metadata then content of each listed entry; the locked ones stop at their metadata
+    assert.strictEqual(rmMock.mock.calls.length, 15);
+    assert.strictEqual(logger.warn.mock.calls.length, 3);
+    // The locked ones are retried instead of being left on disk, and sent again once scanned after a restart
+    const pendingRemovals = priv()['pendingRemovals'] as Record<string, Map<string, number>>;
+    assert.deepStrictEqual(
+      ['cache', 'error', 'archive'].map(folder => [...pendingRemovals[folder]]),
+      [[['bad', 0]], [['bad', 0]], [['bad', 0]]]
+    );
+    assert.strictEqual(service.cacheIsEmpty(), false);
+    assert.deepStrictEqual(
+      renameMock.mock.calls.map(c => c.arguments[1]),
+      [path.join(service.cacheFolder, 'pending-removals.json')]
+    );
+    assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 0, error: 0, archive: 0 });
     assert.ok(emitEventMock.mock.calls.some(c => c.arguments[0] === 'cache-size'));
+  });
+
+  it('should keep the content added while the cache is emptied', async () => {
+    generateRandomIdMock.mock.mockImplementation(
+      seq(
+        () => 'listed',
+        () => 'added'
+      )
+    );
+    writeFileMock.mock.mockImplementation(async () => undefined);
+    rmMock.mock.mockImplementation(async () => undefined);
+    // A south keeps sending data during the reset: one entry is listed (so removed), one is added after
+    readdirMock.mock.mockImplementation(async (folder: string) => {
+      if (folder === path.join(service.cacheFolder, METADATA_FOLDER)) {
+        await service.addCacheContent(Buffer.from('ab'), { contentType: 'any' });
+        return ['listed'];
+      }
+      if (folder === path.join(service.cacheFolder, CONTENT_FOLDER)) {
+        await service.addCacheContent(Buffer.from('abc'), { contentType: 'any' });
+        return ['listed'];
+      }
+      return [];
+    });
+
+    await service.removeAllCacheContent();
+
+    // Not removed: it used to be dropped from the queue but left on disk, never sent nor removed
+    assert.deepStrictEqual(
+      (priv()['queue'] as Array<{ filename: string }>).map(element => element.filename),
+      ['added']
+    );
+    assert.deepStrictEqual(service.getCacheContentSizes(), { cache: 3, error: 0, archive: 0 });
+    assert.strictEqual(priv()['addedWhileRebuilding'], null);
   });
 
   it('should release the update lock when emptying the cache fails', async () => {

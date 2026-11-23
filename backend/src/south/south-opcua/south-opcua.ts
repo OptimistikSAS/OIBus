@@ -25,6 +25,7 @@ import {
 import { HistoryDataOptions, HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createSessionConfigs, getHistoryReadRequest, getTimestamp, logMessages, parseOPCUAValue } from '../../service/utils-opcua';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import HistoryQueryStoppedError from '../../engine/history-query-stopped-error';
 
 // OPC-UA status codes that indicate a device/PLC-level failure. The OPC-UA session
 // itself is still alive — only the device behind the server is unreachable. Do NOT
@@ -394,6 +395,10 @@ export default class SouthOPCUA
     try {
       return await this.getHAValues(items, startTime, endTime, session);
     } catch (error: unknown) {
+      // Not a session failure: the history query is stopping, no reconnection
+      if (error instanceof HistoryQueryStoppedError) {
+        throw error;
+      }
       if (isDeviceError(error)) {
         this.logger.warn(
           workUnitLogCtx(items),
@@ -593,6 +598,10 @@ export default class SouthOPCUA
               try {
                 await this.addContent({ type: 'time-values', content: batchValues }, startRequest.toUTC().toISO(), resampledItemsAsItems);
               } catch (addError: unknown) {
+                // Except a stopping history query: going on would discard the rest of the interval and save its progress
+                if (addError instanceof HistoryQueryStoppedError) {
+                  throw addError;
+                }
                 this.logger.error(logCtx, `Error saving HA values to cache: ${getErrorMessage(addError)}`);
               }
               this.logger.trace(logCtx, `Continue read for ${nodesToRead.length}/${totalNodes} nodes with pending data`);

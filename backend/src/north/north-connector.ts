@@ -748,13 +748,15 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * `cacheContent` while they go on with the next interval. The cache size, which includes the error and archive
    * folders, is checked again on every change of it (send, removal, compaction...).
    *
-   * Throws when `signal` is aborted, so that a stopping history query does not wait for a cache that may never empty.
+   * Throws when `signal` is aborted while it has to wait, so that a stopping history query does not wait for a cache that
+   * may never empty. With space left, it returns even when aborted: the results of the interval ending during the stop
+   * are cached instead of being queried again on restart.
    */
   async waitForCacheSpace(signal: AbortSignal): Promise<void> {
-    signal.throwIfAborted();
     if (!this.cacheExceedsMaxSize()) {
       return;
     }
+    signal.throwIfAborted();
     this.logCacheSpaceWait();
     await new Promise<void>((resolve, reject) => {
       const cleanUp = () => {
