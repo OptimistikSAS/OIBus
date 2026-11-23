@@ -72,7 +72,7 @@ const readSecretOrEnv = (fileEnvVar: string, directEnvVar: string): string | und
 
 /**
  * Read the one-time init config from file (installer path) or env vars (Docker path).
- * Priority: oibus.init.json > ADMIN_USERNAME_FILE/ADMIN_PASSWORD_FILE > ADMIN_USERNAME/ADMIN_PASSWORD/DEFAULT_PORT > undefined.
+ * Priority: oibus.init.json > ADMIN_USERNAME_FILE/ADMIN_PASSWORD_FILE > ADMIN_USERNAME/ADMIN_PASSWORD/DEFAULT_PORT/DEFAULT_HTTPS > undefined.
  */
 export const readInitConfig = (): OIBusInitConfig => {
   if (existsSync(INIT_CONFIG_FILENAME)) {
@@ -83,7 +83,8 @@ export const readInitConfig = (): OIBusInitConfig => {
         engineName: typeof parsed.engineName === 'string' ? parsed.engineName : undefined,
         adminUsername: typeof parsed.adminUsername === 'string' ? parsed.adminUsername : undefined,
         adminPassword: typeof parsed.adminPassword === 'string' ? parsed.adminPassword : undefined,
-        port: typeof parsed.port === 'number' ? parsed.port : undefined
+        port: typeof parsed.port === 'number' ? parsed.port : undefined,
+        https: typeof parsed.https === 'boolean' ? parsed.https : undefined
       };
     } catch (err) {
       console.warn(`Failed to parse ${INIT_CONFIG_FILENAME}: ${(err as Error).message}; falling back to env vars / defaults`);
@@ -92,11 +93,13 @@ export const readInitConfig = (): OIBusInitConfig => {
 
   const portEnv = process.env.DEFAULT_PORT;
   const parsedPort = portEnv ? parseInt(portEnv, 10) : NaN;
+  const httpsEnv = process.env.DEFAULT_HTTPS?.trim().toLowerCase();
   return {
     engineName: process.env.ENGINE_NAME || undefined,
     adminUsername: readSecretOrEnv('ADMIN_USERNAME_FILE', 'ADMIN_USERNAME'),
     adminPassword: readSecretOrEnv('ADMIN_PASSWORD_FILE', 'ADMIN_PASSWORD'),
-    port: Number.isNaN(parsedPort) ? undefined : parsedPort
+    port: Number.isNaN(parsedPort) ? undefined : parsedPort,
+    https: httpsEnv === 'true' ? true : httpsEnv === 'false' ? false : undefined
   };
 };
 

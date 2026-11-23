@@ -14,6 +14,8 @@ set "SERVICE_NAME=OIBus"
 set ADMIN_USERNAME=
 set ADMIN_PASSWORD=
 set OIBUS_PORT=
+rem A new OIBus serves HTTPS by default, with a self-signed certificate it generates at its first start
+set "OIBUS_HTTPS=true"
 
 :PARSE_PARAMETERS
 if "%~1"=="" goto PARSE_PARAMETERS_DONE
@@ -47,6 +49,12 @@ if "%~1"=="-port" (
     shift
     goto PARSE_PARAMETERS
 )
+if "%~1"=="-https" (
+    set "OIBUS_HTTPS=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
 shift
 goto PARSE_PARAMETERS
 :PARSE_PARAMETERS_DONE
@@ -76,6 +84,19 @@ goto PORT_OK
 echo ERROR: Port "%OIBUS_PORT%" must be a number between 1 and 65535.
 exit /b 1
 :PORT_OK
+
+rem -https is embedded as a raw JSON boolean below, so it must be true or false (any case)
+if /I "%OIBUS_HTTPS%"=="true" (
+    set "OIBUS_HTTPS=true"
+    goto HTTPS_OK
+)
+if /I "%OIBUS_HTTPS%"=="false" (
+    set "OIBUS_HTTPS=false"
+    goto HTTPS_OK
+)
+echo ERROR: -https "%OIBUS_HTTPS%" must be true or false.
+exit /b 1
+:HTTPS_OK
 
 goto CHECK
 :INPUT
@@ -136,6 +157,7 @@ set JSON_FIELDS="engineName":"%SERVICE_NAME%"
 if not "%ADMIN_USERNAME%"=="" set JSON_FIELDS=%JSON_FIELDS%,"adminUsername":"%ESCAPED_ADMIN_USERNAME%"
 if not "%ADMIN_PASSWORD%"=="" set JSON_FIELDS=%JSON_FIELDS%,"adminPassword":"%ESCAPED_ADMIN_PASSWORD%"
 if not "%OIBUS_PORT%"=="" set JSON_FIELDS=%JSON_FIELDS%,"port":%OIBUS_PORT%
+set JSON_FIELDS=%JSON_FIELDS%,"https":%OIBUS_HTTPS%
 (echo {%JSON_FIELDS%})> "%DATA_FOLDER_PATH%\oibus.init.json"
 :SKIP_INIT
 

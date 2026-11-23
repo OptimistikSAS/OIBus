@@ -1910,6 +1910,7 @@ describe('Service utils', () => {
       'ADMIN_USERNAME',
       'ADMIN_PASSWORD',
       'DEFAULT_PORT',
+      'DEFAULT_HTTPS',
       'ADMIN_USERNAME_FILE',
       'ADMIN_PASSWORD_FILE'
     ];
@@ -1923,10 +1924,14 @@ describe('Service utils', () => {
 
     it('should read credentials and port from a valid init file', () => {
       mock.method(fsSync, 'existsSync', () => true);
-      mock.method(fsSync, 'readFileSync', () => '{"engineName":"MyOIBus","adminUsername":"alice","adminPassword":"s3cr3t","port":3000}');
+      mock.method(
+        fsSync,
+        'readFileSync',
+        () => '{"engineName":"MyOIBus","adminUsername":"alice","adminPassword":"s3cr3t","port":3000,"https":false}'
+      );
 
       const result = utils.readInitConfig();
-      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'alice', adminPassword: 's3cr3t', port: 3000 });
+      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'alice', adminPassword: 's3cr3t', port: 3000, https: false });
     });
 
     it('should fall back to env vars when init file does not exist', () => {
@@ -1935,9 +1940,20 @@ describe('Service utils', () => {
       process.env.ADMIN_USERNAME = 'bob';
       process.env.ADMIN_PASSWORD = 'secret';
       process.env.DEFAULT_PORT = '4000';
+      process.env.DEFAULT_HTTPS = 'FALSE';
 
       const result = utils.readInitConfig();
-      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'bob', adminPassword: 'secret', port: 4000 });
+      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'bob', adminPassword: 'secret', port: 4000, https: false });
+    });
+
+    it('should read DEFAULT_HTTPS as a boolean, and ignore other values', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      process.env.DEFAULT_HTTPS = 'true';
+      assert.strictEqual(utils.readInitConfig().https, true);
+      process.env.DEFAULT_HTTPS = 'no';
+      assert.strictEqual(utils.readInitConfig().https, undefined);
+      delete process.env.DEFAULT_HTTPS;
+      assert.strictEqual(utils.readInitConfig().https, undefined);
     });
 
     it('should fall back to env vars when init file is malformed JSON', () => {
@@ -1990,10 +2006,20 @@ describe('Service utils', () => {
 
     it('should ignore fields with wrong types in the init file', () => {
       mock.method(fsSync, 'existsSync', () => true);
-      mock.method(fsSync, 'readFileSync', () => '{"engineName":99,"adminUsername":123,"adminPassword":null,"port":"not-a-number"}');
+      mock.method(
+        fsSync,
+        'readFileSync',
+        () => '{"engineName":99,"adminUsername":123,"adminPassword":null,"port":"not-a-number","https":"false"}'
+      );
 
       const result = utils.readInitConfig();
-      assert.deepStrictEqual(result, { engineName: undefined, adminUsername: undefined, adminPassword: undefined, port: undefined });
+      assert.deepStrictEqual(result, {
+        engineName: undefined,
+        adminUsername: undefined,
+        adminPassword: undefined,
+        port: undefined,
+        https: undefined
+      });
     });
   });
 

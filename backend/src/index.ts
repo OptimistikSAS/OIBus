@@ -360,7 +360,8 @@ export async function bootstrap(): Promise<void> {
   await auditCleanupService.start();
 
   const server = new WebServer(
-    oibusSettings.webServer,
+    // Read again: OIBus generates the certificate of the web server of a new OIBus when it starts
+    oIBusService.getEngineSettings().webServer,
     repositoryService.auditService,
     scanModeService,
     ipFilterService,

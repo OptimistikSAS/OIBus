@@ -94,7 +94,7 @@ describe('index.ts bootstrap()', () => {
   let loggerServiceMock: ReturnType<typeof makeLoggerServiceMock>;
   let repoServiceMock: ReturnType<typeof makeRepositoryServiceMock>;
   let webServerMock: ReturnType<typeof makeWebServerMock>;
-  let oibusServiceMock: ReturnType<typeof makeServiceMock>;
+  let oibusServiceMock: ReturnType<typeof makeServiceMock> & { getEngineSettings: ReturnType<typeof mock.fn> };
   let oianalyticsCommandServiceMock: ReturnType<typeof makeServiceMock>;
   let oianalyticsSessionServiceMock: ReturnType<typeof makeServiceMock>;
   let oianalyticsMessageServiceMock: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> };
@@ -115,7 +115,7 @@ describe('index.ts bootstrap()', () => {
     createOwnerOnlyFileMock = mock.fn(async () => undefined);
     repoServiceMock = makeRepositoryServiceMock(engineSettings, cryptoSettings);
     webServerMock = makeWebServerMock();
-    oibusServiceMock = makeServiceMock();
+    oibusServiceMock = { ...makeServiceMock(), getEngineSettings: mock.fn(() => engineSettings) };
     oianalyticsCommandServiceMock = makeServiceMock();
     oianalyticsSessionServiceMock = makeServiceMock();
     oianalyticsMessageServiceMock = { start: mock.fn(), stop: mock.fn(async () => undefined) };

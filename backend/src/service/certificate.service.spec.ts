@@ -161,6 +161,22 @@ describe('Certificate Service', () => {
     assert.deepStrictEqual(result, testData.certificates.list[0]);
   });
 
+  it('should create a self-signed certificate without validating its options', async () => {
+    certificateRepository.create.mock.mockImplementationOnce(() => testData.certificates.list[0]);
+    const options = { ...testData.certificates.command.options!, countryName: '', organizationName: '' };
+
+    const result = await service.createSelfSigned('name', 'description', options, 'system');
+
+    assert.strictEqual(validator.validate.mock.calls.length, 0);
+    const createArgs = certificateRepository.create.mock.calls[0].arguments[0];
+    assert.strictEqual(createArgs.name, 'name');
+    assert.strictEqual(createArgs.description, 'description');
+    assert.strictEqual(createArgs.certificate, certPem);
+    assert.strictEqual(createArgs.createdBy, 'system');
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(result, testData.certificates.list[0]);
+  });
+
   it('should update a certificate', async () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
     const command: CertificateCommandDTO = JSON.parse(JSON.stringify(testData.certificates.command));

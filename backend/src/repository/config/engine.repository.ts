@@ -64,8 +64,9 @@ const DEFAULT_ENGINE_SETTINGS: Omit<
   webServer: {
     port: 2223,
     authTokenDuration: '7d',
+    // A new OIBus serves HTTPS, with a self-signed certificate of the store generated at its first start
     https: {
-      enabled: false,
+      enabled: true,
       certificateSource: 'store',
       certificateId: null,
       certificatePath: null,
@@ -127,12 +128,17 @@ export default class EngineRepository {
     private readonly auditService: AuditService,
     launcherVersion: string,
     defaultPort = DEFAULT_ENGINE_SETTINGS.webServer.port,
-    defaultName = DEFAULT_ENGINE_SETTINGS.general.name
+    defaultName = DEFAULT_ENGINE_SETTINGS.general.name,
+    defaultHttps = DEFAULT_ENGINE_SETTINGS.webServer.https.enabled
   ) {
     this.createDefault(
       {
         ...DEFAULT_ENGINE_SETTINGS,
-        webServer: { ...DEFAULT_ENGINE_SETTINGS.webServer, port: defaultPort },
+        webServer: {
+          ...DEFAULT_ENGINE_SETTINGS.webServer,
+          port: defaultPort,
+          https: { ...DEFAULT_ENGINE_SETTINGS.webServer.https, enabled: defaultHttps }
+        },
         general: { name: defaultName, description: DEFAULT_ENGINE_SETTINGS.general.description }
       },
       launcherVersion
