@@ -68,11 +68,13 @@ sudo ./oibus-setup.sh [options]
 | `-u`    | 首次安装时写入 `oibus.init.json` 的管理员用户名                         | 省略（应用 OIBus 默认值） |
 | `-p`    | 首次安装时写入 `oibus.init.json` 的管理员密码                         | 省略（应用 OIBus 默认值） |
 | `-port` | OIBus 监听的端口，首次安装时写入 `oibus.init.json`                 | 省略（应用 OIBus 默认值） |
+| `-https` | `true` 表示通过 HTTPS 提供 Web 界面，`false` 表示通过 HTTP，首次安装时写入 `oibus.init.json` | `true` |
 
 :::info
-`-u`、`-p` 和 `-port` 仅在 `oibus.db` 尚不存在时使用（即仅在首次安装时）。
+`-u`、`-p`、`-port` 和 `-https` 仅在 `oibus.db` 尚不存在时使用（即仅在首次安装时）。
 它们会被写入数据文件夹中的 `oibus.init.json` 文件，并由 OIBus 在首次启动时应用。
-被省略的参数不会写入该文件——OIBus 会对这些值使用其内置默认值。
+被省略的参数不会写入该文件（`-https` 除外）——OIBus 会对这些值使用其内置默认值。
+使用 HTTPS 时，OIBus 会在首次启动时生成自签名证书（参见 [HTTPS](../engine/engine-settings.mdx#https)）。
 在后续的安装或更新中，该文件不会被重新创建，因此这些参数不再有任何作用。
 :::
 
@@ -110,7 +112,7 @@ Starting OIBus service...
 Installation procedure completed!
 ```
 
-5. 在浏览器中打开 `http://localhost:2223`，然后按照[首次访问指南](./first-access.mdx)操作。
+5. 在浏览器中打开 `https://localhost:2223`，然后按照[首次访问指南](./first-access.mdx)操作。
 
 ### 服务管理 {#service-management}
 

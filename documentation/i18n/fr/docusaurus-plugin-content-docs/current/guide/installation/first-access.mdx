@@ -4,7 +4,13 @@ sidebar_position: 2
 
 # Premier accès
 
-Une fois qu'OIBus est en cours d'exécution, ouvrez un navigateur et accédez à `http://localhost:2223`.
+Une fois qu'OIBus est en cours d'exécution, ouvrez un navigateur et accédez à `https://localhost:2223`.
+
+:::note Certificat auto-signé
+Un nouvel OIBus sert son interface web en HTTPS, avec un certificat auto-signé qu'il génère à son premier démarrage.
+Le navigateur affiche un avertissement tant que ce certificat n'est pas approuvé : acceptez l'avertissement, ou
+sélectionnez un autre certificat dans les [Paramètres du moteur](../engine/engine-settings.mdx#https).
+:::
 
 :::caution Identifiants par défaut
 L'identifiant par défaut est **admin** avec le mot de passe **pass**.

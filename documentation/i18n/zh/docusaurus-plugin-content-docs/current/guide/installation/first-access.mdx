@@ -4,7 +4,12 @@ sidebar_position: 2
 
 # 首次访问
 
-OIBus 运行后，打开浏览器并访问 `http://localhost:2223`。
+OIBus 运行后，打开浏览器并访问 `https://localhost:2223`。
+
+:::note 自签名证书
+新安装的 OIBus 通过 HTTPS 提供 Web 界面，并使用其在首次启动时生成的自签名证书。在该证书被信任之前，浏览器会显示警告：
+请接受该警告，或在[引擎设置](../engine/engine-settings.mdx#https)中选择其他证书。
+:::
 
 :::caution 默认凭据
 默认登录名为 **admin**，密码为 **pass**。

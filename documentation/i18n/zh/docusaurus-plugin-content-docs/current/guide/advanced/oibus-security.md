@@ -153,14 +153,14 @@ OIBus 向 OPC UA® 服务器出示的证书，在每个 OPC UA 连接器中从[�
 
 ## 网络安全 {#network-security}
 
-OIBus 原生**不**支持 HTTPS。Web 界面运行在普通 HTTP 上（默认端口 2223）。
+新安装的 OIBus 通过 [HTTPS](../engine/engine-settings.mdx#https) 提供 Web 界面（默认端口 2223），并使用其在首次启动时生成的自签名证书。
+请将其替换为由浏览器信任的 CA 签发的证书，以避免浏览器警告；对于从 4.0 之前版本升级、仍通过 HTTP 提供服务的 OIBus，在启用 HTTPS 之前，请勿让其可通过网络访问。
 
 对于需要远程访问界面的生产环境：
 
-1. 将 OIBus 部署在终止 TLS 的**反向代理**（nginx、Apache、Caddy）之后。
-2. 配置代理将请求转发到 `http://localhost:2223`。
-3. 使用 [IP 过滤器](../engine/ip-filters.mdx)防止从主机外部直接访问 2223 端口。
-4. 对于外部访问，优先使用 **VPN**，而不是将反向代理暴露到公共互联网。
+1. 使用 [IP 过滤器](../engine/ip-filters.mdx)限制可访问 2223 端口的来源。
+2. 如果改为在**反向代理**（nginx、Apache、Caddy）中终止 TLS，请将其请求转发到 OIBus，并防止从主机外部直接访问 2223 端口。
+3. 对于外部访问，优先使用 **VPN**，而不是将 OIBus 或反向代理暴露到公共互联网。
 
 ## 数据源访问 {#data-source-access}
 

@@ -16,7 +16,7 @@ OIBus 实例的可选自由文本描述，例如其所在位置或所采集的�
 
 ### 端口 {#port}
 
-通过 Web 界面访问 OIBus 设置的默认端口是 **2223**（`http://localhost:2223`）。
+通过 Web 界面访问 OIBus 设置的默认端口是 **2223**（`https://localhost:2223`）。
 如有需要，您可以更改此端口 —— 例如，为了解决冲突或提高安全性。
 
 ### 身份验证时长 {#authentication-duration}
@@ -26,7 +26,7 @@ OIBus 实例的可选自由文本描述，例如其所在位置或所采集的�
 
 ### HTTPS {#https}
 
-默认情况下，Web 界面和 API 通过 HTTP 提供。启用**启用 HTTPS**即可改为通过 HTTPS 提供，并使用以下证书之一：
+新安装的 OIBus 通过 HTTPS 提供 Web 界面和 API，并在首次启动时于[证书存储](./certificates.md)中生成一个自签名证书（名为 **OIBus web server**）。从 4.0 之前版本升级的 OIBus 仍通过 HTTP 提供服务。**启用 HTTPS** 用于选择协议，并使用以下证书之一：
 
 - **证书存储**：[证书存储](./certificates.md)中的证书，由 OIBus 生成（自签名）或连同其私钥一起导入。
 - **文件**：OIBus 所在机器上的证书文件和私钥文件，格式为 PEM。证书文件后可附带其 CA 链，私钥不能加密。相对路径从

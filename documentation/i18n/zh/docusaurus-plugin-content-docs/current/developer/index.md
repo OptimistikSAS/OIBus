@@ -105,7 +105,7 @@ nvm use
 ```bash
 cd backend
 npm install
-npm start  # Starts on http://localhost:2223
+npm start  # Starts on https://localhost:2223 (HTTP for a data folder older than 4.0)
 ```
 
 ### 4. 搭建前端 {#4-set-up-the-frontend}
@@ -149,7 +149,7 @@ npm run build:macos-arm64
 
 ### 7. 验证您的环境 {#7-verify-your-setup}
 
-- 后端：[http://localhost:2223](http://localhost:2223)
+- 后端：[https://localhost:2223](https://localhost:2223)，使用自签名证书；前端开发服务器会代理到该地址，若设置了 `OIBUS_BACKEND_URL` 则代理到该变量指定的地址
 - 文档：[http://localhost:3000](http://localhost:3000)
 
 ## 🛠 开发流程 {#-development-workflow}

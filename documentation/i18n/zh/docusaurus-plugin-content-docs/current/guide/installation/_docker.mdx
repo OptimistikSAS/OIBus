@@ -24,7 +24,7 @@ import packageInfo from '../../../../../../package.json';
 在 Docker 中运行时，不要从 Web 界面更改 OIBus 的 HTTP 端口（2223）。容器只对外暴露了 2223 端口——在内部更改它会导致界面不可访问。
 :::
 
-在浏览器中打开 `http://localhost:2223`，然后按照[首次访问指南](./first-access.mdx)操作。
+在浏览器中打开 `https://localhost:2223`，然后按照[首次访问指南](./first-access.mdx)操作。
 
 ## 初始配置（首次运行）{#initial-configuration-first-run}
 
@@ -38,6 +38,7 @@ import packageInfo from '../../../../../../package.json';
 | `ADMIN_USERNAME_FILE` | 容器内保存管理员用户名的文件路径——用于 Docker Secrets；设置后优先于 `ADMIN_USERNAME` | 省略                         |
 | `ADMIN_PASSWORD_FILE` | 容器内保存管理员密码的文件路径——用于 Docker Secrets；设置后优先于 `ADMIN_PASSWORD` | 省略                         |
 | `DEFAULT_PORT`        | OIBus 在容器内监听的端口                                                                                                           | 省略（应用 OIBus 默认值） |
+| `DEFAULT_HTTPS`       | 设为 `false` 时通过 HTTP 提供 Web 界面，例如位于终止 TLS 的反向代理之后                                                              | 省略（HTTPS） |
 
 <CodeBlock language="bash">
   {`docker run -d \\

@@ -51,7 +51,7 @@ token), so requests must include credentials. The following example uses `curl` 
 specific subnet:
 
 ```bash title="Allow a specific subnet"
-curl --location 'http://localhost:2223/api/ip-filters' \
+curl --insecure --location 'https://localhost:2223/api/ip-filters' \
 --user 'admin:<password>' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \
@@ -64,7 +64,7 @@ curl --location 'http://localhost:2223/api/ip-filters' \
 To allow all remote addresses (useful during initial setup):
 
 ```bash title="Allow all IP addresses"
-curl --location 'http://localhost:2223/api/ip-filters' \
+curl --insecure --location 'https://localhost:2223/api/ip-filters' \
 --user 'admin:<password>' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \

@@ -13,10 +13,13 @@ L'API REST OIBus vous permet d'automatiser tous les aspects d'une instance OIBus
 ## URL de base {#base-url}
 
 ```
-http://<oibus-host>:2223
+https://<oibus-host>:2223
 ```
 
-Le port par défaut est `2223`. Remplacez `<oibus-host>` par le nom d'hôte ou l'adresse IP de la machine sur laquelle OIBus s'exécute.
+Le port par défaut est `2223`. Remplacez `<oibus-host>` par le nom d'hôte ou l'adresse IP de la machine sur laquelle OIBus s'exécute. Un OIBus
+mis à jour depuis une version antérieure à 4.0 sert en HTTP tant que [HTTPS](../guide/engine/engine-settings.mdx#https)
+n'est pas activé, et le certificat auto-signé d'un nouvel OIBus doit être approuvé par le client (`curl --insecure`
+ignore cette vérification).
 
 ## Authentification {#authentication}
 

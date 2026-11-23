@@ -54,7 +54,7 @@ nécessite une authentification (Basic ou jeton Bearer), les requêtes doivent d
 suivant utilise `curl` pour ajouter une règle autorisant un sous-réseau spécifique :
 
 ```bash title="Allow a specific subnet"
-curl --location 'http://localhost:2223/api/ip-filters' \
+curl --insecure --location 'https://localhost:2223/api/ip-filters' \
 --user 'admin:<password>' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \
@@ -67,7 +67,7 @@ curl --location 'http://localhost:2223/api/ip-filters' \
 Pour autoriser toutes les adresses distantes (utile lors de la configuration initiale) :
 
 ```bash title="Allow all IP addresses"
-curl --location 'http://localhost:2223/api/ip-filters' \
+curl --insecure --location 'https://localhost:2223/api/ip-filters' \
 --user 'admin:<password>' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \

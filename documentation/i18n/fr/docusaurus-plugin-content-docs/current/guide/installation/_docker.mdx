@@ -26,7 +26,7 @@ Lors de l'exécution dans Docker, ne modifiez pas le port HTTP d'OIBus (2223) de
 conteneur n'expose que le port 2223 — le modifier en interne rendra l'interface inaccessible.
 :::
 
-Ouvrez `http://localhost:2223` dans un navigateur et suivez le [guide de premier accès](./first-access.mdx).
+Ouvrez `https://localhost:2223` dans un navigateur et suivez le [guide de premier accès](./first-access.mdx).
 
 ## Configuration initiale (premier démarrage) {#initial-configuration-first-run}
 
@@ -42,6 +42,7 @@ et le nom du moteur avant qu'OIBus ne démarre pour la première fois — l'équ
 | `ADMIN_USERNAME_FILE`  | Chemin (à l'intérieur du conteneur) vers un fichier contenant le nom d'utilisateur administrateur — pour Docker Secrets ; prioritaire sur `ADMIN_USERNAME` s'il est défini | omis |
 | `ADMIN_PASSWORD_FILE`  | Chemin (à l'intérieur du conteneur) vers un fichier contenant le mot de passe administrateur — pour Docker Secrets ; prioritaire sur `ADMIN_PASSWORD` s'il est défini | omis |
 | `DEFAULT_PORT`         | Port sur lequel OIBus écoute à l'intérieur du conteneur                                                                                     | omis (la valeur par défaut d'OIBus s'applique) |
+| `DEFAULT_HTTPS`        | `false` pour servir l'interface web en HTTP, par exemple derrière un reverse proxy qui termine le TLS                                       | omis (HTTPS) |
 
 <CodeBlock language="bash">
   {`docker run -d \\
