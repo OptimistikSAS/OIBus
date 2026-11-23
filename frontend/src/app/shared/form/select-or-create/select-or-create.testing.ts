@@ -10,7 +10,8 @@ async function openMenu(select: Locator): Promise<Locator> {
   if (select.element().getAttribute('aria-expanded') !== 'true') {
     await select.click();
   }
-  const menu = page.elementLocator(document.getElementById(`${select.element().id}-menu`)!);
+  // the menu of this dropdown, next to its button: ids can be shared by the dropdowns of nested settings
+  const menu = page.elementLocator(select.element().parentElement!.querySelector('.dropdown-menu')!);
   await expect.element(menu).toBeVisible();
   return menu;
 }

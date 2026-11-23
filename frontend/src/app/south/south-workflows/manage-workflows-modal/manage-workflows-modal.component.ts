@@ -14,9 +14,11 @@ import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.m
 import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
 
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
+import { ScanModeService } from '../../../services/scan-mode.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
 import { DescribedNameComponent } from '../../../shared/described-name/described-name.component';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
+import { withCreated } from '../../../shared/form/select-or-create/select-or-create.component';
 import { ModalService } from '../../../shared/modal.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { ResizableColumnsDirective } from '../../../shared/resizable-columns.directive';
@@ -59,12 +61,15 @@ export default class ManageWorkflowsModalComponent {
   private workflowCreationService = inject(WorkflowCreationService);
   private router = inject(Router);
   private fb = inject(NonNullableFormBuilder);
+  private readonly scanModeService = inject(ScanModeService);
 
   readonly directSave = signal(true);
   /** The connector id - or `create` for a connector being created (in-memory mode only). */
   private southId!: string;
   private southSettings!: SouthSettings;
-  private readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  private readonly loadedScanModes = signal<Array<ScanModeDTO>>([]);
+  /** With the scan modes created from the modals opened from this one */
+  private readonly scanModes = computed(() => withCreated(this.loadedScanModes(), this.scanModeService.created()));
   private groups!: SouthItemGroups;
   private manifest!: SouthConnectorManifest;
   /** The items of the connector, which the items added from the explored nodes can't share their name with */
@@ -110,7 +115,7 @@ export default class ManageWorkflowsModalComponent {
     this.directSave.set(true);
     this.southId = southId;
     this.southSettings = southSettings;
-    this.scanModes.set(scanModes);
+    this.loadedScanModes.set(scanModes);
     this.manifest = manifest;
     this.groups = groups;
     this.existingItems = existingItems;
@@ -141,7 +146,7 @@ export default class ManageWorkflowsModalComponent {
     this.workflowSource.set(workflows);
     this.southId = southId;
     this.southSettings = southSettings;
-    this.scanModes.set(scanModes);
+    this.loadedScanModes.set(scanModes);
     this.manifest = manifest;
     this.groups = groups;
     this.existingItems = existingItems;

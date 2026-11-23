@@ -59,7 +59,16 @@ export class ScanModeService {
    * @param command - the new values of the selected scan mode
    */
   update(scanModeId: string, command: ScanModeCommandDTO) {
-    return this.http.put<void>(`/api/scan-modes/${scanModeId}`, command).pipe(tap(() => this.listTrigger$.next()));
+    return this.http.put<void>(`/api/scan-modes/${scanModeId}`, command).pipe(
+      tap(() => {
+        this.createdScanModes.update(scanModes =>
+          scanModes.map(scanMode =>
+            scanMode.id === scanModeId ? { ...scanMode, name: command.name, description: command.description } : scanMode
+          )
+        );
+        this.listTrigger$.next();
+      })
+    );
   }
 
   /**

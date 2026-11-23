@@ -14,6 +14,8 @@ import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.m
 import { SouthHistoryEmptyIntervalStrategy, SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
 
 import { DownloadService } from '../../../services/download.service';
+import { ScanModeService } from '../../../services/scan-mode.service';
+import { withCreated } from '../../../shared/form/select-or-create/select-or-create.component';
 import { ModalService } from '../../../shared/modal.service';
 import { ResizableColumnsDirective } from '../../../shared/resizable-columns.directive';
 import { openGroupModal, SouthItemGroup, SouthItemGroups } from '../south-item-groups';
@@ -49,13 +51,16 @@ export default class ManageGroupsModalComponent {
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
   private fb = inject(NonNullableFormBuilder);
+  private readonly scanModeService = inject(ScanModeService);
   private downloadService = inject(DownloadService);
 
   readonly directSave = signal(true);
   /** The groups of the page, changed through it only */
   private readonly groupStore = signal<SouthItemGroups | null>(null);
   readonly groups = computed(() => this.groupStore()?.list() ?? []);
-  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  private readonly loadedScanModes = signal<Array<ScanModeDTO>>([]);
+  /** With the scan modes created from the modals opened from this one */
+  readonly scanModes = computed(() => withCreated(this.loadedScanModes(), this.scanModeService.created()));
   private readonly manifest = signal<SouthConnectorManifest | null>(null);
   private getItemCountFn: (groupId: string) => number = () => 0;
 
@@ -126,7 +131,7 @@ export default class ManageGroupsModalComponent {
     getItemCount: (groupId: string) => number
   ) {
     this.groupStore.set(groups);
-    this.scanModes.set(scanModes);
+    this.loadedScanModes.set(scanModes);
     this.manifest.set(manifest);
     this.directSave.set(directSave);
     this.getItemCountFn = getItemCount;

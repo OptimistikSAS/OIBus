@@ -1,14 +1,18 @@
+import { signal, WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand } from '../../../../test/builders';
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { DownloadService } from '../../../services/download.service';
+import { ScanModeService } from '../../../services/scan-mode.service';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { FakeSouthItemGroups, fakeSouthItemGroups } from '../south-item-groups.testing';
@@ -40,6 +44,7 @@ class ManageGroupsModalComponentTester {
 }
 
 describe('ManageGroupsModalComponent', () => {
+  let createdScanModes: WritableSignal<Array<ScanModeDTO>>;
   let activeModal: MockObject<NgbActiveModal>;
   let downloadService: MockObject<DownloadService>;
   let groups: FakeSouthItemGroups;
@@ -47,6 +52,7 @@ describe('ManageGroupsModalComponent', () => {
   let tester: ManageGroupsModalComponentTester;
 
   beforeEach(() => {
+    createdScanModes = signal([]);
     activeModal = createMock(NgbActiveModal);
     downloadService = createMock(DownloadService);
     groups = fakeSouthItemGroups([
@@ -60,7 +66,8 @@ describe('ManageGroupsModalComponent', () => {
         provideI18nTesting(),
         provideModalTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
-        { provide: DownloadService, useValue: downloadService }
+        { provide: DownloadService, useValue: downloadService },
+        { provide: ScanModeService, useValue: createMock(ScanModeService, { created: createdScanModes }) }
       ]
     });
 
@@ -85,6 +92,16 @@ describe('ManageGroupsModalComponent', () => {
     await expect.element(alpha.getByRole('cell').nth(7)).toHaveTextContent('Query the same period again next time');
     await expect.element(alpha.getByRole('cell').nth(8)).toHaveTextContent('5');
     await expect.element(tester.row(1).getByRole('cell').nth(8)).toHaveTextContent('1');
+  });
+
+  test('should display and filter the schedule of a group created from a modal opened from this one', async () => {
+    // the schedule was created after the modal was opened: missing from the scan modes it was given
+    createdScanModes.set([scanModes[0]]);
+    tester.fixture.componentInstance.prepare(groups, scanModes.slice(1), manifest, true, getItemCount);
+
+    await expect.element(tester.row(1).getByRole('cell').nth(1)).toHaveTextContent(scanModes[0].name);
+    await tester.scheduleFilter.selectOptions(scanModes[0].name);
+    await expect.element(tester.rows).toHaveLength(1);
   });
 
   test('should show a message when there is no group', async () => {

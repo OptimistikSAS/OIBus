@@ -48,7 +48,16 @@ export class CertificateService {
   }
 
   update(certificateId: string, command: CertificateCommandDTO) {
-    return this.http.put<void>(`${ENDPOINT}/${certificateId}`, command).pipe(tap(() => this.listTrigger$.next()));
+    return this.http.put<void>(`${ENDPOINT}/${certificateId}`, command).pipe(
+      tap(() => {
+        this.createdCertificates.update(certificates =>
+          certificates.map(certificate =>
+            certificate.id === certificateId ? { ...certificate, name: command.name, description: command.description } : certificate
+          )
+        );
+        this.listTrigger$.next();
+      })
+    );
   }
 
   delete(certificateId: string) {

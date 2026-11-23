@@ -10,6 +10,9 @@
     <span class="text-truncate">
       @if (selectedName(); as selectedName) {
         {{ selectedName }}
+      } @else if (selectedId(); as unknownId) {
+        <!-- an option missing from the list: show what the control holds rather than pretending nothing is selected -->
+        {{ unknownId }}
       } @else if (emptyLabel(); as emptyLabel) {
         {{ emptyLabel | translate }}
       } @else {
@@ -17,7 +20,7 @@
       }
     </span>
   </button>
-  <div ngbDropdownMenu class="w-100" [id]="inputId() + '-menu'" [attr.aria-labelledby]="inputId()">
+  <div ngbDropdownMenu class="w-100" [attr.aria-labelledby]="inputId()">
     @if (noneLabel(); as noneLabel) {
       <button type="button" ngbDropdownItem [class.active]="selectedId() === null" (click)="select(null)">
         {{ noneLabel | translate }}

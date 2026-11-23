@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
 import { SouthItemSettings } from '@oibus/shared/connector/south-settings.model';
 
@@ -16,6 +17,7 @@ import { buildSouthItemGroup, buildWorkflow, buildWorkflowCommand } from '../../
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
+import { ScanModeService } from '../../../services/scan-mode.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../../shared/notification.service';
@@ -71,6 +73,7 @@ class ManageWorkflowsModalComponentTester {
 }
 
 describe('ManageWorkflowsModalComponent', () => {
+  let createdScanModes: WritableSignal<Array<ScanModeDTO>>;
   let activeModal: MockObject<NgbActiveModal>;
   let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
   let confirmationService: MockObject<ConfirmationService>;
@@ -87,6 +90,7 @@ describe('ManageWorkflowsModalComponent', () => {
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
     router = createMock(Router);
+    createdScanModes = signal([]);
     groups = fakeSouthItemGroups([buildSouthItemGroup('group1', 'Group 1')]);
     const workflows = [
       buildWorkflow('workflow1', 'Alpha', { description: 'Discovers the nodes of the reactor' }),
@@ -103,7 +107,8 @@ describe('ManageWorkflowsModalComponent', () => {
         { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ScanModeService, useValue: createMock(ScanModeService, { created: createdScanModes }) }
       ]
     });
 
@@ -148,6 +153,22 @@ describe('ManageWorkflowsModalComponent', () => {
       await expect.element(tester.row(0).getByRole('img')).not.toBeInTheDocument();
       await expect.element(tester.row(0).getByCss('.workflow-not-scheduled')).toHaveTextContent('-');
       await expect.element(tester.row(1).getByRole('img', { name: 'Yes' })).toBeInTheDocument();
+    });
+
+    test('should display the schedule of a workflow created from a modal opened from this one', async () => {
+      // the schedule was created after the modal was opened: missing from the scan modes it was given
+      createdScanModes.set([scanModes[0]]);
+      tester.fixture.componentInstance.prepareForDirectSave(
+        'southId1',
+        southSettings,
+        scanModes.slice(1),
+        manifest,
+        groups,
+        [],
+        onWorkflowRun
+      );
+
+      await expect.element(tester.row(1)).toMatchTextContent(new RegExp(`Beta\\s*Whole data source\\s*${scanModes[0].name}`));
     });
 
     test('should display the full name and the description of a workflow in a tooltip', async () => {
