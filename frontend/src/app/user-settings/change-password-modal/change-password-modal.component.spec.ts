@@ -11,7 +11,6 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { UserSettingsService } from '../../services/user-settings.service';
-import { CurrentUserService } from '../../shared/current-user.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { provideNgbConfigTesting } from '../../shared/form/oi-ngb-testing';
 import { NotificationService } from '../../shared/notification.service';
@@ -25,8 +24,6 @@ class ChangePasswordModalComponentTester {
   readonly newPasswordConfirmation = this.root.getByLabelText('New password confirmation');
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
-  readonly logoutButton = this.root.getByRole('button', { name: 'Logout' });
-  readonly changeRequired = this.root.getByText('This account still has the OIBus default password: change it before going on.');
   readonly alert = this.root.getByRole('alert');
   readonly notIdenticalError = this.root.getByText('The new password and its confirmation must be identical');
 
@@ -42,14 +39,12 @@ describe('ChangePasswordModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let userSettingsService: MockObject<UserSettingsService>;
   let notificationService: MockObject<NotificationService>;
-  let currentUserService: MockObject<CurrentUserService>;
   const userSettings: UserDTO = testData.users.list[0];
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     userSettingsService = createMock(UserSettingsService);
     notificationService = createMock(NotificationService);
-    currentUserService = createMock(CurrentUserService);
     userSettingsService.currentUser.mockReturnValue(of(userSettings));
 
     TestBed.configureTestingModule({
@@ -58,8 +53,7 @@ describe('ChangePasswordModalComponent', () => {
         provideNgbConfigTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: UserSettingsService, useValue: userSettingsService },
-        { provide: NotificationService, useValue: notificationService },
-        { provide: CurrentUserService, useValue: currentUserService }
+        { provide: NotificationService, useValue: notificationService }
       ]
     });
 
@@ -72,8 +66,6 @@ describe('ChangePasswordModalComponent', () => {
     await expect.element(tester.newPassword).toHaveValue('');
     await expect.element(tester.newPasswordConfirmation).toHaveValue('');
     await expect.element(tester.alert).not.toBeInTheDocument();
-    await expect.element(tester.changeRequired).not.toBeInTheDocument();
-    await expect.element(tester.logoutButton).not.toBeInTheDocument();
   });
 
   test('should not save when the new password is shorter than 8 characters', async () => {
@@ -143,15 +135,5 @@ describe('ChangePasswordModalComponent', () => {
 
     expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
     expect(activeModal.dismiss).toHaveBeenCalled();
-  });
-
-  test('should explain why and offer to log out instead of cancelling when the change is required', async () => {
-    tester.fixture.componentInstance.forceChange();
-
-    await expect.element(tester.changeRequired).toBeVisible();
-    await expect.element(tester.cancelButton).not.toBeInTheDocument();
-    await tester.logoutButton.click();
-
-    expect(currentUserService.logout).toHaveBeenCalled();
   });
 });

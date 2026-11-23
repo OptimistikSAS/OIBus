@@ -42,8 +42,8 @@ export class LoginComponent {
     const value = this.form.getRawValue();
     this.currentUserService.loginWithPassword(value.login, value.password).subscribe({
       next: () => {
-        // A navigation refused by the guard opened the password change of a user who must change it first: reloading
-        // would close it, and show the login form again
+        // Reloaded on the page the guards lead to (the password change page for a user who must change it first), not
+        // when they refuse the navigation, which would only show the login form again
         this.router.navigateByUrl(this.requestedUrlService.getRequestedUrl()).then(navigated => {
           if (navigated) {
             this.windowService.reload();

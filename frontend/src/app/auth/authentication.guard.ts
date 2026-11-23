@@ -1,12 +1,10 @@
 import { inject, Service } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivateChildFn, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivateChildFn, CanActivateFn, Router, RouterStateSnapshot } from '@angular/router';
 
 import { map, of, take } from 'rxjs';
 
 import { CurrentUserService } from '../shared/current-user.service';
-import { ModalService } from '../shared/modal.service';
 import { WindowService } from '../shared/window.service';
-import { ChangePasswordModalComponent } from '../user-settings/change-password-modal/change-password-modal.component';
 
 @Service()
 export class RequestedUrlService {
@@ -25,7 +23,7 @@ export class RequestedUrlService {
  * An authentication guard that checks if the ID token is present, except when authentication is disabled, which only happens
  * during E2E tests. This is the only way we managed to run E2E tests.
  * A user who must change their password (the default account still having the default password) can do nothing else: the
- * guard opens the password change instead of the page, and logs them out once changed, to log in with the new password.
+ * guard sends them to the password change page instead.
  * The guard is currently only a CanActivateChild guard, but could also implement CanActivate using the same strategy if
  * needed.
  */
@@ -33,9 +31,7 @@ export const authenticationGuard: CanActivateChildFn = (_childRoute: ActivatedRo
   const windowService = inject(WindowService);
   const router = inject(Router);
   const requestedUrlService = inject(RequestedUrlService);
-
   const currentUserService = inject(CurrentUserService);
-  const modalService = inject(ModalService);
 
   if (!windowService.getStorageItem('oibus-token')) {
     requestedUrlService.setRequestedUrl(routerState.url);
@@ -43,14 +39,24 @@ export const authenticationGuard: CanActivateChildFn = (_childRoute: ActivatedRo
   }
   return currentUserService.get().pipe(
     take(1),
-    map(user => {
-      if (!user?.mustChangePassword) {
-        return true;
-      }
-      const modal = modalService.open(ChangePasswordModalComponent, { backdrop: 'static', keyboard: false });
-      modal.componentInstance.forceChange();
-      modal.result.subscribe(() => currentUserService.logout());
-      return false;
-    })
+    map(user => (user?.mustChangePassword ? router.createUrlTree(['/change-password']) : true))
+  );
+};
+
+/**
+ * The guard of the password change page: only a logged-in user who must change their password can open it, the others are
+ * sent to the login page or the home page.
+ */
+export const passwordChangeGuard: CanActivateFn = () => {
+  const windowService = inject(WindowService);
+  const router = inject(Router);
+  const currentUserService = inject(CurrentUserService);
+
+  if (!windowService.getStorageItem('oibus-token')) {
+    return of(router.createUrlTree(['/login'], { queryParams: { auto: true } }));
+  }
+  return currentUserService.get().pipe(
+    take(1),
+    map(user => (user?.mustChangePassword ? true : router.createUrlTree(['/'])))
   );
 };
