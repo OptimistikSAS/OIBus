@@ -13,10 +13,10 @@ OIBus REST API 可让您自动化 OIBus 实例的方方面面：配置连接器�
 ## 基础 URL {#base-url}
 
 ```
-http://<oibus-host>:2223
+https://<oibus-host>:2223
 ```
 
-默认端口是 `2223`。将 `<oibus-host>` 替换为运行 OIBus 的主机名或 IP 地址。
+默认端口是 `2223`。将 `<oibus-host>` 替换为运行 OIBus 的主机名或 IP 地址。从 4.0 之前版本升级的 OIBus 在启用 [HTTPS](../guide/engine/engine-settings.mdx#https) 之前通过 HTTP 提供服务，而新安装 OIBus 的自签名证书必须被客户端信任（`curl --insecure` 会跳过此检查）。
 
 ## 身份验证 {#authentication}
 

@@ -50,7 +50,7 @@ IP 过滤器在 OIBus 界面的**引擎 → IP 过滤器**中进行管理。
 以下示例使用 `curl` 添加一条允许特定子网的规则：
 
 ```bash title="Allow a specific subnet"
-curl --location 'http://localhost:2223/api/ip-filters' \
+curl --insecure --location 'https://localhost:2223/api/ip-filters' \
 --user 'admin:<password>' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \
@@ -63,7 +63,7 @@ curl --location 'http://localhost:2223/api/ip-filters' \
 要允许所有远程地址（在初始设置期间很有用）：
 
 ```bash title="Allow all IP addresses"
-curl --location 'http://localhost:2223/api/ip-filters' \
+curl --insecure --location 'https://localhost:2223/api/ip-filters' \
 --user 'admin:<password>' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \

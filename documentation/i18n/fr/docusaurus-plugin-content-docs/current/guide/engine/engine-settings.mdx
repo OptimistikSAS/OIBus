@@ -19,7 +19,7 @@ enregistré.
 
 ### Port {#port}
 
-Le port par défaut pour accéder aux paramètres d'OIBus via l'interface web est **2223** (`http://localhost:2223`).
+Le port par défaut pour accéder aux paramètres d'OIBus via l'interface web est **2223** (`https://localhost:2223`).
 Vous pouvez modifier ce port si nécessaire — par exemple pour résoudre des conflits ou améliorer la sécurité.
 
 ### Durée d'authentification {#authentication-duration}
@@ -30,8 +30,10 @@ l'utilisateur ne doive se reconnecter. Les valeurs disponibles sont **1 heure**,
 
 ### HTTPS {#https}
 
-Par défaut, l'interface web et l'API sont servies en HTTP. Activez **Servir en HTTPS** pour les servir en HTTPS, avec
-l'un de ces certificats :
+Un nouvel OIBus sert l'interface web et l'API en HTTPS, avec un certificat auto-signé qu'il génère dans le
+[magasin de certificats](./certificates.md) à son premier démarrage (nommé **OIBus web server**). Un OIBus mis à jour
+depuis une version antérieure à 4.0 continue de servir en HTTP. **Servir en HTTPS** choisit le protocole, avec l'un de
+ces certificats :
 
 - **Magasin de certificats** : un certificat du [magasin de certificats](./certificates.md), généré par OIBus
   (auto-signé) ou importé avec sa clé privée.

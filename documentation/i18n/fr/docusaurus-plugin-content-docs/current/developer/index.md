@@ -107,7 +107,7 @@ nvm use
 ```bash
 cd backend
 npm install
-npm start  # Starts on http://localhost:2223
+npm start  # Starts on https://localhost:2223 (HTTP for a data folder older than 4.0)
 ```
 
 ### 4. Configurer le frontend {#4-set-up-the-frontend}
@@ -152,7 +152,7 @@ processus enfant.
 
 ### 7. Vérifier votre configuration {#7-verify-your-setup}
 
-- Backend : [http://localhost:2223](http://localhost:2223)
+- Backend : [https://localhost:2223](https://localhost:2223), avec un certificat auto-signé ; le serveur de développement du frontend le sert en proxy, ou sert `OIBUS_BACKEND_URL` si cette variable est définie
 - Documentation : [http://localhost:3000](http://localhost:3000)
 
 ## 🛠 Flux de travail de développement {#-development-workflow}

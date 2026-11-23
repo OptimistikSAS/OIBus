@@ -171,14 +171,17 @@ clés utilisée pour l'échange de secrets OIAnalytics, et du secret qui signe l
 
 ## Sécurité réseau {#network-security}
 
-OIBus ne prend **pas** en charge HTTPS nativement. L'interface web fonctionne en HTTP simple (port 2223 par défaut).
+Un nouvel OIBus sert son interface web en [HTTPS](../engine/engine-settings.mdx#https) (port 2223 par défaut), avec
+un certificat auto-signé qu'il génère à son premier démarrage. Remplacez-le par un certificat émis par une autorité
+reconnue par vos navigateurs pour éviter leurs avertissements, et empêchez l'accès par le réseau à un OIBus mis à jour
+depuis une version antérieure à 4.0, qui continue de servir en HTTP, tant que HTTPS n'est pas activé.
 
 Pour les environnements de production où l'interface est accédée à distance :
 
-1. Placez OIBus derrière un **reverse proxy** (nginx, Apache, Caddy) qui termine le TLS.
-2. Configurez le proxy pour transmettre les requêtes vers `http://localhost:2223`.
-3. Utilisez les [filtres IP](../engine/ip-filters.mdx) pour empêcher l'accès direct sur le port 2223 depuis l'extérieur de l'hôte.
-4. Pour un accès externe, privilégiez un **VPN** plutôt que d'exposer le reverse proxy à l'internet public.
+1. Utilisez les [filtres IP](../engine/ip-filters.mdx) pour restreindre l'accès au port 2223.
+2. Pour terminer le TLS dans un **reverse proxy** (nginx, Apache, Caddy) à la place, faites-lui transmettre ses requêtes
+   à OIBus, et empêchez l'accès direct au port 2223 depuis l'extérieur de l'hôte.
+3. Pour un accès externe, privilégiez un **VPN** plutôt que d'exposer OIBus ou le reverse proxy à l'internet public.
 
 ## Accès aux sources de données {#data-source-access}
 

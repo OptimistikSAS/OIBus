@@ -13,10 +13,12 @@ The OIBus REST API lets you automate every aspect of an OIBus instance: configur
 ## Base URL {#base-url}
 
 ```
-http://<oibus-host>:2223
+https://<oibus-host>:2223
 ```
 
-The default port is `2223`. Replace `<oibus-host>` with the hostname or IP address of the machine running OIBus.
+The default port is `2223`. Replace `<oibus-host>` with the hostname or IP address of the machine running OIBus. An OIBus
+upgraded from a version before 4.0 serves HTTP until [HTTPS](../guide/engine/engine-settings.mdx#https) is enabled, and
+the self-signed certificate of a new OIBus must be trusted by the client (`curl --insecure` skips the check).
 
 ## Authentication {#authentication}
 

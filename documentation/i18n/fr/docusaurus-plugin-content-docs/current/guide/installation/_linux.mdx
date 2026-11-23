@@ -68,12 +68,14 @@ sudo ./oibus-setup.sh [options]
 | `-u`    | Nom d'utilisateur administrateur écrit dans `oibus.init.json` lors de la première installation                         | omis (le comportement par défaut d'OIBus s'applique) |
 | `-p`    | Mot de passe administrateur écrit dans `oibus.init.json` lors de la première installation                         | omis (le comportement par défaut d'OIBus s'applique) |
 | `-port` | Port sur lequel OIBus écoute, écrit dans `oibus.init.json` lors de la première installation                 | omis (le comportement par défaut d'OIBus s'applique) |
+| `-https` | `true` pour servir l'interface web en HTTPS, `false` en HTTP, écrit dans `oibus.init.json` lors de la première installation | `true` |
 
 :::info
-`-u`, `-p` et `-port` ne sont utilisés que lorsque `oibus.db` n'existe pas encore (c'est-à-dire lors de la toute
-première installation). Ils sont écrits dans un fichier `oibus.init.json` dans le dossier de données et appliqués par
-OIBus au premier démarrage. Les options omises ne sont pas écrites dans le fichier — OIBus utilisera ses valeurs par
-défaut intégrées pour ces valeurs. Lors des installations ou mises à jour ultérieures, le fichier n'est pas recréé,
+`-u`, `-p`, `-port` et `-https` ne sont utilisés que lorsque `oibus.db` n'existe pas encore (c'est-à-dire lors de la
+toute première installation). Ils sont écrits dans un fichier `oibus.init.json` dans le dossier de données et appliqués
+par OIBus au premier démarrage. Les options omises ne sont pas écrites dans le fichier (sauf `-https`) — OIBus utilisera
+ses valeurs par défaut intégrées pour ces valeurs. En HTTPS, OIBus génère un certificat auto-signé à son premier
+démarrage (voir [HTTPS](../engine/engine-settings.mdx#https)). Lors des installations ou mises à jour ultérieures, le fichier n'est pas recréé,
 ces options n'ont donc aucun effet.
 :::
 
@@ -112,7 +114,7 @@ Starting OIBus service...
 Installation procedure completed!
 ```
 
-5. Ouvrez `http://localhost:2223` dans un navigateur et suivez le [guide de premier accès](./first-access.mdx).
+5. Ouvrez `https://localhost:2223` dans un navigateur et suivez le [guide de premier accès](./first-access.mdx).
 
 ### Gestion du service {#service-management}
 

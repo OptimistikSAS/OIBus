@@ -221,7 +221,7 @@ for /f "tokens=3 delims=: " %%H in ('sc query "%SERVICE_NAME%" ^| findstr "STATE
 
 ```batch
 :WAIT_FOR_WEB
-curl --silent --output NUL --fail http://localhost:2223/api/status
+curl --insecure --silent --output NUL --fail https://localhost:2223/api/status
 if %errorlevel% neq 0 (
     timeout /t 5 >nul
     goto WAIT_FOR_WEB
@@ -235,17 +235,17 @@ if %errorlevel% neq 0 (
 在 OIBus 运行并且其 API 可访问之后，脚本会创建初始对象——扫描模式、连接器，或部署所需的任何其他资源。以下示例创建了两个扫描模式和一个 Modbus 南向连接器。注意带引号的 `"%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%"`——引号可防止 shell 元字符的影响，而阶段 3 的转义处理可防止密码中包含 `"` 时出现问题：
 
 ```batch
-curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
+curl --insecure --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "https://localhost:2223/api/scan-modes" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Every 5 seconds\", \"description\": \"Trigger every 5 seconds\", \"cron\": \"*/5 * * * * *\"}"
 
-curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
+curl --insecure --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "https://localhost:2223/api/scan-modes" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Every 2 minutes\", \"description\": \"Trigger every 2 minutes\", \"cron\": \"* */2 * * * *\"}"
 
-curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/south" ^
+curl --insecure --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "https://localhost:2223/api/south" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Modbus\", \"type\": \"modbus\", ...}"
@@ -260,7 +260,7 @@ curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost
 ### 阶段 11——OIAnalytics 注册 {#phase-11--oianalytics-registration}
 
 ```batch
-curl --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/oianalytics/register" ^
+curl --insecure --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "https://localhost:2223/api/oianalytics/register" ^
 --header "Content-Type: application/json" ^
 --data "{\"host\": \"%ESCAPED_OIANALYTICS_URL%\", ...}"
 ```
@@ -408,7 +408,7 @@ echo %SERVICE_NAME% service is now running.
 :: Wait for the OIBus web server to accept requests
 echo Waiting for %SERVICE_NAME% web server to be up...
 :WAIT_FOR_WEB
-curl --silent --output NUL --fail http://localhost:2223/api/status
+curl --insecure --silent --output NUL --fail https://localhost:2223/api/status
 if %errorlevel% neq 0 (
     timeout /t 5 >nul
     goto WAIT_FOR_WEB
@@ -417,7 +417,7 @@ echo %SERVICE_NAME% web server is now up.
 
 :: Create scan modes
 echo Creating scan modes...
-curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
+curl --insecure --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "https://localhost:2223/api/scan-modes" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Every 5 seconds\", \"description\": \"Trigger every 5 seconds\", \"cron\": \"*/5 * * * * *\"}"
@@ -427,7 +427,7 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
+curl --insecure --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "https://localhost:2223/api/scan-modes" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Every 2 minutes\", \"description\": \"Trigger every 2 minutes\", \"cron\": \"* */2 * * * *\"}"
@@ -439,7 +439,7 @@ if %errorlevel% neq 0 (
 
 :: Create North connector (OIAnalytics)
 echo Creating North connector...
-curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/north" ^
+curl --insecure --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "https://localhost:2223/api/north" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"compress\": true, \"timeout\": 60000}, \"caching\": {\"trigger\": {\"scanModeId\": null, \"scanModeName\": \"Every 2 minutes\", \"numberOfElements\": 10000, \"numberOfFiles\": 1}, \"throttling\": {\"runMinDelay\": 200, \"maxSize\": 0, \"maxNumberOfElements\": 50000}, \"error\": {\"retryInterval\": 5000, \"retryCount\": 3, \"retentionDuration\": 0}, \"archive\": {\"enabled\": false, \"retentionDuration\": 72}}, \"transformers\": []}"
@@ -451,7 +451,7 @@ if %errorlevel% neq 0 (
 
 :: Create South connector (Modbus)
 echo Creating South connector...
-curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/south" ^
+curl --insecure --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "https://localhost:2223/api/south" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Modbus\", \"type\": \"modbus\", \"description\": \"Modbus South\", \"enabled\": true, \"settings\": {\"host\": \"127.0.0.1\", \"port\": 502, \"connectTimeout\": 10000, \"networkTimeout\": 10000, \"retryInterval\": 10000, \"slaveId\": 1, \"addressOffset\": \"modbus\", \"endianness\": \"big-endian\", \"swapBytesInWords\": false, \"swapWordsInDWords\": false, \"batchQuery\": false, \"groupingGap\": 0}, \"groups\": [], \"items\": []}"
@@ -463,7 +463,7 @@ if %errorlevel% neq 0 (
 
 :: Register OIBus with OIAnalytics
 echo Registering OIBus...
-curl --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/oianalytics/register" ^
+curl --insecure --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "https://localhost:2223/api/oianalytics/register" ^
 --header "Content-Type: application/json" ^
 --data "{\"host\": \"%ESCAPED_OIANALYTICS_URL%\", \"useProxy\": false, \"proxyUrl\": null, \"proxyUsername\": null, \"proxyPassword\": null, \"useApiGateway\": false, \"apiGatewayHeaderKey\": null, \"apiGatewayHeaderValue\": null, \"apiGatewayBaseEndpoint\": null, \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"updateVersion\": true, \"operate\": true, \"configureEngine\": true, \"configureDataFlow\": true, \"configureCustomCode\": false, \"manageAccess\": true, \"manageRegistration\": true, \"connectToDataSources\": true, \"manageCache\": true, \"diagnostics\": false, \"setpoint\": false}}"
 echo.

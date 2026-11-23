@@ -61,7 +61,7 @@ import TabItem from '@theme/TabItem';
 
     4. **设置初始变量**
 
-    设置初始管理员用户名、密码，以及 OIBus 将监听的端口。每个实例都拥有各自独立的凭据，
+    设置初始管理员用户名、密码、OIBus 将监听的端口，以及是否通过 HTTPS 提供 Web 界面（默认勾选，使用 OIBus 在首次启动时生成的自签名证书）。每个实例都拥有各自独立的凭据，
     因此在与现有实例一起安装第二个实例时，通常需要修改的是这里的**端口**（它们不能共用同一端口）：
     <div style={{ textAlign: 'center' }}>
       ![安装程序初始变量](@site/static/img/guide/installation/win_installer/4.png)
@@ -175,11 +175,13 @@ import TabItem from '@theme/TabItem';
     | `-u` | 首次安装时写入 `oibus.init.json` 的管理员用户名 | 省略（则应用 OIBus 默认值） |
     | `-p` | 首次安装时写入 `oibus.init.json` 的管理员密码 | 省略（则应用 OIBus 默认值） |
     | `-port` | OIBus 监听的端口，首次安装时写入 `oibus.init.json` | 省略（则应用 OIBus 默认值） |
+    | `-https` | `true` 表示通过 HTTPS 提供 Web 界面，`false` 表示通过 HTTP，首次安装时写入 `oibus.init.json` | `true` |
 
     :::info
-    `-u`、`-p` 和 `-port` 仅在 `oibus.db` 尚不存在时（即首次安装时）使用。它们会被写入数据文件夹中的
+    `-u`、`-p`、`-port` 和 `-https` 仅在 `oibus.db` 尚不存在时（即首次安装时）使用。它们会被写入数据文件夹中的
     `oibus.init.json` 文件，并由 OIBus 在首次启动时应用。
-    未指定的参数不会写入该文件——OIBus 将对这些值使用内置默认值。
+    未指定的参数不会写入该文件（`-https` 除外）——OIBus 将对这些值使用内置默认值。
+    使用 HTTPS 时，OIBus 会在首次启动时生成自签名证书（参见 [HTTPS](../engine/engine-settings.mdx#https)）。
     在后续安装或更新时，该文件不会被重新创建，因此这些参数不再生效。
     :::
 
