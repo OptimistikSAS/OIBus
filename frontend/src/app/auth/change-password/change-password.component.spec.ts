@@ -13,7 +13,6 @@ import { UserSettingsService } from '../../services/user-settings.service';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { provideNgbConfigTesting } from '../../shared/form/oi-ngb-testing';
-import { NotificationService } from '../../shared/notification.service';
 import { ChangePasswordComponent } from './change-password.component';
 
 class ChangePasswordComponentTester {
@@ -38,13 +37,11 @@ class ChangePasswordComponentTester {
 describe('ChangePasswordComponent', () => {
   let tester: ChangePasswordComponentTester;
   let userSettingsService: MockObject<UserSettingsService>;
-  let notificationService: MockObject<NotificationService>;
   let currentUserService: MockObject<CurrentUserService>;
   const user: UserDTO = { ...testData.users.list[0], mustChangePassword: true };
 
   beforeEach(() => {
     userSettingsService = createMock(UserSettingsService);
-    notificationService = createMock(NotificationService);
     currentUserService = createMock(CurrentUserService);
     userSettingsService.currentUser.mockReturnValue(of(user));
 
@@ -53,7 +50,6 @@ describe('ChangePasswordComponent', () => {
         provideI18nTesting(),
         provideNgbConfigTesting(),
         { provide: UserSettingsService, useValue: userSettingsService },
-        { provide: NotificationService, useValue: notificationService },
         { provide: CurrentUserService, useValue: currentUserService }
       ]
     });
@@ -79,15 +75,14 @@ describe('ChangePasswordComponent', () => {
     expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
   });
 
-  test('should change the password, then log out to log in with the new one', async () => {
+  test('should change the password, then log out to a login page telling it has been changed', async () => {
     userSettingsService.updatePassword.mockReturnValue(of(undefined));
 
     await tester.fillForm('pass', 'new password', 'new password');
     await tester.saveButton.click();
 
     expect(userSettingsService.updatePassword).toHaveBeenCalledWith(user.id, { currentPassword: 'pass', newPassword: 'new password' });
-    expect(notificationService.success).toHaveBeenCalledWith('user-settings.change-password.password-changed');
-    expect(currentUserService.logout).toHaveBeenCalled();
+    expect(currentUserService.logout).toHaveBeenCalledWith('/login?password-changed=true');
   });
 
   test('should show an error and stay logged in when the change fails', async () => {

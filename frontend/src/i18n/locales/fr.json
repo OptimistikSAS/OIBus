@@ -3774,7 +3774,8 @@
     "login": "Identifiant",
     "password": "Mot de passe",
     "login-button": "Se connecter",
-    "login-error": "Nom d'utilisateur ou mot de passe invalide"
+    "login-error": "Nom d'utilisateur ou mot de passe invalide",
+    "password-changed": "Votre mot de passe a été modifié : connectez-vous avec le nouveau."
   },
   "user-settings": {
     "edit-user-settings": {

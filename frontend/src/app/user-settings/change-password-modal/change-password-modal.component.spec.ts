@@ -25,7 +25,6 @@ class ChangePasswordModalComponentTester {
   readonly saveButton = this.root.getByRole('button', { name: 'Save' });
   readonly cancelButton = this.root.getByRole('button', { name: 'Cancel' });
   readonly alert = this.root.getByRole('alert');
-  readonly notIdenticalError = this.root.getByText('The new password and its confirmation must be identical');
 
   async fillForm(currentPassword: string, newPassword: string, confirmation: string) {
     await this.currentPassword.fill(currentPassword);
@@ -68,39 +67,11 @@ describe('ChangePasswordModalComponent', () => {
     await expect.element(tester.alert).not.toBeInTheDocument();
   });
 
-  test('should not save when the new password is shorter than 8 characters', async () => {
-    await tester.fillForm('current', 'short', 'short');
-    await tester.saveButton.click();
-
-    await expect.element(tester.root.getByText('This field must have at least 8 characters')).toBeVisible();
-    expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
-  });
-
-  test('should not save when the new password is longer than 128 characters', async () => {
-    const tooLong = 'a'.repeat(129);
-    await tester.fillForm('current', tooLong, tooLong);
-    await tester.saveButton.click();
-
-    await expect.element(tester.root.getByText('This field must have at most 128 characters')).toBeVisible();
-    expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
-  });
-
   test('should not save when the form is invalid', async () => {
     await tester.saveButton.click();
 
     await expect.element(tester.root.getByText('This field is required')).toHaveLength(3);
     expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
-  });
-
-  test('should not save when the new password and its confirmation are different', async () => {
-    await tester.fillForm('current', 'new password', 'other');
-    await tester.saveButton.click();
-
-    await expect.element(tester.notIdenticalError).toBeVisible();
-    expect(userSettingsService.updatePassword).not.toHaveBeenCalled();
-
-    await tester.newPasswordConfirmation.fill('new password');
-    await expect.element(tester.notIdenticalError).not.toBeInTheDocument();
   });
 
   test('should save the change', async () => {

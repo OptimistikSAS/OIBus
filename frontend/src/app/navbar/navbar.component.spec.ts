@@ -102,6 +102,14 @@ describe('NavbarComponent', () => {
     });
   });
 
+  test('should not display the menus to a user who must change their password', async () => {
+    const tester = setup({ ...currentUser, mustChangePassword: true });
+
+    await expect.element(tester.root.getByRole('img', { name: 'logo' })).toBeVisible();
+    await expect.element(tester.navItems).toHaveLength(0);
+    await expect.element(tester.userLogin).not.toBeInTheDocument();
+  });
+
   test('should not display the version when the info is not available', async () => {
     const tester = setup(currentUser, NEVER);
 

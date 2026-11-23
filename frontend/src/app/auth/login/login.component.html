@@ -6,6 +6,9 @@
       <div class="oib-inner-form bg-light p-5">
         <img src="/oibus_white.svg" alt="" class="img-fluid mb-5" />
         <form [formGroup]="form" (ngSubmit)="login()">
+          @if (passwordChanged && !loginError()) {
+            <div class="alert alert-success" role="status" translate="login.password-changed"></div>
+          }
           <div [ngbCollapse]="!loginError()" class="alert alert-danger" role="alert" translate="login.login-error"></div>
           <div class="form-group">
             <label class="form-label" for="login" translate="login.login"></label>

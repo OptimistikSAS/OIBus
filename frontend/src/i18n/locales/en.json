@@ -431,7 +431,8 @@
     "login": "Login",
     "password": "Password",
     "login-button": "Sign in",
-    "login-error": "Invalid username or password"
+    "login-error": "Invalid username or password",
+    "password-changed": "Your password has been changed: sign in with the new one."
   },
   "user-settings": {
     "edit-user-settings": {

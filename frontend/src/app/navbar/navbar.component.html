@@ -4,7 +4,7 @@
     <img src="/logo-oibus.png" alt="logo" class="navbar-logo" />
   </a>
   <div id="navbar" class="navbar-collapse collapse">
-    @if (user(); as user) {
+    @if (menuUser(); as user) {
       <ul class="navbar-nav me-auto d-none d-md-flex">
         <li class="nav-item">
           <a class="nav-link" routerLink="/engine" translate="nav.engine"></a>

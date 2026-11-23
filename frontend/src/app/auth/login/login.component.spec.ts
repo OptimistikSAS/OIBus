@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import { of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
@@ -9,7 +9,7 @@ import { UserDTO } from '@oibus/shared/api/user.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../test/test-data';
-import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { provideNgbConfigTesting } from '../../shared/form/oi-ngb-testing';
@@ -25,6 +25,7 @@ class LoginComponentTester {
   readonly loginButton = this.root.getByRole('button', { name: 'Sign in' });
   readonly requiredErrors = this.root.getByText('This field is required');
   readonly alert = this.root.getByRole('alert');
+  readonly passwordChanged = this.root.getByRole('status');
 
   async submit(login: string, password: string) {
     await this.login.fill(login);
@@ -39,12 +40,14 @@ describe('LoginComponent', () => {
   let requestedUrlService: MockObject<RequestedUrlService>;
   let router: MockObject<Router>;
   let windowService: MockObject<WindowService>;
+  let queryParams: Params;
 
   beforeEach(() => {
     currentUserService = createMock(CurrentUserService);
     requestedUrlService = createMock(RequestedUrlService);
     router = createMock(Router);
     windowService = createMock(WindowService);
+    queryParams = {};
 
     requestedUrlService.getRequestedUrl.mockReturnValue('/about');
     router.navigateByUrl.mockResolvedValue(true);
@@ -56,63 +59,86 @@ describe('LoginComponent', () => {
         { provide: Router, useValue: router },
         { provide: CurrentUserService, useValue: currentUserService },
         { provide: RequestedUrlService, useValue: requestedUrlService },
-        { provide: WindowService, useValue: windowService }
+        { provide: WindowService, useValue: windowService },
+        { provide: ActivatedRoute, useFactory: () => stubRoute({ queryParams }) }
       ]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent);
-    tester = new LoginComponentTester();
   });
 
-  test('should display an empty form without error', async () => {
-    await expect.element(tester.login).toHaveValue('');
-    await expect.element(tester.password).toHaveValue('');
-    await expect.element(tester.alert).not.toBeInTheDocument();
+  describe('opened directly', () => {
+    beforeEach(() => {
+      tester = new LoginComponentTester();
+    });
+
+    test('should display an empty form without error', async () => {
+      await expect.element(tester.login).toHaveValue('');
+      await expect.element(tester.password).toHaveValue('');
+      await expect.element(tester.alert).not.toBeInTheDocument();
+    });
+
+    test('should validate the required fields', async () => {
+      await tester.loginButton.click();
+
+      await expect.element(tester.requiredErrors).toHaveLength(2);
+      expect(currentUserService.loginWithPassword).not.toHaveBeenCalled();
+    });
+
+    test('should login, navigate to the requested url and reload', async () => {
+      currentUserService.loginWithPassword.mockReturnValue(of(testData.users.list[0]));
+
+      await tester.submit('johndoe', 'passw0rd');
+
+      expect(currentUserService.loginWithPassword).toHaveBeenCalledWith('johndoe', 'passw0rd');
+      expect(router.navigateByUrl).toHaveBeenCalledWith('/about');
+      await expect.poll(() => windowService.reload).toHaveBeenCalled();
+    });
+
+    test('should not reload when the guard refuses the navigation, to keep the password change open', async () => {
+      currentUserService.loginWithPassword.mockReturnValue(of(testData.users.list[0]));
+      router.navigateByUrl.mockResolvedValue(false);
+
+      await tester.submit('johndoe', 'passw0rd');
+
+      await expect.poll(() => router.navigateByUrl).toHaveBeenCalledWith('/about');
+      await Promise.resolve();
+      expect(windowService.reload).not.toHaveBeenCalled();
+    });
+
+    test('should display an error if login fails, and hide it when retrying', async () => {
+      currentUserService.loginWithPassword.mockReturnValue(throwError(() => 'oops'));
+
+      await tester.submit('johndoe', 'passw0rd');
+
+      expect(router.navigateByUrl).not.toHaveBeenCalled();
+      expect(windowService.reload).not.toHaveBeenCalled();
+      await expect.element(tester.alert).toBeVisible();
+      await expect.element(tester.alert).toHaveTextContent('Invalid username or password');
+
+      const retry = new Subject<UserDTO | null>();
+      currentUserService.loginWithPassword.mockReturnValue(retry);
+      await tester.submit('johndoe', 'secret');
+
+      expect(currentUserService.loginWithPassword).toHaveBeenLastCalledWith('johndoe', 'secret');
+      await expect.element(tester.alert).not.toBeInTheDocument();
+    });
   });
 
-  test('should validate the required fields', async () => {
-    await tester.loginButton.click();
+  describe('after a password change', () => {
+    beforeEach(() => {
+      queryParams = { 'password-changed': 'true' };
+      tester = new LoginComponentTester();
+    });
 
-    await expect.element(tester.requiredErrors).toHaveLength(2);
-    expect(currentUserService.loginWithPassword).not.toHaveBeenCalled();
-  });
+    test('should tell the password has been changed, until a login fails', async () => {
+      await expect.element(tester.passwordChanged).toHaveTextContent('Your password has been changed: sign in with the new one.');
 
-  test('should login, navigate to the requested url and reload', async () => {
-    currentUserService.loginWithPassword.mockReturnValue(of(testData.users.list[0]));
+      currentUserService.loginWithPassword.mockReturnValue(throwError(() => 'oops'));
+      await tester.submit('admin', 'wrong');
 
-    await tester.submit('johndoe', 'passw0rd');
-
-    expect(currentUserService.loginWithPassword).toHaveBeenCalledWith('johndoe', 'passw0rd');
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/about');
-    await expect.poll(() => windowService.reload).toHaveBeenCalled();
-  });
-
-  test('should not reload when the guard refuses the navigation, to keep the password change open', async () => {
-    currentUserService.loginWithPassword.mockReturnValue(of(testData.users.list[0]));
-    router.navigateByUrl.mockResolvedValue(false);
-
-    await tester.submit('johndoe', 'passw0rd');
-
-    await expect.poll(() => router.navigateByUrl).toHaveBeenCalledWith('/about');
-    await Promise.resolve();
-    expect(windowService.reload).not.toHaveBeenCalled();
-  });
-
-  test('should display an error if login fails, and hide it when retrying', async () => {
-    currentUserService.loginWithPassword.mockReturnValue(throwError(() => 'oops'));
-
-    await tester.submit('johndoe', 'passw0rd');
-
-    expect(router.navigateByUrl).not.toHaveBeenCalled();
-    expect(windowService.reload).not.toHaveBeenCalled();
-    await expect.element(tester.alert).toBeVisible();
-    await expect.element(tester.alert).toHaveTextContent('Invalid username or password');
-
-    const retry = new Subject<UserDTO | null>();
-    currentUserService.loginWithPassword.mockReturnValue(retry);
-    await tester.submit('johndoe', 'secret');
-
-    expect(currentUserService.loginWithPassword).toHaveBeenLastCalledWith('johndoe', 'secret');
-    await expect.element(tester.alert).not.toBeInTheDocument();
+      await expect.element(tester.passwordChanged).not.toBeInTheDocument();
+      await expect.element(tester.alert).toHaveTextContent('Invalid username or password');
+    });
   });
 });

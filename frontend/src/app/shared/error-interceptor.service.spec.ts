@@ -52,13 +52,22 @@ describe('ErrorInterceptorService', () => {
     expect(notificationService.error).toHaveBeenCalledWith('0 - Http failure response for /test: 0');
   });
 
-  test('should redirect to login after logging out when 401 error', () => {
+  test('should log out to the login page when 401 error', () => {
+    windowService.getStorageItem.mockReturnValue('fake.token');
     httpClient.get('/test').subscribe({ error: noop });
     http.expectOne('/test').flush(null, { status: 401, statusText: 'Unauthorized' });
-    expect(currentUserService.logout).toHaveBeenCalled();
-    expect(windowService.redirectTo).toHaveBeenCalledWith('/login?error=401');
+    expect(windowService.getStorageItem).toHaveBeenCalledWith('oibus-token');
+    expect(currentUserService.logout).toHaveBeenCalledWith('/login?error=401');
     expect(notificationService.error).not.toHaveBeenCalled();
     expect(notificationService.errorMessage).not.toHaveBeenCalled();
+  });
+
+  test('should ignore a 401 error once logged out, not to replace the redirect of the logout', () => {
+    windowService.getStorageItem.mockReturnValue(null);
+    httpClient.get('/test').subscribe({ error: noop });
+    http.expectOne('/test').flush(null, { status: 401, statusText: 'Unauthorized' });
+    expect(currentUserService.logout).not.toHaveBeenCalled();
+    expect(notificationService.error).not.toHaveBeenCalled();
   });
 
   test('should emit a custom message with a 403 error', () => {
@@ -135,10 +144,10 @@ describe('ErrorInterceptorService', () => {
     expect(notificationService.error).not.toHaveBeenCalled();
     expect(notificationService.errorMessage).not.toHaveBeenCalled();
 
+    windowService.getStorageItem.mockReturnValue('fake.token');
     httpClient.get('/test', { context }).subscribe({ error: noop });
     http.expectOne('/test').flush(null, { status: 401, statusText: 'Unauthorized' });
-    expect(currentUserService.logout).toHaveBeenCalled();
-    expect(windowService.redirectTo).toHaveBeenCalledWith('/login?error=401');
+    expect(currentUserService.logout).toHaveBeenCalledWith('/login?error=401');
   });
 });
 

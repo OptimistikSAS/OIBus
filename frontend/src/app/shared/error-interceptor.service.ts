@@ -104,8 +104,11 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
               // entities (and possibly other stuff) are in memory, and need to disappear
               // so the easiest and safest way to do that is to reload the app
               // we also want to delete the token, because otherwise, the redirect loop will be infinite
-              currentUserService.logout();
-              windowService.redirectTo('/login?error=401');
+              // Once logged out (no token left), the 401 of a request still running or polled during the logout (after a
+              // password change, which invalidates the token) is ignored: it must not replace the redirect of the logout
+              if (windowService.getStorageItem('oibus-token')) {
+                currentUserService.logout('/login?error=401');
+              }
             } else if (errorResponse.status === HttpStatusCode.Forbidden) {
               notificationService.error('common.forbidden', { url: errorResponse.url });
             } else if (errorResponse.status === HttpStatusCode.NotFound) {

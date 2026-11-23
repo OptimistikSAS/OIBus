@@ -55,11 +55,14 @@ export class CurrentUserService {
     );
   }
 
-  logout(): void {
+  /**
+   * @param loginUrl the URL of the login page to reload the app on, with the query parameters it should show a message for
+   */
+  logout(loginUrl = '/login'): void {
     this.windowService.removeStorageItem('oibus-token');
     // we do not navigate with the router here but instead reload the app to empty some cache data
     // so the easiest and safest way to do that is to reload the app
-    this.windowService.redirectTo('/login');
+    this.windowService.redirectTo(loginUrl);
   }
 
   loginWithPassword(login: string, password: string): Observable<UserDTO | null> {
