@@ -11,16 +11,18 @@ import { AuthTokenDuration, WebServerCertificateSource } from '@oibus/shared/dom
 import { CertificateService } from '../../services/certificate.service';
 import { EngineService } from '../../services/engine.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
+import { SelectOrCreateComponent } from '../../shared/form/select-or-create/select-or-create.component';
 import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/port-redirect-modal.component';
+import { CertificateCreator } from '../certificate-list/certificate-creator.service';
 
 @Component({
   selector: 'oib-edit-engine-web-server-modal',
   templateUrl: './edit-engine-web-server-modal.component.html',
   styleUrl: './edit-engine-web-server-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
+  imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES, SelectOrCreateComponent]
 })
 export class EditEngineWebServerModalComponent {
   private readonly modal = inject(NgbActiveModal);
@@ -29,6 +31,7 @@ export class EditEngineWebServerModalComponent {
   private readonly notificationService = inject(NotificationService);
   private readonly modalService = inject(ModalService);
   private readonly fb = inject(NonNullableFormBuilder);
+  readonly certificateCreator = inject(CertificateCreator);
 
   readonly authTokenDurationOptions: Array<{ value: AuthTokenDuration; labelKey: string }> = [
     { value: '1h', labelKey: 'engine.web-server-settings.auth-token-duration-options.1h' },

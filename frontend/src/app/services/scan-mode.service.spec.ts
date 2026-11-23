@@ -96,4 +96,16 @@ describe('ScanModeService', () => {
     http.expectOne({ method: 'GET', url: '/api/scan-modes' }).flush(reloadedList);
     await expect(firstValueFrom(service.list())).resolves.toEqual(reloadedList);
   });
+
+  test('should keep the created scan modes until deleted', async () => {
+    const created = firstValueFrom(service.create(command));
+    http.expectOne({ method: 'POST', url: '/api/scan-modes' }).flush(scanMode);
+    await created;
+    expect(service.created()).toEqual([scanMode]);
+
+    const deleted = firstValueFrom(service.delete(scanMode.id));
+    http.expectOne({ method: 'DELETE', url: `/api/scan-modes/${scanMode.id}` }).flush(null);
+    await deleted;
+    expect(service.created()).toEqual([]);
+  });
 });

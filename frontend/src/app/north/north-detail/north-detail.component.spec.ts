@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -94,8 +95,8 @@ describe('NorthDetailComponent', () => {
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
     notificationService = createMock(NotificationService);
-    const scanModeService = createMock(ScanModeService);
-    const certificateService = createMock(CertificateService);
+    const scanModeService = createMock(ScanModeService, { created: signal([]) });
+    const certificateService = createMock(CertificateService, { created: signal([]) });
     const transformerService = createMock(TransformerService);
     const southConnectorService = createMock(SouthConnectorService);
     const logService = createMock(LogService);

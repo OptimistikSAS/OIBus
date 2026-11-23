@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { EMPTY, of } from 'rxjs';
@@ -52,7 +53,7 @@ describe('CertificateListComponent', () => {
   >;
 
   beforeEach(() => {
-    certificateService = createMock(CertificateService);
+    certificateService = createMock(CertificateService, { created: signal([]) });
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
     certificateService.list.mockReturnValue(of(testData.certificates.list));

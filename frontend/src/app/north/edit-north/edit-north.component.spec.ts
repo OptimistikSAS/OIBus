@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
@@ -21,6 +22,7 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { TransformerService } from '../../services/transformer.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
+import { chooseSelectOrCreateEntry } from '../../shared/form/select-or-create/select-or-create.testing';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
@@ -126,8 +128,8 @@ describe('EditNorthComponent', () => {
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
-    scanModeService = createMock(ScanModeService);
-    certificateService = createMock(CertificateService);
+    scanModeService = createMock(ScanModeService, { created: signal([]) });
+    certificateService = createMock(CertificateService, { created: signal([]) });
     transformerService = createMock(TransformerService);
     southConnectorService = createMock(SouthConnectorService);
     confirmationService = createMock(ConfirmationService);
@@ -185,7 +187,7 @@ describe('EditNorthComponent', () => {
       await expect.element(tester.step('caching')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.step('caching')).toHaveClass('modal-step-invalid');
 
-      await tester.scanMode.selectOptions('scanMode1');
+      await chooseSelectOrCreateEntry(tester.scanMode, 'scanMode1');
       await tester.nextButton.click();
       await expect.element(tester.root.getByRole('button', { name: 'Add a transformer' })).toBeVisible();
       await tester.backButton.click();
@@ -250,7 +252,7 @@ describe('EditNorthComponent', () => {
 
       await tester.outputFolder.fill('/out');
       await tester.goTo('caching');
-      await tester.scanMode.selectOptions('scanMode1');
+      await chooseSelectOrCreateEntry(tester.scanMode, 'scanMode1');
       await tester.goTo('general');
       await tester.name.fill('New north');
       await tester.description.fill('my description');
@@ -321,7 +323,7 @@ describe('EditNorthComponent', () => {
       await tester.goTo('settings');
       await expect.element(tester.outputFolder).toHaveValue('output-folder');
       await tester.goTo('caching');
-      await expect.element(tester.scanMode).toHaveDisplayValue('scanMode1');
+      await expect.element(tester.scanMode).toHaveTextContent('scanMode1');
       await expect.element(tester.numberOfElements).toHaveValue(250);
       await tester.goTo('transformers');
       await expect.element(tester.deleteTransformerButtons).toHaveLength(1);
@@ -527,7 +529,7 @@ describe('EditNorthComponent', () => {
       await tester.nextButton.click();
       await tester.outputFolder.fill('/out');
       await tester.goTo('caching');
-      await tester.scanMode.selectOptions('scanMode1');
+      await chooseSelectOrCreateEntry(tester.scanMode, 'scanMode1');
       await tester.goTo('general');
       await tester.name.fill('New north');
       await tester.goTo('review');

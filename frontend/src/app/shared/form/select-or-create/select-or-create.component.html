@@ -1,0 +1,36 @@
+<div ngbDropdown class="w-100" (openChange)="onOpenChange($event)">
+  <button
+    type="button"
+    class="form-select w-100 text-start"
+    [id]="inputId()"
+    [disabled]="disabled()"
+    [class.text-body-secondary]="selectedName() === null"
+    ngbDropdownToggle
+  >
+    <span class="text-truncate">
+      @if (selectedName(); as selectedName) {
+        {{ selectedName }}
+      } @else if (emptyLabel(); as emptyLabel) {
+        {{ emptyLabel | translate }}
+      } @else {
+        &nbsp;
+      }
+    </span>
+  </button>
+  <div ngbDropdownMenu class="w-100" [id]="inputId() + '-menu'" [attr.aria-labelledby]="inputId()">
+    @if (noneLabel(); as noneLabel) {
+      <button type="button" ngbDropdownItem [class.active]="selectedId() === null" (click)="select(null)">
+        {{ noneLabel | translate }}
+      </button>
+    }
+    @for (option of allOptions(); track option.id) {
+      <button type="button" ngbDropdownItem [class.active]="option.id === selectedId()" (click)="select(option)">{{ option.name }}</button>
+    }
+    @if (creator(); as creator) {
+      @if (noneLabel() || allOptions().length > 0) {
+        <div class="dropdown-divider"></div>
+      }
+      <button type="button" ngbDropdownItem (click)="create(creator)">{{ creator.createLabel | translate }}</button>
+    }
+  </div>
+</div>

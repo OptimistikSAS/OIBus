@@ -238,4 +238,25 @@ describe('CertificateService', () => {
 
     await expect(result).rejects.toBe('wrong passphrase');
   });
+
+  test('should keep the created and imported certificates until deleted', async () => {
+    const imported = { ...certificate, id: 'imported' };
+    const created = firstValueFrom(service.create(command));
+    http.expectOne({ method: 'POST', url: '/api/certificates' }).flush(certificate);
+    await created;
+    const importResult = firstValueFrom(
+      service.importCertificate(
+        { name: 'my cert', description: 'desc', privateKeyPassphrase: null },
+        { certificate: certificateFile, privateKey: privateKeyFile, certificateChain: null }
+      )
+    );
+    http.expectOne({ method: 'POST', url: '/api/certificates/import' }).flush(imported);
+    await importResult;
+    expect(service.created()).toEqual([certificate, imported]);
+
+    const deleted = firstValueFrom(service.delete(certificate.id));
+    http.expectOne({ method: 'DELETE', url: `/api/certificates/${certificate.id}` }).flush(null);
+    await deleted;
+    expect(service.created()).toEqual([imported]);
+  });
 });

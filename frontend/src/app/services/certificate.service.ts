@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpStatusCode } from '@angular/common/http';
-import { inject, Service } from '@angular/core';
+import { inject, Service, signal } from '@angular/core';
 
 import { BehaviorSubject, map, Observable, shareReplay, switchMap } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
@@ -24,6 +24,13 @@ export class CertificateService {
     switchMap(() => this.http.get<Array<CertificateDTO>>(ENDPOINT)),
     shareReplay(1)
   );
+  private readonly createdCertificates = signal<Array<CertificateDTO>>([]);
+
+  /**
+   * The certificates created or imported since the application was loaded, until deleted: the lists loaded before do
+   * not have them
+   */
+  readonly created = this.createdCertificates.asReadonly();
 
   /**
    * Get the certificates
@@ -37,7 +44,7 @@ export class CertificateService {
   }
 
   create(command: CertificateCommandDTO): Observable<CertificateDTO> {
-    return this.http.post<CertificateDTO>(`${ENDPOINT}`, command).pipe(tap(() => this.listTrigger$.next()));
+    return this.http.post<CertificateDTO>(`${ENDPOINT}`, command).pipe(tap(certificate => this.onCreated(certificate)));
   }
 
   update(certificateId: string, command: CertificateCommandDTO) {
@@ -45,7 +52,12 @@ export class CertificateService {
   }
 
   delete(certificateId: string) {
-    return this.http.delete<void>(`${ENDPOINT}/${certificateId}`).pipe(tap(() => this.listTrigger$.next()));
+    return this.http.delete<void>(`${ENDPOINT}/${certificateId}`).pipe(
+      tap(() => {
+        this.createdCertificates.update(certificates => certificates.filter(certificate => certificate.id !== certificateId));
+        this.listTrigger$.next();
+      })
+    );
   }
 
   /**
@@ -69,7 +81,7 @@ export class CertificateService {
 
     const context = ignoreErrorIfStatusIs(HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
     return this.http.post<CertificateDTO>(`${ENDPOINT}/import`, formData, { context }).pipe(
-      tap(() => this.listTrigger$.next()),
+      tap(certificate => this.onCreated(certificate)),
       catchError(rethrowServerMessage)
     );
   }
@@ -98,5 +110,10 @@ export class CertificateService {
         map(response => this.downloadService.download(response, filename)),
         catchError(rethrowServerMessage)
       );
+  }
+
+  private onCreated(certificate: CertificateDTO) {
+    this.createdCertificates.update(certificates => [...certificates, certificate]);
+    this.listTrigger$.next();
   }
 }

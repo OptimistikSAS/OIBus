@@ -44,6 +44,7 @@ import {
   RecordFilterOperator
 } from '@oibus/shared/domain/configuration-workflow.model';
 
+import { ScanModeCreator } from '../../../engine/scan-mode-list/scan-mode-creator.service';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
@@ -53,6 +54,7 @@ import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { FieldProcessModalComponent } from '../../../shared/field-process-modal/field-process-modal.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
+import { SelectOrCreateComponent, withCreated } from '../../../shared/form/select-or-create/select-or-create.component';
 import { trackControl } from '../../../shared/form/tracked-control';
 import { ModalService } from '../../../shared/modal.service';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
@@ -120,7 +122,8 @@ const PREVIEW_RECORD_LIMIT = 20;
     ExploreStepComponent,
     AddItemsStepComponent,
     ItemFieldMappingFormComponent,
-    NgTemplateOutlet
+    NgTemplateOutlet,
+    SelectOrCreateComponent
   ]
 })
 export default class EditWorkflowModalComponent implements AfterViewInit {
@@ -132,6 +135,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private engineService = inject(EngineService);
   private modalService = inject(ModalService);
   private confirmationService = inject(ConfirmationService);
+  readonly scanModeCreator = inject(ScanModeCreator);
   private injector = inject(Injector);
 
   // The inline, read-only explore tree shown alongside the SQL query editor (for the SQL connectors that can be
@@ -210,7 +214,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    * as edited, when it can't be. Without it, the modal closes with the workflow, for the opener to keep.
    */
   saveWorkflow: ((command: ConfigurationWorkflowCommandDTO) => Observable<ConfigurationWorkflowCommandDTO>) | null = null;
-  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  private readonly loadedScanModes = signal<Array<ScanModeDTO>>([]);
+  /** With the scan modes created from this modal */
+  readonly scanModes = computed(() => withCreated(this.loadedScanModes(), this.scanModeCreator.created()));
   /** The schedule an item of the connector accepts: a connector that only polls (or subscribes) has no use of the other one */
   private readonly itemScheduleType = signal<OIBusScanModeAttribute['acceptableType'] | null>(null);
   protected readonly subscriptionOnly = computed(() => this.itemScheduleType() === 'SUBSCRIPTION');
@@ -551,7 +557,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     prefill: Pick<ConfigurationWorkflowCommandDTO, 'name' | 'discoveryScope'> | null = null
   ) {
     this.mode.set(mode);
-    this.scanModes.set(scanModes);
+    this.loadedScanModes.set(scanModes);
     this.groupStore.set(groups);
     this.existingWorkflows = existingWorkflows;
     this.workflow = workflow;

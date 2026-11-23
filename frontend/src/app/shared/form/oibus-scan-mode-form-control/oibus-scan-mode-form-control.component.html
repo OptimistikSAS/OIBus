@@ -1,10 +1,12 @@
 <div class="form-group">
   <label [for]="scanModeAttribute().key" class="form-label" [translate]="scanModeAttribute().translationKey"></label>
-  <select class="form-select" [id]="scanModeAttribute().key" [formControlName]="scanModeAttribute().key">
-    <option [ngValue]="null"></option>
-    @for (scanMode of scanModes(); track scanMode.id) {
-      <option [ngValue]="scanMode">{{ scanMode.name }}</option>
-    }
-  </select>
+  <oib-select-or-create
+    [formControlName]="scanModeAttribute().key"
+    [inputId]="scanModeAttribute().key"
+    [options]="scanModes()"
+    bindValue="option"
+    noneLabel="engine.scan-mode.none"
+    [creator]="scanModeCreator()"
+  />
   <val-errors [controlName]="scanModeAttribute().key" />
 </div>

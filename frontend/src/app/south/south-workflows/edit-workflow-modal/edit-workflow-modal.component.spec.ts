@@ -24,6 +24,7 @@ import { SouthConnectorService } from '../../../services/south-connector.service
 import { ConfirmationService } from '../../../shared/confirmation.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { FieldProcessModalComponent } from '../../../shared/field-process-modal/field-process-modal.component';
+import { chooseSelectOrCreateEntry, selectOrCreateEntryNames } from '../../../shared/form/select-or-create/select-or-create.testing';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../../shared/notification.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
@@ -409,7 +410,7 @@ describe('EditWorkflowModalComponent', () => {
 
       await expect.element(tester.title).toHaveTextContent('Edit items synchronisation');
       await expect.element(tester.name).toHaveValue('Reactor discovery');
-      await expect.element(tester.scanMode).toHaveDisplayValue(scanModes[0].name);
+      await expect.element(tester.scanMode).toHaveTextContent(scanModes[0].name);
       await expect.element(tester.localMode).toBeChecked();
       await expect.element(tester.identityKeyFields).toHaveTextContent('nodeId');
       await expect.element(tester.eligibilityRows.first()).toMatchTextContent(/type\s*equals\s*Variable/);
@@ -494,7 +495,7 @@ describe('EditWorkflowModalComponent', () => {
       // the nodes come from the Explore step
       const tester = create({ prefill: { name: '', discoveryScope: { nodeIds: ['ns=1;s=Root'] } } });
       await tester.name.fill('New workflow');
-      await tester.scanMode.selectOptions(scanModes[0].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
       await tester.goToStep('items');
       await tester.addIdentityKeyField('nodeId');
       await tester.mappingField('name').fill('{{name}}');
@@ -1790,8 +1791,8 @@ describe('EditWorkflowModalComponent', () => {
       try {
         const tester = create();
 
-        await expect.element(tester.scanMode.getByRole('option', { name: scanModes[0].name })).toBeInTheDocument();
-        await expect.element(tester.scanMode.getByRole('option', { name: 'Subscription' })).not.toBeInTheDocument();
+        expect(await selectOrCreateEntryNames(tester.scanMode)).not.toContain('Subscription');
+        expect(await selectOrCreateEntryNames(tester.scanMode)).toContain(scanModes[0].name);
       } finally {
         scanModes.pop();
       }
@@ -1802,10 +1803,10 @@ describe('EditWorkflowModalComponent', () => {
       const tester = create();
       await expect.element(tester.enabledSwitch).not.toBeInTheDocument();
 
-      await tester.scanMode.selectOptions(scanModes[0].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
       await expect.element(tester.enabledSwitch).toBeInTheDocument();
 
-      await tester.scanMode.selectOptions('Manual only');
+      await chooseSelectOrCreateEntry(tester.scanMode, 'Manual only');
       await expect.element(tester.enabledSwitch).not.toBeInTheDocument();
     });
 

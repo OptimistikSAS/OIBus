@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslateDirective } from '@ngx-translate/core';
@@ -6,7 +6,9 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 
+import { ScanModeCreator } from '../../../engine/scan-mode-list/scan-mode-creator.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
+import { SelectOrCreateComponent } from '../select-or-create/select-or-create.component';
 
 @Component({
   selector: 'oib-oibus-scan-mode-form-control',
@@ -19,9 +21,11 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
     }
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES]
+  imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SelectOrCreateComponent]
 })
 export class OIBusScanModeFormControlComponent {
+  private readonly creator = inject(ScanModeCreator);
+
   readonly scanModeAttribute = input.required<OIBusScanModeAttribute>();
   readonly allScanModes = input.required<Array<ScanModeDTO>>();
 
@@ -34,4 +38,7 @@ export class OIBusScanModeFormControlComponent {
       return this.allScanModes();
     }
   });
+
+  /** The created scan modes are polling ones: none to create when only the subscription is acceptable */
+  readonly scanModeCreator = computed(() => (this.scanModeAttribute().acceptableType === 'SUBSCRIPTION' ? null : this.creator));
 }

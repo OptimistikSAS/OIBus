@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
@@ -49,7 +50,7 @@ describe('ScanModeListComponent', () => {
   const [scanMode1, scanMode2] = testData.scanMode.list;
 
   beforeEach(() => {
-    scanModeService = createMock(ScanModeService);
+    scanModeService = createMock(ScanModeService, { created: signal([]) });
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
     // like the real service, the list is emitted again after each modification

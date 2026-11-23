@@ -13,13 +13,14 @@ import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/aud
 import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DocsUrlService } from '../../shared/docs-url.service';
-import { Modal, ModalService } from '../../shared/modal.service';
+import { ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { ResizableColumnsDirective } from '../../shared/resizable-columns.directive';
 import { isScanModeWindowExpired, ScanModeSchedulePipe } from '../../shared/scan-mode-schedule.pipe';
 import { EditScanModeModalComponent } from './edit-scan-mode-modal/edit-scan-mode-modal.component';
+import { ScanModeCreator } from './scan-mode-creator.service';
 
 type ScanModeSortField = 'name' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -48,6 +49,7 @@ export class ScanModeListComponent {
   private readonly notificationService = inject(NotificationService);
   private readonly scanModeService = inject(ScanModeService);
   private readonly docsUrlService = inject(DocsUrlService);
+  private readonly scanModeCreator = inject(ScanModeCreator);
 
   readonly helpUrl = this.docsUrlService.resolve('guide/engine/scan-modes');
 
@@ -78,35 +80,16 @@ export class ScanModeListComponent {
     });
     const component: EditScanModeModalComponent = modalRef.componentInstance;
     component.prepareForEdition(scanMode);
-    this.refreshAfterEditScanModeModalClosed(modalRef, 'updated');
+    modalRef.result.subscribe((updated: ScanModeDTO) =>
+      this.notificationService.success('engine.scan-mode.updated', { name: updated.name })
+    );
   }
 
   /**
    * Open a modal to create a scan mode
    */
   addScanMode() {
-    const modalRef = this.modalService.open(EditScanModeModalComponent, {
-      beforeDismiss: () => {
-        const component: EditScanModeModalComponent = modalRef.componentInstance;
-        const result = component.canDismiss();
-        return typeof result === 'boolean' ? result : firstValueFrom(result);
-      }
-    });
-    const component: EditScanModeModalComponent = modalRef.componentInstance;
-    component.prepareForCreation();
-    this.refreshAfterEditScanModeModalClosed(modalRef, 'created');
-  }
-
-  private refreshAfterEditScanModeModalClosed(modalRef: Modal<EditScanModeModalComponent>, mode: 'created' | 'updated') {
-    modalRef.result
-      .pipe(
-        tap((scanMode: ScanModeDTO) =>
-          this.notificationService.success(`engine.scan-mode.${mode}`, {
-            name: scanMode.name
-          })
-        )
-      )
-      .subscribe();
+    this.scanModeCreator.create().subscribe();
   }
 
   /**
