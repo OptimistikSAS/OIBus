@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@
 import { TestBed } from '@angular/core/testing';
 import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { DateTime } from 'luxon';
+import { DateTime, Settings } from 'luxon';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -54,6 +54,14 @@ class DateRangeSelectorComponentTester {
 }
 
 const NOW = '2024-01-01T12:00:00.000Z';
+const realNow = Settings.now;
+
+// the clock is frozen through luxon rather than with vi.useFakeTimers(): vitest advances fake timers while an action
+// (selectOptions, fill…) or an expect.element is pending, which shifts the predefined ranges on a slow runner
+function setNow(instant: string) {
+  const millis = Date.parse(instant);
+  Settings.now = () => millis;
+}
 
 function formatRange(startTime: string, endTime: string) {
   const format = (instant: string) => DateTime.fromISO(instant).toLocaleString(DateTime.DATETIME_SHORT);
@@ -64,15 +72,15 @@ describe('DateRangeSelectorComponent', () => {
   let tester: DateRangeSelectorComponentTester;
 
   beforeEach(() => {
-    // only the clock is faked, so that the predefined ranges are predictable
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(NOW);
+    setNow(NOW);
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), provideNgbConfigTesting(), provideCurrentUser({ ...testData.users.list[0], timezone: 'UTC' })]
     });
   });
 
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    Settings.now = realNow;
+  });
 
   test('should select the default range and send it to the parent form without interaction', async () => {
     tester = new DateRangeSelectorComponentTester();
@@ -106,8 +114,6 @@ describe('DateRangeSelectorComponent', () => {
     tester = new DateRangeSelectorComponentTester();
     tester.host.defaultRange.set('last-day');
     await expect.element(tester.rangeType).toBeVisible();
-    // with fake timers, each retry of expect.element advances the clock by its polling interval: back to NOW for the ranges
-    vi.setSystemTime(NOW);
 
     await tester.rangeType.selectOptions(label === 'Last day' ? 'Last minute' : 'Last day');
     await tester.rangeType.selectOptions(label);
@@ -209,7 +215,7 @@ describe('DateRangeSelectorComponent', () => {
       tester = new DateRangeSelectorComponentTester();
       await expect.element(tester.rangeType).toHaveValue('last-hour');
 
-      vi.setSystemTime('2024-01-01T13:00:00.000Z');
+      setNow('2024-01-01T13:00:00.000Z');
 
       expect(tester.host.selector().currentDateRange()).toEqual({
         startTime: '2024-01-01T12:00:00.000Z',
