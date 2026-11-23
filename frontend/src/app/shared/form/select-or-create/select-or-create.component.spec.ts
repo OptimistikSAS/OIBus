@@ -100,6 +100,13 @@ describe('SelectOrCreateComponent', () => {
     await expect.element(tester.select).toHaveTextContent('');
   });
 
+  test('should display an id missing from the options rather than the empty label', async () => {
+    tester.fixture.componentInstance.noneLabel.set('engine.certificate.none');
+    tester.fixture.componentInstance.control.setValue('deleted');
+
+    await expect.element(tester.select).toHaveTextContent('deleted');
+  });
+
   test('should offer to select none', async () => {
     tester.fixture.componentInstance.noneLabel.set('engine.certificate.none');
     tester.fixture.componentInstance.control.setValue('id1');

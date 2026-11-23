@@ -259,4 +259,16 @@ describe('CertificateService', () => {
     await deleted;
     expect(service.created()).toEqual([imported]);
   });
+
+  test('should rename a created certificate when updated', async () => {
+    const created = firstValueFrom(service.create(command));
+    http.expectOne({ method: 'POST', url: '/api/certificates' }).flush(certificate);
+    await created;
+
+    const updated = firstValueFrom(service.update(certificate.id, { ...command, name: 'renamed', description: 'new description' }));
+    http.expectOne({ method: 'PUT', url: `/api/certificates/${certificate.id}` }).flush(null);
+    await updated;
+
+    expect(service.created()).toEqual([{ ...certificate, name: 'renamed', description: 'new description' }]);
+  });
 });

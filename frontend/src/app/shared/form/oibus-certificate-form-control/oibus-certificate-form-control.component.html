@@ -1,8 +1,8 @@
 <div class="form-group">
-  <label [for]="certificateAttribute().key" class="form-label" [translate]="certificateAttribute().translationKey"></label>
+  <label [for]="inputId()" class="form-label" [translate]="certificateAttribute().translationKey"></label>
   <oib-select-or-create
     [formControlName]="certificateAttribute().key"
-    [inputId]="certificateAttribute().key"
+    [inputId]="inputId()"
     [options]="certificates()"
     noneLabel="engine.certificate.none"
     [creator]="certificateCreator"

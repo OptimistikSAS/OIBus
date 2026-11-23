@@ -77,7 +77,7 @@ export class SelectOrCreateComponent<T extends SelectOption> implements ControlV
   readonly bindValue = input<'id' | 'option'>('id');
   /** The translation key of the entry selecting no option: without it, the selection can't be removed */
   readonly noneLabel = input<string | null>(null);
-  /** The translation key shown while no option is selected, when no option can't be selected */
+  /** The translation key shown while no option is selected, when there is no entry selecting none (`noneLabel`) */
   readonly placeholder = input<string | null>(null);
   /** Without creator, the select has no entry creating an option */
   readonly creator = input<OptionCreator<T> | null>(null);

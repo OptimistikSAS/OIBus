@@ -108,4 +108,16 @@ describe('ScanModeService', () => {
     await deleted;
     expect(service.created()).toEqual([]);
   });
+
+  test('should rename a created scan mode when updated', async () => {
+    const created = firstValueFrom(service.create(command));
+    http.expectOne({ method: 'POST', url: '/api/scan-modes' }).flush(scanMode);
+    await created;
+
+    const updated = firstValueFrom(service.update(scanMode.id, { ...command, name: 'renamed', description: 'new description' }));
+    http.expectOne({ method: 'PUT', url: `/api/scan-modes/${scanMode.id}` }).flush(null);
+    await updated;
+
+    expect(service.created()).toEqual([{ ...scanMode, name: 'renamed', description: 'new description' }]);
+  });
 });
