@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
@@ -27,6 +27,14 @@ export class NavbarComponent {
 
   private readonly user$ = this.currentUserService.get();
   readonly user = toSignal(this.user$, { initialValue: null });
+  /**
+   * The user the menus are shown for: none for a user who must change their password, whom every page but the password
+   * change sends back to it
+   */
+  readonly menuUser = computed(() => {
+    const user = this.user();
+    return user?.mustChangePassword ? null : user;
+  });
   readonly info = toSignal(this.user$.pipe(switchMap(user => (user ? this.engineService.info$ : of(null)))), { initialValue: null });
 
   logout() {

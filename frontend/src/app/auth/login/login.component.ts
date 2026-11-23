@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -8,7 +8,7 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { WindowService } from '../../shared/window.service';
-import { RequestedUrlService } from '../authentication.guard';
+import { PASSWORD_CHANGED_PARAM, RequestedUrlService } from '../authentication.guard';
 
 /**
  * The login component, displaying the password-based auth form.
@@ -27,6 +27,8 @@ export class LoginComponent {
   private windowService = inject(WindowService);
   private fb = inject(NonNullableFormBuilder);
 
+  /** Set when the password change page logged out the user once their password changed, to log in with the new one */
+  readonly passwordChanged = inject(ActivatedRoute).snapshot.queryParamMap.has(PASSWORD_CHANGED_PARAM);
   readonly loginError = signal(false);
   readonly form = this.fb.group({
     login: ['', Validators.required],

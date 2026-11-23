@@ -7,17 +7,17 @@ import { switchMap } from 'rxjs';
 
 import { UserSettingsService } from '../../services/user-settings.service';
 import { CurrentUserService } from '../../shared/current-user.service';
-import { NotificationService } from '../../shared/notification.service';
 import {
   ChangePasswordFieldsComponent,
   createChangePasswordForm,
   toChangePasswordCommand
 } from '../../user-settings/change-password-fields/change-password-fields.component';
+import { PASSWORD_CHANGED_PARAM } from '../authentication.guard';
 
 /**
  * The page a user who must change their password (the default account still having the default password) is sent to,
  * whatever page they ask for: they can only change it or log out. Once changed, they are logged out, to log in with the
- * new password.
+ * new password on a login page telling them it has been changed (a notification would not survive the reload).
  */
 @Component({
   selector: 'oib-change-password',
@@ -29,7 +29,6 @@ import {
 export class ChangePasswordComponent {
   private userSettingsService = inject(UserSettingsService);
   private currentUserService = inject(CurrentUserService);
-  private notificationService = inject(NotificationService);
 
   readonly form = createChangePasswordForm(inject(NonNullableFormBuilder));
   readonly error = signal(false);
@@ -45,10 +44,7 @@ export class ChangePasswordComponent {
       .currentUser()
       .pipe(switchMap(user => this.userSettingsService.updatePassword(user.id, command)))
       .subscribe({
-        next: () => {
-          this.notificationService.success('user-settings.change-password.password-changed');
-          this.currentUserService.logout();
-        },
+        next: () => this.currentUserService.logout(`/login?${PASSWORD_CHANGED_PARAM}=true`),
         error: () => this.error.set(true)
       });
   }

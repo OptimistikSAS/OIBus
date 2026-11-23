@@ -3774,7 +3774,8 @@
     "login": "登录",
     "password": "密码",
     "login-button": "登录",
-    "login-error": "用户名或密码无效"
+    "login-error": "用户名或密码无效",
+    "password-changed": "密码已修改，请使用新密码登录。"
   },
   "user-settings": {
     "edit-user-settings": {

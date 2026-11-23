@@ -85,6 +85,15 @@ describe('CurrentUserService', () => {
     expect(windowService.redirectTo).toHaveBeenCalledWith('/login');
   });
 
+  test('should log out to the given login page', () => {
+    const service = TestBed.inject(CurrentUserService);
+
+    service.logout('/login?error=401');
+
+    expect(windowService.removeStorageItem).toHaveBeenCalledWith('oibus-token');
+    expect(windowService.redirectTo).toHaveBeenCalledWith('/login?error=401');
+  });
+
   test('should log in with password, store the token and fetch the current user again', async () => {
     windowService.getStorageItem.mockReturnValue(null);
     const service = TestBed.inject(CurrentUserService);

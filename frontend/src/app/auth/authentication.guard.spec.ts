@@ -73,6 +73,16 @@ describe('authentication guards', () => {
     expect(router.url).toBe('/change-password');
   });
 
+  test('should send to the login page when the current user cannot be fetched', async () => {
+    windowService.getStorageItem.mockReturnValue('fake.token');
+    currentUserService.get.mockReturnValue(of(null));
+
+    await router.navigateByUrl('/dashboards/42');
+
+    expect(router.url).toBe('/login?auto=true');
+    expect(TestBed.inject(RequestedUrlService).getRequestedUrl()).toBe('/dashboards/42');
+  });
+
   describe('password change page', () => {
     test('should be opened by a user who must change their password', async () => {
       windowService.getStorageItem.mockReturnValue('fake.token');
@@ -89,6 +99,15 @@ describe('authentication guards', () => {
       await router.navigateByUrl('/change-password');
 
       expect(router.url).toBe('/');
+    });
+
+    test('should send to the login page when the current user cannot be fetched', async () => {
+      windowService.getStorageItem.mockReturnValue('fake.token');
+      currentUserService.get.mockReturnValue(of(null));
+
+      await router.navigateByUrl('/change-password');
+
+      expect(router.url).toBe('/login?auto=true');
     });
 
     test('should send to the login page when no token is present', async () => {
