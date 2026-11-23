@@ -35,11 +35,12 @@
       @if (certificateSource() === 'store') {
         <div class="form-group">
           <label class="form-label" for="certificate-id" translate="engine.web-server-settings.certificate"></label>
-          <select class="form-select" id="certificate-id" formControlName="certificateId">
-            @for (certificate of certificates(); track certificate.id) {
-              <option [ngValue]="certificate.id">{{ certificate.name }}</option>
-            }
-          </select>
+          <oib-select-or-create
+            formControlName="certificateId"
+            inputId="certificate-id"
+            [options]="certificates()"
+            [creator]="certificateCreator"
+          />
           <val-errors controlName="certificateId" />
           @if (certificates().length === 0) {
             <div class="form-text" translate="engine.web-server-settings.no-certificate"></div>

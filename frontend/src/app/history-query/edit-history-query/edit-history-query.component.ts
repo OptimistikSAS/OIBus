@@ -27,7 +27,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
-import { combineLatest, firstValueFrom, Observable, of, Subject, switchMap, tap } from 'rxjs';
+import { combineLatest, first, firstValueFrom, Observable, of, Subject, switchMap, tap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import {
@@ -71,6 +71,7 @@ import {
   SettingSummary,
   summarizeSettings
 } from '../../shared/form/oibus-settings-summary/settings-summary';
+import { withCreated } from '../../shared/form/select-or-create/select-or-create.component';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 import { ItemsMenuComponent } from '../../shared/items-menu/items-menu.component';
@@ -228,9 +229,13 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   private fromSouthId = '';
   private fromNorthId = '';
   readonly state = new ObservableState();
-  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  private readonly loadedScanModes = signal<Array<ScanModeDTO>>([]);
+  /** With the scan modes created from this page: the lists are loaded once, not to reinitialize the form */
+  readonly scanModes = computed(() => withCreated(this.loadedScanModes(), this.scanModeService.created()));
   readonly transformers = signal<Array<TransformerDTO>>([]);
-  readonly certificates = signal<Array<CertificateDTO>>([]);
+  private readonly loadedCertificates = signal<Array<CertificateDTO>>([]);
+  /** With the certificates created from this page: the lists are loaded once, not to reinitialize the form */
+  readonly certificates = computed(() => withCreated(this.loadedCertificates(), this.certificateService.created()));
   readonly northManifest = signal<NorthConnectorManifest | null>(null);
   // Raw files are counted by the files trigger, every other content type by the elements trigger
   readonly handlesFiles = computed(() => this.northManifest()?.types.includes('file') ?? true);
@@ -321,8 +326,8 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
   constructor() {
     combineLatest([
-      this.scanModeService.list(),
-      this.certificateService.list(),
+      this.scanModeService.list().pipe(first()),
+      this.certificateService.list().pipe(first()),
       this.transformerService.list(),
       this.historyQueryService.list(),
       this.route.paramMap,
@@ -331,8 +336,8 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       .pipe(
         takeUntilDestroyed(),
         switchMap(([scanModes, certificates, transformers, historyQueries, params, queryParams]) => {
-          this.scanModes.set(scanModes.filter(scanMode => scanMode.id !== 'subscription'));
-          this.certificates.set(certificates);
+          this.loadedScanModes.set(scanModes.filter(scanMode => scanMode.id !== 'subscription'));
+          this.loadedCertificates.set(certificates);
           this.transformers.set(transformers);
           this.existingHistoryQueries = historyQueries;
 

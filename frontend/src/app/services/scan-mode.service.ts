@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Service } from '@angular/core';
+import { inject, Service, signal } from '@angular/core';
 
 import { BehaviorSubject, Observable, shareReplay, switchMap } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -18,6 +18,12 @@ export class ScanModeService {
     switchMap(() => this.http.get<Array<ScanModeDTO>>(`/api/scan-modes`)),
     shareReplay(1)
   );
+  private readonly createdScanModes = signal<Array<ScanModeDTO>>([]);
+
+  /**
+   * The scan modes created since the application was loaded, until deleted: the lists loaded before do not have them
+   */
+  readonly created = this.createdScanModes.asReadonly();
 
   /**
    * Get the scan modes
@@ -39,7 +45,12 @@ export class ScanModeService {
    * @param command - the new scan mode
    */
   create(command: ScanModeCommandDTO): Observable<ScanModeDTO> {
-    return this.http.post<ScanModeDTO>(`/api/scan-modes`, command).pipe(tap(() => this.listTrigger$.next()));
+    return this.http.post<ScanModeDTO>(`/api/scan-modes`, command).pipe(
+      tap(scanMode => {
+        this.createdScanModes.update(scanModes => [...scanModes, scanMode]);
+        this.listTrigger$.next();
+      })
+    );
   }
 
   /**
@@ -56,7 +67,12 @@ export class ScanModeService {
    * @param scanModeId - the ID of the scan mode to delete
    */
   delete(scanModeId: string) {
-    return this.http.delete<void>(`/api/scan-modes/${scanModeId}`).pipe(tap(() => this.listTrigger$.next()));
+    return this.http.delete<void>(`/api/scan-modes/${scanModeId}`).pipe(
+      tap(() => {
+        this.createdScanModes.update(scanModes => scanModes.filter(scanMode => scanMode.id !== scanModeId));
+        this.listTrigger$.next();
+      })
+    );
   }
 
   /**

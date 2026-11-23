@@ -21,6 +21,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { ResizableColumnsDirective } from '../../shared/resizable-columns.directive';
 import { emptyPage } from '../../shared/utils/page.utils';
+import { CertificateCreator } from './certificate-creator.service';
 import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
 import { ExportCertificateModalComponent } from './export-certificate-modal/export-certificate-modal.component';
 import { ImportCertificateModalComponent } from './import-certificate-modal/import-certificate-modal.component';
@@ -53,6 +54,7 @@ export class CertificateListComponent {
   private readonly notificationService = inject(NotificationService);
   private readonly certificateService = inject(CertificateService);
   private readonly docsUrlService = inject(DocsUrlService);
+  private readonly certificateCreator = inject(CertificateCreator);
 
   readonly helpUrl = this.docsUrlService.resolve('guide/engine/engine-settings');
 
@@ -96,17 +98,7 @@ export class CertificateListComponent {
    * Open a modal to create a certificate
    */
   addCertificate() {
-    const modalRef = this.modalService.open(EditCertificateModalComponent, {
-      size: 'lg',
-      beforeDismiss: () => {
-        const component: EditCertificateModalComponent = modalRef.componentInstance;
-        const result = component.canDismiss();
-        return typeof result === 'boolean' ? result : firstValueFrom(result);
-      }
-    });
-    const component: EditCertificateModalComponent = modalRef.componentInstance;
-    component.prepareForCreation();
-    this.refreshAfterEditCertificateModalClosed(modalRef, 'created');
+    this.certificateCreator.create().subscribe(() => this.certificatesResource.reload());
   }
 
   /**
@@ -142,7 +134,7 @@ export class CertificateListComponent {
 
   private refreshAfterEditCertificateModalClosed(
     modalRef: Modal<EditCertificateModalComponent | ImportCertificateModalComponent>,
-    mode: 'created' | 'updated' | 'imported'
+    mode: 'updated' | 'imported'
   ) {
     modalRef.result.subscribe((certificate: CertificateDTO) => {
       this.certificatesResource.reload();

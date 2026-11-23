@@ -24,6 +24,7 @@ import { NorthConnectorService } from '../../../services/north-connector.service
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { TransformerService } from '../../../services/transformer.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { chooseSelectOrCreateEntry, selectOrCreateEntryNames } from '../../../shared/form/select-or-create/select-or-create.testing';
 import { MockModalService, provideModalTesting } from '../../../shared/mock-modal.service.testing';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import EditWorkflowModalComponent from '../../south-workflows/edit-workflow-modal/edit-workflow-modal.component';
@@ -246,7 +247,7 @@ describe('EditSouthItemModalComponent', () => {
     await expect.element(tester.title).toHaveTextContent('Edit item');
     await expect.element(tester.root.getByRole('heading', { level: 5, name: 'Name & schedule' })).toBeInTheDocument();
     await expect.element(tester.name).toHaveValue(savedItem1.name);
-    await expect.element(tester.scanMode).toHaveDisplayValue(scanModes[0].name);
+    await expect.element(tester.scanMode).toHaveTextContent(scanModes[0].name);
     await expect.element(tester.enabled).toBeChecked();
     await expect.element(tester.groupToggle).toHaveTextContent('None');
     await expect.element(tester.syncWithGroup).not.toBeInTheDocument();
@@ -279,15 +280,14 @@ describe('EditSouthItemModalComponent', () => {
   test('should only offer polling schedules to a polling connector', async () => {
     const tester = await open('create');
 
-    await expect.element(tester.scanMode.getByRole('option')).toHaveLength(3);
-    await expect.element(tester.scanMode.getByRole('option', { name: 'Subscription' })).not.toBeInTheDocument();
+    expect(await selectOrCreateEntryNames(tester.scanMode)).toEqual([scanModes[0].name, scanModes[1].name, 'Create a new scan mode...']);
   });
 
   test('should create an item', async () => {
     const tester = await open('create');
 
     await tester.name.fill('new item');
-    await tester.scanMode.selectOptions(scanModes[1].name);
+    await chooseSelectOrCreateEntry(tester.scanMode, scanModes[1].name);
     await tester.disable.click();
     await tester.maxReadInterval.fill('60');
     await tester.save();
@@ -348,7 +348,7 @@ describe('EditSouthItemModalComponent', () => {
 
     await expect.element(tester.description).toHaveValue('');
     await tester.name.fill('new item');
-    await tester.scanMode.selectOptions(scanModes[0].name);
+    await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
     await tester.save();
 
     expect(savedCommand()).toEqual(expect.objectContaining({ name: 'new item', description: null }));
@@ -374,14 +374,14 @@ describe('EditSouthItemModalComponent', () => {
     await expect.element(tester.step('settings')).not.toHaveClass('modal-step-invalid');
 
     await tester.name.fill('new item');
-    await tester.scanMode.selectOptions(scanModes[0].name);
+    await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
     await expect.element(tester.step('general')).not.toHaveClass('modal-step-invalid');
   });
 
   describe('steps', () => {
     test('should open the next step when pressing Enter in a field of a new item', async () => {
       const tester = await open('create');
-      await tester.scanMode.selectOptions(scanModes[0].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
 
       // not from a radio button, nor before the step is valid
       await tester.disable.click();
@@ -424,7 +424,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.root.getByText('This field is required').first()).toBeInTheDocument();
 
       await tester.name.fill('new item');
-      await tester.scanMode.selectOptions(scanModes[0].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
       await tester.nextButton.click();
       // where the data of the item goes, once its group is chosen
       await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');
@@ -736,7 +736,7 @@ describe('EditSouthItemModalComponent', () => {
     test('should require a threshold for the threshold strategy', async () => {
       const tester = await open('create', { itemManifest: opcuaManifest });
       await tester.name.fill('new item');
-      await tester.scanMode.selectOptions(scanModes[0].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
 
       await tester.cachingStrategy.selectOptions('Threshold');
       await tester.thresholdType.selectOptions('Absolute');
@@ -754,7 +754,7 @@ describe('EditSouthItemModalComponent', () => {
     test('should require a range high above the range low for a percentage threshold', async () => {
       const tester = await open('create', { itemManifest: opcuaManifest });
       await tester.name.fill('new item');
-      await tester.scanMode.selectOptions(scanModes[0].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
       await tester.cachingStrategy.selectOptions('Threshold');
       await tester.thresholdType.selectOptions('Percentage');
       await tester.threshold.fill('5');
@@ -873,7 +873,7 @@ describe('EditSouthItemModalComponent', () => {
       const tester = await open('create', { prefill });
 
       await expect.element(tester.name).toHaveValue('measures_tags');
-      await tester.scanMode.selectOptions(scanModes[1].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[1].name);
       await tester.step('review').click();
       await tester.saveButton.click();
 
@@ -956,7 +956,7 @@ describe('EditSouthItemModalComponent', () => {
     test('should save the new item and ask for another one', async () => {
       const tester = await open('create');
       await tester.name.fill('new item');
-      await tester.scanMode.selectOptions(scanModes[1].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[1].name);
       await tester.step('review').click();
 
       await tester.saveAndAddAnotherButton.click();
@@ -967,7 +967,7 @@ describe('EditSouthItemModalComponent', () => {
 
     test('should not ask for another item when saved with the main action', async () => {
       const tester = await open('create');
-      await tester.scanMode.selectOptions(scanModes[1].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[1].name);
       // an invalid attempt first, without a name: the main action must not reuse it
       await tester.step('review').click();
       await tester.saveAndAddAnotherButton.click();
@@ -983,7 +983,7 @@ describe('EditSouthItemModalComponent', () => {
     test('should be worded like the main action when the item is added in memory', async () => {
       const tester = await open('create', { directSave: false });
       await tester.name.fill('new item');
-      await tester.scanMode.selectOptions(scanModes[1].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[1].name);
       await tester.step('review').click();
       await expect.element(tester.okButton).toBeInTheDocument();
 
@@ -1013,7 +1013,7 @@ describe('EditSouthItemModalComponent', () => {
       await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
       await tester.step('general').click();
       await expect.element(tester.name).toHaveValue('');
-      await expect.element(tester.scanMode).toHaveDisplayValue(scanModes[1].name);
+      await expect.element(tester.scanMode).toHaveTextContent(scanModes[1].name);
       await expect.element(tester.enabled).not.toBeChecked();
       await expect.element(tester.maxReadInterval).toHaveValue(120);
       await expect.element(tester.readDelay).toHaveValue(50);
@@ -1080,7 +1080,7 @@ describe('EditSouthItemModalComponent', () => {
     test('should save the transformers attached in the North step with the item', async () => {
       const tester = await open('create');
       await tester.name.fill('new item');
-      await tester.scanMode.selectOptions(scanModes[0].name);
+      await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
 
       await tester.attachTransformer('North 2');
       await tester.step('review').click();

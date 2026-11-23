@@ -27,6 +27,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { provideCurrentUser } from '../../shared/current-user-testing';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { chooseSelectOrCreateEntry } from '../../shared/form/select-or-create/select-or-create.testing';
 import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
@@ -120,8 +121,8 @@ describe('EditHistoryQueryComponent', () => {
     historyQueryService = createMock(HistoryQueryService);
     northConnectorService = createMock(NorthConnectorService);
     southConnectorService = createMock(SouthConnectorService);
-    const scanModeService = createMock(ScanModeService);
-    const certificateService = createMock(CertificateService);
+    const scanModeService = createMock(ScanModeService, { created: signal([]) });
+    const certificateService = createMock(CertificateService, { created: signal([]) });
     const transformerService = createMock(TransformerService);
     notificationService = createMock(NotificationService);
     confirmationService = createMock(ConfirmationService);
@@ -587,7 +588,7 @@ describe('EditHistoryQueryComponent', () => {
       await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.root.getByText('This field is required').first()).toBeVisible();
 
-      await tester.schedule.selectOptions(testData.scanMode.list[0].name);
+      await chooseSelectOrCreateEntry(tester.schedule, testData.scanMode.list[0].name);
       await tester.goTo('general');
       await tester.name.fill('new query');
       await tester.goTo('review');
@@ -619,7 +620,7 @@ describe('EditHistoryQueryComponent', () => {
       await expect.element(tester.step('north')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.step('north')).toHaveClass('modal-step-invalid');
 
-      await tester.schedule.selectOptions(testData.scanMode.list[0].name);
+      await chooseSelectOrCreateEntry(tester.schedule, testData.scanMode.list[0].name);
       await tester.nextButton.click();
       await expect.element(tester.step('general')).toHaveAttribute('aria-current', 'step');
       // the name is required
@@ -678,7 +679,7 @@ describe('EditHistoryQueryComponent', () => {
 
       await tester.name.fill('new query');
       await tester.goTo('north');
-      await tester.schedule.selectOptions(testData.scanMode.list[0].name);
+      await chooseSelectOrCreateEntry(tester.schedule, testData.scanMode.list[0].name);
       await tester.goTo('review');
       await tester.saveButton.click();
       expect(historyQueryService.create).toHaveBeenCalledWith(

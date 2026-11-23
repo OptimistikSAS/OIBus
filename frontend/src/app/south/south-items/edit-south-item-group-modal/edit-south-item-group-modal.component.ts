@@ -23,21 +23,25 @@ import {
   SouthHistoryRecoveryStrategy
 } from '@oibus/shared/domain/south-connector.model';
 
+import { ScanModeCreator } from '../../../engine/scan-mode-list/scan-mode-creator.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { SelectOrCreateComponent } from '../../../shared/form/select-or-create/select-or-create.component';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { getScanModeAttribute } from '../south-item-summary';
 
 @Component({
   selector: 'oib-edit-south-item-group-modal',
   templateUrl: './edit-south-item-group-modal.component.html',
   styleUrl: './edit-south-item-group-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
+  imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, SelectOrCreateComponent]
 })
 export class EditSouthItemGroupModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private readonly creator = inject(ScanModeCreator);
 
   readonly mode = signal<'create' | 'edit'>('create');
   /**
@@ -48,6 +52,11 @@ export class EditSouthItemGroupModalComponent {
   readonly state = new ObservableState();
   readonly scanModes = signal<Array<ScanModeDTO>>([]);
   readonly manifest = signal<SouthConnectorManifest | null>(null);
+  /** The created scan modes are polling ones: none to create when the items only accept the subscription */
+  readonly scanModeCreator = computed(() => {
+    const manifest = this.manifest();
+    return manifest && getScanModeAttribute(manifest).acceptableType !== 'SUBSCRIPTION' ? this.creator : null;
+  });
   private group: SouthItemGroupDTO | SouthItemGroupCommandDTO | null = null;
   private existingGroups: ReadonlyArray<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
 

@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -15,6 +16,7 @@ import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
 import { EngineService } from '../../services/engine.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
+import { chooseSelectOrCreateEntry } from '../../shared/form/select-or-create/select-or-create.testing';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
 import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/port-redirect-modal.component';
@@ -59,7 +61,7 @@ describe('EditEngineWebServerModalComponent', () => {
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     engineService = createMock(EngineService);
-    certificateService = createMock(CertificateService);
+    certificateService = createMock(CertificateService, { created: signal([]) });
     certificateService.list.mockReturnValue(of(testData.certificates.list));
     notificationService = createMock(NotificationService);
 
@@ -94,7 +96,7 @@ describe('EditEngineWebServerModalComponent', () => {
 
     await expect.element(tester.httpsEnabled).toBeChecked();
     await expect.element(tester.certificateSource).toHaveDisplayValue('Certificate store');
-    await expect.element(tester.certificate).toHaveDisplayValue(testData.certificates.list[1].name);
+    await expect.element(tester.certificate).toHaveTextContent(testData.certificates.list[1].name);
     await expect.element(tester.certificatePath).not.toBeInTheDocument();
   });
 
@@ -187,7 +189,7 @@ describe('EditEngineWebServerModalComponent', () => {
     await expect.element(tester.root.getByText('This field is required')).toBeInTheDocument();
     expect(engineService.updateEngineWebServer).not.toHaveBeenCalled();
 
-    await tester.certificate.selectOptions(testData.certificates.list[0].name);
+    await chooseSelectOrCreateEntry(tester.certificate, testData.certificates.list[0].name);
     await tester.saveButton.click();
 
     expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({

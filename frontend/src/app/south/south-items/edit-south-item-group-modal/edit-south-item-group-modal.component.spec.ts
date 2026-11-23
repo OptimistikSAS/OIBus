@@ -13,6 +13,7 @@ import { buildSouthItemGroup, buildSouthItemGroupCommand } from '../../../../tes
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { chooseSelectOrCreateEntry } from '../../../shared/form/select-or-create/select-or-create.testing';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from './edit-south-item-group-modal.component';
 
@@ -117,7 +118,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     });
     const tester = openForEdition(group);
 
-    await expect.element(tester.scanMode).toHaveDisplayValue(scanModes[1].name);
+    await expect.element(tester.scanMode).toHaveTextContent(scanModes[1].name);
     await expect.element(tester.maxReadInterval).toHaveValue(60);
     await expect.element(tester.readDelay).toHaveValue(10);
     await expect.element(tester.startTimeOffset).toHaveValue(-100);
@@ -130,7 +131,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     const tester = openForCreation();
 
     await tester.name.fill('GroupC');
-    await tester.scanMode.selectOptions(scanModes[0].name);
+    await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
     await tester.maxReadInterval.fill('60');
     await tester.emptyIntervalStrategy.selectOptions('Skip this period next time');
     await tester.saveButton.click();
@@ -190,7 +191,7 @@ describe('EditSouthItemGroupModalComponent', () => {
     const tester = openForCreation();
 
     await tester.name.fill('groupb');
-    await tester.scanMode.selectOptions(scanModes[0].name);
+    await chooseSelectOrCreateEntry(tester.scanMode, scanModes[0].name);
     await tester.saveButton.click();
 
     await expect.element(tester.mustBeUnique).toBeInTheDocument();

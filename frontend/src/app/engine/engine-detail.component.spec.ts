@@ -74,9 +74,9 @@ describe('EngineDetailComponent', () => {
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
     configTransferService = createMock(ConfigTransferService);
-    const scanModeService = createMock(ScanModeService);
+    const scanModeService = createMock(ScanModeService, { created: signal([]) });
     const ipFilterService = createMock(IpFilterService);
-    certificateService = createMock(CertificateService);
+    certificateService = createMock(CertificateService, { created: signal([]) });
     const transformerService = createMock(TransformerService);
 
     // used by the help links of the lists

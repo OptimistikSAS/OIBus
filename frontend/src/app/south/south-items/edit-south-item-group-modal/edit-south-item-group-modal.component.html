@@ -13,12 +13,13 @@
     <!-- Scan Mode (Schedule) -->
     <div class="form-group">
       <label for="group-scan-mode" class="form-label" translate="south.items.scan-mode"></label>
-      <select class="form-select" id="group-scan-mode" formControlName="scanModeId">
-        <option [ngValue]="null" disabled translate="south.items.select-scan-mode"></option>
-        @for (scanMode of scanModes(); track scanMode.id) {
-          <option [value]="scanMode.id">{{ scanMode.name }}</option>
-        }
-      </select>
+      <oib-select-or-create
+        formControlName="scanModeId"
+        inputId="group-scan-mode"
+        [options]="scanModes()"
+        placeholder="south.items.select-scan-mode"
+        [creator]="scanModeCreator()"
+      />
       <val-errors controlName="scanModeId" />
     </div>
 

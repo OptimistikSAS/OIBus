@@ -627,12 +627,13 @@
       <!-- Scan mode -->
       <div class="form-group">
         <label class="form-label" for="workflow-scan-mode" translate="south.workflows.scan-mode"></label>
-        <select class="form-select" id="workflow-scan-mode" formControlName="scanModeId">
-          <option [ngValue]="null" translate="south.workflows.scan-mode-manual-only"></option>
-          @for (scanMode of workflowScanModes(); track scanMode.id) {
-            <option [value]="scanMode.id">{{ scanMode.name }}</option>
-          }
-        </select>
+        <oib-select-or-create
+          formControlName="scanModeId"
+          inputId="workflow-scan-mode"
+          [options]="workflowScanModes()"
+          noneLabel="south.workflows.scan-mode-manual-only"
+          [creator]="scanModeCreator"
+        />
       </div>
       <!-- Without a schedule the workflow only runs on demand: nothing fires, so there is nothing to enable -->
       @if (!manualSchedule()) {

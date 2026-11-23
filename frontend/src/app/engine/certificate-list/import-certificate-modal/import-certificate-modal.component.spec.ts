@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -43,7 +44,7 @@ describe('ImportCertificateModalComponent', () => {
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
-    certificateService = createMock(CertificateService);
+    certificateService = createMock(CertificateService, { created: signal([]) });
     unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
 
     TestBed.configureTestingModule({

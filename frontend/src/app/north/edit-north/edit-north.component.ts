@@ -13,7 +13,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { combineLatest, Observable, of, Subject, switchMap, tap } from 'rxjs';
+import { combineLatest, first, Observable, of, Subject, switchMap, tap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
@@ -43,6 +43,7 @@ import {
   SettingSummary,
   summarizeSettings
 } from '../../shared/form/oibus-settings-summary/settings-summary';
+import { withCreated } from '../../shared/form/select-or-create/select-or-create.component';
 import { ModalService } from '../../shared/modal.service';
 import { ModalStepsComponent } from '../../shared/modal-steps/modal-steps.component';
 import { submitsOnEnter, WizardSteps } from '../../shared/modal-steps/wizard-steps';
@@ -146,9 +147,13 @@ export class EditNorthComponent implements CanComponentDeactivate {
   readonly northType = signal<OIBusNorthType | null>(null);
   private duplicateId = '';
   readonly state = new ObservableState();
-  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  private readonly loadedScanModes = signal<Array<ScanModeDTO>>([]);
+  /** With the scan modes created from this page: the lists are loaded once, not to reinitialize the form */
+  readonly scanModes = computed(() => withCreated(this.loadedScanModes(), this.scanModeService.created()));
   readonly transformers = signal<Array<TransformerDTO>>([]);
-  readonly certificates = signal<Array<CertificateDTO>>([]);
+  private readonly loadedCertificates = signal<Array<CertificateDTO>>([]);
+  /** With the certificates created from this page: the lists are loaded once, not to reinitialize the form */
+  readonly certificates = computed(() => withCreated(this.loadedCertificates(), this.certificateService.created()));
   readonly manifest = signal<NorthConnectorManifest | null>(null);
   // Raw files are counted by the files trigger, every other content type by the elements trigger
   readonly handlesFiles = computed(() => this.manifest()?.types.includes('file') ?? true);
@@ -247,8 +252,8 @@ export class EditNorthComponent implements CanComponentDeactivate {
 
   constructor() {
     combineLatest([
-      this.scanModeService.list(),
-      this.certificateService.list(),
+      this.scanModeService.list().pipe(first()),
+      this.certificateService.list().pipe(first()),
       this.transformerService.list(),
       this.northConnectorService.list(),
       this.choosesConnector ? this.northConnectorService.getNorthTypes() : of([]),
@@ -257,8 +262,8 @@ export class EditNorthComponent implements CanComponentDeactivate {
     ])
       .pipe(
         switchMap(([scanModes, certificates, transformers, northConnectors, northTypes, params, queryParams]) => {
-          this.scanModes.set(scanModes.filter(scanMode => scanMode.id !== 'subscription'));
-          this.certificates.set(certificates);
+          this.loadedScanModes.set(scanModes.filter(scanMode => scanMode.id !== 'subscription'));
+          this.loadedCertificates.set(certificates);
           this.transformers.set(transformers);
           this.existingNorthConnectors.set(northConnectors);
           this.northTypes.set(northTypes);

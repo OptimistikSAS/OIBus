@@ -1,4 +1,5 @@
 import { Clipboard } from '@angular/cdk/clipboard';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 
@@ -155,8 +156,8 @@ describe('SouthDetailComponent', () => {
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
-    const scanModeService = createMock(ScanModeService);
-    const certificateService = createMock(CertificateService);
+    const scanModeService = createMock(ScanModeService, { created: signal([]) });
+    const certificateService = createMock(CertificateService, { created: signal([]) });
     const engineService = createMock(EngineService, { info$: of(testData.engine.oIBusInfo) });
     const logService = createMock(LogService);
     notificationService = createMock(NotificationService);

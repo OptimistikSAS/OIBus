@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -68,7 +69,7 @@ describe('EditScanModeModalComponent', () => {
   let unsavedChangesConfirmationService: MockObject<UnsavedChangesConfirmationService>;
 
   beforeEach(() => {
-    scanModeService = createMock(ScanModeService);
+    scanModeService = createMock(ScanModeService, { created: signal([]) });
     activeModal = createMock(NgbActiveModal);
     unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
 

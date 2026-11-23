@@ -34,12 +34,14 @@ import {
   SouthHistoryRecoveryStrategy
 } from '@oibus/shared/domain/south-connector.model';
 
+import { ScanModeCreator } from '../../../engine/scan-mode-list/scan-mode-creator.service';
 import { addAttributeToForm, createMqttValidator, extractFormValue } from '../../../shared/form/dynamic-form.builder';
 import { EnabledSelectorComponent } from '../../../shared/form/enabled-selector/enabled-selector.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusSettingsSummaryComponent } from '../../../shared/form/oibus-settings-summary/oibus-settings-summary.component';
+import { SelectOrCreateComponent, withCreated } from '../../../shared/form/select-or-create/select-or-create.component';
 import { ModalService } from '../../../shared/modal.service';
 import { ModalStepsComponent } from '../../../shared/modal-steps/modal-steps.component';
 import { submitsOnEnter } from '../../../shared/modal-steps/wizard-steps';
@@ -76,7 +78,8 @@ import SouthItemTestComponent from '../south-item-test/south-item-test.component
     NgbDropdownModule,
     ModalStepsComponent,
     OIBusSettingsSummaryComponent,
-    SouthItemNorthsComponent
+    SouthItemNorthsComponent,
+    SelectOrCreateComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [
@@ -93,6 +96,7 @@ class EditSouthItemModalComponent {
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
+  private readonly creator = inject(ScanModeCreator);
 
   readonly mode = signal<'create' | 'edit' | 'copy'>('create');
   /**
@@ -106,7 +110,17 @@ class EditSouthItemModalComponent {
    */
   addAnother = false;
   readonly state = new ObservableState();
-  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  private readonly loadedScanModes = signal<Array<ScanModeDTO>>([]);
+  /** The created scan modes are polling ones: none to create when the items only accept the subscription */
+  readonly scanModeCreator = computed(() => {
+    const manifest = this.manifest();
+    return manifest && getScanModeAttribute(manifest).acceptableType !== 'SUBSCRIPTION' ? this.creator : null;
+  });
+  /** With the scan modes created from this modal, or from a group modal opened from it */
+  readonly scanModes = computed(() => {
+    const scanModeCreator = this.scanModeCreator();
+    return scanModeCreator ? withCreated(this.loadedScanModes(), scanModeCreator.created()) : this.loadedScanModes();
+  });
   readonly certificates = signal<Array<CertificateDTO>>([]);
   readonly southId = signal('');
   readonly southConnectorCommand = signal<SouthConnectorCommandDTO | null>(null);
@@ -353,7 +367,7 @@ class EditSouthItemModalComponent {
     this.mode.set(mode);
     this.itemList = itemList;
     this.southItems.set(itemList);
-    this.scanModes.set(this.setScanModes(scanModes, getScanModeAttribute(manifest)));
+    this.loadedScanModes.set(this.setScanModes(scanModes, getScanModeAttribute(manifest)));
     this.certificates.set(certificates);
     this.groupStore.set(groups);
     this.manifest.set(manifest);

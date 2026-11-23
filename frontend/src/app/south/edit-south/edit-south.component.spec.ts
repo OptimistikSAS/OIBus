@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
@@ -201,8 +202,8 @@ describe('EditSouthComponent', () => {
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     configurationWorkflowService = createMock(ConfigurationWorkflowService);
-    const scanModeService = createMock(ScanModeService);
-    const certificateService = createMock(CertificateService);
+    const scanModeService = createMock(ScanModeService, { created: signal([]) });
+    const certificateService = createMock(CertificateService, { created: signal([]) });
     const engineService = createMock(EngineService);
     notificationService = createMock(NotificationService);
     confirmationService = createMock(ConfirmationService);

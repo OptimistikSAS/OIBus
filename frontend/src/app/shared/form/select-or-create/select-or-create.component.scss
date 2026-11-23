@@ -1,0 +1,15 @@
+.form-select {
+  // the select arrow of .form-select is enough: hide the caret added by ngbDropdownToggle
+  &::after {
+    display: none;
+  }
+
+  span {
+    display: block;
+  }
+}
+
+.dropdown-menu {
+  max-height: 20rem;
+  overflow-y: auto;
+}

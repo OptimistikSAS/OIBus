@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { NgbDropdownItem, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { combineLatest, firstValueFrom, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
+import { combineLatest, first, firstValueFrom, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
@@ -44,6 +44,7 @@ import {
   SettingSummary,
   summarizeSettings
 } from '../../shared/form/oibus-settings-summary/settings-summary';
+import { withCreated } from '../../shared/form/select-or-create/select-or-create.component';
 import { builtInSortValue, ItemSelection } from '../../shared/item-table/item-table';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
@@ -182,8 +183,12 @@ export class EditSouthComponent implements CanComponentDeactivate {
   private duplicateId = '';
 
   readonly state = new ObservableState();
-  readonly scanModes = signal<Array<ScanModeDTO>>([]);
-  readonly certificates = signal<Array<CertificateDTO>>([]);
+  private readonly loadedScanModes = signal<Array<ScanModeDTO>>([]);
+  /** With the scan modes created from this page: the lists are loaded once, not to reinitialize the form */
+  readonly scanModes = computed(() => withCreated(this.loadedScanModes(), this.scanModeService.created()));
+  private readonly loadedCertificates = signal<Array<CertificateDTO>>([]);
+  /** With the certificates created from this page: the lists are loaded once, not to reinitialize the form */
+  readonly certificates = computed(() => withCreated(this.loadedCertificates(), this.certificateService.created()));
   readonly manifest = signal<SouthConnectorManifest | null>(null);
   readonly existingSouthConnectors = signal<Array<SouthConnectorLightDTO>>([]);
   readonly form = signal<SouthConnectorForm | null>(null);
@@ -284,8 +289,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
   constructor() {
     // get the generator ID
     combineLatest([
-      this.scanModeService.list(),
-      this.certificateService.list(),
+      this.scanModeService.list().pipe(first()),
+      this.certificateService.list().pipe(first()),
       this.southConnectorService.list(),
       this.choosesConnector ? this.southConnectorService.getSouthTypes() : of([]),
       this.route.paramMap,
@@ -293,8 +298,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
     ])
       .pipe(
         switchMap(([scanModes, certificates, southConnectors, southTypes, params, queryParams]) => {
-          this.scanModes.set(scanModes);
-          this.certificates.set(certificates);
+          this.loadedScanModes.set(scanModes);
+          this.loadedCertificates.set(certificates);
           this.existingSouthConnectors.set(southConnectors);
           this.southTypes.set(southTypes);
 

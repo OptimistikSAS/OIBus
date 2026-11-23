@@ -1,5 +1,6 @@
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter } from '@angular/router';
@@ -89,8 +90,8 @@ describe('HistoryQueryDetailComponent', () => {
     historyQueryService = createMock(HistoryQueryService);
     const northConnectorService = createMock(NorthConnectorService);
     southConnectorService = createMock(SouthConnectorService);
-    const scanModeService = createMock(ScanModeService);
-    const certificateService = createMock(CertificateService);
+    const scanModeService = createMock(ScanModeService, { created: signal([]) });
+    const certificateService = createMock(CertificateService, { created: signal([]) });
     const transformerService = createMock(TransformerService);
     const engineService = createMock(EngineService, { info$: of(testData.engine.oIBusInfo) });
     const logService = createMock(LogService);
