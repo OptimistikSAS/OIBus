@@ -12,7 +12,7 @@ import { OIBusRecordListContent } from '../../shared/model/common/content.model'
 import { GetUserInfo } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
-import { ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
+import { PresentedServerIdentity, ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { CacheMetadataSource } from '../model/engine.model';
@@ -36,6 +36,7 @@ import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode.service';
 import {
   resolveTestedServerTrust,
+  retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
   testConnectionWithServerIdentity,
   toServerTrust,
@@ -245,6 +246,48 @@ export default class NorthService {
     trustedFingerprint: string | null = null,
     historyServerTrust: ServerTrust | null = null
   ): Promise<OIBusConnectionTestResult> {
+    const { north, serverTrust } = await this.buildEphemeralNorth(
+      northId,
+      northType,
+      settingsToTest,
+      trustedFingerprint,
+      historyServerTrust
+    );
+    return await testConnectionWithServerIdentity(north, serverTrust.identity);
+  }
+
+  /**
+   * The identity the server presents with these settings, and how it compares with the identity trusted (as for
+   * `testNorth`), without connecting further: no credential is sent. `null` when the connector does not check it.
+   */
+  async retrieveServerIdentity(
+    northId: string,
+    northType: OIBusNorthType,
+    settingsToTest: NorthSettings,
+    trustedFingerprint: string | null = null,
+    historyServerTrust: ServerTrust | null = null
+  ): Promise<PresentedServerIdentity | null> {
+    const { north, serverTrust } = await this.buildEphemeralNorth(
+      northId,
+      northType,
+      settingsToTest,
+      trustedFingerprint,
+      historyServerTrust
+    );
+    return await retrievePresentedServerIdentity(north, serverTrust.identity);
+  }
+
+  /**
+   * A throwaway North connector built from raw settings, the secrets left blank taken from the saved connector, which trusts
+   * the identity saved for the connector (or the history query) or trusted in its form (`trustedFingerprint`).
+   */
+  private async buildEphemeralNorth(
+    northId: string,
+    northType: OIBusNorthType,
+    settingsToTest: NorthSettings,
+    trustedFingerprint: string | null,
+    historyServerTrust: ServerTrust | null
+  ): Promise<{ north: NorthConnector<NorthSettings>; serverTrust: ServerTrust }> {
     let northConnector: NorthConnectorEntity<NorthSettings> | null = null;
     if (northId !== 'create' && northId !== 'history') {
       northConnector = this.findById(northId);
@@ -303,7 +346,7 @@ export default class NorthService {
       }
     });
     const serverTrust = await resolveTestedServerTrust(savedServerTrust, trustedFingerprint, () => north.retrieveServerIdentity());
-    return await testConnectionWithServerIdentity(north, serverTrust.identity);
+    return { north, serverTrust };
   }
 
   /** A North connector built from an entity, never started by the engine. */

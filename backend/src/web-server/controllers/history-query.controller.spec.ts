@@ -439,6 +439,79 @@ describe('HistoryQueryController', () => {
       userService.getUserInfo.mock.mockImplementation((id: string) => ({ id, friendlyName: 'User 1' }));
     });
 
+    it('should retrieve the identities of the servers with the settings as edited', async () => {
+      historyQueryService.retrieveNorthServerIdentity.mock.mockImplementation(async () => ({ identity, status: 'unknown' }));
+      historyQueryService.retrieveSouthServerIdentity.mock.mockImplementation(async () => null);
+      const historyId = testData.historyQueries.list[0].id;
+
+      assert.deepStrictEqual(
+        await controller.retrieveNorthServerIdentity(
+          historyId,
+          testData.north.command.type,
+          'northId',
+          testData.north.command.settings,
+          mockRequest as CustomExpressRequest,
+          identity.fingerprint
+        ),
+        { identity, status: 'unknown' }
+      );
+      assert.strictEqual(
+        await controller.retrieveSouthServerIdentity(
+          historyId,
+          testData.south.command.type,
+          undefined,
+          testData.south.command.settings,
+          mockRequest as CustomExpressRequest
+        ),
+        null
+      );
+
+      assert.deepStrictEqual(historyQueryService.retrieveNorthServerIdentity.mock.calls[0].arguments, [
+        historyId,
+        testData.north.command.type,
+        'northId',
+        testData.north.command.settings,
+        identity.fingerprint
+      ]);
+      assert.deepStrictEqual(historyQueryService.retrieveSouthServerIdentity.mock.calls[0].arguments, [
+        historyId,
+        testData.south.command.type,
+        undefined,
+        testData.south.command.settings,
+        null
+      ]);
+    });
+
+    it('should wrap the errors when retrieving the identities of the servers', async () => {
+      const fail = async () => {
+        throw new Error('ECONNREFUSED');
+      };
+      historyQueryService.retrieveNorthServerIdentity.mock.mockImplementation(fail);
+      historyQueryService.retrieveSouthServerIdentity.mock.mockImplementation(fail);
+      const historyId = testData.historyQueries.list[0].id;
+
+      await assert.rejects(
+        controller.retrieveNorthServerIdentity(
+          historyId,
+          testData.north.command.type,
+          undefined,
+          testData.north.command.settings,
+          mockRequest as CustomExpressRequest
+        ),
+        new OIBusTestingError('ECONNREFUSED')
+      );
+      await assert.rejects(
+        controller.retrieveSouthServerIdentity(
+          historyId,
+          testData.south.command.type,
+          undefined,
+          testData.south.command.settings,
+          mockRequest as CustomExpressRequest
+        ),
+        new OIBusTestingError('ECONNREFUSED')
+      );
+    });
+
     it('should get the trust of a side of a history query in the identity of its server', () => {
       historyQueryService.getServerTrustState.mock.mockImplementation(() => trustState);
 

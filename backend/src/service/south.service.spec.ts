@@ -1221,6 +1221,39 @@ describe('South Service', () => {
       assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 0);
     });
 
+    it('should retrieve the identity of the server and its status, without testing the connection', async () => {
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => ({ ...testData.south.list[0], serverTrust: trustOf(identity) }));
+
+      assert.deepStrictEqual(
+        await service.retrieveServerIdentity(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings),
+        { identity, status: 'trusted' }
+      );
+      assert.deepStrictEqual(
+        await service.retrieveServerIdentity(
+          'history',
+          testData.south.command.type,
+          testData.south.command.settings,
+          null,
+          trustOf(otherIdentity)
+        ),
+        { identity, status: 'changed' }
+      );
+      assert.deepStrictEqual(
+        await service.retrieveServerIdentity('create', testData.south.command.type, testData.south.command.settings, identity.fingerprint),
+        { identity, status: 'trusted' }
+      );
+      assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 0);
+    });
+
+    it('should retrieve no identity for a connector which does not check it', async () => {
+      mock.method(mockedSouth1, 'retrieveServerIdentity', async () => null);
+
+      assert.strictEqual(
+        await service.retrieveServerIdentity('create', testData.south.command.type, testData.south.command.settings),
+        null
+      );
+    });
+
     it('should test the connection to a trusted server, with its identity', async () => {
       southConnectorRepository.findSouthById.mock.mockImplementation(() => ({ ...testData.south.list[0], serverTrust: trustOf(identity) }));
       mockedSouth1.testConnection.mock.mockImplementation(async () => ({ items: [{ key: 'Server', value: 'ok' }] }));

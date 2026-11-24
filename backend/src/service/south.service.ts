@@ -42,7 +42,7 @@ import { GetUserInfo, Page } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../shared/model/domain/engine.model';
-import { ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
+import { PresentedServerIdentity, ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowSouthCommand } from '../model/configuration-workflow.model';
@@ -79,6 +79,7 @@ import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import {
   resolveTestedServerTrust,
+  retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
   testConnectionWithServerIdentity,
   toServerNotTrustedError,
@@ -461,6 +462,21 @@ export default class SouthService {
   ): Promise<OIBusConnectionTestResult> {
     const south = await this.buildEphemeralSouth(southId, southType, settingsToTest, trustedFingerprint, historyServerTrust);
     return await testConnectionWithServerIdentity(south, south.connectorConfiguration.serverTrust.identity);
+  }
+
+  /**
+   * The identity the server presents with these settings, and how it compares with the identity trusted (as for
+   * `testSouth`), without connecting further: no credential is sent. `null` when the connector does not check it.
+   */
+  async retrieveServerIdentity(
+    southId: string,
+    southType: OIBusSouthType,
+    settingsToTest: SouthSettings,
+    trustedFingerprint: string | null = null,
+    historyServerTrust: ServerTrust | null = null
+  ): Promise<PresentedServerIdentity | null> {
+    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest, trustedFingerprint, historyServerTrust);
+    return await retrievePresentedServerIdentity(south, south.connectorConfiguration.serverTrust.identity);
   }
 
   /**

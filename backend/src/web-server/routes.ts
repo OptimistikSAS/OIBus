@@ -4277,6 +4277,11 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthSettings": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSSettings"},{"ref":"SouthBACnetSettings"},{"ref":"SouthEtherNetIPSettings"},{"ref":"SouthFolderScannerSettings"},{"ref":"SouthFTPSettings"},{"ref":"SouthInfluxDBSettings"},{"ref":"SouthModbusSettings"},{"ref":"SouthMongoDBSettings"},{"ref":"SouthMQTTSettings"},{"ref":"SouthMSSQLSettings"},{"ref":"SouthMySQLSettings"},{"ref":"SouthODBCSettings"},{"ref":"SouthOIAnalyticsSettings"},{"ref":"SouthOLEDBSettings"},{"ref":"SouthOPCSettings"},{"ref":"SouthOPCUASettings"},{"ref":"SouthOracleSettings"},{"ref":"SouthPISettings"},{"ref":"SouthPostgreSQLSettings"},{"ref":"SouthRestSettings"},{"ref":"SouthS7Settings"},{"ref":"SouthSFTPSettings"},{"ref":"SouthSQLiteSettings"}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusConnectionTestResult": {
         "dataType": "refObject",
         "properties": {
@@ -4284,11 +4289,6 @@ const models: TsoaRoute.Models = {
             "serverIdentity": {"ref":"PresentedServerIdentity"},
         },
         "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthSettings": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSSettings"},{"ref":"SouthBACnetSettings"},{"ref":"SouthEtherNetIPSettings"},{"ref":"SouthFolderScannerSettings"},{"ref":"SouthFTPSettings"},{"ref":"SouthInfluxDBSettings"},{"ref":"SouthModbusSettings"},{"ref":"SouthMongoDBSettings"},{"ref":"SouthMQTTSettings"},{"ref":"SouthMSSQLSettings"},{"ref":"SouthMySQLSettings"},{"ref":"SouthODBCSettings"},{"ref":"SouthOIAnalyticsSettings"},{"ref":"SouthOLEDBSettings"},{"ref":"SouthOPCSettings"},{"ref":"SouthOPCUASettings"},{"ref":"SouthOracleSettings"},{"ref":"SouthPISettings"},{"ref":"SouthPostgreSQLSettings"},{"ref":"SouthRestSettings"},{"ref":"SouthS7Settings"},{"ref":"SouthSFTPSettings"},{"ref":"SouthSQLiteSettings"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthItemSettings": {
@@ -12015,6 +12015,40 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_retrieveServerIdentity: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                southType: {"in":"query","name":"southType","required":true,"ref":"OIBusSouthType"},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthSettings"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                trustedFingerprint: {"in":"query","name":"trustedFingerprint","dataType":"string"},
+        };
+        app.post('/api/south/:southId/test/server-identity',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.retrieveServerIdentity)),
+
+            async function SouthConnectorController_retrieveServerIdentity(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_retrieveServerIdentity, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'retrieveServerIdentity',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsSouthConnectorController_testConnection: Record<string, TsoaRoute.ParameterSchema> = {
                 southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
                 southType: {"in":"query","name":"southType","required":true,"ref":"OIBusSouthType"},
@@ -13860,6 +13894,40 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsNorthConnectorController_retrieveServerIdentity: Record<string, TsoaRoute.ParameterSchema> = {
+                northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
+                northType: {"in":"query","name":"northType","required":true,"ref":"OIBusNorthType"},
+                command: {"in":"body","name":"command","required":true,"ref":"NorthSettings"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                trustedFingerprint: {"in":"query","name":"trustedFingerprint","dataType":"string"},
+        };
+        app.post('/api/north/:northId/test/server-identity',
+            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.retrieveServerIdentity)),
+
+            async function NorthConnectorController_retrieveServerIdentity(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_retrieveServerIdentity, request, response });
+
+                const controller = new NorthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'retrieveServerIdentity',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsNorthConnectorController_testNorth: Record<string, TsoaRoute.ParameterSchema> = {
                 northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
                 northType: {"in":"query","name":"northType","required":true,"ref":"OIBusNorthType"},
@@ -14751,6 +14819,76 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsHistoryQueryController_retrieveNorthServerIdentity: Record<string, TsoaRoute.ParameterSchema> = {
+                historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
+                northType: {"in":"query","name":"northType","required":true,"ref":"OIBusNorthType"},
+                fromNorth: {"in":"query","name":"fromNorth","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+                command: {"in":"body","name":"command","required":true,"ref":"NorthSettings"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                trustedFingerprint: {"in":"query","name":"trustedFingerprint","dataType":"string"},
+        };
+        app.post('/api/history/:historyId/test/north/server-identity',
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.retrieveNorthServerIdentity)),
+
+            async function HistoryQueryController_retrieveNorthServerIdentity(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_retrieveNorthServerIdentity, request, response });
+
+                const controller = new HistoryQueryController();
+
+              await templateService.apiHandler({
+                methodName: 'retrieveNorthServerIdentity',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsHistoryQueryController_retrieveSouthServerIdentity: Record<string, TsoaRoute.ParameterSchema> = {
+                historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
+                southType: {"in":"query","name":"southType","required":true,"ref":"OIBusSouthType"},
+                fromSouth: {"in":"query","name":"fromSouth","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthSettings"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                trustedFingerprint: {"in":"query","name":"trustedFingerprint","dataType":"string"},
+        };
+        app.post('/api/history/:historyId/test/south/server-identity',
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.retrieveSouthServerIdentity)),
+
+            async function HistoryQueryController_retrieveSouthServerIdentity(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_retrieveSouthServerIdentity, request, response });
+
+                const controller = new HistoryQueryController();
+
+              await templateService.apiHandler({
+                methodName: 'retrieveSouthServerIdentity',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);

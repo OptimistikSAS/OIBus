@@ -696,6 +696,49 @@ describe('History Query service', () => {
       assert.deepStrictEqual(saved.northServerTrust, trustOf(otherIdentity));
     });
 
+    it('should retrieve the identities of the servers with the settings and the trust of the history query', async () => {
+      const presented = { identity, status: 'trusted' as const };
+      northService.retrieveServerIdentity.mock.mockImplementation(async () => presented);
+      southService.retrieveServerIdentity.mock.mockImplementation(async () => presented);
+      const historyQuery = testData.historyQueries.list[0];
+
+      assert.strictEqual(
+        await service.retrieveNorthServerIdentity(
+          historyQuery.id,
+          testData.north.command.type,
+          undefined,
+          testData.north.command.settings,
+          'fp'
+        ),
+        presented
+      );
+      assert.strictEqual(
+        await service.retrieveSouthServerIdentity(
+          historyQuery.id,
+          testData.south.command.type,
+          undefined,
+          testData.south.command.settings,
+          'fp'
+        ),
+        presented
+      );
+
+      assert.deepStrictEqual(northService.retrieveServerIdentity.mock.calls[0].arguments, [
+        'history',
+        testData.north.command.type,
+        testData.north.command.settings,
+        'fp',
+        historyQuery.northServerTrust
+      ]);
+      assert.deepStrictEqual(southService.retrieveServerIdentity.mock.calls[0].arguments, [
+        'history',
+        testData.south.command.type,
+        testData.south.command.settings,
+        'fp',
+        historyQuery.southServerTrust
+      ]);
+    });
+
     it('should forward the fingerprint trusted in the form when testing the connections, an item and exploring', async () => {
       await service.testNorth('create', testData.north.command.type, undefined, testData.north.command.settings, identity.fingerprint);
       await service.testSouth('create', testData.south.command.type, undefined, testData.south.command.settings, identity.fingerprint);

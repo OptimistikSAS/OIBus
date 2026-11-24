@@ -48,6 +48,7 @@ import {
   OIBusConnectionTestResult
 } from '../../../shared/model/domain/engine.model';
 import { HistoryQueryItemSearchParam } from '../../../shared/model/domain/history-query.model';
+import { PresentedServerIdentity } from '../../../shared/model/domain/server-identity.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { HistoryTransformerWithOptions } from '../../model/transformer.model';
@@ -266,6 +267,52 @@ export class HistoryQueryController extends Controller {
       await historyQueryService.trustServerIdentity(historyId, side, command.fingerprint, request.user.id);
     } catch (error: unknown) {
       throw error instanceof OIBusValidationError ? error : new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Retrieves the identity the server of the North side of a history query presents with these settings, and how it
+   * compares with the identity trusted, without connecting further (no credential is sent). Null when it is not checked
+   * @summary Retrieve the identity of the North server
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the history query, not saved yet
+   */
+  @Post('/{historyId}/test/north/server-identity')
+  async retrieveNorthServerIdentity(
+    @Path() historyId: string,
+    @Query() northType: OIBusNorthType,
+    @Query() fromNorth: string | undefined,
+    @Body() command: NorthSettings,
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
+  ): Promise<PresentedServerIdentity | null> {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    try {
+      return await historyQueryService.retrieveNorthServerIdentity(historyId, northType, fromNorth, command, trustedFingerprint ?? null);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Retrieves the identity the server of the South side of a history query presents with these settings, and how it
+   * compares with the identity trusted, without connecting further (no credential is sent). Null when it is not checked
+   * @summary Retrieve the identity of the South server
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the history query, not saved yet
+   */
+  @Post('/{historyId}/test/south/server-identity')
+  async retrieveSouthServerIdentity(
+    @Path() historyId: string,
+    @Query() southType: OIBusSouthType,
+    @Query() fromSouth: string | undefined,
+    @Body() command: SouthSettings,
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
+  ): Promise<PresentedServerIdentity | null> {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    try {
+      return await historyQueryService.retrieveSouthServerIdentity(historyId, southType, fromSouth, command, trustedFingerprint ?? null);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
     }
   }
 
