@@ -145,7 +145,11 @@ export default class EncryptionService<TInitialized extends boolean = false> {
           {
             type: 2, // 2 = DNS
             value: os.hostname()
-          }
+          },
+          // So that the web server can be reached locally with a certificate trusted by the browser
+          { type: 2, value: 'localhost' },
+          { type: 7, ip: '127.0.0.1' }, // 7 = IP address
+          { type: 7, ip: '::1' }
         ]
       }
     ]);

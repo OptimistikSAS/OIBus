@@ -329,7 +329,10 @@ describe('Encryption Service', () => {
     assert.strictEqual(certificate.subject, 'CN=Test CN\nC=FR\nST=Savoie\nL=Chambery\nO=Test Org');
     assert.strictEqual(certificate.issuer, certificate.subject);
     assert.strictEqual(certificate.ca, false);
-    assert.strictEqual(certificate.subjectAltName, `URI:urn:${os.hostname()}:OIBus, DNS:${os.hostname()}`);
+    assert.strictEqual(
+      certificate.subjectAltName,
+      `URI:urn:${os.hostname()}:OIBus, DNS:${os.hostname()}, DNS:localhost, IP Address:127.0.0.1, IP Address:0:0:0:0:0:0:0:1`
+    );
     assert.deepStrictEqual(certificate.keyUsage, ['1.3.6.1.5.5.7.3.1', '1.3.6.1.5.5.7.3.2']);
     const now = DateTime.fromISO(testData.constants.dates.FAKE_NOW).set({ millisecond: 0 });
     assert.strictEqual(certificate.validFromDate.toISOString(), now.toUTC().toISO());
