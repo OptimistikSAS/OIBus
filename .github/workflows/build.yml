@@ -401,6 +401,8 @@ jobs:
 
       - name: Build documentation
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd documentation
           npm ci
