@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.9](https://github.com/OptimistikSAS/OIBus/compare/v3.9.8...v3.9.9) (2026-11-24)
+
+
+### Bug Fixes
+
+* **doc:** authenticate the oibus agent release lookup in the documentation build ([ba4bdf4](https://github.com/OptimistikSAS/OIBus/commit/ba4bdf47bc0841ed917d983f32a7802e16700050))
+
 ## [3.9.8](https://github.com/OptimistikSAS/OIBus/compare/v3.9.7...v3.9.8) (2026-11-23)
 
 
