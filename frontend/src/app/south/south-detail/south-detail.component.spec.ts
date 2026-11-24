@@ -77,7 +77,8 @@ const southConnector: SouthConnectorFolderScannerDTO = { ...baseSouth, groups: [
 class SouthDetailComponentTester {
   readonly fixture = TestBed.createComponent(SouthDetailComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly title = this.root.getByCss('#title');
+  // the metrics panel has a title of the same id
+  readonly title = this.root.getByRole('heading', { level: 1 });
   readonly editButton = this.root.getByRole('button', { name: 'Edit south connector' });
   readonly auditButton = this.root.getByRole('button', { name: 'View south connector audit history' });
   readonly stopButton = this.root.getByRole('button', { name: 'Stop south connector' });
