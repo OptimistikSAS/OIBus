@@ -403,6 +403,33 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     assert.deepStrictEqual(importedHistoryQuery.northServerTrust, { identity: exportedIdentity, trustOnFirstUse: false });
   });
 
+  it('imports a connector exported without server trust with the trust of a migrated connector', async () => {
+    const envelope = cloneEnvelope();
+    const opcua = envelope.config.southConnectors.find(south => south.type === 'opcua');
+    assert.ok(opcua, 'expected the fixture to seed an opcua south connector');
+    delete (opcua.settings as { serverTrust?: unknown }).serverTrust;
+    const [north] = envelope.config.northConnectors;
+    delete (north.settings as { serverTrust?: unknown }).serverTrust;
+    const [historyQuery] = envelope.config.historyQueries;
+    delete (historyQuery.settings as { southServerTrust?: unknown }).southServerTrust;
+    delete (historyQuery.settings as { northServerTrust?: unknown }).northServerTrust;
+
+    await service.importConfiguration(envelope, importerId());
+
+    // an OPC UA connector securing its connection trusts the identity of its first connection, as after an upgrade
+    assert.deepStrictEqual(southConnectorRepository.findSouthById(opcua.oIBusInternalId)!.serverTrust, {
+      identity: null,
+      trustOnFirstUse: (opcua.settings.settings as { securityMode: string }).securityMode !== 'none'
+    });
+    assert.deepStrictEqual(northConnectorRepository.findNorthById(north.oIBusInternalId)!.serverTrust, {
+      identity: null,
+      trustOnFirstUse: north.type === 'sftp'
+    });
+    const importedHistoryQuery = historyQueryRepository.findHistoryById(historyQuery.oIBusInternalId)!;
+    assert.strictEqual(importedHistoryQuery.southServerTrust.identity, null);
+    assert.strictEqual(importedHistoryQuery.northServerTrust.identity, null);
+  });
+
   it('imports the https settings disabled, and redirects to http when the local web server served https', async () => {
     const local = engineRepository.get()!;
     engineRepository.updateWebServer(

@@ -321,6 +321,7 @@ export class HistoryQueryController extends Controller {
    * identity the server presents, and the connection is only tested further when it is trusted
    * @summary Test north connection
    * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the history query, not saved yet
+   * @param withServerIdentity Whether to return the identity of a server not trusted, for the user to review it, instead of failing
    */
   @Post('/{historyId}/test/north')
   async testNorth(
@@ -329,11 +330,19 @@ export class HistoryQueryController extends Controller {
     @Query() fromNorth: string | undefined,
     @Body() command: NorthSettings,
     @Request() request: CustomExpressRequest,
-    @Query() trustedFingerprint?: string
+    @Query() trustedFingerprint?: string,
+    @Query() withServerIdentity?: boolean
   ): Promise<OIBusConnectionTestResult> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
-      return await historyQueryService.testNorth(historyId, northType, fromNorth, command, trustedFingerprint ?? null);
+      return await historyQueryService.testNorth(
+        historyId,
+        northType,
+        fromNorth,
+        command,
+        trustedFingerprint ?? null,
+        withServerIdentity ?? false
+      );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
@@ -344,6 +353,7 @@ export class HistoryQueryController extends Controller {
    * identity the server presents, and the connection is only tested further when it is trusted
    * @summary Test south connection
    * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the history query, not saved yet
+   * @param withServerIdentity Whether to return the identity of a server not trusted, for the user to review it, instead of failing
    */
   @Post('/{historyId}/test/south')
   async testSouth(
@@ -352,11 +362,19 @@ export class HistoryQueryController extends Controller {
     @Query() fromSouth: string | undefined,
     @Body() command: SouthSettings,
     @Request() request: CustomExpressRequest,
-    @Query() trustedFingerprint?: string
+    @Query() trustedFingerprint?: string,
+    @Query() withServerIdentity?: boolean
   ): Promise<OIBusConnectionTestResult> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
-      return await historyQueryService.testSouth(historyId, southType, fromSouth, command, trustedFingerprint ?? null);
+      return await historyQueryService.testSouth(
+        historyId,
+        southType,
+        fromSouth,
+        command,
+        trustedFingerprint ?? null,
+        withServerIdentity ?? false
+      );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

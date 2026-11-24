@@ -551,6 +551,23 @@ describe('HistoryQueryRepository', () => {
     assert.deepStrictEqual(updated.northServerTrust, trustedSshHostKey);
   });
 
+  it('should not count the identity trusted at the first connection as an edition of the history query', () => {
+    const history: HistoryQuery = {
+      ...newHistory('history trusting its first server'),
+      southServerTrust: { identity: null, trustOnFirstUse: true },
+      northServerTrust: { identity: null, trustOnFirstUse: false }
+    };
+    repository.saveHistory(history, true);
+    const before = repository.findHistoryById(history.id)!;
+
+    repository.updateServerTrust(history.id, 'south', trustedSshHostKey, 'system');
+
+    const updated = repository.findHistoryById(history.id)!;
+    assert.deepStrictEqual(updated.southServerTrust, trustedSshHostKey);
+    assert.strictEqual(updated.updatedBy, before.updatedBy);
+    assert.strictEqual(updated.updatedAt, before.updatedAt);
+  });
+
   for (const side of ['south', 'north'] as const) {
     it(`should update the server trust of the ${side} side of a history query and audit it`, () => {
       const history: HistoryQuery = {

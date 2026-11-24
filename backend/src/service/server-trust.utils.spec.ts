@@ -115,6 +115,17 @@ describe('Server trust utils', () => {
       });
     });
 
+    it('should compare the fingerprints of certificates whatever their case and separators', async () => {
+      const retrieve = mock.fn(async () => other);
+
+      assert.strictEqual(await resolveTestedServerTrust(saved, 'ab:cd', retrieve), saved);
+      assert.deepStrictEqual(await resolveTestedServerTrust(saved, 'ef01', retrieve), {
+        identity: { ...other, trustedBy: '', trustedAt: '' },
+        trustOnFirstUse: false
+      });
+      assert.strictEqual(await retrieveServerIdentityToTrust({ retrieveServerIdentity: async () => other }, 'ef-01'), other);
+    });
+
     it('should give the saved trust when the server does not present the fingerprint trusted in the form', async () => {
       assert.strictEqual(await resolveTestedServerTrust(saved, 'other', async () => other), saved);
       assert.strictEqual(await resolveTestedServerTrust(saved, 'other', async () => null), saved);
@@ -137,25 +148,43 @@ describe('Server trust utils', () => {
     it('should test the connection of a connector which does not check its server', async () => {
       connector.retrieveServerIdentity.mock.mockImplementation(async () => null);
 
-      assert.deepStrictEqual(await testConnectionWithServerIdentity(connector, null), { items: [{ key: 'State', value: 'Running' }] });
+      assert.deepStrictEqual(await testConnectionWithServerIdentity(connector, null, false), {
+        items: [{ key: 'State', value: 'Running' }]
+      });
     });
 
     it('should test the connection to a trusted server, with its identity', async () => {
-      assert.deepStrictEqual(await testConnectionWithServerIdentity(connector, trusted), {
+      assert.deepStrictEqual(await testConnectionWithServerIdentity(connector, trusted, false), {
         items: [{ key: 'State', value: 'Running' }],
         serverIdentity: { identity, status: 'trusted' }
       });
     });
 
     it('should not test further the connection to a server not trusted', async () => {
-      assert.deepStrictEqual(await testConnectionWithServerIdentity(connector, null), {
+      assert.deepStrictEqual(await testConnectionWithServerIdentity(connector, null, true), {
         items: [],
         serverIdentity: { identity, status: 'unknown' }
       });
-      assert.deepStrictEqual(await testConnectionWithServerIdentity(connector, { ...trusted, fingerprint: 'EF:01' }), {
+      assert.deepStrictEqual(await testConnectionWithServerIdentity(connector, { ...trusted, fingerprint: 'EF:01' }, true), {
         items: [],
         serverIdentity: { identity, status: 'changed' }
       });
+      assert.strictEqual(connector.testConnection.mock.callCount(), 0);
+    });
+
+    it('should fail the test of a server not trusted for a caller which does not show its identity', async () => {
+      await assert.rejects(
+        testConnectionWithServerIdentity(connector, null, false),
+        new Error(
+          'The server presents the certificate AB:CD, which is not trusted: the connection was not tested further. Review its identity and trust it to connect'
+        )
+      );
+      await assert.rejects(
+        testConnectionWithServerIdentity(connector, { ...trusted, fingerprint: 'EF:01' }, false),
+        new Error(
+          'The server presents the certificate AB:CD, which is not the trusted one: the connection was not tested further. Review its identity and trust it to connect'
+        )
+      );
       assert.strictEqual(connector.testConnection.mock.callCount(), 0);
     });
   });

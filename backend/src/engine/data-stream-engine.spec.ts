@@ -622,6 +622,21 @@ describe('DataStreamEngine', () => {
     });
   });
 
+  describe('saving the identity trusted on first use', () => {
+    it('should log an error instead of throwing it into the connection when the identity cannot be saved', async () => {
+      await engine.start([], southList, []);
+      southConnectorRepository.updateServerTrust.mock.mockImplementation(() => {
+        throw new Error('database is locked');
+      });
+      engine.startSouth(testData.south.list[0].id);
+
+      assert.doesNotThrow(() => mockedSouth1.serverIdentityVerifier.events.emit('trusted-on-first-use', trustedOnFirstUse));
+
+      assert.ok(loggedError('at its first connection: database is locked'));
+      assert.strictEqual(oianalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
+    });
+  });
+
   describe('History Query Management', () => {
     beforeEach(async () => {
       await engine.start([], [], historyList);

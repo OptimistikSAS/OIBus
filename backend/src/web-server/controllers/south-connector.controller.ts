@@ -327,6 +327,7 @@ export class SouthConnectorController extends Controller {
    * identity the server presents, and the connection is only tested further when it is trusted
    * @summary Test south connection
    * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
+   * @param withServerIdentity Whether to return the identity of a server not trusted, for the user to review it, instead of failing
    */
   @Post('/{southId}/test/connection')
   async testConnection(
@@ -334,11 +335,12 @@ export class SouthConnectorController extends Controller {
     @Query() southType: OIBusSouthType,
     @Body() command: SouthSettings,
     @Request() request: CustomExpressRequest,
-    @Query() trustedFingerprint?: string
+    @Query() trustedFingerprint?: string,
+    @Query() withServerIdentity?: boolean
   ): Promise<OIBusConnectionTestResult> {
     const southService = request.services.southService as SouthService;
     try {
-      return await southService.testSouth(southId, southType, command, trustedFingerprint ?? null);
+      return await southService.testSouth(southId, southType, command, trustedFingerprint ?? null, null, withServerIdentity ?? false);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

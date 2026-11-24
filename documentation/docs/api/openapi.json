@@ -50817,7 +50817,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.9.7",
+		"version": "4.0.0",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
@@ -51987,6 +51987,15 @@
 						"required": false,
 						"schema": {
 							"type": "string"
+						}
+					},
+					{
+						"description": "Whether to return the identity of a server not trusted, for the user to review it, instead of failing",
+						"in": "query",
+						"name": "withServerIdentity",
+						"required": false,
+						"schema": {
+							"type": "boolean"
 						}
 					}
 				],
@@ -54305,6 +54314,15 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"description": "Whether to return the identity of a server not trusted, for the user to review it, instead of failing",
+						"in": "query",
+						"name": "withServerIdentity",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
 					}
 				],
 				"requestBody": {
@@ -55586,6 +55604,15 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"description": "Whether to return the identity of a server not trusted, for the user to review it, instead of failing",
+						"in": "query",
+						"name": "withServerIdentity",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
 					}
 				],
 				"requestBody": {
@@ -55653,6 +55680,15 @@
 						"required": false,
 						"schema": {
 							"type": "string"
+						}
+					},
+					{
+						"description": "Whether to return the identity of a server not trusted, for the user to review it, instead of failing",
+						"in": "query",
+						"name": "withServerIdentity",
+						"required": false,
+						"schema": {
+							"type": "boolean"
 						}
 					}
 				],

@@ -421,7 +421,8 @@ describe('History Query service', () => {
       testData.north.command.type,
       testData.north.command.settings,
       null,
-      { identity: null, trustOnFirstUse: false }
+      { identity: null, trustOnFirstUse: false },
+      false
     ]);
   });
 
@@ -433,7 +434,8 @@ describe('History Query service', () => {
       testData.north.command.type,
       testData.north.command.settings,
       null,
-      testData.north.list[0].serverTrust
+      testData.north.list[0].serverTrust,
+      false
     ]);
   });
 
@@ -445,7 +447,8 @@ describe('History Query service', () => {
       testData.north.command.type,
       testData.north.command.settings,
       null,
-      testData.historyQueries.list[0].northServerTrust
+      testData.historyQueries.list[0].northServerTrust,
+      false
     ]);
   });
 
@@ -457,7 +460,8 @@ describe('History Query service', () => {
       testData.south.command.type,
       testData.south.command.settings,
       null,
-      { identity: null, trustOnFirstUse: false }
+      { identity: null, trustOnFirstUse: false },
+      false
     ]);
   });
 
@@ -469,7 +473,8 @@ describe('History Query service', () => {
       testData.south.command.type,
       testData.south.command.settings,
       null,
-      testData.south.list[0].serverTrust
+      testData.south.list[0].serverTrust,
+      false
     ]);
   });
 
@@ -481,7 +486,8 @@ describe('History Query service', () => {
       testData.south.command.type,
       testData.south.command.settings,
       null,
-      testData.historyQueries.list[0].southServerTrust
+      testData.historyQueries.list[0].southServerTrust,
+      false
     ]);
   });
 

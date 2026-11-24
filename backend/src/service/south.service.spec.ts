@@ -1201,8 +1201,37 @@ describe('South Service', () => {
       assert.strictEqual(southConnectorRepository.updateServerTrust.mock.calls.length, 0);
     });
 
+    it('should fail the test of a server not trusted for a caller which does not show its identity', async () => {
+      await assert.rejects(
+        service.testSouth('create', testData.south.command.type, testData.south.command.settings),
+        new Error(
+          `The server presents the host key ${identity.fingerprint}, which is not trusted: the connection was not tested further. Review its identity and trust it to connect`
+        )
+      );
+      assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 0);
+    });
+
+    it('should not trust the identity of the first connection in a throwaway connector', async () => {
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => ({
+        ...testData.south.list[0],
+        serverTrust: { identity: null, trustOnFirstUse: true }
+      }));
+
+      const result = await service.testSouth(
+        testData.south.list[0].id,
+        testData.south.command.type,
+        testData.south.command.settings,
+        null,
+        null,
+        true
+      );
+
+      assert.deepStrictEqual(buildSouth.mock.calls[0].arguments[0].serverTrust, { identity: null, trustOnFirstUse: false });
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'unknown' } });
+    });
+
     it('should return the identity of a server not trusted without testing the connection', async () => {
-      const result = await service.testSouth('create', testData.south.command.type, testData.south.command.settings);
+      const result = await service.testSouth('create', testData.south.command.type, testData.south.command.settings, null, null, true);
 
       assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'unknown' } });
       assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 0);
@@ -1214,7 +1243,14 @@ describe('South Service', () => {
         serverTrust: trustOf(otherIdentity)
       }));
 
-      const result = await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings);
+      const result = await service.testSouth(
+        testData.south.list[0].id,
+        testData.south.command.type,
+        testData.south.command.settings,
+        null,
+        null,
+        true
+      );
 
       assert.deepStrictEqual(buildSouth.mock.calls[0].arguments[0].serverTrust, trustOf(otherIdentity));
       assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'changed' } });
@@ -1296,7 +1332,9 @@ describe('South Service', () => {
         'create',
         testData.south.command.type,
         testData.south.command.settings,
-        otherIdentity.fingerprint
+        otherIdentity.fingerprint,
+        null,
+        true
       );
 
       assert.deepStrictEqual(mockedSouth1.connectorConfiguration.serverTrust, { identity: null, trustOnFirstUse: false });
@@ -1312,7 +1350,9 @@ describe('South Service', () => {
         testData.south.list[0].id,
         testData.south.command.type,
         testData.south.list[0].settings,
-        otherIdentity.fingerprint
+        otherIdentity.fingerprint,
+        null,
+        true
       );
 
       assert.strictEqual(buildSouth.mock.calls.length, 1);

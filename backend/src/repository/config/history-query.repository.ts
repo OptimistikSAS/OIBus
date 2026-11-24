@@ -385,11 +385,16 @@ export default class HistoryQueryRepository {
     }
     const column = side === 'south' ? 'south_server_trust' : 'north_server_trust';
     const transaction = this.database.transaction(() => {
-      this.database
-        .prepare(
-          `UPDATE ${HISTORY_QUERIES_TABLE} SET ${column} = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
-        )
-        .run(JSON.stringify(serverTrust), updatedBy, id);
+      if (updatedBy === 'system') {
+        // Trusted by the history query at its first connection: not an edition of the history query
+        this.database.prepare(`UPDATE ${HISTORY_QUERIES_TABLE} SET ${column} = ? WHERE id = ?;`).run(JSON.stringify(serverTrust), id);
+      } else {
+        this.database
+          .prepare(
+            `UPDATE ${HISTORY_QUERIES_TABLE} SET ${column} = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+          )
+          .run(JSON.stringify(serverTrust), updatedBy, id);
+      }
       this.auditService.record(
         'history_query',
         id,

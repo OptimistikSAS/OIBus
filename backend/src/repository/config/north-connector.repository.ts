@@ -227,11 +227,16 @@ export default class NorthConnectorRepository {
       throw new NotFoundError(`North connector "${id}" not found`);
     }
     const transaction = this.database.transaction(() => {
-      this.database
-        .prepare(
-          `UPDATE ${NORTH_CONNECTORS_TABLE} SET server_trust = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
-        )
-        .run(JSON.stringify(serverTrust), updatedBy, id);
+      if (updatedBy === 'system') {
+        // Trusted by the connector at its first connection: not an edition of the connector
+        this.database.prepare(`UPDATE ${NORTH_CONNECTORS_TABLE} SET server_trust = ? WHERE id = ?;`).run(JSON.stringify(serverTrust), id);
+      } else {
+        this.database
+          .prepare(
+            `UPDATE ${NORTH_CONNECTORS_TABLE} SET server_trust = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+          )
+          .run(JSON.stringify(serverTrust), updatedBy, id);
+      }
       this.auditService.record(
         'north_connector',
         id,

@@ -363,10 +363,12 @@ export default class DataStreamEngine {
     const north = this.getNorth(northId).north;
     north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
     north.serverIdentityVerifier.events.removeAllListeners();
-    north.serverIdentityVerifier.events.on('trusted-on-first-use', identity => {
-      this.northConnectorRepository.updateServerTrust(northId, { identity, trustOnFirstUse: false }, 'system');
-      this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
-    });
+    north.serverIdentityVerifier.events.on('trusted-on-first-use', identity =>
+      this.saveServerTrust(`North connector "${north.connectorConfiguration.name}"`, () => {
+        this.northConnectorRepository.updateServerTrust(northId, { identity, trustOnFirstUse: false }, 'system');
+        this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
+      })
+    );
     north // Do not await here, so it can start all connectors without blocking the thread
       .start()
       .catch(error => {
@@ -421,6 +423,21 @@ export default class DataStreamEngine {
     this.northConnectors.delete(northEntity.id);
   }
 
+  /**
+   * Saves the identity a connector trusted at its first connection. Called while it checks the identity of its server, from
+   * the protocol library (an SSH host key verifier, an OPC UA certificate check): an error is logged, never thrown there.
+   * The connector trusts the identity until it restarts, when it trusts the identity of its first connection again.
+   */
+  private saveServerTrust(owner: string, save: () => void): void {
+    try {
+      save();
+    } catch (error: unknown) {
+      this._logger.error(
+        `Could not save the identity of the server trusted by ${owner} at its first connection: ${(error as Error).message}`
+      );
+    }
+  }
+
   async createSouth(southId: string): Promise<SouthConnector<SouthSettings, SouthItemSettings>> {
     const configuration = this.southConnectorRepository.findSouthById(southId)!;
     const south = buildSouth(
@@ -447,10 +464,12 @@ export default class DataStreamEngine {
     south.connectorConfiguration = this.southConnectorRepository.findSouthById(southId)!;
     south.connectedEvent.removeAllListeners();
     south.serverIdentityVerifier.events.removeAllListeners();
-    south.serverIdentityVerifier.events.on('trusted-on-first-use', identity => {
-      this.southConnectorRepository.updateServerTrust(southId, { identity, trustOnFirstUse: false }, 'system');
-      this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
-    });
+    south.serverIdentityVerifier.events.on('trusted-on-first-use', identity =>
+      this.saveServerTrust(`South connector "${south.connectorConfiguration.name}"`, () => {
+        this.southConnectorRepository.updateServerTrust(southId, { identity, trustOnFirstUse: false }, 'system');
+        this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
+      })
+    );
     south.connectedEvent.on('connected', async () => {
       if (south.hasSubscription()) {
         await south.updateSubscriptions();
@@ -566,10 +585,12 @@ export default class DataStreamEngine {
     for (const side of ['south', 'north'] as const) {
       const verifier = historyQuery.getServerIdentityVerifier(side);
       verifier.events.removeAllListeners();
-      verifier.events.on('trusted-on-first-use', identity => {
-        this.historyQueryRepository.updateServerTrust(historyId, side, { identity, trustOnFirstUse: false }, 'system');
-        this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
-      });
+      verifier.events.on('trusted-on-first-use', identity =>
+        this.saveServerTrust(`History query "${historyQuery.historyQueryConfiguration.name}"`, () => {
+          this.historyQueryRepository.updateServerTrust(historyId, side, { identity, trustOnFirstUse: false }, 'system');
+          this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+        })
+      );
     }
     historyQuery.finishEvent.removeAllListeners();
     historyQuery.finishEvent.on('finished', () => {

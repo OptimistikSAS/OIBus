@@ -244,7 +244,9 @@ export default class NorthService {
     northType: OIBusNorthType,
     settingsToTest: NorthSettings,
     trustedFingerprint: string | null = null,
-    historyServerTrust: ServerTrust | null = null
+    historyServerTrust: ServerTrust | null = null,
+    // Whether the caller shows the identity of a server not trusted (otherwise, the test fails)
+    withServerIdentity = false
   ): Promise<OIBusConnectionTestResult> {
     const { north, serverTrust } = await this.buildEphemeralNorth(
       northId,
@@ -253,7 +255,7 @@ export default class NorthService {
       trustedFingerprint,
       historyServerTrust
     );
-    return await testConnectionWithServerIdentity(north, serverTrust.identity);
+    return await testConnectionWithServerIdentity(north, serverTrust.identity, withServerIdentity);
   }
 
   /**
@@ -306,7 +308,9 @@ export default class NorthService {
       description: '',
       enabled: false,
       settings: encryptionService.encryptConnectorSecrets(settingsToTest, northConnector?.settings || null, manifest.settings),
-      serverTrust: savedServerTrust,
+      // A connector of a former version trusts the identity of its first connection, not a throwaway one: the identity is
+      // reviewed first (see testConnectionWithServerIdentity)
+      serverTrust: { ...savedServerTrust, trustOnFirstUse: false },
       name: `${northType}:test-connection`,
       transformers: [],
       caching: {

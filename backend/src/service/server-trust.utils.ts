@@ -12,7 +12,13 @@ import {
 } from '../../shared/model/domain/server-identity.model';
 
 import { OIBusValidationError } from '../model/types';
-import { describeServerIdentity, getServerIdentityTrustStatus, NO_SERVER_TRUST, toTrustedServerIdentity } from './utils-server-identity';
+import {
+  describeServerIdentity,
+  getServerIdentityTrustStatus,
+  NO_SERVER_TRUST,
+  sameFingerprint,
+  toTrustedServerIdentity
+} from './utils-server-identity';
 
 /**
  * The trust of a connector saved from a command: an identity other than the one already trusted is trusted by the user
@@ -59,11 +65,11 @@ export const resolveTestedServerTrust = async (
   trustedFingerprint: string | null,
   retrieveServerIdentity: () => Promise<ServerIdentity | null>
 ): Promise<ServerTrust> => {
-  if (!trustedFingerprint || trustedFingerprint === saved.identity?.fingerprint) {
+  if (!trustedFingerprint || sameFingerprint(trustedFingerprint, saved.identity?.fingerprint)) {
     return saved;
   }
   const presented = await retrieveServerIdentity();
-  if (presented?.fingerprint === trustedFingerprint) {
+  if (presented && sameFingerprint(presented.fingerprint, trustedFingerprint)) {
     return { identity: toTrustedServerIdentity(presented, '', ''), trustOnFirstUse: false };
   }
   return saved;
@@ -71,15 +77,18 @@ export const resolveTestedServerTrust = async (
 
 /**
  * Test the connection to a server, after comparing the identity it presents with the trusted one: when it is not trusted,
- * the connection is not tested further, so that no credential is sent to a server the user has not trusted yet. The result
- * carries the identity presented, for the user to review and trust it.
+ * the connection is not tested further, so that no credential is sent to a server the user has not trusted yet. With
+ * `withServerIdentity` (a client which shows the identity for the user to review and trust it), the result then carries the
+ * identity presented; otherwise the test fails, so that a client which does not know about it does not take it for a
+ * success.
  */
 export const testConnectionWithServerIdentity = async (
   connector: {
     retrieveServerIdentity(): Promise<ServerIdentity | null>;
     testConnection(): Promise<OIBusConnectionTestResult>;
   },
-  trusted: TrustedServerIdentity | null
+  trusted: TrustedServerIdentity | null,
+  withServerIdentity: boolean
 ): Promise<OIBusConnectionTestResult> => {
   const presented = await connector.retrieveServerIdentity();
   if (!presented) {
@@ -87,6 +96,11 @@ export const testConnectionWithServerIdentity = async (
   }
   const status = getServerIdentityTrustStatus(presented, trusted);
   if (status !== 'trusted') {
+    if (!withServerIdentity) {
+      throw new Error(
+        `The server presents the ${describeServerIdentity(presented)}, which is ${status === 'changed' ? 'not the trusted one' : 'not trusted'}: the connection was not tested further. Review its identity and trust it to connect`
+      );
+    }
     return { items: [], serverIdentity: { identity: presented, status } };
   }
   return { ...(await connector.testConnection()), serverIdentity: { identity: presented, status } };
@@ -117,7 +131,7 @@ export const retrieveServerIdentityToTrust = async (
   if (!presented) {
     throw new OIBusValidationError('The connector does not check the identity of its server with its current settings');
   }
-  if (presented.fingerprint !== fingerprint) {
+  if (!sameFingerprint(presented.fingerprint, fingerprint)) {
     throw new OIBusValidationError(
       `The server presents the ${describeServerIdentity(presented)}, not the one to trust (${fingerprint}): test the connection again`
     );

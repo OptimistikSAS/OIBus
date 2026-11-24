@@ -209,6 +209,16 @@ export class ServerIdentityCertificateStore implements ICertificateStore {
   }
 }
 
+/** Whether two OPC UA URLs designate the same host and port, whatever their path and the case of the host */
+const sameEndpointAddress = (endpointUrl: string | null | undefined, url: string): boolean => {
+  const toAddress = (value: string) => {
+    const match = /^opc\.tcp:\/\/([^/:]+|\[[^\]]+\])(?::(\d+))?/i.exec(value.trim());
+    return match ? `${match[1].toLowerCase()}:${match[2] ?? '4840'}` : null;
+  };
+  const address = endpointUrl ? toAddress(endpointUrl) : null;
+  return address !== null && address === toAddress(url);
+};
+
 /** The short name of an OPC UA security policy URI (`http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256`). */
 const toSecurityPolicyName = (securityPolicyUri: string | null | undefined): string => {
   const uri = securityPolicyUri ?? '';
@@ -246,12 +256,15 @@ export const retrieveOPCUAServerIdentity = async (settings: SouthOPCUASettings |
     );
     const securityMode = toOPCUASecurityMode(settings.securityMode) as MessageSecurityMode;
     const securityPolicy = toOPCUASecurityPolicy(settings.securityPolicy)?.toLowerCase();
-    const endpoint = endpoints.find(
+    const candidates = endpoints.filter(
       e =>
         e.securityMode === securityMode &&
         (!securityPolicy || toSecurityPolicyName(e.securityPolicyUri).toLowerCase() === securityPolicy) &&
         e.serverCertificate?.length
     );
+    // The endpoint of the URL connected to, as node-opcua checks the certificate of: a server may advertise several URLs
+    // (one per host name or network interface), each with its own certificate
+    const endpoint = candidates.find(e => sameEndpointAddress(e.endpointUrl, settings.url)) ?? candidates[0];
     if (!endpoint) {
       throw new Error(
         `The server has no endpoint with the security mode "${settings.securityMode}" and the security policy "${settings.securityPolicy}"`

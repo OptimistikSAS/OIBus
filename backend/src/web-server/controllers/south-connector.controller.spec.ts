@@ -243,7 +243,7 @@ describe('SouthConnectorController', () => {
     await controller.testConnection(southId, southType, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(southService.testSouth.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings, null]);
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings, null, null, false]);
   });
 
   it('should wrap errors when testing south connection', async () => {
@@ -262,7 +262,7 @@ describe('SouthConnectorController', () => {
       assert.strictEqual((error as OIBusTestingError).message, 'South connection failure');
     }
     assert.strictEqual(southService.testSouth.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings, null]);
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings, null, null, false]);
   });
 
   describe('with the identity of the server', () => {
@@ -385,7 +385,7 @@ describe('SouthConnectorController', () => {
         testingSettings: testData.south.itemTestingSettings
       };
 
-      await controller.testConnection(southId, southType, settings, mockRequest as CustomExpressRequest, identity.fingerprint);
+      await controller.testConnection(southId, southType, settings, mockRequest as CustomExpressRequest, identity.fingerprint, true);
       await controller.testItem(
         southId,
         southType,
@@ -403,7 +403,14 @@ describe('SouthConnectorController', () => {
       );
       await controller.startExplore(southId, southType, settings, mockRequest as CustomExpressRequest, identity.fingerprint);
 
-      assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings, identity.fingerprint]);
+      assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
+        southId,
+        southType,
+        settings,
+        identity.fingerprint,
+        null,
+        true
+      ]);
       assert.deepStrictEqual(southService.testItem.mock.calls[0].arguments, [
         southId,
         southType,

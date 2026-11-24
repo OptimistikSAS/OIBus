@@ -528,6 +528,19 @@ describe('SouthConnectorRepository', () => {
     assert.deepStrictEqual(next!.serverTrust, trustedSshHostKey);
   });
 
+  it('should not count the identity trusted at the first connection as an edition of the south connector', () => {
+    const south = newSouth('south trusting its first server', { serverTrust: { identity: null, trustOnFirstUse: true }, groups: [] });
+    repository.saveSouth(south, true);
+    const before = repository.findSouthById(south.id)!;
+
+    repository.updateServerTrust(south.id, trustedSshHostKey, 'system');
+
+    const updated = repository.findSouthById(south.id)!;
+    assert.deepStrictEqual(updated.serverTrust, trustedSshHostKey);
+    assert.strictEqual(updated.updatedBy, before.updatedBy);
+    assert.strictEqual(updated.updatedAt, before.updatedAt);
+  });
+
   it('should not update the server trust of an unknown south connector', () => {
     assert.throws(() => repository.updateServerTrust('unknown-south', trustedSshHostKey, 'trustUser'), NotFoundError);
     assert.strictEqual(recorded().length, 0);

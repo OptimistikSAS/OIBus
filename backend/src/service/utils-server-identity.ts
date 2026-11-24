@@ -73,6 +73,21 @@ export const toSshHostKeyServerIdentity = (hostKey: Buffer): ServerIdentity => {
 };
 
 /**
+ * Whether two fingerprints are the same, in the format of their type: an SSH fingerprint (`SHA256:` then base64, which is
+ * case-sensitive) exactly, a certificate fingerprint (hexadecimal) whatever its case and separators.
+ */
+export const sameFingerprint = (a: string | null | undefined, b: string | null | undefined): boolean => {
+  if (!a || !b) {
+    return false;
+  }
+  if (a.startsWith('SHA256:') || b.startsWith('SHA256:')) {
+    return a === b;
+  }
+  const toHex = (fingerprint: string) => fingerprint.replace(/[^0-9a-f]/gi, '').toUpperCase();
+  return toHex(a) === toHex(b);
+};
+
+/**
  * How an identity presented by a server compares with the trusted one: only the type and the fingerprint are compared,
  * the details being what the server says about itself.
  */
@@ -80,7 +95,7 @@ export const getServerIdentityTrustStatus = (presented: ServerIdentity, trusted:
   if (!trusted) {
     return 'unknown';
   }
-  return trusted.type === presented.type && trusted.fingerprint === presented.fingerprint ? 'trusted' : 'changed';
+  return trusted.type === presented.type && sameFingerprint(trusted.fingerprint, presented.fingerprint) ? 'trusted' : 'changed';
 };
 
 /** The identity, trusted by a user (or `system`) at a given time. */

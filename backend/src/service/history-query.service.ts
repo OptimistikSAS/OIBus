@@ -285,10 +285,12 @@ export default class HistoryQueryService {
     northType: OIBusNorthType,
     retrieveSecretsFromNorth: string | undefined,
     settingsToTest: NorthSettings,
-    trustedFingerprint: string | null = null
+    trustedFingerprint: string | null = null,
+    // Whether the caller shows the identity of a server not trusted (otherwise, the test fails)
+    withServerIdentity = false
   ): Promise<OIBusConnectionTestResult> {
     const { settings, serverTrust } = await this.northToTest(historyId, northType, retrieveSecretsFromNorth, settingsToTest);
-    return await this.northService.testNorth('history', northType, settings, trustedFingerprint, serverTrust);
+    return await this.northService.testNorth('history', northType, settings, trustedFingerprint, serverTrust, withServerIdentity);
   }
 
   /** The identity the server of the North side presents with these settings, see `NorthService.retrieveServerIdentity`. */
@@ -340,14 +342,17 @@ export default class HistoryQueryService {
     southType: OIBusSouthType,
     retrieveSecretsFromSouth: string | undefined,
     settingsToTest: SouthSettings,
-    trustedFingerprint: string | null = null
+    trustedFingerprint: string | null = null,
+    // Whether the caller shows the identity of a server not trusted (otherwise, the test fails)
+    withServerIdentity = false
   ): Promise<OIBusConnectionTestResult> {
     return await this.southService.testSouth(
       'history',
       southType,
       await this.southSettingsToTest(historyId, southType, retrieveSecretsFromSouth, settingsToTest),
       trustedFingerprint,
-      this.southServerTrust(historyId, retrieveSecretsFromSouth)
+      this.southServerTrust(historyId, retrieveSecretsFromSouth),
+      withServerIdentity
     );
   }
 

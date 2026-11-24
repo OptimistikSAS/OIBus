@@ -376,50 +376,16 @@ describe('Config Import Service', () => {
       await service.validateAndUpgrade(file, CURRENT_VERSION);
     });
 
-    it('rejects a south connector without server trust', async () => {
+    it('accepts the connectors and history queries of a configuration exported without server trust', async () => {
       const file = validFile();
-      const opcua = findSouth(file.config, 'opcua');
-      delete opcua.settings.serverTrust;
+      for (const south of file.config.southConnectors) delete south.settings.serverTrust;
+      for (const north of file.config.northConnectors) delete north.settings.serverTrust;
+      for (const historyQuery of file.config.historyQueries) {
+        delete historyQuery.settings.southServerTrust;
+        delete historyQuery.settings.northServerTrust;
+      }
 
-      const error = await rejection(file);
-
-      assert.ok(
-        error.validationErrors.some(entry => entry.scope === 'south:opcua' && /serverTrust/.test(entry.message)),
-        JSON.stringify(error.validationErrors)
-      );
-    });
-
-    it('rejects a north connector without server trust', async () => {
-      const file = cloneFile();
-      const north = file.config.northConnectors[0];
-      delete north.settings.serverTrust;
-      isolateToSingleNorth(file, north);
-
-      const error = await rejection(file);
-
-      assert.ok(
-        error.validationErrors.some(entry => /serverTrust/.test(entry.message)),
-        JSON.stringify(error.validationErrors)
-      );
-    });
-
-    it('rejects a history query without the server trust of one of its sides', async () => {
-      const file = cloneFile();
-      const historyQuery = file.config.historyQueries[0];
-      delete historyQuery.settings.southServerTrust;
-      delete historyQuery.settings.northServerTrust;
-      isolateToSingleHistoryQuery(file, historyQuery);
-
-      const error = await rejection(file);
-
-      assert.ok(
-        error.validationErrors.some(entry => /southServerTrust/.test(entry.message)),
-        JSON.stringify(error.validationErrors)
-      );
-      assert.ok(
-        error.validationErrors.some(entry => /northServerTrust/.test(entry.message)),
-        JSON.stringify(error.validationErrors)
-      );
+      await service.validateAndUpgrade(file, CURRENT_VERSION);
     });
 
     it('rejects an identity of an unknown type, or a server trust without trustOnFirstUse', async () => {
