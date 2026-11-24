@@ -240,7 +240,7 @@ describe('NorthConnectorService', () => {
   test('should test a North connection and leave the error display to the caller', async () => {
     const result = firstValueFrom(service.testConnection('id1', command.settings, command.type));
 
-    const request = http.expectOne({ method: 'POST', url: '/api/north/id1/test/connection?northType=file-writer' });
+    const request = http.expectOne({ method: 'POST', url: '/api/north/id1/test/connection?northType=file-writer&withServerIdentity=true' });
     expect(request.request.body).toEqual(command.settings);
     expectErrorsIgnoredUnlessUnauthorized(request);
     request.flush(connectionTestResult);
@@ -279,31 +279,38 @@ describe('NorthConnectorService', () => {
   });
 
   describe('with an identity trusted in the form', () => {
-    const trustedRequests: Array<{ name: string; call: (s: NorthConnectorService) => Observable<unknown>; url: string }> = [
+    const trustedRequests: Array<{
+      name: string;
+      call: (s: NorthConnectorService) => Observable<unknown>;
+      url: string;
+      params: Record<string, string>;
+    }> = [
       {
         name: 'a connection test',
         call: s => s.testConnection('id1', command.settings, command.type),
-        url: '/api/north/id1/test/connection'
+        url: '/api/north/id1/test/connection',
+        params: { northType: 'file-writer', withServerIdentity: 'true' }
       },
       {
         name: 'the retrieval of the identity of the server',
         call: s => s.retrieveServerIdentity('id1', command.settings, command.type),
-        url: '/api/north/id1/test/server-identity'
+        url: '/api/north/id1/test/server-identity',
+        params: { northType: 'file-writer' }
       }
     ];
 
-    test.each(trustedRequests)('should send its fingerprint with $name', async ({ call, url }) => {
+    test.each(trustedRequests)('should send its fingerprint with $name', async ({ call, url, params }) => {
       TestBed.inject(FormServerTrustService).set('north', serverIdentity);
 
       const result = firstValueFrom(call(service), { defaultValue: undefined });
 
       const request = http.expectOne(req => req.method === 'POST' && req.url === url);
-      expect(paramsOf(request)).toEqual({ northType: 'file-writer', trustedFingerprint: serverIdentity.fingerprint });
+      expect(paramsOf(request)).toEqual({ ...params, trustedFingerprint: serverIdentity.fingerprint });
       request.flush(null);
       await result;
     });
 
-    test.each(trustedRequests)('should not send the fingerprint trusted for another target with $name', async ({ call, url }) => {
+    test.each(trustedRequests)('should not send the fingerprint trusted for another target with $name', async ({ call, url, params }) => {
       const formServerTrust = TestBed.inject(FormServerTrustService);
       formServerTrust.set('south', serverIdentity);
       formServerTrust.set('history-north', serverIdentity);
@@ -311,7 +318,7 @@ describe('NorthConnectorService', () => {
       const result = firstValueFrom(call(service), { defaultValue: undefined });
 
       const request = http.expectOne(req => req.method === 'POST' && req.url === url);
-      expect(paramsOf(request)).toEqual({ northType: 'file-writer' });
+      expect(paramsOf(request)).toEqual(params);
       request.flush(null);
       await result;
     });

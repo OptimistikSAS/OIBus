@@ -423,25 +423,25 @@ describe('HistoryQueryService', () => {
     {
       name: 'the North connection',
       call: s => s.testNorthConnection('id1', northSettings, 'file-writer'),
-      url: '/api/history/id1/test/north?northType=file-writer',
+      url: '/api/history/id1/test/north?northType=file-writer&withServerIdentity=true',
       body: northSettings
     },
     {
       name: 'the North connection with the secrets of a North connector',
       call: s => s.testNorthConnection('id1', northSettings, 'file-writer', 'northId1'),
-      url: '/api/history/id1/test/north?fromNorth=northId1&northType=file-writer',
+      url: '/api/history/id1/test/north?fromNorth=northId1&northType=file-writer&withServerIdentity=true',
       body: northSettings
     },
     {
       name: 'the South connection',
       call: s => s.testSouthConnection('id1', southSettings, 'folder-scanner'),
-      url: '/api/history/id1/test/south?southType=folder-scanner',
+      url: '/api/history/id1/test/south?southType=folder-scanner&withServerIdentity=true',
       body: southSettings
     },
     {
       name: 'the South connection with the secrets of a South connector',
       call: s => s.testSouthConnection('id1', southSettings, 'folder-scanner', 'southId1'),
-      url: '/api/history/id1/test/south?fromSouth=southId1&southType=folder-scanner',
+      url: '/api/history/id1/test/south?fromSouth=southId1&southType=folder-scanner&withServerIdentity=true',
       body: southSettings
     }
   ])('should test $name and leave the error display to the caller', async ({ call, url, body }) => {
@@ -599,14 +599,14 @@ describe('HistoryQueryService', () => {
         target: 'history-north',
         call: s => s.testNorthConnection('id1', northSettings, 'file-writer', 'northId1'),
         url: '/api/history/id1/test/north',
-        params: { northType: 'file-writer', fromNorth: 'northId1' }
+        params: { northType: 'file-writer', fromNorth: 'northId1', withServerIdentity: 'true' }
       },
       {
         name: 'a South connection test',
         target: 'history-south',
         call: s => s.testSouthConnection('id1', southSettings, 'folder-scanner'),
         url: '/api/history/id1/test/south',
-        params: { southType: 'folder-scanner' }
+        params: { southType: 'folder-scanner', withServerIdentity: 'true' }
       },
       {
         name: 'the retrieval of the identity of the North server',

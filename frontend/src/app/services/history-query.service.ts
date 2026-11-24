@@ -137,7 +137,12 @@ export class HistoryQueryService {
     fromNorth: string | null = null
   ): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/history/${historyId}/test/north`, settings, {
-      params: this.formServerTrust.withTrustedFingerprint('history-north', fromNorth ? { fromNorth, northType } : { northType }),
+      // the identity of a server not trusted is shown, for the user to review and trust it
+      params: this.formServerTrust.withTrustedFingerprint('history-north', {
+        ...(fromNorth ? { fromNorth } : {}),
+        northType,
+        withServerIdentity: 'true'
+      }),
       // the test connection modal already displays the error inline, so skip the global error notification
       context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
@@ -150,7 +155,12 @@ export class HistoryQueryService {
     fromSouth: string | null = null
   ): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/history/${historyId}/test/south`, settings, {
-      params: this.formServerTrust.withTrustedFingerprint('history-south', fromSouth ? { fromSouth, southType } : { southType }),
+      // the identity of a server not trusted is shown, for the user to review and trust it
+      params: this.formServerTrust.withTrustedFingerprint('history-south', {
+        ...(fromSouth ? { fromSouth } : {}),
+        southType,
+        withServerIdentity: 'true'
+      }),
       // the test connection modal already displays the error inline, so skip the global error notification
       context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });

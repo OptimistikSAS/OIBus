@@ -426,7 +426,10 @@ describe('SouthConnectorService', () => {
   test('should test a South connection and leave the error display to the caller', async () => {
     const result = firstValueFrom(service.testConnection('id1', command.settings, command.type));
 
-    const request = http.expectOne({ method: 'POST', url: '/api/south/id1/test/connection?southType=folder-scanner' });
+    const request = http.expectOne({
+      method: 'POST',
+      url: '/api/south/id1/test/connection?southType=folder-scanner&withServerIdentity=true'
+    });
     expect(request.request.body).toEqual(command.settings);
     expectErrorsIgnoredUnlessUnauthorized(request);
     request.flush(connectionTestResult);
@@ -551,7 +554,7 @@ describe('SouthConnectorService', () => {
         name: 'a connection test',
         call: s => s.testConnection('id1', command.settings, command.type),
         url: '/api/south/id1/test/connection',
-        params: { southType: 'folder-scanner' }
+        params: { southType: 'folder-scanner', withServerIdentity: 'true' }
       },
       {
         name: 'an item test',
