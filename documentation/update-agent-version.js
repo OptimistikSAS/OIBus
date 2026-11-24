@@ -6,11 +6,19 @@ async function updateVersion() {
     const repo = 'OptimistikSAS/OIBusAgentRelease';
     const docsDir = path.join(__dirname, 'build');
 
-    // Fetch the latest release from GitHub API
-    const response = await fetch(`https://api.github.com/repos/${repo}/releases/latest`);
+    // Fetch the latest release from GitHub API. Unauthenticated calls are rate limited per IP (shared on CI runners),
+    // so use the token when one is available
+    const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'oibus-documentation' };
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    const response = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, { headers });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch latest release: ${response.statusText}`);
+      // statusText is empty over HTTP/2, so report the status code and the API message
+      const body = await response.text();
+      throw new Error(`Failed to fetch latest release: HTTP ${response.status} ${body}`);
     }
 
     const data = await response.json();
