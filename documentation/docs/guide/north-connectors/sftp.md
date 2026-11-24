@@ -19,6 +19,9 @@ The **SFTP North Connector** securely uploads files to an **SFTP (SSH File Trans
 | **Private key**    | Path to the private key file (PEM format). Required for Private key auth. | `/path/to/key.pem`                 |
 | **Passphrase**     | Passphrase for the private key (if protected).                            | `••••••••`                         |
 
+OIBus checks the host key of the SFTP server, and only connects to a server presenting the host key it trusts: see
+[Server Identity](../advanced/oibus-security.md#server-identity).
+
 ### File Configuration {#file-configuration}
 
 | Setting           | Description                                              | Example Value |

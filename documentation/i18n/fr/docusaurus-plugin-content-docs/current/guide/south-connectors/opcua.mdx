@@ -269,6 +269,14 @@ OIBus présente un certificat qu'il génère en mémoire au démarrage.
 - **Rejetés** (déplacer d'ici vers approuvés) : `.prosysopc\prosys-opc-ua-simulation-server\PKI\CA\rejected\`
   :::
 
+### Certificat du serveur {#server-certificate}
+
+Quand le **Mode de sécurité** est `Sign` ou `Sign and Encrypt`, OIBus doit aussi approuver le certificat du serveur : il
+ne se connecte qu'à un serveur présentant le certificat qu'il approuve, et refuse sinon de se connecter, sans envoyer
+d'identifiant. Approuvez-le en testant la connexion ou en enregistrant le connecteur, après avoir comparé son empreinte
+avec celle du certificat du serveur, ou depuis la page du connecteur quand le serveur présente un nouveau certificat. Voir
+[Identité des serveurs](../advanced/oibus-security.md#server-identity).
+
 ### Certificat d'authentification {#authentication-certificate}
 
 Lorsque l'**Authentification** est définie sur `Certificate`, sélectionnez le certificat identifiant l'_utilisateur_

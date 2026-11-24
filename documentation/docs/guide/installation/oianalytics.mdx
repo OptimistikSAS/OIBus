@@ -70,22 +70,25 @@ put at risk: a command OIBus is not allowed to execute is marked as errored. OIA
 the **Update registration settings** command), but it can never grant one: a permission revoked remotely can only be
 granted again from OIBus.
 
-| Group              | Permission                  | Commands                                                                                                                             | Default |
-| ------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------- |
-| Lifecycle          | **Update version**          | Upgrade version. Cannot be granted when OIBus is started with `--ignoreRemoteUpdate`.                                                | Granted |
-| Lifecycle          | **Operate**                 | Restart, start or stop a history query.                                                                                              | Granted |
-| Configuration      | **Engine settings**         | Update the general, proxy and logger settings.                                                                                       | Granted |
-| Configuration      | **Data flow**               | Create, update or delete the South and North connectors, the history queries (and their items), the scan modes and the certificates. | Granted |
-| Configuration      | **Custom code**             | Create, update, delete or test custom transformers, which run code sent by OIAnalytics.                                              | Revoked |
-| Security           | **Manage access**           | Update the web server settings and the IP filters.                                                                                   | Granted |
-| Security           | **Manage registration**     | Update registration settings.                                                                                                        | Granted |
-| Data and equipment | **Connect to data sources** | Test a connection or an item, test a transformer, open an interactive session to explore a data source.                              | Granted |
-| Data and equipment | **Manage cache**            | Search, retrieve, move or delete the cached content of the North connectors and history queries.                                     | Granted |
-| Data and equipment | **Diagnostics**             | Memory dump, logs database.                                                                                                          | Revoked |
-| Data and equipment | **Setpoints**               | Setpoint.                                                                                                                            | Revoked |
+| Group              | Permission                  | Commands                                                                                                                                                                  | Default |
+| ------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| Lifecycle          | **Update version**          | Upgrade version. Cannot be granted when OIBus is started with `--ignoreRemoteUpdate`.                                                                                     | Granted |
+| Lifecycle          | **Operate**                 | Restart, start or stop a history query.                                                                                                                                   | Granted |
+| Configuration      | **Engine settings**         | Update the general, proxy and logger settings.                                                                                                                            | Granted |
+| Configuration      | **Data flow**               | Create, update or delete the South and North connectors, the history queries (and their items), the scan modes and the certificates, trust the identity of their servers. | Granted |
+| Configuration      | **Custom code**             | Create, update, delete or test custom transformers, which run code sent by OIAnalytics.                                                                                   | Revoked |
+| Security           | **Manage access**           | Update the web server settings and the IP filters.                                                                                                                        | Granted |
+| Security           | **Manage registration**     | Update registration settings.                                                                                                                                             | Granted |
+| Data and equipment | **Connect to data sources** | Test a connection (showing the identity of its server) or an item, test a transformer, open an interactive session to explore a data source.                              | Granted |
+| Data and equipment | **Manage cache**            | Search, retrieve, move or delete the cached content of the North connectors and history queries.                                                                          | Granted |
+| Data and equipment | **Diagnostics**             | Memory dump, logs database.                                                                                                                                               | Revoked |
+| Data and equipment | **Setpoints**               | Setpoint.                                                                                                                                                                 | Revoked |
 
 **Import configuration** replaces the whole configuration: it requires every **Configuration** permission and
 **Manage access**.
+
+Trusting the identity of the [server of a connector](../advanced/oibus-security.md#server-identity) requires **Data flow**
+and **Connect to data sources**.
 
 Revoking **Connect to data sources** closes the interactive sessions open on OIBus. When upgrading from OIBus 3, a
 permission is granted only if every former permission it gathers was, and **Diagnostics** is revoked.

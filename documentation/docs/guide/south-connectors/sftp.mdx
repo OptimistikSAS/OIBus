@@ -37,6 +37,14 @@ transformer with the file type **Any file** and **Compress file** enabled.
 
 :::
 
+### Server Host Key {#server-host-key}
+
+OIBus checks the host key of the SFTP server, and only connects to a server presenting the host key it trusts: it
+otherwise refuses to connect, without sending any credential. Trust it when testing the connection or saving the
+connector, after comparing its fingerprint with the output of `ssh-keygen -l -f <host key file>` on the server, or from
+the page of the connector when the server presents a new host key. See
+[Server Identity](../advanced/oibus-security.md#server-identity).
+
 ## File Retrieval Settings {#file-retrieval-settings}
 
 | Setting                  | Description                                                                                                                                                             | Example Value         |

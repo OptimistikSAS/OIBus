@@ -72,6 +72,9 @@ Archive through the PI AF Client, and can filter the values on the PI Data Archi
   certificate store, selected in each of them, instead of a certificate generated in the data folder (the one used
   until now is imported into the store on upgrade, so the servers keep trusting OIBus), and authenticate their user with
   a certificate of the store too.
+- The OPC UA and SFTP connectors only connect to a server presenting the
+  [**identity they trust**](./advanced/oibus-security.md#server-identity) (its certificate or host key), trusted when
+  testing the connection or saving the connector, and from OIAnalytics.
 - The [**content endpoints**](./engine/engine-settings.mdx#content-endpoints) of the OIBus API (`/api/content`) can be
   disabled.
 - The engine has a [**description**](./engine/engine-settings.mdx#description).
@@ -129,5 +132,9 @@ Archive through the PI AF Client, and can filter the values on the PI Data Archi
   their user with a certificate no longer read it from files. The paths of its files are removed on upgrade: import the
   certificate and its private key into the [certificate store](./engine/certificates.md), and select it in their
   **User certificate** setting.
+- **Review the identity of the servers of your OPC UA and SFTP connectors**: the OPC UA (with a security mode other than
+  None) and SFTP connectors and history queries trust the identity their server presents at their first connection
+  after the upgrade. Check it on their page, and from then on, trust a new certificate or host key of their server
+  there (see [Server Identity](./advanced/oibus-security.md#server-identity)).
 - **REST API**: the engine general settings are updated with `PUT /api/engine/general` (instead of
   `PUT /api/engine/name`), and the content endpoints are disabled when no North transformer applied to the OIBus API.

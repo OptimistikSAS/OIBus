@@ -48,6 +48,9 @@ the [OPC UA South Connector](../south-connectors/opcua.mdx) which reads data fro
 
 :::
 
+In `Sign` or `Sign and encrypt` mode, OIBus also checks the certificate of the server, and only connects to a server it
+trusts: see [Server Identity](../advanced/oibus-security.md#server-identity).
+
 ### Authentication {#authentication}
 
 | Setting              | Description                                                                                                                                  | Example Value                              |

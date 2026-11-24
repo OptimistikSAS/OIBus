@@ -71,22 +71,25 @@ regroupées selon ce qu'elles mettent en jeu : une commande qu'OIBus n'est pas a
 OIAnalytics peut retirer une permission (avec la commande **Mettre à jour les paramètres d'enregistrement**), mais jamais
 en accorder une : une permission retirée à distance ne peut être accordée à nouveau que depuis OIBus.
 
-| Groupe                 | Permission                              | Commandes                                                                                                                                      | Par défaut |
-| ---------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| Cycle de vie           | **Mettre à jour la version**            | Mise à jour de version. Ne peut pas être accordée quand OIBus est démarré avec `--ignoreRemoteUpdate`.                                         | Accordée   |
-| Cycle de vie           | **Exploiter**                           | Redémarrer, démarrer ou arrêter une requête d'historique.                                                                                      | Accordée   |
-| Configuration          | **Paramètres du moteur**                | Mettre à jour les paramètres généraux, du proxy et des journaux.                                                                               | Accordée   |
-| Configuration          | **Flux de données**                     | Créer, modifier ou supprimer les connecteurs South et North, les requêtes d'historique (et leurs items), les modes de scan et les certificats. | Accordée   |
-| Configuration          | **Code personnalisé**                   | Créer, modifier, supprimer ou tester les transformateurs personnalisés, qui exécutent du code envoyé par OIAnalytics.                          | Retirée    |
-| Sécurité               | **Gérer les accès**                     | Mettre à jour les paramètres du serveur web et les filtres IP.                                                                                 | Accordée   |
-| Sécurité               | **Gérer l'enregistrement**              | Mettre à jour les paramètres d'enregistrement.                                                                                                 | Accordée   |
-| Données et équipements | **Se connecter aux sources de données** | Tester une connexion ou un item, tester un transformateur, ouvrir une session interactive pour explorer une source de données.                 | Accordée   |
-| Données et équipements | **Gérer le cache**                      | Rechercher, récupérer, déplacer ou supprimer le contenu en cache des connecteurs North et des requêtes d'historique.                           | Accordée   |
-| Données et équipements | **Diagnostic**                          | Dump mémoire, base des journaux.                                                                                                               | Retirée    |
-| Données et équipements | **Consignes**                           | Consigne.                                                                                                                                      | Retirée    |
+| Groupe                 | Permission                              | Commandes                                                                                                                                                                              | Par défaut |
+| ---------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Cycle de vie           | **Mettre à jour la version**            | Mise à jour de version. Ne peut pas être accordée quand OIBus est démarré avec `--ignoreRemoteUpdate`.                                                                                 | Accordée   |
+| Cycle de vie           | **Exploiter**                           | Redémarrer, démarrer ou arrêter une requête d'historique.                                                                                                                              | Accordée   |
+| Configuration          | **Paramètres du moteur**                | Mettre à jour les paramètres généraux, du proxy et des journaux.                                                                                                                       | Accordée   |
+| Configuration          | **Flux de données**                     | Créer, modifier ou supprimer les connecteurs South et North, les requêtes d'historique (et leurs items), les modes de scan et les certificats, approuver l'identité de leurs serveurs. | Accordée   |
+| Configuration          | **Code personnalisé**                   | Créer, modifier, supprimer ou tester les transformateurs personnalisés, qui exécutent du code envoyé par OIAnalytics.                                                                  | Retirée    |
+| Sécurité               | **Gérer les accès**                     | Mettre à jour les paramètres du serveur web et les filtres IP.                                                                                                                         | Accordée   |
+| Sécurité               | **Gérer l'enregistrement**              | Mettre à jour les paramètres d'enregistrement.                                                                                                                                         | Accordée   |
+| Données et équipements | **Se connecter aux sources de données** | Tester une connexion (en affichant l'identité de son serveur) ou un item, tester un transformateur, ouvrir une session interactive pour explorer une source de données.                | Accordée   |
+| Données et équipements | **Gérer le cache**                      | Rechercher, récupérer, déplacer ou supprimer le contenu en cache des connecteurs North et des requêtes d'historique.                                                                   | Accordée   |
+| Données et équipements | **Diagnostic**                          | Dump mémoire, base des journaux.                                                                                                                                                       | Retirée    |
+| Données et équipements | **Consignes**                           | Consigne.                                                                                                                                                                              | Retirée    |
 
 **Importer la configuration** remplace toute la configuration : cela nécessite toutes les permissions de
 **Configuration** et **Gérer les accès**.
+
+Approuver l'identité du [serveur d'un connecteur](../advanced/oibus-security.md#server-identity) nécessite **Flux de
+données** et **Se connecter aux sources de données**.
 
 Retirer **Se connecter aux sources de données** ferme les sessions interactives ouvertes sur OIBus. Lors d'une mise à
 jour depuis OIBus 3, une permission n'est accordée que si toutes les anciennes permissions qu'elle regroupe l'étaient, et
