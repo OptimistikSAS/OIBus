@@ -39,6 +39,7 @@ import { Page } from '../../../shared/model/common/types';
 import { OIBusSouthType, SouthConnectorManifest, SouthType } from '../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../shared/model/domain/engine.model';
+import { PresentedServerIdentity } from '../../../shared/model/domain/server-identity.model';
 import { SouthConnectorItemSearchParam, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
@@ -296,6 +297,28 @@ export class SouthConnectorController extends Controller {
       await southService.trustServerIdentity(southId, command.fingerprint, request.user.id);
     } catch (error: unknown) {
       throw error instanceof OIBusValidationError ? error : new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Retrieves the identity the server of a south connector presents with these settings, and how it compares with the
+   * identity trusted, without connecting further (no credential is sent). Null when the connector does not check it
+   * @summary Retrieve the identity of the server
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
+   */
+  @Post('/{southId}/test/server-identity')
+  async retrieveServerIdentity(
+    @Path() southId: string,
+    @Query() southType: OIBusSouthType,
+    @Body() command: SouthSettings,
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
+  ): Promise<PresentedServerIdentity | null> {
+    const southService = request.services.southService as SouthService;
+    try {
+      return await southService.retrieveServerIdentity(southId, southType, command, trustedFingerprint ?? null);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
     }
   }
 

@@ -253,6 +253,43 @@ describe('NorthConnectorController', () => {
       userService.getUserInfo.mock.mockImplementation((id: string) => ({ id, friendlyName: 'User 1' }));
     });
 
+    it('should retrieve the identity of the server with the settings as edited', async () => {
+      northService.retrieveServerIdentity.mock.mockImplementation(async () => ({ identity, status: 'unknown' }));
+
+      const result = await controller.retrieveServerIdentity(
+        testData.north.list[0].id,
+        testData.north.command.type,
+        testData.north.command.settings,
+        mockRequest as CustomExpressRequest,
+        identity.fingerprint
+      );
+
+      assert.deepStrictEqual(result, { identity, status: 'unknown' });
+      assert.deepStrictEqual(northService.retrieveServerIdentity.mock.calls[0].arguments, [
+        testData.north.list[0].id,
+        testData.north.command.type,
+        testData.north.command.settings,
+        identity.fingerprint
+      ]);
+    });
+
+    it('should wrap the errors when retrieving the identity of the server', async () => {
+      northService.retrieveServerIdentity.mock.mockImplementation(async () => {
+        throw new Error('ECONNREFUSED');
+      });
+
+      await assert.rejects(
+        controller.retrieveServerIdentity(
+          testData.north.list[0].id,
+          testData.north.command.type,
+          testData.north.command.settings,
+          mockRequest as CustomExpressRequest
+        ),
+        new OIBusTestingError('ECONNREFUSED')
+      );
+      assert.strictEqual(northService.retrieveServerIdentity.mock.calls[0].arguments[3], null);
+    });
+
     it('should get the trust of a north connector in the identity of its server', () => {
       northService.getServerTrustState.mock.mockImplementation(() => trustState);
 

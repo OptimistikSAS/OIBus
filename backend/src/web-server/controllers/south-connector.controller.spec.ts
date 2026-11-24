@@ -283,6 +283,43 @@ describe('SouthConnectorController', () => {
       userService.getUserInfo.mock.mockImplementation((id: string) => ({ id, friendlyName: 'User 1' }));
     });
 
+    it('should retrieve the identity of the server with the settings as edited', async () => {
+      southService.retrieveServerIdentity.mock.mockImplementation(async () => ({ identity, status: 'unknown' }));
+
+      const result = await controller.retrieveServerIdentity(
+        testData.south.list[0].id,
+        testData.south.command.type,
+        testData.south.command.settings,
+        mockRequest as CustomExpressRequest,
+        identity.fingerprint
+      );
+
+      assert.deepStrictEqual(result, { identity, status: 'unknown' });
+      assert.deepStrictEqual(southService.retrieveServerIdentity.mock.calls[0].arguments, [
+        testData.south.list[0].id,
+        testData.south.command.type,
+        testData.south.command.settings,
+        identity.fingerprint
+      ]);
+    });
+
+    it('should wrap the errors when retrieving the identity of the server', async () => {
+      southService.retrieveServerIdentity.mock.mockImplementation(async () => {
+        throw new Error('ECONNREFUSED');
+      });
+
+      await assert.rejects(
+        controller.retrieveServerIdentity(
+          testData.south.list[0].id,
+          testData.south.command.type,
+          testData.south.command.settings,
+          mockRequest as CustomExpressRequest
+        ),
+        new OIBusTestingError('ECONNREFUSED')
+      );
+      assert.strictEqual(southService.retrieveServerIdentity.mock.calls[0].arguments[3], null);
+    });
+
     it('should get the trust of a south connector in the identity of its server', () => {
       southService.getServerTrustState.mock.mockImplementation(() => trustState);
 

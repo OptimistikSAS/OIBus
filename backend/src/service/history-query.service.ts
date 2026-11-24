@@ -18,7 +18,7 @@ import { OIBusSouthType, SouthConnectorManifest } from '../../shared/model/conne
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
 import { HistoryQueryItemSearchParam } from '../../shared/model/domain/history-query.model';
-import { ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
+import { PresentedServerIdentity, ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
 import { SouthConnectorItemTestingSettings } from '../../shared/model/domain/south-connector.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
@@ -287,6 +287,32 @@ export default class HistoryQueryService {
     settingsToTest: NorthSettings,
     trustedFingerprint: string | null = null
   ): Promise<OIBusConnectionTestResult> {
+    const { settings, serverTrust } = await this.northToTest(historyId, northType, retrieveSecretsFromNorth, settingsToTest);
+    return await this.northService.testNorth('history', northType, settings, trustedFingerprint, serverTrust);
+  }
+
+  /** The identity the server of the North side presents with these settings, see `NorthService.retrieveServerIdentity`. */
+  async retrieveNorthServerIdentity(
+    historyId: string,
+    northType: OIBusNorthType,
+    retrieveSecretsFromNorth: string | undefined,
+    settingsToTest: NorthSettings,
+    trustedFingerprint: string | null = null
+  ): Promise<PresentedServerIdentity | null> {
+    const { settings, serverTrust } = await this.northToTest(historyId, northType, retrieveSecretsFromNorth, settingsToTest);
+    return await this.northService.retrieveServerIdentity('history', northType, settings, trustedFingerprint, serverTrust);
+  }
+
+  /**
+   * The north settings as edited, validated, with the secrets left blank taken from the history query - or, for a history
+   * query being created, from the north connector it is created from - and the trust in the identity of their server.
+   */
+  private async northToTest(
+    historyId: string,
+    northType: OIBusNorthType,
+    retrieveSecretsFromNorth: string | undefined,
+    settingsToTest: NorthSettings
+  ): Promise<{ settings: NorthSettings; serverTrust: ServerTrust }> {
     let northSettings: NorthSettings | null = null;
     let northServerTrust: ServerTrust | null = null;
     if (historyId !== 'create') {
@@ -300,16 +326,13 @@ export default class HistoryQueryService {
     }
     const northManifest = this.northService.getManifest(northType);
     await this.validator.validateSettings(northManifest.settings, settingsToTest);
-    return await this.northService.testNorth(
-      'history',
-      northType,
-      encryptionService.decryptConnectorSecrets(
+    return {
+      settings: encryptionService.decryptConnectorSecrets(
         encryptionService.encryptConnectorSecrets(settingsToTest, northSettings, northManifest.settings),
         northManifest.settings
       ),
-      trustedFingerprint,
-      northServerTrust ?? NO_SERVER_TRUST
-    );
+      serverTrust: northServerTrust ?? NO_SERVER_TRUST
+    };
   }
 
   async testSouth(
@@ -320,6 +343,23 @@ export default class HistoryQueryService {
     trustedFingerprint: string | null = null
   ): Promise<OIBusConnectionTestResult> {
     return await this.southService.testSouth(
+      'history',
+      southType,
+      await this.southSettingsToTest(historyId, southType, retrieveSecretsFromSouth, settingsToTest),
+      trustedFingerprint,
+      this.southServerTrust(historyId, retrieveSecretsFromSouth)
+    );
+  }
+
+  /** The identity the server of the South side presents with these settings, see `SouthService.retrieveServerIdentity`. */
+  async retrieveSouthServerIdentity(
+    historyId: string,
+    southType: OIBusSouthType,
+    retrieveSecretsFromSouth: string | undefined,
+    settingsToTest: SouthSettings,
+    trustedFingerprint: string | null = null
+  ): Promise<PresentedServerIdentity | null> {
+    return await this.southService.retrieveServerIdentity(
       'history',
       southType,
       await this.southSettingsToTest(historyId, southType, retrieveSecretsFromSouth, settingsToTest),

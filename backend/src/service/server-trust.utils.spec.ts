@@ -9,6 +9,7 @@ import { PresentedServerIdentity, ServerIdentity, TrustedServerIdentity } from '
 import { OIBusValidationError } from '../model/types';
 import {
   resolveTestedServerTrust,
+  retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
   testConnectionWithServerIdentity,
   toImportedServerTrust,
@@ -156,6 +157,20 @@ describe('Server trust utils', () => {
         serverIdentity: { identity, status: 'changed' }
       });
       assert.strictEqual(connector.testConnection.mock.callCount(), 0);
+    });
+  });
+
+  describe('retrievePresentedServerIdentity', () => {
+    it('should give the identity the server presents and how it compares with the trusted one', async () => {
+      assert.deepStrictEqual(await retrievePresentedServerIdentity({ retrieveServerIdentity: async () => identity }, trusted), {
+        identity,
+        status: 'trusted'
+      });
+      assert.deepStrictEqual(await retrievePresentedServerIdentity({ retrieveServerIdentity: async () => other }, trusted), {
+        identity: other,
+        status: 'changed'
+      });
+      assert.strictEqual(await retrievePresentedServerIdentity({ retrieveServerIdentity: async () => null }, trusted), null);
     });
   });
 

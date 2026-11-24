@@ -13,6 +13,7 @@ import {
   NorthConnectorMetrics,
   OIBusConnectionTestResult
 } from '../../../shared/model/domain/engine.model';
+import { PresentedServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
 import { NorthTransformerWithOptions } from '../../model/transformer.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
@@ -209,6 +210,28 @@ export class NorthConnectorController extends Controller {
       await northService.trustServerIdentity(northId, command.fingerprint, request.user.id);
     } catch (error: unknown) {
       throw error instanceof OIBusValidationError ? error : new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Retrieves the identity the server of a north connector presents with these settings, and how it compares with the
+   * identity trusted, without connecting further (no credential is sent). Null when the connector does not check it
+   * @summary Retrieve the identity of the server
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
+   */
+  @Post('/{northId}/test/server-identity')
+  async retrieveServerIdentity(
+    @Path() northId: string,
+    @Query() northType: OIBusNorthType,
+    @Body() command: NorthSettings,
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
+  ): Promise<PresentedServerIdentity | null> {
+    const northService = request.services.northService as NorthService;
+    try {
+      return await northService.retrieveServerIdentity(northId, northType, command, trustedFingerprint ?? null);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
     }
   }
 

@@ -3,7 +3,13 @@ import { DateTime } from 'luxon';
 import { ServerTrustCommandDTO, ServerTrustDTO, ServerTrustStateDTO } from '../../shared/model/api/server-identity.model';
 import { GetUserInfo } from '../../shared/model/common/types';
 import { OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
-import { ServerIdentity, ServerTrust, ServerTrustState, TrustedServerIdentity } from '../../shared/model/domain/server-identity.model';
+import {
+  PresentedServerIdentity,
+  ServerIdentity,
+  ServerTrust,
+  ServerTrustState,
+  TrustedServerIdentity
+} from '../../shared/model/domain/server-identity.model';
 
 import { OIBusValidationError } from '../model/types';
 import { describeServerIdentity, getServerIdentityTrustStatus, NO_SERVER_TRUST, toTrustedServerIdentity } from './utils-server-identity';
@@ -84,6 +90,18 @@ export const testConnectionWithServerIdentity = async (
     return { items: [], serverIdentity: { identity: presented, status } };
   }
   return { ...(await connector.testConnection()), serverIdentity: { identity: presented, status } };
+};
+
+/**
+ * The identity the server presents and how it compares with the trusted one, without connecting further: no credential
+ * is sent. `null` when the connector does not check the identity of its server.
+ */
+export const retrievePresentedServerIdentity = async (
+  connector: { retrieveServerIdentity(): Promise<ServerIdentity | null> },
+  trusted: TrustedServerIdentity | null
+): Promise<PresentedServerIdentity | null> => {
+  const presented = await connector.retrieveServerIdentity();
+  return presented ? { identity: presented, status: getServerIdentityTrustStatus(presented, trusted) } : null;
 };
 
 /**

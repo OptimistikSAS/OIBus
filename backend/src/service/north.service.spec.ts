@@ -551,6 +551,29 @@ describe('North Service', () => {
       assert.strictEqual(engine.reloadNorth.mock.calls.length, 0);
     });
 
+    it('should retrieve the identity of the server and its status, without testing the connection', async () => {
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => ({
+        ...testData.north.list[0],
+        serverTrust: trustOf(otherIdentity)
+      }));
+
+      assert.deepStrictEqual(
+        await service.retrieveServerIdentity(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings),
+        { identity, status: 'changed' }
+      );
+      assert.deepStrictEqual(
+        await service.retrieveServerIdentity(
+          'history',
+          testData.north.command.type,
+          testData.north.command.settings,
+          null,
+          trustOf(identity)
+        ),
+        { identity, status: 'trusted' }
+      );
+      assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 0);
+    });
+
     it('should return the identity of a server not trusted without testing the connection', async () => {
       const result = await service.testNorth('create', testData.north.command.type, testData.north.command.settings);
 
