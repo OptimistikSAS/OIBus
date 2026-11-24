@@ -1,4 +1,5 @@
 import { OIBusArrayAttribute, OIBusObjectAttribute } from './form.model';
+import { ServerIdentityType } from './server-identity-type.model';
 
 /**
  * List of available categories for OIBus South connectors.
@@ -263,6 +264,15 @@ export interface SouthConnectorManifest {
    * are SQL-family too but don't have discovery yet.
    */
   discovery?: SouthConnectorDiscovery;
+
+  /**
+   * The kind of identity the server of this connector type presents, when the connector checks it: the connector refuses a
+   * server whose identity is not trusted. UI capability flag — mirrors the connector's `retrieveServerIdentity()` (which
+   * may still return none with some settings, as OPC UA with the security mode None).
+   *
+   * @example "x509"
+   */
+  serverIdentity?: ServerIdentityType;
 
   /**
    * The configuration schema for the connector settings.

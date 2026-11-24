@@ -6,8 +6,9 @@ import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connec
 import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/api/transformer.model';
 import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
 import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity, ServerTrustState } from '../../../shared/model/domain/server-identity.model';
 
-import { OIBusTestingError } from '../../model/types';
+import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import type NorthService from '../../service/north.service';
 import type OIBusService from '../../service/oibus.service';
 import type UserService from '../../service/user.service';
@@ -212,7 +213,7 @@ describe('NorthConnectorController', () => {
     await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(northService.testNorth.mock.calls.length, 1);
-    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings]);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings, null]);
   });
 
   it('should wrap errors when testing north connection', async () => {
@@ -231,7 +232,100 @@ describe('NorthConnectorController', () => {
       assert.strictEqual(error.message, 'North connection failure');
     }
     assert.strictEqual(northService.testNorth.mock.calls.length, 1);
-    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings]);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings, null]);
+  });
+
+  describe('with the identity of the server', () => {
+    const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+    const otherIdentity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:other', details: { keyType: 'ssh-ed25519' } };
+    const trustState: ServerTrustState = {
+      identity: { ...identity, trustedBy: 'user1', trustedAt: '2020-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false,
+      pending: { identity: otherIdentity, status: 'changed' }
+    };
+    const trustStateDTO = {
+      identity: { ...identity, trustedBy: { id: 'user1', friendlyName: 'User 1' }, trustedAt: '2020-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false,
+      pending: { identity: otherIdentity, status: 'changed' }
+    };
+
+    beforeEach(() => {
+      userService.getUserInfo.mock.mockImplementation((id: string) => ({ id, friendlyName: 'User 1' }));
+    });
+
+    it('should get the trust of a north connector in the identity of its server', () => {
+      northService.getServerTrustState.mock.mockImplementation(() => trustState);
+
+      const result = controller.getServerTrust(testData.north.list[0].id, mockRequest as CustomExpressRequest);
+
+      assert.deepStrictEqual(northService.getServerTrustState.mock.calls[0].arguments, [testData.north.list[0].id]);
+      assert.deepStrictEqual(userService.getUserInfo.mock.calls[0].arguments, ['user1']);
+      assert.deepStrictEqual(result, trustStateDTO);
+    });
+
+    it('should trust the identity of the server of a north connector, by the user', async () => {
+      await controller.trustServerIdentity(
+        testData.north.list[0].id,
+        { fingerprint: identity.fingerprint },
+        mockRequest as CustomExpressRequest
+      );
+
+      assert.deepStrictEqual(northService.trustServerIdentity.mock.calls[0].arguments, [
+        testData.north.list[0].id,
+        identity.fingerprint,
+        'test'
+      ]);
+    });
+
+    it('should keep a validation error when trusting the identity of the server of a north connector', async () => {
+      const error = new OIBusValidationError('not the one to trust');
+      northService.trustServerIdentity.mock.mockImplementation(async () => {
+        throw error;
+      });
+
+      await assert.rejects(
+        controller.trustServerIdentity(
+          testData.north.list[0].id,
+          { fingerprint: identity.fingerprint },
+          mockRequest as CustomExpressRequest
+        ),
+        error
+      );
+    });
+
+    it('should wrap other errors when trusting the identity of the server of a north connector', async () => {
+      northService.trustServerIdentity.mock.mockImplementation(async () => {
+        throw new Error('connection failed');
+      });
+
+      await assert.rejects(
+        controller.trustServerIdentity(
+          testData.north.list[0].id,
+          { fingerprint: identity.fingerprint },
+          mockRequest as CustomExpressRequest
+        ),
+        new OIBusTestingError('connection failed')
+      );
+    });
+
+    it('should forward the fingerprint trusted in the form when testing the connection', async () => {
+      const northType: OIBusNorthType = testData.north.command.type;
+
+      await controller.testNorth(
+        testData.north.list[0].id,
+        northType,
+        testData.north.command.settings,
+        mockRequest as CustomExpressRequest,
+        identity.fingerprint
+      );
+
+      assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
+        testData.north.list[0].id,
+        northType,
+        testData.north.command.settings,
+        identity.fingerprint
+      ]);
+    });
   });
 
   it('should add or edit a transformer', async () => {

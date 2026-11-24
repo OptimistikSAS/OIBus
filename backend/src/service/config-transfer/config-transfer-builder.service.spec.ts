@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
+import { ServerTrust } from '../../../shared/model/domain/server-identity.model';
+
 import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import type { SouthItemGroupEntity } from '../../model/south-connector.model';
 import { StandardTransformer } from '../../model/transformer.model';
@@ -26,6 +28,17 @@ const standardTransformer: StandardTransformer = {
   functionName: FileToFileTransformer.transformerName,
   inputType: 'file',
   outputType: 'file'
+};
+
+const trustedSshHostKey: ServerTrust = {
+  identity: {
+    type: 'ssh-host-key',
+    fingerprint: 'SHA256:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU',
+    details: { keyType: 'ssh-ed25519' },
+    trustedBy: 'user1',
+    trustedAt: '2026-01-01T00:00:00.000Z'
+  },
+  trustOnFirstUse: false
 };
 
 describe('Config Transfer Builder Service', () => {
@@ -374,6 +387,32 @@ describe('Config Transfer Builder Service', () => {
     assert.strictEqual(configuration.northConnectors.length, testData.north.list.length);
   });
 
+  it('should export the server trust of the south and north connectors, with who trusted the identity and when', () => {
+    northRepository.findAllNorthFull.mock.mockImplementation(() =>
+      testData.north.list.map((north, index) => (index === 0 ? { ...north, serverTrust: trustedSshHostKey } : north))
+    );
+
+    const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
+
+    for (const south of testData.south.list) {
+      const exported = configuration.southConnectors.find(element => element.oIBusInternalId === south.id);
+      assert.deepStrictEqual(exported?.settings.serverTrust, south.serverTrust);
+    }
+    assert.ok(
+      testData.south.list.some(south => south.serverTrust.identity),
+      'expected a south connector trusting an identity'
+    );
+    const [trustingNorth, ...otherNorths] = testData.north.list;
+    assert.deepStrictEqual(
+      configuration.northConnectors.find(element => element.oIBusInternalId === trustingNorth.id)?.settings.serverTrust,
+      trustedSshHostKey
+    );
+    for (const north of otherNorths) {
+      const exported = configuration.northConnectors.find(element => element.oIBusInternalId === north.id);
+      assert.deepStrictEqual(exported?.settings.serverTrust, north.serverTrust);
+    }
+  });
+
   it('should only export the items left out of a transformer when there are some', () => {
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
 
@@ -406,6 +445,20 @@ describe('Config Transfer Builder Service', () => {
       'transformers',
       'users'
     ]);
+  });
+
+  it('should export the server trust of both sides of the history queries', () => {
+    const [historyQuery, ...otherHistoryQueries] = testData.historyQueries.list;
+    historyQueryRepository.findAllHistoriesFull.mock.mockImplementation(() => [
+      { ...historyQuery, southServerTrust: trustedSshHostKey, northServerTrust: { identity: null, trustOnFirstUse: true } },
+      ...otherHistoryQueries
+    ]);
+
+    const configuration = service.buildHistoryQueriesConfiguration();
+
+    const exported = configuration.historyQueries.find(element => element.oIBusInternalId === historyQuery.id);
+    assert.deepStrictEqual(exported?.settings.southServerTrust, trustedSshHostKey);
+    assert.deepStrictEqual(exported?.settings.northServerTrust, { identity: null, trustOnFirstUse: true });
   });
 
   it('should build the history queries configuration', () => {

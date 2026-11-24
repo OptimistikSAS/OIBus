@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 import { NorthConnectorCommandDTO, NorthConnectorLightDTO, NorthConnectorTypedDTO } from '../../shared/model/api/north-connector.model';
 import { NorthConnectorManifest, OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
 
@@ -10,6 +12,7 @@ import { OIBusRecordListContent } from '../../shared/model/common/content.model'
 import { GetUserInfo } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
+import { ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { CacheMetadataSource } from '../model/engine.model';
@@ -18,6 +21,7 @@ import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorItemEntityLight, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import { NorthTransformerWithOptions, TransformerSource } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import type NorthConnector from '../north/north-connector';
 import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
@@ -30,9 +34,17 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import type CertificateService from './certificate.service';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode.service';
+import {
+  resolveTestedServerTrust,
+  retrieveServerIdentityToTrust,
+  testConnectionWithServerIdentity,
+  toServerTrust,
+  toServerTrustDTO
+} from './server-trust.utils';
 import { toSouthConnectorLightDTO, toSouthItemLightDTO } from './south.service';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { checkScanMode } from './utils';
+import { NO_SERVER_TRUST, toTrustedServerIdentity } from './utils-server-identity';
 
 export default class NorthService {
   constructor(
@@ -93,7 +105,8 @@ export default class NorthService {
       northEntity,
       command,
       this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
-      this.scanModeRepository.findAll()
+      this.scanModeRepository.findAll(),
+      createdBy
     );
     northEntity.createdBy = createdBy;
     northEntity.updatedBy = createdBy;
@@ -134,7 +147,7 @@ export default class NorthService {
     }
 
     const northEntity = { id: previousSettings.id } as NorthConnectorEntity<NorthSettings>;
-    copyNorthConnectorCommandToNorthEntity(northEntity, command, previousSettings, this.scanModeRepository.findAll());
+    copyNorthConnectorCommandToNorthEntity(northEntity, command, previousSettings, this.scanModeRepository.findAll(), updatedBy);
     northEntity.createdBy = previousSettings.createdBy;
     northEntity.updatedBy = updatedBy;
     const transformers = this.transformerService.findAll();
@@ -185,7 +198,53 @@ export default class NorthService {
     return this.engine.getNorthMetrics(northId);
   }
 
-  async testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<OIBusConnectionTestResult> {
+  /**
+   * The trust of the connector in the identity of its server, with the identity the connector refused at its last
+   * connection (pending, until a user trusts it).
+   */
+  getServerTrustState(northId: string): ServerTrustState {
+    const northConnector = this.findById(northId);
+    let pending = null;
+    try {
+      pending = this.engine.getNorth(northId).north.getPendingServerIdentity();
+    } catch {
+      // Not in the engine
+    }
+    return { ...northConnector.serverTrust, pending };
+  }
+
+  /**
+   * Trust the identity the server of the connector presents, when its fingerprint is the one the user reviewed, and restart
+   * the connector so that it connects with it.
+   */
+  async trustServerIdentity(northId: string, fingerprint: string, trustedBy: string): Promise<void> {
+    const northConnector = this.findById(northId);
+    const north = this.buildThrowawayNorth({ ...northConnector, enabled: false, transformers: [] });
+    const identity = await retrieveServerIdentityToTrust(north, fingerprint);
+    this.northConnectorRepository.updateServerTrust(
+      northId,
+      { identity: toTrustedServerIdentity(identity, trustedBy, DateTime.now().toUTC().toISO()!), trustOnFirstUse: false },
+      trustedBy
+    );
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadNorth(northConnector);
+    this.engine.logger.info(
+      `Server identity ${identity.fingerprint} trusted by "${trustedBy}" for North connector "${northConnector.name}" (${northId})`
+    );
+  }
+
+  /**
+   * Test the connection with these settings. For a connector checking the identity of its server, the connection is only
+   * tested further when the server is trusted (see `testConnectionWithServerIdentity`), by the connector, by the history
+   * query (`historyServerTrust`), or in the form of the connector (`trustedFingerprint`, not saved yet).
+   */
+  async testNorth(
+    northId: string,
+    northType: OIBusNorthType,
+    settingsToTest: NorthSettings,
+    trustedFingerprint: string | null = null,
+    historyServerTrust: ServerTrust | null = null
+  ): Promise<OIBusConnectionTestResult> {
     let northConnector: NorthConnectorEntity<NorthSettings> | null = null;
     if (northId !== 'create' && northId !== 'history') {
       northConnector = this.findById(northId);
@@ -193,7 +252,8 @@ export default class NorthService {
     const manifest = this.getManifest(northType);
     await this.validator.validateSettings(manifest.settings, settingsToTest);
 
-    const testToRun: NorthConnectorEntity<NorthSettings> = {
+    const savedServerTrust = northConnector?.serverTrust ?? historyServerTrust ?? NO_SERVER_TRUST;
+    const north = this.buildThrowawayNorth({
       id: 'test',
       createdBy: '',
       updatedBy: '',
@@ -203,6 +263,7 @@ export default class NorthService {
       description: '',
       enabled: false,
       settings: encryptionService.encryptConnectorSecrets(settingsToTest, northConnector?.settings || null, manifest.settings),
+      serverTrust: savedServerTrust,
       name: `${northType}:test-connection`,
       transformers: [],
       caching: {
@@ -240,15 +301,19 @@ export default class NorthService {
           maxSize: 0
         }
       }
-    };
+    });
+    const serverTrust = await resolveTestedServerTrust(savedServerTrust, trustedFingerprint, () => north.retrieveServerIdentity());
+    return await testConnectionWithServerIdentity(north, serverTrust.identity);
+  }
 
-    const north = buildNorth(
-      testToRun,
+  /** A North connector built from an entity, never started by the engine. */
+  buildThrowawayNorth(entity: NorthConnectorEntity<NorthSettings>): NorthConnector<NorthSettings> {
+    return buildNorth(
+      entity,
       this.certificateService,
       this.oIAnalyticsRegistrationRepository,
-      createNorthOrchestrator(this.engine.baseFolder, 'test', testToRun.name)
+      createNorthOrchestrator(this.engine.baseFolder, 'test', entity.name)
     );
-    return await north.testConnection();
   }
 
   addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions, userId: string): void {
@@ -389,6 +454,7 @@ export const toNorthConnectorDTO = (
       northEntity.settings,
       northManifestList.find(element => element.id === northEntity.type)!.settings
     ),
+    serverTrust: toServerTrustDTO(northEntity.serverTrust, getUserInfo),
     caching: {
       trigger: {
         scanMode: toScanModeDTO(northEntity.caching.trigger.scanMode, getUserInfo),
@@ -445,7 +511,8 @@ export const copyNorthConnectorCommandToNorthEntity = (
   northEntity: NorthConnectorEntity<NorthSettings>,
   command: NorthConnectorCommandDTO,
   currentSettings: NorthConnectorEntity<NorthSettings> | null,
-  scanModes: Array<ScanMode>
+  scanModes: Array<ScanMode>,
+  user: string
 ): void => {
   northEntity.name = command.name;
   northEntity.type = command.type;
@@ -456,6 +523,7 @@ export const copyNorthConnectorCommandToNorthEntity = (
     currentSettings?.settings || null,
     northManifestList.find(element => element.id === northEntity.type)!.settings
   );
+  northEntity.serverTrust = toServerTrust(command.serverTrust, currentSettings?.serverTrust ?? null, user);
   northEntity.caching = {
     trigger: {
       scanMode: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),

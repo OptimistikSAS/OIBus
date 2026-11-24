@@ -12,6 +12,7 @@ import { DataType } from 'node-opcua-variant';
 
 import type { NorthOPCUASettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
 import type CertificateService from '../../service/certificate.service';
 import type * as Utils from '../../service/utils';
@@ -47,6 +48,7 @@ describe('NorthOPCUA', () => {
   let sessionWrite: AsyncMock;
   let createSessionConfigs: AsyncMock;
   let createOPCUASession: AsyncMock;
+  let retrieveOPCUAServerIdentity: AsyncMock;
   let resolveNodeId: Mock<(id: unknown) => unknown>;
   let createOPCUAClient: Mock<() => unknown>;
   let streamToString: Mock<typeof Utils.streamToString>;
@@ -85,12 +87,13 @@ describe('NorthOPCUA', () => {
     session = createMock<ClientSession>({ close: sessionClose, read: sessionRead, write: sessionWrite });
     createSessionConfigs = mock.fn(async () => ({ options: {}, userIdentity: {} }));
     createOPCUASession = mock.fn(async () => session);
+    retrieveOPCUAServerIdentity = mock.fn(async () => null);
     resolveNodeId = mock.fn((id: unknown) => id);
     createOPCUAClient = mock.fn(() => null);
     streamToString = mock.fn(async () => '[]');
 
     Object.assign(nodeOpcuaExports, { resolveNodeId, OPCUAClient: { create: createOPCUAClient } });
-    Object.assign(utilsOpcuaExports, { createSessionConfigs, createOPCUASession });
+    Object.assign(utilsOpcuaExports, { createSessionConfigs, createOPCUASession, retrieveOPCUAServerIdentity });
     // delay: super.connect() waits for runMinDelay before checking the cache, and setTimeout is mocked
     Object.assign(utilsExports, { streamToString, delay: async () => undefined });
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
@@ -178,6 +181,65 @@ describe('NorthOPCUA', () => {
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // No reconnect timeout set because disconnecting is true
     assert.strictEqual(north['reconnectTimeout'], null);
+  });
+
+  describe('server identity trust', () => {
+    const presented: ServerIdentity = {
+      type: 'x509',
+      fingerprint: 'AB:CD:EF',
+      details: {
+        subject: 'CN=server',
+        issuer: 'CN=server',
+        serialNumber: '01',
+        validFrom: testData.constants.dates.DATE_1,
+        validTo: testData.constants.dates.DATE_2,
+        uris: ['urn:server'],
+        dnsNames: [],
+        ipAddresses: [],
+        selfSigned: true
+      }
+    };
+    const getIsServerTrusted = () => createSessionConfigs.mock.calls[0].arguments[5] as (identity: ServerIdentity) => boolean;
+
+    it('should verify the identity of the server when creating a session', async () => {
+      await north.createSession();
+
+      const verify = mock.method(north.serverIdentityVerifier, 'verify', () => true);
+      assert.strictEqual(getIsServerTrusted()(presented), true);
+      verify.mock.mockImplementation(() => false);
+      assert.strictEqual(getIsServerTrusted()(presented), false);
+      assert.deepStrictEqual(
+        verify.mock.calls.map(call => call.arguments[0]),
+        [presented, presented]
+      );
+    });
+
+    it('should retrieve the identity of the server with its settings', async () => {
+      retrieveOPCUAServerIdentity.mock.mockImplementationOnce(async () => presented);
+
+      assert.deepStrictEqual(await north.retrieveServerIdentity(), presented);
+      assert.strictEqual(retrieveOPCUAServerIdentity.mock.calls.length, 1);
+      assert.deepStrictEqual(retrieveOPCUAServerIdentity.mock.calls[0].arguments, [north['connector'].settings]);
+    });
+
+    it('should not schedule a reconnect after a connection refused for a server not trusted', async () => {
+      // The server certificate is checked during the session creation, before any credential is sent
+      createOPCUASession.mock.mockImplementationOnce(async () => {
+        getIsServerTrusted()(presented);
+        throw new Error('server certificate refused');
+      });
+      const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
+
+      await north.connect();
+
+      assert.ok(
+        logger.error.mock.calls.some(c => c.arguments[0] === 'Error while connecting to the OPC UA server: server certificate refused')
+      );
+      assert.strictEqual(disconnectMock.mock.calls.length, 1);
+      assert.strictEqual(north.isServerNotTrusted(), true);
+      assert.deepStrictEqual(north.getPendingServerIdentity(), { identity: presented, status: 'unknown' });
+      assert.strictEqual(north['reconnectTimeout'], null);
+    });
   });
 
   it('should properly disconnect', async () => {

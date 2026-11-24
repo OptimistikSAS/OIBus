@@ -89,6 +89,7 @@ const buildConfiguration = (
   type: 'influxdb',
   description: `my influxdb v${connectionSettings.version} connector`,
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: { connectionSettings, maxParallelRun },
   groups: [],
   items: [baseItem],

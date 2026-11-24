@@ -20,8 +20,9 @@ import {
   FileCacheContent,
   OIBusConnectionTestResult
 } from '../../shared/model/domain/engine.model';
+import { PresentedServerIdentity, ServerIdentity } from '../../shared/model/domain/server-identity.model';
 
-import { CacheMetadataSource, CacheSize, CONTENT_FOLDER } from '../model/engine.model';
+import { CacheMetadataSource, CacheSize, CONTENT_FOLDER, OIBusError } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
@@ -29,6 +30,7 @@ import { NorthTransformerWithOptions } from '../model/transformer.model';
 import type CacheService from '../service/cache/cache.service';
 import DeferredPromise from '../service/deferred-promise';
 import { loggerService } from '../service/logger/logger.service';
+import ServerIdentityVerifier from '../service/server-identity-verifier';
 import { createTransformer, runTransformerOnContent } from '../service/transformer.service';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import { createOIBusError, delay } from '../service/utils';
@@ -97,6 +99,12 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private taskJobQueue: Array<{ id: string; name: string }> = [];
   private taskRunnerEvent: EventEmitter = new EventEmitter();
   public metricsEvent: TypedEventEmitter<NorthMetricsEvents> = new TypedEventEmitter<NorthMetricsEvents>();
+  // Checks the identity of the server, for the connectors which check it (see retrieveServerIdentity)
+  public readonly serverIdentityVerifier = new ServerIdentityVerifier(
+    () => this.connector.serverTrust,
+    serverTrust => (this.connector = { ...this.connector, serverTrust }),
+    () => this.logger
+  );
 
   private stopping = false;
 
@@ -236,6 +244,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       await this.run(taskDescription);
     });
     this.logger.debug(`North connector "${this.connector.name}" enabled`);
+    this.serverIdentityVerifier.reset();
     await this.cacheService.start();
     if (this.isEnabled()) {
       await this.connect();
@@ -393,6 +402,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
     const fileStream = createReadStream(path.join(this.getCacheFolder(), CONTENT_FOLDER, contentToSend.filename));
     try {
+      if (this.isServerNotTrusted()) {
+        // Kept in the cache, not moved to the error folder: trusting the identity of the server restarts the connector
+        throw new OIBusError('The server is not trusted: review its identity and trust it to send the content', true);
+      }
       await this.handleContent(fileStream, contentToSend.metadata);
       fileStream.close();
       if (this.connector.caching.archive.enabled) {
@@ -819,6 +832,36 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * delivered to a destination that can't handle them.
    */
   abstract supportedTypes(): Array<string>;
+
+  /**
+   * The identity the server presents with the connector's current settings, obtained without trusting it and without
+   * authenticating to the server (no credential is sent), so that a user can review it before trusting it. `null` when the
+   * connector does not check the identity of its server with these settings (the default: a protocol which does not
+   * authenticate the server, or OPC UA with the security mode None). The connectors which check it override this method,
+   * and call `verifyServerIdentity()` at each connection.
+   */
+  retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    return Promise.resolve(null);
+  }
+
+  /**
+   * Whether the connection can go on with a server presenting this identity (see `ServerIdentityVerifier.verify`). A
+   * connector must refuse the connection before sending any credential when it returns false, and not reconnect by itself
+   * (see `isServerNotTrusted()`): trusting the identity restarts it.
+   */
+  protected verifyServerIdentity(presented: ServerIdentity): boolean {
+    return this.serverIdentityVerifier.verify(presented);
+  }
+
+  /** Whether the connector refused its server at its last connection, its identity being pending until a user trusts it. */
+  isServerNotTrusted(): boolean {
+    return this.serverIdentityVerifier.pendingIdentity !== null;
+  }
+
+  /** The identity of the server the connector refused at its last connection, see `isServerNotTrusted()`. */
+  getPendingServerIdentity(): PresentedServerIdentity | null {
+    return this.serverIdentityVerifier.pendingIdentity;
+  }
 
   /**
    * Probe the destination with the connector's current settings. Surfaces

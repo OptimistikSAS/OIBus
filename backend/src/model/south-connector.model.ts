@@ -1,5 +1,6 @@
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import { ServerTrust } from '../../shared/model/domain/server-identity.model';
 import {
   SouthCachingStrategy,
   SouthCachingThresholdType,
@@ -69,6 +70,8 @@ export interface SouthConnectorEntity<S extends SouthSettings, I extends SouthIt
   settings: S;
   items: Array<SouthConnectorItemEntity<I>>;
   groups: Array<SouthItemGroupEntityLight>;
+  // The trust in the identity of the server, for the connectors which check it (see SouthConnector.retrieveServerIdentity)
+  serverTrust: ServerTrust;
 }
 
 export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends BaseEntity {

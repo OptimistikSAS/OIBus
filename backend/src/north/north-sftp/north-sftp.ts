@@ -6,10 +6,13 @@ import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 
 import { NorthSFTPSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
+import { OIBusError } from '../../model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type CacheService from '../../service/cache/cache.service';
 import { encryptionService } from '../../service/encryption.service';
+import { createHostVerifier, retrieveSshServerIdentity } from '../../service/utils-sftp';
 import NorthConnector from '../north-connector';
 
 /**
@@ -22,6 +25,10 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
 
   supportedTypes(): Array<string> {
     return ['file'];
+  }
+
+  override async retrieveServerIdentity(): Promise<ServerIdentity> {
+    return await retrieveSshServerIdentity(this.connector.settings.host, this.connector.settings.port, this.connector.settings.username);
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -67,7 +74,15 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
     const connectionOptions = await this.createConnectionOptions();
 
     const client = new sftpClient();
-    await client.connect(connectionOptions);
+    try {
+      await client.connect(connectionOptions);
+    } catch (error: unknown) {
+      if (this.isServerNotTrusted()) {
+        // Kept in the cache, not moved to the error folder: trusting the identity of the server restarts the connector
+        throw new OIBusError(`The server is not trusted: ${(error as Error).message}`, true);
+      }
+      throw error;
+    }
     await client.put(fileStream, target);
     await client.end();
   }
@@ -80,7 +95,8 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
           port: this.connector.settings.port,
           username: this.connector.settings.username,
           privateKey: await fs.readFile(this.connector.settings.privateKey!, 'utf8'),
-          passphrase: encryptionService.decryptText(this.connector.settings.passphrase)
+          passphrase: encryptionService.decryptText(this.connector.settings.passphrase),
+          hostVerifier: createHostVerifier(identity => this.verifyServerIdentity(identity))
         };
       case 'password':
       default:
@@ -88,7 +104,8 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
           host: this.connector.settings.host,
           port: this.connector.settings.port,
           username: this.connector.settings.username,
-          password: this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : ''
+          password: this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : '',
+          hostVerifier: createHostVerifier(identity => this.verifyServerIdentity(identity))
         };
     }
   }

@@ -42,6 +42,7 @@ import { GetUserInfo, Page } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../shared/model/domain/engine.model';
+import { ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowSouthCommand } from '../model/configuration-workflow.model';
@@ -76,10 +77,19 @@ import {
 } from './configuration-workflow.utils';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
+import {
+  resolveTestedServerTrust,
+  retrieveServerIdentityToTrust,
+  testConnectionWithServerIdentity,
+  toServerNotTrustedError,
+  toServerTrust,
+  toServerTrustDTO
+} from './server-trust.utils';
 import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import SouthExploreSessionManager from './south-explore-session-manager';
 import type TransformerService from './transformer.service';
 import { checkGroups, checkScanMode, parseCsvImport, stringToBoolean } from './utils';
+import { NO_SERVER_TRUST, toTrustedServerIdentity } from './utils-server-identity';
 
 export default class SouthService {
   private readonly exploreSessionManager = new SouthExploreSessionManager();
@@ -158,7 +168,8 @@ export default class SouthService {
       this.retrieveSecretsFromSouth(retrieveSecretsFromSouth, manifest),
       scanModes,
       [], // in create mode, there is no group attached to the south yet
-      !!retrieveSecretsFromSouth
+      !!retrieveSecretsFromSouth,
+      createdBy
     );
 
     southEntity.createdBy = createdBy;
@@ -213,7 +224,8 @@ export default class SouthService {
       previousSettings,
       scanModes,
       this.southItemGroupRepository.findBySouthId(southEntity.id),
-      false
+      false,
+      updatedBy
     );
     southEntity.createdBy = previousSettings.createdBy;
     southEntity.updatedBy = updatedBy;
@@ -309,6 +321,36 @@ export default class SouthService {
     await this.engine.stopSouth(southConnector.id);
   }
 
+  /**
+   * The trust of the connector in the identity of its server, with the identity the connector refused at its last
+   * connection (pending, until a user trusts it).
+   */
+  getServerTrustState(southId: string): ServerTrustState {
+    const southConnector = this.findById(southId);
+    const pending = this.engine.hasSouth(southId) ? this.engine.getSouth(southId).south.getPendingServerIdentity() : null;
+    return { ...southConnector.serverTrust, pending };
+  }
+
+  /**
+   * Trust the identity the server of the connector presents, when its fingerprint is the one the user reviewed, and restart
+   * the connector so that it connects with it.
+   */
+  async trustServerIdentity(southId: string, fingerprint: string, trustedBy: string): Promise<void> {
+    const southConnector = this.findById(southId);
+    const south = this.buildThrowawaySouth({ ...southConnector, enabled: false, items: [], groups: [] });
+    const identity = await retrieveServerIdentityToTrust(south, fingerprint);
+    this.southConnectorRepository.updateServerTrust(
+      southId,
+      { identity: toTrustedServerIdentity(identity, trustedBy, DateTime.now().toUTC().toISO()!), trustOnFirstUse: false },
+      trustedBy
+    );
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouth(southConnector);
+    this.engine.logger.info(
+      `Server identity ${identity.fingerprint} trusted by "${trustedBy}" for South connector "${southConnector.name}" (${southId})`
+    );
+  }
+
   getSouthMetric(southId: string): SouthConnectorMetrics {
     return this.engine.getSouthMetrics(southId);
   }
@@ -322,7 +364,9 @@ export default class SouthService {
   private async buildEphemeralSouth(
     southId: string,
     southType: OIBusSouthType,
-    settingsToTest: SouthSettings
+    settingsToTest: SouthSettings,
+    trustedFingerprint: string | null,
+    historyServerTrust: ServerTrust | null
   ): Promise<ReturnType<typeof buildSouth>> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (southId !== 'create' && southId !== 'history') {
@@ -333,17 +377,22 @@ export default class SouthService {
 
     const testSettings = encryptionService.encryptConnectorSecrets(settingsToTest, southConnector?.settings || null, manifest.settings);
 
-    const runningSouth = this.findRunningSouth(southConnector, testSettings);
+    const savedServerTrust = southConnector?.serverTrust ?? historyServerTrust ?? NO_SERVER_TRUST;
+    const runningSouth =
+      !trustedFingerprint || trustedFingerprint === savedServerTrust.identity?.fingerprint
+        ? this.findRunningSouth(southConnector, testSettings)
+        : null;
     if (runningSouth) {
       return runningSouth;
     }
 
-    const entity: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
+    const south = this.buildThrowawaySouth({
       id: 'test',
       type: southType,
       description: '',
       enabled: false,
       settings: testSettings,
+      serverTrust: savedServerTrust,
       name: southConnector ? southConnector.name : `${southType}:test-connection`,
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>>,
       groups: [] as Array<SouthItemGroupEntityLight>,
@@ -351,8 +400,17 @@ export default class SouthService {
       updatedBy: '',
       createdAt: '',
       updatedAt: ''
+    });
+    // The identity trusted in the form of the connector, not saved yet, is trusted by the throwaway connector
+    south.connectorConfiguration = {
+      ...south.connectorConfiguration,
+      serverTrust: await resolveTestedServerTrust(savedServerTrust, trustedFingerprint, () => south.retrieveServerIdentity())
     };
+    return south;
+  }
 
+  /** A South connector built from an entity, with a no-op content callback and no cache folder: never started by the engine. */
+  buildThrowawaySouth(entity: SouthConnectorEntity<SouthSettings, SouthItemSettings>): ReturnType<typeof buildSouth> {
     /* istanbul ignore next */
     const mockedAddContent = (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
     return buildSouth(
@@ -389,9 +447,20 @@ export default class SouthService {
     return this.engine.hasSouth(southId) && this.engine.getSouth(southId).south === south;
   }
 
-  async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> {
-    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
-    return await south.testConnection();
+  /**
+   * Test the connection with these settings. For a connector checking the identity of its server, the connection is only
+   * tested further when the server is trusted (see `testConnectionWithServerIdentity`), by the connector, by the history
+   * query (`historyServerTrust`), or in the form of the connector (`trustedFingerprint`, not saved yet).
+   */
+  async testSouth(
+    southId: string,
+    southType: OIBusSouthType,
+    settingsToTest: SouthSettings,
+    trustedFingerprint: string | null = null,
+    historyServerTrust: ServerTrust | null = null
+  ): Promise<OIBusConnectionTestResult> {
+    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest, trustedFingerprint, historyServerTrust);
+    return await testConnectionWithServerIdentity(south, south.connectorConfiguration.serverTrust.identity);
   }
 
   /**
@@ -403,9 +472,10 @@ export default class SouthService {
     southId: string,
     southType: OIBusSouthType,
     settingsToTest: SouthSettings,
-    query: string
+    query: string,
+    trustedFingerprint: string | null = null
   ): Promise<Array<OIBusRecord>> {
-    return await this.discover(southId, southType, settingsToTest, { query });
+    return await this.discover(southId, southType, settingsToTest, { query }, trustedFingerprint);
   }
 
   /**
@@ -417,15 +487,19 @@ export default class SouthService {
     southId: string,
     southType: OIBusSouthType,
     settingsToTest: SouthSettings,
-    scope: Record<string, unknown>
+    scope: Record<string, unknown>,
+    trustedFingerprint: string | null = null,
+    historyServerTrust: ServerTrust | null = null
   ): Promise<Array<OIBusRecord>> {
-    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
+    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest, trustedFingerprint, historyServerTrust);
     if (!south.hasConfigurationDiscovery()) {
       throw new Error(`South connector of type "${southType}" does not support configuration discovery`);
     }
     const isLiveInstance = this.isLiveInstance(southId, south);
     try {
       return await south.discover(scope);
+    } catch (error: unknown) {
+      throw toServerNotTrustedError(south, error);
     } finally {
       if (!isLiveInstance) {
         await south.stop();
@@ -440,8 +514,14 @@ export default class SouthService {
    * already connected and must keep running once the session is closed. When the data source can't be explored, the error
    * tells why when it can (see `toExploreError()`).
    */
-  async startExplore(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<SouthExploreStartResult> {
-    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
+  async startExplore(
+    southId: string,
+    southType: OIBusSouthType,
+    settingsToTest: SouthSettings,
+    trustedFingerprint: string | null = null,
+    historyServerTrust: ServerTrust | null = null
+  ): Promise<SouthExploreStartResult> {
+    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest, trustedFingerprint, historyServerTrust);
     if (!south.hasExplore()) {
       throw new Error(`South connector of type "${southType}" does not support exploration`);
     }
@@ -452,7 +532,7 @@ export default class SouthService {
       } catch (error) {
         // connect() failed before the session was registered — release the connector so it doesn't leak.
         await south.stop();
-        throw toExploreError(error, 'connection');
+        throw toExploreError(toServerNotTrustedError(south, error), 'connection');
       }
     }
     const sessionId = await this.exploreSessionManager.start(south, !isLiveInstance);
@@ -500,7 +580,11 @@ export default class SouthService {
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings,
     // The name of the connector the item is tested for, when it is not a south connector (the history query)
-    connectorName?: string
+    connectorName?: string,
+    // The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
+    trustedFingerprint: string | null = null,
+    // The trust of the history query in the identity of its server, when the item is tested for a history query
+    historyServerTrust: ServerTrust | null = null
   ): Promise<SouthConnectorItemTestResult> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (southId !== 'create' && southId !== 'history') {
@@ -560,16 +644,21 @@ export default class SouthService {
     );
 
     let queryResult: SouthConnectorItemQueryResult;
-    const runningSouth = this.findRunningSouth(southConnector, testConnectorSettings);
+    const savedServerTrust = southConnector?.serverTrust ?? historyServerTrust ?? NO_SERVER_TRUST;
+    const runningSouth =
+      !trustedFingerprint || trustedFingerprint === savedServerTrust.identity?.fingerprint
+        ? this.findRunningSouth(southConnector, testConnectorSettings)
+        : null;
     if (runningSouth) {
       queryResult = await runningSouth.testItem(testItemToRun, testingSettings);
     } else {
-      const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
+      const south = this.buildThrowawaySouth({
         id: 'test',
         type: southType,
         enabled: false,
         description: '',
         settings: testConnectorSettings,
+        serverTrust: savedServerTrust,
         name: `${southType}:test-connection`,
         items: [testItemToRun],
         groups: [] as Array<SouthItemGroupEntityLight>,
@@ -577,19 +666,17 @@ export default class SouthService {
         updatedBy: '',
         createdAt: '',
         updatedAt: ''
+      });
+      // The identity trusted in the form of the connector, not saved yet, is trusted by the throwaway connector
+      south.connectorConfiguration = {
+        ...south.connectorConfiguration,
+        serverTrust: await resolveTestedServerTrust(savedServerTrust, trustedFingerprint, () => south.retrieveServerIdentity())
       };
-
-      /* istanbul ignore next */
-      const mockedAddContent = (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
-      const south = buildSouth(
-        testConnectorToRun,
-        mockedAddContent,
-        '',
-        this.southCacheRepository,
-        this.certificateService,
-        this.oIAnalyticsRegistrationRepository
-      );
-      queryResult = await south.testItem(testItemToRun, testingSettings);
+      try {
+        queryResult = await south.testItem(testItemToRun, testingSettings);
+      } catch (error: unknown) {
+        throw toServerNotTrustedError(south, error);
+      }
     }
 
     // Delegate the transform to the shared runner so the south/history item test and the
@@ -1297,7 +1384,8 @@ const copySouthConnectorCommandToSouthEntity = (
   currentSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null,
   scanModes: Array<ScanMode>,
   groups: Array<SouthItemGroupEntity>,
-  retrieveSecretsFromSouth: boolean
+  retrieveSecretsFromSouth: boolean,
+  user: string
 ): void => {
   const manifest = southManifestList.find(element => element.id === command.type)!;
   southEntity.name = command.name;
@@ -1305,6 +1393,7 @@ const copySouthConnectorCommandToSouthEntity = (
   southEntity.description = command.description;
   southEntity.enabled = command.enabled;
   southEntity.settings = encryptionService.encryptConnectorSecrets(command.settings, currentSettings?.settings || null, manifest.settings);
+  southEntity.serverTrust = toServerTrust(command.serverTrust, currentSettings?.serverTrust ?? null, user);
   const currentItems = new Map((currentSettings?.items ?? []).map(item => [item.id, item]));
   southEntity.items = command.items.map(itemCommand => {
     const itemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
@@ -1432,6 +1521,7 @@ export const toSouthConnectorDTO = (
     description: southEntity.description,
     enabled: southEntity.enabled,
     settings: encryptionService.filterSecrets(southEntity.settings, manifest.settings),
+    serverTrust: toServerTrustDTO(southEntity.serverTrust, getUserInfo),
     items,
     groups: southEntity.groups.map(group => ({
       id: group.id,

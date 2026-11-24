@@ -362,6 +362,11 @@ export default class DataStreamEngine {
   startNorth(northId: string): void {
     const north = this.getNorth(northId).north;
     north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
+    north.serverIdentityVerifier.events.removeAllListeners();
+    north.serverIdentityVerifier.events.on('trusted-on-first-use', identity => {
+      this.northConnectorRepository.updateServerTrust(northId, { identity, trustOnFirstUse: false }, 'system');
+      this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
+    });
     north // Do not await here, so it can start all connectors without blocking the thread
       .start()
       .catch(error => {
@@ -441,6 +446,11 @@ export default class DataStreamEngine {
     const south = this.getSouth(southId).south;
     south.connectorConfiguration = this.southConnectorRepository.findSouthById(southId)!;
     south.connectedEvent.removeAllListeners();
+    south.serverIdentityVerifier.events.removeAllListeners();
+    south.serverIdentityVerifier.events.on('trusted-on-first-use', identity => {
+      this.southConnectorRepository.updateServerTrust(southId, { identity, trustOnFirstUse: false }, 'system');
+      this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
+    });
     south.connectedEvent.on('connected', async () => {
       if (south.hasSubscription()) {
         await south.updateSubscriptions();
@@ -553,6 +563,14 @@ export default class DataStreamEngine {
   startHistoryQuery(historyId: string): void {
     const historyQuery = this.getHistoryQuery(historyId).historyQuery;
     historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryById(historyId)!;
+    for (const side of ['south', 'north'] as const) {
+      const verifier = historyQuery.getServerIdentityVerifier(side);
+      verifier.events.removeAllListeners();
+      verifier.events.on('trusted-on-first-use', identity => {
+        this.historyQueryRepository.updateServerTrust(historyId, side, { identity, trustOnFirstUse: false }, 'system');
+        this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+      });
+    }
     historyQuery.finishEvent.removeAllListeners();
     historyQuery.finishEvent.on('finished', () => {
       this.historyQueryRepository.updateHistoryStatus(historyId, 'FINISHED');

@@ -11,6 +11,7 @@ import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
+import { ServerTrust } from '../../shared/model/domain/server-identity.model';
 import { OIBusSyncMetadataCommandDTO } from '../../shared/model/oia/oianalytics-sync-metadata.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
@@ -243,14 +244,16 @@ export default class ConfigurationWorkflowRunService {
     southType: OIBusSouthType,
     southSettings: SouthSettings,
     workflowId: string | null,
-    command: ConfigurationWorkflowCommandDTO
+    command: ConfigurationWorkflowCommandDTO,
+    // The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
+    trustedFingerprint: string | null = null
   ): Promise<WorkflowPreviewResultDTO> {
     checkWorkflowMode(command);
     checkAddedFields(command);
     if (workflowId !== null) {
       this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
     }
-    const records = await this.southService.discover(southId, southType, southSettings, command.discoveryScope);
+    const records = await this.southService.discover(southId, southType, southSettings, command.discoveryScope, trustedFingerprint);
     return this.classifyForPreview(
       {
         pushToOIAnalytics: command.pushToOIAnalytics,
@@ -272,9 +275,20 @@ export default class ConfigurationWorkflowRunService {
     southType: OIBusSouthType,
     southSettings: SouthSettings,
     discoveryScope: Record<string, unknown>,
-    itemFieldMapping: Record<string, string>
+    itemFieldMapping: Record<string, string>,
+    // The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
+    trustedFingerprint: string | null = null,
+    // The trust of the history query in the identity of its server, when the items are discovered for a history query
+    historyServerTrust: ServerTrust | null = null
   ): Promise<Array<SouthConnectorItemCommandDTO>> {
-    const records = await this.southService.discover(southId, southType, southSettings, discoveryScope);
+    const records = await this.southService.discover(
+      southId,
+      southType,
+      southSettings,
+      discoveryScope,
+      trustedFingerprint,
+      historyServerTrust
+    );
     const itemFieldKinds = buildItemFieldKinds(southType);
     return records.map(record => {
       const command = buildItemCommand(

@@ -15,6 +15,7 @@ import {
   NorthSFTPSettings
 } from '../connector/north-settings.model';
 import { ScanModeDTO } from './scan-mode.model';
+import { ServerTrustCommandDTO, ServerTrustDTO } from './server-identity.model';
 import { TransformerCommandDTOWithOptions, TransformerDTOWithOptions } from './transformer.model';
 
 /**
@@ -182,6 +183,11 @@ export interface NorthConnectorTypedDTO<T extends OIBusNorthType, S> extends Bas
    * The list of transformers applied to the data.
    */
   transformers: Array<TransformerDTOWithOptions>;
+  /**
+   * The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security
+   * mode other than None, SFTP).
+   */
+  serverTrust: ServerTrustDTO;
 }
 
 // ── Named variants (tsoa uses these as schema names) ─────────────────────
@@ -369,6 +375,11 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
    * @example []
    */
   transformers: Array<TransformerCommandDTOWithOptions>;
+  /**
+   * The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector
+   * is kept as it is (or none for a new connector).
+   */
+  serverTrust?: ServerTrustCommandDTO;
 }
 
 // ── Named command variants (tsoa uses these as schema names) ──────────────

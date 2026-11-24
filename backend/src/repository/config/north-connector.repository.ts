@@ -3,6 +3,7 @@ import { Database } from 'better-sqlite3';
 import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
 import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
+import { ServerTrust } from '../../../shared/model/domain/server-identity.model';
 
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../model/north-connector.model';
 import { ScanMode } from '../../model/scan-mode.model';
@@ -43,7 +44,7 @@ export default class NorthConnectorRepository {
 
   findAllNorthFull(): Array<NorthConnectorEntity<NorthSettings>> {
     const query =
-      `SELECT id, name, type, description, enabled, settings, ` +
+      `SELECT id, name, type, description, enabled, settings, server_trust, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
@@ -57,7 +58,7 @@ export default class NorthConnectorRepository {
 
   findNorthById(id: string): NorthConnectorEntity<NorthSettings> | null {
     const query =
-      `SELECT id, name, type, description, enabled, settings, ` +
+      `SELECT id, name, type, description, enabled, settings, server_trust, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
@@ -89,12 +90,12 @@ export default class NorthConnectorRepository {
           north.id = generateRandomId(6);
         }
         const insertQuery =
-          `INSERT INTO ${NORTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, ` +
+          `INSERT INTO ${NORTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, server_trust, ` +
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
           `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
           `caching_archive_enabled, caching_archive_retention_duration, caching_archive_max_size, created_by, updated_by, created_at, updated_at) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
         this.database
           .prepare(insertQuery)
           .run(
@@ -104,6 +105,7 @@ export default class NorthConnectorRepository {
             north.description,
             +north.enabled,
             JSON.stringify(north.settings),
+            JSON.stringify(north.serverTrust),
             north.caching.trigger.scanMode.id,
             north.caching.trigger.numberOfElements,
             north.caching.trigger.numberOfFiles,
@@ -122,7 +124,7 @@ export default class NorthConnectorRepository {
           );
       } else {
         const query =
-          `UPDATE ${NORTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, ` +
+          `UPDATE ${NORTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, server_trust = ?, ` +
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
           `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, caching_error_max_size = ?, ` +
@@ -135,6 +137,7 @@ export default class NorthConnectorRepository {
             north.description,
             +north.enabled,
             JSON.stringify(north.settings),
+            JSON.stringify(north.serverTrust),
             north.caching.trigger.scanMode.id,
             north.caching.trigger.numberOfElements,
             north.caching.trigger.numberOfFiles,
@@ -209,6 +212,32 @@ export default class NorthConnectorRepository {
         isNewConnector ? 'CREATE' : 'UPDATE',
         ...redactAuditSnapshots(beforeConnector, afterConnector, connector => this.redactConnector(connector)),
         north.updatedBy
+      );
+    });
+    transaction();
+  }
+
+  /**
+   * Save the trust of the connector in the identity of its server: a user trusting the identity its server presented, or
+   * the connector trusting it at its first connection (`system`, not audited).
+   */
+  updateServerTrust(id: string, serverTrust: ServerTrust, updatedBy: string): void {
+    const before = this.findNorthById(id);
+    if (!before) {
+      throw new NotFoundError(`North connector "${id}" not found`);
+    }
+    const transaction = this.database.transaction(() => {
+      this.database
+        .prepare(
+          `UPDATE ${NORTH_CONNECTORS_TABLE} SET server_trust = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+        )
+        .run(JSON.stringify(serverTrust), updatedBy, id);
+      this.auditService.record(
+        'north_connector',
+        id,
+        'UPDATE',
+        ...redactAuditSnapshots(before, this.findNorthById(id), connector => this.redactConnector(connector)),
+        updatedBy
       );
     });
     transaction();
@@ -503,6 +532,7 @@ export default class NorthConnectorRepository {
       description: result.description as string,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings as string) as NorthSettings,
+      serverTrust: JSON.parse(result.server_trust as string) as ServerTrust,
       caching: {
         trigger: {
           scanMode: this.findScanModeForNorth(result.caching_trigger_schedule as string),

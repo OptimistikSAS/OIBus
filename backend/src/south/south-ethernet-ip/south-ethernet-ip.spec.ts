@@ -58,6 +58,7 @@ const configuration: SouthConnectorEntity<SouthEtherNetIPSettings, SouthEtherNet
   type: 'ethernet-ip',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     host: '192.168.1.10',
     slot: 0,

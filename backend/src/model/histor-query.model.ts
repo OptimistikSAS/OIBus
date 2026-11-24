@@ -3,6 +3,7 @@ import { NorthSettings } from '../../shared/model/connector/north-settings.model
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { HistoryQueryStatus } from '../../shared/model/domain/history-query.model';
+import { ServerTrust } from '../../shared/model/domain/server-identity.model';
 
 import { ScanMode } from './scan-mode.model';
 import { HistoryTransformerWithOptions } from './transformer.model';
@@ -24,6 +25,8 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
   status: HistoryQueryStatus;
   southType: OIBusSouthType;
   southSettings: S;
+  // The trust in the identity of the server of the South side, see SouthConnector.retrieveServerIdentity
+  southServerTrust: ServerTrust;
   queryTimeRange: {
     startTime: Instant;
     endTime: Instant;
@@ -32,6 +35,8 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
   };
   northType: OIBusNorthType;
   northSettings: N;
+  // The trust in the identity of the server of the North side, see NorthConnector.retrieveServerIdentity
+  northServerTrust: ServerTrust;
   caching: {
     trigger: {
       scanMode: ScanMode;

@@ -90,6 +90,7 @@ const buildConfiguration = (
   type: 'mongodb',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     connectionString: 'mongodb://localhost:27017/db',
     connectionTimeout: 1000,

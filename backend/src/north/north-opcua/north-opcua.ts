@@ -13,13 +13,14 @@ import {
 
 import { NorthOPCUASettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
 import { OIBusError } from '../../model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type CacheService from '../../service/cache/cache.service';
 import type CertificateService from '../../service/certificate.service';
 import { streamToString } from '../../service/utils';
-import { createOPCUASession, createSessionConfigs } from '../../service/utils-opcua';
+import { createOPCUASession, createSessionConfigs, retrieveOPCUAServerIdentity } from '../../service/utils-opcua';
 import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import NorthConnector from '../north-connector';
 
@@ -152,6 +153,10 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     return { items };
   }
 
+  override async retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    return await retrieveOPCUAServerIdentity(this.connector.settings);
+  }
+
   override async connect(): Promise<void> {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
@@ -189,7 +194,8 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       this.connector.name,
       this.connector.settings,
       this.connector.settings.writeTimeout,
-      this.certificateService
+      this.certificateService,
+      identity => this.verifyServerIdentity(identity)
     );
     this.logger.debug(`Connecting to OPC UA on ${this.connector.settings.url}`);
     return await createOPCUASession(this.connector.settings.url, userIdentity, options, this.connector.settings.connectionTimeout);
@@ -271,7 +277,8 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
 
   private async triggerReconnect(): Promise<void> {
     await this.disconnect();
-    if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+    // A server not trusted is not reconnected to: trusting its identity restarts the connector
+    if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout && !this.isServerNotTrusted()) {
       this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
     }
   }

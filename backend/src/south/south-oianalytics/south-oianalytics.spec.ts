@@ -35,6 +35,7 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
   type: 'oianalytics',
   description: 'test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     useOiaModule: false,
     timeout: 30,

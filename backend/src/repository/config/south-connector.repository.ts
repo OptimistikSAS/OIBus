@@ -4,6 +4,7 @@ import { Page } from '../../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
 import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { ServerTrust } from '../../../shared/model/domain/server-identity.model';
 import {
   SouthCachingStrategy,
   SouthCachingThresholdType,
@@ -91,7 +92,7 @@ export default class SouthConnectorRepository {
    * still fetches transformers per-row) — only the redundant base-row re-fetch is eliminated here.
    */
   findAllSouthFull(): Array<SouthConnectorEntity<SouthSettings, SouthItemSettings>> {
-    const query = `SELECT id, name, type, description, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${SOUTH_CONNECTORS_TABLE};`;
+    const query = `SELECT id, name, type, description, enabled, settings, server_trust, created_by, updated_by, created_at, updated_at FROM ${SOUTH_CONNECTORS_TABLE};`;
     return this.database
       .prepare(query)
       .all()
@@ -100,7 +101,7 @@ export default class SouthConnectorRepository {
 
   findSouthById(id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null {
     const query = `
-        SELECT id, name, type, description, enabled, settings, created_by, updated_by, created_at, updated_at
+        SELECT id, name, type, description, enabled, settings, server_trust, created_by, updated_by, created_at, updated_at
         FROM ${SOUTH_CONNECTORS_TABLE}
         WHERE id = ?;`;
 
@@ -146,7 +147,7 @@ export default class SouthConnectorRepository {
         if (!south.id) {
           south.id = generateRandomId(6);
         }
-        const insertQuery = `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+        const insertQuery = `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, server_trust, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
         this.database
           .prepare(insertQuery)
           .run(
@@ -156,14 +157,23 @@ export default class SouthConnectorRepository {
             south.description,
             +south.enabled,
             JSON.stringify(south.settings),
+            JSON.stringify(south.serverTrust),
             south.createdBy,
             south.updatedBy
           );
       } else {
-        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
+        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, server_trust = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
         this.database
           .prepare(query)
-          .run(south.name, south.description, +south.enabled, JSON.stringify(south.settings), south.updatedBy, south.id);
+          .run(
+            south.name,
+            south.description,
+            +south.enabled,
+            JSON.stringify(south.settings),
+            JSON.stringify(south.serverTrust),
+            south.updatedBy,
+            south.id
+          );
       }
 
       // Captured before any create/update below, so a group whose id was just preserved into a
@@ -446,6 +456,32 @@ export default class SouthConnectorRepository {
         isNewConnector ? 'CREATE' : 'UPDATE',
         ...redactAuditSnapshots(beforeConnector, afterConnector, connector => this.redactConnector(connector)),
         south.updatedBy
+      );
+    });
+    transaction();
+  }
+
+  /**
+   * Save the trust of the connector in the identity of its server: a user trusting the identity its server presented, or
+   * the connector trusting it at its first connection (`system`, not audited).
+   */
+  updateServerTrust(id: string, serverTrust: ServerTrust, updatedBy: string): void {
+    const before = this.findSouthById(id);
+    if (!before) {
+      throw new NotFoundError(`South connector "${id}" not found`);
+    }
+    const transaction = this.database.transaction(() => {
+      this.database
+        .prepare(
+          `UPDATE ${SOUTH_CONNECTORS_TABLE} SET server_trust = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+        )
+        .run(JSON.stringify(serverTrust), updatedBy, id);
+      this.auditService.record(
+        'south_connector',
+        id,
+        'UPDATE',
+        ...redactAuditSnapshots(before, this.findSouthById(id), connector => this.redactConnector(connector)),
+        updatedBy
       );
     });
     transaction();
@@ -919,6 +955,7 @@ export default class SouthConnectorRepository {
       description: result.description as string,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings as string) as SouthSettings,
+      serverTrust: JSON.parse(result.server_trust as string) as ServerTrust,
       items: this.findAllItemsForSouth(result.id as string),
       groups: this.findGroupBySouthId(result.id as string),
       createdBy: result.created_by as string,

@@ -3,6 +3,7 @@ import { SouthConnectorManifest } from '../../../shared/model/connector/south-ma
 const manifest: SouthConnectorManifest = {
   id: 'sftp',
   category: 'file',
+  serverIdentity: 'ssh-host-key',
   modes: {
     subscription: false,
     lastPoint: false,

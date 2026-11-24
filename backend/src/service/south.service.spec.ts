@@ -15,6 +15,7 @@ import {
 import { OIBusContent } from '../../shared/model/common/content.model';
 import { OIBUS_SOUTH_TYPES } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+import { ServerIdentity, ServerTrust } from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { SouthConnectorEntityLight, SouthConnectorItemEntity, SouthItemGroupEntity } from '../model/south-connector.model';
@@ -1062,6 +1063,358 @@ describe('South Service', () => {
     assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
   });
 
+  describe('with the identity of the server', () => {
+    const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+    const otherIdentity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:other', details: { keyType: 'ssh-ed25519' } };
+    const trustOf = (trusted: ServerIdentity, trustedBy = 'user1'): ServerTrust => ({
+      identity: { ...trusted, trustedBy, trustedAt: '2020-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false
+    });
+    const notTrustedMessage = `The server presents the host key ${identity.fingerprint}, which is not trusted: test the connection to review its identity and trust it`;
+    /** The south refuses the identity of its server, as a connector does at its connection, then fails */
+    const refuseServer = (south: SouthConnectorMock) => {
+      south.serverIdentityVerifier.verify(identity);
+      throw new Error('connection refused');
+    };
+
+    beforeEach(() => {
+      mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+      mock.method(mockedSouth1, 'retrieveServerIdentity', async () => identity);
+    });
+
+    afterEach(() => {
+      mock.timers.reset();
+    });
+
+    it('should trust the identity of the command when creating a south connector, by its creator', async () => {
+      mock.method(service, 'retrieveSecretsFromSouth', () => null);
+
+      await service.create({ ...testData.south.command, serverTrust: { identity } }, null, 'userTest');
+
+      assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[0].serverTrust, {
+        identity: { ...identity, trustedBy: 'userTest', trustedAt: testData.constants.dates.FAKE_NOW },
+        trustOnFirstUse: false
+      });
+    });
+
+    it('should trust no identity when creating a south connector without trust', async () => {
+      mock.method(service, 'retrieveSecretsFromSouth', () => null);
+
+      await service.create(testData.south.command, null, 'userTest');
+
+      assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[0].serverTrust, {
+        identity: null,
+        trustOnFirstUse: false
+      });
+    });
+
+    it('should keep the trust of the duplicated south connector when the command has none', async () => {
+      mock.method(service, 'retrieveSecretsFromSouth', () => testData.south.list[2]);
+
+      await service.create(testData.south.command, testData.south.list[2].id, 'userTest');
+
+      assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[0].serverTrust, testData.south.list[2].serverTrust);
+    });
+
+    it('should keep who trusted the identity of a south connector updated with the same identity', async () => {
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => ({ ...testData.south.list[0], serverTrust: trustOf(identity) }));
+
+      await service.update(testData.south.list[0].id, { ...testData.south.command, serverTrust: { identity } }, 'userTest');
+
+      assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+    });
+
+    it('should trust another identity of a south connector updated, by the user updating it', async () => {
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => ({ ...testData.south.list[0], serverTrust: trustOf(identity) }));
+
+      await service.update(testData.south.list[0].id, { ...testData.south.command, serverTrust: { identity: otherIdentity } }, 'userTest');
+
+      assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[0].serverTrust, {
+        identity: { ...otherIdentity, trustedBy: 'userTest', trustedAt: testData.constants.dates.FAKE_NOW },
+        trustOnFirstUse: false
+      });
+    });
+
+    it('should keep the trust of a south connector updated with a command without trust', async () => {
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => ({ ...testData.south.list[0], serverTrust: trustOf(identity) }));
+
+      await service.update(testData.south.list[0].id, testData.south.command, 'userTest');
+
+      assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+    });
+
+    it('should get the trust of a south connector which is not in the engine, with no pending identity', () => {
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[2]);
+
+      assert.deepStrictEqual(service.getServerTrustState(testData.south.list[2].id), {
+        ...testData.south.list[2].serverTrust,
+        pending: null
+      });
+      assert.strictEqual(engine.getSouth.mock.calls.length, 0);
+    });
+
+    it('should get the trust of a south connector with the identity its engine instance refused', () => {
+      mockedSouth1.serverIdentityVerifier.verify(identity);
+      registerLiveSouth(mockedSouth1);
+
+      assert.deepStrictEqual(service.getServerTrustState(testData.south.list[0].id), {
+        identity: null,
+        trustOnFirstUse: false,
+        pending: { identity, status: 'unknown' }
+      });
+    });
+
+    it('should trust the identity the server of a south connector presents, and reload it', async () => {
+      await service.trustServerIdentity(testData.south.list[0].id, identity.fingerprint, 'userTest');
+
+      // The identity is asked to a throwaway connector, never started
+      assert.deepStrictEqual(buildSouth.mock.calls[0].arguments[0], { ...testData.south.list[0], enabled: false, items: [], groups: [] });
+      assert.deepStrictEqual(southConnectorRepository.updateServerTrust.mock.calls[0].arguments, [
+        testData.south.list[0].id,
+        { identity: { ...identity, trustedBy: 'userTest', trustedAt: testData.constants.dates.FAKE_NOW }, trustOnFirstUse: false },
+        'userTest'
+      ]);
+      assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+      assert.deepStrictEqual(engine.reloadSouth.mock.calls[0].arguments, [testData.south.list[0]]);
+    });
+
+    it('should not trust an identity of a south connector when its server presents another one', async () => {
+      await assert.rejects(
+        service.trustServerIdentity(testData.south.list[0].id, otherIdentity.fingerprint, 'userTest'),
+        new OIBusValidationError(
+          `The server presents the host key ${identity.fingerprint}, not the one to trust (${otherIdentity.fingerprint}): test the connection again`
+        )
+      );
+
+      assert.strictEqual(southConnectorRepository.updateServerTrust.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
+      assert.strictEqual(engine.reloadSouth.mock.calls.length, 0);
+    });
+
+    it('should not trust an identity of a south connector which does not check the identity of its server', async () => {
+      mock.method(mockedSouth1, 'retrieveServerIdentity', async () => null);
+
+      await assert.rejects(
+        service.trustServerIdentity(testData.south.list[0].id, identity.fingerprint, 'userTest'),
+        new OIBusValidationError('The connector does not check the identity of its server with its current settings')
+      );
+      assert.strictEqual(southConnectorRepository.updateServerTrust.mock.calls.length, 0);
+    });
+
+    it('should return the identity of a server not trusted without testing the connection', async () => {
+      const result = await service.testSouth('create', testData.south.command.type, testData.south.command.settings);
+
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'unknown' } });
+      assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 0);
+    });
+
+    it('should return the identity of a server whose identity changed without testing the connection', async () => {
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => ({
+        ...testData.south.list[0],
+        serverTrust: trustOf(otherIdentity)
+      }));
+
+      const result = await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings);
+
+      assert.deepStrictEqual(buildSouth.mock.calls[0].arguments[0].serverTrust, trustOf(otherIdentity));
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'changed' } });
+      assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 0);
+    });
+
+    it('should test the connection to a trusted server, with its identity', async () => {
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => ({ ...testData.south.list[0], serverTrust: trustOf(identity) }));
+      mockedSouth1.testConnection.mock.mockImplementation(async () => ({ items: [{ key: 'Server', value: 'ok' }] }));
+
+      const result = await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings);
+
+      assert.deepStrictEqual(result, { items: [{ key: 'Server', value: 'ok' }], serverIdentity: { identity, status: 'trusted' } });
+      assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
+    });
+
+    it('should test the connection to a server trusted by the history query', async () => {
+      const result = await service.testSouth(
+        'history',
+        testData.south.command.type,
+        testData.south.command.settings,
+        null,
+        trustOf(identity)
+      );
+
+      assert.deepStrictEqual(buildSouth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'trusted' } });
+      assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
+    });
+
+    it('should test the connection to a server whose identity is trusted in the form of the connector', async () => {
+      const result = await service.testSouth('create', testData.south.command.type, testData.south.command.settings, identity.fingerprint);
+
+      // The throwaway connector trusts the identity, not saved
+      assert.deepStrictEqual(mockedSouth1.connectorConfiguration.serverTrust, {
+        identity: { ...identity, trustedBy: '', trustedAt: '' },
+        trustOnFirstUse: false
+      });
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'trusted' } });
+      assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
+      assert.strictEqual(southConnectorRepository.updateServerTrust.mock.calls.length, 0);
+    });
+
+    it('should not trust an identity trusted in the form of the connector which the server does not present', async () => {
+      const result = await service.testSouth(
+        'create',
+        testData.south.command.type,
+        testData.south.command.settings,
+        otherIdentity.fingerprint
+      );
+
+      assert.deepStrictEqual(mockedSouth1.connectorConfiguration.serverTrust, { identity: null, trustOnFirstUse: false });
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'unknown' } });
+      assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 0);
+    });
+
+    it('should test the connection through a throwaway connector when the form trusts another identity than the live instance', async () => {
+      mockedSouth1.isEnabled.mock.mockImplementation(() => true);
+      registerLiveSouth(mockedSouth1);
+
+      await service.testSouth(
+        testData.south.list[0].id,
+        testData.south.command.type,
+        testData.south.list[0].settings,
+        otherIdentity.fingerprint
+      );
+
+      assert.strictEqual(buildSouth.mock.calls.length, 1);
+    });
+
+    it('should test the connection through the live instance when the form trusts its saved identity', async () => {
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => ({ ...testData.south.list[0], serverTrust: trustOf(identity) }));
+      mockedSouth1.connectorConfiguration = { ...testData.south.list[0], serverTrust: trustOf(identity) };
+      mockedSouth1.isEnabled.mock.mockImplementation(() => true);
+      registerLiveSouth(mockedSouth1);
+
+      await service.testSouth(
+        testData.south.list[0].id,
+        testData.south.command.type,
+        testData.south.list[0].settings,
+        identity.fingerprint
+      );
+
+      assert.strictEqual(buildSouth.mock.calls.length, 0);
+      assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
+    });
+
+    it('should test an item through a throwaway connector trusting the identity trusted in the form', async () => {
+      mockedSouth1.isEnabled.mock.mockImplementation(() => true);
+      registerLiveSouth(mockedSouth1);
+
+      await service.testItem(
+        testData.south.list[0].id,
+        testData.south.command.type,
+        testData.south.itemCommand.name,
+        testData.south.list[0].settings,
+        testData.south.itemCommand.settings,
+        testData.south.itemTestingSettings,
+        undefined,
+        identity.fingerprint
+      );
+
+      assert.strictEqual(buildSouth.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedSouth1.connectorConfiguration.serverTrust, {
+        identity: { ...identity, trustedBy: '', trustedAt: '' },
+        trustOnFirstUse: false
+      });
+      assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
+    });
+
+    it('should test an item of a history query with the trust of the history query', async () => {
+      await service.testItem(
+        'history',
+        testData.south.command.type,
+        testData.south.itemCommand.name,
+        testData.south.command.settings,
+        testData.south.itemCommand.settings,
+        testData.south.itemTestingSettings,
+        'History query name',
+        null,
+        trustOf(identity)
+      );
+
+      assert.deepStrictEqual(buildSouth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+      assert.deepStrictEqual(mockedSouth1.connectorConfiguration.serverTrust, trustOf(identity));
+    });
+
+    it('should tell how to trust the server when an item test is refused because the server is not trusted', async () => {
+      mockedSouth1.testItem.mock.mockImplementation(async () => refuseServer(mockedSouth1));
+
+      await assert.rejects(
+        service.testItem(
+          'create',
+          testData.south.command.type,
+          testData.south.itemCommand.name,
+          testData.south.command.settings,
+          testData.south.itemCommand.settings,
+          testData.south.itemTestingSettings
+        ),
+        new Error(notTrustedMessage)
+      );
+    });
+
+    it('should keep the error of an item test failing for another reason', async () => {
+      mockedSouth1.testItem.mock.mockImplementation(async () => {
+        throw new Error('item not found');
+      });
+
+      await assert.rejects(
+        service.testItem(
+          'create',
+          testData.south.command.type,
+          testData.south.itemCommand.name,
+          testData.south.command.settings,
+          testData.south.itemCommand.settings,
+          testData.south.itemTestingSettings
+        ),
+        new Error('item not found')
+      );
+    });
+
+    it('should tell how to trust the server when an explore connection is refused because the server is not trusted', async () => {
+      mock.method(mockedSouth1, 'hasExplore', () => true);
+      mockedSouth1.connect.mock.mockImplementation(async () => refuseServer(mockedSouth1));
+
+      await assert.rejects(
+        service.startExplore('create', testData.south.command.type, testData.south.command.settings),
+        new OIBusExploreError(notTrustedMessage, 'connection')
+      );
+      assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+    });
+
+    it('should explore through a throwaway connector trusting the identity trusted by the history query', async () => {
+      mock.method(mockedSouth1, 'hasExplore', () => true);
+
+      await service.startExplore('history', testData.south.command.type, testData.south.command.settings, null, trustOf(identity));
+
+      assert.deepStrictEqual(buildSouth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+      assert.strictEqual(mockedSouth1.connect.mock.calls.length, 1);
+    });
+
+    it('should tell how to trust the server when a discovery is refused because the server is not trusted', async () => {
+      mockedSouth1.hasConfigurationDiscovery.mock.mockImplementation(() => true);
+      mockedSouth1.discover.mock.mockImplementation(async () => refuseServer(mockedSouth1));
+
+      await assert.rejects(
+        service.testDiscoveryQuery('create', testData.south.command.type, testData.south.command.settings, 'SELECT 1'),
+        new Error(notTrustedMessage)
+      );
+      assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+    });
+
+    it('should convert the trust of a south connector to a DTO, with the user who trusted its identity', () => {
+      assert.deepStrictEqual(toSouthConnectorDTO({ ...testData.south.list[0], serverTrust: trustOf(identity) }, getUserInfo).serverTrust, {
+        identity: { ...identity, trustedBy: getUserInfo('user1'), trustedAt: '2020-01-01T00:00:00.000Z' },
+        trustOnFirstUse: false
+      });
+    });
+  });
+
   it('should list items', () => {
     service.listItems(testData.south.list[0].id);
     assert.deepStrictEqual(southConnectorRepository.findAllItemsForSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
@@ -1959,6 +2312,7 @@ describe('South Service', () => {
       description: southEntity.description,
       enabled: southEntity.enabled,
       settings: southEntity.settings,
+      serverTrust: { identity: null, trustOnFirstUse: false },
       createdBy: getUserInfo(southEntity.createdBy),
       updatedBy: getUserInfo(southEntity.updatedBy),
       createdAt: southEntity.createdAt,

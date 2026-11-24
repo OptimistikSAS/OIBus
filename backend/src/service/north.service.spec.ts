@@ -5,9 +5,11 @@ import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'no
 import { NorthConnectorCommandDTO } from '../../shared/model/api/north-connector.model';
 import { TransformerDTO } from '../../shared/model/api/transformer.model';
 import { OIBUS_NORTH_TYPES } from '../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { ServerIdentity, ServerTrust } from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
-import type { NorthConnectorEntityLight } from '../model/north-connector.model';
+import type { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
 import type { SouthConnectorItemEntityLight, SouthItemGroupEntity } from '../model/south-connector.model';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
@@ -133,7 +135,7 @@ describe('North Service', () => {
   let transformerService: Mocked<TransformerService>;
   let southItemGroupRepository: Mocked<SouthItemGroupRepository>;
   let mockedNorth1: NorthConnectorMock;
-  let buildNorth: Mock<() => NorthConnectorMock>;
+  let buildNorth: Mock<(entity: NorthConnectorEntity<NorthSettings>) => NorthConnectorMock>;
 
   beforeEach(() => {
     mock.timers.enable({
@@ -142,7 +144,7 @@ describe('North Service', () => {
     });
 
     mockedNorth1 = new NorthConnectorMock(testData.north.list[0]);
-    buildNorth = mock.fn(() => mockedNorth1);
+    buildNorth = mock.fn((_entity: NorthConnectorEntity<NorthSettings>) => mockedNorth1);
     northConnectorFactoryExports.buildNorth = buildNorth;
 
     northConnectorRepository = createMock<NorthConnectorRepository>({
@@ -421,6 +423,216 @@ describe('North Service', () => {
     assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 1);
   });
 
+  describe('with the identity of the server', () => {
+    const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+    const otherIdentity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:other', details: { keyType: 'ssh-ed25519' } };
+    const trustOf = (trusted: ServerIdentity): ServerTrust => ({
+      identity: { ...trusted, trustedBy: 'user1', trustedAt: '2020-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false
+    });
+
+    beforeEach(() => {
+      mock.method(mockedNorth1, 'retrieveServerIdentity', async () => identity);
+    });
+
+    it('should trust the identity of the command when creating a north connector, by its creator', async () => {
+      await service.create({ ...testData.north.command, serverTrust: { identity } }, null, 'userTest');
+
+      assert.deepStrictEqual(northConnectorRepository.saveNorth.mock.calls[0].arguments[0].serverTrust, {
+        identity: { ...identity, trustedBy: 'userTest', trustedAt: testData.constants.dates.FAKE_NOW },
+        trustOnFirstUse: false
+      });
+    });
+
+    it('should trust no identity when creating a north connector without trust', async () => {
+      await service.create(testData.north.command, null, 'userTest');
+
+      assert.deepStrictEqual(northConnectorRepository.saveNorth.mock.calls[0].arguments[0].serverTrust, {
+        identity: null,
+        trustOnFirstUse: false
+      });
+    });
+
+    it('should keep the trust of the duplicated north connector when the command has none', async () => {
+      mock.method(service, 'retrieveSecretsFromNorth', () => ({ ...testData.north.list[0], serverTrust: trustOf(identity) }));
+
+      await service.create(testData.north.command, testData.north.list[0].id, 'userTest');
+
+      assert.deepStrictEqual(northConnectorRepository.saveNorth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+    });
+
+    it('should keep who trusted the identity of a north connector updated with the same identity', async () => {
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => ({ ...testData.north.list[0], serverTrust: trustOf(identity) }));
+
+      await service.update(testData.north.list[0].id, { ...testData.north.command, serverTrust: { identity } }, 'userTest');
+
+      assert.deepStrictEqual(northConnectorRepository.saveNorth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+    });
+
+    it('should trust another identity of a north connector updated, by the user updating it', async () => {
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => ({ ...testData.north.list[0], serverTrust: trustOf(identity) }));
+
+      await service.update(testData.north.list[0].id, { ...testData.north.command, serverTrust: { identity: otherIdentity } }, 'userTest');
+
+      assert.deepStrictEqual(northConnectorRepository.saveNorth.mock.calls[0].arguments[0].serverTrust, {
+        identity: { ...otherIdentity, trustedBy: 'userTest', trustedAt: testData.constants.dates.FAKE_NOW },
+        trustOnFirstUse: false
+      });
+    });
+
+    it('should trust no identity of a north connector updated with no identity, trusting the first one on demand', async () => {
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => ({ ...testData.north.list[0], serverTrust: trustOf(identity) }));
+
+      await service.update(
+        testData.north.list[0].id,
+        { ...testData.north.command, serverTrust: { identity: null, trustOnFirstUse: true } },
+        'userTest'
+      );
+
+      assert.deepStrictEqual(northConnectorRepository.saveNorth.mock.calls[0].arguments[0].serverTrust, {
+        identity: null,
+        trustOnFirstUse: true
+      });
+    });
+
+    it('should keep the trust of a north connector updated with a command without trust', async () => {
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => ({ ...testData.north.list[0], serverTrust: trustOf(identity) }));
+
+      await service.update(testData.north.list[0].id, testData.north.command, 'userTest');
+
+      assert.deepStrictEqual(northConnectorRepository.saveNorth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+    });
+
+    it('should get the trust of a north connector which is not in the engine, with no pending identity', () => {
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => ({ ...testData.north.list[0], serverTrust: trustOf(identity) }));
+      engine.getNorth.mock.mockImplementation(() => {
+        throw new Error('not found');
+      });
+
+      assert.deepStrictEqual(service.getServerTrustState(testData.north.list[0].id), { ...trustOf(identity), pending: null });
+    });
+
+    it('should get the trust of a north connector with the identity its engine instance refused', () => {
+      mockedNorth1.serverIdentityVerifier.verify(identity);
+      engine.getNorth.mock.mockImplementation(() => ({ north: mockedNorth1, metrics: createMock<NorthConnectorMetricsService>() }));
+
+      assert.deepStrictEqual(service.getServerTrustState(testData.north.list[0].id), {
+        identity: null,
+        trustOnFirstUse: false,
+        pending: { identity, status: 'unknown' }
+      });
+      assert.deepStrictEqual(engine.getNorth.mock.calls[0].arguments, [testData.north.list[0].id]);
+    });
+
+    it('should trust the identity the server of a north connector presents, and reload it', async () => {
+      await service.trustServerIdentity(testData.north.list[0].id, identity.fingerprint, 'userTest');
+
+      // The identity is asked to a throwaway connector, never started
+      assert.deepStrictEqual(buildNorth.mock.calls[0].arguments[0], { ...testData.north.list[0], enabled: false, transformers: [] });
+      assert.deepStrictEqual(northConnectorRepository.updateServerTrust.mock.calls[0].arguments, [
+        testData.north.list[0].id,
+        { identity: { ...identity, trustedBy: 'userTest', trustedAt: testData.constants.dates.FAKE_NOW }, trustOnFirstUse: false },
+        'userTest'
+      ]);
+      assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+      assert.deepStrictEqual(engine.reloadNorth.mock.calls[0].arguments, [testData.north.list[0]]);
+    });
+
+    it('should not trust an identity of a north connector when its server presents another one', async () => {
+      await assert.rejects(
+        service.trustServerIdentity(testData.north.list[0].id, otherIdentity.fingerprint, 'userTest'),
+        new OIBusValidationError(
+          `The server presents the host key ${identity.fingerprint}, not the one to trust (${otherIdentity.fingerprint}): test the connection again`
+        )
+      );
+
+      assert.strictEqual(northConnectorRepository.updateServerTrust.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
+      assert.strictEqual(engine.reloadNorth.mock.calls.length, 0);
+    });
+
+    it('should return the identity of a server not trusted without testing the connection', async () => {
+      const result = await service.testNorth('create', testData.north.command.type, testData.north.command.settings);
+
+      assert.deepStrictEqual(buildNorth.mock.calls[0].arguments[0].serverTrust, { identity: null, trustOnFirstUse: false });
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'unknown' } });
+      assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 0);
+    });
+
+    it('should return the identity of a server whose identity changed without testing the connection', async () => {
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => ({
+        ...testData.north.list[0],
+        serverTrust: trustOf(otherIdentity)
+      }));
+
+      const result = await service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings);
+
+      assert.deepStrictEqual(buildNorth.mock.calls[0].arguments[0].serverTrust, trustOf(otherIdentity));
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'changed' } });
+      assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 0);
+    });
+
+    it('should test the connection to a trusted server, with its identity', async () => {
+      northConnectorRepository.findNorthById.mock.mockImplementation(() => ({ ...testData.north.list[0], serverTrust: trustOf(identity) }));
+      mockedNorth1.testConnection.mock.mockImplementation(async () => ({ items: [{ key: 'Server', value: 'ok' }] }));
+
+      const result = await service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings);
+
+      assert.deepStrictEqual(result, { items: [{ key: 'Server', value: 'ok' }], serverIdentity: { identity, status: 'trusted' } });
+      assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 1);
+    });
+
+    it('should test the connection to a server trusted by the history query', async () => {
+      const result = await service.testNorth(
+        'history',
+        testData.north.command.type,
+        testData.north.command.settings,
+        null,
+        trustOf(identity)
+      );
+
+      assert.deepStrictEqual(buildNorth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'trusted' } });
+      assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 1);
+    });
+
+    it('should test the connection to a server whose identity is trusted in the form of the connector', async () => {
+      const result = await service.testNorth('create', testData.north.command.type, testData.north.command.settings, identity.fingerprint);
+
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'trusted' } });
+      assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 1);
+      assert.strictEqual(northConnectorRepository.updateServerTrust.mock.calls.length, 0);
+    });
+
+    it('should not trust an identity trusted in the form of the connector which the server does not present', async () => {
+      const result = await service.testNorth(
+        'create',
+        testData.north.command.type,
+        testData.north.command.settings,
+        otherIdentity.fingerprint
+      );
+
+      assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'unknown' } });
+      assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 0);
+    });
+
+    it('should test the connection of a connector which does not check the identity of its server', async () => {
+      mock.method(mockedNorth1, 'retrieveServerIdentity', async () => null);
+
+      const result = await service.testNorth('create', testData.north.command.type, testData.north.command.settings);
+
+      assert.deepStrictEqual(result, { items: [] });
+      assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 1);
+    });
+
+    it('should convert the trust of a north connector to a DTO, with the user who trusted its identity', () => {
+      assert.deepStrictEqual(toNorthConnectorDTO({ ...testData.north.list[0], serverTrust: trustOf(identity) }, getUserInfo).serverTrust, {
+        identity: { ...identity, trustedBy: getUserInfo('user1'), trustedAt: '2020-01-01T00:00:00.000Z' },
+        trustOnFirstUse: false
+      });
+    });
+  });
+
   it('should add or edit transformer', () => {
     const transformerWithOptions = {
       id: 'northTransformerId1',
@@ -521,6 +733,7 @@ describe('North Service', () => {
         northEntity.settings,
         northManifestList.find(element => element.id === northEntity.type)!.settings
       ),
+      serverTrust: { identity: null, trustOnFirstUse: false },
       caching: {
         trigger: {
           scanMode: toScanModeDTO(northEntity.caching.trigger.scanMode, getUserInfo),

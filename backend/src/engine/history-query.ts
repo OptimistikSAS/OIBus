@@ -22,6 +22,7 @@ import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { Instant } from '../model/types';
 import NorthConnector from '../north/north-connector';
 import { loggerService } from '../service/logger/logger.service';
+import ServerIdentityVerifier from '../service/server-identity-verifier';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import { delay, generateIntervals } from '../service/utils';
 import SouthConnector from '../south/south-connector';
@@ -108,6 +109,11 @@ export default class HistoryQuery {
       historyConfiguration.queryTimeRange.endTime,
       historyConfiguration.queryTimeRange.maxReadInterval
     );
+  }
+
+  /** What checks the identity of the server of a side of the history query (see `SouthConnector.serverIdentityVerifier`). */
+  getServerIdentityVerifier(side: 'south' | 'north'): ServerIdentityVerifier {
+    return side === 'south' ? this.south.serverIdentityVerifier : this.north.serverIdentityVerifier;
   }
 
   /** Live north cache/error/archive folder sizes, read from the cache service (the authoritative source). */
@@ -364,6 +370,7 @@ export default class HistoryQuery {
       enabled: historyQueryConfiguration.status === 'RUNNING',
       type: historyQueryConfiguration.southType,
       settings: historyQueryConfiguration.southSettings,
+      serverTrust: historyQueryConfiguration.southServerTrust,
       items: [],
       groups: [],
       createdBy: historyQueryConfiguration.createdBy,
@@ -378,6 +385,7 @@ export default class HistoryQuery {
       enabled: historyQueryConfiguration.status === 'RUNNING',
       type: historyQueryConfiguration.northType,
       settings: historyQueryConfiguration.northSettings,
+      serverTrust: historyQueryConfiguration.northServerTrust,
       caching: historyQueryConfiguration.caching,
       transformers: historyQueryConfiguration.northTransformers.map(element => ({
         id: element.id,

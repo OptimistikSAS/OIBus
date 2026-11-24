@@ -1,5 +1,6 @@
 import { OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { ServerTrust } from '../../shared/model/domain/server-identity.model';
 
 import { ScanMode } from './scan-mode.model';
 import { NorthTransformerWithOptions } from './transformer.model';
@@ -42,4 +43,6 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
     };
   };
   transformers: Array<NorthTransformerWithOptions>;
+  // The trust in the identity of the server, for the connectors which check it (see NorthConnector.retrieveServerIdentity)
+  serverTrust: ServerTrust;
 }

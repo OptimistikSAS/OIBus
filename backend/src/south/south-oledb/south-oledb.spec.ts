@@ -65,6 +65,7 @@ const buildConfiguration = (
   type: 'oledb',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     connectionString: 'Provider=MSOLEDBSQL;Data Source=localhost;Initial Catalog=oibus;User Id=oibus',
     password: 'encrypted-password',

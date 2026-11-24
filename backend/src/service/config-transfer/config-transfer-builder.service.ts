@@ -111,6 +111,8 @@ export default class ConfigTransferBuilderService {
             },
             northType: historyQuery.northType,
             northSettings: encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
+            southServerTrust: historyQuery.southServerTrust,
+            northServerTrust: historyQuery.northServerTrust,
             caching: this.buildCachingCommand(historyQuery.caching),
             items: historyQuery.items.map(item => ({
               id: item.id,
@@ -407,7 +409,8 @@ export default class ConfigTransferBuilderService {
               cachingStrategy: group.cachingStrategy
             }
           })),
-          configurationWorkflows: (workflowsBySouth.get(south.id) ?? []).map(workflow => this.buildConfigurationWorkflowCommand(workflow))
+          configurationWorkflows: (workflowsBySouth.get(south.id) ?? []).map(workflow => this.buildConfigurationWorkflowCommand(workflow)),
+          serverTrust: south.serverTrust
         }
       };
       // Type assertion is safe because we know the type field matches the settings and items at runtime
@@ -452,6 +455,7 @@ export default class ConfigTransferBuilderService {
           description: north.description,
           enabled: north.enabled,
           settings: encryptionService.filterSecrets(north.settings, manifest.settings),
+          serverTrust: north.serverTrust,
           caching: this.buildCachingCommand(north.caching),
           transformers: north.transformers.map(transformerWithOptions => ({
             id: transformerWithOptions.id,

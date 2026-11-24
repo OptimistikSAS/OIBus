@@ -63,6 +63,7 @@ const buildConfiguration = (settings: Partial<SouthPISettings> = {}): SouthConne
   type: 'osisoft-pi',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: { serverName: null, retryInterval: 1000, ...settings },
   groups: [],
   items: [pointItem, sameSourceItem, otherPointItem, queryItem],

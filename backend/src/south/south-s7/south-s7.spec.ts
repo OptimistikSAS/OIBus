@@ -65,6 +65,7 @@ const configuration: SouthConnectorEntity<SouthS7Settings, SouthS7ItemSettings> 
   type: 's7',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     host: '127.0.0.1',
     port: 102,

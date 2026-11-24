@@ -8,6 +8,7 @@ import type { OIBusContent } from '../../shared/model/common/content.model';
 import type { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import type { CacheContentUpdateCommand, CacheSearchParam, HistoryQueryMetrics } from '../../shared/model/domain/engine.model';
+import type { TrustedServerIdentity } from '../../shared/model/domain/server-identity.model';
 
 import type { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import type { HistoryQueryEntity, HistoryQueryEntityLight } from '../model/histor-query.model';
@@ -99,6 +100,15 @@ let engine: DataStreamEngineType;
 const northList: Array<NorthConnectorEntityLight> = testData.north.list;
 const southList: Array<SouthConnectorEntityLight> = testData.south.list.slice(0, 2);
 const historyList: Array<HistoryQueryEntityLight> = testData.historyQueries.listLight;
+
+// An identity trusted by a connector at its first connection
+const trustedOnFirstUse: TrustedServerIdentity = {
+  type: 'ssh-host-key',
+  fingerprint: 'SHA256:abc',
+  details: { keyType: 'ssh-ed25519' },
+  trustedBy: 'system',
+  trustedAt: testData.constants.dates.FAKE_NOW
+};
 
 const loggedError = (text: string) => logger.error.mock.calls.some(c => String(c.arguments[0]).includes(text));
 const givenScanModes = (...scanModes: Array<ScanMode>) => scanModeRepository.findAll.mock.mockImplementation(() => scanModes);
@@ -414,6 +424,22 @@ describe('DataStreamEngine', () => {
       assert.strictEqual(calls.length, 1);
       assert.deepStrictEqual(calls[0].arguments, [northConfig.id]);
     });
+
+    it('should save the identity a north connector trusted on first use', () => {
+      // Started twice: the listener of the first start is replaced
+      engine.startNorth(testData.north.list[0].id);
+      engine.startNorth(testData.north.list[0].id);
+
+      mockedNorth1.serverIdentityVerifier.events.emit('trusted-on-first-use', trustedOnFirstUse);
+
+      assert.strictEqual(northConnectorRepository.updateServerTrust.mock.calls.length, 1);
+      assert.deepStrictEqual(northConnectorRepository.updateServerTrust.mock.calls[0].arguments, [
+        testData.north.list[0].id,
+        { identity: trustedOnFirstUse, trustOnFirstUse: false },
+        'system'
+      ]);
+      assert.strictEqual(oianalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    });
   });
 
   describe('South Connector Management', () => {
@@ -578,6 +604,22 @@ describe('DataStreamEngine', () => {
       assert.ok(mockedNorth1.cacheContent.mock.calls.length > 0);
       assert.ok(mockedNorth2.cacheContent.mock.calls.length > 0);
     });
+
+    it('should save the identity a south connector trusted on first use', () => {
+      // Started twice: the listener of the first start is replaced
+      engine.startSouth(testData.south.list[0].id);
+      engine.startSouth(testData.south.list[0].id);
+
+      mockedSouth1.serverIdentityVerifier.events.emit('trusted-on-first-use', trustedOnFirstUse);
+
+      assert.strictEqual(southConnectorRepository.updateServerTrust.mock.calls.length, 1);
+      assert.deepStrictEqual(southConnectorRepository.updateServerTrust.mock.calls[0].arguments, [
+        testData.south.list[0].id,
+        { identity: trustedOnFirstUse, trustOnFirstUse: false },
+        'system'
+      ]);
+      assert.strictEqual(oianalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    });
   });
 
   describe('History Query Management', () => {
@@ -643,6 +685,26 @@ describe('DataStreamEngine', () => {
 
       assert.strictEqual(engine.getHistoryMetrics(testData.historyQueries.list[0].id), testData.historyQueries.metrics);
     });
+
+    for (const side of ['south', 'north'] as const) {
+      it(`should save the identity the ${side} of a history query trusted on first use`, () => {
+        // Started twice: the listeners of the first start are replaced
+        engine.startHistoryQuery(testData.historyQueries.list[0].id);
+        engine.startHistoryQuery(testData.historyQueries.list[0].id);
+
+        mockedHistoryQuery1.serverIdentityVerifiers[side].events.emit('trusted-on-first-use', trustedOnFirstUse);
+
+        assert.strictEqual(historyQueryRepository.updateServerTrust.mock.calls.length, 1);
+        assert.deepStrictEqual(historyQueryRepository.updateServerTrust.mock.calls[0].arguments, [
+          testData.historyQueries.list[0].id,
+          side,
+          { identity: trustedOnFirstUse, trustOnFirstUse: false },
+          'system'
+        ]);
+        assert.strictEqual(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+        assert.strictEqual(oianalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
+      });
+    }
   });
 
   describe('Transformer Reload Management', () => {

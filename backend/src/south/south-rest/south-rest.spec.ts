@@ -25,6 +25,7 @@ const createConfiguration = (): SouthConnectorEntity<SouthRestSettings, SouthRes
   type: 'rest',
   description: 'Rest connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     host: 'https://api.example.com/',
     acceptUnauthorized: true,

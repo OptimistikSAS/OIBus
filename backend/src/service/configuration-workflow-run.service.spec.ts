@@ -793,7 +793,13 @@ describe('Configuration Workflow Run Service', () => {
 
       const result = await service.previewCommand('create', 'opcua', southSettings, null, command);
 
-      assert.deepStrictEqual(southService.discover.mock.calls[0].arguments, ['create', 'opcua', southSettings, command.discoveryScope]);
+      assert.deepStrictEqual(southService.discover.mock.calls[0].arguments, [
+        'create',
+        'opcua',
+        southSettings,
+        command.discoveryScope,
+        null
+      ]);
       assert.strictEqual(configurationWorkflowService.findById.mock.calls.length, 0);
       assert.strictEqual(itemPointMetadataRepository.findAllByWorkflow.mock.calls.length, 0);
       assert.strictEqual(engine.getSouth.mock.calls.length, 0);
@@ -944,7 +950,9 @@ describe('Configuration Workflow Run Service', () => {
         'create',
         'folder-scanner',
         southSettings,
-        { nodeIds: ['ns=1;s=Reactor'] }
+        { nodeIds: ['ns=1;s=Reactor'] },
+        null,
+        null
       ]);
       // the settings left out get their manifest default, but ignoreModifiedDate, which only applies to preserved files
       const defaults = { preserveFiles: false, maxFiles: 0, maxSize: 0, recursive: false };

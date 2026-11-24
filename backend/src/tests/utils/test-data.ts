@@ -554,6 +554,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     type: 'folder-scanner',
     description: 'my folder scanner',
     enabled: true,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -630,6 +631,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     type: 'mssql',
     description: 'my MSSQL south connector',
     enabled: false,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -723,6 +725,26 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     type: 'opcua',
     description: 'my OPCUA south connector',
     enabled: true,
+    serverTrust: {
+      identity: {
+        type: 'x509',
+        fingerprint: '0A:1B:2C:3D:4E:5F:60:71:82:93:A4:B5:C6:D7:E8:F9:0A:1B:2C:3D:4E:5F:60:71:82:93:A4:B5:C6:D7:E8:F9',
+        details: {
+          subject: 'CN=SimulationServer',
+          issuer: 'CN=SimulationServer',
+          serialNumber: '01',
+          validFrom: '2026-01-01T00:00:00.000Z',
+          validTo: '2027-01-01T00:00:00.000Z',
+          uris: ['urn:localhost:OPCUA:SimulationServer'],
+          dnsNames: ['localhost'],
+          ipAddresses: [],
+          selfSigned: true
+        },
+        trustedBy: 'user1',
+        trustedAt: '2026-01-01T00:00:00.000Z'
+      },
+      trustOnFirstUse: false
+    },
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -994,6 +1016,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     type: 'file-writer',
     description: 'my file writer',
     enabled: true,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -1109,6 +1132,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     type: 'oianalytics',
     description: 'my oianalytics',
     enabled: false,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -1214,6 +1238,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     name: 'my first History Query',
     description: 'description',
     status: 'RUNNING',
+    southServerTrust: { identity: null, trustOnFirstUse: false },
+    northServerTrust: { identity: null, trustOnFirstUse: false },
     queryTimeRange: {
       startTime: constants.dates.DATE_1,
       endTime: constants.dates.DATE_2,
@@ -1330,6 +1356,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     name: 'My second History Query',
     description: 'description',
     status: 'PENDING',
+    southServerTrust: { identity: null, trustOnFirstUse: false },
+    northServerTrust: { identity: null, trustOnFirstUse: false },
     queryTimeRange: {
       startTime: constants.dates.DATE_1,
       endTime: constants.dates.DATE_2,

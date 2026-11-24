@@ -4,6 +4,7 @@ import { after, before, beforeEach, describe, it, mock } from 'node:test';
 import { Database } from 'better-sqlite3';
 
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { ServerTrust } from '../../../shared/model/domain/server-identity.model';
 
 import { ConfigurationWorkflowCommand } from '../../model/configuration-workflow.model';
 import { ScanMode } from '../../model/scan-mode.model';
@@ -27,6 +28,17 @@ const TEST_DB_PATH = 'src/tests/test-config-south.db';
 type South = SouthConnectorEntity<SouthSettings, SouthItemSettings>;
 type SouthItem = SouthConnectorItemEntity<SouthItemSettings>;
 type AuditCall = Parameters<AuditService['record']>;
+
+const trustedSshHostKey: ServerTrust = {
+  identity: {
+    type: 'ssh-host-key',
+    fingerprint: 'SHA256:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU',
+    details: { keyType: 'ssh-ed25519' },
+    trustedBy: 'trustUser',
+    trustedAt: '2026-01-01T00:00:00.000Z'
+  },
+  trustOnFirstUse: false
+};
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
@@ -488,6 +500,37 @@ describe('SouthConnectorRepository', () => {
   it('should start south connector', () => {
     repository.start(testData.south.list[0].id);
     assert.strictEqual(repository.findSouthById(testData.south.list[0].id)!.enabled, true);
+  });
+
+  it('should save and read back the server trust of a south connector', () => {
+    const south = newSouth('south with a trusted server', { serverTrust: clone(trustedSshHostKey), groups: [] });
+    repository.saveSouth(south, true);
+    assert.deepStrictEqual(repository.findSouthById(south.id)!.serverTrust, trustedSshHostKey);
+    assert.deepStrictEqual(repository.findAllSouthFull().find(s => s.id === south.id)!.serverTrust, trustedSshHostKey);
+
+    repository.saveSouth({ ...repository.findSouthById(south.id)!, serverTrust: { identity: null, trustOnFirstUse: true } }, false);
+    assert.deepStrictEqual(repository.findSouthById(south.id)!.serverTrust, { identity: null, trustOnFirstUse: true });
+  });
+
+  it('should update the server trust of a south connector and audit it', () => {
+    const south = newSouth('south trusting its server', { serverTrust: { identity: null, trustOnFirstUse: true }, groups: [] });
+    repository.saveSouth(south, true);
+
+    const calls = auditsDuring(() => repository.updateServerTrust(south.id, trustedSshHostKey, 'trustUser'));
+
+    const updated = repository.findSouthById(south.id)!;
+    assert.deepStrictEqual(updated.serverTrust, trustedSshHostKey);
+    assert.strictEqual(updated.updatedBy, 'trustUser');
+    assert.strictEqual(calls.length, 1);
+    const [entityType, entityId, action, previous, next, userId] = calls[0];
+    assert.deepStrictEqual([entityType, entityId, action, userId], ['south_connector', south.id, 'UPDATE', 'trustUser']);
+    assert.deepStrictEqual(previous!.serverTrust, { identity: null, trustOnFirstUse: true });
+    assert.deepStrictEqual(next!.serverTrust, trustedSshHostKey);
+  });
+
+  it('should not update the server trust of an unknown south connector', () => {
+    assert.throws(() => repository.updateServerTrust('unknown-south', trustedSshHostKey, 'trustUser'), NotFoundError);
+    assert.strictEqual(recorded().length, 0);
   });
 
   it('should list items', () => {

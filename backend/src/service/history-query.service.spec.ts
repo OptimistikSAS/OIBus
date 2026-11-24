@@ -3,17 +3,23 @@ import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import type { TransformerDTO } from '../../shared/model/api/transformer.model';
+import type { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import type { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import type { ServerIdentity, ServerTrust } from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
+import type HistoryQuery from '../engine/history-query';
 import type { HistoryQueryEntityLight } from '../model/histor-query.model';
 import type { HistoryTransformerWithOptions } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import type NorthConnector from '../north/north-connector';
 import type HistoryQueryRepository from '../repository/config/history-query.repository';
 import type NorthConnectorRepository from '../repository/config/north-connector.repository';
 import type ScanModeRepository from '../repository/config/scan-mode.repository';
 import type SouthConnectorRepository from '../repository/config/south-connector.repository';
 import type LogRepository from '../repository/logs/log.repository';
 import type HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
+import type SouthConnector from '../south/south-connector';
 import manifest from '../south/south-mssql/manifest';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -26,10 +32,12 @@ import type {
   toHistoryQueryItemDTO as toHistoryQueryItemDTOType,
   toHistoryQueryLightDTO as toHistoryQueryLightDTOType
 } from './history-query.service';
+import type HistoryQueryMetricsService from './metrics/history-query-metrics.service';
 import type NorthService from './north.service';
 import { northManifestList } from './north-manifests';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode.service';
+import ServerIdentityVerifier from './server-identity-verifier';
 import type SouthService from './south.service';
 import { southManifestList } from './south-manifests';
 import type TransformerService from './transformer.service';
@@ -411,7 +419,9 @@ describe('History Query service', () => {
     assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
       'history',
       testData.north.command.type,
-      testData.north.command.settings
+      testData.north.command.settings,
+      null,
+      { identity: null, trustOnFirstUse: false }
     ]);
   });
 
@@ -421,7 +431,9 @@ describe('History Query service', () => {
     assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
       'history',
       testData.north.command.type,
-      testData.north.command.settings
+      testData.north.command.settings,
+      null,
+      testData.north.list[0].serverTrust
     ]);
   });
 
@@ -431,7 +443,9 @@ describe('History Query service', () => {
     assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
       'history',
       testData.north.command.type,
-      testData.north.command.settings
+      testData.north.command.settings,
+      null,
+      testData.historyQueries.list[0].northServerTrust
     ]);
   });
 
@@ -441,7 +455,9 @@ describe('History Query service', () => {
     assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
-      testData.south.command.settings
+      testData.south.command.settings,
+      null,
+      { identity: null, trustOnFirstUse: false }
     ]);
   });
 
@@ -451,7 +467,9 @@ describe('History Query service', () => {
     assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
-      testData.south.command.settings
+      testData.south.command.settings,
+      null,
+      testData.south.list[0].serverTrust
     ]);
   });
 
@@ -461,7 +479,9 @@ describe('History Query service', () => {
     assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
-      testData.south.command.settings
+      testData.south.command.settings,
+      null,
+      testData.historyQueries.list[0].southServerTrust
     ]);
   });
 
@@ -483,7 +503,9 @@ describe('History Query service', () => {
     assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
-      testData.south.command.settings
+      testData.south.command.settings,
+      null,
+      { identity: null, trustOnFirstUse: false }
     ]);
   });
 
@@ -493,7 +515,9 @@ describe('History Query service', () => {
     assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
-      testData.south.command.settings
+      testData.south.command.settings,
+      null,
+      testData.south.list[0].serverTrust
     ]);
   });
 
@@ -503,7 +527,9 @@ describe('History Query service', () => {
     assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
-      testData.south.command.settings
+      testData.south.command.settings,
+      null,
+      testData.historyQueries.list[0].southServerTrust
     ]);
   });
 
@@ -525,7 +551,9 @@ describe('History Query service', () => {
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
-      undefined
+      undefined,
+      null,
+      { identity: null, trustOnFirstUse: false }
     ]);
   });
 
@@ -547,7 +575,9 @@ describe('History Query service', () => {
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings,
-      undefined
+      undefined,
+      null,
+      testData.south.list[0].serverTrust
     ]);
   });
 
@@ -565,6 +595,263 @@ describe('History Query service', () => {
     assert.strictEqual(southService.testItem.mock.calls.length, 1);
     // the history query is the connector the item is tested for
     assert.strictEqual(southService.testItem.mock.calls[0].arguments[6], testData.historyQueries.list[0].name);
+  });
+
+  describe('with the identity of the servers', () => {
+    const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+    const otherIdentity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:other', details: { keyType: 'ssh-ed25519' } };
+    const trustOf = (trusted: ServerIdentity): ServerTrust => ({
+      identity: { ...trusted, trustedBy: 'user1', trustedAt: '2020-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false
+    });
+    const trustedNow = (trusted: ServerIdentity): ServerTrust => ({
+      identity: { ...trusted, trustedBy: 'userTest', trustedAt: testData.constants.dates.FAKE_NOW },
+      trustOnFirstUse: false
+    });
+    let throwawaySouth: Mocked<SouthConnector<SouthSettings, SouthItemSettings>>;
+    let throwawayNorth: Mocked<NorthConnector<NorthSettings>>;
+
+    beforeEach(() => {
+      mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+      throwawaySouth = createMock<SouthConnector<SouthSettings, SouthItemSettings>>({ retrieveServerIdentity: async () => identity });
+      throwawayNorth = createMock<NorthConnector<NorthSettings>>({ retrieveServerIdentity: async () => identity });
+      southService.buildThrowawaySouth.mock.mockImplementation(() => throwawaySouth);
+      northService.buildThrowawayNorth.mock.mockImplementation(() => throwawayNorth);
+    });
+
+    afterEach(() => {
+      mock.timers.reset();
+    });
+
+    it('should trust the identities of the command when creating a history query, by its creator', async () => {
+      mock.method(service, 'retrieveSecrets', () => null);
+
+      await service.create(
+        { ...testData.historyQueries.command, southServerTrust: { identity }, northServerTrust: { identity: otherIdentity } },
+        undefined,
+        undefined,
+        undefined,
+        'userTest'
+      );
+
+      const saved = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+      assert.deepStrictEqual(saved.southServerTrust, trustedNow(identity));
+      assert.deepStrictEqual(saved.northServerTrust, trustedNow(otherIdentity));
+    });
+
+    it('should trust no identity when creating a history query without trust', async () => {
+      mock.method(service, 'retrieveSecrets', () => null);
+
+      await service.create(testData.historyQueries.command, undefined, undefined, undefined, 'userTest');
+
+      const saved = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+      assert.deepStrictEqual(saved.southServerTrust, { identity: null, trustOnFirstUse: false });
+      assert.deepStrictEqual(saved.northServerTrust, { identity: null, trustOnFirstUse: false });
+    });
+
+    it('should keep the trusts of the connectors a history query is created from when the command has none', async () => {
+      mock.method(service, 'retrieveSecrets', () => ({
+        ...testData.historyQueries.list[0],
+        southServerTrust: trustOf(identity),
+        northServerTrust: trustOf(otherIdentity)
+      }));
+
+      await service.create(testData.historyQueries.command, testData.south.list[0].id, testData.north.list[0].id, undefined, 'userTest');
+
+      const saved = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+      assert.deepStrictEqual(saved.southServerTrust, trustOf(identity));
+      assert.deepStrictEqual(saved.northServerTrust, trustOf(otherIdentity));
+    });
+
+    it('should keep who trusted an identity of a history query updated with the same identity, and trust a new one', async () => {
+      historyQueryRepository.findHistoryById.mock.mockImplementation(() => ({
+        ...testData.historyQueries.list[0],
+        southServerTrust: trustOf(identity),
+        northServerTrust: trustOf(identity)
+      }));
+
+      await service.update(
+        testData.historyQueries.list[0].id,
+        { ...testData.historyQueries.command, southServerTrust: { identity }, northServerTrust: { identity: otherIdentity } },
+        false,
+        'userTest'
+      );
+
+      const saved = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+      assert.deepStrictEqual(saved.southServerTrust, trustOf(identity));
+      assert.deepStrictEqual(saved.northServerTrust, trustedNow(otherIdentity));
+    });
+
+    it('should keep the trusts of a history query updated with a command without trust', async () => {
+      historyQueryRepository.findHistoryById.mock.mockImplementation(() => ({
+        ...testData.historyQueries.list[0],
+        southServerTrust: trustOf(identity),
+        northServerTrust: trustOf(otherIdentity)
+      }));
+
+      await service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false, 'userTest');
+
+      const saved = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+      assert.deepStrictEqual(saved.southServerTrust, trustOf(identity));
+      assert.deepStrictEqual(saved.northServerTrust, trustOf(otherIdentity));
+    });
+
+    it('should forward the fingerprint trusted in the form when testing the connections, an item and exploring', async () => {
+      await service.testNorth('create', testData.north.command.type, undefined, testData.north.command.settings, identity.fingerprint);
+      await service.testSouth('create', testData.south.command.type, undefined, testData.south.command.settings, identity.fingerprint);
+      await service.startExplore('create', testData.south.command.type, undefined, testData.south.command.settings, identity.fingerprint);
+      await service.testItem(
+        'create',
+        testData.south.command.type,
+        testData.south.itemCommand.name,
+        undefined,
+        testData.south.command.settings,
+        testData.south.itemCommand.settings,
+        testData.south.itemTestingSettings,
+        identity.fingerprint
+      );
+
+      assert.strictEqual(northService.testNorth.mock.calls[0].arguments[3], identity.fingerprint);
+      assert.strictEqual(southService.testSouth.mock.calls[0].arguments[3], identity.fingerprint);
+      assert.strictEqual(southService.startExplore.mock.calls[0].arguments[3], identity.fingerprint);
+      assert.strictEqual(southService.testItem.mock.calls[0].arguments[7], identity.fingerprint);
+    });
+
+    it('should get the trust of a side of a history query which is not in the engine, with no pending identity', () => {
+      historyQueryRepository.findHistoryById.mock.mockImplementation(() => ({
+        ...testData.historyQueries.list[0],
+        southServerTrust: trustOf(identity),
+        northServerTrust: trustOf(otherIdentity)
+      }));
+      engine.getHistoryQuery.mock.mockImplementation(() => {
+        throw new Error('not found');
+      });
+
+      assert.deepStrictEqual(service.getServerTrustState(testData.historyQueries.list[0].id, 'south'), {
+        ...trustOf(identity),
+        pending: null
+      });
+      assert.deepStrictEqual(service.getServerTrustState(testData.historyQueries.list[0].id, 'north'), {
+        ...trustOf(otherIdentity),
+        pending: null
+      });
+    });
+
+    it('should get the trust of a side of a history query with the identity its engine instance refused', () => {
+      const verifier = new ServerIdentityVerifier(
+        () => ({ identity: null, trustOnFirstUse: false }),
+        () => undefined,
+        () => new PinoLogger()
+      );
+      verifier.verify(identity);
+      const historyQuery = createMock<HistoryQuery>({ getServerIdentityVerifier: () => verifier });
+      engine.getHistoryQuery.mock.mockImplementation(() => ({ historyQuery, metrics: createMock<HistoryQueryMetricsService>() }));
+
+      assert.deepStrictEqual(service.getServerTrustState(testData.historyQueries.list[0].id, 'north'), {
+        identity: null,
+        trustOnFirstUse: false,
+        pending: { identity, status: 'unknown' }
+      });
+      assert.deepStrictEqual(historyQuery.getServerIdentityVerifier.mock.calls[0].arguments, ['north']);
+    });
+
+    it('should trust the identity the server of the south of a running history query presents, and reload it', async () => {
+      const historyQuery = testData.historyQueries.list[0];
+
+      await service.trustServerIdentity(historyQuery.id, 'south', identity.fingerprint, 'userTest');
+
+      // The identity is asked to a throwaway connector, never started
+      assert.deepStrictEqual(southService.buildThrowawaySouth.mock.calls[0].arguments, [
+        {
+          id: historyQuery.id,
+          name: historyQuery.name,
+          description: historyQuery.description,
+          enabled: false,
+          type: historyQuery.southType,
+          settings: historyQuery.southSettings,
+          serverTrust: historyQuery.southServerTrust,
+          items: [],
+          groups: [],
+          createdBy: historyQuery.createdBy,
+          updatedBy: historyQuery.updatedBy,
+          createdAt: historyQuery.createdAt,
+          updatedAt: historyQuery.updatedAt
+        }
+      ]);
+      assert.strictEqual(northService.buildThrowawayNorth.mock.calls.length, 0);
+      assert.deepStrictEqual(historyQueryRepository.updateServerTrust.mock.calls[0].arguments, [
+        historyQuery.id,
+        'south',
+        trustedNow(identity),
+        'userTest'
+      ]);
+      assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+      assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [historyQuery, false]);
+    });
+
+    it('should trust the identity the server of the north of a history query not running presents, without reloading it', async () => {
+      const historyQuery = testData.historyQueries.list[1];
+      historyQueryRepository.findHistoryById.mock.mockImplementation(() => historyQuery);
+
+      await service.trustServerIdentity(historyQuery.id, 'north', identity.fingerprint, 'userTest');
+
+      assert.deepStrictEqual(northService.buildThrowawayNorth.mock.calls[0].arguments, [
+        {
+          id: historyQuery.id,
+          name: historyQuery.name,
+          description: historyQuery.description,
+          enabled: false,
+          type: historyQuery.northType,
+          settings: historyQuery.northSettings,
+          serverTrust: historyQuery.northServerTrust,
+          caching: historyQuery.caching,
+          transformers: [],
+          createdBy: historyQuery.createdBy,
+          updatedBy: historyQuery.updatedBy,
+          createdAt: historyQuery.createdAt,
+          updatedAt: historyQuery.updatedAt
+        }
+      ]);
+      assert.strictEqual(southService.buildThrowawaySouth.mock.calls.length, 0);
+      assert.deepStrictEqual(historyQueryRepository.updateServerTrust.mock.calls[0].arguments, [
+        historyQuery.id,
+        'north',
+        trustedNow(identity),
+        'userTest'
+      ]);
+      assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+      assert.strictEqual(engine.reloadHistoryQuery.mock.calls.length, 0);
+    });
+
+    it('should not trust an identity of a history query when its server presents another one', async () => {
+      await assert.rejects(
+        service.trustServerIdentity(testData.historyQueries.list[0].id, 'south', otherIdentity.fingerprint, 'userTest'),
+        new OIBusValidationError(
+          `The server presents the host key ${identity.fingerprint}, not the one to trust (${otherIdentity.fingerprint}): test the connection again`
+        )
+      );
+
+      assert.strictEqual(historyQueryRepository.updateServerTrust.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 0);
+      assert.strictEqual(engine.reloadHistoryQuery.mock.calls.length, 0);
+    });
+
+    it('should convert the trusts of a history query to a DTO, with the user who trusted their identity', () => {
+      const dto = toHistoryQueryDTO(
+        {
+          ...testData.historyQueries.list[0],
+          southServerTrust: trustOf(identity),
+          northServerTrust: { identity: null, trustOnFirstUse: true }
+        },
+        getUserInfo
+      );
+
+      assert.deepStrictEqual(dto.southServerTrust, {
+        identity: { ...identity, trustedBy: getUserInfo('user1'), trustedAt: '2020-01-01T00:00:00.000Z' },
+        trustOnFirstUse: false
+      });
+      assert.deepStrictEqual(dto.northServerTrust, { identity: null, trustOnFirstUse: true });
+    });
   });
 
   it('should list items', async () => {
@@ -1019,9 +1306,11 @@ describe('History Query service', () => {
     assert.deepStrictEqual(result, {
       southType: testData.south.list[1].type,
       southSettings: testData.south.list[1].settings,
+      southServerTrust: testData.south.list[1].serverTrust,
       items: testData.south.list[1].items,
       northType: testData.north.list[0].type,
-      northSettings: testData.north.list[0].settings
+      northSettings: testData.north.list[0].settings,
+      northServerTrust: testData.north.list[0].serverTrust
     });
   });
 
@@ -1033,6 +1322,7 @@ describe('History Query service', () => {
     assert.deepStrictEqual(result, {
       southType: testData.south.list[1].type,
       southSettings: testData.south.list[1].settings,
+      southServerTrust: testData.south.list[1].serverTrust,
       items: testData.south.list[1].items
     });
   });
@@ -1043,7 +1333,8 @@ describe('History Query service', () => {
     assert.deepStrictEqual(result, {
       items: [],
       northType: testData.north.list[0].type,
-      northSettings: testData.north.list[0].settings
+      northSettings: testData.north.list[0].settings,
+      northServerTrust: testData.north.list[0].serverTrust
     });
   });
 
@@ -1092,6 +1383,8 @@ describe('History Query service', () => {
       northType: historyQuery.northType,
       southSettings: historyQuery.southSettings,
       northSettings: historyQuery.northSettings,
+      southServerTrust: { identity: null, trustOnFirstUse: false },
+      northServerTrust: { identity: null, trustOnFirstUse: false },
       caching: {
         trigger: {
           scanMode: toScanModeDTO(historyQuery.caching.trigger.scanMode, getUserInfo),

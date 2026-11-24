@@ -7,6 +7,7 @@ import { NorthSettings } from '../../../shared/model/connector/north-settings.mo
 import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../shared/model/domain/history-query.model';
+import { ServerTrust } from '../../../shared/model/domain/server-identity.model';
 
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../../model/histor-query.model';
 import { ScanMode } from '../../model/scan-mode.model';
@@ -46,7 +47,7 @@ export default class HistoryQueryRepository {
   findAllHistoriesFull(): Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
-      `south_type, north_type, south_settings, north_settings, ` +
+      `south_type, north_type, south_settings, north_settings, south_server_trust, north_server_trust, ` +
       `throttling_max_read_interval, throttling_read_delay, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
@@ -61,7 +62,7 @@ export default class HistoryQueryRepository {
   findHistoryById(id: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
-      `south_type, north_type, south_settings, north_settings, ` +
+      `south_type, north_type, south_settings, north_settings, south_server_trust, north_server_trust, ` +
       `throttling_max_read_interval, throttling_read_delay, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
@@ -97,13 +98,13 @@ export default class HistoryQueryRepository {
         }
         const insertQuery =
           `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, ` +
-          `start_time, end_time, south_type, north_type, south_settings, north_settings, ` +
+          `start_time, end_time, south_type, north_type, south_settings, north_settings, south_server_trust, north_server_trust, ` +
           `throttling_max_read_interval, throttling_read_delay, ` +
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
           `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, caching_error_max_size, ` +
           `caching_archive_enabled, caching_archive_retention_duration, caching_archive_max_size, created_by, updated_by, created_at, updated_at) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))`;
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))`;
         this.database.prepare(insertQuery).run(
           history.id,
           history.name,
@@ -115,6 +116,8 @@ export default class HistoryQueryRepository {
           history.northType,
           JSON.stringify(history.southSettings),
           JSON.stringify(history.northSettings),
+          JSON.stringify(history.southServerTrust),
+          JSON.stringify(history.northServerTrust),
           history.queryTimeRange.maxReadInterval,
           history.queryTimeRange.readDelay,
           history.caching.trigger.scanMode.id,
@@ -136,7 +139,7 @@ export default class HistoryQueryRepository {
       } else {
         const query =
           `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, start_time = ?, ` +
-          `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
+          `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?, south_server_trust = ?, north_server_trust = ?, ` +
           `throttling_max_read_interval = ?, throttling_read_delay = ?, ` +
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
@@ -154,6 +157,8 @@ export default class HistoryQueryRepository {
             history.northType,
             JSON.stringify(history.southSettings),
             JSON.stringify(history.northSettings),
+            JSON.stringify(history.southServerTrust),
+            JSON.stringify(history.northServerTrust),
             history.queryTimeRange.maxReadInterval,
             history.queryTimeRange.readDelay,
             history.caching.trigger.scanMode.id,
@@ -364,6 +369,33 @@ export default class HistoryQueryRepository {
         isNew ? 'CREATE' : 'UPDATE',
         ...redactAuditSnapshots(beforeHistory, afterHistory, entity => this.redactHistory(entity)),
         history.updatedBy
+      );
+    });
+    transaction();
+  }
+
+  /**
+   * Save the trust of a side of the history query in the identity of its server: a user trusting the identity its server
+   * presented, or the history query trusting it at its first connection (`system`, not audited).
+   */
+  updateServerTrust(id: string, side: 'south' | 'north', serverTrust: ServerTrust, updatedBy: string): void {
+    const before = this.findHistoryById(id);
+    if (!before) {
+      throw new NotFoundError(`History query "${id}" not found`);
+    }
+    const column = side === 'south' ? 'south_server_trust' : 'north_server_trust';
+    const transaction = this.database.transaction(() => {
+      this.database
+        .prepare(
+          `UPDATE ${HISTORY_QUERIES_TABLE} SET ${column} = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+        )
+        .run(JSON.stringify(serverTrust), updatedBy, id);
+      this.auditService.record(
+        'history_query',
+        id,
+        'UPDATE',
+        ...redactAuditSnapshots(before, this.findHistoryById(id), entity => this.redactHistory(entity)),
+        updatedBy
       );
     });
     transaction();
@@ -785,6 +817,7 @@ export default class HistoryQueryRepository {
       status: result.status as HistoryQueryStatus,
       southType: result.south_type as OIBusSouthType,
       southSettings: JSON.parse(result.south_settings as string) as SouthSettings,
+      southServerTrust: JSON.parse(result.south_server_trust as string) as ServerTrust,
       queryTimeRange: {
         startTime: result.start_time as Instant,
         endTime: result.end_time as Instant,
@@ -793,6 +826,7 @@ export default class HistoryQueryRepository {
       },
       northType: result.north_type as OIBusNorthType,
       northSettings: JSON.parse(result.north_settings as string) as NorthSettings,
+      northServerTrust: JSON.parse(result.north_server_trust as string) as ServerTrust,
       caching: {
         trigger: {
           scanMode: this.findScanModeForHistory(result.caching_trigger_schedule as string),

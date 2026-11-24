@@ -3,6 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 const manifest: NorthConnectorManifest = {
   id: 'opcua',
   category: 'iot',
+  serverIdentity: 'x509',
   types: ['opcua'],
   settings: {
     type: 'object',

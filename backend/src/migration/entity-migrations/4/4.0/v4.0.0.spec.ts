@@ -27,6 +27,7 @@ import {
   addOIAnalyticsReferenceProcess,
   addOPCUATimeoutsAndSubscriptionSettings,
   addRegistrationTokenRefresh,
+  addServerTrust,
   convertFieldProcessesToOperations,
   convertFileWriterLinks,
   convertOIAnalyticsSouths,
@@ -5715,5 +5716,133 @@ describe('Entity migration v4.0.0: removeOPCUAUserCertificateFiles', () => {
     assert.deepStrictEqual(await settingsOf('south_connectors', 'south-mqtt'), {
       authentication: { type: 'cert', certFilePath: 'cert.pem', keyFilePath: 'key.pem' }
     });
+  });
+});
+
+describe('Entity migration v4.0.0: addServerTrust', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addServerTrust, db)
+  });
+  const NO_TRUST = { identity: null, trustOnFirstUse: false };
+  const TRUST_ON_FIRST_USE = { identity: null, trustOnFirstUse: true };
+  let db: Knex;
+
+  const trustOf = async (table: string, id: string, column = 'server_trust') =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('scan_modes').insert({ id: 'sm1', name: 'Every minute', description: '', cron: '0 * * * * *' });
+    await db('south_connectors').insert([
+      { id: 'south-opcua-sign', name: 'OPC UA sign', type: 'opcua', enabled: true, settings: JSON.stringify({ securityMode: 'sign' }) },
+      { id: 'south-opcua-none', name: 'OPC UA none', type: 'opcua', enabled: true, settings: JSON.stringify({ securityMode: 'none' }) },
+      { id: 'south-sftp', name: 'SFTP', type: 'sftp', enabled: true, settings: JSON.stringify({ host: 'server' }) },
+      { id: 'south-mqtt', name: 'MQTT', type: 'mqtt', enabled: true, settings: JSON.stringify({ url: 'mqtt://server' }) }
+    ]);
+    await db('north_connectors').insert([
+      {
+        ...caching,
+        id: 'north-opcua-sign-encrypt',
+        name: 'OPC UA',
+        type: 'opcua',
+        enabled: true,
+        settings: JSON.stringify({ securityMode: 'sign-and-encrypt' })
+      },
+      {
+        ...caching,
+        id: 'north-opcua-none',
+        name: 'OPC UA none',
+        type: 'opcua',
+        enabled: true,
+        settings: JSON.stringify({ securityMode: 'none' })
+      },
+      { ...caching, id: 'north-sftp', name: 'SFTP', type: 'sftp', enabled: true, settings: JSON.stringify({ host: 'server' }) },
+      { ...caching, id: 'north-console', name: 'Console', type: 'console', enabled: true, settings: '{}' }
+    ]);
+    await db('history_queries').insert([
+      {
+        ...caching,
+        id: 'history-opcua-sftp',
+        name: 'OPC UA to SFTP',
+        start_time: NOW,
+        end_time: NOW,
+        south_type: 'opcua',
+        north_type: 'sftp',
+        south_settings: JSON.stringify({ securityMode: 'sign' }),
+        north_settings: JSON.stringify({ host: 'server' })
+      },
+      {
+        ...caching,
+        id: 'history-none-opcua',
+        name: 'OPC UA none to OPC UA',
+        start_time: NOW,
+        end_time: NOW,
+        south_type: 'opcua',
+        north_type: 'opcua',
+        south_settings: JSON.stringify({ securityMode: 'none' }),
+        north_settings: JSON.stringify({ securityMode: 'sign' })
+      },
+      {
+        ...caching,
+        id: 'history-sftp-console',
+        name: 'SFTP to Console',
+        start_time: NOW,
+        end_time: NOW,
+        south_type: 'sftp',
+        north_type: 'console',
+        south_settings: JSON.stringify({ host: 'server' }),
+        north_settings: '{}'
+      }
+    ]);
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should add the server trust columns, trusting no identity by default', async () => {
+    await runStepsFrom(addServerTrust, db);
+
+    assert.ok((await columnNames(db, 'south_connectors')).includes('server_trust'));
+    assert.ok((await columnNames(db, 'north_connectors')).includes('server_trust'));
+    const historyColumns = await columnNames(db, 'history_queries');
+    assert.ok(historyColumns.includes('south_server_trust'));
+    assert.ok(historyColumns.includes('north_server_trust'));
+
+    await db('south_connectors').insert({ id: 'south-new', name: 'New', type: 'opcua', enabled: true, settings: '{}' });
+    assert.deepStrictEqual(await trustOf('south_connectors', 'south-new'), NO_TRUST);
+  });
+
+  it('should trust the identity at the first use for the OPC UA connectors with a security mode and the SFTP ones', async () => {
+    await runStepsFrom(addServerTrust, db);
+
+    assert.deepStrictEqual(await trustOf('south_connectors', 'south-opcua-sign'), TRUST_ON_FIRST_USE);
+    assert.deepStrictEqual(await trustOf('south_connectors', 'south-sftp'), TRUST_ON_FIRST_USE);
+    assert.deepStrictEqual(await trustOf('south_connectors', 'south-opcua-none'), NO_TRUST);
+    assert.deepStrictEqual(await trustOf('south_connectors', 'south-mqtt'), NO_TRUST);
+
+    assert.deepStrictEqual(await trustOf('north_connectors', 'north-opcua-sign-encrypt'), TRUST_ON_FIRST_USE);
+    assert.deepStrictEqual(await trustOf('north_connectors', 'north-sftp'), TRUST_ON_FIRST_USE);
+    assert.deepStrictEqual(await trustOf('north_connectors', 'north-opcua-none'), NO_TRUST);
+    assert.deepStrictEqual(await trustOf('north_connectors', 'north-console'), NO_TRUST);
+
+    assert.deepStrictEqual(await trustOf('history_queries', 'history-opcua-sftp', 'south_server_trust'), TRUST_ON_FIRST_USE);
+    assert.deepStrictEqual(await trustOf('history_queries', 'history-opcua-sftp', 'north_server_trust'), TRUST_ON_FIRST_USE);
+    assert.deepStrictEqual(await trustOf('history_queries', 'history-none-opcua', 'south_server_trust'), NO_TRUST);
+    assert.deepStrictEqual(await trustOf('history_queries', 'history-none-opcua', 'north_server_trust'), TRUST_ON_FIRST_USE);
+    assert.deepStrictEqual(await trustOf('history_queries', 'history-sftp-console', 'south_server_trust'), TRUST_ON_FIRST_USE);
+    assert.deepStrictEqual(await trustOf('history_queries', 'history-sftp-console', 'north_server_trust'), NO_TRUST);
+  });
+
+  it('should drop the server trust columns on down', async () => {
+    await runStepsFrom(addServerTrust, db);
+    await down(db);
+
+    assert.ok(!(await columnNames(db, 'south_connectors')).includes('server_trust'));
+    assert.ok(!(await columnNames(db, 'north_connectors')).includes('server_trust'));
+    const historyColumns = await columnNames(db, 'history_queries');
+    assert.ok(!historyColumns.includes('south_server_trust'));
+    assert.ok(!historyColumns.includes('north_server_trust'));
   });
 });

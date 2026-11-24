@@ -14,10 +14,11 @@ import {
   SouthItemGroupCommandDTO
 } from '../../../shared/model/api/south-connector.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
+import { ServerIdentity, ServerTrustState } from '../../../shared/model/domain/server-identity.model';
 import { SouthConnectorItemSearchParam } from '../../../shared/model/domain/south-connector.model';
 
 import type { SouthItemGroupEntity } from '../../model/south-connector.model';
-import { OIBusExploreError, OIBusTestingError } from '../../model/types';
+import { OIBusExploreError, OIBusTestingError, OIBusValidationError } from '../../model/types';
 import type ConfigurationWorkflowRunService from '../../service/configuration-workflow-run.service';
 import type OIBusService from '../../service/oibus.service';
 import type ScanModeService from '../../service/scan-mode.service';
@@ -242,7 +243,7 @@ describe('SouthConnectorController', () => {
     await controller.testConnection(southId, southType, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(southService.testSouth.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings]);
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings, null]);
   });
 
   it('should wrap errors when testing south connection', async () => {
@@ -261,7 +262,130 @@ describe('SouthConnectorController', () => {
       assert.strictEqual((error as OIBusTestingError).message, 'South connection failure');
     }
     assert.strictEqual(southService.testSouth.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings]);
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings, null]);
+  });
+
+  describe('with the identity of the server', () => {
+    const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+    const otherIdentity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:other', details: { keyType: 'ssh-ed25519' } };
+    const trustState: ServerTrustState = {
+      identity: { ...identity, trustedBy: 'user1', trustedAt: '2020-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false,
+      pending: { identity: otherIdentity, status: 'changed' }
+    };
+    const trustStateDTO = {
+      identity: { ...identity, trustedBy: { id: 'user1', friendlyName: 'User 1' }, trustedAt: '2020-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false,
+      pending: { identity: otherIdentity, status: 'changed' }
+    };
+
+    beforeEach(() => {
+      userService.getUserInfo.mock.mockImplementation((id: string) => ({ id, friendlyName: 'User 1' }));
+    });
+
+    it('should get the trust of a south connector in the identity of its server', () => {
+      southService.getServerTrustState.mock.mockImplementation(() => trustState);
+
+      const result = controller.getServerTrust(testData.south.list[0].id, mockRequest as CustomExpressRequest);
+
+      assert.deepStrictEqual(southService.getServerTrustState.mock.calls[0].arguments, [testData.south.list[0].id]);
+      assert.deepStrictEqual(userService.getUserInfo.mock.calls[0].arguments, ['user1']);
+      assert.deepStrictEqual(result, trustStateDTO);
+    });
+
+    it('should trust the identity of the server of a south connector, by the user', async () => {
+      await controller.trustServerIdentity(
+        testData.south.list[0].id,
+        { fingerprint: identity.fingerprint },
+        mockRequest as CustomExpressRequest
+      );
+
+      assert.deepStrictEqual(southService.trustServerIdentity.mock.calls[0].arguments, [
+        testData.south.list[0].id,
+        identity.fingerprint,
+        'test'
+      ]);
+    });
+
+    it('should keep a validation error when trusting the identity of the server of a south connector', async () => {
+      const error = new OIBusValidationError('not the one to trust');
+      southService.trustServerIdentity.mock.mockImplementation(async () => {
+        throw error;
+      });
+
+      await assert.rejects(
+        controller.trustServerIdentity(
+          testData.south.list[0].id,
+          { fingerprint: identity.fingerprint },
+          mockRequest as CustomExpressRequest
+        ),
+        error
+      );
+    });
+
+    it('should wrap other errors when trusting the identity of the server of a south connector', async () => {
+      southService.trustServerIdentity.mock.mockImplementation(async () => {
+        throw new Error('connection failed');
+      });
+
+      await assert.rejects(
+        controller.trustServerIdentity(
+          testData.south.list[0].id,
+          { fingerprint: identity.fingerprint },
+          mockRequest as CustomExpressRequest
+        ),
+        new OIBusTestingError('connection failed')
+      );
+    });
+
+    it('should forward the fingerprint trusted in the form when testing, exploring and discovering', async () => {
+      const southId = testData.south.list[0].id;
+      const southType = testData.south.command.type;
+      const settings = testData.south.command.settings;
+      const itemRequest = {
+        southSettings: settings,
+        itemSettings: testData.south.itemCommand.settings,
+        testingSettings: testData.south.itemTestingSettings
+      };
+
+      await controller.testConnection(southId, southType, settings, mockRequest as CustomExpressRequest, identity.fingerprint);
+      await controller.testItem(
+        southId,
+        southType,
+        testData.south.itemCommand.name,
+        itemRequest,
+        mockRequest as CustomExpressRequest,
+        identity.fingerprint
+      );
+      await controller.testDiscoveryQuery(
+        southId,
+        southType,
+        { southSettings: settings, query: 'SELECT 1' },
+        mockRequest as CustomExpressRequest,
+        identity.fingerprint
+      );
+      await controller.startExplore(southId, southType, settings, mockRequest as CustomExpressRequest, identity.fingerprint);
+
+      assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [southId, southType, settings, identity.fingerprint]);
+      assert.deepStrictEqual(southService.testItem.mock.calls[0].arguments, [
+        southId,
+        southType,
+        testData.south.itemCommand.name,
+        itemRequest.southSettings,
+        itemRequest.itemSettings,
+        itemRequest.testingSettings,
+        undefined,
+        identity.fingerprint
+      ]);
+      assert.deepStrictEqual(southService.testDiscoveryQuery.mock.calls[0].arguments, [
+        southId,
+        southType,
+        settings,
+        'SELECT 1',
+        identity.fingerprint
+      ]);
+      assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [southId, southType, settings, identity.fingerprint]);
+    });
   });
 
   it('should test a south connector item', async () => {
@@ -291,7 +415,9 @@ describe('SouthConnectorController', () => {
       itemName,
       requestBody.southSettings,
       requestBody.itemSettings,
-      requestBody.testingSettings
+      requestBody.testingSettings,
+      undefined,
+      null
     ]);
     assert.deepStrictEqual(result, mockResult);
   });
@@ -323,7 +449,9 @@ describe('SouthConnectorController', () => {
       itemName,
       requestBody.southSettings,
       requestBody.itemSettings,
-      requestBody.testingSettings
+      requestBody.testingSettings,
+      undefined,
+      null
     ]);
   });
 
@@ -341,7 +469,8 @@ describe('SouthConnectorController', () => {
       southId,
       southType,
       requestBody.southSettings,
-      requestBody.query
+      requestBody.query,
+      null
     ]);
     assert.deepStrictEqual(result, mockResult);
   });
@@ -405,7 +534,8 @@ describe('SouthConnectorController', () => {
       testData.south.command.type,
       requestBody.southSettings,
       'workflowId1',
-      requestBody.workflow
+      requestBody.workflow,
+      null
     ]);
     assert.deepStrictEqual(result, previewResult);
   });
@@ -426,7 +556,8 @@ describe('SouthConnectorController', () => {
       testData.south.command.type,
       requestBody.southSettings,
       requestBody.discoveryScope,
-      requestBody.itemFieldMapping
+      requestBody.itemFieldMapping,
+      null
     ]);
     assert.deepStrictEqual(result, items);
   });
@@ -476,7 +607,7 @@ describe('SouthConnectorController', () => {
     const result = await controller.startExplore(southId, southType, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(southService.startExplore.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [southId, southType, settings]);
+    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [southId, southType, settings, null]);
     assert.deepStrictEqual(result, startResult);
   });
 
