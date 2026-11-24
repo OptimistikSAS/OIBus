@@ -651,6 +651,9 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
     form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
+    // The identities trusted in the form are tied to its settings: a new form (other connector types) trusts none
+    this.serverTrust.south.reset();
+    this.serverTrust.north.reset();
     form.controls.southSettings.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.serverTrust.south.settingsChanged(form.controls.southSettings.getRawValue()));

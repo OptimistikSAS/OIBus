@@ -3863,8 +3863,7 @@
       },
       "review": "Vérifier et approuver",
       "trusted-by": "Approuvée par {{ user }} le {{ date }}",
-      "trust-on-first-use": "Aucune identité approuvée pour l'instant : le connecteur approuve l'identité que présente son serveur à sa première connexion.",
-      "none": "Aucune identité approuvée pour l'instant : testez la connexion pour vérifier l'identité du serveur et l'approuver."
+      "trust-on-first-use": "Aucune identité approuvée pour l'instant : le connecteur approuve l'identité que présente son serveur à sa première connexion."
     }
   }
 }

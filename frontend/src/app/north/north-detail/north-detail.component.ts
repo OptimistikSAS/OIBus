@@ -27,6 +27,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { PageLoader } from '../../shared/page-loader.service';
 import { pollMetrics } from '../../shared/polling';
+import { toDisplayedServerTrust } from '../../shared/server-trust/server-trust';
 import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
@@ -123,12 +124,14 @@ export class NorthDetailComponent {
     this.manifest()?.serverIdentity ? { northId: this.northConnector()?.id ?? null, refresh: this.serverTrustRefresh() } : null
   );
   /** The trust of the connector in the identity of its server, with the identity it refused, polled as the metrics */
-  readonly serverTrust = toSignal(
+  private readonly polledServerTrust = toSignal(
     toObservable(this.serverTrustNorthId).pipe(
       switchMap(target => (target?.northId ? pollMetrics(() => this.northConnectorService.getServerTrust(target.northId!)) : of(null)))
     ),
     { initialValue: null }
   );
+  /** The trust shown on the page (see toDisplayedServerTrust) */
+  readonly serverTrust = computed(() => toDisplayedServerTrust(this.polledServerTrust(), this.northConnector()?.enabled ?? false));
 
   updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
     this.northConnectorService.findById(this.northConnector()!.id).subscribe(northConnector => {

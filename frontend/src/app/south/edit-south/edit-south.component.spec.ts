@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
-import { firstValueFrom, Observable, of, throwError } from 'rxjs';
+import { firstValueFrom, Observable, of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -1316,6 +1316,34 @@ describe('EditSouthComponent', () => {
       expect(trustModal.prepare).toHaveBeenCalledWith('save', presented, null);
       expect(southConnectorService.update).toHaveBeenCalledWith('southId1', command);
       expect(command.serverTrust).toEqual(serverTrust);
+    });
+
+    test('should keep the Save button disabled until the connector reviewed is saved', async () => {
+      southConnectorService.retrieveServerIdentity.mockReturnValue(of<PresentedServerIdentity>({ identity, status: 'unknown' }));
+      const update = new Subject<void>();
+      southConnectorService.update.mockReturnValue(update);
+      const tester = await createTester('edit');
+      mockModal(createMock(ServerTrustModalComponent), 'trust');
+      await tester.goTo('review');
+
+      await tester.saveButton.click();
+
+      expect(southConnectorService.update).toHaveBeenCalledTimes(1);
+      await expect.element(tester.saveButton).toBeDisabled();
+      update.next();
+      update.complete();
+      await expect.element(tester.saveButton).not.toBeDisabled();
+    });
+
+    test('should forget the identity trusted in the form when another connector type is chosen', async () => {
+      const tester = await createTester('edit');
+      await trustFromConnectionTest(tester);
+      expect(TestBed.inject(FormServerTrustService).get('south')).toEqual(identity);
+
+      // a new form is built for the type chosen
+      tester.fixture.componentInstance.buildForm();
+
+      expect(TestBed.inject(FormServerTrustService).get('south')).toBeNull();
     });
 
     test('should not save when the review of the identity the server presents is cancelled', async () => {

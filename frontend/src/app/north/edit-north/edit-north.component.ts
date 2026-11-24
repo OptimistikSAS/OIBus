@@ -451,6 +451,8 @@ export class EditNorthComponent implements CanComponentDeactivate {
 
     form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
+    // An identity trusted in the form is tied to its settings: a new form (another connector type) trusts none
+    this.serverTrust.reset();
     form.controls.settings.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.serverTrust.settingsChanged(form.controls.settings.getRawValue()));
@@ -464,7 +466,8 @@ export class EditNorthComponent implements CanComponentDeactivate {
     return true;
   }
 
-  createOrUpdateNorthConnector(command: NorthConnectorCommandDTO): void {
+  /** Creates or updates the connector, giving it as saved */
+  private createOrUpdateNorthConnector(command: NorthConnectorCommandDTO): Observable<NorthConnectorDTO> {
     let createOrUpdate: Observable<NorthConnectorDTO>;
     if (this.mode() === 'edit') {
       createOrUpdate = this.northConnectorService.update(this.northConnector()!.id, command).pipe(
@@ -484,9 +487,22 @@ export class EditNorthComponent implements CanComponentDeactivate {
         })
       );
     }
-    createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(northConnector => {
-      this.router.navigate(['/north', northConnector.id]);
-    });
+    return createOrUpdate;
+  }
+
+  /**
+   * Saves the connector once the identity of its server is reviewed (see reviewServerIdentityBeforeSave): both are one pending
+   * action, so the Save button stays disabled until the connector is saved.
+   */
+  private saveNorthConnector(): void {
+    this.reviewServerIdentityBeforeSave()
+      .pipe(
+        switchMap(() => this.createOrUpdateNorthConnector(this.formNorthConnectorCommand)),
+        this.state.pendingUntilFinalization()
+      )
+      .subscribe(northConnector => {
+        this.router.navigate(['/north', northConnector.id]);
+      });
   }
 
   /** Pressing Enter in a field submits the form, whether the Save button shows or not */
@@ -534,7 +550,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
         this.steps.showFirstInvalid();
         return;
       }
-      this.reviewServerIdentityBeforeSave().subscribe(() => this.createOrUpdateNorthConnector(this.formNorthConnectorCommand));
+      this.saveNorthConnector();
       return;
     }
 
@@ -677,8 +693,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
           this.serverTrust.trust(identity, this.form()!.controls.settings.getRawValue());
         }
       }),
-      map(() => undefined),
-      this.state.pendingUntilFinalization()
+      map(() => undefined)
     );
   }
 }

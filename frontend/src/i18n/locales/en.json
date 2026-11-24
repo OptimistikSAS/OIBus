@@ -3863,8 +3863,7 @@
       },
       "review": "Review and trust",
       "trusted-by": "Trusted by {{ user }} on {{ date }}",
-      "trust-on-first-use": "No identity trusted yet: the connector trusts the identity its server presents at its first connection.",
-      "none": "No identity trusted yet: test the connection to review the identity of the server and trust it."
+      "trust-on-first-use": "No identity trusted yet: the connector trusts the identity its server presents at its first connection."
     }
   }
 }

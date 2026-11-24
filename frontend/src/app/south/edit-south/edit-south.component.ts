@@ -480,7 +480,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
     return true;
   }
 
-  createOrUpdateSouthConnector(command: SouthConnectorCommandDTO): void {
+  /** Creates or updates the connector, giving it as saved */
+  private createOrUpdateSouthConnector(command: SouthConnectorCommandDTO): Observable<SouthConnectorDTO> {
     let createOrUpdate: Observable<SouthConnectorDTO>;
     if (this.mode() === 'edit') {
       createOrUpdate = this.southConnectorService.update(this.southConnector()!.id, command).pipe(
@@ -500,9 +501,22 @@ export class EditSouthComponent implements CanComponentDeactivate {
         })
       );
     }
-    createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(southConnector => {
-      this.router.navigate(['/south', southConnector.id]);
-    });
+    return createOrUpdate;
+  }
+
+  /**
+   * Saves the connector once the identity of its server is reviewed (see reviewServerIdentityBeforeSave): both are one pending
+   * action, so the Save button stays disabled until the connector is saved.
+   */
+  private saveSouthConnector(): void {
+    this.reviewServerIdentityBeforeSave()
+      .pipe(
+        switchMap(() => this.createOrUpdateSouthConnector(this.formSouthConnectorCommand)),
+        this.state.pendingUntilFinalization()
+      )
+      .subscribe(southConnector => {
+        this.router.navigate(['/south', southConnector.id]);
+      });
   }
 
   /** Pressing Enter in a field submits the form, whether the Save button shows or not */
@@ -548,7 +562,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
         this.steps.showFirstInvalid();
         return;
       }
-      this.reviewServerIdentityBeforeSave().subscribe(() => this.createOrUpdateSouthConnector(this.formSouthConnectorCommand));
+      this.saveSouthConnector();
       return;
     }
 
@@ -985,6 +999,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
     form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
+    // An identity trusted in the form is tied to its settings: a new form (another connector type) trusts none
+    this.serverTrust.reset();
     form.controls.settings.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.serverTrust.settingsChanged(form.controls.settings.getRawValue()));
@@ -1062,8 +1078,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
           this.serverTrust.trust(identity, this.form()!.controls.settings.getRawValue());
         }
       }),
-      map(() => undefined),
-      this.state.pendingUntilFinalization()
+      map(() => undefined)
     );
   }
 

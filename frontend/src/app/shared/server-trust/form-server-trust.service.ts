@@ -84,8 +84,14 @@ export class FormServerTrust {
     return identity ? { identity, trustOnFirstUse: false } : undefined;
   }
 
+  /** Forgets the identity trusted, when a new form is built (another connector type) */
+  reset() {
+    this.store.set(this.target, null);
+    this.endpoint = null;
+  }
+
   /** Forgets the identity trusted, when the form is left */
   destroy() {
-    this.store.set(this.target, null);
+    this.reset();
   }
 }

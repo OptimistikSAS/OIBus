@@ -66,6 +66,7 @@ import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/se
 import { builtInSortValue, ItemSelection } from '../../shared/item-table/item-table';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
+import { toDisplayedServerTrust } from '../../shared/server-trust/server-trust';
 import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
 
@@ -172,12 +173,14 @@ export class SouthDetailComponent {
     this.manifest()?.serverIdentity ? { southId: this.southConnector()?.id ?? null, refresh: this.serverTrustRefresh() } : null
   );
   /** The trust of the connector in the identity of its server, with the identity it refused, polled as the metrics */
-  readonly serverTrust = toSignal(
+  private readonly polledServerTrust = toSignal(
     toObservable(this.serverTrustSouthId).pipe(
       switchMap(target => (target?.southId ? pollMetrics(() => this.southConnectorService.getServerTrust(target.southId!)) : of(null)))
     ),
     { initialValue: null }
   );
+  /** The trust shown on the page (see toDisplayedServerTrust) */
+  readonly serverTrust = computed(() => toDisplayedServerTrust(this.polledServerTrust(), this.southConnector()?.enabled ?? false));
 
   // --- Items table: the group and scan mode filters are added to the name and status filters of the table ---
   readonly groupFilterControl = this.fb.control(null as string | null);

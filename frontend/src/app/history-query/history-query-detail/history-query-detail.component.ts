@@ -53,6 +53,7 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
 import { pollMetrics } from '../../shared/polling';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
+import { toDisplayedServerTrust } from '../../shared/server-trust/server-trust';
 import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
@@ -279,7 +280,7 @@ export class HistoryQueryDetailComponent {
         ? { historyId: this.historyQuery()?.id ?? null, refresh: this.serverTrustRefresh() }
         : null
     );
-    return toSignal(
+    const polled = toSignal(
       toObservable(target).pipe(
         switchMap(polling =>
           polling?.historyId ? pollMetrics(() => this.historyQueryService.getServerTrust(polling.historyId!, side)) : of(null)
@@ -287,6 +288,8 @@ export class HistoryQueryDetailComponent {
       ),
       { initialValue: null }
     );
+    // shown as toDisplayedServerTrust tells
+    return computed(() => toDisplayedServerTrust(polled(), this.historyQuery()?.status === 'RUNNING'));
   }
 
   /** Reviews the identity a side refused, and trusts it if the user does */
