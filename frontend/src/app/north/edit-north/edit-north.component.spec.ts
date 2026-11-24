@@ -8,7 +8,6 @@ import { page, userEvent } from 'vitest/browser';
 
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { NorthConnectorManifest, NorthType } from '@oibus/shared/connector/north-manifest.model';
-import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { buildEngineSettings } from '../../../test/builders';
@@ -71,7 +70,8 @@ const sftpManifest: NorthConnectorManifest = {
   }
 };
 
-const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+const identity = testData.serverTrust.identities.sshHostKey;
+const { presented } = testData.serverTrust;
 
 class EditNorthComponentTester {
   readonly fixture = TestBed.createComponent(EditNorthComponent);
@@ -608,7 +608,7 @@ describe('EditNorthComponent', () => {
 
       test('should trust the identity of the server in the form from the connection test, and save it', async () => {
         modalService.mockClosedModal(testModal);
-        northConnectorService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'trusted' }));
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of(presented.trusted));
         const tester = new EditNorthComponentTester();
         await tester.outputFolder.fill('/out');
         await tester.host.fill('server');
@@ -684,12 +684,7 @@ describe('EditNorthComponent', () => {
       });
 
       test('should test the connection with the identity the connector trusts', async () => {
-        const trusted = {
-          ...identity,
-          fingerprint: 'SHA256:trusted',
-          trustedBy: { id: 'userId1', friendlyName: 'admin' },
-          trustedAt: '2026-01-01T00:00:00.000Z'
-        };
+        const trusted = testData.serverTrust.trustedIdentities.otherSshHostKey;
         northConnector.serverTrust = { identity: trusted, trustOnFirstUse: false };
         modalService.mockClosedModal(testModal);
         const tester = new EditNorthComponentTester();
@@ -702,11 +697,10 @@ describe('EditNorthComponent', () => {
         expect(testModal.runTest).toHaveBeenCalledWith('north', 'northId1', { outputFolder: 'output-folder', host: null }, 'file-writer');
       });
 
-      test.each<{ status: PresentedServerIdentity['status'] }>([{ status: 'unknown' }, { status: 'changed' }])(
+      test.each([presented.unknown, presented.changed])(
         'should save with the identity of the server, $status, once trusted',
-        async ({ status }) => {
-          const presented: PresentedServerIdentity = { identity, status };
-          northConnectorService.retrieveServerIdentity.mockReturnValue(of(presented));
+        async presentedIdentity => {
+          northConnectorService.retrieveServerIdentity.mockReturnValue(of(presentedIdentity));
           modalService.mockClosedModal(trustModal, 'trust');
           const tester = new EditNorthComponentTester();
           await expect.element(tester.name).toHaveValue('North 1');
@@ -718,7 +712,7 @@ describe('EditNorthComponent', () => {
             { outputFolder: 'output-folder', host: null },
             'file-writer'
           );
-          expect(trustModal.prepare).toHaveBeenCalledWith('save', presented, null);
+          expect(trustModal.prepare).toHaveBeenCalledWith('save', presentedIdentity, null);
           expect(northConnectorService.update).toHaveBeenCalledWith(
             'northId1',
             expect.objectContaining({ name: 'North 1', serverTrust: { identity, trustOnFirstUse: false } })
@@ -728,7 +722,7 @@ describe('EditNorthComponent', () => {
       );
 
       test('should save without the identity of the server when the user goes on without trusting it', async () => {
-        northConnectorService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'changed' }));
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of(presented.changed));
         modalService.mockClosedModal(trustModal, 'skip');
         const tester = new EditNorthComponentTester();
         await expect.element(tester.name).toHaveValue('North 1');
@@ -741,7 +735,7 @@ describe('EditNorthComponent', () => {
       });
 
       test('should not save when the review of the identity of the server is cancelled', async () => {
-        northConnectorService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'unknown' }));
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of(presented.unknown));
         modalService.mockDismissedModal(trustModal);
         const tester = new EditNorthComponentTester();
         await expect.element(tester.name).toHaveValue('North 1');
@@ -754,10 +748,10 @@ describe('EditNorthComponent', () => {
       });
 
       test.each([
-        { description: 'is trusted', presented$: of<PresentedServerIdentity>({ identity, status: 'trusted' }), trustOnFirstUse: false },
+        { description: 'is trusted', presented$: of(presented.trusted), trustOnFirstUse: false },
         {
           description: 'is trusted at the first connection',
-          presented$: of<PresentedServerIdentity>({ identity, status: 'unknown' }),
+          presented$: of(presented.unknown),
           trustOnFirstUse: true
         },
         { description: 'is not checked', presented$: of(null), trustOnFirstUse: false },

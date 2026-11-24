@@ -6,30 +6,15 @@ import { page } from 'vitest/browser';
 import { ServerIdentity, X509ServerIdentityDetails } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { provideCurrentUser } from '../../current-user-testing';
 import { ServerIdentityComponent } from './server-identity.component';
 
-const x509Details: X509ServerIdentityDetails = {
-  subject: 'CN=My OPC UA Server\nO=Optimistik',
-  issuer: 'CN=My OPC UA Server\nO=Optimistik',
-  serialNumber: '5E2A0C',
-  validFrom: '2020-01-01T00:00:00.000Z',
-  validTo: '2099-01-01T00:00:00.000Z',
-  uris: ['urn:my-server:UA:Server'],
-  dnsNames: ['my-server.local'],
-  ipAddresses: ['192.168.0.10'],
-  selfSigned: true
-};
+const { sshHostKey, x509, otherX509 } = testData.serverTrust.identities;
 
-function x509Identity(details: Partial<X509ServerIdentityDetails> = {}, fingerprint = 'AB:CD:EF:01'): ServerIdentity {
-  return { type: 'x509', fingerprint, details: { ...x509Details, ...details } };
+function x509Identity(details: Partial<X509ServerIdentityDetails> = {}): ServerIdentity {
+  return { ...x509, details: { ...x509.details, ...details } };
 }
-
-const sshIdentity: ServerIdentity = {
-  type: 'ssh-host-key',
-  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
-  details: { keyType: 'ssh-ed25519' }
-};
 
 class ServerIdentityComponentTester {
   readonly fixture = TestBed.createComponent(ServerIdentityComponent);
@@ -67,10 +52,10 @@ describe('ServerIdentityComponent', () => {
   });
 
   test('should display the details of a self-signed certificate', async () => {
-    const tester = new ServerIdentityComponentTester(x509Identity());
+    const tester = new ServerIdentityComponentTester(x509);
 
     await expect.element(tester.type).toHaveTextContent('Certificate');
-    await expect.element(tester.fingerprint).toHaveTextContent('AB:CD:EF:01');
+    await expect.element(tester.fingerprint).toHaveTextContent(x509.fingerprint);
     await expect.element(tester.previousFingerprint).not.toBeInTheDocument();
     await expect.element(tester.subject).toHaveTextContent('CN=My OPC UA Server O=Optimistik');
     await expect.element(tester.issuerName).toHaveTextContent('CN=My OPC UA Server O=Optimistik');
@@ -127,10 +112,10 @@ describe('ServerIdentityComponent', () => {
   });
 
   test('should display an SSH host key', async () => {
-    const tester = new ServerIdentityComponentTester(sshIdentity);
+    const tester = new ServerIdentityComponentTester(sshHostKey);
 
     await expect.element(tester.type).toHaveTextContent('SSH host key');
-    await expect.element(tester.fingerprint).toHaveTextContent(sshIdentity.fingerprint);
+    await expect.element(tester.fingerprint).toHaveTextContent(sshHostKey.fingerprint);
     await expect.element(tester.keyType).toHaveTextContent('ssh-ed25519');
     await expect.element(tester.subject).not.toBeInTheDocument();
     await expect.element(tester.issuer).not.toBeInTheDocument();
@@ -140,17 +125,17 @@ describe('ServerIdentityComponent', () => {
   });
 
   test('should display the fingerprint trusted before when it changed', async () => {
-    const tester = new ServerIdentityComponentTester(x509Identity(), x509Identity({}, '01:23:45:67'));
+    const tester = new ServerIdentityComponentTester(x509, otherX509);
 
-    await expect.element(tester.previousFingerprint).toHaveTextContent('01:23:45:67');
+    await expect.element(tester.previousFingerprint).toHaveTextContent(otherX509.fingerprint);
     await expect.element(tester.rows.filter({ hasText: 'Fingerprint trusted until now' })).toHaveClass('table-warning');
   });
 
   test.each([
-    { name: 'the same identity', previous: x509Identity() },
+    { name: 'the same identity', previous: x509 },
     { name: 'no identity', previous: null }
   ])('should not display the fingerprint trusted before when it is $name', async ({ previous }) => {
-    const tester = new ServerIdentityComponentTester(x509Identity(), previous);
+    const tester = new ServerIdentityComponentTester(x509, previous);
 
     await expect.element(tester.fingerprint).toBeInTheDocument();
     await expect.element(tester.previousFingerprint).not.toBeInTheDocument();

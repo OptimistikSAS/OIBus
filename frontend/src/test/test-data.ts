@@ -23,6 +23,7 @@ import {
 import { IPFilterCommandDTO, IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
 import { ScanModeCommandDTO, ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { ServerTrustStateDTO, TrustedServerIdentityDTO } from '@oibus/shared/api/server-identity.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -34,6 +35,12 @@ import { UserCommandDTO, UserDTO } from '@oibus/shared/api/user.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 import { EngineMetrics, HistoryQueryMetrics, NorthConnectorMetrics, SouthConnectorMetrics } from '@oibus/shared/domain/engine.model';
+import {
+  PresentedServerIdentity,
+  ServerIdentity,
+  SshHostKeyServerIdentityDetails,
+  X509ServerIdentityDetails
+} from '@oibus/shared/domain/server-identity.model';
 import { OIBusCommandDTO } from '@oibus/shared/oia/command.model';
 
 const DATE_1 = '2020-03-15T00:00:00.000Z';
@@ -2833,6 +2840,85 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
   }
 ];
 
+/** The host key of an SFTP server */
+const sshHostKeyIdentity: ServerIdentity & { details: SshHostKeyServerIdentityDetails } = {
+  type: 'ssh-host-key',
+  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
+  details: { keyType: 'ssh-ed25519' }
+};
+
+/** Another host key: the one trusted before the server changed it */
+const otherSshHostKeyIdentity: ServerIdentity & { details: SshHostKeyServerIdentityDetails } = {
+  type: 'ssh-host-key',
+  fingerprint: 'SHA256:Lrr0bxlNnSFwVd2k9rXc0DbW6Ys3QUdkb1cR1Zx4QpA',
+  details: { keyType: 'ssh-rsa' }
+};
+
+/** The self-signed certificate of an OPC UA server, valid now */
+const x509Identity: ServerIdentity & { details: X509ServerIdentityDetails } = {
+  type: 'x509',
+  fingerprint: 'AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89',
+  details: {
+    subject: 'CN=My OPC UA Server\nO=Optimistik',
+    issuer: 'CN=My OPC UA Server\nO=Optimistik',
+    serialNumber: '5E2A0C',
+    validFrom: '2020-01-01T00:00:00.000Z',
+    validTo: '2099-01-01T00:00:00.000Z',
+    uris: ['urn:my-server:UA:Server'],
+    dnsNames: ['my-server.local'],
+    ipAddresses: ['192.168.0.10'],
+    selfSigned: true
+  }
+};
+
+/** The renewed certificate of the same server */
+const otherX509Identity: ServerIdentity & { details: X509ServerIdentityDetails } = {
+  type: 'x509',
+  fingerprint: '01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF',
+  details: { ...x509Identity.details, serialNumber: '5E2A0D', validFrom: '2026-01-01T00:00:00.000Z' }
+};
+
+const trustedSshHostKeyIdentity: TrustedServerIdentityDTO = {
+  ...sshHostKeyIdentity,
+  trustedBy: { id: 'user1', friendlyName: 'Admin' },
+  trustedAt: '2026-01-01T00:00:00.000Z'
+};
+
+const trustedOtherSshHostKeyIdentity: TrustedServerIdentityDTO = {
+  ...otherSshHostKeyIdentity,
+  trustedBy: { id: 'user1', friendlyName: 'Admin' },
+  trustedAt: '2026-01-01T00:00:00.000Z'
+};
+
+const trustedX509Identity: TrustedServerIdentityDTO = {
+  ...x509Identity,
+  trustedBy: { id: 'user1', friendlyName: 'Admin' },
+  trustedAt: '2026-01-01T00:00:00.000Z'
+};
+
+const presentedUnknown: PresentedServerIdentity = { identity: sshHostKeyIdentity, status: 'unknown' };
+
+const presentedChanged: PresentedServerIdentity = { identity: sshHostKeyIdentity, status: 'changed' };
+
+const presentedTrusted: PresentedServerIdentity = { identity: sshHostKeyIdentity, status: 'trusted' };
+
+/** No identity trusted, refused nor to trust at the first connection */
+const noServerTrust: ServerTrustStateDTO = { identity: null, trustOnFirstUse: false, pending: null };
+
+const trustOnFirstUseServerTrust: ServerTrustStateDTO = { identity: null, trustOnFirstUse: true, pending: null };
+
+const trustedServerTrust: ServerTrustStateDTO = { identity: trustedSshHostKeyIdentity, trustOnFirstUse: false, pending: null };
+
+/** The connector refused the identity of its server, none being trusted yet */
+const unknownRefusedServerTrust: ServerTrustStateDTO = { identity: null, trustOnFirstUse: false, pending: presentedUnknown };
+
+/** The connector refused the identity of its server, another one being trusted */
+const changedRefusedServerTrust: ServerTrustStateDTO = {
+  identity: trustedOtherSshHostKeyIdentity,
+  trustOnFirstUse: false,
+  pending: presentedChanged
+};
+
 const testData = {
   constants: { dates: { DATE_1, DATE_2 } },
   south: {
@@ -2868,6 +2954,27 @@ const testData = {
   oIAnalytics: {
     registration: { completed: registrationCompleted, command: registrationCommand },
     commands: { oIBusList: oIBusCommandList }
+  },
+  serverTrust: {
+    identities: {
+      sshHostKey: sshHostKeyIdentity,
+      otherSshHostKey: otherSshHostKeyIdentity,
+      x509: x509Identity,
+      otherX509: otherX509Identity
+    },
+    trustedIdentities: {
+      sshHostKey: trustedSshHostKeyIdentity,
+      otherSshHostKey: trustedOtherSshHostKeyIdentity,
+      x509: trustedX509Identity
+    },
+    presented: { unknown: presentedUnknown, changed: presentedChanged, trusted: presentedTrusted },
+    states: {
+      none: noServerTrust,
+      trustOnFirstUse: trustOnFirstUseServerTrust,
+      trusted: trustedServerTrust,
+      unknownRefused: unknownRefusedServerTrust,
+      changedRefused: changedRefusedServerTrust
+    }
   }
 };
 

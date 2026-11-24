@@ -9,9 +9,7 @@ import { page } from 'vitest/browser';
 
 import { LogDTO } from '@oibus/shared/api/logs.model';
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
-import { ServerTrustStateDTO, TrustedServerIdentityDTO } from '@oibus/shared/api/server-identity.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
-import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { buildEngineSettings } from '../../../test/builders';
@@ -71,30 +69,11 @@ const manifest: NorthConnectorManifest = {
   }
 };
 
-const identity: ServerIdentity = {
-  type: 'x509',
-  fingerprint: 'AB:CD',
-  details: {
-    subject: 'CN=server',
-    issuer: 'CN=server',
-    serialNumber: '01',
-    validFrom: '2026-01-01T00:00:00.000Z',
-    validTo: '2027-01-01T00:00:00.000Z',
-    uris: [],
-    dnsNames: [],
-    ipAddresses: [],
-    selfSigned: true
-  }
-};
-const trustedIdentity: TrustedServerIdentityDTO = {
-  ...identity,
-  fingerprint: 'EF:01',
-  trustedBy: { id: 'userId1', friendlyName: 'admin' },
-  trustedAt: '2026-01-01T00:00:00.000Z'
-};
-const pending: PresentedServerIdentity = { identity, status: 'changed' };
-const trustedState: ServerTrustStateDTO = { identity: trustedIdentity, trustOnFirstUse: false, pending: null };
-const pendingState: ServerTrustStateDTO = { identity: trustedIdentity, trustOnFirstUse: false, pending };
+const identity = testData.serverTrust.identities.sshHostKey;
+/** The identity trusted before the server presented another one */
+const trustedIdentity = testData.serverTrust.trustedIdentities.otherSshHostKey;
+const pending = testData.serverTrust.presented.changed;
+const { trusted: trustedState, changedRefused: pendingState } = testData.serverTrust.states;
 
 class NorthDetailComponentTester {
   readonly fixture = TestBed.createComponent(NorthDetailComponent);
@@ -306,7 +285,7 @@ describe('NorthDetailComponent', () => {
     let trustModal: MockObject<ServerTrustModalComponent>;
 
     beforeEach(() => {
-      northConnectorService.getNorthManifest.mockReturnValue(of({ ...manifest, serverIdentity: 'x509' }));
+      northConnectorService.getNorthManifest.mockReturnValue(of({ ...manifest, serverIdentity: 'ssh-host-key' }));
       northConnectorService.getServerTrust.mockReturnValue(of(trustedState));
       northConnectorService.trustServerIdentity.mockReturnValue(of(undefined));
       trustModal = createMock(ServerTrustModalComponent);
@@ -318,7 +297,7 @@ describe('NorthDetailComponent', () => {
       await vi.waitFor(() => expect(northConnectorService.getServerTrust).toHaveBeenCalledTimes(1));
       expect(northConnectorService.getServerTrust).toHaveBeenCalledWith('northId1');
 
-      await expect.element(tester.serverTrustPanel).toMatchTextContent(/Identity of the server\s*Trusted by admin on/);
+      await expect.element(tester.serverTrustPanel).toMatchTextContent(/Identity of the server\s*Trusted by Admin on/);
       await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
       await expect.element(tester.reviewServerIdentityButton).not.toBeInTheDocument();
 
@@ -355,7 +334,7 @@ describe('NorthDetailComponent', () => {
       await tester.reviewServerIdentityButton.click();
 
       expect(trustModal.prepare).toHaveBeenCalledWith('review', pending, trustedIdentity);
-      expect(northConnectorService.trustServerIdentity).toHaveBeenCalledWith('northId1', 'AB:CD');
+      expect(northConnectorService.trustServerIdentity).toHaveBeenCalledWith('northId1', identity.fingerprint);
       expect(notificationService.success).toHaveBeenCalledWith('server-trust.trusted', { name: 'North 1' });
       // the trust and the connector are read again
       await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
@@ -387,7 +366,7 @@ describe('NorthDetailComponent', () => {
       const options = testModal.allowServerTrust.mock.lastCall![0];
       expect(options.trusted).toEqual(trustedIdentity);
       await firstValueFrom(options.trust(identity));
-      expect(northConnectorService.trustServerIdentity).toHaveBeenCalledWith('northId1', 'AB:CD');
+      expect(northConnectorService.trustServerIdentity).toHaveBeenCalledWith('northId1', identity.fingerprint);
       expect(notificationService.success).toHaveBeenCalledWith('server-trust.trusted', { name: 'North 1' });
       expect(northConnectorService.findById).toHaveBeenCalledTimes(2);
     });
@@ -407,7 +386,7 @@ describe('NorthDetailComponent', () => {
 
         expect(northConnectorService.retrieveServerIdentity).toHaveBeenCalledWith('northId1', northConnector.settings, 'file-writer');
         expect(trustModal.prepare).toHaveBeenCalledWith('start', pending, null);
-        expect(northConnectorService.trustServerIdentity).toHaveBeenCalledWith('northId1', 'AB:CD');
+        expect(northConnectorService.trustServerIdentity).toHaveBeenCalledWith('northId1', identity.fingerprint);
         expect(northConnectorService.start).toHaveBeenCalledWith('northId1');
         expect(northConnectorService.trustServerIdentity.mock.invocationCallOrder[0]).toBeLessThan(
           northConnectorService.start.mock.invocationCallOrder[0]
@@ -440,7 +419,7 @@ describe('NorthDetailComponent', () => {
       });
 
       test('should start the connector directly when the identity of its server is trusted', async () => {
-        northConnectorService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'trusted' }));
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of(testData.serverTrust.presented.trusted));
         const tester = new NorthDetailComponentTester();
         await expect.element(tester.startButton).toBeInTheDocument();
 

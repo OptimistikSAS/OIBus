@@ -6,7 +6,6 @@ import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { HistoryQueryItemDTO } from '@oibus/shared/api/history-query.model';
-import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import { SouthConnectorItemTestResult, SouthExploreBrowseResult, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
 import {
   CacheContentUpdateCommand,
@@ -14,7 +13,6 @@ import {
   FileCacheContent,
   OIBusConnectionTestResult
 } from '@oibus/shared/domain/engine.model';
-import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { expectHttp } from '../../test/http-testing';
@@ -66,13 +64,9 @@ function paramsOf(request: TestRequest): Record<string, string | null> {
   return Object.fromEntries(params.keys().map(key => [key, params.get(key)]));
 }
 
-const serverIdentity: ServerIdentity = {
-  type: 'ssh-host-key',
-  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
-  details: { keyType: 'ssh-ed25519' }
-};
-const presentedServerIdentity: PresentedServerIdentity = { identity: serverIdentity, status: 'unknown' };
-const serverTrustState: ServerTrustStateDTO = { identity: null, trustOnFirstUse: false, pending: presentedServerIdentity };
+const serverIdentity = testData.serverTrust.identities.sshHostKey;
+const presentedServerIdentity = testData.serverTrust.presented.unknown;
+const serverTrustState = testData.serverTrust.states.unknownRefused;
 
 const connectionTestResult: OIBusConnectionTestResult = { items: [{ key: 'Connected', value: 'true' }] };
 const itemTestResult: SouthConnectorItemTestResult = {

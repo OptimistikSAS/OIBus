@@ -5,7 +5,6 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import {
   SouthConnectorItemDTO,
   SouthConnectorItemTestResult,
@@ -16,7 +15,6 @@ import {
 import { OIBusRecord } from '@oibus/shared/common/content.model';
 import { SouthType } from '@oibus/shared/connector/south-manifest.model';
 import { OIBusConnectionTestResult } from '@oibus/shared/domain/engine.model';
-import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { buildSouthItemGroup, buildSouthItemGroupCommand } from '../../test/builders';
@@ -69,23 +67,9 @@ function paramsOf(request: TestRequest): Record<string, string | null> {
   return Object.fromEntries(params.keys().map(key => [key, params.get(key)]));
 }
 
-const serverIdentity: ServerIdentity = {
-  type: 'x509',
-  fingerprint: 'AB:CD:EF:01',
-  details: {
-    subject: 'CN=Server',
-    issuer: 'CN=Server',
-    serialNumber: '01',
-    validFrom: testData.constants.dates.DATE_1,
-    validTo: testData.constants.dates.DATE_2,
-    uris: [],
-    dnsNames: [],
-    ipAddresses: [],
-    selfSigned: true
-  }
-};
-const presentedServerIdentity: PresentedServerIdentity = { identity: serverIdentity, status: 'unknown' };
-const serverTrustState: ServerTrustStateDTO = { identity: null, trustOnFirstUse: false, pending: presentedServerIdentity };
+const serverIdentity = testData.serverTrust.identities.sshHostKey;
+const presentedServerIdentity = testData.serverTrust.presented.unknown;
+const serverTrustState = testData.serverTrust.states.unknownRefused;
 
 const southTypes: Array<SouthType> = [
   { id: 'folder-scanner', category: 'file', modes: { subscription: false, lastPoint: false, lastFile: true, history: false } },

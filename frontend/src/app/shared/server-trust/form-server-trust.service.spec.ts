@@ -2,20 +2,10 @@ import { TestBed } from '@angular/core/testing';
 
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { ServerIdentity } from '@oibus/shared/domain/server-identity.model';
-
+import testData from '../../../test/test-data';
 import { FormServerTrust, FormServerTrustService } from './form-server-trust.service';
 
-const identity: ServerIdentity = {
-  type: 'ssh-host-key',
-  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
-  details: { keyType: 'ssh-ed25519' }
-};
-const otherIdentity: ServerIdentity = {
-  type: 'ssh-host-key',
-  fingerprint: 'SHA256:otherFingerprint',
-  details: { keyType: 'ssh-rsa' }
-};
+const { sshHostKey: identity, otherSshHostKey: otherIdentity } = testData.serverTrust.identities;
 
 describe('FormServerTrustService', () => {
   let service: FormServerTrustService;

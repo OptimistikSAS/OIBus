@@ -6,9 +6,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { ServerTrustDTO } from '@oibus/shared/api/server-identity.model';
-import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
+import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { provideCurrentUser } from '../../current-user-testing';
 import { MockModalService, provideModalTesting } from '../../mock-modal.service.testing';
@@ -19,21 +20,13 @@ import {
   SERVER_IDENTITY_RETRIEVAL_TIMEOUT_MS,
   ServerTrustDecision,
   ServerTrustModalComponent,
-  ServerTrustModalMode} from './server-trust-modal.component';
+  ServerTrustModalMode
+} from './server-trust-modal.component';
 
-const identity: ServerIdentity = {
-  type: 'ssh-host-key',
-  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
-  details: { keyType: 'ssh-ed25519' }
-};
-const previousIdentity: ServerIdentity = {
-  type: 'ssh-host-key',
-  fingerprint: 'SHA256:previousFingerprint',
-  details: { keyType: 'ssh-ed25519' }
-};
-const unknown: PresentedServerIdentity = { identity, status: 'unknown' };
-const changed: PresentedServerIdentity = { identity, status: 'changed' };
-const noTrust: ServerTrustDTO = { identity: null, trustOnFirstUse: false };
+const identity = testData.serverTrust.identities.sshHostKey;
+const previousIdentity = testData.serverTrust.identities.otherSshHostKey;
+const { unknown, changed, trusted } = testData.serverTrust.presented;
+const { none: noTrust, trustOnFirstUse } = testData.serverTrust.states;
 
 class ServerTrustModalComponentTester {
   readonly fixture = TestBed.createComponent(ServerTrustModalComponent);
@@ -180,12 +173,8 @@ describe('askServerTrust and reviewServerIdentity', () => {
 
     test.each<{ name: string; presented: PresentedServerIdentity | null; serverTrust: ServerTrustDTO | null }>([
       { name: 'the connector does not check the identity of its server', presented: null, serverTrust: noTrust },
-      { name: 'the identity is trusted', presented: { identity, status: 'trusted' }, serverTrust: noTrust },
-      {
-        name: 'the identity is trusted at the first connection',
-        presented: unknown,
-        serverTrust: { identity: null, trustOnFirstUse: true }
-      }
+      { name: 'the identity is trusted', presented: trusted, serverTrust: noTrust },
+      { name: 'the identity is trusted at the first connection', presented: unknown, serverTrust: trustOnFirstUse }
     ])('should emit null without asking when $name', async ({ presented, serverTrust }) => {
       const open = openedModal();
 
