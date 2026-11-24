@@ -8,7 +8,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { LogDTO } from '@oibus/shared/api/logs.model';
-import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import {
   SouthConnectorFolderScannerDTO,
   SouthConnectorItemCommandDTO,
@@ -16,7 +15,7 @@ import {
   SouthItemLastValueResponse
 } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
+import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflow } from '../../../test/builders';
@@ -1070,24 +1069,15 @@ describe('SouthDetailComponent', () => {
     });
   });
   describe('server identity', () => {
-    const identity: ServerIdentity = {
-      type: 'ssh-host-key',
-      fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
-      details: { keyType: 'ssh-ed25519' }
-    };
-    const pending: PresentedServerIdentity = { identity, status: 'unknown' };
+    const identity = testData.serverTrust.identities.sshHostKey;
+    const pending = testData.serverTrust.presented.unknown;
+    const { states } = testData.serverTrust;
     /** A connector checking the host key of its server */
     const trustManifest: SouthConnectorManifest = { ...manifest, serverIdentity: 'ssh-host-key' };
-    const untrusted: ServerTrustStateDTO = { identity: null, trustOnFirstUse: false, pending: null };
-    const trusted: ServerTrustStateDTO = {
-      identity: { ...identity, trustedBy: { id: 'admin', friendlyName: 'Admin' }, trustedAt: '2026-01-01T00:00:00.000Z' },
-      trustOnFirstUse: false,
-      pending: null
-    };
 
     beforeEach(() => {
       southConnectorService.getSouthManifest.mockReturnValue(of(trustManifest));
-      southConnectorService.getServerTrust.mockReturnValue(of(untrusted));
+      southConnectorService.getServerTrust.mockReturnValue(of(states.none));
       southConnectorService.trustServerIdentity.mockReturnValue(of(undefined));
     });
 
@@ -1110,7 +1100,7 @@ describe('SouthDetailComponent', () => {
 
     test('should not show the identity refused by a stopped connector', async () => {
       southConnectorService.findById.mockReturnValue(of({ ...southConnector, enabled: false }));
-      southConnectorService.getServerTrust.mockReturnValue(of({ ...trusted, pending }));
+      southConnectorService.getServerTrust.mockReturnValue(of(states.changedRefused));
       const tester = await createTester();
 
       await expect.element(tester.serverTrustPanel).toMatchTextContent(/Trusted by/);
@@ -1119,7 +1109,7 @@ describe('SouthDetailComponent', () => {
     });
 
     test('should review and trust the identity the connector refused', async () => {
-      southConnectorService.getServerTrust.mockReturnValue(of({ ...untrusted, pending }));
+      southConnectorService.getServerTrust.mockReturnValue(of(states.unknownRefused));
       const tester = await createTester();
       await expect.element(tester.serverNotTrusted).toHaveTextContent('Server not trusted');
       await expect
@@ -1127,7 +1117,7 @@ describe('SouthDetailComponent', () => {
         .toMatchTextContent('The connector refused to connect: its server presents an identity which is not trusted.');
       const trustModal = mockModal(createMock(ServerTrustModalComponent), 'trust');
       const open = vi.spyOn(modalService, 'open');
-      southConnectorService.getServerTrust.mockReturnValue(of(trusted));
+      southConnectorService.getServerTrust.mockReturnValue(of(states.trusted));
       southConnectorService.findById.mockClear();
 
       await tester.reviewServerIdentityButton.click();
@@ -1143,7 +1133,7 @@ describe('SouthDetailComponent', () => {
     });
 
     test('should not trust the identity the connector refused when the review is cancelled', async () => {
-      southConnectorService.getServerTrust.mockReturnValue(of({ ...untrusted, pending }));
+      southConnectorService.getServerTrust.mockReturnValue(of(states.unknownRefused));
       const tester = await createTester();
       modalService.mockDismissedModal(createMock(ServerTrustModalComponent));
 
@@ -1207,7 +1197,7 @@ describe('SouthDetailComponent', () => {
     });
 
     test.each([
-      { server: 'presents a trusted identity', presented$: of<PresentedServerIdentity | null>({ identity, status: 'trusted' }) },
+      { server: 'presents a trusted identity', presented$: of<PresentedServerIdentity | null>(testData.serverTrust.presented.trusted) },
       { server: 'cannot be reached', presented$: throwError(() => new Error('unreachable')) }
     ])('should start the connector without review when the server $server', async ({ presented$ }) => {
       southConnectorService.findById.mockReturnValue(of({ ...southConnector, enabled: false }));

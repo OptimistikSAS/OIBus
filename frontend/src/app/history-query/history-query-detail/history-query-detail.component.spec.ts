@@ -11,9 +11,7 @@ import { page } from 'vitest/browser';
 
 import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
 import { LogDTO } from '@oibus/shared/api/logs.model';
-import { ServerTrustStateDTO, TrustedServerIdentityDTO } from '@oibus/shared/api/server-identity.model';
 import { HistoryQueryMetrics } from '@oibus/shared/domain/engine.model';
-import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../test/test-data';
@@ -88,16 +86,11 @@ const finishedMetrics: HistoryQueryMetrics = {
   historyMetrics: { ...testData.historyQueries.metrics.historyMetrics, intervalProgress: 1 }
 };
 
-const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
-const trustedIdentity: TrustedServerIdentityDTO = {
-  ...identity,
-  fingerprint: 'SHA256:trusted',
-  trustedBy: { id: 'userId1', friendlyName: 'admin' },
-  trustedAt: '2026-01-01T00:00:00.000Z'
-};
-const pending: PresentedServerIdentity = { identity, status: 'changed' };
-const trustedState: ServerTrustStateDTO = { identity: trustedIdentity, trustOnFirstUse: false, pending: null };
-const pendingState: ServerTrustStateDTO = { identity: trustedIdentity, trustOnFirstUse: false, pending };
+const identity = testData.serverTrust.identities.sshHostKey;
+/** The identity trusted before the server presented another one */
+const trustedIdentity = testData.serverTrust.trustedIdentities.otherSshHostKey;
+const pending = testData.serverTrust.presented.changed;
+const { trusted: trustedState, changedRefused: pendingState } = testData.serverTrust.states;
 const sides = ['south', 'north'] as const;
 
 describe('HistoryQueryDetailComponent', () => {
@@ -604,8 +597,8 @@ describe('HistoryQueryDetailComponent', () => {
       expect(historyQueryService.getServerTrust).toHaveBeenCalledWith(historyQuery.id, 'south');
       expect(historyQueryService.getServerTrust).toHaveBeenCalledWith(historyQuery.id, 'north');
 
-      await expect.element(tester.serverTrustPanel('south')).toMatchTextContent(/Identity of the South server\s*Trusted by admin on/);
-      await expect.element(tester.serverTrustPanel('north')).toMatchTextContent(/Identity of the North server\s*Trusted by admin on/);
+      await expect.element(tester.serverTrustPanel('south')).toMatchTextContent(/Identity of the South server\s*Trusted by Admin on/);
+      await expect.element(tester.serverTrustPanel('north')).toMatchTextContent(/Identity of the North server\s*Trusted by Admin on/);
       await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
 
       await vi.advanceTimersByTimeAsync(METRICS_REFRESH_INTERVAL_MS);
@@ -643,7 +636,7 @@ describe('HistoryQueryDetailComponent', () => {
       await reviewButton.click();
 
       expect(trustModal.prepare).toHaveBeenCalledWith('review', pending, trustedIdentity);
-      expect(historyQueryService.trustServerIdentity).toHaveBeenCalledWith(historyQuery.id, side, 'SHA256:presented');
+      expect(historyQueryService.trustServerIdentity).toHaveBeenCalledWith(historyQuery.id, side, identity.fingerprint);
       expect(notificationService.success).toHaveBeenCalledWith('server-trust.trusted', { name: historyQuery.name });
       // the trust and the history query are read again
       await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
@@ -660,14 +653,12 @@ describe('HistoryQueryDetailComponent', () => {
       expect(testModal.allowServerTrust).toHaveBeenCalledWith({ trusted: null, trust: expect.any(Function) });
       expect(testModal.runHistoryQueryTest).toHaveBeenCalled();
       await firstValueFrom(testModal.allowServerTrust.mock.lastCall![0].trust(identity));
-      expect(historyQueryService.trustServerIdentity).toHaveBeenCalledWith(historyQuery.id, side, 'SHA256:presented');
+      expect(historyQueryService.trustServerIdentity).toHaveBeenCalledWith(historyQuery.id, side, identity.fingerprint);
       expect(historyQueryService.findById).toHaveBeenCalledTimes(2);
     });
 
     describe('start', () => {
-      const southPresented: PresentedServerIdentity = { identity, status: 'unknown' };
-      const northIdentity: ServerIdentity = { ...identity, fingerprint: 'SHA256:north' };
-      const northPresented: PresentedServerIdentity = { identity: northIdentity, status: 'changed' };
+      const { unknown: southPresented, changed: northPresented } = testData.serverTrust.presented;
 
       beforeEach(() => {
         historyQuery = { ...historyQuery, status: 'PAUSED' };
@@ -706,7 +697,7 @@ describe('HistoryQueryDetailComponent', () => {
         expect(northModal.prepare).toHaveBeenCalledWith('start', northPresented, null);
         // only the south identity is trusted, before the north one is reviewed
         expect(historyQueryService.trustServerIdentity).toHaveBeenCalledTimes(1);
-        expect(historyQueryService.trustServerIdentity).toHaveBeenCalledWith(historyQuery.id, 'south', 'SHA256:presented');
+        expect(historyQueryService.trustServerIdentity).toHaveBeenCalledWith(historyQuery.id, 'south', identity.fingerprint);
         expect(historyQueryService.trustServerIdentity.mock.invocationCallOrder[0]).toBeLessThan(
           historyQueryService.retrieveServerIdentity.mock.invocationCallOrder[1]
         );
@@ -732,7 +723,7 @@ describe('HistoryQueryDetailComponent', () => {
       });
 
       test('should start directly when the identities are trusted', async () => {
-        historyQueryService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'trusted' }));
+        historyQueryService.retrieveServerIdentity.mockReturnValue(of(testData.serverTrust.presented.trusted));
         const tester = new HistoryQueryDetailComponentTester();
         await expect.element(tester.resumeButton).toBeInTheDocument();
 

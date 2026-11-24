@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { WorkflowRunDetailDTO, WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
-import { ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { buildWorkflow, buildWorkflowCommand } from '../../test/builders';
 import { expectHttp } from '../../test/http-testing';
@@ -215,11 +214,7 @@ describe('ConfigurationWorkflowService', () => {
   );
 
   test('should send the fingerprint of the identity trusted in the form with a command preview', async () => {
-    const serverIdentity: ServerIdentity = {
-      type: 'ssh-host-key',
-      fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
-      details: { keyType: 'ssh-ed25519' }
-    };
+    const serverIdentity = testData.serverTrust.identities.sshHostKey;
     TestBed.inject(FormServerTrustService).set('south', serverIdentity);
 
     await expectHttp(
@@ -235,7 +230,7 @@ describe('ConfigurationWorkflowService', () => {
 
   test('should not send the fingerprint of an identity trusted for another target with a command preview', async () => {
     const formServerTrust = TestBed.inject(FormServerTrustService);
-    formServerTrust.set('history-south', { type: 'ssh-host-key', fingerprint: 'SHA256:other', details: { keyType: 'ssh-rsa' } });
+    formServerTrust.set('history-south', testData.serverTrust.identities.otherSshHostKey);
 
     await expectHttp(
       http,

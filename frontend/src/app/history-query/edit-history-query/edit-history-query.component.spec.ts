@@ -9,11 +9,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
-import { TrustedServerIdentityDTO } from '@oibus/shared/api/server-identity.model';
 import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { NorthConnectorManifest, NorthType } from '@oibus/shared/connector/north-manifest.model';
 import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
-import { ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { EmptyRouteComponent } from '../../../test/empty-route.component';
@@ -145,7 +143,7 @@ const northManifestWithServerIdentity: NorthConnectorManifest = {
     ]
   }
 };
-const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+const identity = testData.serverTrust.identities.sshHostKey;
 const newItem: HistoryQueryItemCommandDTO = { ...testData.historyQueries.itemCommand, id: '', name: 'new item' };
 
 describe('EditHistoryQueryComponent', () => {
@@ -904,12 +902,7 @@ describe('EditHistoryQueryComponent', () => {
     );
 
     test('should show the identity the history query trusts in the connection test', async () => {
-      const trusted: TrustedServerIdentityDTO = {
-        ...identity,
-        fingerprint: 'SHA256:trusted',
-        trustedBy: { id: 'userId1', friendlyName: 'admin' },
-        trustedAt: '2026-01-01T00:00:00.000Z'
-      };
+      const trusted = testData.serverTrust.trustedIdentities.otherSshHostKey;
       historyQueryService.findById.mockImplementation(() =>
         of({ ...structuredClone(savedQuery), northServerTrust: { identity: trusted, trustOnFirstUse: false } })
       );

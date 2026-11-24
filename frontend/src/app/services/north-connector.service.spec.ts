@@ -5,7 +5,6 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import { NorthType } from '@oibus/shared/connector/north-manifest.model';
 import {
   CacheContentUpdateCommand,
@@ -13,7 +12,6 @@ import {
   FileCacheContent,
   OIBusConnectionTestResult
 } from '@oibus/shared/domain/engine.model';
-import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
@@ -44,13 +42,9 @@ function paramsOf(request: TestRequest): Record<string, string | null> {
   return Object.fromEntries(params.keys().map(key => [key, params.get(key)]));
 }
 
-const serverIdentity: ServerIdentity = {
-  type: 'ssh-host-key',
-  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
-  details: { keyType: 'ssh-ed25519' }
-};
-const presentedServerIdentity: PresentedServerIdentity = { identity: serverIdentity, status: 'changed' };
-const serverTrustState: ServerTrustStateDTO = { identity: null, trustOnFirstUse: true, pending: null };
+const serverIdentity = testData.serverTrust.identities.sshHostKey;
+const presentedServerIdentity = testData.serverTrust.presented.changed;
+const serverTrustState = testData.serverTrust.states.trustOnFirstUse;
 
 const northTypes: Array<NorthType> = [
   { id: 'console', category: 'debug', types: ['file'] },

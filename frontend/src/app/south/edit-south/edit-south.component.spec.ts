@@ -14,7 +14,7 @@ import {
   SouthItemGroupCommandDTO
 } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
-import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
+import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflow, buildWorkflowCommand } from '../../../test/builders';
@@ -1218,21 +1218,7 @@ describe('EditSouthComponent', () => {
     });
   });
   describe('server identity', () => {
-    const identity: ServerIdentity = {
-      type: 'x509',
-      fingerprint: 'AB:CD:EF:01',
-      details: {
-        subject: 'CN=server',
-        issuer: 'CN=server',
-        serialNumber: '01',
-        validFrom: '2026-01-01T00:00:00.000Z',
-        validTo: '2027-01-01T00:00:00.000Z',
-        uris: [],
-        dnsNames: [],
-        ipAddresses: [],
-        selfSigned: true
-      }
-    };
+    const identity = testData.serverTrust.identities.x509;
     const url = 'opc.tcp://server:4840';
     /** A connector checking the certificate of the server at the url of its settings */
     const trustManifest: SouthConnectorManifest = {
@@ -1347,11 +1333,11 @@ describe('EditSouthComponent', () => {
     });
 
     test('should not save when the review of the identity the server presents is cancelled', async () => {
-      const trustedIdentity = { ...identity, trustedBy: { id: 'admin', friendlyName: 'Admin' }, trustedAt: '2026-01-01T00:00:00.000Z' };
+      const trustedIdentity = testData.serverTrust.trustedIdentities.x509;
       southConnectorService.findById.mockReturnValue(
         of({ ...southConnector, serverTrust: { identity: trustedIdentity, trustOnFirstUse: false } })
       );
-      const presented: PresentedServerIdentity = { identity: { ...identity, fingerprint: '01:23:45:67' }, status: 'changed' };
+      const presented: PresentedServerIdentity = { identity: testData.serverTrust.identities.otherX509, status: 'changed' };
       southConnectorService.retrieveServerIdentity.mockReturnValue(of(presented));
       const tester = await createTester('edit');
       const trustModal = createMock(ServerTrustModalComponent);

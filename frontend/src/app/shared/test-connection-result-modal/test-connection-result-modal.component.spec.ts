@@ -37,16 +37,7 @@ class TestConnectionResultModalComponentTester {
   readonly trustButton = this.root.getByRole('button', { name: 'Trust this identity' });
 }
 
-const identity: ServerIdentity = {
-  type: 'ssh-host-key',
-  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
-  details: { keyType: 'ssh-ed25519' }
-};
-const previousIdentity: ServerIdentity = {
-  type: 'ssh-host-key',
-  fingerprint: 'SHA256:previousFingerprint',
-  details: { keyType: 'ssh-ed25519' }
-};
+const { sshHostKey: identity, otherSshHostKey: previousIdentity } = testData.serverTrust.identities;
 
 type TestConnectionMock = Mock<(...args: Array<never>) => Observable<OIBusConnectionTestResult>>;
 
