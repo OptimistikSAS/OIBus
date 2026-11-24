@@ -213,7 +213,7 @@ describe('NorthConnectorController', () => {
     await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(northService.testNorth.mock.calls.length, 1);
-    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings, null]);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings, null, null, false]);
   });
 
   it('should wrap errors when testing north connection', async () => {
@@ -232,7 +232,7 @@ describe('NorthConnectorController', () => {
       assert.strictEqual(error.message, 'North connection failure');
     }
     assert.strictEqual(northService.testNorth.mock.calls.length, 1);
-    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings, null]);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings, null, null, false]);
   });
 
   describe('with the identity of the server', () => {
@@ -353,14 +353,17 @@ describe('NorthConnectorController', () => {
         northType,
         testData.north.command.settings,
         mockRequest as CustomExpressRequest,
-        identity.fingerprint
+        identity.fingerprint,
+        true
       );
 
       assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
         testData.north.list[0].id,
         northType,
         testData.north.command.settings,
-        identity.fingerprint
+        identity.fingerprint,
+        null,
+        true
       ]);
     });
   });

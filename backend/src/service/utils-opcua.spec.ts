@@ -151,6 +151,48 @@ describe('Service utils OPCUA', () => {
       assert.strictEqual(client.disconnect.mock.callCount(), 1);
     });
 
+    it('should prefer the endpoint of the URL connected to, which node-opcua checks the certificate of', async () => {
+      client.getEndpoints.mock.mockImplementation(async () => [
+        {
+          endpointUrl: 'opc.tcp://other-host:666/OPCUA/SimulationServer',
+          securityMode: MessageSecurityMode.SignAndEncrypt,
+          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
+          serverCertificate: otherCertificate
+        },
+        {
+          endpointUrl: 'opc.tcp://LOCALHOST:666/',
+          securityMode: MessageSecurityMode.SignAndEncrypt,
+          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
+          serverCertificate
+        }
+      ]);
+
+      const identity = await retrieveOPCUAServerIdentity(settings);
+
+      assert.strictEqual(identity!.fingerprint, new crypto.X509Certificate(serverCertificate).fingerprint256);
+    });
+
+    it('should take the first endpoint of the security mode and policy when none has the URL connected to', async () => {
+      client.getEndpoints.mock.mockImplementation(async () => [
+        {
+          endpointUrl: 'opc.tcp://other-host:4840',
+          securityMode: MessageSecurityMode.SignAndEncrypt,
+          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
+          serverCertificate: otherCertificate
+        },
+        {
+          endpointUrl: 'not an opc.tcp url',
+          securityMode: MessageSecurityMode.SignAndEncrypt,
+          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
+          serverCertificate
+        }
+      ]);
+
+      const identity = await retrieveOPCUAServerIdentity({ ...settings, url: 'opc.tcp://[::1]' });
+
+      assert.strictEqual(identity!.fingerprint, new crypto.X509Certificate(otherCertificate).fingerprint256);
+    });
+
     it('should take the first endpoint of the security mode without security policy', async () => {
       const identity = await retrieveOPCUAServerIdentity({ ...settings, securityPolicy: undefined });
 

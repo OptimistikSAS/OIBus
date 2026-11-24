@@ -12,6 +12,7 @@ import {
   describeServerIdentity,
   getServerIdentityTrustStatus,
   NO_SERVER_TRUST,
+  sameFingerprint,
   toSshHostKeyServerIdentity,
   toTrustedServerIdentity,
   toX509ServerIdentity
@@ -155,6 +156,28 @@ describe('Service utils server identity', () => {
       assert.strictEqual(getServerIdentityTrustStatus(identity, { ...identity, details: { keyType: 'other' } }), 'trusted');
       assert.strictEqual(getServerIdentityTrustStatus(identity, { ...identity, fingerprint: 'SHA256:def' }), 'changed');
       assert.strictEqual(getServerIdentityTrustStatus(identity, { ...identity, type: 'x509' }), 'changed');
+    });
+
+    it('should compare the fingerprints of certificates whatever their case and separators', () => {
+      const certificate: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD:EF', details: identity.details };
+
+      assert.strictEqual(getServerIdentityTrustStatus(certificate, { ...certificate, fingerprint: 'ab:cd:ef' }), 'trusted');
+      assert.strictEqual(getServerIdentityTrustStatus(certificate, { ...certificate, fingerprint: 'abcdef' }), 'trusted');
+      assert.strictEqual(getServerIdentityTrustStatus(certificate, { ...certificate, fingerprint: 'AB:CD:00' }), 'changed');
+    });
+  });
+
+  describe('sameFingerprint', () => {
+    it('should compare SSH fingerprints exactly, base64 being case-sensitive', () => {
+      assert.strictEqual(sameFingerprint('SHA256:AbC', 'SHA256:AbC'), true);
+      assert.strictEqual(sameFingerprint('SHA256:AbC', 'SHA256:abc'), false);
+      assert.strictEqual(sameFingerprint('SHA256:abc', 'abc'), false);
+    });
+
+    it('should not match a missing fingerprint', () => {
+      assert.strictEqual(sameFingerprint(null, 'AB'), false);
+      assert.strictEqual(sameFingerprint('AB', undefined), false);
+      assert.strictEqual(sameFingerprint('', ''), false);
     });
   });
 

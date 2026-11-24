@@ -12055,6 +12055,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"SouthSettings"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
                 trustedFingerprint: {"in":"query","name":"trustedFingerprint","dataType":"string"},
+                withServerIdentity: {"in":"query","name":"withServerIdentity","dataType":"boolean"},
         };
         app.post('/api/south/:southId/test/connection',
             ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
@@ -13934,6 +13935,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"NorthSettings"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
                 trustedFingerprint: {"in":"query","name":"trustedFingerprint","dataType":"string"},
+                withServerIdentity: {"in":"query","name":"withServerIdentity","dataType":"boolean"},
         };
         app.post('/api/north/:northId/test/connection',
             ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
@@ -14902,6 +14904,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"NorthSettings"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
                 trustedFingerprint: {"in":"query","name":"trustedFingerprint","dataType":"string"},
+                withServerIdentity: {"in":"query","name":"withServerIdentity","dataType":"boolean"},
         };
         app.post('/api/history/:historyId/test/north',
             ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
@@ -14937,6 +14940,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"SouthSettings"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
                 trustedFingerprint: {"in":"query","name":"trustedFingerprint","dataType":"string"},
+                withServerIdentity: {"in":"query","name":"withServerIdentity","dataType":"boolean"},
         };
         app.post('/api/history/:historyId/test/south',
             ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),

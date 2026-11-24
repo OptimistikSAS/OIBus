@@ -4,6 +4,7 @@ import argon2 from 'argon2';
 import { Database } from 'better-sqlite3';
 import Joi from 'joi';
 
+import { ServerTrustCommandDTO } from '../../../shared/model/api/server-identity.model';
 import { TransformerSourceCommandDTO } from '../../../shared/model/api/transformer.model';
 import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
@@ -46,9 +47,17 @@ import { northManifestList } from '../north-manifests';
 import { toImportedServerTrust } from '../server-trust.utils';
 import { southManifestList } from '../south-manifests';
 import { CONFIG_SCHEMA, EXPORT_FILE_SCHEMA, RESERVED_SCAN_MODE_ID } from './config-schema';
+import { toServerTrust } from './config-upgrades/4.0/v4.0.0';
 import { ConfigUpgrade, JsonObject } from './config-upgrades/config-upgrade';
 import { getUpgradesBetween } from './config-upgrades/registry';
 import { compareVersions } from './config-upgrades/version-compare';
+
+/**
+ * The trust of a connector exported without it (a configuration of the current version exported before it existed): the
+ * trust the config upgrade gives the connectors of a former version.
+ */
+const defaultServerTrust = (type: string, settings: object): ServerTrustCommandDTO =>
+  toServerTrust(type, settings as Record<string, unknown>) as unknown as ServerTrustCommandDTO;
 
 /**
  * Raised at any rejection point of the import pipeline (malformed file, export from a newer OIBus,
@@ -880,7 +889,7 @@ export default class ConfigImportService {
       description: command.description,
       enabled: false,
       settings: command.settings as unknown as SouthSettings,
-      serverTrust: toImportedServerTrust(command.serverTrust, importedBy),
+      serverTrust: toImportedServerTrust(command.serverTrust ?? defaultServerTrust(command.type, command.settings), importedBy),
       items,
       groups,
       createdBy: importedBy,
@@ -921,7 +930,7 @@ export default class ConfigImportService {
       description: command.description,
       enabled: false,
       settings: command.settings as unknown as NorthSettings,
-      serverTrust: toImportedServerTrust(command.serverTrust, importedBy),
+      serverTrust: toImportedServerTrust(command.serverTrust ?? defaultServerTrust(command.type, command.settings), importedBy),
       caching: this.buildCachingEntity(command.caching),
       transformers,
       createdBy: importedBy,
@@ -1055,11 +1064,17 @@ export default class ConfigImportService {
       status: 'PENDING',
       southType: command.southType,
       southSettings: command.southSettings,
-      southServerTrust: toImportedServerTrust(command.southServerTrust, importedBy),
+      southServerTrust: toImportedServerTrust(
+        command.southServerTrust ?? defaultServerTrust(command.southType, command.southSettings),
+        importedBy
+      ),
       queryTimeRange: { ...command.queryTimeRange },
       northType: command.northType,
       northSettings: command.northSettings,
-      northServerTrust: toImportedServerTrust(command.northServerTrust, importedBy),
+      northServerTrust: toImportedServerTrust(
+        command.northServerTrust ?? defaultServerTrust(command.northType, command.northSettings),
+        importedBy
+      ),
       caching: this.buildCachingEntity(command.caching),
       items,
       northTransformers,

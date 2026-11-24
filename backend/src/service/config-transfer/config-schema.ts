@@ -188,7 +188,10 @@ const configurationWorkflowEntry = Joi.object({
   return workflow;
 });
 
-/** The trust of a connector in the identity of its server (see `ServerTrustCommandDTO`). */
+/**
+ * The trust of a connector in the identity of its server (see `ServerTrustCommandDTO`). Optional: a configuration of the
+ * current version exported before it existed gets the trust a migrated connector gets (see `defaultServerTrust` in ConfigImportService).
+ */
 const serverTrustSchema = Joi.object({
   identity: Joi.object({
     type: Joi.string()
@@ -200,7 +203,7 @@ const serverTrustSchema = Joi.object({
     trustedAt: Joi.string()
   }).allow(null),
   trustOnFirstUse: Joi.boolean().required()
-}).required();
+});
 
 const southEntry = Joi.object({
   ...auditFields,

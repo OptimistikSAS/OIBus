@@ -192,7 +192,7 @@ describe('HistoryQueryController', () => {
     await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.testNorth.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings, null]);
+    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings, null, false]);
   });
 
   it('should wrap errors when testing north connection', async () => {
@@ -212,7 +212,7 @@ describe('HistoryQueryController', () => {
       assert.strictEqual(error.message, 'North test failure');
     }
     assert.strictEqual(historyQueryService.testNorth.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings, null]);
+    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings, null, false]);
   });
 
   it('should throw OIBusTestingError when testing north connection fails', async () => {
@@ -243,7 +243,7 @@ describe('HistoryQueryController', () => {
     await controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.testSouth.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings, null]);
+    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings, null, false]);
   });
 
   it('should wrap errors when testing south connection', async () => {
@@ -263,7 +263,7 @@ describe('HistoryQueryController', () => {
       assert.strictEqual((error as OIBusTestingError).message, 'South test failure');
     }
     assert.strictEqual(historyQueryService.testSouth.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings, null]);
+    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings, null, false]);
   });
 
   it('should start an explore session', async () => {
@@ -588,7 +588,8 @@ describe('HistoryQueryController', () => {
         undefined,
         testData.north.command.settings,
         mockRequest as CustomExpressRequest,
-        identity.fingerprint
+        identity.fingerprint,
+        true
       );
       await controller.testSouth(
         historyId,
@@ -596,7 +597,8 @@ describe('HistoryQueryController', () => {
         undefined,
         testData.south.command.settings,
         mockRequest as CustomExpressRequest,
-        identity.fingerprint
+        identity.fingerprint,
+        true
       );
       await controller.testItem(
         historyId,
@@ -621,14 +623,16 @@ describe('HistoryQueryController', () => {
         testData.north.command.type,
         undefined,
         testData.north.command.settings,
-        identity.fingerprint
+        identity.fingerprint,
+        true
       ]);
       assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [
         historyId,
         testData.south.command.type,
         undefined,
         testData.south.command.settings,
-        identity.fingerprint
+        identity.fingerprint,
+        true
       ]);
       assert.deepStrictEqual(historyQueryService.testItem.mock.calls[0].arguments, [
         historyId,

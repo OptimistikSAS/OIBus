@@ -90,7 +90,7 @@ import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import SouthExploreSessionManager from './south-explore-session-manager';
 import type TransformerService from './transformer.service';
 import { checkGroups, checkScanMode, parseCsvImport, stringToBoolean } from './utils';
-import { NO_SERVER_TRUST, toTrustedServerIdentity } from './utils-server-identity';
+import { NO_SERVER_TRUST, sameFingerprint, toTrustedServerIdentity } from './utils-server-identity';
 
 export default class SouthService {
   private readonly exploreSessionManager = new SouthExploreSessionManager();
@@ -380,7 +380,7 @@ export default class SouthService {
 
     const savedServerTrust = southConnector?.serverTrust ?? historyServerTrust ?? NO_SERVER_TRUST;
     const runningSouth =
-      !trustedFingerprint || trustedFingerprint === savedServerTrust.identity?.fingerprint
+      !trustedFingerprint || sameFingerprint(trustedFingerprint, savedServerTrust.identity?.fingerprint)
         ? this.findRunningSouth(southConnector, testSettings)
         : null;
     if (runningSouth) {
@@ -393,7 +393,9 @@ export default class SouthService {
       description: '',
       enabled: false,
       settings: testSettings,
-      serverTrust: savedServerTrust,
+      // A connector of a former version trusts the identity of its first connection, not a throwaway one: the identity is
+      // reviewed first (see testConnectionWithServerIdentity)
+      serverTrust: { ...savedServerTrust, trustOnFirstUse: false },
       name: southConnector ? southConnector.name : `${southType}:test-connection`,
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>>,
       groups: [] as Array<SouthItemGroupEntityLight>,
@@ -458,10 +460,12 @@ export default class SouthService {
     southType: OIBusSouthType,
     settingsToTest: SouthSettings,
     trustedFingerprint: string | null = null,
-    historyServerTrust: ServerTrust | null = null
+    historyServerTrust: ServerTrust | null = null,
+    // Whether the caller shows the identity of a server not trusted (otherwise, the test fails)
+    withServerIdentity = false
   ): Promise<OIBusConnectionTestResult> {
     const south = await this.buildEphemeralSouth(southId, southType, settingsToTest, trustedFingerprint, historyServerTrust);
-    return await testConnectionWithServerIdentity(south, south.connectorConfiguration.serverTrust.identity);
+    return await testConnectionWithServerIdentity(south, south.connectorConfiguration.serverTrust.identity, withServerIdentity);
   }
 
   /**
@@ -662,7 +666,7 @@ export default class SouthService {
     let queryResult: SouthConnectorItemQueryResult;
     const savedServerTrust = southConnector?.serverTrust ?? historyServerTrust ?? NO_SERVER_TRUST;
     const runningSouth =
-      !trustedFingerprint || trustedFingerprint === savedServerTrust.identity?.fingerprint
+      !trustedFingerprint || sameFingerprint(trustedFingerprint, savedServerTrust.identity?.fingerprint)
         ? this.findRunningSouth(southConnector, testConnectorSettings)
         : null;
     if (runningSouth) {
@@ -674,7 +678,8 @@ export default class SouthService {
         enabled: false,
         description: '',
         settings: testConnectorSettings,
-        serverTrust: savedServerTrust,
+        // A connector of a former version trusts the identity of its first connection, not a throwaway one
+        serverTrust: { ...savedServerTrust, trustOnFirstUse: false },
         name: `${southType}:test-connection`,
         items: [testItemToRun],
         groups: [] as Array<SouthItemGroupEntityLight>,

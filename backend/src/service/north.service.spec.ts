@@ -574,8 +574,18 @@ describe('North Service', () => {
       assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 0);
     });
 
+    it('should fail the test of a server not trusted for a caller which does not show its identity', async () => {
+      await assert.rejects(
+        service.testNorth('create', testData.north.command.type, testData.north.command.settings),
+        new Error(
+          `The server presents the host key ${identity.fingerprint}, which is not trusted: the connection was not tested further. Review its identity and trust it to connect`
+        )
+      );
+      assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 0);
+    });
+
     it('should return the identity of a server not trusted without testing the connection', async () => {
-      const result = await service.testNorth('create', testData.north.command.type, testData.north.command.settings);
+      const result = await service.testNorth('create', testData.north.command.type, testData.north.command.settings, null, null, true);
 
       assert.deepStrictEqual(buildNorth.mock.calls[0].arguments[0].serverTrust, { identity: null, trustOnFirstUse: false });
       assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'unknown' } });
@@ -588,7 +598,14 @@ describe('North Service', () => {
         serverTrust: trustOf(otherIdentity)
       }));
 
-      const result = await service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings);
+      const result = await service.testNorth(
+        testData.north.list[0].id,
+        testData.north.command.type,
+        testData.north.command.settings,
+        null,
+        null,
+        true
+      );
 
       assert.deepStrictEqual(buildNorth.mock.calls[0].arguments[0].serverTrust, trustOf(otherIdentity));
       assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'changed' } });
@@ -632,7 +649,9 @@ describe('North Service', () => {
         'create',
         testData.north.command.type,
         testData.north.command.settings,
-        otherIdentity.fingerprint
+        otherIdentity.fingerprint,
+        null,
+        true
       );
 
       assert.deepStrictEqual(result, { items: [], serverIdentity: { identity, status: 'unknown' } });

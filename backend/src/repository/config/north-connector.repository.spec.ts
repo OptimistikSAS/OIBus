@@ -473,6 +473,19 @@ describe('NorthConnectorRepository', () => {
     assert.deepStrictEqual(repository.findNorthById(north.id)!.serverTrust, { identity: null, trustOnFirstUse: true });
   });
 
+  it('should not count the identity trusted at the first connection as an edition of the north connector', () => {
+    const north = newNorth('north trusting its first server', { serverTrust: { identity: null, trustOnFirstUse: true } });
+    repository.saveNorth(north, true);
+    const before = repository.findNorthById(north.id)!;
+
+    repository.updateServerTrust(north.id, trustedSshHostKey, 'system');
+
+    const updated = repository.findNorthById(north.id)!;
+    assert.deepStrictEqual(updated.serverTrust, trustedSshHostKey);
+    assert.strictEqual(updated.updatedBy, before.updatedBy);
+    assert.strictEqual(updated.updatedAt, before.updatedAt);
+  });
+
   it('should update the server trust of a north connector and audit it', () => {
     const north = newNorth('north trusting its server', { serverTrust: { identity: null, trustOnFirstUse: true } });
     repository.saveNorth(north, true);
