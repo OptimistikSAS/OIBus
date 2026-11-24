@@ -13,6 +13,8 @@ import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type ConfigurationWorkflowRunService from '../configuration-workflow-run.service';
+import type HistoryQueryService from '../history-query.service';
+import type NorthService from '../north.service';
 import type SouthService from '../south.service';
 import type OIAnalyticsClient from './oianalytics-client.service';
 import type OIAnalyticsRegistrationService from './oianalytics-registration.service';
@@ -35,6 +37,8 @@ let encryptionService: EncryptionServiceMock;
 let registrationService: Mocked<OIAnalyticsRegistrationService>;
 let client: Mocked<OIAnalyticsClient>;
 let southService: Mocked<SouthService>;
+let northService: Mocked<NorthService>;
+let historyQueryService: Mocked<HistoryQueryService>;
 let workflowRunService: Mocked<ConfigurationWorkflowRunService>;
 let registration: OIAnalyticsRegistration;
 let now: number;
@@ -90,8 +94,19 @@ describe('OIAnalytics Session Service', () => {
     registrationService = createMock<OIAnalyticsRegistrationService>({ getRegistrationSettings: () => registration });
     client = createMock<OIAnalyticsClient>({ retrieveSessionRequests: async () => [] });
     southService = createMock<SouthService>({ getManifest: () => testData.south.manifest });
+    northService = createMock<NorthService>();
+    historyQueryService = createMock<HistoryQueryService>();
     workflowRunService = createMock<ConfigurationWorkflowRunService>();
-    service = new OIAnalyticsSessionService(registrationService, client, southService, workflowRunService, logger, TMP_FOLDER);
+    service = new OIAnalyticsSessionService(
+      registrationService,
+      client,
+      southService,
+      northService,
+      historyQueryService,
+      workflowRunService,
+      logger,
+      TMP_FOLDER
+    );
   });
 
   afterEach(async () => {
@@ -219,7 +234,8 @@ describe('OIAnalytics Session Service', () => {
       assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
         'create',
         'opcua',
-        { host: 'localhost', decrypted: true }
+        { host: 'localhost', decrypted: true },
+        null
       ]);
       assert.deepStrictEqual(completions(), [
         [registration, 'session1', 'request1', { status: 'COMPLETED', result: { exploreId: 'explore1', entries } }]
@@ -296,8 +312,37 @@ describe('OIAnalytics Session Service', () => {
 
       await openSession();
 
-      assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, ['southId', 'opcua', { host: 'localhost', decrypted: true }]);
+      // with the identity of a server not trusted, which OIAnalytics shows for the user to review it
+      assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
+        'southId',
+        'opcua',
+        { host: 'localhost', decrypted: true },
+        null,
+        null,
+        true
+      ]);
       assert.deepStrictEqual(completions(), [[registration, 'session1', 'request1', { status: 'COMPLETED', result }]]);
+    });
+
+    it('should trust the identity trusted in the form of the connector when testing, exploring and previewing', async () => {
+      southService.testSouth.mock.mockImplementation(async () => ({ items: [] }));
+      southService.startExplore.mock.mockImplementation(async () => ({ sessionId: 'explore1', entries: [] }));
+      southService.testItem.mock.mockImplementation(async () => ({}) as never);
+      workflowRunService.previewCommand.mock.mockImplementation(async () => ({}) as never);
+      const content = { ...southContent(), trustedFingerprint: 'SHA256:form' };
+      respondWith(
+        request('TEST_SOUTH_CONNECTION', content, 'test'),
+        request('START_EXPLORE', content, 'explore'),
+        request('TEST_SOUTH_ITEM', { ...content, itemName: 'item', itemSettings: {}, testingSettings: {} }, 'item'),
+        request('PREVIEW_WORKFLOW', { ...content, workflowId: null, workflow: {} }, 'preview')
+      );
+
+      await openSession();
+
+      assert.strictEqual(southService.testSouth.mock.calls[0].arguments[3], 'SHA256:form');
+      assert.strictEqual(southService.startExplore.mock.calls[0].arguments[3], 'SHA256:form');
+      assert.strictEqual(southService.testItem.mock.calls[0].arguments[7], 'SHA256:form');
+      assert.strictEqual(workflowRunService.previewCommand.mock.calls[0].arguments[5], 'SHA256:form');
     });
 
     it('should test an item, with the secrets of the item decrypted', async () => {
@@ -316,7 +361,9 @@ describe('OIAnalytics Session Service', () => {
         'item',
         { host: 'localhost', decrypted: true },
         { query: 'SELECT 1', decrypted: true },
-        testingSettings
+        testingSettings,
+        undefined,
+        null
       ]);
       assert.deepStrictEqual(completions(), [[registration, 'session1', 'request1', { status: 'COMPLETED', result }]]);
     });
@@ -334,9 +381,86 @@ describe('OIAnalytics Session Service', () => {
         'opcua',
         { host: 'localhost', decrypted: true },
         'workflowId',
-        workflow
+        workflow,
+        null
       ]);
       assert.deepStrictEqual(completions(), [[registration, 'session1', 'request1', { status: 'COMPLETED', result }]]);
+    });
+
+    it('should trust the identity of the server of a connector, or of a side of a history query, by OIAnalytics', async () => {
+      respondWith(
+        request('TRUST_SERVER_IDENTITY', { target: 'south', id: 'southId', fingerprint: 'SHA256:south' }, 'south'),
+        request('TRUST_SERVER_IDENTITY', { target: 'north', id: 'northId', fingerprint: 'SHA256:north' }, 'north'),
+        request(
+          'TRUST_SERVER_IDENTITY',
+          { target: 'history-query', id: 'historyId', side: 'north', fingerprint: 'SHA256:history' },
+          'history'
+        )
+      );
+
+      await openSession();
+
+      assert.deepStrictEqual(southService.trustServerIdentity.mock.calls[0].arguments, ['southId', 'SHA256:south', 'oianalytics']);
+      assert.deepStrictEqual(northService.trustServerIdentity.mock.calls[0].arguments, ['northId', 'SHA256:north', 'oianalytics']);
+      assert.deepStrictEqual(historyQueryService.trustServerIdentity.mock.calls[0].arguments, [
+        'historyId',
+        'north',
+        'SHA256:history',
+        'oianalytics'
+      ]);
+      assert.deepStrictEqual(
+        completions().map(([, , id, completion]) => [id, completion]),
+        [
+          ['south', { status: 'COMPLETED', result: null }],
+          ['north', { status: 'COMPLETED', result: null }],
+          ['history', { status: 'COMPLETED', result: null }]
+        ]
+      );
+    });
+
+    it('should not trust the identity of a server without the side of a history query, nor of another target', async () => {
+      respondWith(
+        request('TRUST_SERVER_IDENTITY', { target: 'history-query', id: 'historyId', fingerprint: 'SHA256:history' }, 'history'),
+        request('TRUST_SERVER_IDENTITY', { target: 'engine', id: 'engineId', fingerprint: 'SHA256:engine' }, 'engine')
+      );
+
+      await openSession();
+
+      assert.strictEqual(historyQueryService.trustServerIdentity.mock.calls.length, 0);
+      assert.deepStrictEqual(
+        completions().map(([, , id, completion]) => [id, completion]),
+        [
+          ['history', { status: 'ERRORED', result: 'The side of history query "historyId" to trust the server of is missing' }],
+          ['engine', { status: 'ERRORED', result: 'Cannot trust the identity of the server of a "engine"' }]
+        ]
+      );
+    });
+
+    it('should not trust the identity of a server when OIAnalytics is not allowed to configure the data flow', async () => {
+      registration = { ...REGISTRATION, commandPermissions: { ...REGISTRATION.commandPermissions, configureDataFlow: false } };
+      southService.testSouth.mock.mockImplementation(async () => ({ items: [] }));
+      respondWith(
+        request('TRUST_SERVER_IDENTITY', { target: 'south', id: 'southId', fingerprint: 'SHA256:south' }, 'trust'),
+        request('TEST_SOUTH_CONNECTION', southContent(), 'test')
+      );
+
+      await openSession();
+
+      assert.strictEqual(southService.trustServerIdentity.mock.calls.length, 0);
+      assert.deepStrictEqual(
+        completions().map(([, , id, completion]) => [id, completion]),
+        [
+          [
+            'trust',
+            {
+              status: 'ERRORED',
+              result: 'OIAnalytics is not allowed to request TRUST_SERVER_IDENTITY: it requires the permission configureDataFlow'
+            }
+          ],
+          // the review of the identity only requires connecting to the data sources
+          ['test', { status: 'COMPLETED', result: { items: [] } }]
+        ]
+      );
     });
 
     it('should not execute an unsupported request', async () => {

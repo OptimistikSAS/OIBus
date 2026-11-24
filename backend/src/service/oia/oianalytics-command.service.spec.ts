@@ -806,7 +806,7 @@ const executionCases = (): Array<ExecutionCase> => {
       command: testSouthConnectionCommand,
       setup: () => southService.testSouth.mock.mockImplementationOnce(async () => ({ items: [] })),
       calls: () => southService.testSouth.mock.calls,
-      args: ['southConnectorId', testData.south.command.type, testData.south.command.settings],
+      args: ['southConnectorId', testData.south.command.type, testData.south.command.settings, null, null, false],
       result: JSON.stringify({ items: [] })
     },
     {
@@ -820,7 +820,9 @@ const executionCases = (): Array<ExecutionCase> => {
         testData.south.itemCommand.name,
         testData.south.command.settings,
         testData.south.itemCommand.settings,
-        {}
+        {},
+        undefined,
+        null
       ],
       result: completedItemTest
     },
@@ -835,7 +837,9 @@ const executionCases = (): Array<ExecutionCase> => {
         testData.south.itemCommand.name,
         testData.south.command.settings,
         testData.south.itemCommand.settings,
-        {}
+        {},
+        undefined,
+        null
       ],
       result: completedItemTestWithoutTransformer
     },
@@ -863,7 +867,7 @@ const executionCases = (): Array<ExecutionCase> => {
       command: testNorthConnectionCommand,
       setup: () => northService.testNorth.mock.mockImplementationOnce(async () => ({ items: [] })),
       calls: () => northService.testNorth.mock.calls,
-      args: ['northConnectorId', testData.north.command.type, testData.north.command.settings],
+      args: ['northConnectorId', testData.north.command.type, testData.north.command.settings, null, null, false],
       result: JSON.stringify({ items: [] })
     },
     // history queries
@@ -889,14 +893,28 @@ const executionCases = (): Array<ExecutionCase> => {
       command: testHistoryNorthConnectionCommand,
       setup: () => historyQueryService.testNorth.mock.mockImplementationOnce(async () => ({ items: [] })),
       calls: () => historyQueryService.testNorth.mock.calls,
-      args: ['historyId', testData.historyQueries.command.northType, 'northConnectorId', testData.historyQueries.command.northSettings],
+      args: [
+        'historyId',
+        testData.historyQueries.command.northType,
+        'northConnectorId',
+        testData.historyQueries.command.northSettings,
+        null,
+        false
+      ],
       result: JSON.stringify({ items: [] })
     },
     {
       command: testHistorySouthConnectionCommand,
       setup: () => historyQueryService.testSouth.mock.mockImplementationOnce(async () => ({ items: [] })),
       calls: () => historyQueryService.testSouth.mock.calls,
-      args: ['historyId', testData.historyQueries.command.southType, 'southConnectorId', testData.historyQueries.command.southSettings],
+      args: [
+        'historyId',
+        testData.historyQueries.command.southType,
+        'southConnectorId',
+        testData.historyQueries.command.southSettings,
+        null,
+        false
+      ],
       result: JSON.stringify({ items: [] })
     },
     {
@@ -910,7 +928,8 @@ const executionCases = (): Array<ExecutionCase> => {
         'southConnectorId',
         testData.historyQueries.command.southSettings,
         testData.historyQueries.itemCommand.settings,
-        {}
+        {},
+        null
       ],
       // History query item tests keep the full raw → transformer → output pipeline, same as south-item tests
       result: completedItemTest
@@ -927,7 +946,8 @@ const executionCases = (): Array<ExecutionCase> => {
         'southConnectorId',
         testData.historyQueries.command.southSettings,
         testData.historyQueries.itemCommand.settings,
-        {}
+        {},
+        null
       ],
       result: completedItemTestWithoutTransformer
     },
@@ -1494,6 +1514,67 @@ describe('OIAnalytics Command Service', () => {
       assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
     });
   }
+
+  it('should show the identity of a server not trusted to an OIAnalytics sending the trust of its form', async () => {
+    const serverTrust = {
+      identity: { type: 'ssh-host-key' as const, fingerprint: 'SHA256:form', details: { keyType: 'ssh-ed25519' } },
+      trustOnFirstUse: false
+    };
+    southService.testSouth.mock.mockImplementation(async () => ({ items: [] }));
+    northService.testNorth.mock.mockImplementation(async () => ({ items: [] }));
+    historyQueryService.testNorth.mock.mockImplementation(async () => ({ items: [] }));
+    historyQueryService.testSouth.mock.mockImplementation(async () => ({ items: [] }));
+    historyQueryService.testItem.mock.mockImplementation(async () => itemTestResult);
+
+    await executeCommand(
+      buildCommand<OIBusTestSouthConnectorCommand>({
+        id: 'testSouth',
+        type: 'test-south-connection',
+        southConnectorId: 'southConnectorId',
+        commandContent: { ...testData.south.command, serverTrust }
+      })
+    );
+    await executeCommand(
+      buildCommand<OIBusTestNorthConnectorCommand>({
+        id: 'testNorth',
+        type: 'test-north-connection',
+        northConnectorId: 'northConnectorId',
+        commandContent: { ...testData.north.command, serverTrust }
+      })
+    );
+    await executeCommand(
+      buildCommand<OIBusTestHistoryQueryNorthConnectionCommand>({
+        id: 'testHistoryNorth',
+        type: 'test-history-query-north-connection',
+        northConnectorId: 'northConnectorId',
+        historyQueryId: 'historyId',
+        commandContent: { ...testData.historyQueries.command, northServerTrust: serverTrust }
+      })
+    );
+    await executeCommand(
+      buildCommand<OIBusTestHistoryQuerySouthConnectionCommand>({
+        id: 'testHistorySouth',
+        type: 'test-history-query-south-connection',
+        southConnectorId: 'southConnectorId',
+        historyQueryId: 'historyId',
+        commandContent: { ...testData.historyQueries.command, southServerTrust: { identity: null, trustOnFirstUse: false } }
+      })
+    );
+    await executeCommand({
+      ...testHistoryQuerySouthItemCommand,
+      commandContent: {
+        ...testHistoryQuerySouthItemCommand.commandContent,
+        historyCommand: { ...testHistoryQuerySouthItemCommand.commandContent.historyCommand, southServerTrust: serverTrust }
+      }
+    });
+
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments.slice(3), ['SHA256:form', null, true]);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments.slice(3), ['SHA256:form', null, true]);
+    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments.slice(4), ['SHA256:form', true]);
+    // the trust of the form trusts no identity: the identity of the server is shown all the same
+    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments.slice(4), [null, true]);
+    assert.strictEqual(historyQueryService.testItem.mock.calls[0].arguments[7], 'SHA256:form');
+  });
 
   it('should execute update-engine-logger command with loki password', async () => {
     const command = buildCommand<OIBusUpdateEngineLoggerCommand>({

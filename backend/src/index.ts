@@ -315,6 +315,8 @@ export async function bootstrap(): Promise<void> {
     oIAnalyticsRegistrationService,
     oIAnalyticsClient,
     southService,
+    northService,
+    historyQueryService,
     configurationWorkflowRunService,
     loggerService.createChildLogger('internal'),
     path.resolve(CACHE_FOLDER, 'tmp')
