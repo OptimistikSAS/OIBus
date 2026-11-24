@@ -13,7 +13,8 @@ import {
 } from '../../../../../shared/model/connector/south-settings.model';
 
 import { HistoryQueryEntity } from '../../../../model/histor-query.model';
-import { createHistoryQuery, createNorth, createSouth } from '../../../../tests/utils/database-utils';
+import { NorthConnectorEntity } from '../../../../model/north-connector.model';
+import { SouthConnectorEntity } from '../../../../model/south-connector.model';
 import { buildSchemaBefore, createMigrationSchemaHarness } from '../../../../tests/utils/migration-test-utils';
 import testData from '../../../../tests/utils/test-data';
 import { buildNorthEntity, buildSouthEntity } from '../../../../tests/utils/test-utils';
@@ -53,6 +54,63 @@ async function insertSouthConnector(db: Knex, id = 'south-1', type = 'mssql') {
     updated_at: '2026-01-01T00:00:00Z'
   });
 }
+
+// The rows are inserted in the schema before v3.9.0, with its columns only: the helpers of database-utils write the
+// columns of the current schema.
+const insertSouth = async (db: Knex, south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) => {
+  await db('south_connectors').insert({
+    id: south.id,
+    name: south.name,
+    type: south.type,
+    description: south.description,
+    enabled: south.enabled,
+    settings: JSON.stringify(south.settings)
+  });
+};
+
+const cachingColumns = (caching: NorthConnectorEntity<NorthSettings>['caching']) => ({
+  caching_trigger_schedule: caching.trigger.scanMode.id,
+  caching_trigger_number_of_elements: caching.trigger.numberOfElements,
+  caching_trigger_number_of_files: caching.trigger.numberOfFiles,
+  caching_throttling_run_min_delay: caching.throttling.runMinDelay,
+  caching_throttling_cache_max_size: caching.throttling.maxSize,
+  caching_throttling_max_number_of_elements: caching.throttling.maxNumberOfElements,
+  caching_error_retry_interval: caching.error.retryInterval,
+  caching_error_retry_count: caching.error.retryCount,
+  caching_error_retention_duration: caching.error.retentionDuration,
+  caching_archive_enabled: caching.archive.enabled,
+  caching_archive_retention_duration: caching.archive.retentionDuration
+});
+
+const insertNorth = async (db: Knex, north: NorthConnectorEntity<NorthSettings>) => {
+  await db('north_connectors').insert({
+    id: north.id,
+    name: north.name,
+    type: north.type,
+    description: north.description,
+    enabled: north.enabled,
+    settings: JSON.stringify(north.settings),
+    ...cachingColumns(north.caching)
+  });
+};
+
+const insertHistoryQuery = async (db: Knex, historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) => {
+  await db('history_queries').insert({
+    id: historyQuery.id,
+    status: historyQuery.status,
+    name: historyQuery.name,
+    description: historyQuery.description,
+    start_time: historyQuery.queryTimeRange.startTime,
+    end_time: historyQuery.queryTimeRange.endTime,
+    throttling_max_read_interval: historyQuery.queryTimeRange.maxReadInterval,
+    throttling_read_delay: historyQuery.queryTimeRange.readDelay,
+    south_type: historyQuery.southType,
+    north_type: historyQuery.northType,
+    south_settings: JSON.stringify(historyQuery.southSettings),
+    north_settings: JSON.stringify(historyQuery.northSettings),
+    ...cachingColumns(historyQuery.caching)
+  });
+};
 
 describe('Entity migration v3.9.0', () => {
   const harness = createMigrationSchemaHarness({
@@ -575,7 +633,7 @@ describe('Entity migration v3.9.0', () => {
         []
       );
       south.id = 'folder-scanner-1';
-      await createSouth(db, south);
+      await insertSouth(db, south);
       // Simulate a pre-3.9.0 row: the settings JSON predates the SMB auth fields entirely.
       await db('south_connectors')
         .where('id', south.id)
@@ -598,7 +656,7 @@ describe('Entity migration v3.9.0', () => {
         []
       );
       south.id = 'folder-scanner-2';
-      await createSouth(db, south);
+      await insertSouth(db, south);
 
       await up(db);
 
@@ -630,7 +688,7 @@ describe('Entity migration v3.9.0', () => {
         []
       );
       south.id = 'mssql-1';
-      await createSouth(db, south);
+      await insertSouth(db, south);
       await db('south_connectors')
         .where('id', south.id)
         .update({ settings: JSON.stringify({ host: 'host', port: 1433 }) });
@@ -651,7 +709,7 @@ describe('Entity migration v3.9.0', () => {
         domain: null
       });
       north.id = 'file-writer-1';
-      await createNorth(db, north);
+      await insertNorth(db, north);
       await db('north_connectors')
         .where('id', north.id)
         .update({ settings: JSON.stringify({ outputFolder: 'output', prefix: null, suffix: null }) });
@@ -675,7 +733,7 @@ describe('Entity migration v3.9.0', () => {
         domain: 'WORKGROUP'
       });
       north.id = 'file-writer-2';
-      await createNorth(db, north);
+      await insertNorth(db, north);
 
       await up(db);
 
@@ -696,7 +754,7 @@ describe('Entity migration v3.9.0', () => {
         items: [],
         northTransformers: []
       };
-      await createHistoryQuery(db, historyQuery);
+      await insertHistoryQuery(db, historyQuery);
       await db('history_queries')
         .where('id', historyQuery.id)
         .update({ south_settings: JSON.stringify({ inputFolder: 'input', compression: false }) });
@@ -728,7 +786,7 @@ describe('Entity migration v3.9.0', () => {
         items: [],
         northTransformers: []
       };
-      await createHistoryQuery(db, historyQuery);
+      await insertHistoryQuery(db, historyQuery);
       await db('history_queries')
         .where('id', historyQuery.id)
         .update({ north_settings: JSON.stringify({ outputFolder: 'output', prefix: null, suffix: null }) });
