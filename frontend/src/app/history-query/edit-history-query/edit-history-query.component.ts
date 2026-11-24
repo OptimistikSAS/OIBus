@@ -83,6 +83,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { FormServerTrustService } from '../../shared/server-trust/form-server-trust.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
@@ -213,6 +214,12 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   private readonly currentUserService = inject(CurrentUserService);
   private readonly locale = inject(LOCALE_ID);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly formServerTrustService = inject(FormServerTrustService);
+  /** The identities of the servers trusted in the form, saved with the history query */
+  private readonly serverTrust = {
+    south: this.formServerTrustService.track('history-south'),
+    north: this.formServerTrustService.track('history-north')
+  };
 
   readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/history-queries');
   readonly cachingHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#caching');
@@ -325,6 +332,10 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.serverTrust.south.destroy();
+      this.serverTrust.north.destroy();
+    });
     combineLatest([
       this.scanModeService.list().pipe(first()),
       this.certificateService.list().pipe(first()),
@@ -640,6 +651,12 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
     form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
+    form.controls.southSettings.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.serverTrust.south.settingsChanged(form.controls.southSettings.getRawValue()));
+    form.controls.northSettings.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.serverTrust.north.settingsChanged(form.controls.northSettings.getRawValue()));
     if (this.mode() === 'edit') {
       this.savedSummary.set(this.summarizeHistoryQuery());
       this.savedItems.set(structuredClone(this.inMemoryItems()));
@@ -869,7 +886,9 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
           name: item.name,
           enabled: item.enabled
         }))
-      }))
+      })),
+      southServerTrust: this.serverTrust.south.command(),
+      northServerTrust: this.serverTrust.north.command()
     } as HistoryQueryCommandDTO;
 
     if (this.mode() === 'edit') {
@@ -918,6 +937,21 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+    if ((type === 'south' ? this.southManifest() : this.northManifest())?.serverIdentity) {
+      // kept in the form, saved with the history query
+      const serverTrust = this.serverTrust[type];
+      const savedServerTrust = type === 'south' ? this.historyQuery()?.southServerTrust : this.historyQuery()?.northServerTrust;
+      component.allowServerTrust({
+        trusted: serverTrust.identity ?? savedServerTrust?.identity ?? null,
+        trust: identity => {
+          serverTrust.trust(
+            identity,
+            (type === 'south' ? this.form()!.controls.southSettings : this.form()!.controls.northSettings).getRawValue()
+          );
+          return of(undefined);
+        }
+      });
+    }
     component.runHistoryQueryTest(type, historyQueryId, command.settings, command.type, fromConnectorId ? fromConnectorId : null);
   }
 

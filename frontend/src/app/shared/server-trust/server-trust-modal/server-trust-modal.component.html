@@ -1,0 +1,40 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="server-trust.modal.title"></h4>
+</div>
+<div class="modal-body">
+  @if (presented(); as presented) {
+    <div
+      class="alert"
+      id="server-trust-status"
+      [class.alert-warning]="presented.status === 'unknown'"
+      [class.alert-danger]="presented.status === 'changed'"
+      [translate]="'server-trust.status-message.' + presented.status"
+    ></div>
+    <p translate="server-trust.modal.compare" [translateParams]="{ type: presented.identity.type }"></p>
+    <oib-server-identity [identity]="presented.identity" [previous]="trusted()" />
+    @if (mode() !== 'review') {
+      <p class="mt-3 mb-0 text-body-secondary" [translate]="'server-trust.modal.skip-hint.' + mode()"></p>
+    }
+  }
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button
+      type="button"
+      class="btn btn-primary"
+      id="trust-button"
+      (click)="decide('trust')"
+      [translate]="'server-trust.modal.trust.' + mode()"
+    ></button>
+    @if (mode() !== 'review') {
+      <button
+        type="button"
+        class="btn btn-secondary"
+        id="skip-button"
+        (click)="decide('skip')"
+        [translate]="'server-trust.modal.skip.' + mode()"
+      ></button>
+    }
+    <button type="button" class="btn btn-cancel" id="cancel-button" (click)="cancel()" translate="common.cancel"></button>
+  </div>
+</div>

@@ -3801,5 +3801,70 @@
     "title": "Update Available",
     "message": "A new version of OIBus has been detected. The page will automatically reload in {{ seconds }} seconds to apply the update.",
     "reload-now": "Reload Now"
+  },
+  "server-trust": {
+    "not-trusted": "Server not trusted",
+    "trusted": "Identity of the server trusted for {{ name }}",
+    "identity": {
+      "type": "Identity",
+      "types": {
+        "x509": "Certificate",
+        "ssh-host-key": "SSH host key"
+      },
+      "fingerprint": "SHA-256 fingerprint",
+      "previous-fingerprint": "Fingerprint trusted until now",
+      "subject": "Subject",
+      "issuer": "Issuer",
+      "self-signed": "Self-signed",
+      "issued-by-ca": "Issued by a certificate authority",
+      "validity": "Validity",
+      "valid-from-to": "From {{ from }} to {{ to }}",
+      "out-of-validity": "Not valid now",
+      "uris": "URIs",
+      "names": "DNS names and IP addresses",
+      "serial-number": "Serial number",
+      "key-type": "Key type"
+    },
+    "status-message": {
+      "unknown": "The connector does not trust any identity for this server yet: it refuses to connect to it until its identity is trusted.",
+      "changed": "The server presents another identity than the one trusted: its certificate or host key may have been renewed, or another server may impersonate it. The connector refuses to connect to it until this identity is trusted."
+    },
+    "modal": {
+      "title": "Identity of the server",
+      "compare": "Compare the fingerprint below with the one the server shows (its certificate, or the output of ssh-keygen -l for its host key) before trusting it.",
+      "skip-hint": {
+        "save": "The connector can be saved without trusting this identity: it then waits until its server is trusted.",
+        "start": "The connector can be started without trusting this identity: it then waits until its server is trusted."
+      },
+      "trust": {
+        "review": "Trust this identity",
+        "save": "Trust and save",
+        "start": "Trust and start"
+      },
+      "skip": {
+        "save": "Save without trusting",
+        "start": "Start without trusting"
+      }
+    },
+    "test-connection": {
+      "not-tested": "The connection was not tested further: no credential is sent to a server whose identity is not trusted.",
+      "identity-title": "Identity of the server",
+      "trusted": "Trusted identity",
+      "trust": "Trust this identity",
+      "trust-elsewhere": "Trust this identity from the page of the connector."
+    },
+    "panel": {
+      "title": "Identity of the server",
+      "south-title": "Identity of the South server",
+      "north-title": "Identity of the North server",
+      "refused": {
+        "unknown": "The connector refused to connect: its server presents an identity which is not trusted.",
+        "changed": "The connector refused to connect: its server presents another identity than the one trusted."
+      },
+      "review": "Review and trust",
+      "trusted-by": "Trusted by {{ user }} on {{ date }}",
+      "trust-on-first-use": "No identity trusted yet: the connector trusts the identity its server presents at its first connection.",
+      "none": "No identity trusted yet: test the connection to review the identity of the server and trust it."
+    }
   }
 }

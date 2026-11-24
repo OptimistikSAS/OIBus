@@ -56,6 +56,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { FormServerTrustService } from '../../shared/server-trust/form-server-trust.service';
+import { reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
@@ -162,6 +164,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
   private readonly unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private readonly docsUrlService = inject(DocsUrlService);
   private readonly destroyRef = inject(DestroyRef);
+  /** The identity of the server trusted in the form, saved with the connector */
+  private readonly serverTrust = inject(FormServerTrustService).track('south');
 
   readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings');
   readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
@@ -287,6 +291,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.serverTrust.destroy());
     // get the generator ID
     combineLatest([
       this.scanModeService.list().pipe(first()),
@@ -543,7 +548,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
         this.steps.showFirstInvalid();
         return;
       }
-      this.createOrUpdateSouthConnector(this.formSouthConnectorCommand);
+      this.reviewServerIdentityBeforeSave().subscribe(() => this.createOrUpdateSouthConnector(this.formSouthConnectorCommand));
       return;
     }
 
@@ -554,6 +559,16 @@ export class EditSouthComponent implements CanComponentDeactivate {
     }
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+    if (this.manifest()!.serverIdentity) {
+      // kept in the form, saved with the connector
+      component.allowServerTrust({
+        trusted: this.serverTrust.identity ?? this.southConnector()?.serverTrust.identity ?? null,
+        trust: identity => {
+          this.serverTrust.trust(identity, this.form()!.controls.settings.getRawValue());
+          return of(undefined);
+        }
+      });
+    }
     component.runTest(
       'south',
       this.southConnector()?.id || null,
@@ -970,6 +985,9 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
     form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
+    form.controls.settings.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.serverTrust.settingsChanged(form.controls.settings.getRawValue()));
     this.form.set(form);
     if (this.mode() === 'edit') {
       this.savedSummary.set(this.summarizeConnector());
@@ -1016,8 +1034,37 @@ export class EditSouthComponent implements CanComponentDeactivate {
       settings: extractFormValue(formValue.settings)!,
       items: this.inMemoryItems(),
       groups: this.inMemoryGroups(),
-      configurationWorkflows: this.inMemoryWorkflows()
+      configurationWorkflows: this.inMemoryWorkflows(),
+      serverTrust: this.serverTrust.command()
     } as SouthConnectorCommandDTO;
+  }
+
+  /**
+   * Before saving an enabled connector checking the identity of its server: proposes to trust it when it must be reviewed.
+   * Emits once the connector can be saved, trusting the identity in the form if the user does; nothing when cancelled.
+   * Saving does not depend on reaching the server: the connector then waits until its server is trusted.
+   */
+  private reviewServerIdentityBeforeSave(): Observable<void> {
+    const command = this.formSouthConnectorCommand;
+    if (!this.manifest()!.serverIdentity || !command.enabled) {
+      return of(undefined);
+    }
+    const southConnector = this.southConnector();
+    return reviewServerIdentity(
+      this.modalService,
+      'save',
+      this.southConnectorService.retrieveServerIdentity(southConnector?.id || 'create', command.settings, command.type),
+      southConnector?.serverTrust ?? null,
+      this.serverTrust.identity ?? southConnector?.serverTrust.identity ?? null
+    ).pipe(
+      tap(identity => {
+        if (identity) {
+          this.serverTrust.trust(identity, this.form()!.controls.settings.getRawValue());
+        }
+      }),
+      map(() => undefined),
+      this.state.pendingUntilFinalization()
+    );
   }
 
   // Mass action methods

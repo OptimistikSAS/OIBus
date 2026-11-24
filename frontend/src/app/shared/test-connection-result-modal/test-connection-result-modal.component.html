@@ -11,8 +11,21 @@
       </div>
     } @else {
       @if (success()) {
-        <div class="alert alert-info" id="success" [translate]="type() + '.test-connection.success'"></div>
         @let result = testResult();
+        @let serverIdentity = result?.serverIdentity;
+        @if (serverIdentity && serverIdentity.status !== 'trusted') {
+          <div
+            class="alert"
+            id="server-not-trusted"
+            [class.alert-warning]="serverIdentity.status === 'unknown'"
+            [class.alert-danger]="serverIdentity.status === 'changed'"
+          >
+            <div [translate]="'server-trust.status-message.' + serverIdentity.status"></div>
+            <div class="mt-1" translate="server-trust.test-connection.not-tested"></div>
+          </div>
+        } @else {
+          <div class="alert alert-info" id="success" [translate]="type() + '.test-connection.success'"></div>
+        }
         @if (result && result.items.length > 0) {
           <table class="table table-sm mt-2">
             <tbody>
@@ -25,6 +38,21 @@
             </tbody>
           </table>
         }
+        @if (serverIdentity) {
+          <h6 class="mt-3" translate="server-trust.test-connection.identity-title"></h6>
+          <oib-server-identity [identity]="serverIdentity.identity" [previous]="serverTrust()?.trusted ?? null" />
+          @if (serverIdentity.status === 'trusted') {
+            <span class="badge text-bg-success mt-2" id="server-trusted" translate="server-trust.test-connection.trusted"></span>
+          } @else if (serverTrust()) {
+            <p class="mt-3 mb-0" translate="server-trust.modal.compare" [translateParams]="{ type: serverIdentity.identity.type }"></p>
+          } @else {
+            <p
+              class="mt-3 mb-0 text-body-secondary"
+              id="server-trust-elsewhere"
+              translate="server-trust.test-connection.trust-elsewhere"
+            ></p>
+          }
+        }
       }
     }
   } @else {
@@ -35,6 +63,17 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group">
+    @let presented = testResult()?.serverIdentity;
+    @if (!loading() && presented && presented.status !== 'trusted' && serverTrust()) {
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="trust-server-identity"
+        [disabled]="trusting()"
+        (click)="trustServerIdentity(presented.identity)"
+        translate="server-trust.test-connection.trust"
+      ></button>
+    }
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.close" id="cancel-button"></button>
   </div>
 </div>

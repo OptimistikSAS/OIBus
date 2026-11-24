@@ -3801,5 +3801,70 @@
     }
   },
   "enabled": "actif",
-  "disabled": "en pause"
+  "disabled": "en pause",
+  "server-trust": {
+    "not-trusted": "Serveur non approuvé",
+    "trusted": "Identité du serveur approuvée pour {{ name }}",
+    "identity": {
+      "type": "Identité",
+      "types": {
+        "x509": "Certificat",
+        "ssh-host-key": "Clé d'hôte SSH"
+      },
+      "fingerprint": "Empreinte SHA-256",
+      "previous-fingerprint": "Empreinte approuvée jusqu'ici",
+      "subject": "Sujet",
+      "issuer": "Émetteur",
+      "self-signed": "Auto-signé",
+      "issued-by-ca": "Émis par une autorité de certification",
+      "validity": "Validité",
+      "valid-from-to": "Du {{ from }} au {{ to }}",
+      "out-of-validity": "Non valide actuellement",
+      "uris": "URI",
+      "names": "Noms DNS et adresses IP",
+      "serial-number": "Numéro de série",
+      "key-type": "Type de clé"
+    },
+    "status-message": {
+      "unknown": "Le connecteur n'approuve encore aucune identité pour ce serveur : il refuse de s'y connecter tant que son identité n'est pas approuvée.",
+      "changed": "Le serveur présente une autre identité que celle approuvée : son certificat ou sa clé d'hôte a peut-être été renouvelé, ou un autre serveur se fait peut-être passer pour lui. Le connecteur refuse de s'y connecter tant que cette identité n'est pas approuvée."
+    },
+    "modal": {
+      "title": "Identité du serveur",
+      "compare": "Comparez l'empreinte ci-dessous avec celle qu'affiche le serveur (son certificat, ou la sortie de ssh-keygen -l pour sa clé d'hôte) avant de l'approuver.",
+      "skip-hint": {
+        "save": "Le connecteur peut être enregistré sans approuver cette identité : il attend alors que son serveur soit approuvé.",
+        "start": "Le connecteur peut être démarré sans approuver cette identité : il attend alors que son serveur soit approuvé."
+      },
+      "trust": {
+        "review": "Approuver cette identité",
+        "save": "Approuver et enregistrer",
+        "start": "Approuver et démarrer"
+      },
+      "skip": {
+        "save": "Enregistrer sans approuver",
+        "start": "Démarrer sans approuver"
+      }
+    },
+    "test-connection": {
+      "not-tested": "La connexion n'a pas été testée plus avant : aucun identifiant n'est envoyé à un serveur dont l'identité n'est pas approuvée.",
+      "identity-title": "Identité du serveur",
+      "trusted": "Identité approuvée",
+      "trust": "Approuver cette identité",
+      "trust-elsewhere": "Approuvez cette identité depuis la page du connecteur."
+    },
+    "panel": {
+      "title": "Identité du serveur",
+      "south-title": "Identité du serveur South",
+      "north-title": "Identité du serveur North",
+      "refused": {
+        "unknown": "Le connecteur a refusé de se connecter : son serveur présente une identité qui n'est pas approuvée.",
+        "changed": "Le connecteur a refusé de se connecter : son serveur présente une autre identité que celle approuvée."
+      },
+      "review": "Vérifier et approuver",
+      "trusted-by": "Approuvée par {{ user }} le {{ date }}",
+      "trust-on-first-use": "Aucune identité approuvée pour l'instant : le connecteur approuve l'identité que présente son serveur à sa première connexion.",
+      "none": "Aucune identité approuvée pour l'instant : testez la connexion pour vérifier l'identité du serveur et l'approuver."
+    }
+  }
 }

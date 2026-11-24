@@ -1,0 +1,81 @@
+<table class="table table-sm mb-0 server-identity">
+  <tbody>
+    <tr>
+      <th scope="row" class="w-25" translate="server-trust.identity.type"></th>
+      <td id="server-identity-type" [translate]="'server-trust.identity.types.' + identity().type"></td>
+    </tr>
+    <tr>
+      <th scope="row" translate="server-trust.identity.fingerprint"></th>
+      <td class="fingerprint" id="server-identity-fingerprint">{{ identity().fingerprint }}</td>
+    </tr>
+    @if (changedFrom(); as previous) {
+      <tr class="table-warning">
+        <th scope="row" translate="server-trust.identity.previous-fingerprint"></th>
+        <td class="fingerprint" id="server-identity-previous-fingerprint">{{ previous.fingerprint }}</td>
+      </tr>
+    }
+    @if (x509(); as x509) {
+      <tr>
+        <th scope="row" translate="server-trust.identity.subject"></th>
+        <td class="multiline" id="server-identity-subject">{{ x509.subject }}</td>
+      </tr>
+      <tr>
+        <th scope="row" translate="server-trust.identity.issuer"></th>
+        <td id="server-identity-issuer">
+          <div class="multiline">{{ x509.issuer }}</div>
+          <span
+            class="badge"
+            [class.text-bg-warning]="x509.selfSigned"
+            [class.text-bg-info]="!x509.selfSigned"
+            [translate]="x509.selfSigned ? 'server-trust.identity.self-signed' : 'server-trust.identity.issued-by-ca'"
+          ></span>
+        </td>
+      </tr>
+      <tr [class.table-danger]="outOfValidity()">
+        <th scope="row" translate="server-trust.identity.validity"></th>
+        <td id="server-identity-validity">
+          <span
+            translate="server-trust.identity.valid-from-to"
+            [translateParams]="{ from: x509.validFrom | datetime: 'ff', to: x509.validTo | datetime: 'ff' }"
+          ></span>
+          @if (outOfValidity()) {
+            <span class="badge text-bg-danger ms-1" translate="server-trust.identity.out-of-validity"></span>
+          }
+        </td>
+      </tr>
+      @if (x509.uris.length > 0) {
+        <tr>
+          <th scope="row" translate="server-trust.identity.uris"></th>
+          <td id="server-identity-uris">
+            @for (uri of x509.uris; track $index) {
+              <div>{{ uri }}</div>
+            }
+          </td>
+        </tr>
+      }
+      @if (x509.dnsNames.length > 0 || x509.ipAddresses.length > 0) {
+        <tr>
+          <th scope="row" translate="server-trust.identity.names"></th>
+          <td id="server-identity-names">
+            @for (name of x509.dnsNames; track $index) {
+              <div>{{ name }}</div>
+            }
+            @for (address of x509.ipAddresses; track $index) {
+              <div>{{ address }}</div>
+            }
+          </td>
+        </tr>
+      }
+      <tr>
+        <th scope="row" translate="server-trust.identity.serial-number"></th>
+        <td class="fingerprint" id="server-identity-serial-number">{{ x509.serialNumber }}</td>
+      </tr>
+    }
+    @if (sshHostKey(); as sshHostKey) {
+      <tr>
+        <th scope="row" translate="server-trust.identity.key-type"></th>
+        <td id="server-identity-key-type">{{ sshHostKey.keyType }}</td>
+      </tr>
+    }
+  </tbody>
+</table>

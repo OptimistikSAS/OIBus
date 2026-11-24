@@ -13,7 +13,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { combineLatest, first, Observable, of, Subject, switchMap, tap } from 'rxjs';
+import { combineLatest, first, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
@@ -51,6 +51,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { FormServerTrustService } from '../../shared/server-trust/form-server-trust.service';
+import { reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
@@ -128,6 +130,8 @@ export class EditNorthComponent implements CanComponentDeactivate {
   private readonly docsUrlService = inject(DocsUrlService);
   private readonly translateService = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+  /** The identity of the server trusted in the form, saved with the connector */
+  private readonly serverTrust = inject(FormServerTrustService).track('north');
 
   readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings');
   readonly cachingHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#caching');
@@ -251,6 +255,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
   };
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.serverTrust.destroy());
     combineLatest([
       this.scanModeService.list().pipe(first()),
       this.certificateService.list().pipe(first()),
@@ -446,6 +451,9 @@ export class EditNorthComponent implements CanComponentDeactivate {
 
     form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
     form.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => this.formEvent.set(event));
+    form.controls.settings.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.serverTrust.settingsChanged(form.controls.settings.getRawValue()));
     this.form.set(form);
   }
 
@@ -526,7 +534,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
         this.steps.showFirstInvalid();
         return;
       }
-      this.createOrUpdateNorthConnector(this.formNorthConnectorCommand);
+      this.reviewServerIdentityBeforeSave().subscribe(() => this.createOrUpdateNorthConnector(this.formNorthConnectorCommand));
       return;
     }
 
@@ -538,6 +546,16 @@ export class EditNorthComponent implements CanComponentDeactivate {
     }
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+    if (this.manifest()!.serverIdentity) {
+      // kept in the form, saved with the connector
+      component.allowServerTrust({
+        trusted: this.serverTrust.identity ?? this.northConnector()?.serverTrust.identity ?? null,
+        trust: identity => {
+          this.serverTrust.trust(identity, settings.getRawValue());
+          return of(undefined);
+        }
+      });
+    }
     component.runTest(
       'north',
       this.northConnector()?.id || null,
@@ -631,7 +649,36 @@ export class EditNorthComponent implements CanComponentDeactivate {
         transformerId: element.transformer.id,
         options: element.options,
         source: toSourceCommand(element.source)
-      }))
+      })),
+      serverTrust: this.serverTrust.command()
     };
+  }
+
+  /**
+   * Before saving an enabled connector checking the identity of its server: proposes to trust it when it must be reviewed.
+   * Emits once the connector can be saved, trusting the identity in the form if the user does; nothing when cancelled.
+   * Saving does not depend on reaching the server: the connector then waits until its server is trusted.
+   */
+  private reviewServerIdentityBeforeSave(): Observable<void> {
+    const command = this.formNorthConnectorCommand;
+    if (!this.manifest()!.serverIdentity || !command.enabled) {
+      return of(undefined);
+    }
+    const northConnector = this.northConnector();
+    return reviewServerIdentity(
+      this.modalService,
+      'save',
+      this.northConnectorService.retrieveServerIdentity(northConnector?.id || 'create', command.settings, command.type),
+      northConnector?.serverTrust ?? null,
+      this.serverTrust.identity ?? northConnector?.serverTrust.identity ?? null
+    ).pipe(
+      tap(identity => {
+        if (identity) {
+          this.serverTrust.trust(identity, this.form()!.controls.settings.getRawValue());
+        }
+      }),
+      map(() => undefined),
+      this.state.pendingUntilFinalization()
+    );
   }
 }

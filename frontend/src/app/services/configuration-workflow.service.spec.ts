@@ -7,11 +7,13 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { WorkflowRunDetailDTO, WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
+import { ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { buildWorkflow, buildWorkflowCommand } from '../../test/builders';
 import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
 import { toPage } from '../shared/utils/page.utils';
 import { ConfigurationWorkflowService } from './configuration-workflow.service';
 
@@ -211,4 +213,35 @@ describe('ConfigurationWorkflowService', () => {
       await expect(result).rejects.toBeInstanceOf(HttpErrorResponse);
     }
   );
+
+  test('should send the fingerprint of the identity trusted in the form with a command preview', async () => {
+    const serverIdentity: ServerIdentity = {
+      type: 'ssh-host-key',
+      fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
+      details: { keyType: 'ssh-ed25519' }
+    };
+    TestBed.inject(FormServerTrustService).set('south', serverIdentity);
+
+    await expectHttp(
+      http,
+      service.previewCommand(SOUTH_ID, 'opcua', southSettings, WORKFLOW_ID, command),
+      {
+        method: 'POST',
+        url: `/api/south/${SOUTH_ID}/test/workflow-preview?southType=opcua&trustedFingerprint=${serverIdentity.fingerprint}`
+      },
+      { body: { southSettings, workflowId: WORKFLOW_ID, workflow: command }, params: { trustedFingerprint: serverIdentity.fingerprint } }
+    );
+  });
+
+  test('should not send the fingerprint of an identity trusted for another target with a command preview', async () => {
+    const formServerTrust = TestBed.inject(FormServerTrustService);
+    formServerTrust.set('history-south', { type: 'ssh-host-key', fingerprint: 'SHA256:other', details: { keyType: 'ssh-rsa' } });
+
+    await expectHttp(
+      http,
+      service.previewCommand(SOUTH_ID, 'opcua', southSettings, WORKFLOW_ID, command),
+      { method: 'POST', url: `/api/south/${SOUTH_ID}/test/workflow-preview?southType=opcua` },
+      { body: { southSettings, workflowId: WORKFLOW_ID, workflow: command } }
+    );
+  });
 });

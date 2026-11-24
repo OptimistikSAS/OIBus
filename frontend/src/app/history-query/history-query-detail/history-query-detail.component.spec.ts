@@ -5,13 +5,15 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 
-import { of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { firstValueFrom, of, throwError } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
 import { LogDTO } from '@oibus/shared/api/logs.model';
+import { ServerTrustStateDTO, TrustedServerIdentityDTO } from '@oibus/shared/api/server-identity.model';
 import { HistoryQueryMetrics } from '@oibus/shared/domain/engine.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../test/test-data';
@@ -30,6 +32,8 @@ import { provideCurrentUser } from '../../shared/current-user-testing';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
+import { METRICS_REFRESH_INTERVAL_MS } from '../../shared/polling';
+import { ServerTrustModalComponent } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { emptyPage } from '../../shared/utils/page.utils';
 import { WindowService } from '../../shared/window.service';
@@ -62,6 +66,12 @@ class HistoryQueryDetailComponentTester {
   readonly selectAllButton = this.root.getByRole('button', { name: 'Select all' });
   readonly unselectAllButton = this.root.getByRole('button', { name: 'Unselect all' });
   readonly massActions = this.root.getByRole('button', { name: /Mass actions/ });
+  readonly serverNotTrusted = this.root.getByCss('#server-not-trusted-status');
+
+  /** The panel of the trust of a side in the identity of its server */
+  serverTrustPanel(side: 'south' | 'north') {
+    return this.root.getByCss(`#${side}-server-trust`);
+  }
 
   item(index: number) {
     return this.items.nth(index);
@@ -78,17 +88,30 @@ const finishedMetrics: HistoryQueryMetrics = {
   historyMetrics: { ...testData.historyQueries.metrics.historyMetrics, intervalProgress: 1 }
 };
 
+const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+const trustedIdentity: TrustedServerIdentityDTO = {
+  ...identity,
+  fingerprint: 'SHA256:trusted',
+  trustedBy: { id: 'userId1', friendlyName: 'admin' },
+  trustedAt: '2026-01-01T00:00:00.000Z'
+};
+const pending: PresentedServerIdentity = { identity, status: 'changed' };
+const trustedState: ServerTrustStateDTO = { identity: trustedIdentity, trustOnFirstUse: false, pending: null };
+const pendingState: ServerTrustStateDTO = { identity: trustedIdentity, trustOnFirstUse: false, pending };
+const sides = ['south', 'north'] as const;
+
 describe('HistoryQueryDetailComponent', () => {
   let historyQuery: HistoryQueryDTO;
   let historyQueryService: MockObject<HistoryQueryService>;
   let southConnectorService: MockObject<SouthConnectorService>;
+  let northConnectorService: MockObject<NorthConnectorService>;
   let notificationService: MockObject<NotificationService>;
   let confirmationService: MockObject<ConfirmationService>;
 
   beforeEach(() => {
     historyQuery = structuredClone(testData.historyQueries.list[0]);
     historyQueryService = createMock(HistoryQueryService);
-    const northConnectorService = createMock(NorthConnectorService);
+    northConnectorService = createMock(NorthConnectorService);
     southConnectorService = createMock(SouthConnectorService);
     const scanModeService = createMock(ScanModeService, { created: signal([]) });
     const certificateService = createMock(CertificateService, { created: signal([]) });
@@ -269,6 +292,8 @@ describe('HistoryQueryDetailComponent', () => {
       type === 'north' ? historyQuery.northSettings : historyQuery.southSettings,
       type === 'north' ? historyQuery.northType : historyQuery.southType
     );
+    // the connectors do not check the identity of their server
+    expect(testModal.allowServerTrust).not.toHaveBeenCalled();
   });
 
   test('should open the audit history of the history query and of its items', async () => {
@@ -543,5 +568,190 @@ describe('HistoryQueryDetailComponent', () => {
     );
     expect(historyQueryService.importItems).toHaveBeenCalledWith(historyQuery.id, items, true);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.imported');
+  });
+
+  test('should not check the identities of the servers when the connectors do not', async () => {
+    historyQuery = { ...historyQuery, status: 'PAUSED' };
+    historyQueryService.start.mockReturnValue(of(undefined));
+    const tester = new HistoryQueryDetailComponentTester();
+    await expect.element(tester.resumeButton).toBeInTheDocument();
+
+    await tester.resumeButton.click();
+
+    expect(historyQueryService.start).toHaveBeenCalledWith(historyQuery.id);
+    expect(historyQueryService.retrieveServerIdentity).not.toHaveBeenCalled();
+    expect(historyQueryService.getServerTrust).not.toHaveBeenCalled();
+    await expect.element(tester.serverTrustPanel('south')).not.toBeInTheDocument();
+    await expect.element(tester.serverTrustPanel('north')).not.toBeInTheDocument();
+  });
+
+  describe('server identity', () => {
+    beforeEach(() => {
+      northConnectorService.getNorthManifest.mockReturnValue(of({ ...testData.north.manifest, serverIdentity: 'ssh-host-key' }));
+      southConnectorService.getSouthManifest.mockReturnValue(of({ ...testData.south.manifest, serverIdentity: 'x509' }));
+      historyQueryService.getServerTrust.mockReturnValue(of(trustedState));
+      historyQueryService.trustServerIdentity.mockReturnValue(of(undefined));
+      historyQueryService.start.mockReturnValue(of(undefined));
+      historyQueryService.pause.mockReturnValue(of(undefined));
+    });
+
+    afterEach(() => vi.useRealTimers());
+
+    test('should poll the trust of both sides in the identities of their servers', async () => {
+      vi.useFakeTimers();
+      const tester = new HistoryQueryDetailComponentTester();
+      await vi.waitFor(() => expect(historyQueryService.getServerTrust).toHaveBeenCalledTimes(2));
+      expect(historyQueryService.getServerTrust).toHaveBeenCalledWith(historyQuery.id, 'south');
+      expect(historyQueryService.getServerTrust).toHaveBeenCalledWith(historyQuery.id, 'north');
+
+      await expect.element(tester.serverTrustPanel('south')).toMatchTextContent(/Identity of the South server\s*Trusted by admin on/);
+      await expect.element(tester.serverTrustPanel('north')).toMatchTextContent(/Identity of the North server\s*Trusted by admin on/);
+      await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
+
+      await vi.advanceTimersByTimeAsync(METRICS_REFRESH_INTERVAL_MS);
+      expect(historyQueryService.getServerTrust).toHaveBeenCalledTimes(4);
+
+      tester.fixture.destroy();
+      await vi.advanceTimersByTimeAsync(METRICS_REFRESH_INTERVAL_MS);
+      expect(historyQueryService.getServerTrust).toHaveBeenCalledTimes(4);
+    });
+
+    test.each(sides)('should show that the server is not trusted when the %s refused its identity', async side => {
+      historyQueryService.getServerTrust.mockImplementation((_historyId, trustSide) =>
+        of(trustSide === side ? pendingState : trustedState)
+      );
+      const tester = new HistoryQueryDetailComponentTester();
+
+      await expect.element(tester.serverNotTrusted).toHaveTextContent('Server not trusted');
+      const other = side === 'south' ? 'north' : 'south';
+      await expect.element(tester.serverTrustPanel(side).getByRole('button', { name: 'Review and trust' })).toBeVisible();
+      await expect.element(tester.serverTrustPanel(other)).toBeInTheDocument();
+      await expect.element(tester.serverTrustPanel(other).getByRole('button', { name: 'Review and trust' })).not.toBeInTheDocument();
+    });
+
+    test.each(sides)('should review and trust the identity the %s refused', async side => {
+      historyQueryService.getServerTrust.mockImplementation((_historyId, trustSide) =>
+        of(trustSide === side ? pendingState : trustedState)
+      );
+      const trustModal = createMock(ServerTrustModalComponent);
+      mockModal(trustModal, 'trust');
+      const tester = new HistoryQueryDetailComponentTester();
+      const reviewButton = tester.serverTrustPanel(side).getByRole('button', { name: 'Review and trust' });
+      await expect.element(reviewButton).toBeVisible();
+      historyQueryService.getServerTrust.mockReturnValue(of(trustedState));
+
+      await reviewButton.click();
+
+      expect(trustModal.prepare).toHaveBeenCalledWith('review', pending, trustedIdentity);
+      expect(historyQueryService.trustServerIdentity).toHaveBeenCalledWith(historyQuery.id, side, 'SHA256:presented');
+      expect(notificationService.success).toHaveBeenCalledWith('server-trust.trusted', { name: historyQuery.name });
+      // the trust and the history query are read again
+      await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
+      expect(historyQueryService.findById).toHaveBeenCalledTimes(2);
+    });
+
+    test.each(sides)('should trust the identity of the %s server from the connection test', async side => {
+      const testModal = createMock(TestConnectionResultModalComponent);
+      mockModal(testModal);
+      const tester = new HistoryQueryDetailComponentTester();
+
+      await (side === 'north' ? tester.testNorthButton : tester.testSouthButton).click();
+
+      expect(testModal.allowServerTrust).toHaveBeenCalledWith({ trusted: null, trust: expect.any(Function) });
+      expect(testModal.runHistoryQueryTest).toHaveBeenCalled();
+      await firstValueFrom(testModal.allowServerTrust.mock.lastCall![0].trust(identity));
+      expect(historyQueryService.trustServerIdentity).toHaveBeenCalledWith(historyQuery.id, side, 'SHA256:presented');
+      expect(historyQueryService.findById).toHaveBeenCalledTimes(2);
+    });
+
+    describe('start', () => {
+      const southPresented: PresentedServerIdentity = { identity, status: 'unknown' };
+      const northIdentity: ServerIdentity = { ...identity, fingerprint: 'SHA256:north' };
+      const northPresented: PresentedServerIdentity = { identity: northIdentity, status: 'changed' };
+
+      beforeEach(() => {
+        historyQuery = { ...historyQuery, status: 'PAUSED' };
+        historyQueryService.retrieveServerIdentity.mockImplementation((_historyId, side) =>
+          of(side === 'south' ? southPresented : northPresented)
+        );
+      });
+
+      test('should review the identities of the south then north servers before starting', async () => {
+        const southModal = createMock(ServerTrustModalComponent);
+        const northModal = createMock(ServerTrustModalComponent);
+        vi.spyOn(TestBed.inject(MockModalService), 'open')
+          .mockReturnValueOnce(fakeModal(southModal, Promise.resolve('trust')))
+          .mockReturnValueOnce(fakeModal(northModal, Promise.resolve('skip')));
+        const tester = new HistoryQueryDetailComponentTester();
+        await expect.element(tester.resumeButton).toBeInTheDocument();
+
+        await tester.resumeButton.click();
+
+        await vi.waitFor(() => expect(historyQueryService.start).toHaveBeenCalledWith(historyQuery.id));
+        expect(historyQueryService.retrieveServerIdentity).toHaveBeenNthCalledWith(
+          1,
+          historyQuery.id,
+          'south',
+          historyQuery.southSettings,
+          historyQuery.southType
+        );
+        expect(historyQueryService.retrieveServerIdentity).toHaveBeenNthCalledWith(
+          2,
+          historyQuery.id,
+          'north',
+          historyQuery.northSettings,
+          historyQuery.northType
+        );
+        expect(southModal.prepare).toHaveBeenCalledWith('start', southPresented, null);
+        expect(northModal.prepare).toHaveBeenCalledWith('start', northPresented, null);
+        // only the south identity is trusted, before the north one is reviewed
+        expect(historyQueryService.trustServerIdentity).toHaveBeenCalledTimes(1);
+        expect(historyQueryService.trustServerIdentity).toHaveBeenCalledWith(historyQuery.id, 'south', 'SHA256:presented');
+        expect(historyQueryService.trustServerIdentity.mock.invocationCallOrder[0]).toBeLessThan(
+          historyQueryService.retrieveServerIdentity.mock.invocationCallOrder[1]
+        );
+        expect(historyQueryService.retrieveServerIdentity.mock.invocationCallOrder[1]).toBeLessThan(
+          historyQueryService.start.mock.invocationCallOrder[0]
+        );
+        expect(notificationService.success).toHaveBeenCalledWith('history-query.started', { name: historyQuery.name });
+      });
+
+      test('should not start when the review of an identity is cancelled', async () => {
+        TestBed.inject<MockModalService<ServerTrustModalComponent>>(MockModalService).mockDismissedModal(
+          createMock(ServerTrustModalComponent)
+        );
+        const tester = new HistoryQueryDetailComponentTester();
+        await expect.element(tester.resumeButton).toBeInTheDocument();
+
+        await tester.resumeButton.click();
+
+        expect(historyQueryService.retrieveServerIdentity).toHaveBeenCalledTimes(1);
+        expect(historyQueryService.trustServerIdentity).not.toHaveBeenCalled();
+        expect(historyQueryService.start).not.toHaveBeenCalled();
+        await expect.element(tester.resumeButton).toBeEnabled();
+      });
+
+      test('should start directly when the identities are trusted', async () => {
+        historyQueryService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'trusted' }));
+        const tester = new HistoryQueryDetailComponentTester();
+        await expect.element(tester.resumeButton).toBeInTheDocument();
+
+        // no modal is set up: opening one would fail
+        await tester.resumeButton.click();
+
+        expect(historyQueryService.retrieveServerIdentity).toHaveBeenCalledTimes(2);
+        expect(historyQueryService.start).toHaveBeenCalledWith(historyQuery.id);
+      });
+    });
+
+    test('should not review the identities of the servers when pausing', async () => {
+      const tester = new HistoryQueryDetailComponentTester();
+      await expect.element(tester.pauseButton).toBeInTheDocument();
+
+      await tester.pauseButton.click();
+
+      expect(historyQueryService.pause).toHaveBeenCalledWith(historyQuery.id);
+      expect(historyQueryService.retrieveServerIdentity).not.toHaveBeenCalled();
+    });
   });
 });

@@ -6,6 +6,7 @@ import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { HistoryQueryItemDTO } from '@oibus/shared/api/history-query.model';
+import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import { SouthConnectorItemTestResult, SouthExploreBrowseResult, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
 import {
   CacheContentUpdateCommand,
@@ -13,12 +14,14 @@ import {
   FileCacheContent,
   OIBusConnectionTestResult
 } from '@oibus/shared/domain/engine.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
 import { toPage } from '../shared/utils/page.utils';
 import { DownloadService } from './download.service';
 import { HistoryQueryService } from './history-query.service';
@@ -56,6 +59,20 @@ async function jsonFileOf(formData: FormData, key: string): Promise<{ name: stri
   }
   return { name: value.name, content: JSON.parse(await value.text()) };
 }
+
+/** The params of a request, by name */
+function paramsOf(request: TestRequest): Record<string, string | null> {
+  const params = request.request.params;
+  return Object.fromEntries(params.keys().map(key => [key, params.get(key)]));
+}
+
+const serverIdentity: ServerIdentity = {
+  type: 'ssh-host-key',
+  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
+  details: { keyType: 'ssh-ed25519' }
+};
+const presentedServerIdentity: PresentedServerIdentity = { identity: serverIdentity, status: 'unknown' };
+const serverTrustState: ServerTrustStateDTO = { identity: null, trustOnFirstUse: false, pending: presentedServerIdentity };
 
 const connectionTestResult: OIBusConnectionTestResult = { items: [{ key: 'Connected', value: 'true' }] };
 const itemTestResult: SouthConnectorItemTestResult = {
@@ -515,5 +532,145 @@ describe('HistoryQueryService', () => {
     request.flush(null);
 
     await expect(result).resolves.toBeNull();
+  });
+
+  test.each([
+    { side: 'south' as const, fromConnector: null, url: '/api/history/id1/test/south/server-identity?southType=folder-scanner' },
+    {
+      side: 'south' as const,
+      fromConnector: 'southId1',
+      url: '/api/history/id1/test/south/server-identity?southType=folder-scanner&fromSouth=southId1'
+    },
+    { side: 'north' as const, fromConnector: null, url: '/api/history/id1/test/north/server-identity?northType=file-writer' },
+    {
+      side: 'north' as const,
+      fromConnector: 'northId1',
+      url: '/api/history/id1/test/north/server-identity?northType=file-writer&fromNorth=northId1'
+    }
+  ])(
+    'should retrieve the identity of the $side server (fromConnector: $fromConnector) and leave the error display to the caller',
+    async ({ side, fromConnector, url }) => {
+      const settings = side === 'south' ? southSettings : northSettings;
+      const type = side === 'south' ? 'folder-scanner' : 'file-writer';
+
+      const result = firstValueFrom(service.retrieveServerIdentity('id1', side, settings, type, fromConnector));
+
+      const request = http.expectOne({ method: 'POST', url });
+      expect(request.request.body).toEqual(settings);
+      expectErrorsIgnoredUnlessUnauthorized(request);
+      request.flush(presentedServerIdentity);
+
+      await expect(result).resolves.toEqual(presentedServerIdentity);
+    }
+  );
+
+  test.each(['south' as const, 'north' as const])(
+    'should get the trust in the identity of the %s server and only notify an expired session',
+    async side => {
+      const result = firstValueFrom(service.getServerTrust('id1', side));
+
+      const request = http.expectOne({ method: 'GET', url: `/api/history/id1/server-trust/${side}` });
+      expectErrorsIgnoredUnlessUnauthorized(request);
+      request.flush(serverTrustState);
+
+      await expect(result).resolves.toEqual(serverTrustState);
+    }
+  );
+
+  test.each(['south' as const, 'north' as const])('should trust the identity of the %s server', async side => {
+    await expectHttp(
+      http,
+      service.trustServerIdentity('id1', side, serverIdentity.fingerprint),
+      { method: 'POST', url: `/api/history/id1/server-trust/${side}` },
+      { body: { fingerprint: serverIdentity.fingerprint } }
+    );
+  });
+
+  describe('with an identity trusted in the form', () => {
+    const trustedRequests: Array<{
+      name: string;
+      target: 'history-south' | 'history-north';
+      call: (s: HistoryQueryService) => Observable<unknown>;
+      url: string;
+      params: Record<string, string>;
+    }> = [
+      {
+        name: 'a North connection test',
+        target: 'history-north',
+        call: s => s.testNorthConnection('id1', northSettings, 'file-writer', 'northId1'),
+        url: '/api/history/id1/test/north',
+        params: { northType: 'file-writer', fromNorth: 'northId1' }
+      },
+      {
+        name: 'a South connection test',
+        target: 'history-south',
+        call: s => s.testSouthConnection('id1', southSettings, 'folder-scanner'),
+        url: '/api/history/id1/test/south',
+        params: { southType: 'folder-scanner' }
+      },
+      {
+        name: 'the retrieval of the identity of the North server',
+        target: 'history-north',
+        call: s => s.retrieveServerIdentity('id1', 'north', northSettings, 'file-writer'),
+        url: '/api/history/id1/test/north/server-identity',
+        params: { northType: 'file-writer' }
+      },
+      {
+        name: 'the retrieval of the identity of the South server',
+        target: 'history-south',
+        call: s => s.retrieveServerIdentity('id1', 'south', southSettings, 'folder-scanner', 'southId1'),
+        url: '/api/history/id1/test/south/server-identity',
+        params: { southType: 'folder-scanner', fromSouth: 'southId1' }
+      },
+      {
+        name: 'an explore session',
+        target: 'history-south',
+        call: s => s.startExplore('id1', southSettings, 'folder-scanner'),
+        url: '/api/history/id1/explore',
+        params: { southType: 'folder-scanner' }
+      },
+      {
+        name: 'a discovery',
+        target: 'history-south',
+        call: s => s.discoverItems('id1', 'folder-scanner', southSettings, { nodeIds: ['node'] }, { name: '{{name}}' }, 'southId1'),
+        url: '/api/history/id1/test/discovered-items',
+        params: { southType: 'folder-scanner', fromSouth: 'southId1' }
+      },
+      {
+        name: 'an item test',
+        target: 'history-south',
+        call: s => s.testItem('id1', null, 'mysql', 'my item', southSettings, testData.south.itemCommand.settings, testingSettings),
+        url: '/api/history/id1/test/items',
+        params: { southType: 'mysql', itemName: 'my item' }
+      }
+    ];
+
+    test.each(trustedRequests)('should send its fingerprint with $name', async ({ target, call, url, params }) => {
+      TestBed.inject(FormServerTrustService).set(target, serverIdentity);
+
+      const result = firstValueFrom(call(service), { defaultValue: undefined });
+
+      const request = http.expectOne(req => req.method === 'POST' && req.url === url);
+      expect(paramsOf(request)).toEqual({ ...params, trustedFingerprint: serverIdentity.fingerprint });
+      request.flush(null);
+      await result;
+    });
+
+    test.each(trustedRequests)(
+      'should not send the fingerprint trusted for another target with $name',
+      async ({ target, call, url, params }) => {
+        const formServerTrust = TestBed.inject(FormServerTrustService);
+        formServerTrust.set(target === 'history-south' ? 'history-north' : 'history-south', serverIdentity);
+        formServerTrust.set('south', serverIdentity);
+        formServerTrust.set('north', serverIdentity);
+
+        const result = firstValueFrom(call(service), { defaultValue: undefined });
+
+        const request = http.expectOne(req => req.method === 'POST' && req.url === url);
+        expect(paramsOf(request)).toEqual(params);
+        request.flush(null);
+        await result;
+      }
+    );
   });
 });

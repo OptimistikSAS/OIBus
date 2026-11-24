@@ -1,0 +1,33 @@
+@let serverTrust = this.serverTrust();
+<section class="oib-panel server-trust-panel">
+  <div class="oib-section-title">
+    <h5 [translate]="titleKey()"></h5>
+  </div>
+  @if (serverTrust.pending; as pending) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-2" id="server-not-trusted">
+      <span [translate]="'server-trust.panel.refused.' + pending.status"></span>
+      <button
+        type="button"
+        class="btn btn-sm btn-danger text-nowrap"
+        id="review-server-identity"
+        (click)="review.emit(pending)"
+        translate="server-trust.panel.review"
+      ></button>
+    </div>
+  }
+  @if (serverTrust.identity; as identity) {
+    <p
+      class="mb-2"
+      id="server-trusted-by"
+      translate="server-trust.panel.trusted-by"
+      [translateParams]="{ user: identity.trustedBy.friendlyName, date: identity.trustedAt | datetime: 'ff' }"
+    ></p>
+    <oib-server-identity [identity]="identity" />
+  } @else if (!serverTrust.pending) {
+    <p
+      class="mb-0 text-body-secondary"
+      id="no-server-identity"
+      [translate]="serverTrust.trustOnFirstUse ? 'server-trust.panel.trust-on-first-use' : 'server-trust.panel.none'"
+    ></p>
+  }
+</section>

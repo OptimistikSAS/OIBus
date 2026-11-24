@@ -3,6 +3,7 @@ import { inject, Service } from '@angular/core';
 
 import { map, Observable } from 'rxjs';
 
+import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -21,9 +22,11 @@ import { Page } from '@oibus/shared/common/types';
 import { OIBusSouthType, SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import { OIBusConnectionTestResult, SouthConnectorMetrics } from '@oibus/shared/domain/engine.model';
+import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.model';
 import { SouthConnectorItemSearchParam, SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
 import { DownloadService } from './download.service';
 
 /**
@@ -33,6 +36,7 @@ import { DownloadService } from './download.service';
 export class SouthConnectorService {
   private readonly http = inject(HttpClient);
   private readonly downloadService = inject(DownloadService);
+  private readonly formServerTrust = inject(FormServerTrustService);
 
   /**
    * Get South connectors manifests
@@ -121,7 +125,7 @@ export class SouthConnectorService {
 
   testConnection(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/south/${southId}/test/connection`, settings, {
-      params: { southType },
+      params: this.formServerTrust.withTrustedFingerprint('south', { southType }),
       // the test connection modal already displays the error inline, so skip the global error notification
       context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
@@ -139,7 +143,7 @@ export class SouthConnectorService {
       `/api/south/${southId}/items/test`,
       { southSettings, itemSettings, testingSettings },
       {
-        params: { southType, itemName },
+        params: this.formServerTrust.withTrustedFingerprint('south', { southType, itemName }),
         // the test panel already displays the error inline, so skip the global error notification
         context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
       }
@@ -159,7 +163,7 @@ export class SouthConnectorService {
     return this.http.post<Array<OIBusRecord>>(
       `/api/south/${southId}/test/discovery-query`,
       { southSettings, query },
-      { params: { southType } }
+      { params: this.formServerTrust.withTrustedFingerprint('south', { southType }) }
     );
   }
 
@@ -177,7 +181,7 @@ export class SouthConnectorService {
     return this.http.post<Array<SouthConnectorItemCommandDTO>>(
       `/api/south/${southId}/test/discovered-items`,
       { southSettings, discoveryScope, itemFieldMapping },
-      { params: { southType } }
+      { params: this.formServerTrust.withTrustedFingerprint('south', { southType }) }
     );
   }
 
@@ -186,8 +190,35 @@ export class SouthConnectorService {
    */
   startExplore(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<SouthExploreStartResult> {
     return this.http.post<SouthExploreStartResult>(`/api/south/${southId}/explore`, settings, {
-      params: { southType }
+      params: this.formServerTrust.withTrustedFingerprint('south', { southType })
     });
+  }
+
+  /**
+   * The identity the server of the South presents with these settings, and how it compares with the identity trusted
+   * (by the connector, or in its form), without connecting further: null when the connector does not check it
+   */
+  retrieveServerIdentity(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<PresentedServerIdentity | null> {
+    return this.http.post<PresentedServerIdentity | null>(`/api/south/${southId}/test/server-identity`, settings, {
+      params: this.formServerTrust.withTrustedFingerprint('south', { southType }),
+      // a server which cannot be reached does not prevent saving or starting the connector
+      context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
+    });
+  }
+
+  /**
+   * The trust of the South in the identity of its server, with the identity it refused. Polled in the background, so only
+   * an expired session is notified
+   */
+  getServerTrust(southId: string): Observable<ServerTrustStateDTO> {
+    return this.http.get<ServerTrustStateDTO>(`/api/south/${southId}/server-trust`, {
+      context: ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized)
+    });
+  }
+
+  /** Trust the identity the server of the South presents (with this fingerprint), and restart the connector */
+  trustServerIdentity(southId: string, fingerprint: string): Observable<void> {
+    return this.http.post<void>(`/api/south/${southId}/server-trust`, { fingerprint });
   }
 
   /**

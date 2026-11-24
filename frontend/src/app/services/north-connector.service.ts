@@ -4,6 +4,7 @@ import { inject, Service } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import { TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { NorthConnectorManifest, NorthType, OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 import { NorthSettings } from '@oibus/shared/connector/north-settings.model';
@@ -16,8 +17,10 @@ import {
   NorthConnectorMetrics,
   OIBusConnectionTestResult
 } from '@oibus/shared/domain/engine.model';
+import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
@@ -25,6 +28,7 @@ import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../sha
 @Service()
 export class NorthConnectorService {
   private readonly http = inject(HttpClient);
+  private readonly formServerTrust = inject(FormServerTrustService);
 
   /**
    * Get North connectors types
@@ -113,10 +117,37 @@ export class NorthConnectorService {
 
   testConnection(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/north/${northId}/test/connection`, settings, {
-      params: { northType },
+      params: this.formServerTrust.withTrustedFingerprint('north', { northType }),
       // the test connection modal already displays the error inline, so skip the global error notification
       context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
+  }
+
+  /**
+   * The identity the server of the North presents with these settings, and how it compares with the identity trusted
+   * (by the connector, or in its form), without connecting further: null when the connector does not check it
+   */
+  retrieveServerIdentity(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<PresentedServerIdentity | null> {
+    return this.http.post<PresentedServerIdentity | null>(`/api/north/${northId}/test/server-identity`, settings, {
+      params: this.formServerTrust.withTrustedFingerprint('north', { northType }),
+      // a server which cannot be reached does not prevent saving or starting the connector
+      context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
+    });
+  }
+
+  /**
+   * The trust of the North in the identity of its server, with the identity it refused. Polled in the background, so only
+   * an expired session is notified
+   */
+  getServerTrust(northId: string): Observable<ServerTrustStateDTO> {
+    return this.http.get<ServerTrustStateDTO>(`/api/north/${northId}/server-trust`, {
+      context: ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized)
+    });
+  }
+
+  /** Trust the identity the server of the North presents (with this fingerprint), and restart the connector */
+  trustServerIdentity(northId: string, fingerprint: string): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/server-trust`, { fingerprint });
   }
 
   /**

@@ -10,6 +10,12 @@
                 <span [class]="statusIcon(historyQuery.status)" aria-hidden="true"></span>
                 <span [translate]="'enums.status.' + historyQuery.status"></span>
               </span>
+              @if (southServerTrust()?.pending || northServerTrust()?.pending) {
+                <span class="oib-status-badge" id="server-not-trusted-status">
+                  <span class="fa-solid fa-shield-halved status-red" aria-hidden="true"></span>
+                  <span translate="server-trust.not-trusted"></span>
+                </span>
+              }
               <span class="d-flex align-items-center gap-1" id="history-query-time-range">
                 <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
                 {{ historyQuery.queryTimeRange.startTime | datetime: 'mediumWithSeconds' }}
@@ -95,6 +101,22 @@
             [historyQuery]="historyQuery"
             [northManifest]="northManifest()!"
             [southManifest]="southManifest()!"
+          />
+        }
+        @if (southServerTrust(); as southServerTrust) {
+          <oib-server-trust-panel
+            id="south-server-trust"
+            titleKey="server-trust.panel.south-title"
+            [serverTrust]="southServerTrust"
+            (review)="reviewServerIdentity('south', $event)"
+          />
+        }
+        @if (northServerTrust(); as northServerTrust) {
+          <oib-server-trust-panel
+            id="north-server-trust"
+            titleKey="server-trust.panel.north-title"
+            [serverTrust]="northServerTrust"
+            (review)="reviewServerIdentity('north', $event)"
           />
         }
         <!-- South specific settings -->

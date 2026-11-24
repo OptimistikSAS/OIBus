@@ -3801,5 +3801,70 @@
     }
   },
   "enabled": "运行中",
-  "disabled": "已暂停"
+  "disabled": "已暂停",
+  "server-trust": {
+    "not-trusted": "服务器未受信任",
+    "trusted": "已信任 {{ name }} 的服务器身份",
+    "identity": {
+      "type": "身份",
+      "types": {
+        "x509": "证书",
+        "ssh-host-key": "SSH 主机密钥"
+      },
+      "fingerprint": "SHA-256 指纹",
+      "previous-fingerprint": "此前信任的指纹",
+      "subject": "主题",
+      "issuer": "颁发者",
+      "self-signed": "自签名",
+      "issued-by-ca": "由证书颁发机构颁发",
+      "validity": "有效期",
+      "valid-from-to": "从 {{ from }} 至 {{ to }}",
+      "out-of-validity": "当前无效",
+      "uris": "URI",
+      "names": "DNS 名称和 IP 地址",
+      "serial-number": "序列号",
+      "key-type": "密钥类型"
+    },
+    "status-message": {
+      "unknown": "连接器尚未信任此服务器的任何身份：在其身份被信任之前，连接器拒绝连接。",
+      "changed": "服务器提供的身份与已信任的身份不同：其证书或主机密钥可能已更新，或者有其他服务器冒充它。在此身份被信任之前，连接器拒绝连接。"
+    },
+    "modal": {
+      "title": "服务器身份",
+      "compare": "在信任之前，请将下面的指纹与服务器显示的指纹（其证书，或其主机密钥的 ssh-keygen -l 输出）进行比较。",
+      "skip-hint": {
+        "save": "可以在不信任此身份的情况下保存连接器：连接器将等待其服务器被信任。",
+        "start": "可以在不信任此身份的情况下启动连接器：连接器将等待其服务器被信任。"
+      },
+      "trust": {
+        "review": "信任此身份",
+        "save": "信任并保存",
+        "start": "信任并启动"
+      },
+      "skip": {
+        "save": "保存但不信任",
+        "start": "启动但不信任"
+      }
+    },
+    "test-connection": {
+      "not-tested": "未进一步测试连接：不会向身份未受信任的服务器发送任何凭据。",
+      "identity-title": "服务器身份",
+      "trusted": "已信任的身份",
+      "trust": "信任此身份",
+      "trust-elsewhere": "请在连接器页面中信任此身份。"
+    },
+    "panel": {
+      "title": "服务器身份",
+      "south-title": "South 服务器身份",
+      "north-title": "North 服务器身份",
+      "refused": {
+        "unknown": "连接器拒绝连接：其服务器提供的身份未受信任。",
+        "changed": "连接器拒绝连接：其服务器提供的身份与已信任的身份不同。"
+      },
+      "review": "查看并信任",
+      "trusted-by": "由 {{ user }} 于 {{ date }} 信任",
+      "trust-on-first-use": "尚未信任任何身份：连接器将在首次连接时信任其服务器提供的身份。",
+      "none": "尚未信任任何身份：请测试连接以查看服务器身份并信任它。"
+    }
+  }
 }

@@ -4,14 +4,16 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, provideRouter, Router } from '@angular/router';
 
-import { Observable, of } from 'rxjs';
+import { firstValueFrom, Observable, of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
+import { TrustedServerIdentityDTO } from '@oibus/shared/api/server-identity.model';
 import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
-import { NorthType } from '@oibus/shared/connector/north-manifest.model';
-import { SouthType } from '@oibus/shared/connector/south-manifest.model';
+import { NorthConnectorManifest, NorthType } from '@oibus/shared/connector/north-manifest.model';
+import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
+import { ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { EmptyRouteComponent } from '../../../test/empty-route.component';
@@ -30,6 +32,7 @@ import { ExportItemModalComponent } from '../../shared/export-item-modal/export-
 import { chooseSelectOrCreateEntry } from '../../shared/form/select-or-create/select-or-create.testing';
 import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
+import { FormServerTrustService } from '../../shared/server-trust/form-server-trust.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { WindowService } from '../../shared/window.service';
@@ -107,6 +110,42 @@ const northTypes: Array<NorthType> = [
   { id: 'console', category: 'debug', types: ['file'] },
   { id: 'file-writer', category: 'file', types: ['file'] }
 ];
+/** Manifests of connectors checking the identity of their server, with the setting telling which server */
+const southManifestWithServerIdentity: SouthConnectorManifest = {
+  ...testData.south.manifest,
+  serverIdentity: 'x509',
+  settings: {
+    ...testData.south.manifest.settings,
+    attributes: [
+      {
+        type: 'string',
+        key: 'url',
+        translationKey: 'configuration.oibus.manifest.south.opcua.url',
+        defaultValue: null,
+        validators: [],
+        displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+      }
+    ]
+  }
+};
+const northManifestWithServerIdentity: NorthConnectorManifest = {
+  ...testData.north.manifest,
+  serverIdentity: 'ssh-host-key',
+  settings: {
+    ...testData.north.manifest.settings,
+    attributes: [
+      {
+        type: 'string',
+        key: 'host',
+        translationKey: 'configuration.oibus.manifest.north.sftp.host',
+        defaultValue: null,
+        validators: [],
+        displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+      }
+    ]
+  }
+};
+const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
 const newItem: HistoryQueryItemCommandDTO = { ...testData.historyQueries.itemCommand, id: '', name: 'new item' };
 
 describe('EditHistoryQueryComponent', () => {
@@ -313,6 +352,8 @@ describe('EditHistoryQueryComponent', () => {
         type === 'north' ? 'console' : 'folder-scanner',
         null
       );
+      // the connectors do not check the identity of their server
+      expect(testModal.allowServerTrust).not.toHaveBeenCalled();
     });
 
     test('should open the explore wizard wired to the history query explore endpoints', async () => {
@@ -781,6 +822,116 @@ describe('EditHistoryQueryComponent', () => {
         'folder-scanner',
         'southId1'
       );
+    });
+  });
+
+  describe('server identity', () => {
+    const sides = [
+      { side: 'south', target: 'history-south', endpoint: 'URL', settingKey: 'url', type: 'folder-scanner', command: 'southServerTrust' },
+      { side: 'north', target: 'history-north', endpoint: 'Host', settingKey: 'host', type: 'console', command: 'northServerTrust' }
+    ] as const;
+
+    beforeEach(() => {
+      configure({ params: { historyQueryId: savedQuery.id } });
+      southConnectorService.getSouthManifest.mockReturnValue(of(southManifestWithServerIdentity));
+      northConnectorService.getNorthManifest.mockReturnValue(of(northManifestWithServerIdentity));
+    });
+
+    /** The test button and the setting telling which server, of the opened step */
+    function sideOf(tester: EditHistoryQueryComponentTester, side: 'south' | 'north', endpoint: string) {
+      return {
+        testButton: side === 'south' ? tester.testSouthButton : tester.testNorthButton,
+        endpoint: tester.root.getByRole('textbox', { name: endpoint })
+      };
+    }
+
+    test.each(sides)(
+      'should trust the identity of the $side server in the form from the connection test, and save it',
+      async ({ side, target, endpoint, settingKey, type, command }) => {
+        const testModal = createMock(TestConnectionResultModalComponent);
+        mockModal(testModal);
+        const tester = await createTester(side);
+        const { testButton, endpoint: endpointInput } = sideOf(tester, side, endpoint);
+        await endpointInput.fill('server');
+
+        await testButton.click();
+
+        expect(testModal.runHistoryQueryTest).toHaveBeenCalledWith(side, savedQuery.id, { [settingKey]: 'server' }, type, null);
+        const options = testModal.allowServerTrust.mock.lastCall![0];
+        expect(options.trusted).toBeNull();
+        await firstValueFrom(options.trust(identity));
+        const formServerTrust = TestBed.inject(FormServerTrustService);
+        expect(formServerTrust.get(target)).toEqual(identity);
+        expect(formServerTrust.get(target === 'history-south' ? 'history-north' : 'history-south')).toBeNull();
+
+        // the next test shows it as trusted
+        await testButton.click();
+        expect(testModal.allowServerTrust.mock.lastCall![0].trusted).toEqual(identity);
+
+        mockModal(createMock(ResetCacheHistoryQueryModalComponent), false);
+        await tester.saveButton.click();
+
+        expect(historyQueryService.update).toHaveBeenCalledWith(
+          savedQuery.id,
+          expect.objectContaining({ [command]: { identity, trustOnFirstUse: false } }),
+          false
+        );
+        const otherCommand = command === 'southServerTrust' ? 'northServerTrust' : 'southServerTrust';
+        expect(historyQueryService.update.mock.lastCall![1][otherCommand]).toBeUndefined();
+      }
+    );
+
+    test.each(sides)(
+      'should drop the identity of the $side server trusted in the form when the settings connect to another server',
+      async ({ side, target, endpoint, command }) => {
+        const testModal = createMock(TestConnectionResultModalComponent);
+        mockModal(testModal);
+        const tester = await createTester(side);
+        const { testButton, endpoint: endpointInput } = sideOf(tester, side, endpoint);
+        await endpointInput.fill('server');
+        await testButton.click();
+        await firstValueFrom(testModal.allowServerTrust.mock.lastCall![0].trust(identity));
+        const formServerTrust = TestBed.inject(FormServerTrustService);
+
+        await endpointInput.fill('other-server');
+
+        expect(formServerTrust.get(target)).toBeNull();
+        mockModal(createMock(ResetCacheHistoryQueryModalComponent), false);
+        await tester.saveButton.click();
+        expect(historyQueryService.update).toHaveBeenCalled();
+        expect(historyQueryService.update.mock.lastCall![1][command]).toBeUndefined();
+      }
+    );
+
+    test('should show the identity the history query trusts in the connection test', async () => {
+      const trusted: TrustedServerIdentityDTO = {
+        ...identity,
+        fingerprint: 'SHA256:trusted',
+        trustedBy: { id: 'userId1', friendlyName: 'admin' },
+        trustedAt: '2026-01-01T00:00:00.000Z'
+      };
+      historyQueryService.findById.mockImplementation(() =>
+        of({ ...structuredClone(savedQuery), northServerTrust: { identity: trusted, trustOnFirstUse: false } })
+      );
+      const testModal = createMock(TestConnectionResultModalComponent);
+      mockModal(testModal);
+      const tester = await createTester('north');
+
+      await tester.testNorthButton.click();
+
+      expect(testModal.allowServerTrust).toHaveBeenCalledWith({ trusted, trust: expect.any(Function) });
+    });
+
+    test('should forget the identities trusted in the form when the form is left', async () => {
+      const testModal = createMock(TestConnectionResultModalComponent);
+      mockModal(testModal);
+      const tester = await createTester('south');
+      await tester.testSouthButton.click();
+      await firstValueFrom(testModal.allowServerTrust.mock.lastCall![0].trust(identity));
+
+      tester.fixture.destroy();
+
+      expect(TestBed.inject(FormServerTrustService).get('history-south')).toBeNull();
     });
   });
 });
