@@ -4,6 +4,7 @@ import path from 'node:path';
 import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import {
+  OIBUS_INTERACTIVE_SESSION_REQUEST_REQUIRED_PERMISSIONS,
   OIBusBrowseRequestContent,
   OIBusCloseExploreRequestContent,
   OIBusInteractiveSessionFileResult,
@@ -11,13 +12,16 @@ import {
   OIBusInteractiveSessionSouthContent,
   OIBusPreviewWorkflowRequestContent,
   OIBusStartExploreResult,
-  OIBusTestSouthItemRequestContent
+  OIBusTestSouthItemRequestContent,
+  OIBusTrustServerIdentityRequestContent
 } from '../../../shared/model/oia/interactive-session.model';
 
 import type { ILogger } from '../../model/logger.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import type ConfigurationWorkflowRunService from '../configuration-workflow-run.service';
 import { encryptionService } from '../encryption.service';
+import type HistoryQueryService from '../history-query.service';
+import type NorthService from '../north.service';
 import type SouthService from '../south.service';
 import { getErrorMessage, withTimeout } from '../utils';
 import type OIAnalyticsClient from './oianalytics-client.service';
@@ -56,6 +60,8 @@ export default class OIAnalyticsSessionService {
     private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private oIAnalyticsClient: OIAnalyticsClient,
     private southService: SouthService,
+    private northService: NorthService,
+    private historyQueryService: HistoryQueryService,
     private configurationWorkflowRunService: ConfigurationWorkflowRunService,
     private logger: ILogger,
     private tmpFolder: string
@@ -208,10 +214,21 @@ export default class OIAnalyticsSessionService {
     registration: OIAnalyticsRegistration,
     request: OIBusInteractiveSessionRequestDTO
   ): Promise<unknown> {
+    const missingPermissions = (OIBUS_INTERACTIVE_SESSION_REQUEST_REQUIRED_PERMISSIONS[request.type] ?? []).filter(
+      permission => !registration.commandPermissions[permission]
+    );
+    if (missingPermissions.length > 0) {
+      throw new Error(`OIAnalytics is not allowed to request ${request.type}: it requires the permission ${missingPermissions.join(', ')}`);
+    }
     switch (request.type) {
       case 'START_EXPLORE': {
         const content = this.decryptSouthContent(request.content as OIBusInteractiveSessionSouthContent, registration);
-        const explore = await this.southService.startExplore(content.southId, content.southType, content.settings);
+        const explore = await this.southService.startExplore(
+          content.southId,
+          content.southType,
+          content.settings,
+          content.trustedFingerprint ?? null
+        );
         if (session.closed) {
           // The session was closed while connecting: its explores have already been closed
           await this.southService.closeExplore(explore.sessionId);
@@ -235,7 +252,15 @@ export default class OIAnalyticsSessionService {
       }
       case 'TEST_SOUTH_CONNECTION': {
         const content = this.decryptSouthContent(request.content as OIBusInteractiveSessionSouthContent, registration);
-        return await this.southService.testSouth(content.southId, content.southType, content.settings);
+        // OIAnalytics shows the identity of a server not trusted, for the user to review and trust it
+        return await this.southService.testSouth(
+          content.southId,
+          content.southType,
+          content.settings,
+          content.trustedFingerprint ?? null,
+          null,
+          true
+        );
       }
       case 'TEST_SOUTH_ITEM': {
         const content = this.decryptSouthContent(
@@ -249,7 +274,9 @@ export default class OIAnalyticsSessionService {
           content.itemName,
           content.settings,
           itemSettings,
-          content.testingSettings
+          content.testingSettings,
+          undefined,
+          content.trustedFingerprint ?? null
         );
       }
       case 'PREVIEW_WORKFLOW': {
@@ -262,8 +289,29 @@ export default class OIAnalyticsSessionService {
           content.southType,
           content.settings,
           content.workflowId,
-          content.workflow
+          content.workflow,
+          content.trustedFingerprint ?? null
         );
+      }
+      case 'TRUST_SERVER_IDENTITY': {
+        const content = request.content as OIBusTrustServerIdentityRequestContent;
+        switch (content.target) {
+          case 'south':
+            await this.southService.trustServerIdentity(content.id, content.fingerprint, 'oianalytics');
+            break;
+          case 'north':
+            await this.northService.trustServerIdentity(content.id, content.fingerprint, 'oianalytics');
+            break;
+          case 'history-query':
+            if (content.side !== 'south' && content.side !== 'north') {
+              throw new Error(`The side of history query "${content.id}" to trust the server of is missing`);
+            }
+            await this.historyQueryService.trustServerIdentity(content.id, content.side, content.fingerprint, 'oianalytics');
+            break;
+          default:
+            throw new Error(`Cannot trust the identity of the server of a "${content.target}"`);
+        }
+        return null;
       }
       default:
         throw new Error(`Interactive session request type "${request.type}" not supported`);

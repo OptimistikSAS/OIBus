@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 
 import { HistoryQueryCommandDTO } from '../../../shared/model/api/history-query.model';
 import type { ScanModeCommandDTO } from '../../../shared/model/api/scan-mode.model';
+import { ServerTrustCommandDTO } from '../../../shared/model/api/server-identity.model';
 import { SouthConnectorItemCommandDTO, SouthConnectorItemTestResult } from '../../../shared/model/api/south-connector.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
 import { Page } from '../../../shared/model/common/types';
@@ -107,6 +108,19 @@ const UPDATE_SETTINGS_FILE = 'update.json';
 // system, not by OIBus. Without a deadline here, a hung connection keeps
 // `isExecutingCommand` true forever, blocking every subsequent command.
 const TEST_COMMAND_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * How a test sent by OIAnalytics treats the identity of the server, from the trust its command carries (that of the form of
+ * the connector in OIAnalytics): the fingerprint of the identity trusted there, not saved yet, and whether the result
+ * carries the identity of a server not trusted, for the user to review it. An OIAnalytics which does not know about the
+ * trust sends none: the test of a server not trusted then fails, instead of looking successful.
+ */
+const testedServerTrust = (
+  serverTrust: ServerTrustCommandDTO | undefined
+): { trustedFingerprint: string | null; withServerIdentity: boolean } => ({
+  trustedFingerprint: serverTrust?.identity?.fingerprint ?? null,
+  withServerIdentity: serverTrust !== undefined
+});
 
 export default class OIAnalyticsCommandService {
   private isRetrievingCommands = false;
@@ -1057,7 +1071,10 @@ export default class OIAnalyticsCommandService {
     const result = await this.southService.testSouth(
       command.southConnectorId,
       command.commandContent.type,
-      command.commandContent.settings
+      command.commandContent.settings,
+      testedServerTrust(command.commandContent.serverTrust).trustedFingerprint,
+      null,
+      testedServerTrust(command.commandContent.serverTrust).withServerIdentity
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
@@ -1071,7 +1088,9 @@ export default class OIAnalyticsCommandService {
       command.commandContent.itemCommand.name,
       command.commandContent.southCommand.settings,
       command.commandContent.itemCommand.settings,
-      command.commandContent.testingSettings
+      command.commandContent.testingSettings,
+      undefined,
+      testedServerTrust(command.commandContent.southCommand.serverTrust).trustedFingerprint
     );
     this.completeDualResultTestCommand(command, result);
   }
@@ -1110,7 +1129,10 @@ export default class OIAnalyticsCommandService {
     const result = await this.northService.testNorth(
       command.northConnectorId,
       command.commandContent.type,
-      command.commandContent.settings
+      command.commandContent.settings,
+      testedServerTrust(command.commandContent.serverTrust).trustedFingerprint,
+      null,
+      testedServerTrust(command.commandContent.serverTrust).withServerIdentity
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
@@ -1216,11 +1238,14 @@ export default class OIAnalyticsCommandService {
     privateKeys: Array<string>
   ) {
     this.decryptHistoryQuerySettings(command.commandContent, privateKeys);
+    const { trustedFingerprint, withServerIdentity } = testedServerTrust(command.commandContent.northServerTrust);
     const result = await this.historyQueryService.testNorth(
       command.historyQueryId,
       command.commandContent.northType,
       command.northConnectorId,
-      command.commandContent.northSettings
+      command.commandContent.northSettings,
+      trustedFingerprint,
+      withServerIdentity
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
@@ -1230,11 +1255,14 @@ export default class OIAnalyticsCommandService {
     privateKeys: Array<string>
   ) {
     this.decryptHistoryQuerySettings(command.commandContent, privateKeys);
+    const { trustedFingerprint, withServerIdentity } = testedServerTrust(command.commandContent.southServerTrust);
     const result = await this.historyQueryService.testSouth(
       command.historyQueryId,
       command.commandContent.southType,
       command.southConnectorId,
-      command.commandContent.southSettings
+      command.commandContent.southSettings,
+      trustedFingerprint,
+      withServerIdentity
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
@@ -1249,7 +1277,8 @@ export default class OIAnalyticsCommandService {
       command.southConnectorId,
       command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand.settings,
-      command.commandContent.testingSettings
+      command.commandContent.testingSettings,
+      testedServerTrust(command.commandContent.historyCommand.southServerTrust).trustedFingerprint
     );
     this.completeDualResultTestCommand(command, result);
   }

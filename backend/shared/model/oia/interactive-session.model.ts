@@ -2,6 +2,7 @@ import { ConfigurationWorkflowCommandDTO } from '../api/configuration-workflow.m
 import { Instant } from '../common/types';
 import { OIBusSouthType } from '../connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../connector/south-settings.model';
+import { CommandPermission } from '../domain/engine.model';
 import { SouthConnectorExploreEntry, SouthConnectorItemTestingSettings } from '../domain/south-connector.model';
 
 /**
@@ -14,9 +15,27 @@ export const OIBUS_INTERACTIVE_SESSION_REQUEST_TYPES = [
   'CLOSE_EXPLORE',
   'TEST_SOUTH_CONNECTION',
   'TEST_SOUTH_ITEM',
-  'PREVIEW_WORKFLOW'
+  'PREVIEW_WORKFLOW',
+  'TRUST_SERVER_IDENTITY'
 ] as const;
 export type OIBusInteractiveSessionRequestType = (typeof OIBUS_INTERACTIVE_SESSION_REQUEST_TYPES)[number];
+
+/**
+ * The permissions a request of an interactive session requires, all of them, on top of `connectToDataSources` which opening
+ * the session requires. Trusting the identity of a server changes the configuration of a connector: it decides which server
+ * receives its credentials and its data, as changing its URL does.
+ */
+export const OIBUS_INTERACTIVE_SESSION_REQUEST_REQUIRED_PERMISSIONS: Readonly<
+  Record<OIBusInteractiveSessionRequestType, ReadonlyArray<CommandPermission>>
+> = {
+  START_EXPLORE: ['connectToDataSources'],
+  BROWSE: ['connectToDataSources'],
+  CLOSE_EXPLORE: ['connectToDataSources'],
+  TEST_SOUTH_CONNECTION: ['connectToDataSources'],
+  TEST_SOUTH_ITEM: ['connectToDataSources'],
+  PREVIEW_WORKFLOW: ['connectToDataSources'],
+  TRUST_SERVER_IDENTITY: ['connectToDataSources', 'configureDataFlow']
+};
 
 /**
  * A request of an interactive session, as retrieved from OIAnalytics. Its content depends on its type (see the
@@ -41,6 +60,11 @@ export interface OIBusInteractiveSessionSouthContent {
   southId: string | null;
   southType: OIBusSouthType;
   settings: SouthSettings;
+  /**
+   * The SHA-256 fingerprint of the identity of the server trusted in the form of the connector in OIAnalytics, not saved
+   * yet: the request trusts it when the server presents it (as the identity trusted by the saved connector otherwise).
+   */
+  trustedFingerprint?: string | null;
 }
 
 /**
@@ -89,7 +113,10 @@ export interface OIBusCloseExploreRequestContent {
 }
 
 /**
- * Content of a `TEST_SOUTH_CONNECTION` request. Its result is an `OIBusConnectionTestResult`.
+ * Content of a `TEST_SOUTH_CONNECTION` request. Its result is an `OIBusConnectionTestResult`, carrying the identity the
+ * server presents for the connectors checking it (`serverIdentity`): when it is not trusted, the connection is not tested
+ * further (no credential is sent), for the user to review the identity and trust it (`TRUST_SERVER_IDENTITY`, or with the
+ * connector saved by a command).
  */
 export type OIBusTestSouthConnectionRequestContent = OIBusInteractiveSessionSouthContent;
 
@@ -139,4 +166,31 @@ export interface OIBusInteractiveSessionFileResult {
    * The size of the file, in bytes.
    */
   size: number;
+}
+
+/**
+ * Content of a `TRUST_SERVER_IDENTITY` request: trusts the identity the server of a saved connector, or of a side of a saved
+ * history query, presents, when its fingerprint is the one the user reviewed (the server is asked for it again, so that
+ * only its own identity is trusted). The connector, or the history query when it is running, restarts with it. Requires the
+ * `configureDataFlow` permission. Its result is null.
+ */
+export interface OIBusTrustServerIdentityRequestContent {
+  /**
+   * What trusts the identity: a South connector, a North connector, or a history query (`side` telling which of its
+   * connectors).
+   */
+  target: 'south' | 'north' | 'history-query';
+  /**
+   * The ID of the connector or of the history query.
+   */
+  id: string;
+  /**
+   * For a history query, the side whose server is trusted.
+   */
+  side?: 'south' | 'north';
+  /**
+   * The SHA-256 fingerprint of the identity to trust, as the connection test showed it.
+   * @example "SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s"
+   */
+  fingerprint: string;
 }
