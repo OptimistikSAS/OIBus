@@ -20,6 +20,9 @@ Protocol)**.
 | **Clé privée**        | Chemin vers le fichier de clé privée (format PEM). Requis pour l'authentification par clé privée. | `/path/to/key.pem`                             |
 | **Phrase secrète**    | Phrase secrète pour la clé privée (si protégée).                                                  | `••••••••`                                     |
 
+OIBus vérifie la clé d'hôte du serveur SFTP, et ne se connecte qu'à un serveur présentant la clé d'hôte qu'il approuve :
+voir [Identité des serveurs](../advanced/oibus-security.md#server-identity).
+
 ### Configuration des fichiers {#file-configuration}
 
 | Paramètre           | Description                                                    | Exemple de valeur |

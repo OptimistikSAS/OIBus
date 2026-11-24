@@ -19,6 +19,9 @@
 | **私钥**     | 私钥文件路径（PEM 格式）。私钥身份验证时必填。 | `/path/to/key.pem`    |
 | **密码短语** | 私钥的密码短语（如果受保护）。                 | `••••••••`            |
 
+OIBus 会检查 SFTP 服务器的主机密钥，并且只连接到提供其所信任主机密钥的服务器：参见
+[服务器身份](../advanced/oibus-security.md#server-identity)。
+
 ### 文件配置 {#file-configuration}
 
 | 设置           | 说明                          | 示例值        |

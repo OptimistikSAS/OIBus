@@ -183,6 +183,34 @@ Pour les environnements de production où l'interface est accédée à distance 
    à OIBus, et empêchez l'accès direct au port 2223 depuis l'extérieur de l'hôte.
 3. Pour un accès externe, privilégiez un **VPN** plutôt que d'exposer OIBus ou le reverse proxy à l'internet public.
 
+## Identité des serveurs {#server-identity}
+
+Avant d'envoyer le moindre identifiant, les connecteurs OPC UA® (avec le **Mode de sécurité** `Sign` ou
+`Sign and encrypt`) et SFTP, South et North, ainsi que les requêtes d'historique qui les utilisent, vérifient l'identité
+du serveur auquel ils se connectent : le certificat d'un serveur OPC UA, la clé d'hôte d'un serveur SFTP. Un connecteur
+ne se connecte qu'à un serveur présentant l'identité qu'il approuve, identifiée par son empreinte SHA-256. Une autre
+machine ne peut ainsi pas se faire passer pour le serveur afin de récupérer les identifiants, ou les données.
+
+- **Approuver une identité** : tester la connexion, ou enregistrer ou démarrer un connecteur dont l'identité du serveur
+  n'est pas encore approuvée, affiche l'identité que présente son serveur : son empreinte et, pour un certificat, son
+  sujet, son émetteur, sa validité et ses noms. Comparez l'empreinte avec celle qu'affiche le serveur (son certificat, ou
+  la sortie de `ssh-keygen -l -f <fichier de clé d'hôte>` sur le serveur SFTP) avant de l'approuver. Tant que l'identité
+  n'est pas approuvée, un test de connexion s'arrête après cette vérification, pour qu'aucun identifiant ne soit envoyé
+  au serveur.
+- **Enregistrer sans approuver** : un connecteur peut être enregistré, ou démarré, sans approuver l'identité de son
+  serveur : il attend alors que son serveur soit approuvé.
+- **Identité refusée** : quand le serveur présente une identité que le connecteur n'approuve pas, ou une autre que
+  l'identité approuvée (son certificat ou sa clé d'hôte a été renouvelé, ou un autre serveur se fait passer pour lui), le
+  connecteur refuse de se connecter et cesse de réessayer. La page du connecteur ou de la requête d'historique affiche
+  l'identité présentée : **Vérifier et approuver** l'approuve et redémarre le connecteur.
+- **Traçabilité** : la page du connecteur indique qui a approuvé l'identité de son serveur, et quand. L'approbation d'une
+  identité est journalisée, et l'identité approuvée est conservée quand la configuration est
+  [exportée et importée](../engine/config-export-import.mdx).
+- **Mise à niveau** : les connecteurs et requêtes d'historique OPC UA et SFTP créés avant OIBus 4.0 approuvent l'identité
+  que présente leur serveur à leur première connexion. Vérifiez-la sur leur page.
+- **OIAnalytics** : OIAnalytics affiche l'identité du serveur quand il teste une connexion, et ne l'approuve qu'avec les
+  [permissions **Flux de données** et **Se connecter aux sources de données**](../installation/oianalytics.mdx#command-permissions).
+
 ## Accès aux sources de données {#data-source-access}
 
 Appliquez le principe du moindre privilège pour chaque système auquel OIBus se connecte :

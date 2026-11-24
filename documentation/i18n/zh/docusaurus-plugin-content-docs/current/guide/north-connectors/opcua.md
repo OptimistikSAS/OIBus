@@ -47,6 +47,9 @@
 
 :::
 
+在 `Sign` 或 `Sign and encrypt` 模式下，OIBus 还会检查服务器的证书，并且只连接到其所信任的服务器：参见
+[服务器身份](../advanced/oibus-security.md#server-identity)。
+
 ### 身份验证 {#authentication}
 
 | 设置         | 描述                                                                                  | 示例值                      |

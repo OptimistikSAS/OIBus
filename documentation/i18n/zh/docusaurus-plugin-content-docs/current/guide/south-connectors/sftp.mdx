@@ -37,6 +37,12 @@ import RegexTester from '../../../../../../src/components/RegexTester/index';
 
 :::
 
+### 服务器主机密钥 {#server-host-key}
+
+OIBus 会检查 SFTP 服务器的主机密钥，并且只连接到提供其所信任主机密钥的服务器：否则会拒绝连接，且不发送任何凭据。在
+测试连接或保存连接器时，将其指纹与在服务器上运行 `ssh-keygen -l -f <主机密钥文件>` 的输出比对后信任该主机密钥；当
+服务器提供新的主机密钥时，也可在连接器页面上信任它。参见[服务器身份](../advanced/oibus-security.md#server-identity)。
+
 ## 文件检索设置 {#file-retrieval-settings}
 
 | 设置                     | 描述                                                                                                                       | 示例值               |

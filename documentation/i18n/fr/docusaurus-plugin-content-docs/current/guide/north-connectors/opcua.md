@@ -48,6 +48,9 @@ UA, ce connecteur North **envoie des données** depuis OIBus vers des serveurs O
 
 :::
 
+En mode `Sign` ou `Sign and encrypt`, OIBus vérifie aussi le certificat du serveur, et ne se connecte qu'à un serveur
+qu'il approuve : voir [Identité des serveurs](../advanced/oibus-security.md#server-identity).
+
 ### Authentification {#authentication}
 
 | Paramètre                  | Description                                                                                                                                                   | Exemple de valeur                                        |

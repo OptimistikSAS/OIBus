@@ -38,6 +38,14 @@ fichier **Tout fichier** et **Compresser le fichier** activé.
 
 :::
 
+### Clé d'hôte du serveur {#server-host-key}
+
+OIBus vérifie la clé d'hôte du serveur SFTP, et ne se connecte qu'à un serveur présentant la clé d'hôte qu'il approuve :
+il refuse sinon de se connecter, sans envoyer d'identifiant. Approuvez-la en testant la connexion ou en enregistrant le
+connecteur, après avoir comparé son empreinte avec la sortie de `ssh-keygen -l -f <fichier de clé d'hôte>` sur le
+serveur, ou depuis la page du connecteur quand le serveur présente une nouvelle clé d'hôte. Voir
+[Identité des serveurs](../advanced/oibus-security.md#server-identity).
+
 ## Paramètres de récupération des fichiers {#file-retrieval-settings}
 
 | Paramètre                         | Description                                                                                                                                                                                                                | Exemple de valeur     |

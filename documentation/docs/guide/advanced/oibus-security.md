@@ -183,6 +183,33 @@ For production environments where the interface is accessed remotely:
    direct access to port 2223 from outside the host.
 3. For external access, prefer a **VPN** over exposing OIBus or the reverse proxy to the public internet.
 
+## Server Identity {#server-identity}
+
+Before sending any credential, the OPC UA® connectors (with the **Security Mode** `Sign` or `Sign and encrypt`) and the
+SFTP connectors, South and North, and the history queries using them, check the identity of the server they connect
+to: the certificate of an OPC UA server, the host key of an SFTP server. A connector only connects to a server
+presenting the identity it trusts, identified by its SHA-256 fingerprint. This prevents another machine from
+impersonating the server to collect the credentials, or the data.
+
+- **Trusting an identity**: testing the connection, or saving or starting a connector whose server identity is not
+  trusted yet, shows the identity its server presents: its fingerprint and, for a certificate, its subject, issuer,
+  validity and names. Compare the fingerprint with the one the server shows (its certificate, or the output of
+  `ssh-keygen -l -f <host key file>` on the SFTP server) before trusting it. Until the identity is trusted, a connection
+  test stops after this check, so that no credential is sent to the server.
+- **Saving without trusting**: a connector can be saved, or started, without trusting the identity of its server: it
+  then waits until its server is trusted.
+- **Refused identity**: when the server presents an identity the connector does not trust, or another one than the
+  trusted identity (its certificate or host key was renewed, or another server impersonates it), the connector refuses
+  to connect, and stops retrying. The page of the connector or history query shows the identity presented: **Review and
+  trust** trusts it, and restarts the connector.
+- **Traceability**: the page of the connector shows who trusted the identity of its server, and when. Trusting an
+  identity is logged, and the trusted identity is kept when the configuration is
+  [exported and imported](../engine/config-export-import.mdx).
+- **Upgrade**: the OPC UA and SFTP connectors and history queries created before OIBus 4.0 trust the identity their
+  server presents at their first connection. Review it on their page.
+- **OIAnalytics**: OIAnalytics shows the identity of the server when it tests a connection, and trusts it only with the
+  [**Data flow** and **Connect to data sources** permissions](../installation/oianalytics.mdx#command-permissions).
+
 ## Data Source Access {#data-source-access}
 
 Apply the principle of least privilege for every system OIBus connects to:

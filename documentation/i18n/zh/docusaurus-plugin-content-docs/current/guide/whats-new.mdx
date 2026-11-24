@@ -56,6 +56,8 @@ OIBus 4 是一个主要版本。它新增了连接器，让 OIBus 能够发现�
 ## 引擎与管理 {#engine-and-administration}
 
 - Web 服务器可以使用证书库中的证书或 PEM 文件提供 [**HTTPS**](./engine/engine-settings.mdx#https) 服务。
+- OPC UA 和 SFTP 连接器只连接到提供[**其所信任身份**](./advanced/oibus-security.md#server-identity)（证书或主机密钥）
+  的服务器，该身份可在测试连接或保存连接器时信任，也可从 OIAnalytics 信任。
 - 可以禁用 OIBus API 的[**内容端点**](./engine/engine-settings.mdx#content-endpoints)（`/api/content`）。
 - 引擎有了[**描述**](./engine/engine-settings.mdx#description)。
 - [**审计跟踪**](./engine/audit-trail.mdx)记录谁修改了配置中的哪些内容，并可设置保留期限。
@@ -94,5 +96,8 @@ OIBus 4 是一个主要版本。它新增了连接器，让 OIBus 能够发现�
   `value.split('/').pop()`）会被移除，并在日志中给出警告。
 - 为不再使用 OIBus Agent 的 OPC Classic、ODBC、OLE DB 和 PI South 连接器**在 OIBus 机器上安装驱动程序**（升级时会移除
   Agent 的设置）。
+- **核对 OPC UA 和 SFTP 连接器的服务器身份**：升级后，OPC UA（安全模式不为 None）和 SFTP 连接器及历史查询会信任其
+  服务器在首次连接时提供的身份。请在其页面上核对该身份，此后服务器的新证书或新主机密钥也需在该页面上信任（参见
+  [服务器身份](./advanced/oibus-security.md#server-identity)）。
 - **REST API**：引擎通用设置通过 `PUT /api/engine/general` 更新（取代 `PUT /api/engine/name`），当没有 North
   转换器应用于 OIBus API 时，内容端点会被禁用。

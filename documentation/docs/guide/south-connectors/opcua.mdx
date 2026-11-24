@@ -264,6 +264,14 @@ presents a certificate it generates in memory at startup.
 - **Rejected** (move from here to trusted): `.prosysopc\prosys-opc-ua-simulation-server\PKI\CA\rejected\`
   :::
 
+### Server Certificate {#server-certificate}
+
+When **Security Mode** is set to `Sign` or `Sign and Encrypt`, OIBus must also trust the certificate of the server: it
+only connects to a server presenting the certificate it trusts, and otherwise refuses to connect, without sending any
+credential. Trust it when testing the connection or saving the connector, after comparing its fingerprint with the one
+of the server's certificate, or from the page of the connector when the server presents a new certificate. See
+[Server Identity](../advanced/oibus-security.md#server-identity).
+
 ### Authentication Certificate {#authentication-certificate}
 
 When **Authentication** is set to `Certificate`, select the certificate identifying the _user_ in the **User
