@@ -1,4 +1,9 @@
-import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat, CertificateOptions } from '../../shared/model/api/certificate.model';
+import {
+  CertificateCommandDTO,
+  CertificateDTO,
+  CertificateExportFormat,
+  CertificateOptions
+} from '../../shared/model/api/certificate.model';
 import { GetUserInfo } from '../../shared/model/common/types';
 
 import { Certificate, CertificateImportCommand, CertificateKeyPair, CertificateUsage } from '../model/certificate.model';
