@@ -61,9 +61,13 @@ function sortValue(item: SouthConnectorItemDTO, column: string): string | number
   return column === 'group' ? item.group?.standardSettings.name || '' : builtInSortValue(item, column);
 }
 
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
+
 import { builtInSortValue, ItemSelection } from '../../shared/item-table/item-table';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
+import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
+import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
 
 @Component({
   selector: 'oib-south-detail',
@@ -86,7 +90,8 @@ import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templat
     ExploreButtonComponent,
     ItemsMenuComponent,
     NgTemplateOutlet,
-    AuditInfoComponent
+    AuditInfoComponent,
+    ServerTrustPanelComponent
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
@@ -157,6 +162,19 @@ export class SouthDetailComponent {
   readonly connectorMetrics = toSignal(
     toObservable(this.metricsSouthId).pipe(
       switchMap(southId => (southId ? pollMetrics(() => this.southConnectorService.getMetrics(southId)) : of(null)))
+    ),
+    { initialValue: null }
+  );
+
+  /** Bumped to read again the trust of the connector in the identity of its server, once a user trusted it */
+  private readonly serverTrustRefresh = signal(0);
+  private readonly serverTrustSouthId = computed(() =>
+    this.manifest()?.serverIdentity ? { southId: this.southConnector()?.id ?? null, refresh: this.serverTrustRefresh() } : null
+  );
+  /** The trust of the connector in the identity of its server, with the identity it refused, polled as the metrics */
+  readonly serverTrust = toSignal(
+    toObservable(this.serverTrustSouthId).pipe(
+      switchMap(target => (target?.southId ? pollMetrics(() => this.southConnectorService.getServerTrust(target.southId!)) : of(null)))
     ),
     { initialValue: null }
   );
@@ -735,9 +753,55 @@ export class SouthDetailComponent {
   }
 
   testConnection() {
+    const southConnector = this.southConnector()!;
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runTest('south', this.southConnector()!.id, this.southConnector()!.settings, this.southConnector()!.type);
+    if (this.manifest()!.serverIdentity) {
+      component.allowServerTrust({
+        trusted: southConnector.serverTrust.identity,
+        trust: identity => this.trustServerIdentity(identity)
+      });
+    }
+    component.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
+  }
+
+  /** Reviews the identity the connector refused, and trusts it if the user does */
+  reviewServerIdentity(pending: PresentedServerIdentity) {
+    askServerTrust(this.modalService, 'review', pending, this.serverTrust()?.identity ?? null)
+      .pipe(switchMap(() => this.trustServerIdentity(pending.identity)))
+      .subscribe();
+  }
+
+  /** Trusts the identity the server presents (the connector restarts with it) */
+  private trustServerIdentity(identity: ServerIdentity): Observable<void> {
+    const southConnector = this.southConnector()!;
+    return this.southConnectorService.trustServerIdentity(southConnector.id, identity.fingerprint).pipe(
+      tap(() => {
+        this.notificationService.success('server-trust.trusted', { name: southConnector.name });
+        this.serverTrustRefresh.update(refresh => refresh + 1);
+      }),
+      switchMap(() => this.southConnectorService.findById(southConnector.id)),
+      tap(updatedSouthConnector => this.refresh(updatedSouthConnector)),
+      map(() => undefined)
+    );
+  }
+
+  /**
+   * Before starting a connector checking the identity of its server: proposes to trust it when it must be reviewed. Starting
+   * does not depend on reaching the server: the connector then waits until its server is trusted.
+   */
+  private reviewServerIdentityBeforeStart(): Observable<void> {
+    const southConnector = this.southConnector()!;
+    if (!this.manifest()!.serverIdentity) {
+      return of(undefined);
+    }
+    return reviewServerIdentity(
+      this.modalService,
+      'start',
+      this.southConnectorService.retrieveServerIdentity(southConnector.id, southConnector.settings, southConnector.type),
+      southConnector.serverTrust,
+      southConnector.serverTrust.identity
+    ).pipe(switchMap(identity => (identity ? this.trustServerIdentity(identity) : of(undefined))));
   }
 
   /**
@@ -775,9 +839,9 @@ export class SouthDetailComponent {
 
   toggleConnector(value: boolean) {
     if (value) {
-      this.southConnectorService
-        .start(this.southConnector()!.id)
+      this.reviewServerIdentityBeforeStart()
         .pipe(
+          switchMap(() => this.southConnectorService.start(this.southConnector()!.id)),
           tap(() => {
             this.notificationService.success('south.started', { name: this.southConnector()!.name });
           }),

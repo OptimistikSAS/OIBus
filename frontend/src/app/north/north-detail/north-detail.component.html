@@ -20,6 +20,12 @@
                     <span translate="north.disabled"></span>
                   }
                 </span>
+                @if (serverTrust()?.pending) {
+                  <span class="oib-status-badge" id="server-not-trusted-status">
+                    <span class="fa-solid fa-shield-halved status-red" aria-hidden="true"></span>
+                    <span translate="server-trust.not-trusted"></span>
+                  </span>
+                }
                 <span class="d-flex align-items-center gap-1" id="north-audit-info">
                   <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
                   <oib-audit-info
@@ -85,6 +91,9 @@
           <!-- North metrics -->
           @if (connectorMetrics(); as connectorMetrics) {
             <oib-north-metrics [connectorMetrics]="connectorMetrics" [manifest]="manifest" [northConnector]="northConnector" />
+          }
+          @if (serverTrust(); as serverTrust) {
+            <oib-server-trust-panel [serverTrust]="serverTrust" (review)="reviewServerIdentity($event)" />
           }
           <!-- Specific settings -->
           <section class="oib-panel">

@@ -10,6 +10,7 @@ import {
   HistoryQueryItemDTO,
   HistoryQueryLightDTO
 } from '@oibus/shared/api/history-query.model';
+import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemTestResult,
@@ -32,9 +33,11 @@ import {
   OIBusConnectionTestResult
 } from '@oibus/shared/domain/engine.model';
 import { HistoryQueryItemSearchParam } from '@oibus/shared/domain/history-query.model';
+import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.model';
 import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
 import { DownloadService } from './download.service';
 
 /**
@@ -43,6 +46,7 @@ import { DownloadService } from './download.service';
 @Service()
 export class HistoryQueryService {
   private readonly http = inject(HttpClient);
+  private readonly formServerTrust = inject(FormServerTrustService);
   private readonly downloadService = inject(DownloadService);
 
   /**
@@ -133,7 +137,7 @@ export class HistoryQueryService {
     fromNorth: string | null = null
   ): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/history/${historyId}/test/north`, settings, {
-      params: fromNorth ? { fromNorth, northType } : { northType },
+      params: this.formServerTrust.withTrustedFingerprint('history-north', fromNorth ? { fromNorth, northType } : { northType }),
       // the test connection modal already displays the error inline, so skip the global error notification
       context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
@@ -146,10 +150,47 @@ export class HistoryQueryService {
     fromSouth: string | null = null
   ): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/history/${historyId}/test/south`, settings, {
-      params: fromSouth ? { fromSouth, southType } : { southType },
+      params: this.formServerTrust.withTrustedFingerprint('history-south', fromSouth ? { fromSouth, southType } : { southType }),
       // the test connection modal already displays the error inline, so skip the global error notification
       context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
+  }
+
+  /**
+   * The identity the server of a side of the history query presents with these settings, and how it compares with the
+   * identity trusted (by the history query, or in its form), without connecting further: null when it is not checked
+   */
+  retrieveServerIdentity(
+    historyId: string,
+    side: 'south' | 'north',
+    settings: SouthSettings | NorthSettings,
+    connectorType: OIBusSouthType | OIBusNorthType,
+    fromConnector: string | null = null
+  ): Observable<PresentedServerIdentity | null> {
+    const params: Record<string, string> =
+      side === 'south'
+        ? { southType: connectorType, ...(fromConnector ? { fromSouth: fromConnector } : {}) }
+        : { northType: connectorType, ...(fromConnector ? { fromNorth: fromConnector } : {}) };
+    return this.http.post<PresentedServerIdentity | null>(`/api/history/${historyId}/test/${side}/server-identity`, settings, {
+      params: this.formServerTrust.withTrustedFingerprint(`history-${side}`, params),
+      // a server which cannot be reached does not prevent saving or starting the history query
+      context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
+    });
+  }
+
+  /**
+   * The trust of a side of the history query in the identity of its server, with the identity it refused. Polled in the
+   * background, so only an expired session is notified
+   */
+  getServerTrust(historyId: string, side: 'south' | 'north'): Observable<ServerTrustStateDTO> {
+    return this.http.get<ServerTrustStateDTO>(`/api/history/${historyId}/server-trust/${side}`, {
+      context: ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized)
+    });
+  }
+
+  /** Trust the identity the server of a side of the history query presents (with this fingerprint) */
+  trustServerIdentity(historyId: string, side: 'south' | 'north', fingerprint: string): Observable<void> {
+    return this.http.post<void>(`/api/history/${historyId}/server-trust/${side}`, { fingerprint });
   }
 
   /**
@@ -163,7 +204,7 @@ export class HistoryQueryService {
     fromSouth: string | null = null
   ): Observable<SouthExploreStartResult> {
     return this.http.post<SouthExploreStartResult>(`/api/history/${historyId}/explore`, settings, {
-      params: fromSouth ? { fromSouth, southType } : { southType }
+      params: this.formServerTrust.withTrustedFingerprint('history-south', fromSouth ? { fromSouth, southType } : { southType })
     });
   }
 
@@ -182,7 +223,7 @@ export class HistoryQueryService {
     return this.http.post<Array<SouthConnectorItemCommandDTO>>(
       `/api/history/${historyId}/test/discovered-items`,
       { southSettings, discoveryScope, itemFieldMapping },
-      { params: fromSouth ? { fromSouth, southType } : { southType } }
+      { params: this.formServerTrust.withTrustedFingerprint('history-south', fromSouth ? { fromSouth, southType } : { southType }) }
     );
   }
 
@@ -217,7 +258,10 @@ export class HistoryQueryService {
         testingSettings
       },
       {
-        params: fromSouth ? { fromSouth, southType, itemName } : { southType, itemName },
+        params: this.formServerTrust.withTrustedFingerprint(
+          'history-south',
+          fromSouth ? { fromSouth, southType, itemName } : { southType, itemName }
+        ),
         // the test panel already displays the error inline, so skip the global error notification
         context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
       }

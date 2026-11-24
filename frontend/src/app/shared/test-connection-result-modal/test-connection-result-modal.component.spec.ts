@@ -2,18 +2,21 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { NEVER, Observable, of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, Mock, test } from 'vitest';
+import { NEVER, Observable, of, Subject, throwError } from 'rxjs';
+import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { OIBusConnectionTestResult } from '@oibus/shared/domain/engine.model';
+import { ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../test/test-data';
+import { catchUnhandledErrors } from '../../../test/unhandled-errors';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
+import { provideCurrentUser } from '../current-user-testing';
 import { TestConnectionResultModalComponent } from './test-connection-result-modal.component';
 
 class TestConnectionResultModalComponentTester {
@@ -26,7 +29,25 @@ class TestConnectionResultModalComponentTester {
   readonly success = this.root.getByCss('#success');
   readonly cancel = this.root.getByRole('button', { name: 'Close' });
   readonly resultRows = this.root.getByRole('row');
+  readonly notTrusted = this.root.getByCss('#server-not-trusted');
+  readonly trustedBadge = this.root.getByCss('#server-trusted');
+  readonly trustElsewhere = this.root.getByCss('#server-trust-elsewhere');
+  readonly compare = this.root.getByText(/^Compare the fingerprint below/);
+  readonly fingerprint = this.root.getByCss('#server-identity-fingerprint');
+  readonly previousFingerprint = this.root.getByCss('#server-identity-previous-fingerprint');
+  readonly trustButton = this.root.getByRole('button', { name: 'Trust this identity' });
 }
+
+const identity: ServerIdentity = {
+  type: 'ssh-host-key',
+  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
+  details: { keyType: 'ssh-ed25519' }
+};
+const previousIdentity: ServerIdentity = {
+  type: 'ssh-host-key',
+  fingerprint: 'SHA256:previousFingerprint',
+  details: { keyType: 'ssh-ed25519' }
+};
 
 type TestConnectionMock = Mock<(...args: Array<never>) => Observable<OIBusConnectionTestResult>>;
 
@@ -58,6 +79,7 @@ describe('TestConnectionResultModalComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideCurrentUser(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NorthConnectorService, useValue: northConnectorService },
@@ -146,6 +168,118 @@ describe('TestConnectionResultModalComponent', () => {
       await expect.element(tester.error).toMatchTextContent(/^Error when testing settings\s*failure$/);
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.success).not.toBeInTheDocument();
+    });
+  });
+
+  describe('identity of the server', () => {
+    test('should display the identity trusted', async () => {
+      southConnectorService.testConnection.mockReturnValue(
+        of({ items: [{ key: 'Version', value: '1.2.3' }], serverIdentity: { identity, status: 'trusted' } })
+      );
+
+      tester.component.runTest('south', south.id, south.settings, south.type);
+
+      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.notTrusted).not.toBeInTheDocument();
+      await expect.element(tester.fingerprint).toHaveTextContent(identity.fingerprint);
+      await expect.element(tester.trustedBadge).toHaveTextContent('Trusted identity');
+      await expect.element(tester.trustButton).not.toBeInTheDocument();
+      await expect.element(tester.trustElsewhere).not.toBeInTheDocument();
+    });
+
+    test('should trust an unknown identity, then test the connection again', async () => {
+      const trust = vi.fn((_identity: ServerIdentity) => of(undefined));
+      tester.component.allowServerTrust({ trusted: null, trust });
+      southConnectorService.testConnection
+        .mockReturnValueOnce(of({ items: [], serverIdentity: { identity, status: 'unknown' } }))
+        .mockReturnValueOnce(of({ items: [], serverIdentity: { identity, status: 'trusted' } }));
+
+      tester.component.runTest('south', south.id, south.settings, south.type);
+
+      await expect.element(tester.notTrusted).toHaveClass('alert-warning');
+      await expect
+        .element(tester.notTrusted)
+        .toHaveTextContent(
+          'The connector does not trust any identity for this server yet: it refuses to connect to it until its identity is trusted.' +
+            'The connection was not tested further: no credential is sent to a server whose identity is not trusted.'
+        );
+      await expect.element(tester.success).not.toBeInTheDocument();
+      await expect.element(tester.fingerprint).toHaveTextContent(identity.fingerprint);
+      await expect.element(tester.previousFingerprint).not.toBeInTheDocument();
+      await expect.element(tester.compare).toBeInTheDocument();
+      await expect.element(tester.trustElsewhere).not.toBeInTheDocument();
+
+      await tester.trustButton.click();
+
+      expect(trust).toHaveBeenCalledWith(identity);
+      expect(southConnectorService.testConnection).toHaveBeenCalledTimes(2);
+      expect(southConnectorService.testConnection).toHaveBeenLastCalledWith(south.id, south.settings, south.type);
+      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.trustedBadge).toBeInTheDocument();
+      await expect.element(tester.notTrusted).not.toBeInTheDocument();
+      await expect.element(tester.previousFingerprint).not.toBeInTheDocument();
+      await expect.element(tester.trustButton).not.toBeInTheDocument();
+    });
+
+    test('should show the identity trusted before a changed one', async () => {
+      tester.component.allowServerTrust({ trusted: previousIdentity, trust: () => of(undefined) });
+      historyQueryService.testNorthConnection.mockReturnValue(of({ items: [], serverIdentity: { identity, status: 'changed' } }));
+
+      tester.component.runHistoryQueryTest('north', 'historyId1', north.settings, north.type);
+
+      await expect.element(tester.notTrusted).toHaveClass('alert-danger');
+      await expect.element(tester.notTrusted.getByText(/^The server presents another identity than the one trusted/)).toBeInTheDocument();
+      await expect.element(tester.fingerprint).toHaveTextContent(identity.fingerprint);
+      await expect.element(tester.previousFingerprint).toHaveTextContent(previousIdentity.fingerprint);
+      await expect.element(tester.trustButton).toBeInTheDocument();
+    });
+
+    test('should not trust the identity twice while trusting it, nor test again when it fails', async () => {
+      const unhandledError = catchUnhandledErrors();
+      const trusted = new Subject<void>();
+      const trust = vi.fn(() => trusted);
+      tester.component.allowServerTrust({ trusted: null, trust });
+      southConnectorService.testConnection.mockReturnValue(of({ items: [], serverIdentity: { identity, status: 'unknown' } }));
+      tester.component.runTest('south', south.id, south.settings, south.type);
+
+      await tester.trustButton.click();
+
+      await expect.element(tester.trustButton).toBeDisabled();
+      expect(southConnectorService.testConnection).toHaveBeenCalledTimes(1);
+
+      const error = new Error('failure');
+      trusted.error(error);
+
+      await expect.element(tester.trustButton).toBeEnabled();
+      expect(southConnectorService.testConnection).toHaveBeenCalledTimes(1);
+      await vi.waitFor(() => expect(unhandledError).toHaveBeenCalledWith(error));
+    });
+
+    test('should display the error of the test run again once trusted', async () => {
+      tester.component.allowServerTrust({ trusted: null, trust: () => of(undefined) });
+      southConnectorService.testConnection
+        .mockReturnValueOnce(of({ items: [], serverIdentity: { identity, status: 'unknown' } }))
+        .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ error: { message: 'bad credentials' } })));
+      tester.component.runTest('south', south.id, south.settings, south.type);
+
+      await tester.trustButton.click();
+
+      await expect.element(tester.error).toMatchTextContent(/^Error when testing settings\s*bad credentials$/);
+      await expect.element(tester.notTrusted).not.toBeInTheDocument();
+      await expect.element(tester.fingerprint).not.toBeInTheDocument();
+      await expect.element(tester.trustButton).not.toBeInTheDocument();
+    });
+
+    test('should tell to trust the identity elsewhere when it cannot be trusted from the modal', async () => {
+      northConnectorService.testConnection.mockReturnValue(of({ items: [], serverIdentity: { identity, status: 'unknown' } }));
+
+      tester.component.runTest('north', north.id, north.settings, north.type);
+
+      await expect.element(tester.notTrusted).toBeInTheDocument();
+      await expect.element(tester.fingerprint).toHaveTextContent(identity.fingerprint);
+      await expect.element(tester.trustElsewhere).toHaveTextContent('Trust this identity from the page of the connector.');
+      await expect.element(tester.compare).not.toBeInTheDocument();
+      await expect.element(tester.trustButton).not.toBeInTheDocument();
     });
   });
 

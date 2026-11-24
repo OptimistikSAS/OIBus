@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, Observable, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
@@ -14,6 +14,7 @@ import {
   SouthItemGroupCommandDTO
 } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflow, buildWorkflowCommand } from '../../../test/builders';
@@ -30,6 +31,8 @@ import { DefaultValidationErrorsComponent } from '../../shared/default-validatio
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
+import { FormServerTrustService } from '../../shared/server-trust/form-server-trust.service';
+import { ServerTrustModalComponent } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
@@ -114,6 +117,8 @@ class EditSouthComponentTester {
   readonly reviewErrors = this.root.getByCss('#review-errors');
   readonly reviewChanges = this.root.getByCss('#review-changes');
   readonly itemChanges = this.root.getByCss('#item-changes');
+  /** The url of the settings, in the manifest of a connector checking the identity of its server */
+  readonly url = this.root.getByRole('textbox', { name: 'URL' });
 
   step(step: SouthConnectorStep) {
     return this.root.getByCss(`#south-step-${step}`);
@@ -1210,6 +1215,176 @@ describe('EditSouthComponent', () => {
       await tester.manageWorkflows();
 
       expect(manageWorkflowsModal.prepareForInMemory.mock.lastCall![1]).toBe('create');
+    });
+  });
+  describe('server identity', () => {
+    const identity: ServerIdentity = {
+      type: 'x509',
+      fingerprint: 'AB:CD:EF:01',
+      details: {
+        subject: 'CN=server',
+        issuer: 'CN=server',
+        serialNumber: '01',
+        validFrom: '2026-01-01T00:00:00.000Z',
+        validTo: '2027-01-01T00:00:00.000Z',
+        uris: [],
+        dnsNames: [],
+        ipAddresses: [],
+        selfSigned: true
+      }
+    };
+    const url = 'opc.tcp://server:4840';
+    /** A connector checking the certificate of the server at the url of its settings */
+    const trustManifest: SouthConnectorManifest = {
+      ...manifest,
+      serverIdentity: 'x509',
+      settings: {
+        ...manifest.settings,
+        attributes: [
+          {
+            ...manifest.items.rootAttribute.attributes[0],
+            key: 'url',
+            translationKey: 'configuration.oibus.manifest.south.opcua.url',
+            validators: []
+          }
+        ]
+      }
+    };
+
+    beforeEach(() => southConnectorService.getSouthManifest.mockReturnValue(of(trustManifest)));
+
+    /** Tests the connection with the given url, and trusts the identity of the server from the test modal */
+    async function trustFromConnectionTest(tester: EditSouthComponentTester, testedUrl = url) {
+      await tester.goTo('settings');
+      await tester.url.fill(testedUrl);
+      const testConnectionModal = mockModal(createMock(TestConnectionResultModalComponent));
+      await tester.testConnectionButton.click();
+      const [options] = testConnectionModal.allowServerTrust.mock.lastCall!;
+      await firstValueFrom(options.trust(identity));
+      return testConnectionModal;
+    }
+
+    test('should let the connection test trust the identity of the server, saved with the connector', async () => {
+      const tester = await createTester('edit');
+
+      const testConnectionModal = await trustFromConnectionTest(tester);
+
+      expect(testConnectionModal.allowServerTrust).toHaveBeenCalledWith({ trusted: null, trust: expect.any(Function) });
+      expect(testConnectionModal.runTest).toHaveBeenCalledWith('south', 'southId1', { url }, 'folder-scanner');
+      expect(TestBed.inject(FormServerTrustService).get('south')).toEqual(identity);
+      // the next test shows the identity trusted in the form
+      const nextTestModal = mockModal(createMock(TestConnectionResultModalComponent));
+      await tester.testConnectionButton.click();
+      expect(nextTestModal.allowServerTrust).toHaveBeenCalledWith({ trusted: identity, trust: expect.any(Function) });
+
+      southConnectorService.retrieveServerIdentity.mockReturnValue(of<PresentedServerIdentity>({ identity, status: 'trusted' }));
+      const command = await lastSavedCommand(tester);
+
+      expect(southConnectorService.retrieveServerIdentity).toHaveBeenCalledWith('southId1', { url }, 'folder-scanner');
+      expect(command.serverTrust).toEqual({ identity, trustOnFirstUse: false });
+    });
+
+    test('should not check the identity of the server of a connector which does not', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(manifest));
+      const tester = await createTester('edit');
+      const testConnectionModal = mockModal(createMock(TestConnectionResultModalComponent));
+      await tester.goTo('settings');
+
+      await tester.testConnectionButton.click();
+      const command = await lastSavedCommand(tester);
+
+      expect(testConnectionModal.runTest).toHaveBeenCalled();
+      expect(testConnectionModal.allowServerTrust).not.toHaveBeenCalled();
+      expect(southConnectorService.retrieveServerIdentity).not.toHaveBeenCalled();
+      expect(command.serverTrust).toBeUndefined();
+    });
+
+    test.each([
+      { decision: 'trust', serverTrust: { identity, trustOnFirstUse: false } },
+      { decision: 'skip', serverTrust: undefined }
+    ] as const)('should review the identity the server presents before saving ($decision)', async ({ decision, serverTrust }) => {
+      const presented: PresentedServerIdentity = { identity, status: 'unknown' };
+      southConnectorService.retrieveServerIdentity.mockReturnValue(of(presented));
+      const tester = await createTester('edit');
+      const trustModal = mockModal(createMock(ServerTrustModalComponent), decision);
+      const open = vi.spyOn(modalService, 'open');
+
+      const command = await lastSavedCommand(tester);
+
+      expect(southConnectorService.retrieveServerIdentity).toHaveBeenCalledWith('southId1', { url: null }, 'folder-scanner');
+      expect(open).toHaveBeenCalledWith(ServerTrustModalComponent, { size: 'lg' });
+      expect(trustModal.prepare).toHaveBeenCalledWith('save', presented, null);
+      expect(southConnectorService.update).toHaveBeenCalledWith('southId1', command);
+      expect(command.serverTrust).toEqual(serverTrust);
+    });
+
+    test('should not save when the review of the identity the server presents is cancelled', async () => {
+      const trustedIdentity = { ...identity, trustedBy: { id: 'admin', friendlyName: 'Admin' }, trustedAt: '2026-01-01T00:00:00.000Z' };
+      southConnectorService.findById.mockReturnValue(
+        of({ ...southConnector, serverTrust: { identity: trustedIdentity, trustOnFirstUse: false } })
+      );
+      const presented: PresentedServerIdentity = { identity: { ...identity, fingerprint: '01:23:45:67' }, status: 'changed' };
+      southConnectorService.retrieveServerIdentity.mockReturnValue(of(presented));
+      const tester = await createTester('edit');
+      const trustModal = createMock(ServerTrustModalComponent);
+      modalService.mockDismissedModal(trustModal);
+
+      await tester.saveButton.click();
+
+      // compared with the identity trusted before
+      expect(trustModal.prepare).toHaveBeenCalledWith('save', presented, trustedIdentity);
+      expect(southConnectorService.update).not.toHaveBeenCalled();
+      await expect.element(tester.saveButton).toBeEnabled();
+    });
+
+    test.each([
+      { server: 'presents a trusted identity', presented$: of<PresentedServerIdentity>({ identity, status: 'trusted' }) },
+      { server: 'presents no identity', presented$: of(null) },
+      { server: 'cannot be reached', presented$: throwError(() => new Error('unreachable')) }
+    ])('should save without review when the server $server', async ({ presented$ }) => {
+      southConnectorService.retrieveServerIdentity.mockReturnValue(presented$ as Observable<PresentedServerIdentity | null>);
+      const tester = await createTester('create');
+      await tester.name.fill('My south');
+      const open = vi.spyOn(modalService, 'open');
+
+      const command = await lastSavedCommand(tester);
+
+      expect(southConnectorService.retrieveServerIdentity).toHaveBeenCalledWith('create', { url: null }, 'folder-scanner');
+      expect(open).not.toHaveBeenCalled();
+      expect(southConnectorService.create).toHaveBeenCalledWith(command, '');
+      expect(command.serverTrust).toBeUndefined();
+    });
+
+    test('should not retrieve the identity of the server of a disabled connector', async () => {
+      const tester = await createTester('edit');
+
+      await tester.root.getByCss('label[for="south-enabled-disabled"]').click();
+      const command = await lastSavedCommand(tester);
+
+      expect(command.enabled).toBe(false);
+      expect(southConnectorService.retrieveServerIdentity).not.toHaveBeenCalled();
+      expect(southConnectorService.update).toHaveBeenCalledWith('southId1', command);
+    });
+
+    test('should drop the identity trusted in the form when the settings connect to another server', async () => {
+      const tester = await createTester('edit');
+      await trustFromConnectionTest(tester);
+      const formServerTrust = TestBed.inject(FormServerTrustService);
+
+      await tester.url.fill('opc.tcp://other-server:4840');
+
+      expect(formServerTrust.get('south')).toBeNull();
+      southConnectorService.retrieveServerIdentity.mockReturnValue(of(null));
+      expect((await lastSavedCommand(tester)).serverTrust).toBeUndefined();
+    });
+
+    test('should forget the identity trusted in the form when the page is left', async () => {
+      const tester = await createTester('edit');
+      await trustFromConnectionTest(tester);
+
+      tester.fixture.destroy();
+
+      expect(TestBed.inject(FormServerTrustService).get('south')).toBeNull();
     });
   });
 });

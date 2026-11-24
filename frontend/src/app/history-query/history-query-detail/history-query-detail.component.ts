@@ -6,7 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { combineLatest, EMPTY, firstValueFrom, map, switchMap, tap } from 'rxjs';
+import { combineLatest, EMPTY, firstValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { OIBusInfo } from '@oibus/shared/api/engine.model';
@@ -20,6 +20,7 @@ import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.m
 import { AuditEntityType } from '@oibus/shared/domain/audit.model';
 import { HistoryQueryMetrics } from '@oibus/shared/domain/engine.model';
 import { HistoryQueryStatus } from '@oibus/shared/domain/history-query.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { LogsComponent } from '../../logs/logs.component';
 import { summarizeCaching } from '../../north/north-summary';
@@ -52,6 +53,8 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
 import { pollMetrics } from '../../shared/polling';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
+import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
+import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { openExploreWizard } from '../../south/south-workflows/edit-workflow-modal/edit-workflow-modal.component';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
@@ -83,7 +86,8 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
     ExploreButtonComponent,
     ItemsMenuComponent,
     NgTemplateOutlet,
-    AuditInfoComponent
+    AuditInfoComponent,
+    ServerTrustPanelComponent
   ],
   templateUrl: './history-query-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -144,6 +148,13 @@ export class HistoryQueryDetailComponent {
   });
   readonly northManifest = computed<NorthConnectorManifest | null>(() => (this.manifests.hasValue() ? this.manifests.value()[0] : null));
   readonly southManifest = computed<SouthConnectorManifest | null>(() => (this.manifests.hasValue() ? this.manifests.value()[1] : null));
+
+  /** Bumped to read again the trust of the history query in the identities of its servers, once a user trusted one */
+  private readonly serverTrustRefresh = signal(0);
+  /** The trust of the South side in the identity of its server, with the identity it refused, polled as the metrics */
+  readonly southServerTrust = this.pollServerTrust('south');
+  /** The trust of the North side in the identity of its server, with the identity it refused, polled as the metrics */
+  readonly northServerTrust = this.pollServerTrust('north');
 
   readonly northDisplayedSettings = computed(() => {
     const northManifest = this.northManifest();
@@ -230,7 +241,12 @@ export class HistoryQueryDetailComponent {
   toggleHistoryQuery(newStatus: HistoryQueryStatus) {
     const historyQueryId = this.historyQuery()!.id;
     const toggle =
-      newStatus === 'RUNNING' ? this.historyQueryService.start(historyQueryId) : this.historyQueryService.pause(historyQueryId);
+      newStatus === 'RUNNING'
+        ? this.reviewServerIdentityBeforeStart('south').pipe(
+            switchMap(() => this.reviewServerIdentityBeforeStart('north')),
+            switchMap(() => this.historyQueryService.start(historyQueryId))
+          )
+        : this.historyQueryService.pause(historyQueryId);
     toggle
       .pipe(
         this.state.pendingUntilFinalization(),
@@ -256,10 +272,79 @@ export class HistoryQueryDetailComponent {
     }
   }
 
+  /** The trust of a side in the identity of its server, polled when its connector checks it */
+  private pollServerTrust(side: 'south' | 'north') {
+    const target = computed(() =>
+      (side === 'south' ? this.southManifest() : this.northManifest())?.serverIdentity
+        ? { historyId: this.historyQuery()?.id ?? null, refresh: this.serverTrustRefresh() }
+        : null
+    );
+    return toSignal(
+      toObservable(target).pipe(
+        switchMap(polling =>
+          polling?.historyId ? pollMetrics(() => this.historyQueryService.getServerTrust(polling.historyId!, side)) : of(null)
+        )
+      ),
+      { initialValue: null }
+    );
+  }
+
+  /** Reviews the identity a side refused, and trusts it if the user does */
+  reviewServerIdentity(side: 'south' | 'north', pending: PresentedServerIdentity) {
+    const serverTrust = side === 'south' ? this.southServerTrust() : this.northServerTrust();
+    askServerTrust(this.modalService, 'review', pending, serverTrust?.identity ?? null)
+      .pipe(switchMap(() => this.trustServerIdentity(side, pending.identity)))
+      .subscribe();
+  }
+
+  /** Trusts the identity the server of a side presents (a running history query restarts with it) */
+  private trustServerIdentity(side: 'south' | 'north', identity: ServerIdentity): Observable<void> {
+    const historyQuery = this.historyQuery()!;
+    return this.historyQueryService.trustServerIdentity(historyQuery.id, side, identity.fingerprint).pipe(
+      tap(() => {
+        this.notificationService.success('server-trust.trusted', { name: historyQuery.name });
+        this.serverTrustRefresh.update(refresh => refresh + 1);
+      }),
+      switchMap(() => this.historyQueryService.findById(historyQuery.id)),
+      tap(updatedHistoryQuery => this.historyQueryResource.set(updatedHistoryQuery)),
+      map(() => undefined)
+    );
+  }
+
+  /**
+   * Before starting the history query: proposes to trust the identity the server of a side presents, when its connector
+   * checks it and it must be reviewed. Starting does not depend on reaching the server.
+   */
+  private reviewServerIdentityBeforeStart(side: 'south' | 'north'): Observable<void> {
+    const historyQuery = this.historyQuery()!;
+    if (!(side === 'south' ? this.southManifest() : this.northManifest())?.serverIdentity) {
+      return of(undefined);
+    }
+    const serverTrust = side === 'south' ? historyQuery.southServerTrust : historyQuery.northServerTrust;
+    return reviewServerIdentity(
+      this.modalService,
+      'start',
+      this.historyQueryService.retrieveServerIdentity(
+        historyQuery.id,
+        side,
+        side === 'south' ? historyQuery.southSettings : historyQuery.northSettings,
+        side === 'south' ? historyQuery.southType : historyQuery.northType
+      ),
+      serverTrust,
+      serverTrust.identity
+    ).pipe(switchMap(identity => (identity ? this.trustServerIdentity(side, identity) : of(undefined))));
+  }
+
   test(type: 'south' | 'north') {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent, { backdrop: 'static' });
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     const historyQuery = this.historyQuery()!;
+    if ((type === 'south' ? this.southManifest() : this.northManifest())?.serverIdentity) {
+      component.allowServerTrust({
+        trusted: (type === 'south' ? historyQuery.southServerTrust : historyQuery.northServerTrust).identity,
+        trust: identity => this.trustServerIdentity(type, identity)
+      });
+    }
     component.runHistoryQueryTest(
       type,
       historyQuery.id,

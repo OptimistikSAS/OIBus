@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { LogDTO } from '@oibus/shared/api/logs.model';
+import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import {
   SouthConnectorFolderScannerDTO,
   SouthConnectorItemCommandDTO,
@@ -15,6 +16,7 @@ import {
   SouthItemLastValueResponse
 } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { buildSouthItemGroup, buildSouthItemGroupCommand, buildWorkflow } from '../../../test/builders';
@@ -32,6 +34,7 @@ import { provideCurrentUser } from '../../shared/current-user-testing';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { fakeModal, MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
+import { ServerTrustModalComponent } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { emptyPage } from '../../shared/utils/page.utils';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
@@ -85,6 +88,9 @@ class SouthDetailComponentTester {
   readonly exploreButton = this.root.getByCss('#explore');
   readonly testConnectionButton = this.root.getByRole('button', { name: 'Test settings' });
   readonly settings = this.root.getByCss('#south-settings .oib-summary-entry');
+  readonly serverTrustPanel = this.root.getByCss('oib-server-trust-panel');
+  readonly serverNotTrusted = this.root.getByCss('#server-not-trusted-status');
+  readonly reviewServerIdentityButton = this.root.getByRole('button', { name: 'Review and trust' });
 
   readonly items = this.root.getByCss('#south-items');
   readonly itemsTitle = this.items.getByCss('.oib-section-title');
@@ -1061,6 +1067,168 @@ describe('SouthDetailComponent', () => {
       onWorkflowRun!();
 
       await tester.expectItems('item b', 'item a', 'item c', 'item d');
+    });
+  });
+  describe('server identity', () => {
+    const identity: ServerIdentity = {
+      type: 'ssh-host-key',
+      fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
+      details: { keyType: 'ssh-ed25519' }
+    };
+    const pending: PresentedServerIdentity = { identity, status: 'unknown' };
+    /** A connector checking the host key of its server */
+    const trustManifest: SouthConnectorManifest = { ...manifest, serverIdentity: 'ssh-host-key' };
+    const untrusted: ServerTrustStateDTO = { identity: null, trustOnFirstUse: false, pending: null };
+    const trusted: ServerTrustStateDTO = {
+      identity: { ...identity, trustedBy: { id: 'admin', friendlyName: 'Admin' }, trustedAt: '2026-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false,
+      pending: null
+    };
+
+    beforeEach(() => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(trustManifest));
+      southConnectorService.getServerTrust.mockReturnValue(of(untrusted));
+      southConnectorService.trustServerIdentity.mockReturnValue(of(undefined));
+    });
+
+    afterEach(() => vi.useRealTimers());
+
+    test('should poll the trust of the connector in the identity of its server', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+      const tester = await createTester();
+      await vi.advanceTimersByTimeAsync(0);
+      await expect
+        .element(tester.serverTrustPanel)
+        .toMatchTextContent('No identity trusted yet: test the connection to review the identity of the server and trust it.');
+      await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
+      expect(southConnectorService.getServerTrust).toHaveBeenCalledTimes(1);
+      expect(southConnectorService.getServerTrust).toHaveBeenCalledWith('southId1');
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      expect(southConnectorService.getServerTrust).toHaveBeenCalledTimes(2);
+    });
+
+    test('should review and trust the identity the connector refused', async () => {
+      southConnectorService.getServerTrust.mockReturnValue(of({ ...untrusted, pending }));
+      const tester = await createTester();
+      await expect.element(tester.serverNotTrusted).toHaveTextContent('Server not trusted');
+      await expect
+        .element(tester.serverTrustPanel)
+        .toMatchTextContent('The connector refused to connect: its server presents an identity which is not trusted.');
+      const trustModal = mockModal(createMock(ServerTrustModalComponent), 'trust');
+      const open = vi.spyOn(modalService, 'open');
+      southConnectorService.getServerTrust.mockReturnValue(of(trusted));
+      southConnectorService.findById.mockClear();
+
+      await tester.reviewServerIdentityButton.click();
+
+      expect(open).toHaveBeenCalledWith(ServerTrustModalComponent, { size: 'lg' });
+      expect(trustModal.prepare).toHaveBeenCalledWith('review', pending, null);
+      expect(southConnectorService.trustServerIdentity).toHaveBeenCalledWith('southId1', identity.fingerprint);
+      expect(notificationService.success).toHaveBeenCalledWith('server-trust.trusted', { name: 'South 1' });
+      expect(southConnectorService.findById).toHaveBeenCalledWith('southId1');
+      // the trust is read again
+      await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
+      await expect.element(tester.serverTrustPanel).toMatchTextContent('Trusted by Admin');
+    });
+
+    test('should not trust the identity the connector refused when the review is cancelled', async () => {
+      southConnectorService.getServerTrust.mockReturnValue(of({ ...untrusted, pending }));
+      const tester = await createTester();
+      modalService.mockDismissedModal(createMock(ServerTrustModalComponent));
+
+      await tester.reviewServerIdentityButton.click();
+
+      expect(southConnectorService.trustServerIdentity).not.toHaveBeenCalled();
+      await expect.element(tester.serverNotTrusted).toBeInTheDocument();
+    });
+
+    test('should let the connection test trust the identity of the server', async () => {
+      const tester = await createTester();
+      const testConnectionModal = mockModal(createMock(TestConnectionResultModalComponent));
+      southConnectorService.findById.mockClear();
+
+      await tester.testConnectionButton.click();
+
+      expect(testConnectionModal.allowServerTrust).toHaveBeenCalledWith({ trusted: null, trust: expect.any(Function) });
+      expect(testConnectionModal.runTest).toHaveBeenCalledWith('south', 'southId1', southConnector.settings, 'folder-scanner');
+      const [options] = testConnectionModal.allowServerTrust.mock.lastCall!;
+      await firstValueFrom(options.trust(identity));
+      expect(southConnectorService.trustServerIdentity).toHaveBeenCalledWith('southId1', identity.fingerprint);
+      expect(notificationService.success).toHaveBeenCalledWith('server-trust.trusted', { name: 'South 1' });
+      expect(southConnectorService.findById).toHaveBeenCalledWith('southId1');
+    });
+
+    test.each(['trust', 'skip'] as const)('should review the identity the server presents before starting (%s)', async decision => {
+      southConnectorService.findById.mockReturnValue(of({ ...southConnector, enabled: false }));
+      southConnectorService.retrieveServerIdentity.mockReturnValue(of(pending));
+      southConnectorService.start.mockReturnValue(of(undefined));
+      const tester = await createTester();
+      const trustModal = mockModal(createMock(ServerTrustModalComponent), decision);
+
+      await tester.startButton.click();
+
+      expect(southConnectorService.retrieveServerIdentity).toHaveBeenCalledWith('southId1', southConnector.settings, 'folder-scanner');
+      expect(trustModal.prepare).toHaveBeenCalledWith('start', pending, null);
+      expect(southConnectorService.start).toHaveBeenCalledWith('southId1');
+      expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: 'South 1' });
+      if (decision === 'trust') {
+        expect(southConnectorService.trustServerIdentity).toHaveBeenCalledWith('southId1', identity.fingerprint);
+        // trusted before the connector starts
+        expect(southConnectorService.trustServerIdentity.mock.invocationCallOrder[0]).toBeLessThan(
+          southConnectorService.start.mock.invocationCallOrder[0]
+        );
+      } else {
+        expect(southConnectorService.trustServerIdentity).not.toHaveBeenCalled();
+      }
+    });
+
+    test('should not start the connector when the review of the identity the server presents is cancelled', async () => {
+      southConnectorService.findById.mockReturnValue(of({ ...southConnector, enabled: false }));
+      southConnectorService.retrieveServerIdentity.mockReturnValue(of(pending));
+      const tester = await createTester();
+      modalService.mockDismissedModal(createMock(ServerTrustModalComponent));
+
+      await tester.startButton.click();
+
+      expect(southConnectorService.start).not.toHaveBeenCalled();
+      expect(southConnectorService.trustServerIdentity).not.toHaveBeenCalled();
+      await expect.element(tester.startButton).toBeVisible();
+    });
+
+    test.each([
+      { server: 'presents a trusted identity', presented$: of<PresentedServerIdentity | null>({ identity, status: 'trusted' }) },
+      { server: 'cannot be reached', presented$: throwError(() => new Error('unreachable')) }
+    ])('should start the connector without review when the server $server', async ({ presented$ }) => {
+      southConnectorService.findById.mockReturnValue(of({ ...southConnector, enabled: false }));
+      southConnectorService.retrieveServerIdentity.mockReturnValue(presented$);
+      southConnectorService.start.mockReturnValue(of(undefined));
+      const tester = await createTester();
+      const open = vi.spyOn(modalService, 'open');
+
+      await tester.startButton.click();
+
+      expect(open).not.toHaveBeenCalled();
+      expect(southConnectorService.start).toHaveBeenCalledWith('southId1');
+    });
+
+    test('should not check the identity of the server of a connector which does not', async () => {
+      southConnectorService.getSouthManifest.mockReturnValue(of(manifest));
+      southConnectorService.findById.mockReturnValue(of({ ...southConnector, enabled: false }));
+      southConnectorService.start.mockReturnValue(of(undefined));
+      const tester = await createTester();
+      await expect.element(tester.metrics).toBeVisible();
+      const testConnectionModal = mockModal(createMock(TestConnectionResultModalComponent));
+
+      await tester.testConnectionButton.click();
+      await tester.startButton.click();
+
+      expect(southConnectorService.getServerTrust).not.toHaveBeenCalled();
+      await expect.element(tester.serverTrustPanel).not.toBeInTheDocument();
+      expect(testConnectionModal.allowServerTrust).not.toHaveBeenCalled();
+      expect(southConnectorService.retrieveServerIdentity).not.toHaveBeenCalled();
+      expect(southConnectorService.start).toHaveBeenCalledWith('southId1');
     });
   });
 });

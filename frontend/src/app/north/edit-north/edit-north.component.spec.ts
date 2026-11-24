@@ -2,12 +2,13 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
-import { firstValueFrom, isObservable, of } from 'rxjs';
+import { firstValueFrom, isObservable, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { NorthConnectorManifest, NorthType } from '@oibus/shared/connector/north-manifest.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { buildEngineSettings } from '../../../test/builders';
@@ -25,6 +26,8 @@ import { DefaultValidationErrorsComponent } from '../../shared/default-validatio
 import { chooseSelectOrCreateEntry } from '../../shared/form/select-or-create/select-or-create.testing';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
+import { FormServerTrustService } from '../../shared/server-trust/form-server-trust.service';
+import { ServerTrustModalComponent } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { EditNorthComponent, NorthConnectorStep } from './edit-north.component';
@@ -47,6 +50,29 @@ const manifest: NorthConnectorManifest = {
   }
 };
 
+/** A manifest of a connector checking the identity of its server */
+const sftpManifest: NorthConnectorManifest = {
+  ...manifest,
+  id: 'sftp',
+  serverIdentity: 'ssh-host-key',
+  settings: {
+    ...manifest.settings,
+    attributes: [
+      ...manifest.settings.attributes,
+      {
+        type: 'string',
+        key: 'host',
+        translationKey: 'configuration.oibus.manifest.north.sftp.host',
+        defaultValue: null,
+        validators: [],
+        displayProperties: { row: 1, columns: 4, displayInViewMode: true }
+      }
+    ]
+  }
+};
+
+const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+
 class EditNorthComponentTester {
   readonly fixture = TestBed.createComponent(EditNorthComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
@@ -54,6 +80,7 @@ class EditNorthComponentTester {
   readonly name = this.root.getByLabelText('Name', { exact: true });
   readonly description = this.root.getByLabelText('Description', { exact: true });
   readonly outputFolder = this.root.getByLabelText('Output folder');
+  readonly host = this.root.getByLabelText('Host');
   readonly scanMode = this.root.getByLabelText('Schedule');
   readonly numberOfElements = this.root.getByLabelText('Number of elements');
   // the transformers of the sources: without south, only the one of the OIBus API data source
@@ -551,6 +578,230 @@ describe('EditNorthComponent', () => {
       await tester.connectorCard('Console').click();
 
       expect(tester.fixture.componentInstance.canDeactivate()).toBe(confirmation);
+    });
+  });
+
+  describe('server identity', () => {
+    let modalService: MockModalService<unknown>;
+    let testModal: MockObject<TestConnectionResultModalComponent>;
+    let trustModal: MockObject<ServerTrustModalComponent>;
+
+    beforeEach(() => {
+      northConnectorService.getNorthManifest.mockReturnValue(of(sftpManifest));
+      testModal = createMock(TestConnectionResultModalComponent);
+      trustModal = createMock(ServerTrustModalComponent);
+    });
+
+    describe('create mode', () => {
+      beforeEach(() => {
+        configure({ queryParams: { type: 'sftp' } });
+        modalService = TestBed.inject(MockModalService);
+      });
+
+      async function fillNewConnector(tester: EditNorthComponentTester) {
+        await tester.goTo('caching');
+        await chooseSelectOrCreateEntry(tester.scanMode, 'scanMode1');
+        await tester.goTo('general');
+        await tester.name.fill('New north');
+        await tester.goTo('review');
+      }
+
+      test('should trust the identity of the server in the form from the connection test, and save it', async () => {
+        modalService.mockClosedModal(testModal);
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'trusted' }));
+        const tester = new EditNorthComponentTester();
+        await tester.outputFolder.fill('/out');
+        await tester.host.fill('server');
+
+        await tester.testButton.click();
+        expect(testModal.runTest).toHaveBeenCalledWith('north', null, { outputFolder: '/out', host: 'server' }, 'sftp');
+        const options = testModal.allowServerTrust.mock.lastCall![0];
+        expect(options.trusted).toBeNull();
+        await firstValueFrom(options.trust(identity));
+        // kept in the form, not saved yet
+        expect(TestBed.inject(FormServerTrustService).get('north')).toEqual(identity);
+        expect(northConnectorService.create).not.toHaveBeenCalled();
+
+        // the next test shows it as trusted
+        await tester.testButton.click();
+        expect(testModal.allowServerTrust.mock.lastCall![0].trusted).toEqual(identity);
+
+        await fillNewConnector(tester);
+        await tester.saveButton.click();
+
+        expect(northConnectorService.retrieveServerIdentity).toHaveBeenCalledWith(
+          'create',
+          { outputFolder: '/out', host: 'server' },
+          'sftp'
+        );
+        expect(northConnectorService.create).toHaveBeenCalledWith(
+          expect.objectContaining({ name: 'New north', serverTrust: { identity, trustOnFirstUse: false } }),
+          ''
+        );
+      });
+
+      test('should drop the identity trusted in the form when the settings connect to another server', async () => {
+        modalService.mockClosedModal(testModal);
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of(null));
+        const tester = new EditNorthComponentTester();
+        await tester.outputFolder.fill('/out');
+        await tester.host.fill('server');
+        await tester.testButton.click();
+        await firstValueFrom(testModal.allowServerTrust.mock.lastCall![0].trust(identity));
+        const formServerTrust = TestBed.inject(FormServerTrustService);
+
+        // another setting keeps it
+        await tester.outputFolder.fill('/out2');
+        expect(formServerTrust.get('north')).toEqual(identity);
+
+        await tester.host.fill('other-server');
+        expect(formServerTrust.get('north')).toBeNull();
+
+        await fillNewConnector(tester);
+        await tester.saveButton.click();
+
+        expect(northConnectorService.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'New north' }), '');
+        expect(northConnectorService.create.mock.lastCall![0].serverTrust).toBeUndefined();
+      });
+
+      test('should forget the identity trusted in the form when the form is left', async () => {
+        modalService.mockClosedModal(testModal);
+        const tester = new EditNorthComponentTester();
+        await tester.outputFolder.fill('/out');
+        await tester.testButton.click();
+        await firstValueFrom(testModal.allowServerTrust.mock.lastCall![0].trust(identity));
+
+        tester.fixture.destroy();
+
+        expect(TestBed.inject(FormServerTrustService).get('north')).toBeNull();
+      });
+    });
+
+    describe('edit mode', () => {
+      beforeEach(() => {
+        configure({ params: { northId: 'northId1' } });
+        modalService = TestBed.inject(MockModalService);
+      });
+
+      test('should test the connection with the identity the connector trusts', async () => {
+        const trusted = {
+          ...identity,
+          fingerprint: 'SHA256:trusted',
+          trustedBy: { id: 'userId1', friendlyName: 'admin' },
+          trustedAt: '2026-01-01T00:00:00.000Z'
+        };
+        northConnector.serverTrust = { identity: trusted, trustOnFirstUse: false };
+        modalService.mockClosedModal(testModal);
+        const tester = new EditNorthComponentTester();
+        await tester.goTo('settings');
+        await expect.element(tester.outputFolder).toHaveValue('output-folder');
+
+        await tester.testButton.click();
+
+        expect(testModal.allowServerTrust).toHaveBeenCalledWith({ trusted, trust: expect.any(Function) });
+        expect(testModal.runTest).toHaveBeenCalledWith('north', 'northId1', { outputFolder: 'output-folder', host: null }, 'file-writer');
+      });
+
+      test.each<{ status: PresentedServerIdentity['status'] }>([{ status: 'unknown' }, { status: 'changed' }])(
+        'should save with the identity of the server, $status, once trusted',
+        async ({ status }) => {
+          const presented: PresentedServerIdentity = { identity, status };
+          northConnectorService.retrieveServerIdentity.mockReturnValue(of(presented));
+          modalService.mockClosedModal(trustModal, 'trust');
+          const tester = new EditNorthComponentTester();
+          await expect.element(tester.name).toHaveValue('North 1');
+
+          await tester.saveButton.click();
+
+          expect(northConnectorService.retrieveServerIdentity).toHaveBeenCalledWith(
+            'northId1',
+            { outputFolder: 'output-folder', host: null },
+            'file-writer'
+          );
+          expect(trustModal.prepare).toHaveBeenCalledWith('save', presented, null);
+          expect(northConnectorService.update).toHaveBeenCalledWith(
+            'northId1',
+            expect.objectContaining({ name: 'North 1', serverTrust: { identity, trustOnFirstUse: false } })
+          );
+          expect(TestBed.inject(FormServerTrustService).get('north')).toEqual(identity);
+        }
+      );
+
+      test('should save without the identity of the server when the user goes on without trusting it', async () => {
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'changed' }));
+        modalService.mockClosedModal(trustModal, 'skip');
+        const tester = new EditNorthComponentTester();
+        await expect.element(tester.name).toHaveValue('North 1');
+
+        await tester.saveButton.click();
+
+        expect(trustModal.prepare).toHaveBeenCalled();
+        expect(northConnectorService.update).toHaveBeenCalledWith('northId1', expect.objectContaining({ name: 'North 1' }));
+        expect(northConnectorService.update.mock.lastCall![1].serverTrust).toBeUndefined();
+      });
+
+      test('should not save when the review of the identity of the server is cancelled', async () => {
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'unknown' }));
+        modalService.mockDismissedModal(trustModal);
+        const tester = new EditNorthComponentTester();
+        await expect.element(tester.name).toHaveValue('North 1');
+
+        await tester.saveButton.click();
+
+        expect(trustModal.prepare).toHaveBeenCalled();
+        expect(northConnectorService.update).not.toHaveBeenCalled();
+        await expect.element(tester.saveButton).toBeEnabled();
+      });
+
+      test.each([
+        { description: 'is trusted', presented$: of<PresentedServerIdentity>({ identity, status: 'trusted' }), trustOnFirstUse: false },
+        {
+          description: 'is trusted at the first connection',
+          presented$: of<PresentedServerIdentity>({ identity, status: 'unknown' }),
+          trustOnFirstUse: true
+        },
+        { description: 'is not checked', presented$: of(null), trustOnFirstUse: false },
+        { description: 'cannot be retrieved', presented$: throwError(() => new Error('unreachable')), trustOnFirstUse: false }
+      ])('should save directly when the identity of the server $description', async ({ presented$, trustOnFirstUse }) => {
+        northConnector.serverTrust = { identity: null, trustOnFirstUse };
+        northConnectorService.retrieveServerIdentity.mockReturnValue(presented$);
+        const tester = new EditNorthComponentTester();
+        await expect.element(tester.name).toHaveValue('North 1');
+
+        // no modal is set up: opening one would fail
+        await tester.saveButton.click();
+
+        expect(northConnectorService.retrieveServerIdentity).toHaveBeenCalled();
+        expect(northConnectorService.update).toHaveBeenCalledWith('northId1', expect.objectContaining({ name: 'North 1' }));
+        expect(northConnectorService.update.mock.lastCall![1].serverTrust).toBeUndefined();
+      });
+
+      test('should not retrieve the identity of the server of a disabled connector', async () => {
+        northConnector.enabled = false;
+        const tester = new EditNorthComponentTester();
+        await expect.element(tester.name).toHaveValue('North 1');
+
+        await tester.saveButton.click();
+
+        expect(northConnectorService.retrieveServerIdentity).not.toHaveBeenCalled();
+        expect(northConnectorService.update).toHaveBeenCalledWith('northId1', expect.objectContaining({ enabled: false }));
+      });
+    });
+
+    test('should not retrieve the identity of the server when the connector does not check it', async () => {
+      northConnectorService.getNorthManifest.mockReturnValue(of(manifest));
+      configure({ params: { northId: 'northId1' } });
+      TestBed.inject(MockModalService).mockClosedModal(testModal);
+      const tester = new EditNorthComponentTester();
+      await expect.element(tester.name).toHaveValue('North 1');
+
+      await tester.goTo('settings');
+      await tester.testButton.click();
+      await tester.saveButton.click();
+
+      expect(testModal.allowServerTrust).not.toHaveBeenCalled();
+      expect(northConnectorService.retrieveServerIdentity).not.toHaveBeenCalled();
+      expect(northConnectorService.update).toHaveBeenCalled();
     });
   });
 });

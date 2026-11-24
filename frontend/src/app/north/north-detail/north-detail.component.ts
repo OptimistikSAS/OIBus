@@ -1,14 +1,15 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { map, of, switchMap, tap } from 'rxjs';
+import { map, Observable, of, switchMap, tap } from 'rxjs';
 
 import { TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { AuditEntityType } from '@oibus/shared/domain/audit.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { LogsComponent } from '../../logs/logs.component';
 import { CertificateService } from '../../services/certificate.service';
@@ -26,6 +27,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { PageLoader } from '../../shared/page-loader.service';
 import { pollMetrics } from '../../shared/polling';
+import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
+import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
 import { summarizeCaching } from '../north-summary';
@@ -44,7 +47,8 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
     NgbTooltip,
     NorthTransformersComponent,
     OIBusSettingsSummaryComponent,
-    AuditInfoComponent
+    AuditInfoComponent,
+    ServerTrustPanelComponent
   ],
   templateUrl: './north-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,6 +117,19 @@ export class NorthDetailComponent {
     { initialValue: null }
   );
 
+  /** Bumped to read again the trust of the connector in the identity of its server, once a user trusted it */
+  private readonly serverTrustRefresh = signal(0);
+  private readonly serverTrustNorthId = computed(() =>
+    this.manifest()?.serverIdentity ? { northId: this.northConnector()?.id ?? null, refresh: this.serverTrustRefresh() } : null
+  );
+  /** The trust of the connector in the identity of its server, with the identity it refused, polled as the metrics */
+  readonly serverTrust = toSignal(
+    toObservable(this.serverTrustNorthId).pipe(
+      switchMap(target => (target?.northId ? pollMetrics(() => this.northConnectorService.getServerTrust(target.northId!)) : of(null)))
+    ),
+    { initialValue: null }
+  );
+
   updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
     this.northConnectorService.findById(this.northConnector()!.id).subscribe(northConnector => {
       this.northConnectorResource.set(northConnector);
@@ -123,14 +140,59 @@ export class NorthDetailComponent {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     const northConnector = this.northConnector()!;
+    if (this.manifest()!.serverIdentity) {
+      component.allowServerTrust({
+        trusted: northConnector.serverTrust.identity,
+        trust: identity => this.trustServerIdentity(identity)
+      });
+    }
     component.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
+  }
+
+  /** Reviews the identity the connector refused, and trusts it if the user does */
+  reviewServerIdentity(pending: PresentedServerIdentity) {
+    askServerTrust(this.modalService, 'review', pending, this.serverTrust()?.identity ?? null)
+      .pipe(switchMap(() => this.trustServerIdentity(pending.identity)))
+      .subscribe();
+  }
+
+  /** Trusts the identity the server presents (the connector restarts with it) */
+  private trustServerIdentity(identity: ServerIdentity): Observable<void> {
+    const northConnector = this.northConnector()!;
+    return this.northConnectorService.trustServerIdentity(northConnector.id, identity.fingerprint).pipe(
+      tap(() => {
+        this.notificationService.success('server-trust.trusted', { name: northConnector.name });
+        this.serverTrustRefresh.update(refresh => refresh + 1);
+      }),
+      switchMap(() => this.northConnectorService.findById(northConnector.id)),
+      tap(updatedNorthConnector => this.northConnectorResource.set(updatedNorthConnector)),
+      map(() => undefined)
+    );
+  }
+
+  /**
+   * Before starting a connector checking the identity of its server: proposes to trust it when it must be reviewed. Starting
+   * does not depend on reaching the server: the connector then waits until its server is trusted.
+   */
+  private reviewServerIdentityBeforeStart(): Observable<void> {
+    const northConnector = this.northConnector()!;
+    if (!this.manifest()!.serverIdentity) {
+      return of(undefined);
+    }
+    return reviewServerIdentity(
+      this.modalService,
+      'start',
+      this.northConnectorService.retrieveServerIdentity(northConnector.id, northConnector.settings, northConnector.type),
+      northConnector.serverTrust,
+      northConnector.serverTrust.identity
+    ).pipe(switchMap(identity => (identity ? this.trustServerIdentity(identity) : of(undefined))));
   }
 
   toggleConnector(value: boolean) {
     if (value) {
-      this.northConnectorService
-        .start(this.northConnector()!.id)
+      this.reviewServerIdentityBeforeStart()
         .pipe(
+          switchMap(() => this.northConnectorService.start(this.northConnector()!.id)),
           tap(() => {
             this.notificationService.success('north.started', { name: this.northConnector()!.name });
           }),

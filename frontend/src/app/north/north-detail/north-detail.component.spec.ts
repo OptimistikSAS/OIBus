@@ -3,13 +3,15 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { LogDTO } from '@oibus/shared/api/logs.model';
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
+import { ServerTrustStateDTO, TrustedServerIdentityDTO } from '@oibus/shared/api/server-identity.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { buildEngineSettings } from '../../../test/builders';
@@ -29,6 +31,7 @@ import { provideCurrentUser } from '../../shared/current-user-testing';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
 import { METRICS_REFRESH_INTERVAL_MS } from '../../shared/polling';
+import { ServerTrustModalComponent } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { emptyPage } from '../../shared/utils/page.utils';
 import { NorthDetailComponent } from './north-detail.component';
@@ -68,6 +71,31 @@ const manifest: NorthConnectorManifest = {
   }
 };
 
+const identity: ServerIdentity = {
+  type: 'x509',
+  fingerprint: 'AB:CD',
+  details: {
+    subject: 'CN=server',
+    issuer: 'CN=server',
+    serialNumber: '01',
+    validFrom: '2026-01-01T00:00:00.000Z',
+    validTo: '2027-01-01T00:00:00.000Z',
+    uris: [],
+    dnsNames: [],
+    ipAddresses: [],
+    selfSigned: true
+  }
+};
+const trustedIdentity: TrustedServerIdentityDTO = {
+  ...identity,
+  fingerprint: 'EF:01',
+  trustedBy: { id: 'userId1', friendlyName: 'admin' },
+  trustedAt: '2026-01-01T00:00:00.000Z'
+};
+const pending: PresentedServerIdentity = { identity, status: 'changed' };
+const trustedState: ServerTrustStateDTO = { identity: trustedIdentity, trustOnFirstUse: false, pending: null };
+const pendingState: ServerTrustStateDTO = { identity: trustedIdentity, trustOnFirstUse: false, pending };
+
 class NorthDetailComponentTester {
   readonly fixture = TestBed.createComponent(NorthDetailComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
@@ -84,12 +112,15 @@ class NorthDetailComponentTester {
   readonly transformers = this.root.getByCss('oib-north-transformers').getByRole('button', { name: 'Delete transformer' });
   readonly status = this.root.getByCss('#north-status');
   readonly caching = this.root.getByCss('#north-caching .oib-summary-entry');
+  readonly serverTrustPanel = this.root.getByCss('oib-server-trust-panel');
+  readonly serverNotTrusted = this.root.getByCss('#server-not-trusted-status');
+  readonly reviewServerIdentityButton = this.root.getByRole('button', { name: 'Review and trust' });
 }
 
 describe('NorthDetailComponent', () => {
   let northConnectorService: MockObject<NorthConnectorService>;
   let notificationService: MockObject<NotificationService>;
-  let modalService: MockModalService<AuditHistoryModalComponent | TestConnectionResultModalComponent>;
+  let modalService: MockModalService<AuditHistoryModalComponent | TestConnectionResultModalComponent | ServerTrustModalComponent>;
   let northConnector: NorthConnectorDTO;
 
   beforeEach(() => {
@@ -269,5 +300,173 @@ describe('NorthDetailComponent', () => {
 
     await expect.element(tester.transformers).toHaveLength(0);
     expect(northConnectorService.findById).toHaveBeenCalledTimes(2);
+  });
+
+  describe('server identity', () => {
+    let trustModal: MockObject<ServerTrustModalComponent>;
+
+    beforeEach(() => {
+      northConnectorService.getNorthManifest.mockReturnValue(of({ ...manifest, serverIdentity: 'x509' }));
+      northConnectorService.getServerTrust.mockReturnValue(of(trustedState));
+      northConnectorService.trustServerIdentity.mockReturnValue(of(undefined));
+      trustModal = createMock(ServerTrustModalComponent);
+    });
+
+    test('should poll the trust of the connector in the identity of its server', async () => {
+      vi.useFakeTimers();
+      const tester = new NorthDetailComponentTester();
+      await vi.waitFor(() => expect(northConnectorService.getServerTrust).toHaveBeenCalledTimes(1));
+      expect(northConnectorService.getServerTrust).toHaveBeenCalledWith('northId1');
+
+      await expect.element(tester.serverTrustPanel).toMatchTextContent(/Identity of the server\s*Trusted by admin on/);
+      await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
+      await expect.element(tester.reviewServerIdentityButton).not.toBeInTheDocument();
+
+      northConnectorService.getServerTrust.mockReturnValue(of(pendingState));
+      await vi.advanceTimersByTimeAsync(METRICS_REFRESH_INTERVAL_MS);
+      expect(northConnectorService.getServerTrust).toHaveBeenCalledTimes(2);
+      await expect.element(tester.serverNotTrusted).toHaveTextContent('Server not trusted');
+
+      tester.fixture.destroy();
+      await vi.advanceTimersByTimeAsync(METRICS_REFRESH_INTERVAL_MS);
+      expect(northConnectorService.getServerTrust).toHaveBeenCalledTimes(2);
+    });
+
+    test('should show that the server is not trusted when the connector refused its identity', async () => {
+      northConnectorService.getServerTrust.mockReturnValue(of(pendingState));
+      const tester = new NorthDetailComponentTester();
+
+      await expect.element(tester.serverNotTrusted).toHaveTextContent('Server not trusted');
+      await expect
+        .element(
+          tester.serverTrustPanel.getByText('The connector refused to connect: its server presents another identity than the one trusted.')
+        )
+        .toBeVisible();
+      await expect.element(tester.reviewServerIdentityButton).toBeVisible();
+    });
+
+    test('should review and trust the identity the connector refused', async () => {
+      northConnectorService.getServerTrust.mockReturnValue(of(pendingState));
+      modalService.mockClosedModal(trustModal, 'trust');
+      const tester = new NorthDetailComponentTester();
+      await expect.element(tester.serverNotTrusted).toBeInTheDocument();
+      northConnectorService.getServerTrust.mockReturnValue(of(trustedState));
+
+      await tester.reviewServerIdentityButton.click();
+
+      expect(trustModal.prepare).toHaveBeenCalledWith('review', pending, trustedIdentity);
+      expect(northConnectorService.trustServerIdentity).toHaveBeenCalledWith('northId1', 'AB:CD');
+      expect(notificationService.success).toHaveBeenCalledWith('server-trust.trusted', { name: 'North 1' });
+      // the trust and the connector are read again
+      await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
+      expect(northConnectorService.getServerTrust).toHaveBeenCalledTimes(2);
+      expect(northConnectorService.findById).toHaveBeenCalledTimes(2);
+    });
+
+    test('should not trust the identity the connector refused when the review is cancelled', async () => {
+      northConnectorService.getServerTrust.mockReturnValue(of(pendingState));
+      modalService.mockDismissedModal(trustModal);
+      const tester = new NorthDetailComponentTester();
+
+      await tester.reviewServerIdentityButton.click();
+
+      expect(trustModal.prepare).toHaveBeenCalled();
+      expect(northConnectorService.trustServerIdentity).not.toHaveBeenCalled();
+      await expect.element(tester.serverNotTrusted).toBeInTheDocument();
+    });
+
+    test('should trust the identity of the server from the connection test', async () => {
+      northConnector.serverTrust = { identity: trustedIdentity, trustOnFirstUse: false };
+      const testModal = createMock(TestConnectionResultModalComponent);
+      modalService.mockClosedModal(testModal);
+      const tester = new NorthDetailComponentTester();
+
+      await tester.testConnectionButton.click();
+
+      expect(testModal.runTest).toHaveBeenCalledWith('north', 'northId1', northConnector.settings, 'file-writer');
+      const options = testModal.allowServerTrust.mock.lastCall![0];
+      expect(options.trusted).toEqual(trustedIdentity);
+      await firstValueFrom(options.trust(identity));
+      expect(northConnectorService.trustServerIdentity).toHaveBeenCalledWith('northId1', 'AB:CD');
+      expect(notificationService.success).toHaveBeenCalledWith('server-trust.trusted', { name: 'North 1' });
+      expect(northConnectorService.findById).toHaveBeenCalledTimes(2);
+    });
+
+    describe('start', () => {
+      beforeEach(() => {
+        northConnectorService.findById.mockReturnValue(of({ ...northConnector, enabled: false }));
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of(pending));
+      });
+
+      test('should trust the identity of the server before starting the connector', async () => {
+        modalService.mockClosedModal(trustModal, 'trust');
+        const tester = new NorthDetailComponentTester();
+        await expect.element(tester.startButton).toBeInTheDocument();
+
+        await tester.startButton.click();
+
+        expect(northConnectorService.retrieveServerIdentity).toHaveBeenCalledWith('northId1', northConnector.settings, 'file-writer');
+        expect(trustModal.prepare).toHaveBeenCalledWith('start', pending, null);
+        expect(northConnectorService.trustServerIdentity).toHaveBeenCalledWith('northId1', 'AB:CD');
+        expect(northConnectorService.start).toHaveBeenCalledWith('northId1');
+        expect(northConnectorService.trustServerIdentity.mock.invocationCallOrder[0]).toBeLessThan(
+          northConnectorService.start.mock.invocationCallOrder[0]
+        );
+        expect(notificationService.success).toHaveBeenCalledWith('north.started', { name: 'North 1' });
+      });
+
+      test('should start the connector without trusting the identity of its server', async () => {
+        modalService.mockClosedModal(trustModal, 'skip');
+        const tester = new NorthDetailComponentTester();
+        await expect.element(tester.startButton).toBeInTheDocument();
+
+        await tester.startButton.click();
+
+        expect(trustModal.prepare).toHaveBeenCalled();
+        expect(northConnectorService.trustServerIdentity).not.toHaveBeenCalled();
+        expect(northConnectorService.start).toHaveBeenCalledWith('northId1');
+      });
+
+      test('should not start the connector when the review of the identity of its server is cancelled', async () => {
+        modalService.mockDismissedModal(trustModal);
+        const tester = new NorthDetailComponentTester();
+        await expect.element(tester.startButton).toBeInTheDocument();
+
+        await tester.startButton.click();
+
+        expect(trustModal.prepare).toHaveBeenCalled();
+        expect(northConnectorService.trustServerIdentity).not.toHaveBeenCalled();
+        expect(northConnectorService.start).not.toHaveBeenCalled();
+      });
+
+      test('should start the connector directly when the identity of its server is trusted', async () => {
+        northConnectorService.retrieveServerIdentity.mockReturnValue(of({ identity, status: 'trusted' }));
+        const tester = new NorthDetailComponentTester();
+        await expect.element(tester.startButton).toBeInTheDocument();
+
+        // no modal is set up: opening one would fail
+        await tester.startButton.click();
+
+        expect(northConnectorService.trustServerIdentity).not.toHaveBeenCalled();
+        expect(northConnectorService.start).toHaveBeenCalledWith('northId1');
+      });
+    });
+  });
+
+  test('should not check the identity of the server when the connector does not', async () => {
+    northConnectorService.findById.mockReturnValue(of({ ...northConnector, enabled: false }));
+    const testModal = createMock(TestConnectionResultModalComponent);
+    modalService.mockClosedModal(testModal);
+    const tester = new NorthDetailComponentTester();
+    await expect.element(tester.startButton).toBeInTheDocument();
+
+    await tester.testConnectionButton.click();
+    await tester.startButton.click();
+
+    expect(testModal.allowServerTrust).not.toHaveBeenCalled();
+    expect(northConnectorService.retrieveServerIdentity).not.toHaveBeenCalled();
+    expect(northConnectorService.start).toHaveBeenCalledWith('northId1');
+    expect(northConnectorService.getServerTrust).not.toHaveBeenCalled();
+    await expect.element(tester.serverTrustPanel).not.toBeInTheDocument();
   });
 });

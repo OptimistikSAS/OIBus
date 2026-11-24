@@ -15,6 +15,7 @@ import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
 import { WorkflowRunSearchParam } from '@oibus/shared/domain/workflow-run.model';
 
 import { ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
+import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
 
 /**
  * Service used to interact with the backend for CRUD and run operations on Configuration Workflows
@@ -22,6 +23,7 @@ import { ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
 @Service()
 export class ConfigurationWorkflowService {
   private readonly http = inject(HttpClient);
+  private readonly formServerTrust = inject(FormServerTrustService);
 
   /**
    * Get all configuration workflows for a south connector
@@ -100,7 +102,7 @@ export class ConfigurationWorkflowService {
     return this.http.post<WorkflowPreviewResultDTO>(
       `/api/south/${southId}/test/workflow-preview`,
       { southSettings, workflowId, workflow: command },
-      { params: { southType }, context }
+      { params: this.formServerTrust.withTrustedFingerprint('south', { southType }), context }
     );
   }
 

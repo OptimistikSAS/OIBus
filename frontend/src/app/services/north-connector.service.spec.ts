@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
+import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import { NorthType } from '@oibus/shared/connector/north-manifest.model';
 import {
   CacheContentUpdateCommand,
@@ -12,10 +13,12 @@ import {
   FileCacheContent,
   OIBusConnectionTestResult
 } from '@oibus/shared/domain/engine.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
 import { NorthConnectorService } from './north-connector.service';
 
 interface HttpCase {
@@ -34,6 +37,20 @@ function expectErrorsIgnoredUnlessUnauthorized(request: TestRequest) {
   expect(shouldIgnore(new HttpErrorResponse({ status: 400 }))).toBe(true);
   expect(shouldIgnore(new HttpErrorResponse({ status: 401 }))).toBe(false);
 }
+
+/** The params of a request, by name */
+function paramsOf(request: TestRequest): Record<string, string | null> {
+  const params = request.request.params;
+  return Object.fromEntries(params.keys().map(key => [key, params.get(key)]));
+}
+
+const serverIdentity: ServerIdentity = {
+  type: 'ssh-host-key',
+  fingerprint: 'SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s',
+  details: { keyType: 'ssh-ed25519' }
+};
+const presentedServerIdentity: PresentedServerIdentity = { identity: serverIdentity, status: 'changed' };
+const serverTrustState: ServerTrustStateDTO = { identity: null, trustOnFirstUse: true, pending: null };
 
 const northTypes: Array<NorthType> = [
   { id: 'console', category: 'debug', types: ['file'] },
@@ -229,5 +246,74 @@ describe('NorthConnectorService', () => {
     request.flush(connectionTestResult);
 
     await expect(result).resolves.toEqual(connectionTestResult);
+  });
+
+  test('should retrieve the identity of the server and leave the error display to the caller', async () => {
+    const result = firstValueFrom(service.retrieveServerIdentity('id1', command.settings, command.type));
+
+    const request = http.expectOne({ method: 'POST', url: '/api/north/id1/test/server-identity?northType=file-writer' });
+    expect(request.request.body).toEqual(command.settings);
+    expectErrorsIgnoredUnlessUnauthorized(request);
+    request.flush(presentedServerIdentity);
+
+    await expect(result).resolves.toEqual(presentedServerIdentity);
+  });
+
+  test('should get the trust in the identity of the server and only notify an expired session', async () => {
+    const result = firstValueFrom(service.getServerTrust('id1'));
+
+    const request = http.expectOne({ method: 'GET', url: '/api/north/id1/server-trust' });
+    expectErrorsIgnoredUnlessUnauthorized(request);
+    request.flush(serverTrustState);
+
+    await expect(result).resolves.toEqual(serverTrustState);
+  });
+
+  test('should trust the identity of the server', async () => {
+    await expectHttp(
+      http,
+      service.trustServerIdentity('id1', serverIdentity.fingerprint),
+      { method: 'POST', url: '/api/north/id1/server-trust' },
+      { body: { fingerprint: serverIdentity.fingerprint } }
+    );
+  });
+
+  describe('with an identity trusted in the form', () => {
+    const trustedRequests: Array<{ name: string; call: (s: NorthConnectorService) => Observable<unknown>; url: string }> = [
+      {
+        name: 'a connection test',
+        call: s => s.testConnection('id1', command.settings, command.type),
+        url: '/api/north/id1/test/connection'
+      },
+      {
+        name: 'the retrieval of the identity of the server',
+        call: s => s.retrieveServerIdentity('id1', command.settings, command.type),
+        url: '/api/north/id1/test/server-identity'
+      }
+    ];
+
+    test.each(trustedRequests)('should send its fingerprint with $name', async ({ call, url }) => {
+      TestBed.inject(FormServerTrustService).set('north', serverIdentity);
+
+      const result = firstValueFrom(call(service), { defaultValue: undefined });
+
+      const request = http.expectOne(req => req.method === 'POST' && req.url === url);
+      expect(paramsOf(request)).toEqual({ northType: 'file-writer', trustedFingerprint: serverIdentity.fingerprint });
+      request.flush(null);
+      await result;
+    });
+
+    test.each(trustedRequests)('should not send the fingerprint trusted for another target with $name', async ({ call, url }) => {
+      const formServerTrust = TestBed.inject(FormServerTrustService);
+      formServerTrust.set('south', serverIdentity);
+      formServerTrust.set('history-north', serverIdentity);
+
+      const result = firstValueFrom(call(service), { defaultValue: undefined });
+
+      const request = http.expectOne(req => req.method === 'POST' && req.url === url);
+      expect(paramsOf(request)).toEqual({ northType: 'file-writer' });
+      request.flush(null);
+      await result;
+    });
   });
 });

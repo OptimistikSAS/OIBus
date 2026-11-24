@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
+import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import {
   SouthConnectorItemDTO,
   SouthConnectorItemTestResult,
@@ -15,6 +16,7 @@ import {
 import { OIBusRecord } from '@oibus/shared/common/content.model';
 import { SouthType } from '@oibus/shared/connector/south-manifest.model';
 import { OIBusConnectionTestResult } from '@oibus/shared/domain/engine.model';
+import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { buildSouthItemGroup, buildSouthItemGroupCommand } from '../../test/builders';
@@ -22,6 +24,7 @@ import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
 import { toPage } from '../shared/utils/page.utils';
 import { DownloadService } from './download.service';
 import { SouthConnectorService } from './south-connector.service';
@@ -59,6 +62,30 @@ async function jsonFileOf(formData: FormData, key: string): Promise<{ name: stri
   }
   return { name: value.name, content: JSON.parse(await value.text()) };
 }
+
+/** The params of a request, by name */
+function paramsOf(request: TestRequest): Record<string, string | null> {
+  const params = request.request.params;
+  return Object.fromEntries(params.keys().map(key => [key, params.get(key)]));
+}
+
+const serverIdentity: ServerIdentity = {
+  type: 'x509',
+  fingerprint: 'AB:CD:EF:01',
+  details: {
+    subject: 'CN=Server',
+    issuer: 'CN=Server',
+    serialNumber: '01',
+    validFrom: testData.constants.dates.DATE_1,
+    validTo: testData.constants.dates.DATE_2,
+    uris: [],
+    dnsNames: [],
+    ipAddresses: [],
+    selfSigned: true
+  }
+};
+const presentedServerIdentity: PresentedServerIdentity = { identity: serverIdentity, status: 'unknown' };
+const serverTrustState: ServerTrustStateDTO = { identity: null, trustOnFirstUse: false, pending: presentedServerIdentity };
 
 const southTypes: Array<SouthType> = [
   { id: 'folder-scanner', category: 'file', modes: { subscription: false, lastPoint: false, lastFile: true, history: false } },
@@ -481,5 +508,105 @@ describe('SouthConnectorService', () => {
     request.flush(null);
 
     await expect(result).resolves.toBeNull();
+  });
+
+  test('should retrieve the identity of the server and leave the error display to the caller', async () => {
+    const result = firstValueFrom(service.retrieveServerIdentity('id1', command.settings, command.type));
+
+    const request = http.expectOne({ method: 'POST', url: '/api/south/id1/test/server-identity?southType=folder-scanner' });
+    expect(request.request.body).toEqual(command.settings);
+    expectErrorsIgnoredUnlessUnauthorized(request);
+    request.flush(presentedServerIdentity);
+
+    await expect(result).resolves.toEqual(presentedServerIdentity);
+  });
+
+  test('should get the trust in the identity of the server and only notify an expired session', async () => {
+    const result = firstValueFrom(service.getServerTrust('id1'));
+
+    const request = http.expectOne({ method: 'GET', url: '/api/south/id1/server-trust' });
+    expectErrorsIgnoredUnlessUnauthorized(request);
+    request.flush(serverTrustState);
+
+    await expect(result).resolves.toEqual(serverTrustState);
+  });
+
+  test('should trust the identity of the server', async () => {
+    await expectHttp(
+      http,
+      service.trustServerIdentity('id1', serverIdentity.fingerprint),
+      { method: 'POST', url: '/api/south/id1/server-trust' },
+      { body: { fingerprint: serverIdentity.fingerprint } }
+    );
+  });
+
+  describe('with an identity trusted in the form', () => {
+    const trustedRequests: Array<{
+      name: string;
+      call: (s: SouthConnectorService) => Observable<unknown>;
+      url: string;
+      params: Record<string, string>;
+    }> = [
+      {
+        name: 'a connection test',
+        call: s => s.testConnection('id1', command.settings, command.type),
+        url: '/api/south/id1/test/connection',
+        params: { southType: 'folder-scanner' }
+      },
+      {
+        name: 'an item test',
+        call: s => s.testItem('id1', 'folder-scanner', 'my item', command.settings, itemCommand.settings, testingSettings),
+        url: '/api/south/id1/items/test',
+        params: { southType: 'folder-scanner', itemName: 'my item' }
+      },
+      {
+        name: 'a discovery query',
+        call: s => s.testDiscoveryQuery('id1', 'opcua', command.settings, 'SELECT *'),
+        url: '/api/south/id1/test/discovery-query',
+        params: { southType: 'opcua' }
+      },
+      {
+        name: 'a discovery',
+        call: s => s.discoverItems('id1', 'opcua', command.settings, { nodeIds: ['ns=1;s=Reactor'] }, { name: '{{path}}' }),
+        url: '/api/south/id1/test/discovered-items',
+        params: { southType: 'opcua' }
+      },
+      {
+        name: 'an explore session',
+        call: s => s.startExplore('id1', command.settings, command.type),
+        url: '/api/south/id1/explore',
+        params: { southType: 'folder-scanner' }
+      },
+      {
+        name: 'the retrieval of the identity of the server',
+        call: s => s.retrieveServerIdentity('id1', command.settings, command.type),
+        url: '/api/south/id1/test/server-identity',
+        params: { southType: 'folder-scanner' }
+      }
+    ];
+
+    test.each(trustedRequests)('should send its fingerprint with $name', async ({ call, url, params }) => {
+      TestBed.inject(FormServerTrustService).set('south', serverIdentity);
+
+      const result = firstValueFrom(call(service), { defaultValue: undefined });
+
+      const request = http.expectOne(req => req.method === 'POST' && req.url === url);
+      expect(paramsOf(request)).toEqual({ ...params, trustedFingerprint: serverIdentity.fingerprint });
+      request.flush(null);
+      await result;
+    });
+
+    test.each(trustedRequests)('should not send the fingerprint trusted for another target with $name', async ({ call, url, params }) => {
+      const formServerTrust = TestBed.inject(FormServerTrustService);
+      formServerTrust.set('north', serverIdentity);
+      formServerTrust.set('history-south', serverIdentity);
+
+      const result = firstValueFrom(call(service), { defaultValue: undefined });
+
+      const request = http.expectOne(req => req.method === 'POST' && req.url === url);
+      expect(paramsOf(request)).toEqual(params);
+      request.flush(null);
+      await result;
+    });
   });
 });
