@@ -65,6 +65,16 @@
       "groupSlug": "azure-sdk",
       "schedule": ["before 3am on Monday"]
     },
+    // azure-kusto-ingest depends on the azure-kusto-data of its own version and takes its
+    // connection string builders and clients: a major bump of only one of them leaves two
+    // incompatible copies of azure-kusto-data. Minor and patch updates already go together
+    // in the weekly batch below; this group keeps majors together too.
+    {
+      "matchPackageNames": ["azure-kusto-{data,ingest}"],
+      "groupName": "Azure Kusto SDK",
+      "groupSlug": "azure-kusto",
+      "schedule": ["before 3am on Monday"]
+    },
 
     // ── CodemMirror ───────────────────────────────────────────────────────
     {
