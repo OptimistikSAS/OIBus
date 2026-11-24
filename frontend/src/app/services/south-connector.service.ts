@@ -125,7 +125,8 @@ export class SouthConnectorService {
 
   testConnection(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/south/${southId}/test/connection`, settings, {
-      params: this.formServerTrust.withTrustedFingerprint('south', { southType }),
+      // the identity of a server not trusted is shown, for the user to review and trust it
+      params: this.formServerTrust.withTrustedFingerprint('south', { southType, withServerIdentity: 'true' }),
       // the test connection modal already displays the error inline, so skip the global error notification
       context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });

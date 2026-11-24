@@ -117,7 +117,8 @@ export class NorthConnectorService {
 
   testConnection(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/north/${northId}/test/connection`, settings, {
-      params: this.formServerTrust.withTrustedFingerprint('north', { northType }),
+      // the identity of a server not trusted is shown, for the user to review and trust it
+      params: this.formServerTrust.withTrustedFingerprint('north', { northType, withServerIdentity: 'true' }),
       // the test connection modal already displays the error inline, so skip the global error notification
       context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
