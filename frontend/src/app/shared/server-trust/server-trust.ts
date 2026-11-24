@@ -1,4 +1,4 @@
-import { ServerTrustDTO } from '@oibus/shared/api/server-identity.model';
+import { ServerTrustDTO, ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 /** The settings telling which server a connector connects to: an identity is trusted for this server only */
@@ -19,4 +19,18 @@ export function mustReviewServerIdentity(presented: PresentedServerIdentity | nu
     return false;
   }
   return !(presented.status === 'unknown' && serverTrust?.trustOnFirstUse);
+}
+
+/**
+ * The trust shown on the page of a connector: the identity it refused only while it runs (a stopped connector refuses
+ * nothing), and nothing at all when there is nothing to show - no identity trusted, refused nor to trust at the first
+ * connection, as for a connector which does not check the identity of its server with its settings (OPC UA with the
+ * security mode None).
+ */
+export function toDisplayedServerTrust(state: ServerTrustStateDTO | null, running: boolean): ServerTrustStateDTO | null {
+  if (!state) {
+    return null;
+  }
+  const displayed = running ? state : { ...state, pending: null };
+  return displayed.identity || displayed.pending || displayed.trustOnFirstUse ? displayed : null;
 }

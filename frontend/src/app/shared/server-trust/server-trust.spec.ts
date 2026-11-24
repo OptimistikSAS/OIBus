@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 
-import { ServerTrustDTO } from '@oibus/shared/api/server-identity.model';
+import { ServerTrustDTO, ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import { PresentedServerIdentity, ServerIdentity, ServerIdentityTrustStatus } from '@oibus/shared/domain/server-identity.model';
 
-import { mustReviewServerIdentity, serverEndpointOf } from './server-trust';
+import { mustReviewServerIdentity, serverEndpointOf, toDisplayedServerTrust } from './server-trust';
 
 const identity: ServerIdentity = {
   type: 'ssh-host-key',
@@ -62,5 +62,39 @@ describe('mustReviewServerIdentity', () => {
     }
   ])('should tell whether $name must be reviewed', ({ presented, serverTrust, expected }) => {
     expect(mustReviewServerIdentity(presented, serverTrust)).toBe(expected);
+  });
+});
+
+describe('toDisplayedServerTrust', () => {
+  const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:displayed', details: { keyType: 'ssh-ed25519' } };
+  const trusted: ServerTrustStateDTO = {
+    identity: { ...identity, trustedBy: { id: 'admin', friendlyName: 'Admin' }, trustedAt: '2026-01-01T00:00:00.000Z' },
+    trustOnFirstUse: false,
+    pending: null
+  };
+  const pending: PresentedServerIdentity = { identity, status: 'unknown' };
+
+  test('should show nothing before the trust is read', () => {
+    expect(toDisplayedServerTrust(null, true)).toBeNull();
+  });
+
+  test('should show nothing when no identity is trusted, refused nor to trust at the first connection', () => {
+    expect(toDisplayedServerTrust({ identity: null, trustOnFirstUse: false, pending: null }, true)).toBeNull();
+  });
+
+  test('should show the trust of a running connector, with the identity it refused', () => {
+    const state: ServerTrustStateDTO = { ...trusted, pending };
+
+    expect(toDisplayedServerTrust(state, true)).toBe(state);
+    expect(toDisplayedServerTrust({ identity: null, trustOnFirstUse: true, pending: null }, false)).toEqual({
+      identity: null,
+      trustOnFirstUse: true,
+      pending: null
+    });
+  });
+
+  test('should not show the identity refused by a stopped connector', () => {
+    expect(toDisplayedServerTrust({ ...trusted, pending }, false)).toEqual(trusted);
+    expect(toDisplayedServerTrust({ identity: null, trustOnFirstUse: false, pending }, false)).toBeNull();
   });
 });

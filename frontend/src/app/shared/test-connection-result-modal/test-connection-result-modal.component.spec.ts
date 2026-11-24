@@ -11,7 +11,6 @@ import { ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../test/test-data';
-import { catchUnhandledErrors } from '../../../test/unhandled-errors';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -234,8 +233,7 @@ describe('TestConnectionResultModalComponent', () => {
       await expect.element(tester.trustButton).toBeInTheDocument();
     });
 
-    test('should not trust the identity twice while trusting it, nor test again when it fails', async () => {
-      const unhandledError = catchUnhandledErrors();
+    test('should not trust the identity twice while trusting it, and display why it could not be trusted', async () => {
       const trusted = new Subject<void>();
       const trust = vi.fn(() => trusted);
       tester.component.allowServerTrust({ trusted: null, trust });
@@ -247,12 +245,12 @@ describe('TestConnectionResultModalComponent', () => {
       await expect.element(tester.trustButton).toBeDisabled();
       expect(southConnectorService.testConnection).toHaveBeenCalledTimes(1);
 
-      const error = new Error('failure');
-      trusted.error(error);
+      trusted.error(new HttpErrorResponse({ error: { message: 'The server presents another certificate' } }));
 
-      await expect.element(tester.trustButton).toBeEnabled();
+      await expect.element(tester.error).toMatchTextContent(/^Error when testing settings\s*The server presents another certificate$/);
+      // the identity refused is not offered anymore: the user tests again
+      await expect.element(tester.trustButton).not.toBeInTheDocument();
       expect(southConnectorService.testConnection).toHaveBeenCalledTimes(1);
-      await vi.waitFor(() => expect(unhandledError).toHaveBeenCalledWith(error));
     });
 
     test('should display the error of the test run again once trusted', async () => {

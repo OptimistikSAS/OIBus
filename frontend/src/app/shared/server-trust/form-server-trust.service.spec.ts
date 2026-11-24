@@ -158,6 +158,18 @@ describe('FormServerTrustService', () => {
       expect(service.get('north')).toEqual(identity);
     });
 
+    test('should forget the identity when the form is built again', () => {
+      tracker.trust(identity, settings);
+
+      tracker.reset();
+
+      expect(tracker.identity).toBeNull();
+      expect(service.get('south')).toBeNull();
+      // and the settings it was trusted for
+      tracker.settingsChanged(settings);
+      expect(tracker.identity).toBeNull();
+    });
+
     test('should forget the identity when destroyed', () => {
       tracker.trust(identity, settings);
 

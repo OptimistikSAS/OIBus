@@ -1097,9 +1097,8 @@ describe('SouthDetailComponent', () => {
       vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
       const tester = await createTester();
       await vi.advanceTimersByTimeAsync(0);
-      await expect
-        .element(tester.serverTrustPanel)
-        .toMatchTextContent('No identity trusted yet: test the connection to review the identity of the server and trust it.');
+      // nothing to show: no identity trusted, refused nor to trust at the first connection (e.g. OPC UA without security)
+      await expect.element(tester.serverTrustPanel).not.toBeInTheDocument();
       await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
       expect(southConnectorService.getServerTrust).toHaveBeenCalledTimes(1);
       expect(southConnectorService.getServerTrust).toHaveBeenCalledWith('southId1');
@@ -1107,6 +1106,16 @@ describe('SouthDetailComponent', () => {
       await vi.advanceTimersByTimeAsync(5000);
 
       expect(southConnectorService.getServerTrust).toHaveBeenCalledTimes(2);
+    });
+
+    test('should not show the identity refused by a stopped connector', async () => {
+      southConnectorService.findById.mockReturnValue(of({ ...southConnector, enabled: false }));
+      southConnectorService.getServerTrust.mockReturnValue(of({ ...trusted, pending }));
+      const tester = await createTester();
+
+      await expect.element(tester.serverTrustPanel).toMatchTextContent(/Trusted by/);
+      await expect.element(tester.serverNotTrusted).not.toBeInTheDocument();
+      await expect.element(tester.reviewServerIdentityButton).not.toBeInTheDocument();
     });
 
     test('should review and trust the identity the connector refused', async () => {

@@ -23,11 +23,7 @@
       [translateParams]="{ user: identity.trustedBy.friendlyName, date: identity.trustedAt | datetime: 'ff' }"
     ></p>
     <oib-server-identity [identity]="identity" />
-  } @else if (!serverTrust.pending) {
-    <p
-      class="mb-0 text-body-secondary"
-      id="no-server-identity"
-      [translate]="serverTrust.trustOnFirstUse ? 'server-trust.panel.trust-on-first-use' : 'server-trust.panel.none'"
-    ></p>
+  } @else if (!serverTrust.pending && serverTrust.trustOnFirstUse) {
+    <p class="mb-0 text-body-secondary" id="no-server-identity" translate="server-trust.panel.trust-on-first-use"></p>
   }
 </section>

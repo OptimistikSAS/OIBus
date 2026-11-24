@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { firstValueFrom, Observable, of, throwError } from 'rxjs';
+import { firstValueFrom, NEVER, Observable, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -16,10 +16,10 @@ import { ModalService } from '../../modal.service';
 import {
   askServerTrust,
   reviewServerIdentity,
+  SERVER_IDENTITY_RETRIEVAL_TIMEOUT_MS,
   ServerTrustDecision,
   ServerTrustModalComponent,
-  ServerTrustModalMode
-} from './server-trust-modal.component';
+  ServerTrustModalMode} from './server-trust-modal.component';
 
 const identity: ServerIdentity = {
   type: 'ssh-host-key',
@@ -192,6 +192,21 @@ describe('askServerTrust and reviewServerIdentity', () => {
       await expect(review(of(presented), serverTrust)).resolves.toBeNull();
 
       expect(open).not.toHaveBeenCalled();
+    });
+
+    test('should emit null without asking when the server does not answer in time', async () => {
+      vi.useFakeTimers();
+      try {
+        const open = openedModal();
+        const result = review(NEVER);
+
+        await vi.advanceTimersByTimeAsync(SERVER_IDENTITY_RETRIEVAL_TIMEOUT_MS);
+
+        await expect(result).resolves.toBeNull();
+        expect(open).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     test('should emit null without asking when the server cannot be reached', async () => {

@@ -63,16 +63,21 @@ describe('ServerTrustPanelComponent', () => {
   test.each([
     {
       trustOnFirstUse: false,
-      text: 'No identity trusted yet: test the connection to review the identity of the server and trust it.'
+      text: null
     },
     {
       trustOnFirstUse: true,
       text: 'No identity trusted yet: the connector trusts the identity its server presents at its first connection.'
     }
-  ])('should tell that no identity is trusted (trustOnFirstUse: $trustOnFirstUse)', async ({ trustOnFirstUse, text }) => {
+  ])('should tell that no identity is trusted yet (trustOnFirstUse: $trustOnFirstUse)', async ({ trustOnFirstUse, text }) => {
     const tester = new ServerTrustPanelComponentTester({ identity: null, trustOnFirstUse, pending: null });
 
-    await expect.element(tester.noIdentity).toHaveTextContent(text);
+    if (text) {
+      await expect.element(tester.noIdentity).toHaveTextContent(text);
+    } else {
+      // the page shows no panel then (see toDisplayedServerTrust)
+      await expect.element(tester.noIdentity).not.toBeInTheDocument();
+    }
     await expect.element(tester.trustedBy).not.toBeInTheDocument();
     await expect.element(tester.fingerprint).not.toBeInTheDocument();
     await expect.element(tester.notTrusted).not.toBeInTheDocument();

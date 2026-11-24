@@ -135,9 +135,16 @@ export class TestConnectionResultModalComponent {
     serverTrust
       .trust(identity)
       .pipe(finalize(() => this.trusting.set(false)))
-      .subscribe(() => {
-        this.serverTrust.set({ ...serverTrust, trusted: identity });
-        this.run(this.type()!, this.test!);
+      .subscribe({
+        next: () => {
+          this.serverTrust.set({ ...serverTrust, trusted: identity });
+          this.run(this.type()!, this.test!);
+        },
+        // e.g. the server presents another identity by now: shown in place of the result, the user tests again
+        error: (httpError: HttpErrorResponse) => {
+          this.testResult.set(null);
+          this.error.set(extractErrorMessage(httpError));
+        }
       });
   }
 

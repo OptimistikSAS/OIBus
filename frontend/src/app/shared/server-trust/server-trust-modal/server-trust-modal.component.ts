@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { catchError, EMPTY, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, EMPTY, map, Observable, of, switchMap, timeout } from 'rxjs';
 
 import { ServerTrustDTO } from '@oibus/shared/api/server-identity.model';
 import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
@@ -66,6 +66,12 @@ export function askServerTrust(
 }
 
 /**
+ * How long the identity of the server is waited for before saving or starting a connector: a server which cannot be reached
+ * does not delay them for the whole connection timeout of the connector
+ */
+export const SERVER_IDENTITY_RETRIEVAL_TIMEOUT_MS = 5_000;
+
+/**
  * Before saving or starting a connector: asks the user to trust the identity its server presents when it must be reviewed
  * (see `mustReviewServerIdentity`). Emits the identity to trust, or null to go on without trusting any (nothing to review,
  * the server cannot be reached, or the user goes on without trusting it); emits nothing when the user cancels.
@@ -78,7 +84,8 @@ export function reviewServerIdentity(
   trusted: ServerIdentity | null
 ): Observable<ServerIdentity | null> {
   return presented$.pipe(
-    // a server which cannot be reached does not prevent saving or starting the connector
+    timeout({ first: SERVER_IDENTITY_RETRIEVAL_TIMEOUT_MS }),
+    // a server which cannot be reached (or too slowly) does not prevent saving or starting the connector
     catchError(() => of(null)),
     switchMap(presented => {
       if (!presented || !mustReviewServerIdentity(presented, serverTrust)) {
