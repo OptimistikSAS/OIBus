@@ -1,5 +1,6 @@
 import { OIBusRecord } from '../common/content.model';
 import { Instant } from '../common/types';
+import { PresentedServerIdentity } from './server-identity.model';
 
 /**
  * List of allowed durations for the authentication token lifetime, in the same
@@ -847,4 +848,9 @@ export interface FileCacheContent {
 
 export interface OIBusConnectionTestResult {
   items: Array<{ key: string; value: string }>;
+  /**
+   * The identity the server presented, for the connectors which check it, and how it compares with the identity trusted.
+   * When it is not trusted, the connection is not tested further (no credential is sent to the server): `items` is empty.
+   */
+  serverIdentity?: PresentedServerIdentity;
 }

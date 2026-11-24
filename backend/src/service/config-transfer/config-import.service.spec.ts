@@ -362,6 +362,93 @@ describe('Config Import Service', () => {
     });
   });
 
+  describe('server trust validation', () => {
+    it('accepts a trusted identity without who trusted it and when, and no identity trusted at the first use', async () => {
+      const file = validFile();
+      const opcua = findSouth(file.config, 'opcua');
+      assert.ok(opcua.settings.serverTrust?.identity, 'expected the opcua fixture to trust an identity');
+      delete opcua.settings.serverTrust.identity.trustedBy;
+      delete opcua.settings.serverTrust.identity.trustedAt;
+
+      await service.validateAndUpgrade(file, CURRENT_VERSION);
+
+      opcua.settings.serverTrust = { identity: null, trustOnFirstUse: true };
+      await service.validateAndUpgrade(file, CURRENT_VERSION);
+    });
+
+    it('rejects a south connector without server trust', async () => {
+      const file = validFile();
+      const opcua = findSouth(file.config, 'opcua');
+      delete opcua.settings.serverTrust;
+
+      const error = await rejection(file);
+
+      assert.ok(
+        error.validationErrors.some(entry => entry.scope === 'south:opcua' && /serverTrust/.test(entry.message)),
+        JSON.stringify(error.validationErrors)
+      );
+    });
+
+    it('rejects a north connector without server trust', async () => {
+      const file = cloneFile();
+      const north = file.config.northConnectors[0];
+      delete north.settings.serverTrust;
+      isolateToSingleNorth(file, north);
+
+      const error = await rejection(file);
+
+      assert.ok(
+        error.validationErrors.some(entry => /serverTrust/.test(entry.message)),
+        JSON.stringify(error.validationErrors)
+      );
+    });
+
+    it('rejects a history query without the server trust of one of its sides', async () => {
+      const file = cloneFile();
+      const historyQuery = file.config.historyQueries[0];
+      delete historyQuery.settings.southServerTrust;
+      delete historyQuery.settings.northServerTrust;
+      isolateToSingleHistoryQuery(file, historyQuery);
+
+      const error = await rejection(file);
+
+      assert.ok(
+        error.validationErrors.some(entry => /southServerTrust/.test(entry.message)),
+        JSON.stringify(error.validationErrors)
+      );
+      assert.ok(
+        error.validationErrors.some(entry => /northServerTrust/.test(entry.message)),
+        JSON.stringify(error.validationErrors)
+      );
+    });
+
+    it('rejects an identity of an unknown type, or a server trust without trustOnFirstUse', async () => {
+      const file = validFile();
+      const opcua = findSouth(file.config, 'opcua');
+      assert.ok(opcua.settings.serverTrust?.identity, 'expected the opcua fixture to trust an identity');
+      (opcua.settings.serverTrust.identity as unknown as JsonObject).type = 'pgp';
+
+      const typeError = await rejection(file);
+
+      assert.ok(
+        typeError.validationErrors.some(entry => entry.scope === 'south:opcua' && /serverTrust\.identity\.type/.test(entry.message)),
+        JSON.stringify(typeError.validationErrors)
+      );
+
+      const otherFile = validFile();
+      delete findSouth(otherFile.config, 'opcua').settings.serverTrust!.trustOnFirstUse;
+
+      const trustOnFirstUseError = await rejection(otherFile);
+
+      assert.ok(
+        trustOnFirstUseError.validationErrors.some(
+          entry => entry.scope === 'south:opcua' && /serverTrust\.trustOnFirstUse/.test(entry.message)
+        ),
+        JSON.stringify(trustOnFirstUseError.validationErrors)
+      );
+    });
+  });
+
   describe('settings validation', () => {
     it('rejects settings that do not match their manifest', async () => {
       const file = validFile();

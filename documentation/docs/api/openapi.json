@@ -2255,6 +2255,14 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ServerIdentityType": {
+				"type": "string",
+				"enum": [
+					"x509",
+					"ssh-host-key"
+				],
+				"description": "The kind of identity a server presents."
+			},
 			"SouthConnectorManifest": {
 				"description": "Manifest for a South connector type.\nDescribes the configuration schema, capabilities, and structure of a South connector type.",
 				"properties": {
@@ -2313,6 +2321,11 @@
 					"discovery": {
 						"$ref": "#/components/schemas/SouthConnectorDiscovery",
 						"description": "Whether this connector type can feed Configuration Workflows, the shape of their discovery scope and the\nstarting values of a new one. Absent when the connector has no discovery.\nUI capability flag — mirrors the connector's structural `hasConfigurationDiscovery()`. ODBC and OLEDB\nare SQL-family too but don't have discovery yet."
+					},
+					"serverIdentity": {
+						"$ref": "#/components/schemas/ServerIdentityType",
+						"description": "The kind of identity the server of this connector type presents, when the connector checks it: the connector refuses a\nserver whose identity is not trusted. UI capability flag — mirrors the connector's `retrieveServerIdentity()` (which\nmay still return none with some settings, as OPC UA with the security mode None).",
+						"example": "x509"
 					},
 					"settings": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
@@ -3291,6 +3304,168 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"X509ServerIdentityDetails": {
+				"description": "What an X.509 certificate presented by a server says about it, to be compared with the server before trusting it.",
+				"properties": {
+					"subject": {
+						"type": "string",
+						"description": "The distinguished name of the subject, one attribute per line.",
+						"example": "CN=My OPC UA Server\nO=Optimistik"
+					},
+					"issuer": {
+						"type": "string",
+						"description": "The distinguished name of the issuer, one attribute per line.",
+						"example": "CN=My OPC UA Server\nO=Optimistik"
+					},
+					"serialNumber": {
+						"type": "string",
+						"description": "The serial number, in hexadecimal.",
+						"example": "5E2A0C"
+					},
+					"validFrom": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The start of the validity period.",
+						"example": "2026-01-01T00:00:00.000Z"
+					},
+					"validTo": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The end of the validity period.",
+						"example": "2027-01-01T00:00:00.000Z"
+					},
+					"uris": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The URIs of the subject alternative names (the application URI of an OPC UA server).",
+						"example": [
+							"urn:my-server:UA:Server"
+						]
+					},
+					"dnsNames": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The DNS names of the subject alternative names.",
+						"example": [
+							"my-server.local"
+						]
+					},
+					"ipAddresses": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The IP addresses of the subject alternative names.",
+						"example": [
+							"192.168.0.10"
+						]
+					},
+					"selfSigned": {
+						"type": "boolean",
+						"description": "Whether the certificate is self-signed, rather than issued by a certificate authority.",
+						"example": true
+					}
+				},
+				"required": [
+					"subject",
+					"issuer",
+					"serialNumber",
+					"validFrom",
+					"validTo",
+					"uris",
+					"dnsNames",
+					"ipAddresses",
+					"selfSigned"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SshHostKeyServerIdentityDetails": {
+				"description": "What the host key presented by an SSH server says about it.",
+				"properties": {
+					"keyType": {
+						"type": "string",
+						"description": "The algorithm of the key.",
+						"example": "ssh-ed25519"
+					}
+				},
+				"required": [
+					"keyType"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TrustedServerIdentityDTO": {
+				"description": "An identity trusted for a connector, with who trusted it and when.",
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/ServerIdentityType",
+						"description": "The kind of identity.",
+						"example": "x509"
+					},
+					"fingerprint": {
+						"type": "string",
+						"description": "The SHA-256 fingerprint, the only part compared at each connection, in the format of the tools of its kind, to be\ncompared with the server: colon-separated hexadecimal for a certificate, `SHA256:` followed by base64 for an SSH host\nkey (as `ssh-keygen -l` shows it).",
+						"example": "AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89"
+					},
+					"details": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/X509ServerIdentityDetails"
+							},
+							{
+								"$ref": "#/components/schemas/SshHostKeyServerIdentityDetails"
+							}
+						],
+						"description": "What the identity says about the server, depending on its type."
+					},
+					"trustedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who trusted the identity (`system` for an identity trusted at the first connection after an upgrade)."
+					},
+					"trustedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "When the identity was trusted.",
+						"example": "2026-01-01T00:00:00.000Z"
+					}
+				},
+				"required": [
+					"type",
+					"fingerprint",
+					"details",
+					"trustedBy",
+					"trustedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ServerTrustDTO": {
+				"description": "The trust of a connector in the identity of its server.",
+				"properties": {
+					"identity": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/TrustedServerIdentityDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The identity trusted, `null` when none is."
+					},
+					"trustOnFirstUse": {
+						"type": "boolean",
+						"description": "Whether the connector trusts the identity it receives at its next connection, when none is trusted: set on the\nconnectors which worked before the identity of their server was checked, so that their connection keeps working.",
+						"example": false
+					}
+				},
+				"required": [
+					"identity",
+					"trustOnFirstUse"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorADSDTO": {
 				"description": "South connector configuration for Beckhoff ADS.",
 				"properties": {
@@ -3358,6 +3533,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -3372,7 +3551,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4014,6 +4194,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -4028,7 +4212,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4532,6 +4717,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -4546,7 +4735,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5069,6 +5259,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -5083,7 +5277,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5627,6 +5822,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -5641,7 +5840,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6197,6 +6397,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -6211,7 +6415,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6815,6 +7020,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -6829,7 +7038,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7411,6 +7621,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -7425,7 +7639,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7989,6 +8204,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -8003,7 +8222,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8619,6 +8839,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -8633,7 +8857,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9232,6 +9457,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -9246,7 +9475,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9808,6 +10038,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -9822,7 +10056,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10408,6 +10643,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -10422,7 +10661,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10994,6 +11234,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -11008,7 +11252,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11562,6 +11807,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -11576,7 +11825,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12249,6 +12499,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -12263,7 +12517,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12869,6 +13124,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -12883,7 +13142,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13392,6 +13652,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -13406,7 +13670,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -14010,6 +14275,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -14024,7 +14293,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -14926,6 +15196,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -14940,7 +15214,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -15467,6 +15742,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -15481,7 +15760,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -16032,6 +16312,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -16046,7 +16330,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -16593,6 +16878,10 @@
 						},
 						"type": "array",
 						"description": "List of groups attached to this connector"
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -16607,7 +16896,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -17405,6 +17695,73 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ServerIdentityCommandDTO": {
+				"description": "An identity trusted for a connector, as a connector is created or updated. Who trusted it and when are only kept by a\nconfiguration import: otherwise, an identity other than the one already trusted is trusted by the user saving the\nconnector.",
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/ServerIdentityType",
+						"description": "The kind of identity.",
+						"example": "x509"
+					},
+					"fingerprint": {
+						"type": "string",
+						"description": "The SHA-256 fingerprint, the only part compared at each connection, in the format of the tools of its kind, to be\ncompared with the server: colon-separated hexadecimal for a certificate, `SHA256:` followed by base64 for an SSH host\nkey (as `ssh-keygen -l` shows it).",
+						"example": "AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89"
+					},
+					"details": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/X509ServerIdentityDetails"
+							},
+							{
+								"$ref": "#/components/schemas/SshHostKeyServerIdentityDetails"
+							}
+						],
+						"description": "What the identity says about the server, depending on its type."
+					},
+					"trustedBy": {
+						"type": "string",
+						"description": "The user who trusted the identity, kept by a configuration import.",
+						"example": "admin"
+					},
+					"trustedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "When the identity was trusted, kept by a configuration import.",
+						"example": "2026-01-01T00:00:00.000Z"
+					}
+				},
+				"required": [
+					"type",
+					"fingerprint",
+					"details"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ServerTrustCommandDTO": {
+				"description": "The trust of a connector in the identity of its server, as a connector is created or updated.",
+				"properties": {
+					"identity": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ServerIdentityCommandDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The identity to trust, `null` to trust none."
+					},
+					"trustOnFirstUse": {
+						"type": "boolean",
+						"description": "Whether the connector trusts the identity it receives at its next connection, when none is trusted (see\n`ServerTrust.trustOnFirstUse`). False when omitted.",
+						"example": false
+					}
+				},
+				"required": [
+					"identity"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorCommandBodyDTO": {
 				"description": "Request body of the South connector create and update endpoints: a {@link SouthConnectorCommandDTO} of any type,\nwhose connector and item settings are checked against the manifest of that type by the service.\n\nThe request is not validated against the {@link SouthConnectorCommandDTO} union: tsoa tries each member in turn and\npiles up the errors of every item for each member that does not match, which takes a time quadratic in the number of\nitems (tens of minutes for ten thousand items, blocking the whole process).",
 				"properties": {
@@ -17453,6 +17810,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -17551,6 +17912,118 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ServerIdentity": {
+				"description": "The identity a server presents to a connector: what a user trusts, and what the connector compares at each connection.",
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/ServerIdentityType",
+						"description": "The kind of identity.",
+						"example": "x509"
+					},
+					"fingerprint": {
+						"type": "string",
+						"description": "The SHA-256 fingerprint, the only part compared at each connection, in the format of the tools of its kind, to be\ncompared with the server: colon-separated hexadecimal for a certificate, `SHA256:` followed by base64 for an SSH host\nkey (as `ssh-keygen -l` shows it).",
+						"example": "AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89"
+					},
+					"details": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/X509ServerIdentityDetails"
+							},
+							{
+								"$ref": "#/components/schemas/SshHostKeyServerIdentityDetails"
+							}
+						],
+						"description": "What the identity says about the server, depending on its type."
+					}
+				},
+				"required": [
+					"type",
+					"fingerprint",
+					"details"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ServerIdentityTrustStatus": {
+				"type": "string",
+				"enum": [
+					"trusted",
+					"unknown",
+					"changed"
+				],
+				"description": "How the identity a server presents compares with the trusted one."
+			},
+			"PresentedServerIdentity": {
+				"description": "The identity a server presented, and how it compares with the trusted one.",
+				"properties": {
+					"identity": {
+						"$ref": "#/components/schemas/ServerIdentity",
+						"description": "The identity the server presented."
+					},
+					"status": {
+						"$ref": "#/components/schemas/ServerIdentityTrustStatus",
+						"description": "How it compares with the trusted identity.",
+						"example": "changed"
+					}
+				},
+				"required": [
+					"identity",
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ServerTrustStateDTO": {
+				"description": "The trust of a connector in the identity of its server, with the identity its server presented when the connector refused\nit.",
+				"properties": {
+					"identity": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/TrustedServerIdentityDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The identity trusted, `null` when none is."
+					},
+					"trustOnFirstUse": {
+						"type": "boolean",
+						"description": "Whether the connector trusts the identity it receives at its next connection, when none is trusted: set on the\nconnectors which worked before the identity of their server was checked, so that their connection keeps working.",
+						"example": false
+					},
+					"pending": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/PresentedServerIdentity"
+							}
+						],
+						"nullable": true,
+						"description": "The identity the server presented at the last connection the connector refused (the connector waits for a user to\ntrust it), `null` when it did not refuse any."
+					}
+				},
+				"required": [
+					"identity",
+					"trustOnFirstUse",
+					"pending"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TrustServerIdentityCommandDTO": {
+				"description": "Trust the identity the server of a connector presents.",
+				"properties": {
+					"fingerprint": {
+						"type": "string",
+						"description": "The SHA-256 fingerprint of the identity to trust, as the connection test showed it: the server is asked for its\nidentity again, which is trusted only if its fingerprint is this one.",
+						"example": "SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s"
+					}
+				},
+				"required": [
+					"fingerprint"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusConnectionTestResult": {
 				"properties": {
 					"items": {
@@ -17570,6 +18043,10 @@
 							"type": "object"
 						},
 						"type": "array"
+					},
+					"serverIdentity": {
+						"$ref": "#/components/schemas/PresentedServerIdentity",
+						"description": "The identity the server presented, for the connectors which check it, and how it compares with the identity trusted.\nWhen it is not trusted, the connection is not tested further (no credential is sent to the server): `items` is empty."
 					}
 				},
 				"required": [
@@ -17809,8 +18286,8 @@
 			"WorkflowPreviewEntryStatus": {
 				"type": "string",
 				"enum": [
-					"new",
 					"changed",
+					"new",
 					"unchanged",
 					"reactivated",
 					"missing"
@@ -25562,6 +26039,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -25816,6 +26297,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -26070,6 +26555,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -26324,6 +26813,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -26578,6 +27071,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -26832,6 +27329,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -27086,6 +27587,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -27340,6 +27845,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -27594,6 +28103,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -27848,6 +28361,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -28102,6 +28619,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -28356,6 +28877,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -28610,6 +29135,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -28864,6 +29393,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -29118,6 +29651,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -29372,6 +29909,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -29626,6 +30167,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -29880,6 +30425,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -30134,6 +30683,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -30388,6 +30941,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -30642,6 +31199,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -30896,6 +31457,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -31150,6 +31715,10 @@
 						},
 						"type": "array",
 						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -32057,6 +32626,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -32327,6 +32900,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -32599,6 +33176,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -32803,6 +33384,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -33019,6 +33604,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -33273,6 +33862,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -33546,6 +34139,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -33836,6 +34433,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -34129,6 +34730,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -34537,6 +35142,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -34776,6 +35385,10 @@
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
 						"example": []
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector\nis kept as it is (or none for a new connector)."
 					}
 				},
 				"required": [
@@ -35457,6 +36070,14 @@
 							"$ref": "#/components/schemas/HistoryTransformerCommandDTOWithOptions"
 						},
 						"type": "array"
+					},
+					"southServerTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the South side in the identity of its server (see the connection test). Omitted, it is kept as it is (or\nnone for a new history query)."
+					},
+					"northServerTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the North side in the identity of its server. Omitted, it is kept as it is (or none for a new history\nquery)."
 					}
 				},
 				"required": [
@@ -40190,6 +40811,11 @@
 							"file"
 						]
 					},
+					"serverIdentity": {
+						"$ref": "#/components/schemas/ServerIdentityType",
+						"description": "The kind of identity the server of this connector type presents, when the connector checks it: the connector refuses a\nserver whose identity is not trusted. UI capability flag — mirrors the connector's `retrieveServerIdentity()` (which\nmay still return none with some settings, as OPC UA with the security mode None).",
+						"example": "x509"
+					},
 					"settings": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The configuration schema for the North connector settings."
@@ -40647,6 +41273,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -40661,7 +41291,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -40858,6 +41489,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -40872,7 +41507,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -41069,6 +41705,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -41083,7 +41723,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -41280,6 +41921,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -41294,7 +41939,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -41491,6 +42137,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -41505,7 +42155,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -41702,6 +42353,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -41716,7 +42371,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -41913,6 +42569,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -41927,7 +42587,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -42124,6 +42785,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -42138,7 +42803,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -42335,6 +43001,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -42349,7 +43019,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -42546,6 +43217,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -42560,7 +43235,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -42757,6 +43433,10 @@
 						},
 						"type": "array",
 						"description": "The list of transformers applied to the data."
+					},
+					"serverTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
 					}
 				},
 				"required": [
@@ -42771,7 +43451,8 @@
 					"enabled",
 					"settings",
 					"caching",
-					"transformers"
+					"transformers",
+					"serverTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -43802,6 +44483,14 @@
 						},
 						"type": "array",
 						"description": "List of transformers to apply to data before sending to North connector."
+					},
+					"southServerTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the South side in the identity of its server, for the connectors which check it (OPC UA with a security\nmode other than None, SFTP)."
+					},
+					"northServerTrust": {
+						"$ref": "#/components/schemas/ServerTrustDTO",
+						"description": "The trust of the North side in the identity of its server, for the connectors which check it."
 					}
 				},
 				"required": [
@@ -43810,7 +44499,9 @@
 					"status",
 					"queryTimeRange",
 					"caching",
-					"northTransformers"
+					"northTransformers",
+					"southServerTrust",
+					"northServerTrust"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -47437,6 +48128,14 @@
 							"$ref": "#/components/schemas/HistoryTransformerCommandDTOWithOptions"
 						},
 						"type": "array"
+					},
+					"southServerTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the South side in the identity of its server (see the connection test). Omitted, it is kept as it is (or\nnone for a new history query)."
+					},
+					"northServerTrust": {
+						"$ref": "#/components/schemas/ServerTrustCommandDTO",
+						"description": "The trust of the North side in the identity of its server. Omitted, it is kept as it is (or none for a new history\nquery)."
 					},
 					"southType": {
 						"$ref": "#/components/schemas/OIBusSouthType"
@@ -51111,6 +51810,73 @@
 				]
 			}
 		},
+		"/api/south/{southId}/server-trust": {
+			"get": {
+				"operationId": "GetServerTrust",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ServerTrustStateDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves the trust of a south connector in the identity of its server, with the identity the connector refused at its\nlast connection (pending, until a user trusts it)",
+				"summary": "Get the trust in the identity of the server",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "TrustServerIdentity",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Trusts the identity the server of a south connector presents, when its fingerprint is the one given (as the connection\ntest showed it), and restarts the connector",
+				"summary": "Trust the identity of the server",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TrustServerIdentityCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/south/{southId}/test/connection": {
 			"post": {
 				"operationId": "TestConnection",
@@ -51126,7 +51892,7 @@
 						}
 					}
 				},
-				"description": "Tests the connection for a south connector",
+				"description": "Tests the connection for a south connector. For a connector checking the identity of its server, the result carries the\nidentity the server presents, and the connection is only tested further when it is trusted",
 				"summary": "Test south connection",
 				"tags": [
 					"South Connectors"
@@ -51147,6 +51913,15 @@
 						"required": true,
 						"schema": {
 							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the connector, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
+						"schema": {
+							"type": "string"
 						}
 					}
 				],
@@ -51207,6 +51982,15 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the connector, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				],
 				"requestBody": {
@@ -51261,6 +52045,15 @@
 						"schema": {
 							"$ref": "#/components/schemas/OIBusSouthType"
 						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the connector, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				],
 				"requestBody": {
@@ -51312,6 +52105,15 @@
 						"required": true,
 						"schema": {
 							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the connector, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
+						"schema": {
+							"type": "string"
 						}
 					}
 				],
@@ -51368,6 +52170,15 @@
 						"schema": {
 							"$ref": "#/components/schemas/OIBusSouthType"
 						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the connector, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				],
 				"requestBody": {
@@ -51418,6 +52229,15 @@
 						"required": true,
 						"schema": {
 							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the connector, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
+						"schema": {
+							"type": "string"
 						}
 					}
 				],
@@ -53242,6 +54062,73 @@
 				]
 			}
 		},
+		"/api/north/{northId}/server-trust": {
+			"get": {
+				"operationId": "GetServerTrust",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ServerTrustStateDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves the trust of a north connector in the identity of its server, with the identity the connector refused at its\nlast connection (pending, until a user trusts it)",
+				"summary": "Get the trust in the identity of the server",
+				"tags": [
+					"North Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "northId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "TrustServerIdentity",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Trusts the identity the server of a north connector presents, when its fingerprint is the one given (as the connection\ntest showed it), and restarts the connector",
+				"summary": "Trust the identity of the server",
+				"tags": [
+					"North Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "northId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TrustServerIdentityCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/north/{northId}/test/connection": {
 			"post": {
 				"operationId": "TestNorth",
@@ -53257,7 +54144,7 @@
 						}
 					}
 				},
-				"description": "Tests the connection for a north connector",
+				"description": "Tests the connection for a north connector. For a connector checking the identity of its server, the result carries the\nidentity the server presents, and the connection is only tested further when it is trusted",
 				"summary": "Test north connection",
 				"tags": [
 					"North Connectors"
@@ -53278,6 +54165,15 @@
 						"required": true,
 						"schema": {
 							"$ref": "#/components/schemas/OIBusNorthType"
+						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the connector, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
+						"schema": {
+							"type": "string"
 						}
 					}
 				],
@@ -54269,6 +55165,97 @@
 				]
 			}
 		},
+		"/api/history/{historyId}/server-trust/{side}": {
+			"get": {
+				"operationId": "GetServerTrust",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ServerTrustStateDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves the trust of a side of a history query in the identity of its server, with the identity it refused at its\nlast connection (pending, until a user trusts it)",
+				"summary": "Get the trust in the identity of the server",
+				"tags": [
+					"History Queries"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "historyId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "side",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"south",
+								"north"
+							]
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "TrustServerIdentity",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Trusts the identity the server of a side of a history query presents, when its fingerprint is the one given (as the\nconnection test showed it), and restarts the history query when it is running",
+				"summary": "Trust the identity of the server",
+				"tags": [
+					"History Queries"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "historyId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "side",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"south",
+								"north"
+							]
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TrustServerIdentityCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/history/{historyId}/test/north": {
 			"post": {
 				"operationId": "TestNorth",
@@ -54284,7 +55271,7 @@
 						}
 					}
 				},
-				"description": "Test north connection for a history query",
+				"description": "Test north connection for a history query. For a connector checking the identity of its server, the result carries the\nidentity the server presents, and the connection is only tested further when it is trusted",
 				"summary": "Test north connection",
 				"tags": [
 					"History Queries"
@@ -54311,6 +55298,15 @@
 						"in": "query",
 						"name": "fromNorth",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the history query, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}
@@ -54343,7 +55339,7 @@
 						}
 					}
 				},
-				"description": "Test south connection for a history query",
+				"description": "Test south connection for a history query. For a connector checking the identity of its server, the result carries the\nidentity the server presents, and the connection is only tested further when it is trusted",
 				"summary": "Test south connection",
 				"tags": [
 					"History Queries"
@@ -54370,6 +55366,15 @@
 						"in": "query",
 						"name": "fromSouth",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the history query, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}
@@ -54440,6 +55445,15 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the history query, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
 					}
 				],
 				"requestBody": {
@@ -54496,6 +55510,15 @@
 						"in": "query",
 						"name": "fromSouth",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the history query, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}
@@ -54560,6 +55583,15 @@
 						"in": "query",
 						"name": "fromSouth",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The fingerprint of the identity of the server trusted in the form of the history query, not saved yet",
+						"in": "query",
+						"name": "trustedFingerprint",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}

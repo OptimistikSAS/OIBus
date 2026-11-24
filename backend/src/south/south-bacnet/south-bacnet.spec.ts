@@ -242,6 +242,7 @@ const configuration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSe
   type: 'bacnet',
   description: 'test bacnet connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     localInterface: '',
     discoveryMode: 'broadcast',

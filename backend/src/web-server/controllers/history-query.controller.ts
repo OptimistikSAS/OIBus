@@ -25,6 +25,7 @@ import {
   HistoryQueryItemDTO,
   HistoryQueryLightDTO
 } from '../../../shared/model/api/history-query.model';
+import { ServerTrustStateDTO, TrustServerIdentityCommandDTO } from '../../../shared/model/api/server-identity.model';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemTestResult,
@@ -53,6 +54,7 @@ import { HistoryTransformerWithOptions } from '../../model/transformer.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import HistoryQueryService, { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
 import OIBusService from '../../service/oibus.service';
+import { toServerTrustStateDTO } from '../../service/server-trust.utils';
 import SouthService from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { CustomExpressRequest } from '../express';
@@ -230,8 +232,48 @@ export class HistoryQueryController extends Controller {
   }
 
   /**
-   * Test north connection for a history query
+   * Retrieves the trust of a side of a history query in the identity of its server, with the identity it refused at its
+   * last connection (pending, until a user trusts it)
+   * @summary Get the trust in the identity of the server
+   */
+  @Get('/{historyId}/server-trust/{side}')
+  getServerTrust(
+    @Path() historyId: string,
+    @Path() side: 'south' | 'north',
+    @Request() request: CustomExpressRequest
+  ): ServerTrustStateDTO {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    return toServerTrustStateDTO(historyQueryService.getServerTrustState(historyId, side), id =>
+      request.services.userService.getUserInfo(id)
+    );
+  }
+
+  /**
+   * Trusts the identity the server of a side of a history query presents, when its fingerprint is the one given (as the
+   * connection test showed it), and restarts the history query when it is running
+   * @summary Trust the identity of the server
+   */
+  @Post('/{historyId}/server-trust/{side}')
+  @SuccessResponse(204, 'No Content')
+  async trustServerIdentity(
+    @Path() historyId: string,
+    @Path() side: 'south' | 'north',
+    @Body() command: TrustServerIdentityCommandDTO,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    try {
+      await historyQueryService.trustServerIdentity(historyId, side, command.fingerprint, request.user.id);
+    } catch (error: unknown) {
+      throw error instanceof OIBusValidationError ? error : new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Test north connection for a history query. For a connector checking the identity of its server, the result carries the
+   * identity the server presents, and the connection is only tested further when it is trusted
    * @summary Test north connection
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the history query, not saved yet
    */
   @Post('/{historyId}/test/north')
   async testNorth(
@@ -239,19 +281,22 @@ export class HistoryQueryController extends Controller {
     @Query() northType: OIBusNorthType,
     @Query() fromNorth: string | undefined,
     @Body() command: NorthSettings,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<OIBusConnectionTestResult> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
-      return await historyQueryService.testNorth(historyId, northType, fromNorth, command);
+      return await historyQueryService.testNorth(historyId, northType, fromNorth, command, trustedFingerprint ?? null);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
   }
 
   /**
-   * Test south connection for a history query
+   * Test south connection for a history query. For a connector checking the identity of its server, the result carries the
+   * identity the server presents, and the connection is only tested further when it is trusted
    * @summary Test south connection
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the history query, not saved yet
    */
   @Post('/{historyId}/test/south')
   async testSouth(
@@ -259,11 +304,12 @@ export class HistoryQueryController extends Controller {
     @Query() southType: OIBusSouthType,
     @Query() fromSouth: string | undefined,
     @Body() command: SouthSettings,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<OIBusConnectionTestResult> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
-      return await historyQueryService.testSouth(historyId, southType, fromSouth, command);
+      return await historyQueryService.testSouth(historyId, southType, fromSouth, command, trustedFingerprint ?? null);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
@@ -272,6 +318,7 @@ export class HistoryQueryController extends Controller {
   /**
    * Test a history query item
    * @summary Test history query item
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the history query, not saved yet
    */
   @Post('/{historyId}/test/items')
   async testItem(
@@ -280,7 +327,8 @@ export class HistoryQueryController extends Controller {
     @Query() itemName: string,
     @Query() fromSouth: string | undefined,
     @Body() command: HistorySouthItemTestRequest,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<SouthConnectorItemTestResult> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
@@ -291,7 +339,8 @@ export class HistoryQueryController extends Controller {
         fromSouth,
         command.southSettings,
         command.itemSettings,
-        command.testingSettings
+        command.testingSettings,
+        trustedFingerprint ?? null
       );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
@@ -301,6 +350,7 @@ export class HistoryQueryController extends Controller {
   /**
    * Start an interactive explore session for a history query's south connector
    * @summary Start south explore session
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the history query, not saved yet
    */
   @Post('/{historyId}/explore')
   async startExplore(
@@ -308,11 +358,12 @@ export class HistoryQueryController extends Controller {
     @Query() southType: OIBusSouthType,
     @Query() fromSouth: string | undefined,
     @Body() command: SouthSettings,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<SouthExploreStartResult> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
-      return await historyQueryService.startExplore(historyId, southType, fromSouth, command);
+      return await historyQueryService.startExplore(historyId, southType, fromSouth, command, trustedFingerprint ?? null);
     } catch (error: unknown) {
       // Keeps why the data source could not be explored
       throw error instanceof OIBusTestingError ? error : new OIBusTestingError((error as Error).message);
@@ -326,6 +377,7 @@ export class HistoryQueryController extends Controller {
    * @param historyId The history query id, or "create" for a history query not created yet
    * @param fromSouth The south connector a history query being created is created from, whose secrets it uses
    * @returns {Promise<Array<SouthConnectorItemCommandDTO>>} One item to create per discovered record
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the history query, not saved yet
    */
   @Post('/{historyId}/test/discovered-items')
   async discoverItems(
@@ -333,7 +385,8 @@ export class HistoryQueryController extends Controller {
     @Query() southType: OIBusSouthType,
     @Query() fromSouth: string | undefined,
     @Body() command: HistoryDiscoveredItemsRequest,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<Array<SouthConnectorItemCommandDTO>> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
@@ -343,7 +396,9 @@ export class HistoryQueryController extends Controller {
         southType,
         southSettings,
         command.discoveryScope,
-        command.itemFieldMapping
+        command.itemFieldMapping,
+        trustedFingerprint ?? null,
+        historyQueryService.southServerTrust(historyId, fromSouth)
       );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);

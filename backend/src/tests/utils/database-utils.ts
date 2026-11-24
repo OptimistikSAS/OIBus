@@ -466,6 +466,8 @@ export const createNorth = async (database: knex.Knex, north: NorthConnectorEnti
       description: north.description,
       enabled: north.enabled,
       settings: JSON.stringify(north.settings),
+      // Not in the schema of the versions before 4.0 (migration specs)
+      ...((await database.schema.hasColumn('north_connectors', 'server_trust')) ? { server_trust: JSON.stringify(north.serverTrust) } : {}),
       caching_trigger_schedule: north.caching.trigger.scanMode.id,
       caching_trigger_number_of_elements: north.caching.trigger.numberOfElements,
       caching_trigger_number_of_files: north.caching.trigger.numberOfFiles,
@@ -500,7 +502,9 @@ export const createSouth = async (database: knex.Knex, south: SouthConnectorEnti
       type: south.type,
       description: south.description,
       enabled: south.enabled,
-      settings: JSON.stringify(south.settings)
+      settings: JSON.stringify(south.settings),
+      // Not in the schema of the versions before 4.0 (migration specs)
+      ...((await database.schema.hasColumn('south_connectors', 'server_trust')) ? { server_trust: JSON.stringify(south.serverTrust) } : {})
     })
     .into('south_connectors');
 
@@ -618,6 +622,13 @@ export const createHistoryQuery = async (
       north_type: historyQuery.northType,
       south_settings: JSON.stringify(historyQuery.southSettings),
       north_settings: JSON.stringify(historyQuery.northSettings),
+      // Not in the schema of the versions before 4.0 (migration specs)
+      ...((await database.schema.hasColumn('history_queries', 'south_server_trust'))
+        ? {
+            south_server_trust: JSON.stringify(historyQuery.southServerTrust),
+            north_server_trust: JSON.stringify(historyQuery.northServerTrust)
+          }
+        : {}),
       caching_trigger_schedule: historyQuery.caching.trigger.scanMode.id,
       caching_trigger_number_of_elements: historyQuery.caching.trigger.numberOfElements,
       caching_trigger_number_of_files: historyQuery.caching.trigger.numberOfFiles,

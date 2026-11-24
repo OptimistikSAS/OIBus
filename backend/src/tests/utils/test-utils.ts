@@ -198,6 +198,7 @@ export const buildNorthEntity = <T extends NorthSettings>(type: OIBusNorthType, 
   description: 'desc',
   type: type,
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings,
   caching: {
     trigger: {
@@ -270,6 +271,7 @@ export const buildSouthEntity = <T extends SouthSettings, I extends SouthItemSet
     description: 'desc',
     type,
     enabled: true,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     settings,
     items,
     groups: []

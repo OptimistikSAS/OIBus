@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
 
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '../../../shared/model/api/north-connector.model';
+import { ServerTrustStateDTO, TrustServerIdentityCommandDTO } from '../../../shared/model/api/server-identity.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/api/transformer.model';
 import { NorthConnectorManifest, OIBusNorthCategory, OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
@@ -14,9 +15,10 @@ import {
 } from '../../../shared/model/domain/engine.model';
 
 import { NorthTransformerWithOptions } from '../../model/transformer.model';
-import { OIBusTestingError } from '../../model/types';
+import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import NorthService, { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
 import OIBusService from '../../service/oibus.service';
+import { toServerTrustStateDTO } from '../../service/server-trust.utils';
 import { CustomExpressRequest } from '../express';
 
 /**
@@ -180,19 +182,53 @@ export class NorthConnectorController extends Controller {
   }
 
   /**
-   * Tests the connection for a north connector
+   * Retrieves the trust of a north connector in the identity of its server, with the identity the connector refused at its
+   * last connection (pending, until a user trusts it)
+   * @summary Get the trust in the identity of the server
+   */
+  @Get('/{northId}/server-trust')
+  getServerTrust(@Path() northId: string, @Request() request: CustomExpressRequest): ServerTrustStateDTO {
+    const northService = request.services.northService as NorthService;
+    return toServerTrustStateDTO(northService.getServerTrustState(northId), id => request.services.userService.getUserInfo(id));
+  }
+
+  /**
+   * Trusts the identity the server of a north connector presents, when its fingerprint is the one given (as the connection
+   * test showed it), and restarts the connector
+   * @summary Trust the identity of the server
+   */
+  @Post('/{northId}/server-trust')
+  @SuccessResponse(204, 'No Content')
+  async trustServerIdentity(
+    @Path() northId: string,
+    @Body() command: TrustServerIdentityCommandDTO,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const northService = request.services.northService as NorthService;
+    try {
+      await northService.trustServerIdentity(northId, command.fingerprint, request.user.id);
+    } catch (error: unknown) {
+      throw error instanceof OIBusValidationError ? error : new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Tests the connection for a north connector. For a connector checking the identity of its server, the result carries the
+   * identity the server presents, and the connection is only tested further when it is trusted
    * @summary Test north connection
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
    */
   @Post('/{northId}/test/connection')
   async testNorth(
     @Path() northId: string,
     @Query() northType: OIBusNorthType,
     @Body() command: NorthSettings,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<OIBusConnectionTestResult> {
     const northService = request.services.northService as NorthService;
     try {
-      return await northService.testNorth(northId, northType, command);
+      return await northService.testNorth(northId, northType, command, trustedFingerprint ?? null);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

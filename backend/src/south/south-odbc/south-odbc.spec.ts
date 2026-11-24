@@ -60,6 +60,7 @@ const buildConfiguration = (settings: Partial<SouthODBCSettings>): SouthConnecto
   type: 'odbc',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
     password: 'password',

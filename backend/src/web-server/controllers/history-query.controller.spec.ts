@@ -11,8 +11,9 @@ import { OIBusContent } from '../../../shared/model/common/content.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/domain/engine.model';
 import { HistoryQueryItemSearchParam } from '../../../shared/model/domain/history-query.model';
+import { ServerIdentity, ServerTrustState } from '../../../shared/model/domain/server-identity.model';
 
-import { OIBusExploreError, OIBusTestingError } from '../../model/types';
+import { OIBusExploreError, OIBusTestingError, OIBusValidationError } from '../../model/types';
 import type ConfigurationWorkflowRunService from '../../service/configuration-workflow-run.service';
 import type HistoryQueryService from '../../service/history-query.service';
 import type OIBusService from '../../service/oibus.service';
@@ -191,7 +192,7 @@ describe('HistoryQueryController', () => {
     await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.testNorth.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings]);
+    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings, null]);
   });
 
   it('should wrap errors when testing north connection', async () => {
@@ -211,7 +212,7 @@ describe('HistoryQueryController', () => {
       assert.strictEqual(error.message, 'North test failure');
     }
     assert.strictEqual(historyQueryService.testNorth.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings]);
+    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings, null]);
   });
 
   it('should throw OIBusTestingError when testing north connection fails', async () => {
@@ -242,7 +243,7 @@ describe('HistoryQueryController', () => {
     await controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.testSouth.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings]);
+    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings, null]);
   });
 
   it('should wrap errors when testing south connection', async () => {
@@ -262,7 +263,7 @@ describe('HistoryQueryController', () => {
       assert.strictEqual((error as OIBusTestingError).message, 'South test failure');
     }
     assert.strictEqual(historyQueryService.testSouth.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings]);
+    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings, null]);
   });
 
   it('should start an explore session', async () => {
@@ -276,7 +277,7 @@ describe('HistoryQueryController', () => {
     const result = await controller.startExplore(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.startExplore.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.startExplore.mock.calls[0].arguments, [historyId, southType, fromSouth, settings]);
+    assert.deepStrictEqual(historyQueryService.startExplore.mock.calls[0].arguments, [historyId, southType, fromSouth, settings, null]);
     assert.deepStrictEqual(result, mockResult);
   });
 
@@ -318,6 +319,8 @@ describe('HistoryQueryController', () => {
   });
 
   it('should map the records discovered against the south settings to new items', async () => {
+    const serverTrust = { identity: null, trustOnFirstUse: true };
+    historyQueryService.southServerTrust.mock.mockImplementation(() => serverTrust);
     const historyId = testData.historyQueries.list[0].id;
     const southType = testData.south.command.type;
     const fromSouth = testData.south.list[0].id;
@@ -344,7 +347,9 @@ describe('HistoryQueryController', () => {
       southType,
       resolvedSettings,
       command.discoveryScope,
-      command.itemFieldMapping
+      command.itemFieldMapping,
+      null,
+      serverTrust
     ]);
     assert.deepStrictEqual(result, discovered);
   });
@@ -416,6 +421,162 @@ describe('HistoryQueryController', () => {
     assert.deepStrictEqual(southService.closeExplore.mock.calls[0].arguments, [sessionId]);
   });
 
+  describe('with the identity of the servers', () => {
+    const identity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+    const otherIdentity: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:other', details: { keyType: 'ssh-ed25519' } };
+    const trustState: ServerTrustState = {
+      identity: { ...identity, trustedBy: 'user1', trustedAt: '2020-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false,
+      pending: { identity: otherIdentity, status: 'changed' }
+    };
+    const trustStateDTO = {
+      identity: { ...identity, trustedBy: { id: 'user1', friendlyName: 'User 1' }, trustedAt: '2020-01-01T00:00:00.000Z' },
+      trustOnFirstUse: false,
+      pending: { identity: otherIdentity, status: 'changed' }
+    };
+
+    beforeEach(() => {
+      userService.getUserInfo.mock.mockImplementation((id: string) => ({ id, friendlyName: 'User 1' }));
+    });
+
+    it('should get the trust of a side of a history query in the identity of its server', () => {
+      historyQueryService.getServerTrustState.mock.mockImplementation(() => trustState);
+
+      const result = controller.getServerTrust(testData.historyQueries.list[0].id, 'north', mockRequest as CustomExpressRequest);
+
+      assert.deepStrictEqual(historyQueryService.getServerTrustState.mock.calls[0].arguments, [
+        testData.historyQueries.list[0].id,
+        'north'
+      ]);
+      assert.deepStrictEqual(userService.getUserInfo.mock.calls[0].arguments, ['user1']);
+      assert.deepStrictEqual(result, trustStateDTO);
+    });
+
+    it('should trust the identity of the server of a side of a history query, by the user', async () => {
+      await controller.trustServerIdentity(
+        testData.historyQueries.list[0].id,
+        'south',
+        { fingerprint: identity.fingerprint },
+        mockRequest as CustomExpressRequest
+      );
+
+      assert.deepStrictEqual(historyQueryService.trustServerIdentity.mock.calls[0].arguments, [
+        testData.historyQueries.list[0].id,
+        'south',
+        identity.fingerprint,
+        'test'
+      ]);
+    });
+
+    it('should keep a validation error when trusting the identity of the server of a history query', async () => {
+      const error = new OIBusValidationError('not the one to trust');
+      historyQueryService.trustServerIdentity.mock.mockImplementation(async () => {
+        throw error;
+      });
+
+      await assert.rejects(
+        controller.trustServerIdentity(
+          testData.historyQueries.list[0].id,
+          'south',
+          { fingerprint: identity.fingerprint },
+          mockRequest as CustomExpressRequest
+        ),
+        error
+      );
+    });
+
+    it('should wrap other errors when trusting the identity of the server of a history query', async () => {
+      historyQueryService.trustServerIdentity.mock.mockImplementation(async () => {
+        throw new Error('connection failed');
+      });
+
+      await assert.rejects(
+        controller.trustServerIdentity(
+          testData.historyQueries.list[0].id,
+          'north',
+          { fingerprint: identity.fingerprint },
+          mockRequest as CustomExpressRequest
+        ),
+        new OIBusTestingError('connection failed')
+      );
+    });
+
+    it('should forward the fingerprint trusted in the form when testing, testing an item and exploring', async () => {
+      const historyId = testData.historyQueries.list[0].id;
+      const itemRequest = {
+        southSettings: testData.south.command.settings,
+        itemSettings: testData.south.itemCommand.settings,
+        testingSettings: { history: { startTime: testData.constants.dates.DATE_1, endTime: testData.constants.dates.DATE_2 } }
+      } as HistorySouthItemTestRequest;
+
+      await controller.testNorth(
+        historyId,
+        testData.north.command.type,
+        undefined,
+        testData.north.command.settings,
+        mockRequest as CustomExpressRequest,
+        identity.fingerprint
+      );
+      await controller.testSouth(
+        historyId,
+        testData.south.command.type,
+        undefined,
+        testData.south.command.settings,
+        mockRequest as CustomExpressRequest,
+        identity.fingerprint
+      );
+      await controller.testItem(
+        historyId,
+        testData.south.command.type,
+        testData.south.itemCommand.name,
+        undefined,
+        itemRequest,
+        mockRequest as CustomExpressRequest,
+        identity.fingerprint
+      );
+      await controller.startExplore(
+        historyId,
+        testData.south.command.type,
+        undefined,
+        testData.south.command.settings,
+        mockRequest as CustomExpressRequest,
+        identity.fingerprint
+      );
+
+      assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [
+        historyId,
+        testData.north.command.type,
+        undefined,
+        testData.north.command.settings,
+        identity.fingerprint
+      ]);
+      assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [
+        historyId,
+        testData.south.command.type,
+        undefined,
+        testData.south.command.settings,
+        identity.fingerprint
+      ]);
+      assert.deepStrictEqual(historyQueryService.testItem.mock.calls[0].arguments, [
+        historyId,
+        testData.south.command.type,
+        testData.south.itemCommand.name,
+        undefined,
+        itemRequest.southSettings,
+        itemRequest.itemSettings,
+        itemRequest.testingSettings,
+        identity.fingerprint
+      ]);
+      assert.deepStrictEqual(historyQueryService.startExplore.mock.calls[0].arguments, [
+        historyId,
+        testData.south.command.type,
+        undefined,
+        testData.south.command.settings,
+        identity.fingerprint
+      ]);
+    });
+  });
+
   it('should test a history query item', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const southType = testData.south.command.type;
@@ -461,7 +622,8 @@ describe('HistoryQueryController', () => {
       fromSouth,
       requestBody.southSettings,
       requestBody.itemSettings,
-      requestBody.testingSettings
+      requestBody.testingSettings,
+      null
     ]);
     assert.deepStrictEqual(result, mockResult);
   });
@@ -500,7 +662,8 @@ describe('HistoryQueryController', () => {
       fromSouth,
       requestBody.southSettings,
       requestBody.itemSettings,
-      requestBody.testingSettings
+      requestBody.testingSettings,
+      null
     ]);
   });
 

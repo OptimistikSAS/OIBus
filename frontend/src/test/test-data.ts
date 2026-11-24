@@ -206,6 +206,7 @@ const southList: Array<SouthConnectorDTO> = [
     type: 'folder-scanner',
     description: 'my folder scanner',
     enabled: true,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     settings: {
       inputFolder: 'input',
       username: null,
@@ -334,6 +335,7 @@ const southList: Array<SouthConnectorDTO> = [
     type: 'mssql',
     description: 'my MSSQL south connector',
     enabled: false,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     settings: {
       connectionSettings: {
         host: 'host',
@@ -471,6 +473,7 @@ const southList: Array<SouthConnectorDTO> = [
     type: 'opcua',
     description: 'my OPCUA south connector',
     enabled: true,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       connectionTimeout: 15000,
@@ -883,6 +886,7 @@ const northList: Array<NorthConnectorDTO> = [
     type: 'file-writer',
     description: 'my file writer',
     enabled: true,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     settings: {
       outputFolder: 'output-folder',
       username: null,
@@ -1123,6 +1127,7 @@ const northList: Array<NorthConnectorDTO> = [
     type: 'oianalytics',
     description: 'my oianalytics',
     enabled: false,
+    serverTrust: { identity: null, trustOnFirstUse: false },
     settings: {
       useOiaModule: true,
       timeout: 5000,
@@ -1306,6 +1311,8 @@ const historyQueryList: Array<HistoryQueryDTO> = [
     name: 'my first History Query',
     description: 'description',
     status: 'RUNNING',
+    southServerTrust: { identity: null, trustOnFirstUse: false },
+    northServerTrust: { identity: null, trustOnFirstUse: false },
     southType: 'mssql',
     southSettings: {
       connectionSettings: {
@@ -1534,6 +1541,8 @@ const historyQueryList: Array<HistoryQueryDTO> = [
     name: 'My second History Query',
     description: 'description',
     status: 'PENDING',
+    southServerTrust: { identity: null, trustOnFirstUse: false },
+    northServerTrust: { identity: null, trustOnFirstUse: false },
     southType: 'mssql',
     southSettings: {
       connectionSettings: {

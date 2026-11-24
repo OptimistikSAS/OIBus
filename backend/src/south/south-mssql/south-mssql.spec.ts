@@ -98,6 +98,7 @@ const buildConfiguration = (
   type: 'mssql',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     connectionSettings: {
       host: 'localhost',

@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import type { CacheContentUpdateCommand, HistoryQueryItemStatus } from '../../shared/model/domain/engine.model';
+import type { ServerTrust } from '../../shared/model/domain/server-identity.model';
 
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -616,5 +617,49 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.updateCacheContent(updateCommand);
     assert.strictEqual(north.updateCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(north.updateCacheContent.mock.calls[0].arguments[0], updateCommand);
+  });
+
+  describe('server identity trust', () => {
+    const southServerTrust: ServerTrust = {
+      identity: {
+        type: 'ssh-host-key',
+        fingerprint: 'SHA256:south',
+        details: { keyType: 'ssh-ed25519' },
+        trustedBy: 'admin',
+        trustedAt: testData.constants.dates.DATE_1
+      },
+      trustOnFirstUse: false
+    };
+    const northServerTrust: ServerTrust = { identity: null, trustOnFirstUse: true };
+
+    it('should give the verifier of the identity of the server of each side', () => {
+      assert.strictEqual(historyQuery.getServerIdentityVerifier('south'), south.serverIdentityVerifier);
+      assert.strictEqual(historyQuery.getServerIdentityVerifier('north'), north.serverIdentityVerifier);
+    });
+
+    it('should give each side the trust in the identity of its server', () => {
+      historyQuery.historyQueryConfiguration = { ...configuration, southServerTrust, northServerTrust };
+
+      assert.deepStrictEqual(south.connectorConfiguration.serverTrust, southServerTrust);
+      assert.deepStrictEqual(north.connectorConfiguration.serverTrust, northServerTrust);
+      // The verifiers compare the identity presented with the trust of their side
+      assert.strictEqual(
+        historyQuery.getServerIdentityVerifier('south').verify({
+          type: 'ssh-host-key',
+          fingerprint: 'SHA256:south',
+          details: { keyType: 'ssh-ed25519' }
+        }),
+        true
+      );
+      assert.strictEqual(
+        historyQuery.getServerIdentityVerifier('south').verify({
+          type: 'ssh-host-key',
+          fingerprint: 'SHA256:other',
+          details: { keyType: 'ssh-ed25519' }
+        }),
+        false
+      );
+      assert.strictEqual(south.getPendingServerIdentity()?.status, 'changed');
+    });
   });
 });

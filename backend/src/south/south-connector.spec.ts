@@ -15,6 +15,7 @@ import type {
   SouthOPCUAItemSettings,
   SouthOPCUASettings
 } from '../../shared/model/connector/south-settings.model';
+import type { ServerIdentity } from '../../shared/model/domain/server-identity.model';
 import type { SouthHistoryEmptyIntervalStrategy, SouthHistoryRecoveryStrategy } from '../../shared/model/domain/south-connector.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
@@ -513,6 +514,60 @@ describe('SouthConnector', () => {
       assert.strictEqual(saveCalls.length, 1);
       assert.strictEqual(saveCalls[0].arguments[0], south.connectorConfiguration.id);
       assert.strictEqual((saveCalls[0].arguments[1] as { itemId: string }).itemId, items[0].id);
+    });
+
+    describe('server identity trust', () => {
+      const presented: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+
+      it('should not check the identity of its server by default', async () => {
+        assert.strictEqual(await south.retrieveServerIdentity(), null);
+        assert.strictEqual(south.isServerNotTrusted(), false);
+        assert.strictEqual(south.getPendingServerIdentity(), null);
+      });
+
+      it('should refuse a server whose identity is not trusted and keep it pending', () => {
+        assert.strictEqual(south['verifyServerIdentity'](presented), false);
+
+        assert.strictEqual(south.isServerNotTrusted(), true);
+        assert.deepStrictEqual(south.getPendingServerIdentity(), { identity: presented, status: 'unknown' });
+        assert.deepStrictEqual(south.getPendingServerIdentity(), south.serverIdentityVerifier.pendingIdentity);
+      });
+
+      it('should accept the trusted identity and forget the pending one', () => {
+        south['verifyServerIdentity'](presented);
+        south.connectorConfiguration = {
+          ...south.connectorConfiguration,
+          serverTrust: {
+            identity: { ...presented, trustedBy: 'admin', trustedAt: testData.constants.dates.FAKE_NOW },
+            trustOnFirstUse: false
+          }
+        };
+
+        assert.strictEqual(south['verifyServerIdentity'](presented), true);
+        assert.strictEqual(south.isServerNotTrusted(), false);
+        assert.strictEqual(south.getPendingServerIdentity(), null);
+      });
+
+      it('should save in its configuration the identity trusted on first use', () => {
+        south.connectorConfiguration = { ...south.connectorConfiguration, serverTrust: { identity: null, trustOnFirstUse: true } };
+
+        assert.strictEqual(south['verifyServerIdentity'](presented), true);
+        assert.deepStrictEqual(south.connectorConfiguration.serverTrust, {
+          identity: { ...presented, trustedBy: 'system', trustedAt: testData.constants.dates.FAKE_NOW },
+          trustOnFirstUse: false
+        });
+        assert.strictEqual(south.isServerNotTrusted(), false);
+      });
+
+      it('should forget the pending identity when it starts', async () => {
+        south['verifyServerIdentity'](presented);
+        assert.strictEqual(south.isServerNotTrusted(), true);
+
+        await south.start();
+
+        assert.strictEqual(south.isServerNotTrusted(), false);
+        assert.strictEqual(south.getPendingServerIdentity(), null);
+      });
     });
   });
 

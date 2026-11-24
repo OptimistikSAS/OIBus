@@ -54,6 +54,7 @@ const configuration: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings
   type: 'ads',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     port: 851,
     netId: '10.211.55.3.1.1',

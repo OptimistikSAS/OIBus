@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 import {
   HistoryQueryCommandDTO,
   HistoryQueryCommonDTO,
@@ -16,6 +18,7 @@ import { OIBusSouthType, SouthConnectorManifest } from '../../shared/model/conne
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
 import { HistoryQueryItemSearchParam } from '../../shared/model/domain/history-query.model';
+import { ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
 import { SouthConnectorItemTestingSettings } from '../../shared/model/domain/south-connector.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
@@ -37,11 +40,13 @@ import type NorthService from './north.service';
 import { northManifestList } from './north-manifests';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
+import { retrieveServerIdentityToTrust, toServerTrust, toServerTrustDTO } from './server-trust.utils';
 import type SouthService from './south.service';
 import { southManifestList } from './south-manifests';
 import type TransformerService from './transformer.service';
 import { toTransformerDTO } from './transformer.service';
 import { checkScanMode, parseCsvImport, stringToBoolean } from './utils';
+import { NO_SERVER_TRUST, toTrustedServerIdentity } from './utils-server-identity';
 
 export default class HistoryQueryService {
   constructor(
@@ -107,7 +112,8 @@ export default class HistoryQueryService {
         southManifest,
         northManifest
       ),
-      this.scanModeRepository.findAll()
+      this.scanModeRepository.findAll(),
+      createdBy
     );
     historyQuery.createdBy = createdBy;
     historyQuery.updatedBy = createdBy;
@@ -187,7 +193,7 @@ export default class HistoryQueryService {
     }
 
     const historyQuery = { id: previousSettings.id } as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
-    copyHistoryQueryCommandToHistoryQueryEntity(historyQuery, command, previousSettings, this.scanModeRepository.findAll());
+    copyHistoryQueryCommandToHistoryQueryEntity(historyQuery, command, previousSettings, this.scanModeRepository.findAll(), updatedBy);
     historyQuery.createdBy = previousSettings.createdBy;
     historyQuery.updatedBy = updatedBy;
     for (const item of historyQuery.items) {
@@ -278,15 +284,19 @@ export default class HistoryQueryService {
     historyId: string,
     northType: OIBusNorthType,
     retrieveSecretsFromNorth: string | undefined,
-    settingsToTest: NorthSettings
+    settingsToTest: NorthSettings,
+    trustedFingerprint: string | null = null
   ): Promise<OIBusConnectionTestResult> {
     let northSettings: NorthSettings | null = null;
+    let northServerTrust: ServerTrust | null = null;
     if (historyId !== 'create') {
       const historyQuery = this.findById(historyId);
       northSettings = historyQuery.northSettings;
+      northServerTrust = historyQuery.northServerTrust;
     } else if (retrieveSecretsFromNorth) {
       const north = this.northService.findById(retrieveSecretsFromNorth);
       northSettings = north.settings;
+      northServerTrust = north.serverTrust;
     }
     const northManifest = this.northService.getManifest(northType);
     await this.validator.validateSettings(northManifest.settings, settingsToTest);
@@ -296,7 +306,9 @@ export default class HistoryQueryService {
       encryptionService.decryptConnectorSecrets(
         encryptionService.encryptConnectorSecrets(settingsToTest, northSettings, northManifest.settings),
         northManifest.settings
-      )
+      ),
+      trustedFingerprint,
+      northServerTrust ?? NO_SERVER_TRUST
     );
   }
 
@@ -304,12 +316,15 @@ export default class HistoryQueryService {
     historyId: string,
     southType: OIBusSouthType,
     retrieveSecretsFromSouth: string | undefined,
-    settingsToTest: SouthSettings
+    settingsToTest: SouthSettings,
+    trustedFingerprint: string | null = null
   ): Promise<OIBusConnectionTestResult> {
     return await this.southService.testSouth(
       'history',
       southType,
-      await this.southSettingsToTest(historyId, southType, retrieveSecretsFromSouth, settingsToTest)
+      await this.southSettingsToTest(historyId, southType, retrieveSecretsFromSouth, settingsToTest),
+      trustedFingerprint,
+      this.southServerTrust(historyId, retrieveSecretsFromSouth)
     );
   }
 
@@ -317,12 +332,95 @@ export default class HistoryQueryService {
     historyId: string,
     southType: OIBusSouthType,
     retrieveSecretsFromSouth: string | undefined,
-    settingsToTest: SouthSettings
+    settingsToTest: SouthSettings,
+    trustedFingerprint: string | null = null
   ): Promise<SouthExploreStartResult> {
     return await this.southService.startExplore(
       'history',
       southType,
-      await this.southSettingsToTest(historyId, southType, retrieveSecretsFromSouth, settingsToTest)
+      await this.southSettingsToTest(historyId, southType, retrieveSecretsFromSouth, settingsToTest),
+      trustedFingerprint,
+      this.southServerTrust(historyId, retrieveSecretsFromSouth)
+    );
+  }
+
+  /**
+   * The trust of the South side of the history query in the identity of its server - or, for a history query being
+   * created, of the south connector it is created from.
+   */
+  southServerTrust(historyId: string, retrieveSecretsFromSouth: string | undefined): ServerTrust {
+    if (historyId !== 'create') {
+      return this.findById(historyId).southServerTrust;
+    }
+    return retrieveSecretsFromSouth ? this.southService.findById(retrieveSecretsFromSouth).serverTrust : NO_SERVER_TRUST;
+  }
+
+  /**
+   * The trust of a side of the history query in the identity of its server, with the identity it refused at its last
+   * connection (pending, until a user trusts it).
+   */
+  getServerTrustState(historyId: string, side: 'south' | 'north'): ServerTrustState {
+    const historyQuery = this.findById(historyId);
+    let pending = null;
+    try {
+      pending = this.engine.getHistoryQuery(historyId).historyQuery.getServerIdentityVerifier(side).pendingIdentity;
+    } catch {
+      // Not in the engine
+    }
+    return { ...(side === 'south' ? historyQuery.southServerTrust : historyQuery.northServerTrust), pending };
+  }
+
+  /**
+   * Trust the identity the server of a side of the history query presents, when its fingerprint is the one the user
+   * reviewed, and restart the history query so that it connects with it.
+   */
+  async trustServerIdentity(historyId: string, side: 'south' | 'north', fingerprint: string, trustedBy: string): Promise<void> {
+    const historyQuery = this.findById(historyId);
+    const connector =
+      side === 'south'
+        ? this.southService.buildThrowawaySouth({
+            id: historyQuery.id,
+            name: historyQuery.name,
+            description: historyQuery.description,
+            enabled: false,
+            type: historyQuery.southType,
+            settings: historyQuery.southSettings,
+            serverTrust: historyQuery.southServerTrust,
+            items: [],
+            groups: [],
+            createdBy: historyQuery.createdBy,
+            updatedBy: historyQuery.updatedBy,
+            createdAt: historyQuery.createdAt,
+            updatedAt: historyQuery.updatedAt
+          })
+        : this.northService.buildThrowawayNorth({
+            id: historyQuery.id,
+            name: historyQuery.name,
+            description: historyQuery.description,
+            enabled: false,
+            type: historyQuery.northType,
+            settings: historyQuery.northSettings,
+            serverTrust: historyQuery.northServerTrust,
+            caching: historyQuery.caching,
+            transformers: [],
+            createdBy: historyQuery.createdBy,
+            updatedBy: historyQuery.updatedBy,
+            createdAt: historyQuery.createdAt,
+            updatedAt: historyQuery.updatedAt
+          });
+    const identity = await retrieveServerIdentityToTrust(connector, fingerprint);
+    this.historyQueryRepository.updateServerTrust(
+      historyId,
+      side,
+      { identity: toTrustedServerIdentity(identity, trustedBy, DateTime.now().toUTC().toISO()!), trustOnFirstUse: false },
+      trustedBy
+    );
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+    if (historyQuery.status === 'RUNNING') {
+      await this.engine.reloadHistoryQuery(historyQuery, false);
+    }
+    this.engine.logger.info(
+      `Server identity ${identity.fingerprint} trusted by "${trustedBy}" for the ${side === 'south' ? 'South' : 'North'} of History query "${historyQuery.name}" (${historyId})`
     );
   }
 
@@ -359,7 +457,8 @@ export default class HistoryQueryService {
     retrieveSecretsFromSouth: string | undefined,
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
-    testingSettings: SouthConnectorItemTestingSettings
+    testingSettings: SouthConnectorItemTestingSettings,
+    trustedFingerprint: string | null = null
   ): Promise<SouthConnectorItemTestResult> {
     let southSettingsFrom: SouthSettings | null = null;
     let historyName: string | undefined;
@@ -387,7 +486,9 @@ export default class HistoryQueryService {
       ),
       itemSettings,
       testingSettings,
-      historyName
+      historyName,
+      trustedFingerprint,
+      this.southServerTrust(historyId, retrieveSecretsFromSouth)
     );
   }
 
@@ -653,6 +754,7 @@ export default class HistoryQueryService {
         source.southType = south.type;
         source.items = south.items;
         source.southSettings = south.settings;
+        source.southServerTrust = south.serverTrust;
       }
       if (retrieveSecretsFromNorth) {
         const north = this.northService.findById(retrieveSecretsFromNorth);
@@ -663,6 +765,7 @@ export default class HistoryQueryService {
         }
         source.northType = north.type;
         source.northSettings = north.settings;
+        source.northServerTrust = north.serverTrust;
       }
       return source;
     }
@@ -674,7 +777,8 @@ const copyHistoryQueryCommandToHistoryQueryEntity = (
   historyQueryEntity: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
   command: HistoryQueryCommandDTO,
   currentSettings: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null,
-  scanModes: Array<ScanMode>
+  scanModes: Array<ScanMode>,
+  user: string
 ): void => {
   const southManifest = southManifestList.find(element => element.id === command.southType)!;
   const northManifest = northManifestList.find(element => element.id === command.northType)!;
@@ -699,6 +803,8 @@ const copyHistoryQueryCommandToHistoryQueryEntity = (
     currentSettings?.southSettings || null,
     southManifest.settings
   );
+  historyQueryEntity.southServerTrust = toServerTrust(command.southServerTrust, currentSettings?.southServerTrust ?? null, user);
+  historyQueryEntity.northServerTrust = toServerTrust(command.northServerTrust, currentSettings?.northServerTrust ?? null, user);
   historyQueryEntity.caching = {
     trigger: {
       scanMode: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
@@ -808,6 +914,8 @@ export const toHistoryQueryDTO = (
     },
     northType: historyQuery.northType,
     northSettings: encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
+    southServerTrust: toServerTrustDTO(historyQuery.southServerTrust, getUserInfo),
+    northServerTrust: toServerTrustDTO(historyQuery.northServerTrust, getUserInfo),
     caching: {
       trigger: {
         scanMode: toScanModeDTO(historyQuery.caching.trigger.scanMode, getUserInfo),

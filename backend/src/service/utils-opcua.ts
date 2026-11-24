@@ -8,18 +8,22 @@ import {
   DataType,
   DataValue,
   HistoryReadRequest,
+  ICertificateStore,
   InMemoryCertificateKeyPairProvider,
   InMemoryCertificateStore,
+  MessageSecurityMode,
   OPCUAClient,
   OPCUAClientOptions,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
+  StatusCode,
+  StatusCodes,
   TimestampsToReturn,
   UserIdentityInfo,
   UserTokenType,
   Variant
 } from 'node-opcua';
-import { convertPEMtoDER, exploreCertificate, split_der } from 'node-opcua-crypto';
+import { Certificate, convertPEMtoDER, exploreCertificate, split_der } from 'node-opcua-crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
 import { Instant } from '../../shared/model/common/types';
@@ -34,11 +38,13 @@ import {
   SouthOPCUASettingsSecurityMode,
   SouthOPCUASettingsSecurityPolicy
 } from '../../shared/model/connector/south-settings.model';
+import { ServerIdentity } from '../../shared/model/domain/server-identity.model';
 
 import type { CertificateKeyPair } from '../model/certificate.model';
 import type { ILogger } from '../model/logger.model';
 import type CertificateService from './certificate.service';
 import { encryptionService } from './encryption.service';
+import { toX509ServerIdentity } from './utils-server-identity';
 
 const NUM_VALUES_PER_NODE = 1000;
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
@@ -125,12 +131,151 @@ export const getOPCUACertificate = async (
   };
 };
 
+/**
+ * Runs `task` and rejects with `message` when it is not done after `timeoutMs`. Wired through a single promise settled by
+ * either branch, instead of a `Promise.race`, so that neither branch is left pending once the other one settled (see
+ * `getDAValues` of the OPC UA South connector). The task itself is not aborted: the caller has to clean up after a timeout.
+ */
+const withTimeout = <T>(task: () => Promise<T>, timeoutMs: number, message: string): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+    task().then(
+      result => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      },
+      (error: unknown) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      }
+    );
+  });
+
+/**
+ * The certificate of the server, without its chain: node-opcua gives the certificate of the endpoint, which may be a DER
+ * chain, the certificate of the server first.
+ */
+const toServerCertificate = (certificate: Certificate | Array<Certificate>): Buffer =>
+  Array.isArray(certificate) ? certificate[0] : split_der(certificate)[0];
+
+/**
+ * The trust store node-opcua checks the certificate of the server with (when securing the connection, so not with the
+ * security mode None): it asks the connector whether it trusts the server (see `SouthConnector.verifyServerIdentity`),
+ * instead of comparing thumbprints in memory. node-opcua checks it when it fetches the endpoint, before opening the secure
+ * channel, so before sending any credential. In memory: no rejected/, trusted/, issuers/ folders on disk. The trust is
+ * the connector's own, so a certificate is never trusted or rejected through the store itself.
+ */
+export class ServerIdentityCertificateStore implements ICertificateStore {
+  referenceCounter = 0;
+
+  constructor(private readonly isServerTrusted: (identity: ServerIdentity) => boolean) {}
+
+  async initialize(): Promise<void> {
+    // Nothing to load: the trust is the connector's own
+  }
+
+  async dispose(): Promise<void> {
+    // Nothing to release
+  }
+
+  checkCertificate(certificate: Certificate | Array<Certificate>): Promise<StatusCode> {
+    return Promise.resolve(
+      this.isServerTrusted(toX509ServerIdentity(toServerCertificate(certificate))) ? StatusCodes.Good : StatusCodes.BadCertificateUntrusted
+    );
+  }
+
+  async verifyCertificate(certificate: Certificate | Array<Certificate>): Promise<string> {
+    return (await this.checkCertificate(certificate)).name;
+  }
+
+  async getTrustStatus(certificate: Certificate): Promise<StatusCode> {
+    return await this.checkCertificate(certificate);
+  }
+
+  async trustCertificate(): Promise<void> {
+    // Trusted by a user through the connector, never by node-opcua
+  }
+
+  async rejectCertificate(): Promise<void> {
+    // Refused by the connector itself
+  }
+
+  async addIssuer(): Promise<void> {
+    // The certificate of the server itself is trusted, not its issuer
+  }
+
+  async addRevocationList(): Promise<void> {
+    // The certificate of the server itself is trusted, not its issuer
+  }
+}
+
+/** The short name of an OPC UA security policy URI (`http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256`). */
+const toSecurityPolicyName = (securityPolicyUri: string | null | undefined): string => {
+  const uri = securityPolicyUri ?? '';
+  return uri.substring(uri.lastIndexOf('#') + 1);
+};
+
+/**
+ * The identity (the application certificate) the OPC UA server presents on the endpoint of the security mode and policy
+ * of the settings, read from the endpoints the server advertises: no session is opened, so no credential is sent. `null`
+ * with the security mode None, where the certificate of the server is not checked (nothing authenticates the server).
+ */
+export const retrieveOPCUAServerIdentity = async (settings: SouthOPCUASettings | NorthOPCUASettings): Promise<ServerIdentity | null> => {
+  if (settings.securityMode === 'none') {
+    return null;
+  }
+  const { provider, applicationUri } = await getOPCUACertificate(null);
+  const client = OPCUAClient.create({
+    applicationName: 'OIBus',
+    applicationUri,
+    connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+    transportTimeout: settings.connectionTimeout,
+    endpointMustExist: false,
+    certificateKeyPairProvider: provider,
+    clientCertificateManager: new InMemoryCertificateStore()
+  });
+  try {
+    const getEndpoints = async () => {
+      await client.connect(settings.url);
+      return await client.getEndpoints();
+    };
+    const endpoints = await withTimeout(
+      getEndpoints,
+      settings.connectionTimeout,
+      `Connection timeout: no endpoint received after ${settings.connectionTimeout} ms`
+    );
+    const securityMode = toOPCUASecurityMode(settings.securityMode) as MessageSecurityMode;
+    const securityPolicy = toOPCUASecurityPolicy(settings.securityPolicy)?.toLowerCase();
+    const endpoint = endpoints.find(
+      e =>
+        e.securityMode === securityMode &&
+        (!securityPolicy || toSecurityPolicyName(e.securityPolicyUri).toLowerCase() === securityPolicy) &&
+        e.serverCertificate?.length
+    );
+    if (!endpoint) {
+      throw new Error(
+        `The server has no endpoint with the security mode "${settings.securityMode}" and the security policy "${settings.securityPolicy}"`
+      );
+    }
+    return toX509ServerIdentity(toServerCertificate(endpoint.serverCertificate));
+  } finally {
+    await client.disconnect().catch(() => {
+      /* the identity, or the error, is the result worth reporting */
+    });
+  }
+};
+
+/**
+ * The options and user identity to open a session with. `isServerTrusted` decides whether the connection goes on with
+ * the server presenting an identity (see `ServerIdentityCertificateStore`).
+ */
 export const createSessionConfigs = async (
   connectorId: string,
   connectorName: string,
   settings: SouthOPCUASettings | NorthOPCUASettings,
   requestTimeout: number,
-  certificateService: CertificateService
+  certificateService: CertificateService,
+  isServerTrusted: (identity: ServerIdentity) => boolean
 ) => {
   const { provider, applicationUri } = await getOPCUACertificate(
     settings.certificateId ? certificateService.getKeyPair(settings.certificateId) : null
@@ -156,8 +301,7 @@ export const createSessionConfigs = async (
     // The certificate and its key in memory: node-opcua also gives this provider to the client it uses to find the
     // endpoint of the server
     certificateKeyPairProvider: provider,
-    // In-memory trust store with auto-accept — no rejected/, trusted/, issuers/ folders on disk.
-    clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true })
+    clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted)
   };
 
   let userIdentity: UserIdentityInfo;
@@ -185,26 +329,6 @@ export const createSessionConfigs = async (
 
   return { options, userIdentity };
 };
-
-/**
- * Runs `task` and rejects with `message` when it is not done after `timeoutMs`. Wired through a single promise settled by
- * either branch, instead of a `Promise.race`, so that neither branch is left pending once the other one settled (see
- * `getDAValues` of the OPC UA South connector). The task itself is not aborted: the caller has to clean up after a timeout.
- */
-const withTimeout = <T>(task: () => Promise<T>, timeoutMs: number, message: string): Promise<T> =>
-  new Promise<T>((resolve, reject) => {
-    const timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
-    task().then(
-      result => {
-        clearTimeout(timeoutId);
-        resolve(result);
-      },
-      (error: unknown) => {
-        clearTimeout(timeoutId);
-        reject(error);
-      }
-    );
-  });
 
 /**
  * Same as node-opcua's `OPCUAClient.createSession(endpointUrl, userIdentity, options)` - connect a client,

@@ -61,6 +61,7 @@ import {
 } from '../domain/south-connector.model';
 import { ConfigurationWorkflowCommandDTO } from './configuration-workflow.model';
 import { ScanModeDTO } from './scan-mode.model';
+import { ServerTrustCommandDTO, ServerTrustDTO } from './server-identity.model';
 
 /**
  * Lightweight Data Transfer Object for a South connector.
@@ -139,6 +140,11 @@ export interface SouthConnectorTypedDTO<T extends OIBusSouthType, S, IS> extends
    * List of groups attached to this connector
    */
   groups: Array<SouthItemGroupDTO>;
+  /**
+   * The trust of the connector in the identity of its server, for the connectors which check it (OPC UA with a security
+   * mode other than None, SFTP).
+   */
+  serverTrust: ServerTrustDTO;
 }
 
 export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
@@ -680,6 +686,11 @@ export interface SouthConnectorCommandTypedDTO<T extends OIBusSouthType, S, IS> 
    * created.
    */
   configurationWorkflows: Array<ConfigurationWorkflowCommandDTO>;
+  /**
+   * The trust of the connector in the identity of its server (see the connection test). Omitted, the trust of the connector
+   * is kept as it is (or none for a new connector).
+   */
+  serverTrust?: ServerTrustCommandDTO;
 }
 
 export interface SouthConnectorItemCommandTypedDTO<IS> {

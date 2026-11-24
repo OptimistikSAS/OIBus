@@ -7,6 +7,7 @@ import sftpClient, { ConnectOptions, FileInfo } from 'ssh2-sftp-client';
 import { OIBusContent, OIBusPointRecord } from '../../../shared/model/common/content.model';
 import { SouthItemSettings, SouthSFTPItemSettings, SouthSFTPSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -14,6 +15,7 @@ import { Instant, OIBusTestingError } from '../../model/types';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { encryptionService } from '../../service/encryption.service';
 import { checkAge, getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { createHostVerifier, retrieveSshServerIdentity } from '../../service/utils-sftp';
 import SouthConnector from '../south-connector';
 import { SouthDirectQuery } from '../south-interface';
 
@@ -68,7 +70,8 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         `Error while connecting to SFTP server ${this.connector.settings.host}:${this.connector.settings.port}: ${getErrorMessage(error)}`
       );
       await this.disconnect();
-      if (!this.disconnecting && this.connector.enabled) {
+      // A server not trusted is not reconnected to: trusting its identity restarts the connector
+      if (!this.disconnecting && this.connector.enabled && !this.isServerNotTrusted()) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
     }
@@ -118,6 +121,10 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     }
     await super.disconnect();
     this.disconnecting = false;
+  }
+
+  override async retrieveServerIdentity(): Promise<ServerIdentity> {
+    return await retrieveSshServerIdentity(this.connector.settings.host, this.connector.settings.port, this.connector.settings.username);
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -392,7 +399,8 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
           port: this.connector.settings.port,
           username: this.connector.settings.username,
           privateKey: await fs.readFile(this.connector.settings.privateKey!, 'utf8'),
-          passphrase: this.connector.settings.passphrase ? encryptionService.decryptText(this.connector.settings.passphrase) : ''
+          passphrase: this.connector.settings.passphrase ? encryptionService.decryptText(this.connector.settings.passphrase) : '',
+          hostVerifier: createHostVerifier(identity => this.verifyServerIdentity(identity))
         };
       case 'password':
       default:
@@ -400,7 +408,8 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
           host: this.connector.settings.host,
           port: this.connector.settings.port,
           username: this.connector.settings.username,
-          password: this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : ''
+          password: this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : '',
+          hostVerifier: createHostVerifier(identity => this.verifyServerIdentity(identity))
         };
     }
   }

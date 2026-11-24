@@ -1,5 +1,6 @@
 import Joi from 'joi';
 
+import { SERVER_IDENTITY_TYPES } from '../../../shared/model/connector/server-identity-type.model';
 import { RECORD_FILTER_OPERATORS } from '../../../shared/model/domain/configuration-workflow.model';
 import { HISTORY_QUERY_STATUS } from '../../../shared/model/domain/history-query.model';
 
@@ -187,6 +188,20 @@ const configurationWorkflowEntry = Joi.object({
   return workflow;
 });
 
+/** The trust of a connector in the identity of its server (see `ServerTrustCommandDTO`). */
+const serverTrustSchema = Joi.object({
+  identity: Joi.object({
+    type: Joi.string()
+      .valid(...SERVER_IDENTITY_TYPES)
+      .required(),
+    fingerprint: Joi.string().required(),
+    details: Joi.object().required(),
+    trustedBy: Joi.string(),
+    trustedAt: Joi.string()
+  }).allow(null),
+  trustOnFirstUse: Joi.boolean().required()
+}).required();
+
 const southEntry = Joi.object({
   ...auditFields,
   type: Joi.string().required(),
@@ -198,7 +213,8 @@ const southEntry = Joi.object({
     settings: settingsBlob,
     items: Joi.array().items(southItemEntry).required(),
     groups: Joi.array().items(southGroupEntry).required(),
-    configurationWorkflows: Joi.array().items(configurationWorkflowEntry).required()
+    configurationWorkflows: Joi.array().items(configurationWorkflowEntry).required(),
+    serverTrust: serverTrustSchema
   }).required()
 });
 
@@ -245,6 +261,7 @@ const northEntry = Joi.object({
     description: nullableString,
     enabled: Joi.boolean().required(),
     settings: settingsBlob,
+    serverTrust: serverTrustSchema,
     caching: cachingSchema,
     transformers: Joi.array()
       .items(
@@ -277,6 +294,8 @@ const historyQueryEntry = Joi.object({
     }).required(),
     northType: Joi.string().required(),
     northSettings: settingsBlob,
+    southServerTrust: serverTrustSchema,
+    northServerTrust: serverTrustSchema,
     caching: cachingSchema,
     items: Joi.array()
       .items(

@@ -3,6 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 const manifest: NorthConnectorManifest = {
   id: 'sftp',
   category: 'file',
+  serverIdentity: 'ssh-host-key',
   types: ['file'],
   settings: {
     type: 'object',

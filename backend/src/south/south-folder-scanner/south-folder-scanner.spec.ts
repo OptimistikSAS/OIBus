@@ -34,6 +34,7 @@ const buildConfiguration = (
   type: 'folder-scanner',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     inputFolder: 'inputFolder',
     ...settings

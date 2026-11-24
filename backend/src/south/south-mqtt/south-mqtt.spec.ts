@@ -70,6 +70,7 @@ const buildConfiguration = (): SouthConnectorEntity<SouthMQTTSettings, SouthMQTT
   type: 'mqtt',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     url: 'mqtt://localhost:1883',
     qos: '1',

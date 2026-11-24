@@ -9,9 +9,10 @@ import {
   DataType,
   DataValue,
   InMemoryCertificateKeyPairProvider,
-  InMemoryCertificateStore,
+  MessageSecurityMode,
   OPCUAClient,
   ReadProcessedDetails,
+  StatusCodes,
   TimestampsToReturn,
   UserTokenType,
   Variant
@@ -20,6 +21,7 @@ import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_op
 
 import { NorthOPCUASettings } from '../../shared/model/connector/north-settings.model';
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../shared/model/connector/south-settings.model';
+import { ServerIdentity } from '../../shared/model/domain/server-identity.model';
 
 import type { CertificateKeyPair } from '../model/certificate.model';
 import { NotFoundError } from '../model/types';
@@ -37,11 +39,148 @@ import {
   logMessages,
   MAX_NUMBER_OF_NODE_TO_LOG,
   parseOPCUAValue,
+  retrieveOPCUAServerIdentity,
+  ServerIdentityCertificateStore,
   toOPCUASecurityMode,
   toOPCUASecurityPolicy
 } from './utils-opcua';
 
 describe('Service utils OPCUA', () => {
+  const isServerTrusted = (_identity: ServerIdentity) => true;
+
+  describe('server identity', () => {
+    let serverCertificate: Buffer;
+    let otherCertificate: Buffer;
+    const settings: SouthOPCUASettings = {
+      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+      authentication: { type: 'basic', username: 'user', password: 'password' },
+      securityMode: 'sign-and-encrypt',
+      securityPolicy: 'basic256-sha256',
+      certificateId: 'certificate-id',
+      keepSessionAlive: false,
+      connectionTimeout: 15_000,
+      retryInterval: 10_000,
+      readTimeout: 15_000,
+      maxParallelRun: 1,
+      subscription: { publishingInterval: 150, maxKeepAliveCount: 10, numberOfMessageBeforeFlush: 1000, delayBetweenFlush: 1000 }
+    };
+    let client: {
+      connect: ReturnType<typeof mock.fn>;
+      getEndpoints: ReturnType<typeof mock.fn>;
+      disconnect: ReturnType<typeof mock.fn>;
+    };
+
+    before(async () => {
+      const options = {
+        commonName: 'OPC UA server',
+        countryName: 'FR',
+        stateOrProvinceName: '',
+        localityName: '',
+        organizationName: '',
+        keySize: 2048,
+        daysBeforeExpiry: 365
+      };
+      serverCertificate = new crypto.X509Certificate((await encryptionService.generateSelfSignedCertificate(options)).cert).raw;
+      otherCertificate = new crypto.X509Certificate(
+        (await encryptionService.generateSelfSignedCertificate({ ...options, commonName: 'Other' })).cert
+      ).raw;
+    });
+
+    beforeEach(() => {
+      client = {
+        connect: mock.fn(async () => undefined),
+        getEndpoints: mock.fn(async () => [
+          {
+            securityMode: MessageSecurityMode.None,
+            securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#None',
+            serverCertificate: otherCertificate
+          },
+          {
+            securityMode: MessageSecurityMode.SignAndEncrypt,
+            securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256',
+            serverCertificate: otherCertificate
+          },
+          // a chain: the certificate of the server first
+          {
+            securityMode: MessageSecurityMode.SignAndEncrypt,
+            securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
+            serverCertificate: Buffer.concat([serverCertificate, otherCertificate])
+          }
+        ]),
+        disconnect: mock.fn(async () => undefined)
+      };
+      mock.method(OPCUAClient, 'create', () => client);
+    });
+
+    afterEach(() => {
+      mock.restoreAll();
+    });
+
+    it('should ask the connector whether it trusts the certificate of the server, without its chain', async () => {
+      const trust = mock.fn((_identity: ServerIdentity) => true);
+      const store = new ServerIdentityCertificateStore(trust);
+
+      assert.strictEqual(await store.checkCertificate(Buffer.concat([serverCertificate, otherCertificate])), StatusCodes.Good);
+      assert.strictEqual(trust.mock.calls[0].arguments[0].fingerprint, new crypto.X509Certificate(serverCertificate).fingerprint256);
+
+      trust.mock.mockImplementation(() => false);
+      assert.strictEqual(await store.checkCertificate([otherCertificate, serverCertificate]), StatusCodes.BadCertificateUntrusted);
+      assert.strictEqual(trust.mock.calls[1].arguments[0].fingerprint, new crypto.X509Certificate(otherCertificate).fingerprint256);
+    });
+
+    it('should only trust or reject a certificate through the connector', async () => {
+      const store = new ServerIdentityCertificateStore(() => false);
+
+      await store.initialize();
+      await store.trustCertificate();
+      await store.addIssuer();
+      await store.addRevocationList();
+      await store.rejectCertificate();
+      assert.strictEqual(await store.getTrustStatus(serverCertificate), StatusCodes.BadCertificateUntrusted);
+      assert.strictEqual(await store.verifyCertificate(serverCertificate), 'BadCertificateUntrusted');
+      await store.dispose();
+      assert.strictEqual(store.referenceCounter, 0);
+    });
+
+    it('should read the identity of the server on the endpoint of the security mode and policy, without session', async () => {
+      const identity = await retrieveOPCUAServerIdentity(settings);
+
+      assert.strictEqual(identity!.type, 'x509');
+      assert.strictEqual(identity!.fingerprint, new crypto.X509Certificate(serverCertificate).fingerprint256);
+      assert.deepStrictEqual(client.connect.mock.calls[0].arguments, [settings.url]);
+      assert.strictEqual(client.disconnect.mock.callCount(), 1);
+    });
+
+    it('should take the first endpoint of the security mode without security policy', async () => {
+      const identity = await retrieveOPCUAServerIdentity({ ...settings, securityPolicy: undefined });
+
+      assert.strictEqual(identity!.fingerprint, new crypto.X509Certificate(otherCertificate).fingerprint256);
+    });
+
+    it('should not read any identity with the security mode None', async () => {
+      assert.strictEqual(await retrieveOPCUAServerIdentity({ ...settings, securityMode: 'none' }), null);
+      assert.strictEqual(client.connect.mock.callCount(), 0);
+    });
+
+    it('should fail without endpoint of the security mode and policy', async () => {
+      await assert.rejects(() => retrieveOPCUAServerIdentity({ ...settings, securityMode: 'sign' }), {
+        message: 'The server has no endpoint with the security mode "sign" and the security policy "basic256-sha256"'
+      });
+      assert.strictEqual(client.disconnect.mock.callCount(), 1);
+    });
+
+    it('should fail when the server cannot be reached, and disconnect the client', async () => {
+      client.connect.mock.mockImplementation(async () => {
+        throw new Error('ECONNREFUSED');
+      });
+      client.disconnect.mock.mockImplementation(async () => {
+        throw new Error('already disconnected');
+      });
+
+      await assert.rejects(() => retrieveOPCUAServerIdentity(settings), { message: 'ECONNREFUSED' });
+    });
+  });
+
   describe('createOPCUASession', () => {
     const userIdentity = { type: UserTokenType.UserName, userName: 'oibus', password: 'pass' } as const;
     let closeSession: ReturnType<typeof mock.fn>;
@@ -259,7 +398,8 @@ describe('Service utils OPCUA', () => {
         'connectorName',
         baseSettings,
         15_000,
-        certificateService
+        certificateService,
+        isServerTrusted
       );
 
       assert.deepStrictEqual(certificateService.getKeyPair.mock.calls[0].arguments, ['certificate-id']);
@@ -275,9 +415,12 @@ describe('Service utils OPCUA', () => {
         throw new NotFoundError('Certificate "certificate-id" not found');
       });
 
-      await assert.rejects(() => createSessionConfigs('connectorId', 'connectorName', baseSettings, 15_000, certificateService), {
-        message: 'Certificate "certificate-id" not found'
-      });
+      await assert.rejects(
+        () => createSessionConfigs('connectorId', 'connectorName', baseSettings, 15_000, certificateService, isServerTrusted),
+        {
+          message: 'Certificate "certificate-id" not found'
+        }
+      );
     });
   });
 
@@ -328,24 +471,27 @@ describe('Service utils OPCUA', () => {
           delayBetweenFlush: 1000
         }
       };
-      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000, certificateService), {
-        options: {
-          applicationName: 'OIBus',
-          applicationUri: `urn:${os.hostname()}:OIBus`,
-          certificateKeyPairProvider: ephemeralProvider,
-          clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
-          clientName: 'connectorName-connectorId',
-          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-          endpointMustExist: false,
-          keepPendingSessionsOnDisconnect: false,
-          keepSessionAlive: false,
-          transportTimeout: 15000,
-          defaultTransactionTimeout: 15000,
-          securityMode: 1,
-          securityPolicy: 'none'
-        },
-        userIdentity: { type: UserTokenType.Anonymous }
-      });
+      assert.deepStrictEqual(
+        await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000, certificateService, isServerTrusted),
+        {
+          options: {
+            applicationName: 'OIBus',
+            applicationUri: `urn:${os.hostname()}:OIBus`,
+            certificateKeyPairProvider: ephemeralProvider,
+            clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted),
+            clientName: 'connectorName-connectorId',
+            connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+            endpointMustExist: false,
+            keepPendingSessionsOnDisconnect: false,
+            keepSessionAlive: false,
+            transportTimeout: 15000,
+            defaultTransactionTimeout: 15000,
+            securityMode: 1,
+            securityPolicy: 'none'
+          },
+          userIdentity: { type: UserTokenType.Anonymous }
+        }
+      );
     });
 
     it('should properly create session configs with basic auth', async () => {
@@ -366,28 +512,31 @@ describe('Service utils OPCUA', () => {
           delayBetweenFlush: 1000
         }
       };
-      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000, certificateService), {
-        options: {
-          applicationName: 'OIBus',
-          applicationUri: `urn:${os.hostname()}:OIBus`,
-          certificateKeyPairProvider: ephemeralProvider,
-          clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
-          clientName: 'connectorName-connectorId',
-          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-          endpointMustExist: false,
-          keepPendingSessionsOnDisconnect: false,
-          keepSessionAlive: false,
-          transportTimeout: 15000,
-          defaultTransactionTimeout: 15000,
-          securityMode: 1,
-          securityPolicy: 'none'
-        },
-        userIdentity: {
-          type: UserTokenType.UserName,
-          userName: southSettings.authentication.username!,
-          password: southSettings.authentication.password!
+      assert.deepStrictEqual(
+        await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000, certificateService, isServerTrusted),
+        {
+          options: {
+            applicationName: 'OIBus',
+            applicationUri: `urn:${os.hostname()}:OIBus`,
+            certificateKeyPairProvider: ephemeralProvider,
+            clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted),
+            clientName: 'connectorName-connectorId',
+            connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+            endpointMustExist: false,
+            keepPendingSessionsOnDisconnect: false,
+            keepSessionAlive: false,
+            transportTimeout: 15000,
+            defaultTransactionTimeout: 15000,
+            securityMode: 1,
+            securityPolicy: 'none'
+          },
+          userIdentity: {
+            type: UserTokenType.UserName,
+            userName: southSettings.authentication.username!,
+            password: southSettings.authentication.password!
+          }
         }
-      });
+      );
       assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [southSettings.authentication.password!]);
     });
 
@@ -403,13 +552,20 @@ describe('Service utils OPCUA', () => {
         retryInterval: 10_000
       };
       assert.deepStrictEqual(
-        await createSessionConfigs('connectorId', 'connectorName', northSettings, northSettings.writeTimeout, certificateService),
+        await createSessionConfigs(
+          'connectorId',
+          'connectorName',
+          northSettings,
+          northSettings.writeTimeout,
+          certificateService,
+          isServerTrusted
+        ),
         {
           options: {
             applicationName: 'OIBus',
             applicationUri: `urn:${os.hostname()}:OIBus`,
             certificateKeyPairProvider: ephemeralProvider,
-            clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
+            clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted),
             clientName: 'connectorName-connectorId',
             connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
             endpointMustExist: false,

@@ -9,6 +9,7 @@ import { Instant, Interval } from '../../shared/model/common/types';
 import { IOT_FAMILY_SOUTH_TYPES, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
+import { PresentedServerIdentity, ServerIdentity } from '../../shared/model/domain/server-identity.model';
 import {
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings,
@@ -16,6 +17,7 @@ import {
   SouthHistoryRecoveryStrategy
 } from '../../shared/model/domain/south-connector.model';
 
+import ServerIdentityVerifier from '../service/server-identity-verifier';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import { delay, generateIntervals, getErrorMessage, groupItemsByGroup, QueryTimeVariablesUsage, workUnitLogCtx } from '../service/utils';
 import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from './south-interface';
@@ -143,6 +145,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   public connectedEvent: EventEmitter = new EventEmitter();
   public metricsEvent: TypedEventEmitter<SouthMetricsEvents> = new TypedEventEmitter<SouthMetricsEvents>();
+  // Checks the identity of the server, for the connectors which check it (see retrieveServerIdentity)
+  public readonly serverIdentityVerifier = new ServerIdentityVerifier(
+    () => this.connector.serverTrust,
+    serverTrust => (this.connector = { ...this.connector, serverTrust }),
+    () => this.logger
+  );
 
   // Counts concurrently in-flight historyQueryHandler() calls. historyIsRunning below is derived
   // from this counter (rather than being set true/false directly) since more than one work-unit's
@@ -270,6 +278,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * we don't spin up cron jobs or open connections.
    */
   async start(): Promise<void> {
+    this.serverIdentityVerifier.reset();
     if (this.isEnabled()) {
       this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
       await this.connect();
@@ -1270,6 +1279,36 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   get connectorConfiguration(): SouthConnectorEntity<T, I> {
     return this.connector;
+  }
+
+  /**
+   * The identity the server presents with the connector's current settings, obtained without trusting it and without
+   * authenticating to the server (no credential is sent), so that a user can review it before trusting it. `null` when the
+   * connector does not check the identity of its server with these settings (the default: a protocol which does not
+   * authenticate the server, or OPC UA with the security mode None). The connectors which check it override this method,
+   * and call `verifyServerIdentity()` at each connection.
+   */
+  retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    return Promise.resolve(null);
+  }
+
+  /**
+   * Whether the connection can go on with a server presenting this identity (see `ServerIdentityVerifier.verify`). A
+   * connector must refuse the connection before sending any credential when it returns false, and not reconnect by itself
+   * (see `isServerNotTrusted()`): trusting the identity restarts it.
+   */
+  protected verifyServerIdentity(presented: ServerIdentity): boolean {
+    return this.serverIdentityVerifier.verify(presented);
+  }
+
+  /** Whether the connector refused its server at its last connection, its identity being pending until a user trusts it. */
+  isServerNotTrusted(): boolean {
+    return this.serverIdentityVerifier.pendingIdentity !== null;
+  }
+
+  /** The identity of the server the connector refused at its last connection, see `isServerNotTrusted()`. */
+  getPendingServerIdentity(): PresentedServerIdentity | null {
+    return this.serverIdentityVerifier.pendingIdentity;
   }
 
   /**

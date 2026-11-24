@@ -5,6 +5,7 @@ import { Database } from 'better-sqlite3';
 
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { ServerTrust } from '../../../shared/model/domain/server-identity.model';
 
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
 import { HistoryTransformerWithOptions } from '../../model/transformer.model';
@@ -20,6 +21,17 @@ const TEST_DB_PATH = 'src/tests/test-config-history-query.db';
 type HistoryQuery = HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
 type HistoryItem = HistoryQueryItemEntity<SouthItemSettings>;
 type AuditCall = Parameters<AuditService['record']>;
+
+const trustedSshHostKey: ServerTrust = {
+  identity: {
+    type: 'ssh-host-key',
+    fingerprint: 'SHA256:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU',
+    details: { keyType: 'ssh-ed25519' },
+    trustedBy: 'trustUser',
+    trustedAt: '2026-01-01T00:00:00.000Z'
+  },
+  trustOnFirstUse: false
+};
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
@@ -515,6 +527,57 @@ describe('HistoryQueryRepository', () => {
   it('should update status', () => {
     repository.updateHistoryStatus(testData.historyQueries.list[0].id, 'FINISHED');
     assert.strictEqual(repository.findHistoryById(testData.historyQueries.list[0].id)!.status, 'FINISHED');
+  });
+
+  it('should save and read back the server trust of both sides of a history query', () => {
+    const history: HistoryQuery = {
+      ...newHistory('history with trusted servers'),
+      southServerTrust: clone(trustedSshHostKey),
+      northServerTrust: { identity: null, trustOnFirstUse: true }
+    };
+    repository.saveHistory(history, true);
+    const saved = repository.findHistoryById(history.id)!;
+    assert.deepStrictEqual(saved.southServerTrust, trustedSshHostKey);
+    assert.deepStrictEqual(saved.northServerTrust, { identity: null, trustOnFirstUse: true });
+    const full = repository.findAllHistoriesFull().find(h => h.id === history.id)!;
+    assert.deepStrictEqual([full.southServerTrust, full.northServerTrust], [trustedSshHostKey, { identity: null, trustOnFirstUse: true }]);
+
+    repository.saveHistory(
+      { ...saved, southServerTrust: { identity: null, trustOnFirstUse: false }, northServerTrust: clone(trustedSshHostKey) },
+      false
+    );
+    const updated = repository.findHistoryById(history.id)!;
+    assert.deepStrictEqual(updated.southServerTrust, { identity: null, trustOnFirstUse: false });
+    assert.deepStrictEqual(updated.northServerTrust, trustedSshHostKey);
+  });
+
+  for (const side of ['south', 'north'] as const) {
+    it(`should update the server trust of the ${side} side of a history query and audit it`, () => {
+      const history: HistoryQuery = {
+        ...newHistory(`history trusting its ${side} server`),
+        southServerTrust: { identity: null, trustOnFirstUse: true },
+        northServerTrust: { identity: null, trustOnFirstUse: true }
+      };
+      repository.saveHistory(history, true);
+
+      const calls = auditsDuring(() => repository.updateServerTrust(history.id, side, trustedSshHostKey, 'trustUser'));
+
+      const updated = repository.findHistoryById(history.id)!;
+      const otherSide = side === 'south' ? updated.northServerTrust : updated.southServerTrust;
+      assert.deepStrictEqual(side === 'south' ? updated.southServerTrust : updated.northServerTrust, trustedSshHostKey);
+      assert.deepStrictEqual(otherSide, { identity: null, trustOnFirstUse: true });
+      assert.strictEqual(updated.updatedBy, 'trustUser');
+      assert.strictEqual(calls.length, 1);
+      const [entityType, entityId, action, previous, next, userId] = calls[0];
+      assert.deepStrictEqual([entityType, entityId, action, userId], ['history_query', history.id, 'UPDATE', 'trustUser']);
+      assert.deepStrictEqual(previous![`${side}ServerTrust`], { identity: null, trustOnFirstUse: true });
+      assert.deepStrictEqual(next![`${side}ServerTrust`], trustedSshHostKey);
+    });
+  }
+
+  it('should not update the server trust of an unknown history query', () => {
+    assert.throws(() => repository.updateServerTrust('unknown-history', 'south', trustedSshHostKey, 'trustUser'), NotFoundError);
+    assert.strictEqual(recorded().length, 0);
   });
 
   it('should list items', () => {

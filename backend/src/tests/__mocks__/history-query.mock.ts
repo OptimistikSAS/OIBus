@@ -15,7 +15,9 @@ import HistoryQuery from '../../engine/history-query';
 import type { CacheSize } from '../../model/engine.model';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
 import type NorthConnector from '../../north/north-connector';
+import ServerIdentityVerifier from '../../service/server-identity-verifier';
 import type SouthConnector from '../../south/south-connector';
+import PinoLogger from './service/logger/logger.mock';
 
 /**
  * Create a mock object for History Query
@@ -32,6 +34,20 @@ export default class HistoryQueryMock extends HistoryQuery {
     // south and north are null in this mock — skip the connector propagation
   }
 
+  // The verifiers of the identity of the servers of the South and North (null in this mock)
+  readonly serverIdentityVerifiers = {
+    south: new ServerIdentityVerifier(
+      () => ({ identity: null, trustOnFirstUse: false }),
+      () => undefined,
+      () => new PinoLogger()
+    ),
+    north: new ServerIdentityVerifier(
+      () => ({ identity: null, trustOnFirstUse: false }),
+      () => undefined,
+      () => new PinoLogger()
+    )
+  };
+  override getServerIdentityVerifier = mock.fn((side: 'south' | 'north'): ServerIdentityVerifier => this.serverIdentityVerifiers[side]);
   override start = mock.fn(async (): Promise<void> => undefined);
   override stop = mock.fn(async (): Promise<void> => undefined);
   override resetCache = mock.fn(async (): Promise<void> => undefined);

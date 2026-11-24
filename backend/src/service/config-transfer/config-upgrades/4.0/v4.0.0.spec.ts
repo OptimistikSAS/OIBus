@@ -8,6 +8,7 @@ import { JsonObject } from '../config-upgrade';
 import {
   addFolderMaxSizes,
   buildRecordListToCsvOptions,
+  checksServerIdentity,
   COMPRESSED_FILE_OPTIONS,
   FILE_AS_IS_OPTIONS,
   keepsResolvedTransformer,
@@ -20,6 +21,7 @@ import {
   toNoneResamplingItemSettings,
   toOIAnalyticsItemFileOptions,
   toRecordListTransformerOptions,
+  toServerTrust,
   upgrade,
   usesRemoteAgent,
   withoutOdbcAgentSettings,
@@ -819,6 +821,109 @@ describe('4.0.0 config upgrade', () => {
       const once = upgrade.apply(buildConfig());
 
       assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+  });
+
+  describe('server trust', () => {
+    const NO_TRUST = { identity: null, trustOnFirstUse: false };
+    const TRUST_ON_FIRST_USE = { identity: null, trustOnFirstUse: true };
+    const buildConfig = (): JsonObject => ({
+      southConnectors: [
+        { type: 'opcua', settings: { name: 'OPC UA sign', settings: { url: 'u', securityMode: 'sign' } } },
+        { type: 'opcua', settings: { name: 'OPC UA none', settings: { url: 'u', securityMode: 'none' } } },
+        { type: 'sftp', settings: { name: 'SFTP', settings: { host: 'h' } } },
+        { type: 'mqtt', settings: { name: 'MQTT', settings: { url: 'u' } } }
+      ],
+      northConnectors: [
+        { type: 'opcua', settings: { name: 'OPC UA', settings: { url: 'u', securityMode: 'sign-and-encrypt' } } },
+        { type: 'opcua', settings: { name: 'OPC UA none', settings: { url: 'u', securityMode: 'none' } } },
+        { type: 'sftp', settings: { name: 'SFTP', settings: { host: 'h' } } },
+        { type: 'console', settings: { name: 'Console', settings: {} } }
+      ],
+      historyQueries: [
+        {
+          settings: {
+            southType: 'opcua',
+            northType: 'sftp',
+            southSettings: { url: 'u', securityMode: 'sign' },
+            northSettings: { host: 'h' }
+          }
+        },
+        {
+          settings: {
+            southType: 'opcua',
+            northType: 'console',
+            southSettings: { url: 'u', securityMode: 'none' },
+            northSettings: {}
+          }
+        }
+      ]
+    });
+    const serverTrustOf = (connectors: unknown) => (connectors as Array<JsonObject>).map(c => (c.settings as JsonObject).serverTrust);
+
+    it('trusts the identity at the first use for the OPC UA connectors in a Sign mode and the SFTP ones only', () => {
+      const config = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(serverTrustOf(config.southConnectors), [TRUST_ON_FIRST_USE, NO_TRUST, TRUST_ON_FIRST_USE, NO_TRUST]);
+      assert.deepStrictEqual(serverTrustOf(config.northConnectors), [TRUST_ON_FIRST_USE, NO_TRUST, TRUST_ON_FIRST_USE, NO_TRUST]);
+      const [opcuaToSftp, opcuaNoneToConsole] = (config.historyQueries as Array<JsonObject>).map(h => h.settings as JsonObject);
+      assert.deepStrictEqual(opcuaToSftp.southServerTrust, TRUST_ON_FIRST_USE);
+      assert.deepStrictEqual(opcuaToSftp.northServerTrust, TRUST_ON_FIRST_USE);
+      assert.deepStrictEqual(opcuaNoneToConsole.southServerTrust, NO_TRUST);
+      assert.deepStrictEqual(opcuaNoneToConsole.northServerTrust, NO_TRUST);
+    });
+
+    it('keeps the server trust already set', () => {
+      const trusted = {
+        identity: {
+          type: 'ssh-host-key',
+          fingerprint: 'SHA256:abc',
+          details: { keyType: 'ssh-ed25519' },
+          trustedBy: 'admin',
+          trustedAt: '2026-01-01T00:00:00.000Z'
+        },
+        trustOnFirstUse: false
+      };
+      const config = buildConfig();
+      const [, , sftpSouth] = config.southConnectors as Array<JsonObject>;
+      const [, opcuaNoneNorth] = config.northConnectors as Array<JsonObject>;
+      const [historyQuery] = (config.historyQueries as Array<JsonObject>).map(h => h.settings as JsonObject);
+      (sftpSouth.settings as JsonObject).serverTrust = structuredClone(trusted);
+      (opcuaNoneNorth.settings as JsonObject).serverTrust = TRUST_ON_FIRST_USE;
+      historyQuery.southServerTrust = NO_TRUST;
+      historyQuery.northServerTrust = structuredClone(trusted);
+
+      upgrade.apply(config);
+
+      assert.deepStrictEqual((sftpSouth.settings as JsonObject).serverTrust, trusted);
+      assert.deepStrictEqual((opcuaNoneNorth.settings as JsonObject).serverTrust, TRUST_ON_FIRST_USE);
+      assert.deepStrictEqual(historyQuery.southServerTrust, NO_TRUST);
+      assert.deepStrictEqual(historyQuery.northServerTrust, trusted);
+    });
+
+    it('is safe to run twice', () => {
+      const once = upgrade.apply(buildConfig());
+
+      assert.deepStrictEqual(upgrade.apply(structuredClone(once)), once);
+    });
+
+    it('checks the identity of the server of the OPC UA connectors not in a None mode and of the SFTP ones', () => {
+      assert.strictEqual(checksServerIdentity('opcua', { securityMode: 'sign' }), true);
+      assert.strictEqual(checksServerIdentity('opcua', { securityMode: 'sign-and-encrypt' }), true);
+      assert.strictEqual(checksServerIdentity('opcua', {}), true);
+      assert.strictEqual(checksServerIdentity('opcua', { securityMode: 'none' }), false);
+      assert.strictEqual(checksServerIdentity('opcua', null), false);
+      assert.strictEqual(checksServerIdentity('opcua', undefined), false);
+      assert.strictEqual(checksServerIdentity('sftp', null), true);
+      assert.strictEqual(checksServerIdentity('sftp', { host: 'h' }), true);
+      assert.strictEqual(checksServerIdentity('mqtt', { securityMode: 'sign' }), false);
+    });
+
+    it('trusts no identity, at the first use when the server identity is checked', () => {
+      assert.deepStrictEqual(toServerTrust('sftp', {}), TRUST_ON_FIRST_USE);
+      assert.deepStrictEqual(toServerTrust('opcua', { securityMode: 'sign' }), TRUST_ON_FIRST_USE);
+      assert.deepStrictEqual(toServerTrust('opcua', { securityMode: 'none' }), NO_TRUST);
+      assert.deepStrictEqual(toServerTrust('console', {}), NO_TRUST);
     });
   });
 

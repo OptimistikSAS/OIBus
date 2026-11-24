@@ -101,6 +101,7 @@ const buildConfiguration = (
   type: 'postgresql',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     connectionSettings: {
       host: 'localhost',

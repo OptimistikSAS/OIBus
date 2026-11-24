@@ -67,6 +67,7 @@ const buildConfiguration = (
   type: 'ftp',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     host: '127.0.0.1',
     port: 21,

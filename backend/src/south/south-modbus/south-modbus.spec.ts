@@ -105,6 +105,7 @@ const configuration: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSe
   type: 'modbus',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     port: 502,
     host: '127.0.0.1',

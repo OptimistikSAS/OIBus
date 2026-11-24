@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -10,6 +11,7 @@ import type { FileInfo } from 'ssh2-sftp-client';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type { SouthItemSettings, SouthSFTPItemSettings, SouthSFTPSettings } from '../../../shared/model/connector/south-settings.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -74,6 +76,7 @@ const buildConfiguration = (
   type: 'sftp',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     host: '127.0.0.1',
     port: 2222,
@@ -110,6 +113,18 @@ const flushMicrotasks = async (turns = 10): Promise<void> => {
   }
 };
 
+/** A host key in the SSH wire format: the length of the key type, the key type, then the key */
+const sshHostKey = (keyType: string): Buffer => {
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(keyType.length);
+  return Buffer.concat([length, Buffer.from(keyType, 'ascii'), Buffer.from('key-data')]);
+};
+
+const sshFingerprint = (hostKey: Buffer): string =>
+  `SHA256:${crypto.createHash('sha256').update(hostKey).digest('base64').replace(/=+$/, '')}`;
+
+type HostVerifier = (hostKey: Buffer) => boolean;
+
 const fileModifiedTwoMinutesAgo = (name: string, size: number) =>
   ({ name, size, modifyTime: DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis() }) as FileInfo;
 
@@ -133,6 +148,9 @@ describe('SouthSFTP', () => {
   // `default` is declared up front so the interop wrapper of the SUT exposes it (its value is set per test)
   const sftpExports: Record<string, unknown> = { __esModule: true, default: undefined };
   const encryptionExports: Record<string, unknown> = { __esModule: true };
+  // The real utils-sftp (the host verifier), the retrieval of the identity of the server being controlled
+  const utilsSftpExports: Record<string, unknown> = {};
+  let retrieveSshServerIdentity: Mock<(host: string, port: number, username: string) => Promise<ServerIdentity>>;
 
   const realUtils: typeof Utils = nodeRequire('../../service/utils');
   const createUtilsMocks = () => ({
@@ -143,6 +161,8 @@ describe('SouthSFTP', () => {
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, 'ssh2-sftp-client', sftpExports);
+    Object.assign(utilsSftpExports, reloadModule(nodeRequire, '../../service/utils-sftp'));
+    mockModule(nodeRequire, '../../service/utils-sftp', utilsSftpExports);
     mockModule(nodeRequire, '../../service/encryption.service', encryptionExports);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: () => logger },
@@ -165,6 +185,12 @@ describe('SouthSFTP', () => {
       return sftpClient;
     });
     sftpExports.default = sftpClientConstructor;
+    retrieveSshServerIdentity = mock.fn(async () => ({
+      type: 'ssh-host-key',
+      fingerprint: 'SHA256:abc',
+      details: { keyType: 'ssh-ed25519' }
+    }));
+    utilsSftpExports.retrieveSshServerIdentity = retrieveSshServerIdentity;
     Object.assign(utilsExports, createUtilsMocks());
     unlink = mock.method(fs, 'unlink', async () => undefined);
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
@@ -328,6 +354,59 @@ describe('SouthSFTP', () => {
         const fileInfo = { name: 'myFile1', size: 123 } as FileInfo;
         await assert.rejects(south.getFile(fileInfo, configuration.items[0], []), new Error('SFTP client is not connected'));
         assert.strictEqual(sftpClient.fastGet.mock.calls.length, 0);
+      });
+    });
+
+    describe('server identity trust', () => {
+      const getHostVerifier = (): HostVerifier =>
+        (sftpClient.connect.mock.calls[0].arguments[0] as { hostVerifier: HostVerifier }).hostVerifier;
+
+      it('should verify the host key of the server when connecting', async () => {
+        await south.connect();
+
+        const hostKey = sshHostKey('ssh-ed25519');
+        const verify = mock.method(south.serverIdentityVerifier, 'verify', () => true);
+        assert.strictEqual(getHostVerifier()(hostKey), true);
+        verify.mock.mockImplementation(() => false);
+        assert.strictEqual(getHostVerifier()(hostKey), false);
+        assert.deepStrictEqual(
+          verify.mock.calls.map(call => call.arguments[0]),
+          [
+            { type: 'ssh-host-key', fingerprint: sshFingerprint(hostKey), details: { keyType: 'ssh-ed25519' } },
+            { type: 'ssh-host-key', fingerprint: sshFingerprint(hostKey), details: { keyType: 'ssh-ed25519' } }
+          ]
+        );
+      });
+
+      it('should retrieve the host key of the server without its credentials', async () => {
+        assert.deepStrictEqual(await south.retrieveServerIdentity(), {
+          type: 'ssh-host-key',
+          fingerprint: 'SHA256:abc',
+          details: { keyType: 'ssh-ed25519' }
+        });
+        assert.deepStrictEqual(retrieveSshServerIdentity.mock.calls[0].arguments, ['127.0.0.1', 2222, 'user']);
+      });
+
+      it('should not schedule a reconnect after a connection refused for a server not trusted', async () => {
+        const hostKey = sshHostKey('ssh-rsa');
+        sftpClient.connect.mock.mockImplementationOnce(async options => {
+          // ssh2 refuses the connection, before the authentication, when the host verifier returns false (not trusted here)
+          (options as { hostVerifier: HostVerifier }).hostVerifier(hostKey);
+          throw new Error('Host denied (verification failed)');
+        });
+
+        await south.connect();
+
+        assert.ok(logIncludes(logger.error, 'Error while connecting to SFTP server 127.0.0.1:2222: Host denied (verification failed)'));
+        assert.strictEqual(south.isServerNotTrusted(), true);
+        assert.deepStrictEqual(south.getPendingServerIdentity(), {
+          identity: { type: 'ssh-host-key', fingerprint: sshFingerprint(hostKey), details: { keyType: 'ssh-rsa' } },
+          status: 'unknown'
+        });
+        assert.strictEqual(south['reconnectTimeout'], null);
+        mock.timers.tick(configuration.settings.retryInterval);
+        await flushMicrotasks();
+        assert.strictEqual(sftpClientConstructor.mock.calls.length, 1);
       });
     });
 
@@ -653,6 +732,10 @@ describe('SouthSFTP', () => {
       assert.strictEqual(logger.error.mock.calls.length, 0);
       assert.strictEqual(encryptionService.decryptText.mock.calls.length, 1);
       assert.strictEqual(readFile.mock.calls.length, 1);
+      // The host key is verified with a private key authentication too
+      const { hostVerifier } = sftpClient.connect.mock.calls[0].arguments[0] as { hostVerifier: HostVerifier };
+      assert.strictEqual(hostVerifier(sshHostKey('ssh-ed25519')), false);
+      assert.strictEqual(south.isServerNotTrusted(), true);
       // testConnection() always closes its own local client.
       assert.strictEqual(sftpClient.end.mock.calls.length, 1);
 

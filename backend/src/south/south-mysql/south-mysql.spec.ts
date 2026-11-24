@@ -100,6 +100,7 @@ const buildConfiguration = (
   type: 'mysql',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     connectionSettings: {
       host: 'localhost',

@@ -61,6 +61,7 @@ import {
   toOPCUANorthSettings,
   toOPCUASouthSettings,
   toRecordListTransformerOptions,
+  toServerTrust,
   toSetpointTransformerOptions,
   usesRemoteAgent,
   withItemRequestTimeout,
@@ -141,7 +142,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   encryptSecretsWithAesGcm,
   flagDefaultPasswords,
   moveOPCUACertificateToStore,
-  removeOPCUAUserCertificateFiles
+  removeOPCUAUserCertificateFiles,
+  addServerTrust
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -162,6 +164,9 @@ export async function up(knex: Knex): Promise<void> {
  * is enabled.
  */
 export async function down(knex: Knex): Promise<void> {
+  await dropColumns(knex, SOUTH_CONNECTORS_TABLE, ['server_trust']);
+  await dropColumns(knex, NORTH_CONNECTORS_TABLE, ['server_trust']);
+  await dropColumns(knex, HISTORY_QUERIES_TABLE, ['south_server_trust', 'north_server_trust']);
   await dropColumns(knex, USERS_TABLE, ['must_change_password']);
   await dropColumns(knex, REGISTRATIONS_TABLE, [
     'refresh_token',
@@ -2322,6 +2327,40 @@ export async function removeOPCUAUserCertificateFiles(knex: Knex): Promise<void>
       await knex(table)
         .where('id', row.id)
         .update({ [settingsColumn]: JSON.stringify(withoutUserCertificateFiles(JSON.parse(row[settingsColumn]))) });
+    }
+  }
+}
+
+/**
+ * The connectors and history queries gain the trust in the identity of their server (a JSON object, see `ServerTrust`):
+ * the identity trusted, none yet, and whether they trust the identity they receive at their first connection, as the OPC
+ * UA (with a security mode other than None) and SFTP ones do, which worked without checking it. As in the config upgrade,
+ * with `toServerTrust`.
+ */
+export async function addServerTrust(knex: Knex): Promise<void> {
+  const noTrust = JSON.stringify({ identity: null, trustOnFirstUse: false });
+  for (const [table, columns] of [
+    [SOUTH_CONNECTORS_TABLE, ['server_trust']],
+    [NORTH_CONNECTORS_TABLE, ['server_trust']],
+    [HISTORY_QUERIES_TABLE, ['south_server_trust', 'north_server_trust']]
+  ] as const) {
+    await knex.schema.alterTable(table, builder => {
+      for (const column of columns) {
+        builder.text(column).notNullable().defaultTo(noTrust);
+      }
+    });
+  }
+
+  for (const [table, typeColumn, settingsColumn, trustColumn] of [
+    [SOUTH_CONNECTORS_TABLE, 'type', 'settings', 'server_trust'],
+    [NORTH_CONNECTORS_TABLE, 'type', 'settings', 'server_trust'],
+    [HISTORY_QUERIES_TABLE, 'south_type', 'south_settings', 'south_server_trust'],
+    [HISTORY_QUERIES_TABLE, 'north_type', 'north_settings', 'north_server_trust']
+  ]) {
+    for (const row of await knex(table).whereIn(typeColumn, ['opcua', 'sftp']).select('id', typeColumn, settingsColumn)) {
+      await knex(table)
+        .where('id', row.id)
+        .update({ [trustColumn]: JSON.stringify(toServerTrust(row[typeColumn], JSON.parse(row[settingsColumn]))) });
     }
   }
 }

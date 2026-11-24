@@ -12,6 +12,7 @@ import type { OIBusContent, OIBusFileContent } from '../../shared/model/common/c
 import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { TransformerFileToFileSettings } from '../../shared/model/connector/transformer-settings.model';
 import type { CacheContentUpdateCommand, CacheMetadata } from '../../shared/model/domain/engine.model';
+import type { ServerIdentity } from '../../shared/model/domain/server-identity.model';
 
 import { CacheMetadataSource, CacheMetadataSourceOriginSouth, OIBusError } from '../model/engine.model';
 import type { NorthConnectorEntity } from '../model/north-connector.model';
@@ -517,6 +518,87 @@ describe('NorthConnector', () => {
     assert.strictEqual(cacheService.getCacheContentToSend.mock.calls.length, 1);
     assert.strictEqual(handleContentMock.mock.calls.length, 1);
     assert.strictEqual(cacheService.updateCacheContent.mock.calls.length, 0);
+  });
+
+  describe('server identity trust', () => {
+    const presented: ServerIdentity = { type: 'ssh-host-key', fingerprint: 'SHA256:presented', details: { keyType: 'ssh-ed25519' } };
+
+    it('should not check the identity of its server by default', async () => {
+      assert.strictEqual(await north.retrieveServerIdentity(), null);
+      assert.strictEqual(north.isServerNotTrusted(), false);
+      assert.strictEqual(north.getPendingServerIdentity(), null);
+    });
+
+    it('should keep the pending identity of a server refused', () => {
+      assert.strictEqual(north['verifyServerIdentity'](presented), false);
+
+      assert.strictEqual(north.isServerNotTrusted(), true);
+      assert.deepStrictEqual(north.getPendingServerIdentity(), { identity: presented, status: 'unknown' });
+    });
+
+    it('should save in its configuration the identity trusted on first use', () => {
+      north.connectorConfiguration = { ...north.connectorConfiguration, serverTrust: { identity: null, trustOnFirstUse: true } };
+
+      assert.strictEqual(north['verifyServerIdentity'](presented), true);
+      assert.deepStrictEqual(north.connectorConfiguration.serverTrust, {
+        identity: { ...presented, trustedBy: 'system', trustedAt: testData.constants.dates.FAKE_NOW },
+        trustOnFirstUse: false
+      });
+      assert.strictEqual(north.isServerNotTrusted(), false);
+    });
+
+    it('should keep the content in the cache without sending it while the server is not trusted', async () => {
+      north.connectorConfiguration.caching.error.retryCount = 0;
+      north['verifyServerIdentity'](presented);
+      cacheService.getCacheContentToSend.mock.mockImplementation(async () => contentToHandle);
+      const handleContentMock = mock.fn(async () => undefined);
+      north.handleContent = handleContentMock;
+
+      await north.handleContentWrapper();
+      await north.handleContentWrapper();
+
+      // Retried past the retry count, but never moved to the error folder
+      assert.strictEqual(cacheService.getCacheContentToSend.mock.calls.length, 1);
+      assert.strictEqual(handleContentMock.mock.calls.length, 0);
+      assert.strictEqual(cacheService.updateCacheContent.mock.calls.length, 0);
+      assert.ok(north['contentBeingSent']);
+      assert.ok(
+        logger.error.mock.calls.some(call =>
+          String(call.arguments[0]).endsWith('Error: The server is not trusted: review its identity and trust it to send the content')
+        )
+      );
+    });
+
+    it('should send the content again once the server is trusted', async () => {
+      north['verifyServerIdentity'](presented);
+      cacheService.getCacheContentToSend.mock.mockImplementation(async () => contentToHandle);
+      const handleContentMock = mock.fn(async () => undefined);
+      north.handleContent = handleContentMock;
+      await north.handleContentWrapper();
+      assert.strictEqual(handleContentMock.mock.calls.length, 0);
+
+      // Trusting the identity restarts the connector, which forgets the identity refused
+      north.serverIdentityVerifier.reset();
+      await north.handleContentWrapper();
+
+      assert.strictEqual(north.isServerNotTrusted(), false);
+      assert.strictEqual(handleContentMock.mock.calls.length, 1);
+      assert.deepStrictEqual(cacheService.updateCacheContent.mock.calls[0].arguments[0], {
+        cache: { remove: [contentToHandle.filename], move: [] },
+        archive: { remove: [], move: [] },
+        error: { remove: [], move: [] }
+      });
+    });
+
+    it('should forget the pending identity when it starts', async () => {
+      north['verifyServerIdentity'](presented);
+      assert.strictEqual(north.isServerNotTrusted(), true);
+
+      await north.start();
+
+      assert.strictEqual(north.isServerNotTrusted(), false);
+      assert.strictEqual(north.getPendingServerIdentity(), null);
+    });
   });
 
   it('should cache json content without maxSendCount', async () => {

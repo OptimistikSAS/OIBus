@@ -18,6 +18,7 @@ import { DataType } from 'node-opcua-variant';
 import type { OIBusPointRecord } from '../../../shared/model/common/content.model';
 import type { Instant } from '../../../shared/model/common/types';
 import type { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/connector/south-settings.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 import { SouthConnectorExploreEntry } from '../../../shared/model/domain/south-connector.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -101,6 +102,7 @@ const buildConfiguration = (): SouthConnectorEntity<SouthOPCUASettings, SouthOPC
   type: 'opcua',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
     connectionTimeout: 15000,
@@ -262,7 +264,8 @@ describe('SouthOPCUA', () => {
     getHistoryReadRequest: mock.fn(() => new HistoryReadRequest()),
     getTimestamp: mock.fn(() => testData.constants.dates.FAKE_NOW),
     logMessages: mock.fn(),
-    parseOPCUAValue: mock.fn((): string | null => null)
+    parseOPCUAValue: mock.fn((): string | null => null),
+    retrieveOPCUAServerIdentity: mock.fn(async (..._args: Array<unknown>): Promise<ServerIdentity | null> => null)
   });
   const utilsOpcuaExports = createUtilsOpcuaMocks();
 
@@ -414,6 +417,80 @@ describe('SouthOPCUA', () => {
     south['connector'].enabled = false;
     await south.connect();
     assert.strictEqual(south['reconnectTimeout'], null);
+  });
+
+  describe('server identity trust', () => {
+    const presented: ServerIdentity = {
+      type: 'x509',
+      fingerprint: 'AB:CD:EF',
+      details: {
+        subject: 'CN=server',
+        issuer: 'CN=server',
+        serialNumber: '01',
+        validFrom: testData.constants.dates.DATE_1,
+        validTo: testData.constants.dates.DATE_2,
+        uris: ['urn:server'],
+        dnsNames: [],
+        ipAddresses: [],
+        selfSigned: true
+      }
+    };
+
+    it('should verify the identity of the server when creating a session', async () => {
+      await south.createSession();
+
+      const isServerTrusted = utilsOpcuaExports.createSessionConfigs.mock.calls[0].arguments[5] as (identity: ServerIdentity) => boolean;
+      const verify = mock.method(south.serverIdentityVerifier, 'verify', () => true);
+      assert.strictEqual(isServerTrusted(presented), true);
+      verify.mock.mockImplementation(() => false);
+      assert.strictEqual(isServerTrusted(presented), false);
+      assert.deepStrictEqual(
+        verify.mock.calls.map(call => call.arguments[0]),
+        [presented, presented]
+      );
+    });
+
+    it('should refuse a server whose identity is not trusted', async () => {
+      await south.createSession();
+
+      const isServerTrusted = utilsOpcuaExports.createSessionConfigs.mock.calls[0].arguments[5] as (identity: ServerIdentity) => boolean;
+      assert.strictEqual(isServerTrusted(presented), false);
+      assert.strictEqual(south.isServerNotTrusted(), true);
+      assert.deepStrictEqual(south.getPendingServerIdentity(), { identity: presented, status: 'unknown' });
+    });
+
+    it('should retrieve the identity of the server with its settings', async () => {
+      utilsOpcuaExports.retrieveOPCUAServerIdentity.mock.mockImplementationOnce(async () => presented);
+
+      assert.deepStrictEqual(await south.retrieveServerIdentity(), presented);
+      assert.strictEqual(utilsOpcuaExports.retrieveOPCUAServerIdentity.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsOpcuaExports.retrieveOPCUAServerIdentity.mock.calls[0].arguments, [configuration.settings]);
+    });
+
+    it('should schedule a reconnect after a connection failure when the server is trusted', async () => {
+      mock.method(south, 'createSession', async () => {
+        throw new Error('get session error');
+      });
+      mock.method(south, 'disconnect', async () => undefined);
+
+      await south.connect();
+
+      assert.notStrictEqual(south['reconnectTimeout'], null);
+    });
+
+    it('should not schedule a reconnect after a connection refused for a server not trusted', async () => {
+      mock.method(south, 'createSession', async () => {
+        south['verifyServerIdentity'](presented);
+        throw new Error('server certificate refused');
+      });
+      const disconnect = mock.method(south, 'disconnect', async () => undefined);
+
+      await south.connect();
+
+      assert.strictEqual(loggedErrors('Error while connecting to the OPC UA server: server certificate refused'), 1);
+      assert.strictEqual(disconnect.mock.calls.length, 1);
+      assert.strictEqual(south['reconnectTimeout'], null);
+    });
   });
 
   it('should properly disconnect', async () => {

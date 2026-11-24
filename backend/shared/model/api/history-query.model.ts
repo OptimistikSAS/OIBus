@@ -65,6 +65,7 @@ import {
 } from '../connector/south-settings.model';
 import { HistoryQueryStatus } from '../domain/history-query.model';
 import { ScanModeDTO } from './scan-mode.model';
+import { ServerTrustCommandDTO, ServerTrustDTO } from './server-identity.model';
 import { HistoryTransformerCommandDTOWithOptions, HistoryTransformerDTOWithOptions } from './transformer.model';
 
 /**
@@ -307,6 +308,16 @@ export interface HistoryQueryCommonDTO {
    * List of transformers to apply to data before sending to North connector.
    */
   northTransformers: Array<HistoryTransformerDTOWithOptions>;
+  /**
+   * The trust of the South side in the identity of its server, for the connectors which check it (OPC UA with a security
+   * mode other than None, SFTP).
+   */
+  southServerTrust: ServerTrustDTO;
+
+  /**
+   * The trust of the North side in the identity of its server, for the connectors which check it.
+   */
+  northServerTrust: ServerTrustDTO;
 }
 
 export interface HistoryQuerySouthTypedDTO<T extends OIBusSouthType, S, IS> {
@@ -557,6 +568,18 @@ export interface HistoryQueryCommandCommonDTO {
     };
   };
   northTransformers: Array<HistoryTransformerCommandDTOWithOptions>;
+
+  /**
+   * The trust of the South side in the identity of its server (see the connection test). Omitted, it is kept as it is (or
+   * none for a new history query).
+   */
+  southServerTrust?: ServerTrustCommandDTO;
+
+  /**
+   * The trust of the North side in the identity of its server. Omitted, it is kept as it is (or none for a new history
+   * query).
+   */
+  northServerTrust?: ServerTrustCommandDTO;
 }
 
 export interface HistoryQuerySouthCommandTypedDTO<T extends OIBusSouthType, S, IS> {

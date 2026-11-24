@@ -1,15 +1,18 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import type { ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type SftpClient from 'ssh2-sftp-client';
 
 import type { NorthSFTPSettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
+import { OIBusError } from '../../model/engine.model';
 import type EncryptionService from '../../service/encryption.service';
 import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -30,6 +33,18 @@ const metadata: CacheMetadata = {
   contentType: 'file'
 };
 
+/** A host key in the SSH wire format: the length of the key type, the key type, then the key */
+const sshHostKey = (keyType: string): Buffer => {
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(keyType.length);
+  return Buffer.concat([length, Buffer.from(keyType, 'ascii'), Buffer.from('key-data')]);
+};
+
+const sshFingerprint = (hostKey: Buffer): string =>
+  `SHA256:${crypto.createHash('sha256').update(hostKey).digest('base64').replace(/=+$/, '')}`;
+
+type HostVerifier = (hostKey: Buffer) => boolean;
+
 describe('NorthSFTP', () => {
   let NorthSftp: typeof NorthSftpClass;
   let north: NorthSftpClass;
@@ -45,6 +60,9 @@ describe('NorthSFTP', () => {
     }
   };
   const encryptionExports: Record<string, unknown> = { __esModule: true };
+  // The real utils-sftp (the host verifier), the retrieval of the identity of the server being controlled
+  const utilsSftpExports: Record<string, unknown> = {};
+  let retrieveSshServerIdentity: Mock<(host: string, port: number, username: string) => Promise<ServerIdentity>>;
 
   const createNorth = (settings: NorthSFTPSettings) => {
     north = new NorthSftp(buildNorthEntity<NorthSFTPSettings>('sftp', settings), createCacheServiceMock());
@@ -52,6 +70,8 @@ describe('NorthSFTP', () => {
 
   before(() => {
     mockModule(nodeRequire, 'ssh2-sftp-client', sftpExports);
+    Object.assign(utilsSftpExports, reloadModule(nodeRequire, '../../service/utils-sftp'));
+    mockModule(nodeRequire, '../../service/utils-sftp', utilsSftpExports);
     mockModule(nodeRequire, '../../service/encryption.service', encryptionExports);
     // No transformation here: don't pay for loading every transformer
     mockModule(nodeRequire, '../../service/transformer.service', {});
@@ -69,6 +89,12 @@ describe('NorthSFTP', () => {
     encryptionService = createMock<EncryptionService>({ decryptText: text => text });
     encryptionExports.encryptionService = encryptionService;
     readFileMock = mockReadFile();
+    retrieveSshServerIdentity = mock.fn(async () => ({
+      type: 'ssh-host-key',
+      fingerprint: 'SHA256:abc',
+      details: { keyType: 'ssh-ed25519' }
+    }));
+    utilsSftpExports.retrieveSshServerIdentity = retrieveSshServerIdentity;
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -131,6 +157,70 @@ describe('NorthSFTP', () => {
       assert.strictEqual(sftpClient.end.mock.calls.length, 1);
       assert.strictEqual(encryptionService.decryptText.mock.calls.length, 0);
     });
+
+    describe('server identity trust', () => {
+      const getHostVerifier = (): HostVerifier =>
+        (sftpClient.connect.mock.calls[0].arguments[0] as { hostVerifier: HostVerifier }).hostVerifier;
+
+      it('should verify the host key of the server when connecting', async () => {
+        await north.sendToSftpServer(mockStream, 'remoteFolder/target');
+
+        const hostKey = sshHostKey('ecdsa-sha2-nistp256');
+        const verify = mock.method(north.serverIdentityVerifier, 'verify', () => true);
+        assert.strictEqual(getHostVerifier()(hostKey), true);
+        verify.mock.mockImplementation(() => false);
+        assert.strictEqual(getHostVerifier()(hostKey), false);
+        assert.deepStrictEqual(
+          verify.mock.calls.map(call => call.arguments[0]),
+          [
+            { type: 'ssh-host-key', fingerprint: sshFingerprint(hostKey), details: { keyType: 'ecdsa-sha2-nistp256' } },
+            { type: 'ssh-host-key', fingerprint: sshFingerprint(hostKey), details: { keyType: 'ecdsa-sha2-nistp256' } }
+          ]
+        );
+      });
+
+      it('should retrieve the host key of the server without its credentials', async () => {
+        assert.deepStrictEqual(await north.retrieveServerIdentity(), {
+          type: 'ssh-host-key',
+          fingerprint: 'SHA256:abc',
+          details: { keyType: 'ssh-ed25519' }
+        });
+        assert.deepStrictEqual(retrieveSshServerIdentity.mock.calls[0].arguments, ['127.0.0.1', 2222, 'user']);
+      });
+
+      it('should keep the content to send again when the server is not trusted', async () => {
+        const hostKey = sshHostKey('ssh-ed25519');
+        sftpClient.connect.mock.mockImplementationOnce(async options => {
+          // ssh2 refuses the connection, before the authentication, when the host verifier returns false (not trusted here)
+          (options as { hostVerifier: HostVerifier }).hostVerifier(hostKey);
+          throw new Error('Host denied (verification failed)');
+        });
+
+        await assert.rejects(
+          north.sendToSftpServer(mockStream, 'remoteFolder/target'),
+          new OIBusError('The server is not trusted: Host denied (verification failed)', true)
+        );
+        assert.strictEqual(north.isServerNotTrusted(), true);
+        assert.deepStrictEqual(north.getPendingServerIdentity(), {
+          identity: { type: 'ssh-host-key', fingerprint: sshFingerprint(hostKey), details: { keyType: 'ssh-ed25519' } },
+          status: 'unknown'
+        });
+        assert.strictEqual(sftpClient.put.mock.calls.length, 0);
+      });
+
+      it('should rethrow a connection error when the server is trusted', async () => {
+        const error = new Error('connection refused');
+        sftpClient.connect.mock.mockImplementationOnce(async () => {
+          throw error;
+        });
+
+        await assert.rejects(north.sendToSftpServer(mockStream, 'remoteFolder/target'), (thrown: unknown) => {
+          assert.strictEqual(thrown, error);
+          return true;
+        });
+        assert.strictEqual(sftpClient.put.mock.calls.length, 0);
+      });
+    });
   });
 
   describe('with Private Key Auth', () => {
@@ -158,6 +248,9 @@ describe('NorthSFTP', () => {
       assert.strictEqual(connectConfig.username, 'user');
       assert.strictEqual(connectConfig.privateKey, 'actual-private-key-content');
       assert.strictEqual(connectConfig.passphrase, 'myPassphrase');
+      // The host key is verified with a private key authentication too
+      assert.strictEqual((connectConfig.hostVerifier as HostVerifier)(sshHostKey('ssh-ed25519')), false);
+      assert.strictEqual(north.isServerNotTrusted(), true);
     });
 
     it('should have access to output folder', async () => {

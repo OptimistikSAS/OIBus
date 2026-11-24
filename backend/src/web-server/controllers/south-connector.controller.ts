@@ -18,6 +18,7 @@ import {
 } from 'tsoa';
 
 import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../shared/model/api/configuration-workflow.model';
+import { ServerTrustStateDTO, TrustServerIdentityCommandDTO } from '../../../shared/model/api/server-identity.model';
 import {
   SouthConnectorCommandBodyDTO,
   SouthConnectorCommandDTO,
@@ -41,6 +42,7 @@ import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../share
 import { SouthConnectorItemSearchParam, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
+import { toServerTrustStateDTO } from '../../service/server-trust.utils';
 import SouthService, {
   toSouthConnectorDTO,
   toSouthConnectorItemDTO,
@@ -267,19 +269,53 @@ export class SouthConnectorController extends Controller {
   }
 
   /**
-   * Tests the connection for a south connector
+   * Retrieves the trust of a south connector in the identity of its server, with the identity the connector refused at its
+   * last connection (pending, until a user trusts it)
+   * @summary Get the trust in the identity of the server
+   */
+  @Get('/{southId}/server-trust')
+  getServerTrust(@Path() southId: string, @Request() request: CustomExpressRequest): ServerTrustStateDTO {
+    const southService = request.services.southService as SouthService;
+    return toServerTrustStateDTO(southService.getServerTrustState(southId), id => request.services.userService.getUserInfo(id));
+  }
+
+  /**
+   * Trusts the identity the server of a south connector presents, when its fingerprint is the one given (as the connection
+   * test showed it), and restarts the connector
+   * @summary Trust the identity of the server
+   */
+  @Post('/{southId}/server-trust')
+  @SuccessResponse(204, 'No Content')
+  async trustServerIdentity(
+    @Path() southId: string,
+    @Body() command: TrustServerIdentityCommandDTO,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    try {
+      await southService.trustServerIdentity(southId, command.fingerprint, request.user.id);
+    } catch (error: unknown) {
+      throw error instanceof OIBusValidationError ? error : new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Tests the connection for a south connector. For a connector checking the identity of its server, the result carries the
+   * identity the server presents, and the connection is only tested further when it is trusted
    * @summary Test south connection
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
    */
   @Post('/{southId}/test/connection')
   async testConnection(
     @Path() southId: string,
     @Query() southType: OIBusSouthType,
     @Body() command: SouthSettings,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<OIBusConnectionTestResult> {
     const southService = request.services.southService as SouthService;
     try {
-      return await southService.testSouth(southId, southType, command);
+      return await southService.testSouth(southId, southType, command, trustedFingerprint ?? null);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
@@ -288,6 +324,7 @@ export class SouthConnectorController extends Controller {
   /**
    * Test a south connector item
    * @summary Test south connector item
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
    * @returns {Promise<SouthConnectorItemTestResult>} Raw and (optionally) transformed test results
    */
   @Post('/{southId}/items/test')
@@ -296,7 +333,8 @@ export class SouthConnectorController extends Controller {
     @Query() southType: OIBusSouthType,
     @Query() itemName: string,
     @Body() command: SouthItemTestRequest,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<SouthConnectorItemTestResult> {
     const southService = request.services.southService as SouthService;
     try {
@@ -306,7 +344,9 @@ export class SouthConnectorController extends Controller {
         itemName,
         command.southSettings,
         command.itemSettings,
-        command.testingSettings
+        command.testingSettings,
+        undefined,
+        trustedFingerprint ?? null
       );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
@@ -317,6 +357,7 @@ export class SouthConnectorController extends Controller {
    * Test a Configuration Workflow discovery query as currently typed, against an ephemeral or the
    * live connector (mirrors testItem), and return its raw rows
    * @summary Test a discovery query
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
    * @returns {Promise<Array<OIBusRecord>>} The rows returned by the query
    */
   @Post('/{southId}/test/discovery-query')
@@ -324,11 +365,12 @@ export class SouthConnectorController extends Controller {
     @Path() southId: string,
     @Query() southType: OIBusSouthType,
     @Body() command: SouthDiscoveryQueryTestRequest,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<Array<OIBusRecord>> {
     const southService = request.services.southService as SouthService;
     try {
-      return await southService.testDiscoveryQuery(southId, southType, command.southSettings, command.query);
+      return await southService.testDiscoveryQuery(southId, southType, command.southSettings, command.query, trustedFingerprint ?? null);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
@@ -340,6 +382,7 @@ export class SouthConnectorController extends Controller {
    * nothing is written. Used from the south connector edit page, where workflows can be previewed but not run.
    * @summary Preview a configuration workflow before saving it
    * @param southId The south connector id, or "create" for a connector not created yet
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
    * @returns {Promise<WorkflowPreviewResultDTO>} What a run would find and how it would classify it
    */
   @Post('/{southId}/test/workflow-preview')
@@ -347,7 +390,8 @@ export class SouthConnectorController extends Controller {
     @Path() southId: string,
     @Query() southType: OIBusSouthType,
     @Body() command: SouthWorkflowPreviewRequest,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<WorkflowPreviewResultDTO> {
     try {
       return await request.services.configurationWorkflowRunService.previewCommand(
@@ -355,7 +399,8 @@ export class SouthConnectorController extends Controller {
         southType,
         command.southSettings,
         command.workflowId,
-        command.workflow
+        command.workflow,
+        trustedFingerprint ?? null
       );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
@@ -367,6 +412,7 @@ export class SouthConnectorController extends Controller {
    * as currently edited, and maps every record to a new item, as a configuration workflow would. Nothing is saved.
    * @summary Map discovered records to new items
    * @param southId The south connector id, or "create" for a connector not created yet
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
    * @returns {Promise<Array<SouthConnectorItemCommandDTO>>} One item to create per discovered record
    */
   @Post('/{southId}/test/discovered-items')
@@ -374,7 +420,8 @@ export class SouthConnectorController extends Controller {
     @Path() southId: string,
     @Query() southType: OIBusSouthType,
     @Body() command: SouthDiscoveredItemsRequest,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<Array<SouthConnectorItemCommandDTO>> {
     try {
       return await request.services.configurationWorkflowRunService.discoverItems(
@@ -382,7 +429,8 @@ export class SouthConnectorController extends Controller {
         southType,
         command.southSettings,
         command.discoveryScope,
-        command.itemFieldMapping
+        command.itemFieldMapping,
+        trustedFingerprint ?? null
       );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
@@ -392,17 +440,19 @@ export class SouthConnectorController extends Controller {
   /**
    * Start an interactive explore session for a south connector
    * @summary Start south explore session
+   * @param trustedFingerprint The fingerprint of the identity of the server trusted in the form of the connector, not saved yet
    */
   @Post('/{southId}/explore')
   async startExplore(
     @Path() southId: string,
     @Query() southType: OIBusSouthType,
     @Body() command: SouthSettings,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @Query() trustedFingerprint?: string
   ): Promise<SouthExploreStartResult> {
     const southService = request.services.southService as SouthService;
     try {
-      return await southService.startExplore(southId, southType, command);
+      return await southService.startExplore(southId, southType, command, trustedFingerprint ?? null);
     } catch (error: unknown) {
       // Keeps why the data source could not be explored
       throw error instanceof OIBusTestingError ? error : new OIBusTestingError((error as Error).message);

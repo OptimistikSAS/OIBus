@@ -359,6 +359,50 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     assert.strictEqual(engineRepository.get()!.webServer.enableContentEndpoint, !beforeEngine.webServer.enableContentEndpoint);
   });
 
+  it('imports the server trust, keeping who trusted the identity and when, or trusting it as the importer now', async () => {
+    const envelope = cloneEnvelope();
+    const opcua = envelope.config.southConnectors.find(south => south.type === 'opcua');
+    assert.ok(opcua, 'expected the fixture to seed an opcua south connector');
+    const exportedIdentity = structuredClone(testData.south.list.find(south => south.type === 'opcua')!.serverTrust.identity!);
+    opcua.settings.serverTrust = { identity: structuredClone(exportedIdentity), trustOnFirstUse: false };
+    const [north] = envelope.config.northConnectors;
+    north.settings.serverTrust = {
+      identity: {
+        type: 'ssh-host-key',
+        fingerprint: 'SHA256:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU',
+        details: { keyType: 'ssh-ed25519' }
+      },
+      trustOnFirstUse: false
+    };
+    const [historyQuery] = envelope.config.historyQueries;
+    historyQuery.settings.southServerTrust = { identity: null, trustOnFirstUse: true };
+    historyQuery.settings.northServerTrust = structuredClone(opcua.settings.serverTrust);
+    const importer = importerId();
+    const before = new Date().toISOString();
+
+    await service.importConfiguration(envelope, importer);
+
+    const after = new Date().toISOString();
+    assert.deepStrictEqual(southConnectorRepository.findSouthById(opcua.oIBusInternalId)!.serverTrust, {
+      identity: exportedIdentity,
+      trustOnFirstUse: false
+    });
+    const northTrust = northConnectorRepository.findNorthById(north.oIBusInternalId)!.serverTrust;
+    assert.ok(northTrust.identity);
+    const { trustedAt, ...northIdentity } = northTrust.identity;
+    assert.deepStrictEqual(northIdentity, {
+      type: 'ssh-host-key',
+      fingerprint: 'SHA256:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU',
+      details: { keyType: 'ssh-ed25519' },
+      trustedBy: importer
+    });
+    assert.ok(trustedAt >= before && trustedAt <= after, `expected ${trustedAt} to be the time of the import`);
+    assert.strictEqual(northTrust.trustOnFirstUse, false);
+    const importedHistoryQuery = historyQueryRepository.findHistoryById(historyQuery.oIBusInternalId)!;
+    assert.deepStrictEqual(importedHistoryQuery.southServerTrust, { identity: null, trustOnFirstUse: true });
+    assert.deepStrictEqual(importedHistoryQuery.northServerTrust, { identity: exportedIdentity, trustOnFirstUse: false });
+  });
+
   it('imports the https settings disabled, and redirects to http when the local web server served https', async () => {
     const local = engineRepository.get()!;
     engineRepository.updateWebServer(

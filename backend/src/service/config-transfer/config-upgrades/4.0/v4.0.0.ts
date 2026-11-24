@@ -538,6 +538,22 @@ export function withoutUserCertificateFiles(settings: Record<string, unknown>): 
   return { ...settings, authentication: { ...rest, certificateId: null } };
 }
 
+/**
+ * Whether a connector of this type, with these settings, checks the identity of its server: the OPC UA connectors (with
+ * a security mode other than None) and the SFTP connectors, South or North.
+ */
+export function checksServerIdentity(type: string, settings: Record<string, unknown> | null | undefined): boolean {
+  return type === 'sftp' || (type === 'opcua' && !!settings && settings.securityMode !== 'none');
+}
+
+/**
+ * The trust of a connector in the identity of its server: none for a new connector, while one of a former version, which
+ * worked without checking it, trusts the identity it receives at its first connection, so that it keeps working.
+ */
+export function toServerTrust(type: string, settings: Record<string, unknown> | null | undefined): JsonObject {
+  return { identity: null, trustOnFirstUse: checksServerIdentity(type, settings) };
+}
+
 /** The database souths whose work-units can now query in parallel, gaining a `maxParallelRun` setting */
 export const MAX_PARALLEL_RUN_SOUTH_TYPES = ['influxdb', 'mssql', 'mysql', 'odbc', 'oracle', 'postgresql'];
 
@@ -1736,6 +1752,25 @@ function removeOPCUAUserCertificateFiles(config: JsonObject): void {
 }
 
 /**
+ * The connectors and history queries gain the trust in the identity of their server (see `toServerTrust`): the OPC UA and
+ * SFTP ones trust the identity they receive at their first connection.
+ */
+function addServerTrust(config: JsonObject): void {
+  forEachSouth(config, null, south => {
+    const settings = south.settings as JsonObject;
+    setMissing(settings, 'serverTrust', toServerTrust(south.type as string, settings.settings as JsonObject | undefined));
+  });
+  forEachNorth(config, null, north => {
+    const settings = north.settings as JsonObject;
+    setMissing(settings, 'serverTrust', toServerTrust(north.type as string, settings.settings as JsonObject | undefined));
+  });
+  forEachHistoryQuery(config, null, settings => {
+    setMissing(settings, 'southServerTrust', toServerTrust(settings.southType as string, settings.southSettings as JsonObject | undefined));
+    setMissing(settings, 'northServerTrust', toServerTrust(settings.northType as string, settings.northSettings as JsonObject | undefined));
+  });
+}
+
+/**
  * The database South settings gain a `maxParallelRun` and a `connectionSettings` group (see `toDatabaseSouthSettings`), for
  * the connectors and the history queries. The request timeout of the MSSQL and PostgreSQL ones moves to their items.
  */
@@ -1877,7 +1912,9 @@ export const upgrade: ConfigUpgrade = {
     'give the error and archive folders of the North connectors and history queries their own maximum size; ' +
     'add the description of the engine; ' +
     'remove the paths of the user certificate of the OPC UA connectors, which select it in the certificate store, as their ' +
-    'communication certificate',
+    'communication certificate; ' +
+    'add the trust in the identity of the server of the connectors and history queries, the OPC UA and SFTP ones trusting ' +
+    'the identity they receive at their first connection',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1991,6 +2028,7 @@ export const upgrade: ConfigUpgrade = {
     removeOpcAgentSettings(config);
     useLocalOleDbDriver(config);
     removePiAgentSettings(config);
+    addServerTrust(config);
     forEachNorth(config, null, north => addFolderMaxSizes((north.settings as JsonObject).caching as JsonObject | undefined));
     forEachHistoryQuery(config, null, settings => addFolderMaxSizes(settings.caching as JsonObject | undefined));
 

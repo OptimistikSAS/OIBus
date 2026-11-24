@@ -58,6 +58,7 @@ const buildConfiguration = (
   type: 'opc',
   description: 'my test connector',
   enabled: true,
+  serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     retryInterval: 1000,
     host: 'localhost',

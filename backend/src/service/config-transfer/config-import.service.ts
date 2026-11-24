@@ -43,6 +43,7 @@ import UserRepository from '../../repository/config/user.repository';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { toEngineSettingsCommand } from '../engine-command.utils';
 import { northManifestList } from '../north-manifests';
+import { toImportedServerTrust } from '../server-trust.utils';
 import { southManifestList } from '../south-manifests';
 import { CONFIG_SCHEMA, EXPORT_FILE_SCHEMA, RESERVED_SCAN_MODE_ID } from './config-schema';
 import { ConfigUpgrade, JsonObject } from './config-upgrades/config-upgrade';
@@ -879,6 +880,7 @@ export default class ConfigImportService {
       description: command.description,
       enabled: false,
       settings: command.settings as unknown as SouthSettings,
+      serverTrust: toImportedServerTrust(command.serverTrust, importedBy),
       items,
       groups,
       createdBy: importedBy,
@@ -919,6 +921,7 @@ export default class ConfigImportService {
       description: command.description,
       enabled: false,
       settings: command.settings as unknown as NorthSettings,
+      serverTrust: toImportedServerTrust(command.serverTrust, importedBy),
       caching: this.buildCachingEntity(command.caching),
       transformers,
       createdBy: importedBy,
@@ -1052,9 +1055,11 @@ export default class ConfigImportService {
       status: 'PENDING',
       southType: command.southType,
       southSettings: command.southSettings,
+      southServerTrust: toImportedServerTrust(command.southServerTrust, importedBy),
       queryTimeRange: { ...command.queryTimeRange },
       northType: command.northType,
       northSettings: command.northSettings,
+      northServerTrust: toImportedServerTrust(command.northServerTrust, importedBy),
       caching: this.buildCachingEntity(command.caching),
       items,
       northTransformers,

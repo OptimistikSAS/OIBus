@@ -43,6 +43,7 @@ export const buildHistoryQuery = (
       enabled: settings.status === 'RUNNING',
       type: settings.northType,
       settings: settings.northSettings,
+      serverTrust: settings.northServerTrust,
       caching: settings.caching,
       transformers: settings.northTransformers.map(element => ({
         id: element.id,
@@ -83,6 +84,7 @@ export const buildHistoryQuery = (
       enabled: settings.status === 'RUNNING',
       type: settings.southType,
       settings: settings.southSettings,
+      serverTrust: settings.southServerTrust,
       items: [],
       groups: [],
       createdBy: settings.createdBy,

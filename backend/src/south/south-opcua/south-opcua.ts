@@ -28,6 +28,7 @@ import { OIBusContent, OIBusPointRecord, OIBusRecord } from '../../../shared/mod
 import { Aggregate, Instant, Resampling } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 import {
   SouthConnectorExploreEntry,
   SouthConnectorItemQueryResult,
@@ -45,7 +46,8 @@ import {
   getHistoryReadRequest,
   getTimestamp,
   logMessages,
-  parseOPCUAValue
+  parseOPCUAValue,
+  retrieveOPCUAServerIdentity
 } from '../../service/utils-opcua';
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from '../south-interface';
@@ -270,7 +272,8 @@ export default class SouthOPCUA
       } catch (disconnectError: unknown) {
         this.logger.error(`Error while disconnecting after failed connect: ${getErrorMessage(disconnectError)}`);
       }
-      if (!this.disconnecting && this.connector.enabled) {
+      // A server not trusted is not reconnected to: trusting its identity restarts the connector
+      if (!this.disconnecting && this.connector.enabled && !this.isServerNotTrusted()) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
     } finally {
@@ -320,6 +323,10 @@ export default class SouthOPCUA
   protected override getMaxParallelRun(): number {
     const CEILING = 32;
     return Math.max(1, Math.min(this.connector.settings.maxParallelRun ?? 1, CEILING));
+  }
+
+  override async retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    return await retrieveOPCUAServerIdentity(this.connector.settings);
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -515,7 +522,8 @@ export default class SouthOPCUA
       this.connector.name,
       this.connector.settings,
       this.connector.settings.readTimeout,
-      this.certificateService
+      this.certificateService,
+      identity => this.verifyServerIdentity(identity)
     );
     this.logger.debug(`Connecting to OPC UA on ${this.connector.settings.url}`);
     const connectStart = DateTime.now().toMillis();

@@ -4,6 +4,7 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 import { Database } from 'better-sqlite3';
 
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { ServerTrust } from '../../../shared/model/domain/server-identity.model';
 
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { SouthItemGroupEntity } from '../../model/south-connector.model';
@@ -21,6 +22,17 @@ const TEST_DB_PATH = 'src/tests/test-config-north.db';
 
 type North = NorthConnectorEntity<NorthSettings>;
 type AuditCall = Parameters<AuditService['record']>;
+
+const trustedSshHostKey: ServerTrust = {
+  identity: {
+    type: 'ssh-host-key',
+    fingerprint: 'SHA256:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU',
+    details: { keyType: 'ssh-ed25519' },
+    trustedBy: 'trustUser',
+    trustedAt: '2026-01-01T00:00:00.000Z'
+  },
+  trustOnFirstUse: false
+};
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
@@ -449,5 +461,36 @@ describe('NorthConnectorRepository', () => {
   it('should start north connector', () => {
     repository.startNorth(testData.north.list[0].id);
     assert.strictEqual(repository.findNorthById(testData.north.list[0].id)!.enabled, true);
+  });
+
+  it('should save and read back the server trust of a north connector', () => {
+    const north = newNorth('north with a trusted server', { serverTrust: clone(trustedSshHostKey) });
+    repository.saveNorth(north, true);
+    assert.deepStrictEqual(repository.findNorthById(north.id)!.serverTrust, trustedSshHostKey);
+    assert.deepStrictEqual(repository.findAllNorthFull().find(n => n.id === north.id)!.serverTrust, trustedSshHostKey);
+
+    repository.saveNorth({ ...repository.findNorthById(north.id)!, serverTrust: { identity: null, trustOnFirstUse: true } }, false);
+    assert.deepStrictEqual(repository.findNorthById(north.id)!.serverTrust, { identity: null, trustOnFirstUse: true });
+  });
+
+  it('should update the server trust of a north connector and audit it', () => {
+    const north = newNorth('north trusting its server', { serverTrust: { identity: null, trustOnFirstUse: true } });
+    repository.saveNorth(north, true);
+
+    const calls = auditsDuring(() => repository.updateServerTrust(north.id, trustedSshHostKey, 'trustUser'));
+
+    const updated = repository.findNorthById(north.id)!;
+    assert.deepStrictEqual(updated.serverTrust, trustedSshHostKey);
+    assert.strictEqual(updated.updatedBy, 'trustUser');
+    assert.strictEqual(calls.length, 1);
+    const [entityType, entityId, action, previous, next, userId] = calls[0];
+    assert.deepStrictEqual([entityType, entityId, action, userId], ['north_connector', north.id, 'UPDATE', 'trustUser']);
+    assert.deepStrictEqual(previous!.serverTrust, { identity: null, trustOnFirstUse: true });
+    assert.deepStrictEqual(next!.serverTrust, trustedSshHostKey);
+  });
+
+  it('should not update the server trust of an unknown north connector', () => {
+    assert.throws(() => repository.updateServerTrust('unknown-north', trustedSshHostKey, 'trustUser'), NotFoundError);
+    assert.strictEqual(recorded().length, 0);
   });
 });
