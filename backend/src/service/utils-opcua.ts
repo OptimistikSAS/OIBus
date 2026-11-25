@@ -164,11 +164,21 @@ const toServerCertificate = (certificate: Certificate | Array<Certificate>): Buf
  * instead of comparing thumbprints in memory. node-opcua checks it when it fetches the endpoint, before opening the secure
  * channel, so before sending any credential. In memory: no rejected/, trusted/, issuers/ folders on disk. The trust is
  * the connector's own, so a certificate is never trusted or rejected through the store itself.
+ *
+ * node-opcua also checks the certificate of OIBus itself with this store, when it connects (a sanity check, expecting it to
+ * be untrusted): it is not the certificate of the server, so it is never compared with the identity trusted for the server
+ * (it would be refused, and presented to the user as the identity of the server to trust).
  */
 export class ServerIdentityCertificateStore implements ICertificateStore {
   referenceCounter = 0;
 
-  constructor(private readonly isServerTrusted: (identity: ServerIdentity) => boolean) {}
+  /**
+   * @param ownCertificate the certificate OIBus presents to the server, which this store does not check
+   */
+  constructor(
+    private readonly isServerTrusted: (identity: ServerIdentity) => boolean,
+    private readonly ownCertificate: Certificate | null = null
+  ) {}
 
   async initialize(): Promise<void> {
     // Nothing to load: the trust is the connector's own
@@ -179,9 +189,12 @@ export class ServerIdentityCertificateStore implements ICertificateStore {
   }
 
   checkCertificate(certificate: Certificate | Array<Certificate>): Promise<StatusCode> {
-    return Promise.resolve(
-      this.isServerTrusted(toX509ServerIdentity(toServerCertificate(certificate))) ? StatusCodes.Good : StatusCodes.BadCertificateUntrusted
-    );
+    const leaf = toServerCertificate(certificate);
+    if (this.ownCertificate && leaf.equals(this.ownCertificate)) {
+      // As node-opcua expects for the certificate of the application itself: it is not in its own trust list
+      return Promise.resolve(StatusCodes.BadCertificateUntrusted);
+    }
+    return Promise.resolve(this.isServerTrusted(toX509ServerIdentity(leaf)) ? StatusCodes.Good : StatusCodes.BadCertificateUntrusted);
   }
 
   async verifyCertificate(certificate: Certificate | Array<Certificate>): Promise<string> {
@@ -314,7 +327,7 @@ export const createSessionConfigs = async (
     // The certificate and its key in memory: node-opcua also gives this provider to the client it uses to find the
     // endpoint of the server
     certificateKeyPairProvider: provider,
-    clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted)
+    clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted, provider.getCertificate())
   };
 
   let userIdentity: UserIdentityInfo;
