@@ -178,7 +178,7 @@ OIBus 向 OPC UA® 服务器出示的证书，在每个 OPC UA 连接器中从[�
   重启连接器。
 - **可追溯性**：连接器页面会显示谁在何时信任了其服务器的身份。信任身份的操作会被记录在日志中，且在
   [导出和导入](../engine/config-export-import.mdx)配置时会保留已信任的身份。
-- **升级**：在 OIBus 4.0 之前创建的 OPC UA 和 SFTP 连接器及历史查询，会信任其服务器在首次连接时提供的身份。请在其
+- **升级**：在 OIBus 4.0 之前创建的 OPC UA（安全模式不为 None）和 SFTP 连接器及历史查询，会信任其服务器在首次连接时提供的身份。请在其
   页面上核对该身份。
 - **OIAnalytics**：OIAnalytics 测试连接时会显示服务器的身份，且只有在拥有
   [**数据流**和**连接数据源**权限](../installation/oianalytics.mdx#command-permissions)时才能信任该身份。

@@ -1164,6 +1164,15 @@ describe('South Service', () => {
       });
     });
 
+    it('should retrieve the identity the server of a saved south connector presents, without trusting it', async () => {
+      const presented = await service.retrieveSavedServerIdentity(testData.south.list[0].id);
+
+      assert.deepStrictEqual(presented?.identity, identity);
+      // The identity is asked to a throwaway connector, never started
+      assert.deepStrictEqual(buildSouth.mock.calls[0].arguments[0], { ...testData.south.list[0], enabled: false, items: [], groups: [] });
+      assert.strictEqual(southConnectorRepository.updateServerTrust.mock.calls.length, 0);
+    });
+
     it('should trust the identity the server of a south connector presents, and reload it', async () => {
       await service.trustServerIdentity(testData.south.list[0].id, identity.fingerprint, 'userTest');
 

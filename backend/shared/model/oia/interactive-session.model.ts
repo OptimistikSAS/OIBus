@@ -3,6 +3,7 @@ import { Instant } from '../common/types';
 import { OIBusSouthType } from '../connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../connector/south-settings.model';
 import { CommandPermission } from '../domain/engine.model';
+import { PresentedServerIdentity, ServerTrustState } from '../domain/server-identity.model';
 import { SouthConnectorExploreEntry, SouthConnectorItemTestingSettings } from '../domain/south-connector.model';
 
 /**
@@ -190,10 +191,31 @@ export interface OIBusServerTrustTarget {
 
 /**
  * Content of a `GET_SERVER_TRUST` request: the identity a saved connector, or a side of a saved history query, trusts for
- * its server, and the identity it refused at its last connection, waiting to be reviewed. Its result is a `ServerTrustState`
- * (`trustedBy` as in the configuration sent to OIAnalytics).
+ * its server, and the identity it refused at its last connection, waiting to be reviewed. Its result is an
+ * `OIBusServerTrustResult`.
  */
-export type OIBusGetServerTrustRequestContent = OIBusServerTrustTarget;
+export interface OIBusGetServerTrustRequestContent extends OIBusServerTrustTarget {
+  /**
+   * Whether to also ask the server for the identity it presents now (without sending any credential), to review it when
+   * the connector did not refuse it: it is stopped, or has not connected yet.
+   */
+  withPresented?: boolean;
+}
+
+/**
+ * The result of a `GET_SERVER_TRUST` request (`trustedBy` as in the configuration sent to OIAnalytics).
+ */
+export interface OIBusServerTrustResult extends ServerTrustState {
+  /**
+   * The identity the server presents now, when requested (`withPresented`): `null` when not requested, when the connector
+   * does not check it, or when it could not be retrieved (see `presentedError`).
+   */
+  presented?: PresentedServerIdentity | null;
+  /**
+   * Why the identity the server presents could not be retrieved (unreachable server...), `null` otherwise.
+   */
+  presentedError?: string | null;
+}
 
 /**
  * Content of a `TRUST_SERVER_IDENTITY` request: trusts the identity the server of a saved connector, or of a side of a saved

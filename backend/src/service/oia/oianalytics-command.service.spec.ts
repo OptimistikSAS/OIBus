@@ -1576,6 +1576,40 @@ describe('OIAnalytics Command Service', () => {
     assert.strictEqual(historyQueryService.testItem.mock.calls[0].arguments[7], 'SHA256:form');
   });
 
+  it('should not trust the identity of a test for an OIAnalytics not allowed to configure the data flow, nor a saved identity', async () => {
+    const identity = { type: 'ssh-host-key' as const, fingerprint: 'SHA256:form', details: { keyType: 'ssh-ed25519' } };
+    southService.testSouth.mock.mockImplementation(async () => ({ items: [] }));
+    northService.testNorth.mock.mockImplementation(async () => ({ items: [] }));
+
+    // the identity OIBus sent in its configuration, with who trusted it: it may no longer be the one trusted
+    await executeCommand(
+      buildCommand<OIBusTestSouthConnectorCommand>({
+        id: 'testSouth',
+        type: 'test-south-connection',
+        southConnectorId: 'southConnectorId',
+        commandContent: {
+          ...testData.south.command,
+          serverTrust: { identity: { ...identity, trustedBy: 'admin', trustedAt: testData.constants.dates.DATE_1 }, trustOnFirstUse: false }
+        }
+      })
+    );
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: { ...testData.oIAnalytics.registration.completed.commandPermissions, configureDataFlow: false }
+    }));
+    await executeCommand(
+      buildCommand<OIBusTestNorthConnectorCommand>({
+        id: 'testNorth',
+        type: 'test-north-connection',
+        northConnectorId: 'northConnectorId',
+        commandContent: { ...testData.north.command, serverTrust: { identity, trustOnFirstUse: false } }
+      })
+    );
+
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments.slice(3), [null, null, true]);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments.slice(3), [null, null, true]);
+  });
+
   it('should execute update-engine-logger command with loki password', async () => {
     const command = buildCommand<OIBusUpdateEngineLoggerCommand>({
       id: 'updateEngineLoggerId',

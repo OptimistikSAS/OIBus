@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { CommandPermission } from '../../../shared/model/domain/engine.model';
 import {
   OIBUS_INTERACTIVE_SESSION_REQUEST_REQUIRED_PERMISSIONS,
   OIBusBrowseRequestContent,
@@ -12,6 +13,7 @@ import {
   OIBusInteractiveSessionRequestDTO,
   OIBusInteractiveSessionSouthContent,
   OIBusPreviewWorkflowRequestContent,
+  OIBusServerTrustResult,
   OIBusServerTrustTarget,
   OIBusStartExploreResult,
   OIBusTestSouthItemRequestContent,
@@ -55,6 +57,23 @@ interface InteractiveSession {
  * not exist anymore (closed by the user, or expired), when OIAnalytics cannot be reached for too long, when OIBus is not
  * registered anymore, or when OIBus stops. The explores of a session are closed with it.
  */
+/**
+ * The names of the permissions, as OIBus and OIAnalytics show them, for the errors OIAnalytics shows its user.
+ */
+const COMMAND_PERMISSION_LABELS: Readonly<Record<CommandPermission, string>> = {
+  updateVersion: 'Update version',
+  operate: 'Operate',
+  configureEngine: 'Engine settings',
+  configureDataFlow: 'Data flow',
+  configureCustomCode: 'Custom code',
+  manageAccess: 'Manage access',
+  manageRegistration: 'Manage registration',
+  connectToDataSources: 'Connect to data sources',
+  manageCache: 'Manage cache',
+  diagnostics: 'Diagnostics',
+  setpoint: 'Setpoints'
+};
+
 export default class OIAnalyticsSessionService {
   private readonly sessions = new Map<string, InteractiveSession>();
 
@@ -220,7 +239,11 @@ export default class OIAnalyticsSessionService {
       permission => !registration.commandPermissions[permission]
     );
     if (missingPermissions.length > 0) {
-      throw new Error(`OIAnalytics is not allowed to request ${request.type}: it requires the permission ${missingPermissions.join(', ')}`);
+      throw new Error(
+        `OIAnalytics is not allowed to request ${request.type}: it requires the permission ${missingPermissions
+          .map(permission => `${COMMAND_PERMISSION_LABELS[permission]} (${permission})`)
+          .join(', ')}`
+      );
     }
     switch (request.type) {
       case 'START_EXPLORE': {
@@ -229,7 +252,7 @@ export default class OIAnalyticsSessionService {
           content.southId,
           content.southType,
           content.settings,
-          content.trustedFingerprint ?? null
+          this.formFingerprint(content, registration)
         );
         if (session.closed) {
           // The session was closed while connecting: its explores have already been closed
@@ -259,7 +282,7 @@ export default class OIAnalyticsSessionService {
           content.southId,
           content.southType,
           content.settings,
-          content.trustedFingerprint ?? null,
+          this.formFingerprint(content, registration),
           null,
           true
         );
@@ -278,7 +301,7 @@ export default class OIAnalyticsSessionService {
           itemSettings,
           content.testingSettings,
           undefined,
-          content.trustedFingerprint ?? null
+          this.formFingerprint(content, registration)
         );
       }
       case 'PREVIEW_WORKFLOW': {
@@ -292,17 +315,31 @@ export default class OIAnalyticsSessionService {
           content.settings,
           content.workflowId,
           content.workflow,
-          content.trustedFingerprint ?? null
+          this.formFingerprint(content, registration)
         );
       }
       case 'GET_SERVER_TRUST': {
         const content = request.content as OIBusGetServerTrustRequestContent;
-        return this.serverTrustOf(
+        const state = this.serverTrustOf(
           content,
           id => this.southService.getServerTrustState(id),
           id => this.northService.getServerTrustState(id),
           (id, side) => this.historyQueryService.getServerTrustState(id, side)
         );
+        if (!content.withPresented) {
+          return state;
+        }
+        try {
+          const presented = await this.serverTrustOf(
+            content,
+            id => this.southService.retrieveSavedServerIdentity(id),
+            id => this.northService.retrieveSavedServerIdentity(id),
+            (id, side) => this.historyQueryService.retrieveSavedServerIdentity(id, side)
+          );
+          return { ...state, presented, presentedError: null } satisfies OIBusServerTrustResult;
+        } catch (error: unknown) {
+          return { ...state, presented: null, presentedError: getErrorMessage(error) } satisfies OIBusServerTrustResult;
+        }
       }
       case 'TRUST_SERVER_IDENTITY': {
         const content = request.content as OIBusTrustServerIdentityRequestContent;
@@ -317,6 +354,14 @@ export default class OIAnalyticsSessionService {
       default:
         throw new Error(`Interactive session request type "${request.type}" not supported`);
     }
+  }
+
+  /**
+   * The fingerprint of the identity trusted in the form of the connector in OIAnalytics, which the request trusts when the
+   * server presents it: ignored when OIAnalytics is not allowed to configure the data flow, as trusting an identity requires.
+   */
+  private formFingerprint(content: OIBusInteractiveSessionSouthContent, registration: OIAnalyticsRegistration): string | null {
+    return registration.commandPermissions.configureDataFlow ? (content.trustedFingerprint ?? null) : null;
   }
 
   /**

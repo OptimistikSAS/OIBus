@@ -804,6 +804,17 @@ describe('History Query service', () => {
       assert.deepStrictEqual(historyQuery.getServerIdentityVerifier.mock.calls[0].arguments, ['north']);
     });
 
+    it('should retrieve the identity the server of a side of a saved history query presents, without trusting it', async () => {
+      const historyQuery = testData.historyQueries.list[0];
+
+      const presented = await service.retrieveSavedServerIdentity(historyQuery.id, 'north');
+
+      assert.deepStrictEqual(presented?.identity, identity);
+      assert.strictEqual(northService.buildThrowawayNorth.mock.calls[0].arguments[0].type, historyQuery.northType);
+      assert.strictEqual(southService.buildThrowawaySouth.mock.calls.length, 0);
+      assert.strictEqual(historyQueryRepository.updateServerTrust.mock.calls.length, 0);
+    });
+
     it('should trust the identity the server of the south of a running history query presents, and reload it', async () => {
       const historyQuery = testData.historyQueries.list[0];
 
