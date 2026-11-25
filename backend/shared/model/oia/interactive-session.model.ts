@@ -16,6 +16,7 @@ export const OIBUS_INTERACTIVE_SESSION_REQUEST_TYPES = [
   'TEST_SOUTH_CONNECTION',
   'TEST_SOUTH_ITEM',
   'PREVIEW_WORKFLOW',
+  'GET_SERVER_TRUST',
   'TRUST_SERVER_IDENTITY'
 ] as const;
 export type OIBusInteractiveSessionRequestType = (typeof OIBUS_INTERACTIVE_SESSION_REQUEST_TYPES)[number];
@@ -34,6 +35,7 @@ export const OIBUS_INTERACTIVE_SESSION_REQUEST_REQUIRED_PERMISSIONS: Readonly<
   TEST_SOUTH_CONNECTION: ['connectToDataSources'],
   TEST_SOUTH_ITEM: ['connectToDataSources'],
   PREVIEW_WORKFLOW: ['connectToDataSources'],
+  GET_SERVER_TRUST: ['connectToDataSources'],
   TRUST_SERVER_IDENTITY: ['connectToDataSources', 'configureDataFlow']
 };
 
@@ -169,15 +171,11 @@ export interface OIBusInteractiveSessionFileResult {
 }
 
 /**
- * Content of a `TRUST_SERVER_IDENTITY` request: trusts the identity the server of a saved connector, or of a side of a saved
- * history query, presents, when its fingerprint is the one the user reviewed (the server is asked for it again, so that
- * only its own identity is trusted). The connector, or the history query when it is running, restarts with it. Requires the
- * `configureDataFlow` permission. Its result is null.
+ * The saved connector, or side of a saved history query, whose trust in the identity of its server is requested.
  */
-export interface OIBusTrustServerIdentityRequestContent {
+export interface OIBusServerTrustTarget {
   /**
-   * What trusts the identity: a South connector, a North connector, or a history query (`side` telling which of its
-   * connectors).
+   * A South connector, a North connector, or a history query (`side` telling which of its connectors).
    */
   target: 'south' | 'north' | 'history-query';
   /**
@@ -185,11 +183,27 @@ export interface OIBusTrustServerIdentityRequestContent {
    */
   id: string;
   /**
-   * For a history query, the side whose server is trusted.
+   * For a history query, the side whose server is concerned.
    */
   side?: 'south' | 'north';
+}
+
+/**
+ * Content of a `GET_SERVER_TRUST` request: the identity a saved connector, or a side of a saved history query, trusts for
+ * its server, and the identity it refused at its last connection, waiting to be reviewed. Its result is a `ServerTrustState`
+ * (`trustedBy` as in the configuration sent to OIAnalytics).
+ */
+export type OIBusGetServerTrustRequestContent = OIBusServerTrustTarget;
+
+/**
+ * Content of a `TRUST_SERVER_IDENTITY` request: trusts the identity the server of a saved connector, or of a side of a saved
+ * history query, presents, when its fingerprint is the one the user reviewed (the server is asked for it again, so that
+ * only its own identity is trusted). The connector, or the history query when it is running, restarts with it. Requires the
+ * `configureDataFlow` permission. Its result is null.
+ */
+export interface OIBusTrustServerIdentityRequestContent extends OIBusServerTrustTarget {
   /**
-   * The SHA-256 fingerprint of the identity to trust, as the connection test showed it.
+   * The SHA-256 fingerprint of the identity to trust, as the connection test or `GET_SERVER_TRUST` showed it.
    * @example "SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s"
    */
   fingerprint: string;
