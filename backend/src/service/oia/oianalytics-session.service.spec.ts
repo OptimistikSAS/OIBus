@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import { ServerTrustState } from '../../../shared/model/domain/server-identity.model';
+import { PresentedServerIdentity, ServerTrustState } from '../../../shared/model/domain/server-identity.model';
 import { OIBusInteractiveSessionRequestDTO } from '../../../shared/model/oia/interactive-session.model';
 
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
@@ -346,6 +346,16 @@ describe('OIAnalytics Session Service', () => {
       assert.strictEqual(workflowRunService.previewCommand.mock.calls[0].arguments[5], 'SHA256:form');
     });
 
+    it('should not trust the identity trusted in the form when OIAnalytics is not allowed to configure the data flow', async () => {
+      registration = { ...REGISTRATION, commandPermissions: { ...REGISTRATION.commandPermissions, configureDataFlow: false } };
+      southService.testSouth.mock.mockImplementation(async () => ({ items: [] }));
+      respondWith(request('TEST_SOUTH_CONNECTION', { ...southContent(), trustedFingerprint: 'SHA256:form' }, 'test'));
+
+      await openSession();
+
+      assert.strictEqual(southService.testSouth.mock.calls[0].arguments[3], null);
+    });
+
     it('should test an item, with the secrets of the item decrypted', async () => {
       const result = { raw: { type: 'any', content: '' }, transformed: null, connectionDuration: 1, queryDuration: 2 } as never;
       southService.testItem.mock.mockImplementationOnce(async () => result);
@@ -425,6 +435,40 @@ describe('OIAnalytics Session Service', () => {
       );
     });
 
+    it('should send the identity the server presents now, when requested, or why it could not be retrieved', async () => {
+      const trust: ServerTrustState = { identity: null, trustOnFirstUse: false, pending: null };
+      const presented: PresentedServerIdentity = {
+        identity: { type: 'ssh-host-key', fingerprint: 'SHA256:north', details: { keyType: 'ssh-ed25519' } },
+        status: 'unknown'
+      };
+      southService.getServerTrustState.mock.mockImplementation(() => trust);
+      northService.getServerTrustState.mock.mockImplementation(() => trust);
+      historyQueryService.getServerTrustState.mock.mockImplementation(() => trust);
+      southService.retrieveSavedServerIdentity.mock.mockImplementation(async () => {
+        throw new Error('Server unreachable');
+      });
+      northService.retrieveSavedServerIdentity.mock.mockImplementation(async () => presented);
+      historyQueryService.retrieveSavedServerIdentity.mock.mockImplementation(async () => null);
+      respondWith(
+        request('GET_SERVER_TRUST', { target: 'south', id: 'southId', withPresented: true }, 'south'),
+        request('GET_SERVER_TRUST', { target: 'north', id: 'northId', withPresented: true }, 'north'),
+        request('GET_SERVER_TRUST', { target: 'history-query', id: 'historyId', side: 'north', withPresented: true }, 'history')
+      );
+
+      await openSession();
+
+      assert.deepStrictEqual(northService.retrieveSavedServerIdentity.mock.calls[0].arguments, ['northId']);
+      assert.deepStrictEqual(historyQueryService.retrieveSavedServerIdentity.mock.calls[0].arguments, ['historyId', 'north']);
+      assert.deepStrictEqual(
+        completions().map(([, , id, completion]) => [id, completion]),
+        [
+          ['south', { status: 'COMPLETED', result: { ...trust, presented: null, presentedError: 'Server unreachable' } }],
+          ['north', { status: 'COMPLETED', result: { ...trust, presented, presentedError: null } }],
+          ['history', { status: 'COMPLETED', result: { ...trust, presented: null, presentedError: null } }]
+        ]
+      );
+    });
+
     it('should trust the identity of the server of a connector, or of a side of a history query, by OIAnalytics', async () => {
       respondWith(
         request('TRUST_SERVER_IDENTITY', { target: 'south', id: 'southId', fingerprint: 'SHA256:south' }, 'south'),
@@ -492,7 +536,8 @@ describe('OIAnalytics Session Service', () => {
             'trust',
             {
               status: 'ERRORED',
-              result: 'OIAnalytics is not allowed to request TRUST_SERVER_IDENTITY: it requires the permission configureDataFlow'
+              result:
+                'OIAnalytics is not allowed to request TRUST_SERVER_IDENTITY: it requires the permission Data flow (configureDataFlow)'
             }
           ],
           // the review of the identity only requires connecting to the data sources

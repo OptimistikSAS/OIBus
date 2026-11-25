@@ -40,7 +40,7 @@ import type NorthService from './north.service';
 import { northManifestList } from './north-manifests';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
-import { retrieveServerIdentityToTrust, toServerTrust, toServerTrustDTO } from './server-trust.utils';
+import { retrievePresentedServerIdentity, retrieveServerIdentityToTrust, toServerTrust, toServerTrustDTO } from './server-trust.utils';
 import type SouthService from './south.service';
 import { southManifestList } from './south-manifests';
 import type TransformerService from './transformer.service';
@@ -416,43 +416,24 @@ export default class HistoryQueryService {
   }
 
   /**
+   * The identity the server of a side of the saved history query presents now, and how it compares with the identity
+   * trusted, without connecting further (no credential is sent). `null` when the connector does not check it.
+   */
+  async retrieveSavedServerIdentity(historyId: string, side: 'south' | 'north'): Promise<PresentedServerIdentity | null> {
+    const historyQuery = this.findById(historyId);
+    return await retrievePresentedServerIdentity(
+      this.buildThrowawayConnector(historyQuery, side),
+      (side === 'south' ? historyQuery.southServerTrust : historyQuery.northServerTrust).identity
+    );
+  }
+
+  /**
    * Trust the identity the server of a side of the history query presents, when its fingerprint is the one the user
    * reviewed, and restart the history query so that it connects with it.
    */
   async trustServerIdentity(historyId: string, side: 'south' | 'north', fingerprint: string, trustedBy: string): Promise<void> {
     const historyQuery = this.findById(historyId);
-    const connector =
-      side === 'south'
-        ? this.southService.buildThrowawaySouth({
-            id: historyQuery.id,
-            name: historyQuery.name,
-            description: historyQuery.description,
-            enabled: false,
-            type: historyQuery.southType,
-            settings: historyQuery.southSettings,
-            serverTrust: historyQuery.southServerTrust,
-            items: [],
-            groups: [],
-            createdBy: historyQuery.createdBy,
-            updatedBy: historyQuery.updatedBy,
-            createdAt: historyQuery.createdAt,
-            updatedAt: historyQuery.updatedAt
-          })
-        : this.northService.buildThrowawayNorth({
-            id: historyQuery.id,
-            name: historyQuery.name,
-            description: historyQuery.description,
-            enabled: false,
-            type: historyQuery.northType,
-            settings: historyQuery.northSettings,
-            serverTrust: historyQuery.northServerTrust,
-            caching: historyQuery.caching,
-            transformers: [],
-            createdBy: historyQuery.createdBy,
-            updatedBy: historyQuery.updatedBy,
-            createdAt: historyQuery.createdAt,
-            updatedAt: historyQuery.updatedAt
-          });
+    const connector = this.buildThrowawayConnector(historyQuery, side);
     const identity = await retrieveServerIdentityToTrust(connector, fingerprint);
     this.historyQueryRepository.updateServerTrust(
       historyId,
@@ -467,6 +448,46 @@ export default class HistoryQueryService {
     this.engine.logger.info(
       `Server identity ${identity.fingerprint} trusted by "${trustedBy}" for the ${side === 'south' ? 'South' : 'North'} of History query "${historyQuery.name}" (${historyId})`
     );
+  }
+
+  /**
+   * A connector of a side of the saved history query, not started, to retrieve the identity of its server.
+   */
+  private buildThrowawayConnector(
+    historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
+    side: 'south' | 'north'
+  ) {
+    return side === 'south'
+      ? this.southService.buildThrowawaySouth({
+          id: historyQuery.id,
+          name: historyQuery.name,
+          description: historyQuery.description,
+          enabled: false,
+          type: historyQuery.southType,
+          settings: historyQuery.southSettings,
+          serverTrust: historyQuery.southServerTrust,
+          items: [],
+          groups: [],
+          createdBy: historyQuery.createdBy,
+          updatedBy: historyQuery.updatedBy,
+          createdAt: historyQuery.createdAt,
+          updatedAt: historyQuery.updatedAt
+        })
+      : this.northService.buildThrowawayNorth({
+          id: historyQuery.id,
+          name: historyQuery.name,
+          description: historyQuery.description,
+          enabled: false,
+          type: historyQuery.northType,
+          settings: historyQuery.northSettings,
+          serverTrust: historyQuery.northServerTrust,
+          caching: historyQuery.caching,
+          transformers: [],
+          createdBy: historyQuery.createdBy,
+          updatedBy: historyQuery.updatedBy,
+          createdAt: historyQuery.createdAt,
+          updatedAt: historyQuery.updatedAt
+        });
   }
 
   /**

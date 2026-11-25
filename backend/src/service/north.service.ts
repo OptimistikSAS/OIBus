@@ -215,6 +215,16 @@ export default class NorthService {
   }
 
   /**
+   * The identity the server of the saved connector presents now, and how it compares with the identity trusted, without
+   * connecting further (no credential is sent). `null` when the connector does not check it.
+   */
+  async retrieveSavedServerIdentity(northId: string): Promise<PresentedServerIdentity | null> {
+    const northConnector = this.findById(northId);
+    const north = this.buildThrowawayNorth({ ...northConnector, enabled: false, transformers: [] });
+    return await retrievePresentedServerIdentity(north, northConnector.serverTrust.identity);
+  }
+
+  /**
    * Trust the identity the server of the connector presents, when its fingerprint is the one the user reviewed, and restart
    * the connector so that it connects with it.
    */

@@ -205,7 +205,7 @@ impersonating the server to collect the credentials, or the data.
 - **Traceability**: the page of the connector shows who trusted the identity of its server, and when. Trusting an
   identity is logged, and the trusted identity is kept when the configuration is
   [exported and imported](../engine/config-export-import.mdx).
-- **Upgrade**: the OPC UA and SFTP connectors and history queries created before OIBus 4.0 trust the identity their
+- **Upgrade**: the OPC UA (with a security mode other than None) and SFTP connectors and history queries created before OIBus 4.0 trust the identity their
   server presents at their first connection. Review it on their page.
 - **OIAnalytics**: OIAnalytics shows the identity of the server when it tests a connection, and trusts it only with the
   [**Data flow** and **Connect to data sources** permissions](../installation/oianalytics.mdx#command-permissions).

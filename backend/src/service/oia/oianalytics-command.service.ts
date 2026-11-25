@@ -109,19 +109,6 @@ const UPDATE_SETTINGS_FILE = 'update.json';
 // `isExecutingCommand` true forever, blocking every subsequent command.
 const TEST_COMMAND_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
-/**
- * How a test sent by OIAnalytics treats the identity of the server, from the trust its command carries (that of the form of
- * the connector in OIAnalytics): the fingerprint of the identity trusted there, not saved yet, and whether the result
- * carries the identity of a server not trusted, for the user to review it. An OIAnalytics which does not know about the
- * trust sends none: the test of a server not trusted then fails, instead of looking successful.
- */
-const testedServerTrust = (
-  serverTrust: ServerTrustCommandDTO | undefined
-): { trustedFingerprint: string | null; withServerIdentity: boolean } => ({
-  trustedFingerprint: serverTrust?.identity?.fingerprint ?? null,
-  withServerIdentity: serverTrust !== undefined
-});
-
 export default class OIAnalyticsCommandService {
   private isRetrievingCommands = false;
   private isExecutingCommand = false;
@@ -1066,15 +1053,38 @@ export default class OIAnalyticsCommandService {
     );
   }
 
+  /**
+   * How a test sent by OIAnalytics treats the identity of the server, from the trust its command carries: the fingerprint of
+   * an identity trusted in the form of the connector in OIAnalytics, not saved yet, and whether the result carries the
+   * identity of a server not trusted, for the user to review it. An OIAnalytics which does not know about the trust sends
+   * none: the test of a server not trusted then fails, instead of looking successful.
+   *
+   * The fingerprint is ignored when OIAnalytics is not allowed to configure the data flow (it would trust a server for the
+   * test without the permission trusting it requires), and for an identity already trusted (with who trusted it, as in the
+   * configuration OIBus sent): it may no longer be the trusted one, which then applies.
+   */
+  private testedServerTrust(serverTrust: ServerTrustCommandDTO | undefined): {
+    trustedFingerprint: string | null;
+    withServerIdentity: boolean;
+  } {
+    const identity = serverTrust?.identity;
+    const canTrust = !!this.oIAnalyticsRegistrationService.getRegistrationSettings()?.commandPermissions.configureDataFlow;
+    return {
+      trustedFingerprint: identity && !identity.trustedBy && canTrust ? identity.fingerprint : null,
+      withServerIdentity: serverTrust !== undefined
+    };
+  }
+
   private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand, privateKeys: Array<string>) {
     this.decryptSouthSettings(command, privateKeys);
+    const { trustedFingerprint, withServerIdentity } = this.testedServerTrust(command.commandContent.serverTrust);
     const result = await this.southService.testSouth(
       command.southConnectorId,
       command.commandContent.type,
       command.commandContent.settings,
-      testedServerTrust(command.commandContent.serverTrust).trustedFingerprint,
+      trustedFingerprint,
       null,
-      testedServerTrust(command.commandContent.serverTrust).withServerIdentity
+      withServerIdentity
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
@@ -1090,7 +1100,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
       undefined,
-      testedServerTrust(command.commandContent.southCommand.serverTrust).trustedFingerprint
+      this.testedServerTrust(command.commandContent.southCommand.serverTrust).trustedFingerprint
     );
     this.completeDualResultTestCommand(command, result);
   }
@@ -1126,13 +1136,14 @@ export default class OIAnalyticsCommandService {
 
   private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand, privateKeys: Array<string>) {
     this.decryptNorthSettings(command, privateKeys);
+    const { trustedFingerprint, withServerIdentity } = this.testedServerTrust(command.commandContent.serverTrust);
     const result = await this.northService.testNorth(
       command.northConnectorId,
       command.commandContent.type,
       command.commandContent.settings,
-      testedServerTrust(command.commandContent.serverTrust).trustedFingerprint,
+      trustedFingerprint,
       null,
-      testedServerTrust(command.commandContent.serverTrust).withServerIdentity
+      withServerIdentity
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
@@ -1238,7 +1249,7 @@ export default class OIAnalyticsCommandService {
     privateKeys: Array<string>
   ) {
     this.decryptHistoryQuerySettings(command.commandContent, privateKeys);
-    const { trustedFingerprint, withServerIdentity } = testedServerTrust(command.commandContent.northServerTrust);
+    const { trustedFingerprint, withServerIdentity } = this.testedServerTrust(command.commandContent.northServerTrust);
     const result = await this.historyQueryService.testNorth(
       command.historyQueryId,
       command.commandContent.northType,
@@ -1255,7 +1266,7 @@ export default class OIAnalyticsCommandService {
     privateKeys: Array<string>
   ) {
     this.decryptHistoryQuerySettings(command.commandContent, privateKeys);
-    const { trustedFingerprint, withServerIdentity } = testedServerTrust(command.commandContent.southServerTrust);
+    const { trustedFingerprint, withServerIdentity } = this.testedServerTrust(command.commandContent.southServerTrust);
     const result = await this.historyQueryService.testSouth(
       command.historyQueryId,
       command.commandContent.southType,
@@ -1278,7 +1289,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings,
-      testedServerTrust(command.commandContent.historyCommand.southServerTrust).trustedFingerprint
+      this.testedServerTrust(command.commandContent.historyCommand.southServerTrust).trustedFingerprint
     );
     this.completeDualResultTestCommand(command, result);
   }

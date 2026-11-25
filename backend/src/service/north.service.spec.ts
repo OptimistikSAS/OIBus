@@ -524,6 +524,13 @@ describe('North Service', () => {
       assert.deepStrictEqual(engine.getNorth.mock.calls[0].arguments, [testData.north.list[0].id]);
     });
 
+    it('should retrieve the identity the server of a saved north connector presents, without trusting it', async () => {
+      const presented = await service.retrieveSavedServerIdentity(testData.north.list[0].id);
+
+      assert.deepStrictEqual(presented?.identity, identity);
+      assert.strictEqual(northConnectorRepository.updateServerTrust.mock.calls.length, 0);
+    });
+
     it('should trust the identity the server of a north connector presents, and reload it', async () => {
       await service.trustServerIdentity(testData.north.list[0].id, identity.fingerprint, 'userTest');
 
