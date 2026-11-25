@@ -128,6 +128,20 @@ describe('Service utils OPCUA', () => {
       assert.strictEqual(trust.mock.calls[1].arguments[0].fingerprint, new crypto.X509Certificate(otherCertificate).fingerprint256);
     });
 
+    it('should not check the certificate of OIBus itself, which node-opcua checks when connecting', async () => {
+      const trust = mock.fn((_identity: ServerIdentity) => false);
+      const store = new ServerIdentityCertificateStore(trust, otherCertificate);
+
+      // the sanity check of node-opcua expects its own certificate to be untrusted
+      assert.strictEqual(await store.verifyCertificate(otherCertificate), 'BadCertificateUntrusted');
+      assert.strictEqual(await store.checkCertificate([otherCertificate, serverCertificate]), StatusCodes.BadCertificateUntrusted);
+      assert.strictEqual(trust.mock.calls.length, 0);
+
+      // the certificate of the server is checked by the connector
+      await store.checkCertificate(serverCertificate);
+      assert.strictEqual(trust.mock.calls[0].arguments[0].fingerprint, new crypto.X509Certificate(serverCertificate).fingerprint256);
+    });
+
     it('should only trust or reject a certificate through the connector', async () => {
       const store = new ServerIdentityCertificateStore(() => false);
 
@@ -520,7 +534,7 @@ describe('Service utils OPCUA', () => {
             applicationName: 'OIBus',
             applicationUri: `urn:${os.hostname()}:OIBus`,
             certificateKeyPairProvider: ephemeralProvider,
-            clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted),
+            clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted, ephemeralProvider.getCertificate()),
             clientName: 'connectorName-connectorId',
             connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
             endpointMustExist: false,
@@ -561,7 +575,7 @@ describe('Service utils OPCUA', () => {
             applicationName: 'OIBus',
             applicationUri: `urn:${os.hostname()}:OIBus`,
             certificateKeyPairProvider: ephemeralProvider,
-            clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted),
+            clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted, ephemeralProvider.getCertificate()),
             clientName: 'connectorName-connectorId',
             connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
             endpointMustExist: false,
@@ -607,7 +621,7 @@ describe('Service utils OPCUA', () => {
             applicationName: 'OIBus',
             applicationUri: `urn:${os.hostname()}:OIBus`,
             certificateKeyPairProvider: ephemeralProvider,
-            clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted),
+            clientCertificateManager: new ServerIdentityCertificateStore(isServerTrusted, ephemeralProvider.getCertificate()),
             clientName: 'connectorName-connectorId',
             connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
             endpointMustExist: false,
