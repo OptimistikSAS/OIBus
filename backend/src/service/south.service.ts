@@ -172,6 +172,9 @@ export default class SouthService {
       !!retrieveSecretsFromSouth,
       createdBy
     );
+    // A new connector, even copied from another one, only trusts the identity its command sends: the one the connector
+    // copied trusts may not be the identity of the server of the copy
+    southEntity.serverTrust = toServerTrust(command.serverTrust, null, createdBy);
 
     southEntity.createdBy = createdBy;
     southEntity.updatedBy = createdBy;

@@ -23,7 +23,8 @@ import {
 /**
  * The trust of a connector saved from a command: an identity other than the one already trusted is trusted by the user
  * saving the connector, now (the identity already trusted keeps who trusted it and when). Omitted (a command predating the
- * trust, from an older client or OIAnalytics), the current trust is kept.
+ * trust, from an older client or OIAnalytics), the current trust is kept: `current` is null for a connector created, even
+ * as a copy, which then trusts no identity.
  */
 export const toServerTrust = (command: ServerTrustCommandDTO | undefined, current: ServerTrust | null, user: string): ServerTrust => {
   if (command === undefined) {

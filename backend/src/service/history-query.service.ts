@@ -115,6 +115,10 @@ export default class HistoryQueryService {
       this.scanModeRepository.findAll(),
       createdBy
     );
+    // A new history query, even copied from another one or from connectors, only trusts the identity its command sends: the one copied may not be the
+    // identity of the server of the copy
+    historyQuery.southServerTrust = toServerTrust(command.southServerTrust, null, createdBy);
+    historyQuery.northServerTrust = toServerTrust(command.northServerTrust, null, createdBy);
     historyQuery.createdBy = createdBy;
     historyQuery.updatedBy = createdBy;
     for (const item of historyQuery.items) {
