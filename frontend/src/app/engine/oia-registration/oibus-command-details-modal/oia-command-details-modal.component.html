@@ -110,6 +110,16 @@
                 [translateParams]="{ southConnectorId: cmd.southConnectorId }"
               ></li>
             }
+            @case ('update-south-status') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.south-id"
+                [translateParams]="{ southConnectorId: cmd.southConnectorId }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.enabled"
+                [translateParams]="{ enabled: cmd.commandContent.enabled }"
+              ></li>
+            }
             @case ('create-or-update-south-items-from-csv') {
               <li
                 translate="oia-module.commands.details-modal.command-content.south.south-id"
@@ -142,6 +152,16 @@
               <li
                 translate="oia-module.commands.details-modal.command-content.north.north-id"
                 [translateParams]="{ northConnectorId: cmd.northConnectorId }"
+              ></li>
+            }
+            @case ('update-north-status') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.north.north-id"
+                [translateParams]="{ northConnectorId: cmd.northConnectorId }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.north.enabled"
+                [translateParams]="{ enabled: cmd.commandContent.enabled }"
               ></li>
             }
             @case ('create-ip-filter') {

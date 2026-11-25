@@ -55,6 +55,8 @@ describe('Command permissions', () => {
         'restart-engine',
         'dump-memory',
         'retrieve-logs-database',
+        'update-south-status',
+        'update-north-status',
         'update-history-query-status'
       ]);
     });

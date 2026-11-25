@@ -73,9 +73,11 @@ import {
   OIBusUpdateIPFilterCommand,
   OIBusUpdateNorthCacheContentCommand,
   OIBusUpdateNorthConnectorCommand,
+  OIBusUpdateNorthConnectorStatusCommand,
   OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
   OIBusUpdateSouthConnectorCommand,
+  OIBusUpdateSouthConnectorStatusCommand,
   OIBusUpdateVersionCommand
 } from '../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
@@ -463,6 +465,9 @@ export default class OIAnalyticsCommandService {
         case 'delete-south':
           await this.executeDeleteSouthCommand(command);
           break;
+        case 'update-south-status':
+          await this.executeUpdateSouthStatusCommand(command);
+          break;
         case 'create-or-update-south-items-from-csv':
           await this.executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command);
           break;
@@ -492,6 +497,9 @@ export default class OIAnalyticsCommandService {
           break;
         case 'delete-north':
           await this.executeDeleteNorthCommand(command);
+          break;
+        case 'update-north-status':
+          await this.executeUpdateNorthStatusCommand(command);
           break;
         case 'test-north-connection':
           {
@@ -998,6 +1006,16 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector deleted successfully');
   }
 
+  private async executeUpdateSouthStatusCommand(command: OIBusUpdateSouthConnectorStatusCommand) {
+    if (command.commandContent.enabled) {
+      await this.southService.start(command.southConnectorId);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector started');
+    } else {
+      await this.southService.stop(command.southConnectorId);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector stopped');
+    }
+  }
+
   private async executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand) {
     const southConnector = this.southService.findById(command.southConnectorId);
     if (!southConnector) {
@@ -1132,6 +1150,16 @@ export default class OIAnalyticsCommandService {
   private async executeDeleteNorthCommand(command: OIBusDeleteNorthConnectorCommand) {
     await this.northService.delete(command.northConnectorId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector deleted successfully');
+  }
+
+  private async executeUpdateNorthStatusCommand(command: OIBusUpdateNorthConnectorStatusCommand) {
+    if (command.commandContent.enabled) {
+      await this.northService.start(command.northConnectorId);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector started');
+    } else {
+      await this.northService.stop(command.northConnectorId);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector stopped');
+    }
   }
 
   private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand, privateKeys: Array<string>) {
@@ -1697,6 +1725,13 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
         type: command.type,
         southConnectorId: command.southConnectorId
       };
+    case 'update-south-status':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        southConnectorId: command.southConnectorId,
+        commandContent: command.commandContent
+      };
     case 'test-south-connection':
       return {
         ...toBaseOIBusCommandDTO(command),
@@ -1731,6 +1766,13 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
         ...toBaseOIBusCommandDTO(command),
         type: command.type,
         northConnectorId: command.northConnectorId
+      };
+    case 'update-north-status':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
       };
     case 'test-north-connection':
       return {

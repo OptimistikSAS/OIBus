@@ -223,6 +223,19 @@ describe('OiaCommandDetailsModalComponent', () => {
     expect(JSON.parse(tester.json.element().textContent!)).toEqual('commandContent' in command ? command.commandContent : null);
   });
 
+  test.each<OIBusCommandDTO>([
+    { ...base, type: 'update-south-status', southConnectorId: 'southId1', commandContent: { enabled: true } },
+    { ...base, type: 'update-north-status', northConnectorId: 'northId1', commandContent: { enabled: false } }
+  ])('should display the connector and the status of a $type command', async command => {
+    const tester = new OiaCommandDetailsModalComponentTester(command);
+
+    await expect.element(tester.contentLines).toHaveLength(3);
+    await expect
+      .element(tester.contentLines.nth(1))
+      .toHaveTextContent(command.type === 'update-south-status' ? 'South connector ID: southId1' : 'North connector ID: northId1');
+    await expect.element(tester.contentLines.nth(2)).toHaveTextContent(`Enabled: ${command.type === 'update-south-status'}`);
+  });
+
   test('should display a history query status update', async () => {
     const tester = new OiaCommandDetailsModalComponentTester({
       ...base,

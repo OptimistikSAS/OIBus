@@ -179,6 +179,14 @@ export interface OIBusTestSouthConnectorItemCommand extends BaseOIBusCommand {
   };
 }
 
+export interface OIBusUpdateSouthConnectorStatusCommand extends BaseOIBusCommand {
+  type: 'update-south-status';
+  southConnectorId: string;
+  commandContent: {
+    enabled: boolean;
+  };
+}
+
 export interface OIBusCreateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'create-north';
   northConnectorId: string | null; // used to retrieve passwords in case of duplicate
@@ -201,6 +209,14 @@ export interface OIBusTestNorthConnectorCommand extends BaseOIBusCommand {
   targetVersion: string;
   northConnectorId: string;
   commandContent: NorthConnectorCommandDTO;
+}
+
+export interface OIBusUpdateNorthConnectorStatusCommand extends BaseOIBusCommand {
+  type: 'update-north-status';
+  northConnectorId: string;
+  commandContent: {
+    enabled: boolean;
+  };
 }
 
 export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand extends BaseOIBusCommand {
@@ -386,10 +402,12 @@ export type OIBusCommand =
   | OIBusDeleteSouthConnectorCommand
   | OIBusTestSouthConnectorCommand
   | OIBusTestSouthConnectorItemCommand
+  | OIBusUpdateSouthConnectorStatusCommand
   | OIBusCreateNorthConnectorCommand
   | OIBusUpdateNorthConnectorCommand
   | OIBusDeleteNorthConnectorCommand
   | OIBusTestNorthConnectorCommand
+  | OIBusUpdateNorthConnectorStatusCommand
   | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand
   | OIBusCreateHistoryQueryCommand
   | OIBusUpdateHistoryQueryCommand

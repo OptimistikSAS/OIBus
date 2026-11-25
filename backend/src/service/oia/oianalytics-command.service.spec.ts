@@ -72,9 +72,11 @@ import {
   OIBusUpdateIPFilterCommand,
   OIBusUpdateNorthCacheContentCommand,
   OIBusUpdateNorthConnectorCommand,
+  OIBusUpdateNorthConnectorStatusCommand,
   OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
   OIBusUpdateSouthConnectorCommand,
+  OIBusUpdateSouthConnectorStatusCommand,
   OIBusUpdateVersionCommand
 } from '../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
@@ -2289,6 +2291,76 @@ describe('OIAnalytics Command Service', () => {
       // The real error — not a timeout — should be reported
       assertErrored(testSouthItemCommand, 'connection refused');
     });
+  });
+
+  it('should execute update-south-status command', async () => {
+    const command = buildCommand<OIBusUpdateSouthConnectorStatusCommand>({
+      id: 'updateSouthStatusId',
+      type: 'update-south-status',
+      southConnectorId: 'southId',
+      commandContent: { enabled: true }
+    });
+
+    await executeCommand(command);
+
+    assert.deepStrictEqual(southService.start.mock.calls[0].arguments, [command.southConnectorId]);
+    assert.strictEqual(southService.stop.mock.callCount(), 0);
+    assertCompleted(command, 'South connector started');
+
+    command.commandContent.enabled = false;
+    await executeCommand(command);
+
+    assert.deepStrictEqual(southService.stop.mock.calls[0].arguments, [command.southConnectorId]);
+    assert.ok(oIAnalyticsCommandRepository.markAsCompleted.mock.calls.some(c => c.arguments[2] === 'South connector stopped'));
+  });
+
+  it('should mark update-south-status command as errored when the south connector is not found', async () => {
+    const command = buildCommand<OIBusUpdateSouthConnectorStatusCommand>({
+      id: 'updateSouthStatusId',
+      type: 'update-south-status',
+      southConnectorId: 'southId',
+      commandContent: { enabled: true }
+    });
+    southService.start.mock.mockImplementationOnce(() => Promise.reject(new Error('South "southId" not found')));
+
+    await executeCommand(command);
+
+    assertErrored(command, 'South "southId" not found');
+  });
+
+  it('should execute update-north-status command', async () => {
+    const command = buildCommand<OIBusUpdateNorthConnectorStatusCommand>({
+      id: 'updateNorthStatusId',
+      type: 'update-north-status',
+      northConnectorId: 'northId',
+      commandContent: { enabled: true }
+    });
+
+    await executeCommand(command);
+
+    assert.deepStrictEqual(northService.start.mock.calls[0].arguments, [command.northConnectorId]);
+    assert.strictEqual(northService.stop.mock.callCount(), 0);
+    assertCompleted(command, 'North connector started');
+
+    command.commandContent.enabled = false;
+    await executeCommand(command);
+
+    assert.deepStrictEqual(northService.stop.mock.calls[0].arguments, [command.northConnectorId]);
+    assert.ok(oIAnalyticsCommandRepository.markAsCompleted.mock.calls.some(c => c.arguments[2] === 'North connector stopped'));
+  });
+
+  it('should mark update-north-status command as errored when the north connector is not found', async () => {
+    const command = buildCommand<OIBusUpdateNorthConnectorStatusCommand>({
+      id: 'updateNorthStatusId',
+      type: 'update-north-status',
+      northConnectorId: 'northId',
+      commandContent: { enabled: true }
+    });
+    northService.start.mock.mockImplementationOnce(() => Promise.reject(new Error('North "northId" not found')));
+
+    await executeCommand(command);
+
+    assertErrored(command, 'North "northId" not found');
   });
 
   it('should execute update-history-query-status command', async () => {

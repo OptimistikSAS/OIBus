@@ -2718,11 +2718,13 @@
       "delete-south": "删除 South 连接器",
       "test-south-connection": "测试 South 连接",
       "test-south-item": "测试 South 项",
+      "update-south-status": "启动或停止 South 连接器",
       "create-or-update-south-items-from-csv": "从 CSV 加载 South 项",
       "create-north": "创建 North 连接器",
       "update-north": "更新 North 连接器",
       "delete-north": "删除 North 连接器",
       "test-north-connection": "测试 North 连接",
+      "update-north-status": "启动或停止 North 连接器",
       "create-history-query": "创建历史查询",
       "update-history-query": "更新历史查询",
       "delete-history-query": "删除历史查询",
@@ -3438,7 +3440,7 @@
           },
           "operate": {
             "label": "运行操作",
-            "description": "重启 OIBus，启动或停止历史查询"
+            "description": "重启 OIBus，启动或停止 South 或 North 连接器或历史查询"
           },
           "configureEngine": {
             "label": "引擎设置",
@@ -3519,10 +3521,12 @@
             "delete-items-not-present": "删除不存在的项：{{ deleteItemsNotPresent }}",
             "delimiter": "分隔符：{{ delimiter }}",
             "csv-content": "CSV 内容：{{ csvContent }}",
-            "item-id": "项 ID：{{ itemId }}"
+            "item-id": "项 ID：{{ itemId }}",
+            "enabled": "已启用：{{ enabled }}"
           },
           "north": {
-            "north-id": "North 连接器 ID：{{ northConnectorId }}"
+            "north-id": "North 连接器 ID：{{ northConnectorId }}",
+            "enabled": "已启用：{{ enabled }}"
           },
           "ip-filter": {
             "ip-filter-id": "IP 过滤器 ID：{{ ipFilterId }}"

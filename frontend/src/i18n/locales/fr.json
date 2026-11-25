@@ -2718,11 +2718,13 @@
       "delete-south": "Supprimer le connecteur South",
       "test-south-connection": "Tester la connexion South",
       "test-south-item": "Tester le point South",
+      "update-south-status": "Démarrer ou arrêter le connecteur South",
       "create-or-update-south-items-from-csv": "Charger les points South depuis un CSV",
       "create-north": "Créer un connecteur North",
       "update-north": "Mettre à jour le connecteur North",
       "delete-north": "Supprimer le connecteur North",
       "test-north-connection": "Tester la connexion North",
+      "update-north-status": "Démarrer ou arrêter le connecteur North",
       "create-history-query": "Créer une requête d'historique",
       "update-history-query": "Mettre à jour la requête d'historique",
       "delete-history-query": "Supprimer la requête d'historique",
@@ -3438,7 +3440,7 @@
           },
           "operate": {
             "label": "Exploiter",
-            "description": "Redémarrer OIBus, démarrer ou arrêter une requête d'historique"
+            "description": "Redémarrer OIBus, démarrer ou arrêter un connecteur South ou North ou une requête d'historique"
           },
           "configureEngine": {
             "label": "Paramètres du moteur",
@@ -3519,10 +3521,12 @@
             "delete-items-not-present": "Supprimer les éléments absents : {{ deleteItemsNotPresent }}",
             "delimiter": "Délimiteur : {{ delimiter }}",
             "csv-content": "Contenu CSV : {{ csvContent }}",
-            "item-id": "ID de l'élément : {{ itemId }}"
+            "item-id": "ID de l'élément : {{ itemId }}",
+            "enabled": "Activé : {{ enabled }}"
           },
           "north": {
-            "north-id": "ID du connecteur North : {{ northConnectorId }}"
+            "north-id": "ID du connecteur North : {{ northConnectorId }}",
+            "enabled": "Activé : {{ enabled }}"
           },
           "ip-filter": {
             "ip-filter-id": "ID du filtre IP : {{ ipFilterId }}"
