@@ -57,9 +57,11 @@ import {
   OIAnalyticsFetchUpdateIPFilterCommandDTO,
   OIAnalyticsFetchUpdateNorthCacheContentCommandDTO,
   OIAnalyticsFetchUpdateNorthConnectorCommandDTO,
+  OIAnalyticsFetchUpdateNorthConnectorStatusCommandDTO,
   OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO,
   OIAnalyticsFetchUpdateScanModeCommandDTO,
   OIAnalyticsFetchUpdateSouthConnectorCommandDTO,
+  OIAnalyticsFetchUpdateSouthConnectorStatusCommandDTO,
   OIAnalyticsFetchUpdateVersionCommandDTO
 } from '../../service/oia/oianalytics.model';
 import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
@@ -1041,6 +1043,54 @@ describe('OIAnalyticsCommandRepository', () => {
         deleteItemsNotPresent: command.deleteItemsNotPresent,
         delimiter: command.delimiter
       }
+    });
+  });
+
+  it('should create a update-south-status command', () => {
+    const command: OIAnalyticsFetchUpdateSouthConnectorStatusCommandDTO = {
+      id: 'updateSouthStatusCommandId',
+      targetVersion: 'v4.0.0',
+      type: 'update-south-status',
+      southConnectorId: 's1',
+      enabled: false
+    };
+    repository.create(command);
+
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
+      id: command.id,
+      type: command.type,
+      status: 'RETRIEVED',
+      ack: false,
+      targetVersion: command.targetVersion,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      southConnectorId: command.southConnectorId,
+      commandContent: { enabled: false }
+    });
+  });
+
+  it('should create a update-north-status command', () => {
+    const command: OIAnalyticsFetchUpdateNorthConnectorStatusCommandDTO = {
+      id: 'updateNorthStatusCommandId',
+      targetVersion: 'v4.0.0',
+      type: 'update-north-status',
+      northConnectorId: 'n1',
+      enabled: false
+    };
+    repository.create(command);
+
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
+      id: command.id,
+      type: command.type,
+      status: 'RETRIEVED',
+      ack: false,
+      targetVersion: command.targetVersion,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: command.northConnectorId,
+      commandContent: { enabled: false }
     });
   });
 

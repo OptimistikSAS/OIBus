@@ -196,6 +196,11 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(command.southConnectorId);
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'update-south-status':
+        queryParams.push(command.southConnectorId);
+        queryParams.push(JSON.stringify({ enabled: command.enabled }));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
       case 'create-or-update-south-items-from-csv':
         queryParams.push(command.southConnectorId);
         queryParams.push(
@@ -231,6 +236,11 @@ export default class OIAnalyticsCommandRepository {
       case 'delete-north':
         queryParams.push(command.northConnectorId);
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'update-north-status':
+        queryParams.push(command.northConnectorId);
+        queryParams.push(JSON.stringify({ enabled: command.enabled }));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'test-north-connection':
         queryParams.push(command.northConnectorId);
@@ -503,6 +513,13 @@ export default class OIAnalyticsCommandRepository {
           type: 'delete-north',
           northConnectorId: command.north_connector_id as string
         };
+      case 'update-north-status':
+        return {
+          ...baseCommandFields(command),
+          type: 'update-north-status',
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
       case 'test-north-connection':
         return {
           ...baseCommandFields(command),
@@ -529,6 +546,13 @@ export default class OIAnalyticsCommandRepository {
           ...baseCommandFields(command),
           type: 'delete-south',
           southConnectorId: command.south_connector_id as string
+        };
+      case 'update-south-status':
+        return {
+          ...baseCommandFields(command),
+          type: 'update-south-status',
+          southConnectorId: command.south_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-or-update-south-items-from-csv':
         return {

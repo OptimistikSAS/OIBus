@@ -48,10 +48,12 @@ export const OIBUS_COMMAND_TYPES = [
   'delete-south',
   'test-south-connection',
   'test-south-item',
+  'update-south-status',
   'create-north',
   'update-north',
   'delete-north',
   'test-north-connection',
+  'update-north-status',
   'create-or-update-south-items-from-csv',
   'create-history-query',
   'update-history-query',
@@ -88,6 +90,8 @@ export type OIBusCommandType = (typeof OIBUS_COMMAND_TYPES)[number];
 export const COMMAND_REQUIRED_PERMISSIONS: Readonly<Record<OIBusCommandType, ReadonlyArray<CommandPermission>>> = {
   'update-version': ['updateVersion'],
   'restart-engine': ['operate'],
+  'update-south-status': ['operate'],
+  'update-north-status': ['operate'],
   'update-history-query-status': ['operate'],
   'update-engine-general': ['configureEngine'],
   'update-engine-proxy': ['configureEngine'],
@@ -658,6 +662,33 @@ export interface OIBusDeleteSouthConnectorCommandDTO extends BaseOIBusCommandDTO
 }
 
 /**
+ * Command DTO for starting or stopping a south connector.
+ */
+export interface OIBusUpdateSouthConnectorStatusCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'update-south-status';
+
+  /**
+   * The ID of the south connector to start or stop.
+   * @example "south123"
+   */
+  southConnectorId: string;
+
+  /**
+   * The content of the command, including the new status of the south connector.
+   */
+  commandContent: {
+    /**
+     * Whether the south connector must run (true) or be stopped (false).
+     * @example true
+     */
+    enabled: boolean;
+  };
+}
+
+/**
  * Command DTO for testing a south connector connection.
  */
 export interface OIBusTestSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
@@ -776,6 +807,33 @@ export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO
    * @example "north123"
    */
   northConnectorId: string;
+}
+
+/**
+ * Command DTO for starting or stopping a north connector.
+ */
+export interface OIBusUpdateNorthConnectorStatusCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'update-north-status';
+
+  /**
+   * The ID of the north connector to start or stop.
+   * @example "north123"
+   */
+  northConnectorId: string;
+
+  /**
+   * The content of the command, including the new status of the north connector.
+   */
+  commandContent: {
+    /**
+     * Whether the north connector must run (true) or be stopped (false).
+     * @example true
+     */
+    enabled: boolean;
+  };
 }
 
 /**
@@ -1329,10 +1387,12 @@ export type OIBusCommandDTO =
   | OIBusDeleteSouthConnectorCommandDTO
   | OIBusTestSouthConnectorCommandDTO
   | OIBusTestSouthConnectorItemCommandDTO
+  | OIBusUpdateSouthConnectorStatusCommandDTO
   | OIBusCreateNorthConnectorCommandDTO
   | OIBusUpdateNorthConnectorCommandDTO
   | OIBusDeleteNorthConnectorCommandDTO
   | OIBusTestNorthConnectorCommandDTO
+  | OIBusUpdateNorthConnectorStatusCommandDTO
   | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO
   | OIBusCreateHistoryQueryCommandDTO
   | OIBusUpdateHistoryQueryCommandDTO

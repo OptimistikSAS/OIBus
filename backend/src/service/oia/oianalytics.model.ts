@@ -67,10 +67,12 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'create-or-update-south-items-from-csv',
   'test-south-connection',
   'test-south-item',
+  'update-south-status',
   'create-north',
   'update-north',
   'delete-north',
   'test-north-connection',
+  'update-north-status',
   'create-history-query',
   'update-history-query',
   'delete-history-query',
@@ -224,6 +226,12 @@ export interface OIAnalyticsFetchDeleteSouthConnectorCommandDTO extends BaseOIAn
   southConnectorId: string;
 }
 
+export interface OIAnalyticsFetchUpdateSouthConnectorStatusCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-south-status';
+  southConnectorId: string;
+  enabled: boolean;
+}
+
 export interface OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'create-or-update-south-items-from-csv';
   southConnectorId: string;
@@ -270,6 +278,12 @@ export interface OIAnalyticsFetchTestNorthConnectionCommandDTO extends BaseOIAna
   type: 'test-north-connection';
   northConnectorId: string;
   commandContent: NorthConnectorCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateNorthConnectorStatusCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-north-status';
+  northConnectorId: string;
+  enabled: boolean;
 }
 
 export interface OIAnalyticsFetchCreateHistoryQueryCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -444,11 +458,13 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchDeleteSouthConnectorCommandDTO
   | OIAnalyticsFetchTestSouthConnectionCommandDTO
   | OIAnalyticsFetchTestSouthItemCommandDTO
+  | OIAnalyticsFetchUpdateSouthConnectorStatusCommandDTO
   | OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO
   | OIAnalyticsFetchCreateNorthConnectorCommandDTO
   | OIAnalyticsFetchUpdateNorthConnectorCommandDTO
   | OIAnalyticsFetchDeleteNorthConnectorCommandDTO
   | OIAnalyticsFetchTestNorthConnectionCommandDTO
+  | OIAnalyticsFetchUpdateNorthConnectorStatusCommandDTO
   | OIAnalyticsFetchCreateHistoryQueryCommandDTO
   | OIAnalyticsFetchUpdateHistoryQueryCommandDTO
   | OIAnalyticsFetchDeleteHistoryQueryCommandDTO

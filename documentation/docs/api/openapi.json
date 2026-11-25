@@ -23691,10 +23691,12 @@
 					"delete-south",
 					"test-south-connection",
 					"test-south-item",
+					"update-south-status",
 					"create-north",
 					"update-north",
 					"delete-north",
 					"test-north-connection",
+					"update-north-status",
 					"create-or-update-south-items-from-csv",
 					"create-history-query",
 					"update-history-query",
@@ -32234,6 +32236,97 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"OIBusUpdateSouthConnectorStatusCommandDTO": {
+				"description": "Command DTO for starting or stopping a south connector.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"update-south-status"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
+					"southConnectorId": {
+						"type": "string",
+						"description": "The ID of the south connector to start or stop.",
+						"example": "south123"
+					},
+					"commandContent": {
+						"properties": {
+							"enabled": {
+								"type": "boolean",
+								"description": "Whether the south connector must run (true) or be stopped (false).",
+								"example": true
+							}
+						},
+						"required": [
+							"enabled"
+						],
+						"type": "object",
+						"description": "The content of the command, including the new status of the south connector."
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"southConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"NorthAmazonS3Settings": {
 				"properties": {
 					"bucket": {
@@ -35744,6 +35837,97 @@
 					"commandContent": {
 						"$ref": "#/components/schemas/NorthConnectorCommandDTO",
 						"description": "The content of the command, including the north connector details to test."
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"northConnectorId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusUpdateNorthConnectorStatusCommandDTO": {
+				"description": "Command DTO for starting or stopping a north connector.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"update-north-status"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
+					"northConnectorId": {
+						"type": "string",
+						"description": "The ID of the north connector to start or stop.",
+						"example": "north123"
+					},
+					"commandContent": {
+						"properties": {
+							"enabled": {
+								"type": "boolean",
+								"description": "Whether the north connector must run (true) or be stopped (false).",
+								"example": true
+							}
+						},
+						"required": [
+							"enabled"
+						],
+						"type": "object",
+						"description": "The content of the command, including the new status of the north connector."
 					}
 				},
 				"required": [
@@ -40602,6 +40786,9 @@
 						"$ref": "#/components/schemas/OIBusTestSouthConnectorItemCommandDTO"
 					},
 					{
+						"$ref": "#/components/schemas/OIBusUpdateSouthConnectorStatusCommandDTO"
+					},
+					{
 						"$ref": "#/components/schemas/OIBusCreateNorthConnectorCommandDTO"
 					},
 					{
@@ -40612,6 +40799,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusTestNorthConnectorCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusUpdateNorthConnectorStatusCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO"
@@ -50817,7 +51007,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "4.0.0",
+		"version": "3.9.7",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
