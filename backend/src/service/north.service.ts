@@ -109,6 +109,9 @@ export default class NorthService {
       this.scanModeRepository.findAll(),
       createdBy
     );
+    // A new connector, even copied from another one, only trusts the identity its command sends: the one the connector
+    // copied trusts may not be the identity of the server of the copy
+    northEntity.serverTrust = toServerTrust(command.serverTrust, null, createdBy);
     northEntity.createdBy = createdBy;
     northEntity.updatedBy = createdBy;
     const transformers = this.transformerService.findAll();

@@ -655,7 +655,7 @@ describe('History Query service', () => {
       assert.deepStrictEqual(saved.northServerTrust, { identity: null, trustOnFirstUse: false });
     });
 
-    it('should keep the trusts of the connectors a history query is created from when the command has none', async () => {
+    it('should not trust the identities the connectors a history query is created from trust when the command has none', async () => {
       mock.method(service, 'retrieveSecrets', () => ({
         ...testData.historyQueries.list[0],
         southServerTrust: trustOf(identity),
@@ -665,8 +665,8 @@ describe('History Query service', () => {
       await service.create(testData.historyQueries.command, testData.south.list[0].id, testData.north.list[0].id, undefined, 'userTest');
 
       const saved = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
-      assert.deepStrictEqual(saved.southServerTrust, trustOf(identity));
-      assert.deepStrictEqual(saved.northServerTrust, trustOf(otherIdentity));
+      assert.deepStrictEqual(saved.southServerTrust, { identity: null, trustOnFirstUse: false });
+      assert.deepStrictEqual(saved.northServerTrust, { identity: null, trustOnFirstUse: false });
     });
 
     it('should keep who trusted an identity of a history query updated with the same identity, and trust a new one', async () => {

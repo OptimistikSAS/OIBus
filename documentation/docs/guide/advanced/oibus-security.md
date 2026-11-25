@@ -197,7 +197,8 @@ impersonating the server to collect the credentials, or the data.
   `ssh-keygen -l -f <host key file>` on the SFTP server) before trusting it. Until the identity is trusted, a connection
   test stops after this check, so that no credential is sent to the server.
 - **Saving without trusting**: a connector can be saved, or started, without trusting the identity of its server: it
-  then waits until its server is trusted.
+  then waits until its server is trusted. A connector or history query copied from another one does not trust the
+  identity the other one trusts: trust the identity of its own server.
 - **Refused identity**: when the server presents an identity the connector does not trust, or another one than the
   trusted identity (its certificate or host key was renewed, or another server impersonates it), the connector refuses
   to connect, and stops retrying. The page of the connector or history query shows the identity presented: **Review and

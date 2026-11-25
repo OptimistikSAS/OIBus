@@ -198,7 +198,8 @@ machine ne peut ainsi pas se faire passer pour le serveur afin de récupérer le
   n'est pas approuvée, un test de connexion s'arrête après cette vérification, pour qu'aucun identifiant ne soit envoyé
   au serveur.
 - **Enregistrer sans approuver** : un connecteur peut être enregistré, ou démarré, sans approuver l'identité de son
-  serveur : il attend alors que son serveur soit approuvé.
+  serveur : il attend alors que son serveur soit approuvé. Un connecteur ou une requête d'historique copié d'un autre
+  n'approuve pas l'identité qu'approuve l'autre : approuvez l'identité de son propre serveur.
 - **Identité refusée** : quand le serveur présente une identité que le connecteur n'approuve pas, ou une autre que
   l'identité approuvée (son certificat ou sa clé d'hôte a été renouvelé, ou un autre serveur se fait passer pour lui), le
   connecteur refuse de se connecter et cesse de réessayer. La page du connecteur ou de la requête d'historique affiche

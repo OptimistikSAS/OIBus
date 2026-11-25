@@ -453,12 +453,15 @@ describe('North Service', () => {
       });
     });
 
-    it('should keep the trust of the duplicated north connector when the command has none', async () => {
+    it('should not trust the identity the duplicated north connector trusts when the command has no trust', async () => {
       mock.method(service, 'retrieveSecretsFromNorth', () => ({ ...testData.north.list[0], serverTrust: trustOf(identity) }));
 
       await service.create(testData.north.command, testData.north.list[0].id, 'userTest');
 
-      assert.deepStrictEqual(northConnectorRepository.saveNorth.mock.calls[0].arguments[0].serverTrust, trustOf(identity));
+      assert.deepStrictEqual(northConnectorRepository.saveNorth.mock.calls[0].arguments[0].serverTrust, {
+        identity: null,
+        trustOnFirstUse: false
+      });
     });
 
     it('should keep who trusted the identity of a north connector updated with the same identity', async () => {

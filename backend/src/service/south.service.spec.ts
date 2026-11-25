@@ -1108,12 +1108,27 @@ describe('South Service', () => {
       });
     });
 
-    it('should keep the trust of the duplicated south connector when the command has none', async () => {
-      mock.method(service, 'retrieveSecretsFromSouth', () => testData.south.list[2]);
+    it('should not trust the identity the duplicated south connector trusts when the command has no trust', async () => {
+      mock.method(service, 'retrieveSecretsFromSouth', () => ({ ...testData.south.list[2], serverTrust: trustOf(identity) }));
 
       await service.create(testData.south.command, testData.south.list[2].id, 'userTest');
 
-      assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[0].serverTrust, testData.south.list[2].serverTrust);
+      assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[0].serverTrust, {
+        identity: null,
+        trustOnFirstUse: false
+      });
+    });
+
+    it('should trust the identity of the command of a duplicated south connector by its creator', async () => {
+      mock.method(service, 'retrieveSecretsFromSouth', () => ({ ...testData.south.list[2], serverTrust: trustOf(identity) }));
+
+      await service.create({ ...testData.south.command, serverTrust: { identity } }, testData.south.list[2].id, 'userTest');
+
+      // the creator trusts it, not the user who trusted it for the duplicated connector
+      assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[0].serverTrust, {
+        identity: { ...identity, trustedBy: 'userTest', trustedAt: testData.constants.dates.FAKE_NOW },
+        trustOnFirstUse: false
+      });
     });
 
     it('should keep who trusted the identity of a south connector updated with the same identity', async () => {
