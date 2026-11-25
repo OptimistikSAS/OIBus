@@ -669,6 +669,26 @@ describe('History Query service', () => {
       assert.deepStrictEqual(saved.northServerTrust, { identity: null, trustOnFirstUse: false });
     });
 
+    it('should not trust the identities the history query a history query is copied from trusts when the command has none', async () => {
+      const command = testData.historyQueries.command;
+      // the types of the manifests the South and North services are mocked with
+      const source = {
+        ...testData.historyQueries.list[0],
+        southType: southManifestList[0].id,
+        northType: fileWriterManifest.id,
+        southServerTrust: trustOf(identity),
+        northServerTrust: trustOf(otherIdentity)
+      };
+      historyQueryRepository.findHistoryById.mock.mockImplementation(() => source);
+
+      await service.create(command, undefined, undefined, source.id, 'userTest');
+
+      assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [source.id]);
+      const saved = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+      assert.deepStrictEqual(saved.southServerTrust, { identity: null, trustOnFirstUse: false });
+      assert.deepStrictEqual(saved.northServerTrust, { identity: null, trustOnFirstUse: false });
+    });
+
     it('should keep who trusted an identity of a history query updated with the same identity, and trust a new one', async () => {
       historyQueryRepository.findHistoryById.mock.mockImplementation(() => ({
         ...testData.historyQueries.list[0],
