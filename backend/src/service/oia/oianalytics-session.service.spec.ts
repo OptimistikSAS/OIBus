@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import { ServerTrustState } from '../../../shared/model/domain/server-identity.model';
 import { OIBusInteractiveSessionRequestDTO } from '../../../shared/model/oia/interactive-session.model';
 
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
@@ -387,6 +388,43 @@ describe('OIAnalytics Session Service', () => {
       assert.deepStrictEqual(completions(), [[registration, 'session1', 'request1', { status: 'COMPLETED', result }]]);
     });
 
+    it('should send the trust of a connector, or of a side of a history query, in the identity of its server', async () => {
+      const southTrust: ServerTrustState = { identity: null, trustOnFirstUse: false, pending: null };
+      const northTrust: ServerTrustState = {
+        identity: null,
+        trustOnFirstUse: false,
+        pending: { identity: { type: 'ssh-host-key', fingerprint: 'SHA256:north', details: { keyType: 'ssh-ed25519' } }, status: 'unknown' }
+      };
+      const historyTrust: ServerTrustState = { identity: null, trustOnFirstUse: true, pending: null };
+      southService.getServerTrustState.mock.mockImplementation(() => southTrust);
+      northService.getServerTrustState.mock.mockImplementation(() => northTrust);
+      historyQueryService.getServerTrustState.mock.mockImplementation(() => historyTrust);
+      respondWith(
+        request('GET_SERVER_TRUST', { target: 'south', id: 'southId' }, 'south'),
+        request('GET_SERVER_TRUST', { target: 'north', id: 'northId' }, 'north'),
+        request('GET_SERVER_TRUST', { target: 'history-query', id: 'historyId', side: 'south' }, 'history'),
+        request('GET_SERVER_TRUST', { target: 'history-query', id: 'historyId' }, 'no-side')
+      );
+
+      await openSession();
+
+      assert.deepStrictEqual(southService.getServerTrustState.mock.calls[0].arguments, ['southId']);
+      assert.deepStrictEqual(northService.getServerTrustState.mock.calls[0].arguments, ['northId']);
+      assert.deepStrictEqual(
+        historyQueryService.getServerTrustState.mock.calls.map(call => call.arguments),
+        [['historyId', 'south']]
+      );
+      assert.deepStrictEqual(
+        completions().map(([, , id, completion]) => [id, completion]),
+        [
+          ['south', { status: 'COMPLETED', result: southTrust }],
+          ['north', { status: 'COMPLETED', result: northTrust }],
+          ['history', { status: 'COMPLETED', result: historyTrust }],
+          ['no-side', { status: 'ERRORED', result: 'The side of history query "historyId" whose server is concerned is missing' }]
+        ]
+      );
+    });
+
     it('should trust the identity of the server of a connector, or of a side of a history query, by OIAnalytics', async () => {
       respondWith(
         request('TRUST_SERVER_IDENTITY', { target: 'south', id: 'southId', fingerprint: 'SHA256:south' }, 'south'),
@@ -430,8 +468,8 @@ describe('OIAnalytics Session Service', () => {
       assert.deepStrictEqual(
         completions().map(([, , id, completion]) => [id, completion]),
         [
-          ['history', { status: 'ERRORED', result: 'The side of history query "historyId" to trust the server of is missing' }],
-          ['engine', { status: 'ERRORED', result: 'Cannot trust the identity of the server of a "engine"' }]
+          ['history', { status: 'ERRORED', result: 'The side of history query "historyId" whose server is concerned is missing' }],
+          ['engine', { status: 'ERRORED', result: 'Unknown target "engine" of a server trust request' }]
         ]
       );
     });

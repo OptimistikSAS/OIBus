@@ -7,10 +7,12 @@ import {
   OIBUS_INTERACTIVE_SESSION_REQUEST_REQUIRED_PERMISSIONS,
   OIBusBrowseRequestContent,
   OIBusCloseExploreRequestContent,
+  OIBusGetServerTrustRequestContent,
   OIBusInteractiveSessionFileResult,
   OIBusInteractiveSessionRequestDTO,
   OIBusInteractiveSessionSouthContent,
   OIBusPreviewWorkflowRequestContent,
+  OIBusServerTrustTarget,
   OIBusStartExploreResult,
   OIBusTestSouthItemRequestContent,
   OIBusTrustServerIdentityRequestContent
@@ -293,28 +295,52 @@ export default class OIAnalyticsSessionService {
           content.trustedFingerprint ?? null
         );
       }
+      case 'GET_SERVER_TRUST': {
+        const content = request.content as OIBusGetServerTrustRequestContent;
+        return this.serverTrustOf(
+          content,
+          id => this.southService.getServerTrustState(id),
+          id => this.northService.getServerTrustState(id),
+          (id, side) => this.historyQueryService.getServerTrustState(id, side)
+        );
+      }
       case 'TRUST_SERVER_IDENTITY': {
         const content = request.content as OIBusTrustServerIdentityRequestContent;
-        switch (content.target) {
-          case 'south':
-            await this.southService.trustServerIdentity(content.id, content.fingerprint, 'oianalytics');
-            break;
-          case 'north':
-            await this.northService.trustServerIdentity(content.id, content.fingerprint, 'oianalytics');
-            break;
-          case 'history-query':
-            if (content.side !== 'south' && content.side !== 'north') {
-              throw new Error(`The side of history query "${content.id}" to trust the server of is missing`);
-            }
-            await this.historyQueryService.trustServerIdentity(content.id, content.side, content.fingerprint, 'oianalytics');
-            break;
-          default:
-            throw new Error(`Cannot trust the identity of the server of a "${content.target}"`);
-        }
+        await this.serverTrustOf(
+          content,
+          id => this.southService.trustServerIdentity(id, content.fingerprint, 'oianalytics'),
+          id => this.northService.trustServerIdentity(id, content.fingerprint, 'oianalytics'),
+          (id, side) => this.historyQueryService.trustServerIdentity(id, side, content.fingerprint, 'oianalytics')
+        );
         return null;
       }
       default:
         throw new Error(`Interactive session request type "${request.type}" not supported`);
+    }
+  }
+
+  /**
+   * Applies the operation matching the target of a server trust request: its South or North connector, or a side of its
+   * history query.
+   */
+  private serverTrustOf<T>(
+    content: OIBusServerTrustTarget,
+    south: (id: string) => T,
+    north: (id: string) => T,
+    historyQuery: (id: string, side: 'south' | 'north') => T
+  ): T {
+    switch (content.target) {
+      case 'south':
+        return south(content.id);
+      case 'north':
+        return north(content.id);
+      case 'history-query':
+        if (content.side !== 'south' && content.side !== 'north') {
+          throw new Error(`The side of history query "${content.id}" whose server is concerned is missing`);
+        }
+        return historyQuery(content.id, content.side);
+      default:
+        throw new Error(`Unknown target "${content.target}" of a server trust request`);
     }
   }
 
