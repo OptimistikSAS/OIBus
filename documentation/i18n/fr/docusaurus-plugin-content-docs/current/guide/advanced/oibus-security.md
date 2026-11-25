@@ -206,8 +206,6 @@ machine ne peut ainsi pas se faire passer pour le serveur afin de récupérer le
 - **Traçabilité** : la page du connecteur indique qui a approuvé l'identité de son serveur, et quand. L'approbation d'une
   identité est journalisée, et l'identité approuvée est conservée quand la configuration est
   [exportée et importée](../engine/config-export-import.mdx).
-- **Mise à niveau** : les connecteurs et requêtes d'historique OPC UA (avec un mode de sécurité autre que None) et SFTP créés avant OIBus 4.0 approuvent l'identité
-  que présente leur serveur à leur première connexion. Vérifiez-la sur leur page.
 - **OIAnalytics** : OIAnalytics affiche l'identité du serveur quand il teste une connexion, et ne l'approuve qu'avec les
   [permissions **Flux de données** et **Se connecter aux sources de données**](../installation/oianalytics.mdx#command-permissions).
 
