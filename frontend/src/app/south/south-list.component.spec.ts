@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -280,6 +280,19 @@ describe('SouthListComponent', () => {
       await expect.element(tester.enabledChip).toHaveClass('active');
       await expect.element(tester.typeChip('OPC UA®')).toHaveClass('active');
       await expect.element(tester.filterCount).toHaveTextContent('2 of 3');
+    });
+
+    test('should only tell how many connectors the filters show once they are loaded', async () => {
+      const loadedSouths = new Subject<Array<SouthConnectorListDTO>>();
+      southConnectorService.list.mockReturnValue(loadedSouths);
+      const tester = await createTester('/?type=opcua');
+
+      await expect.element(tester.root.getByCss('oib-loading-spinner')).toBeInTheDocument();
+      await expect.element(tester.filterCount).not.toBeInTheDocument();
+
+      loadedSouths.next(southConnectors);
+
+      await expect.element(tester.filterCount).toHaveTextContent('1 of 3');
     });
 
     test('should ignore the invalid values of the URL', async () => {

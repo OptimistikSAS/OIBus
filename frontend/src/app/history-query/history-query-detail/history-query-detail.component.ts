@@ -161,7 +161,14 @@ export class HistoryQueryDetailComponent {
     // an item whose link is followed is opened, to be displayed (and edited) as on a south connector
     this.urlState.openLinked<HistoryQueryItemDTO>(
       ITEM_LINK_PARAM,
-      () => (this.southManifest() ? (this.historyQuery()?.items ?? null) : null),
+      // once the history query of the page and its manifest are loaded: the component is reused when only the URL changes,
+      // so the ones of the previous page may still be displayed
+      () => {
+        const historyQuery = this.historyQuery();
+        return historyQuery?.id === this.historyQueryId() && this.southManifest() && !this.manifests.isLoading()
+          ? historyQuery.items
+          : null;
+      },
       item => this.editItem(item)
     );
   }

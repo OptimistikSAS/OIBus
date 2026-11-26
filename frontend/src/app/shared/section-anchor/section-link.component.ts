@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -18,12 +19,23 @@ import { TranslatePipe } from '@ngx-translate/core';
     [replaceUrl]="true"
     [ngbTooltip]="'common.section-link' | translate"
     [attr.aria-label]="'common.section-link' | translate"
+    (click)="scrollToSection()"
     ><span class="fa-solid fa-link fa-xs" aria-hidden="true"></span
   ></a>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, NgbTooltip, TranslatePipe]
 })
 export class SectionLinkComponent {
+  private readonly document = inject(DOCUMENT);
+
   /** The name of the section, as given to SectionAnchorDirective */
   readonly fragment = input.required<string>();
+
+  /**
+   * Scrolls to the section: SectionAnchorDirective only does when the fragment of the URL changes, and the router
+   * ignores a click on the link when the URL already has this fragment (e.g. when the user has scrolled away since)
+   */
+  protected scrollToSection() {
+    this.document.querySelector(`[data-section="${this.fragment()}"]`)?.scrollIntoView({ block: 'start' });
+  }
 }

@@ -97,9 +97,11 @@ export class HistoryQueryListComponent {
     name: ''
   });
   private readonly searchedName = this.urlState.get(PARAMS.name);
-  /** True when the search or a filter hides history queries */
+  /** True when the search or a filter hides history queries, once they are loaded */
   readonly filtered = computed(
-    () => !!this.searchedName() || this.activeStatuses().length > 0 || this.activeSouthTypes().length > 0 || this.activeNorthTypes().length > 0
+    () =>
+      !!this.allHistoryQueries() &&
+      (!!this.searchedName() || this.activeStatuses().length > 0 || this.activeSouthTypes().length > 0 || this.activeNorthTypes().length > 0)
   );
 
   readonly filteredHistoryQueries = computed(() => this.sort(this.filter(this.allHistoryQueries() ?? [])));
