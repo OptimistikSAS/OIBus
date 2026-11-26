@@ -24,7 +24,7 @@
         <!-- 0. A new history query starts with the connectors it is created from, the form being built from them -->
         @if (choosesConnectors) {
           <div class="oib-steps-panel mt-3" [hidden]="steps.current() !== 'connectors'">
-            <oib-history-query-connectors />
+            <oib-history-query-connectors (picked)="onConnectorsPicked()" />
           </div>
         }
         @if (form) {

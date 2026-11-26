@@ -505,6 +505,17 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     }
   }
 
+  /**
+   * Picking the South and North connectors on the connectors step opens the next step once both are chosen, the first time
+   * only: once the step has been left, coming back to change the connectors takes the Next button, as it starts the history
+   * query over.
+   */
+  onConnectorsPicked() {
+    if (!this.appliedChoice) {
+      this.nextStep();
+    }
+  }
+
   /** Opens a step of the steps bar: leaving the connectors step loads the chosen connectors, as Next does */
   goTo(step: HistoryQueryStep) {
     if (this.steps.current() === 'connectors' && step !== 'connectors') {

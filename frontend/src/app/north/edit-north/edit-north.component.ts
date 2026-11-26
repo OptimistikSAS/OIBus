@@ -333,6 +333,16 @@ export class EditNorthComponent implements CanComponentDeactivate {
     }
   }
 
+  /**
+   * Picking the connector on the connector step opens the next step, the first time only: once the step has been left, coming
+   * back to change the connector takes the Next button, as it starts the connector over.
+   */
+  onConnectorPicked() {
+    if (!this.appliedChoice) {
+      this.nextStep();
+    }
+  }
+
   /** Opens a step of the steps bar: leaving the connector step loads the chosen connector, as Next does */
   goTo(step: NorthConnectorStep) {
     if (this.steps.current() === 'connector' && step !== 'connector') {

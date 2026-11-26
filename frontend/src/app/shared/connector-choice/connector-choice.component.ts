@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 
@@ -69,6 +69,8 @@ export class ConnectorChoiceComponent {
   readonly types = input.required<Array<SouthType | NorthType>>();
   /** The translation key of the title shown above the choice */
   readonly titleKey = input.required<string>();
+  /** Emitted when the user picks an existing connector or a type, once the form has its value */
+  readonly picked = output<void>();
 
   readonly categories = computed(() => groupByCategory(this.types()));
   /**
@@ -111,5 +113,6 @@ export class ConnectorChoiceComponent {
     const control = controls.fromExisting.value ? controls.id : controls.type;
     control.setValue(value);
     control.markAsDirty();
+    this.picked.emit();
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder } from '@angular/forms';
 
@@ -47,6 +47,8 @@ export class HistoryQueryConnectorsComponent {
     south: createConnectorChoiceForm(this.fb, true),
     north: createConnectorChoiceForm(this.fb, true)
   });
+  /** Emitted when the user picks a connector or a type and both sides are then chosen */
+  readonly picked = output<void>();
 
   // loaded once the form is created, each side starting from new settings when there is no existing connector
   readonly connectors = toSignal(
@@ -73,6 +75,13 @@ export class HistoryQueryConnectorsComponent {
       })
     )
   );
+
+  /** A connector or a type was picked on a side */
+  onPicked() {
+    if (this.createForm.valid) {
+      this.picked.emit();
+    }
+  }
 
   /** The chosen connectors, once the form is valid */
   choice(): ConnectorChoice {

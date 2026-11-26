@@ -8,6 +8,7 @@
     [form]="createForm.controls.south"
     [existing]="connectors()?.southList ?? []"
     [types]="connectors()?.southTypes ?? []"
+    (picked)="onPicked()"
   />
   <oib-connector-choice
     class="col-md-6"
@@ -17,5 +18,6 @@
     [form]="createForm.controls.north"
     [existing]="connectors()?.northList ?? []"
     [types]="connectors()?.northTypes ?? []"
+    (picked)="onPicked()"
   />
 </div>
