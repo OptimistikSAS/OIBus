@@ -161,6 +161,27 @@ describe('HTTPRequest Service', () => {
     assert.strictEqual(requestMock.mock.calls.length, 2);
   });
 
+  it('should validate the certificate of the server with the TLS options given, reusing their agent', async () => {
+    const tls = { ca: ['trusted certificate'], allowPartialTrustChain: true, checkServerIdentity: () => undefined };
+
+    await HTTPRequest(testUrl, { tls });
+    await HTTPRequest(testUrl, { tls: { ...tls, checkServerIdentity: () => undefined } });
+    await HTTPRequest(testUrl, { tls: { ca: ['another certificate'] } });
+
+    assert.strictEqual(agentInstances.length, 2);
+    assert.deepStrictEqual((undiciModule.Agent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [{ connect: tls }]);
+    const calledWith = requestMock.mock.calls[0].arguments[1]!;
+    assert.ok(calledWith.dispatcher?.isMockAgent);
+    assert.ok(!('tls' in calledWith));
+  });
+
+  it('should use the standard validation with empty TLS options', async () => {
+    await HTTPRequest(testUrl, { tls: {} });
+
+    assert.strictEqual(agentInstances.length, 0);
+    assert.strictEqual(requestMock.mock.calls[0].arguments[1]?.dispatcher, undefined);
+  });
+
   it('should handle non 2xx status codes and set ok to false', async () => {
     requestMock.mock.mockImplementation(async () => createMockResponse(404, { error: 'Not Found' }));
     const response = await HTTPRequest(testUrl);
@@ -432,6 +453,16 @@ describe('HTTPRequest Service', () => {
       const dispatcher = requestMock.mock.calls[0].arguments[1]?.dispatcher;
       assert.ok(dispatcher?.isMockProxyAgent);
       assert.strictEqual(decryptTextMock.mock.calls.length, 0);
+    });
+
+    it('should validate the certificate of the server through the proxy with the TLS options given', async () => {
+      const tls = { ca: ['trusted certificate'] };
+
+      await HTTPRequest(testUrl, { proxy: { url: testProxyUrl }, tls });
+
+      assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        { uri: testProxyUrl, requestTls: tls }
+      ]);
     });
 
     it('should configure ProxyAgent with Basic auth', async () => {

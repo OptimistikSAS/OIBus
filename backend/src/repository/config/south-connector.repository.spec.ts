@@ -514,6 +514,21 @@ describe('SouthConnectorRepository', () => {
     assert.deepStrictEqual(repository.findSouthById(south.id)!.serverTrust, { identity: null, trustOnFirstUse: true });
   });
 
+  it('should select a trusted certificate in the settings of a south connector, and audit it', () => {
+    const south = newSouth('south trusting a certificate', { serverTrust: { identity: null, trustOnFirstUse: true }, groups: [] });
+    repository.saveSouth(south, true);
+
+    const calls = auditsDuring(() => repository.trustCertificate(south.id, 'trustedId', 'trustUser'));
+
+    const updated = repository.findSouthById(south.id)!;
+    assert.strictEqual((updated.settings as unknown as Record<string, unknown>).certificateValidation, 'trusted');
+    assert.strictEqual((updated.settings as unknown as Record<string, unknown>).trustedCertificateId, 'trustedId');
+    assert.deepStrictEqual(updated.serverTrust, { identity: null, trustOnFirstUse: false });
+    assert.strictEqual(updated.updatedBy, 'trustUser');
+    assert.strictEqual(calls.length, 1);
+    assert.throws(() => repository.trustCertificate('unknown-south', 'trustedId', 'trustUser'), NotFoundError);
+  });
+
   it('should update the server trust of a south connector and audit it', () => {
     const south = newSouth('south trusting its server', { serverTrust: { identity: null, trustOnFirstUse: true }, groups: [] });
     repository.saveSouth(south, true);

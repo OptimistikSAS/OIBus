@@ -2,6 +2,8 @@ import { SouthConnectorManifest } from '../../../shared/model/connector/south-ma
 
 const manifest: SouthConnectorManifest = {
   id: 'rest',
+  serverIdentity: 'x509',
+  serverTrustInCertificateStore: true,
   category: 'api',
   modes: {
     subscription: false,
@@ -17,7 +19,13 @@ const manifest: SouthConnectorManifest = {
       visible: true,
       wrapInBox: false
     },
-    enablingConditions: [],
+    enablingConditions: [
+      {
+        referralPathFromRoot: 'certificateValidation',
+        targetPathFromRoot: 'trustedCertificateId',
+        values: ['trusted']
+      }
+    ],
     validators: [],
     attributes: [
       {
@@ -42,10 +50,11 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
-        type: 'boolean',
-        key: 'acceptUnauthorized',
-        translationKey: 'configuration.oibus.manifest.south.rest.accept-unauthorized',
-        defaultValue: false,
+        type: 'string-select',
+        key: 'certificateValidation',
+        translationKey: 'configuration.oibus.manifest.south.rest.certificate-validation',
+        defaultValue: 'standard',
+        selectableValues: ['standard', 'trusted'],
         validators: [
           {
             type: 'REQUIRED',
@@ -54,6 +63,18 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'certificate',
+        key: 'trustedCertificateId',
+        translationKey: 'configuration.oibus.manifest.south.rest.trusted-certificate-id',
+        trusted: true,
+        validators: [],
+        displayProperties: {
+          row: 1,
           columns: 4,
           displayInViewMode: true
         }

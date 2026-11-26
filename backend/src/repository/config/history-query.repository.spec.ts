@@ -594,6 +594,28 @@ describe('HistoryQueryRepository', () => {
     });
   }
 
+  it('should select a trusted certificate in the settings of a side of a history query, and audit it', () => {
+    const history: HistoryQuery = {
+      ...newHistory('history trusting a certificate'),
+      southServerTrust: { identity: null, trustOnFirstUse: true },
+      northServerTrust: { identity: null, trustOnFirstUse: true }
+    };
+    repository.saveHistory(history, true);
+    const before = repository.findHistoryById(history.id)!;
+
+    const calls = auditsDuring(() => repository.trustCertificate(history.id, 'north', 'trustedId', 'system'));
+
+    const updated = repository.findHistoryById(history.id)!;
+    assert.strictEqual((updated.northSettings as unknown as Record<string, unknown>).trustedCertificateId, 'trustedId');
+    assert.strictEqual((updated.northSettings as unknown as Record<string, unknown>).certificateValidation, 'trusted');
+    assert.deepStrictEqual(updated.northServerTrust, { identity: null, trustOnFirstUse: false });
+    assert.deepStrictEqual(updated.southSettings, before.southSettings);
+    // trusted at the first connection: not an edition of the history query
+    assert.strictEqual(updated.updatedBy, before.updatedBy);
+    assert.strictEqual(calls.length, 1);
+    assert.throws(() => repository.trustCertificate('unknown-history', 'south', 'trustedId', 'trustUser'), NotFoundError);
+  });
+
   it('should not update the server trust of an unknown history query', () => {
     assert.throws(() => repository.updateServerTrust('unknown-history', 'south', trustedSshHostKey, 'trustUser'), NotFoundError);
     assert.strictEqual(recorded().length, 0);

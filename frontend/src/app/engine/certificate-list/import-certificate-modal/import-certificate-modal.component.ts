@@ -59,6 +59,11 @@ export class ImportCertificateModalComponent {
       (this.kind() === 'trusted' || this.privateKeyFile() !== this.initializeFile)
   );
 
+  /** Imports a certificate OIBus trusts, from a select of trusted certificates */
+  prepareForTrusted() {
+    this.form.controls.kind.setValue('trusted');
+  }
+
   onFileSelected(field: FileField, file: File) {
     if (file.size > MAX_FILE_SIZE) {
       this.fileError.set('file-too-large');

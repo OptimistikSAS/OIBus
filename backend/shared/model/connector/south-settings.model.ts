@@ -240,6 +240,9 @@ export type SouthRestSettingsAuthenticationAddTo = (typeof SOUTH_REST_SETTINGS_A
 export const SOUTH_REST_SETTINGS_TEST_METHODS = ['GET', 'POST', 'PUT'] as const;
 export type SouthRestSettingsTestMethod = (typeof SOUTH_REST_SETTINGS_TEST_METHODS)[number];
 
+export const SOUTH_REST_SETTINGS_CERTIFICATE_VALIDATIONS = ['standard', 'trusted'] as const;
+export type SouthRestSettingsCertificateValidation = (typeof SOUTH_REST_SETTINGS_CERTIFICATE_VALIDATIONS)[number];
+
 export const SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_INPUT_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthRestItemSettingsQueryParamsDateTimeInputType =
   (typeof SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_INPUT_TYPES)[number];
@@ -581,7 +584,8 @@ export interface SouthPostgreSQLSettings {
 
 export interface SouthRestSettings {
   host: string;
-  acceptUnauthorized: boolean;
+  certificateValidation: SouthRestSettingsCertificateValidation;
+  trustedCertificateId?: string | null;
   timeout: number;
   authentication: SouthRestSettingsAuthentication;
   proxy: SouthRestSettingsProxy;

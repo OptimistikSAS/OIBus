@@ -13,12 +13,15 @@ import {
   SouthRestSettings
 } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity, ServerIdentityTrustStatus } from '../../../shared/model/domain/server-identity.model';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type CertificateService from '../../service/certificate.service';
 import { encryptionService } from '../../service/encryption.service';
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
+import { toServerNotTrustedError } from '../../service/server-trust.utils';
 import {
   convertDateTimeToInstant,
   formatInstant,
@@ -29,6 +32,7 @@ import {
   sanitizeFilename,
   workUnitLogCtx
 } from '../../service/utils';
+import { TlsServerTrust } from '../../service/utils-tls';
 import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
 
@@ -49,9 +53,61 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    cacheFolderPath: string
+    cacheFolderPath: string,
+    private readonly certificateService: CertificateService
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
+  }
+
+  /** The validation of the certificate of the server (see `TlsServerTrust`) */
+  private readonly tlsServerTrust = new TlsServerTrust(
+    () => this.connector.settings,
+    () => this.connector.serverTrust.identity,
+    certificateId => this.certificateService.findById(certificateId),
+    () => {
+      const { host, proxy, timeout } = this.connector.settings;
+      if (!/^https:\/\//i.test(host)) {
+        return null;
+      }
+      return {
+        url: host,
+        defaultPort: 443,
+        proxy:
+          proxy.useProxy && proxy.proxyUrl
+            ? {
+                url: proxy.proxyUrl,
+                username: proxy.proxyUsername,
+                password: proxy.proxyPassword ? encryptionService.decryptText(proxy.proxyPassword) : null
+              }
+            : null,
+        timeoutMs: timeout * 1000
+      };
+    },
+    (presented, status) => this.serverIdentityVerifier.refuse(presented, status)
+  );
+
+  override async retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    return await this.tlsServerTrust.retrieveServerIdentity();
+  }
+
+  /** Whether the certificate the server presents validates (see `testConnectionWithServerIdentity`) */
+  getServerIdentityTrustStatus(presented: ServerIdentity): ServerIdentityTrustStatus {
+    return this.tlsServerTrust.status(presented);
+  }
+
+  /**
+   * Sends a request to the server, validating its certificate: when it does not validate, the certificate the server
+   * presents is kept as pending, for a user to review and trust it
+   */
+  private async request(url: string | URL, options: ReqOptions): Promise<ReqResponse> {
+    try {
+      return await HTTPRequest(url, { ...options, tls: this.tlsServerTrust.tls() });
+    } catch (error: unknown) {
+      if (await this.tlsServerTrust.refuseIfNotTrusted(error)) {
+        throw toServerNotTrustedError(this, error);
+      }
+      throw error;
+    }
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -64,19 +120,18 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
 
     let response: ReqResponse;
     try {
-      const { proxy, acceptUnauthorized } = this.getProxyOptions();
+      const proxy = this.getProxyOptions();
       const fetchOptions: ReqOptions = {
         method: testMethod,
         auth: this.getAuthorizationOptions(),
         proxy,
         timeout: this.connector.settings.timeout * 1000,
-        acceptUnauthorized,
         body: this.connector.settings.test.body && ['POST', 'PUT'].includes(testMethod) ? this.connector.settings.test.body : undefined
       };
 
       this.handleApiKeyAuth(fetchOptions, requestUrl);
 
-      response = await HTTPRequest(requestUrl, fetchOptions);
+      response = await this.request(requestUrl, fetchOptions);
     } catch (error: unknown) {
       throw new Error(`Fetch error: ${getErrorMessage(error)}`);
     }
@@ -194,7 +249,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     }
     this.logger.info(workUnitLogCtx([item]), logMessage);
 
-    const { proxy, acceptUnauthorized } = this.getProxyOptions();
+    const proxy = this.getProxyOptions();
     const fetchOptions: ReqOptions = {
       method: item.settings.method,
       query,
@@ -202,13 +257,12 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       headers,
       auth: this.getAuthorizationOptions(),
       proxy,
-      timeout: this.connector.settings.timeout * 1000,
-      acceptUnauthorized
+      timeout: this.connector.settings.timeout * 1000
     };
 
     this.handleApiKeyAuth(fetchOptions, requestUrl);
 
-    const response = await HTTPRequest(requestUrl, fetchOptions);
+    const response = await this.request(requestUrl, fetchOptions);
     if (!response.ok) {
       throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
     }
@@ -348,11 +402,11 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     );
   }
 
-  private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
+  private getProxyOptions(): ReqProxyOptions | undefined {
     const settings = this.connector.settings;
 
     if (!settings.proxy.useProxy) {
-      return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
+      return undefined;
     }
     if (!settings.proxy.proxyUrl) {
       throw new Error('Proxy URL not specified');
@@ -370,7 +424,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       };
     }
 
-    return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
+    return options;
   }
 
   private getAuthorizationOptions(): ReqAuthOptions | undefined {

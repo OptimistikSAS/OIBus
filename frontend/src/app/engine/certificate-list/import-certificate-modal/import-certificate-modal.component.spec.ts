@@ -113,6 +113,13 @@ describe('ImportCertificateModalComponent', () => {
     );
   });
 
+  test('should import a trusted certificate when prepared for one', async () => {
+    tester.componentInstance.prepareForTrusted();
+
+    await expect.element(tester.trustedKind).toBeChecked();
+    await expect.element(tester.privateKeyFileButton).not.toBeInTheDocument();
+  });
+
   test('should include the certificate chain and passphrase when provided', async () => {
     certificateService.importCertificate.mockReturnValue(of(testData.certificates.list[0]));
 

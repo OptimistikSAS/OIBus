@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
+import * as forge from 'node-forge';
 
 import { OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
 import { PresentedServerIdentity, ServerIdentity, TrustedServerIdentity } from '../../shared/model/domain/server-identity.model';
@@ -12,11 +14,13 @@ import {
   retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
   testConnectionWithServerIdentity,
+  toCertificateStoreServerTrust,
   toImportedServerTrust,
   toServerNotTrustedError,
   toServerTrust,
   toServerTrustDTO,
-  toServerTrustStateDTO
+  toServerTrustStateDTO,
+  trustFormCertificateInStore
 } from './server-trust.utils';
 
 const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
@@ -186,6 +190,100 @@ describe('Server trust utils', () => {
         )
       );
       assert.strictEqual(connector.testConnection.mock.callCount(), 0);
+    });
+  });
+
+  describe('with a connector telling the trust status itself (a TLS connector)', () => {
+    it('should test the connection to a server whose certificate validates, whatever the trusted identity', async () => {
+      const connector = {
+        retrieveServerIdentity: async () => identity,
+        getServerIdentityTrustStatus: () => 'trusted' as const,
+        testConnection: async () => ({ items: [] })
+      };
+
+      assert.deepStrictEqual(await testConnectionWithServerIdentity(connector, null, false), {
+        items: [],
+        serverIdentity: { identity, status: 'trusted' }
+      });
+      assert.deepStrictEqual(
+        await retrievePresentedServerIdentity({ ...connector, getServerIdentityTrustStatus: () => 'changed' }, trusted),
+        {
+          identity,
+          status: 'changed'
+        }
+      );
+    });
+  });
+
+  describe('trustFormCertificateInStore', () => {
+    const certificateIdentity: ServerIdentity = {
+      type: 'x509',
+      fingerprint: 'AB:CD',
+      details: { certificate: '-----BEGIN CERTIFICATE-----' } as ServerIdentity['details']
+    };
+
+    it('should add the certificate trusted in the form to the store, and select it', () => {
+      const settings: Record<string, unknown> = { certificateValidation: 'standard', trustedCertificateId: null };
+      const trustCertificate = mock.fn((_certificate: string) => ({ id: 'trustedId' }));
+
+      assert.deepStrictEqual(
+        trustFormCertificateInStore(
+          settings,
+          { identity: null, trustOnFirstUse: true },
+          { identity: certificateIdentity },
+          true,
+          trustCertificate
+        ),
+        { identity: null, trustOnFirstUse: false }
+      );
+      assert.deepStrictEqual(trustCertificate.mock.calls[0].arguments, ['-----BEGIN CERTIFICATE-----']);
+      assert.deepStrictEqual(settings, { certificateValidation: 'trusted', trustedCertificateId: 'trustedId' });
+    });
+
+    it('should keep no identity in the trust of a connector trusting the store, without certificate in its form', () => {
+      const trustCertificate = mock.fn((_certificate: string) => ({ id: 'trustedId' }));
+
+      assert.deepStrictEqual(
+        trustFormCertificateInStore({}, { identity: trusted, trustOnFirstUse: true }, { identity }, true, trustCertificate),
+        { identity: null, trustOnFirstUse: true }
+      );
+      assert.strictEqual(trustCertificate.mock.callCount(), 0);
+    });
+
+    it('should keep the trust of the other connectors', () => {
+      const serverTrust = { identity: trusted, trustOnFirstUse: false };
+
+      assert.strictEqual(
+        trustFormCertificateInStore({}, serverTrust, { identity: certificateIdentity }, false, () => ({ id: 'id' })),
+        serverTrust
+      );
+    });
+  });
+
+  describe('toCertificateStoreServerTrust', () => {
+    it('should show the certificate of the store a connector trusts as the identity it trusts', () => {
+      const keys = forge.pki.rsa.generateKeyPair(1024);
+      const certificate = forge.pki.createCertificate();
+      certificate.publicKey = keys.publicKey;
+      certificate.setSubject([{ shortName: 'CN', value: 'server' }]);
+      certificate.setIssuer([{ shortName: 'CN', value: 'server' }]);
+      certificate.sign(keys.privateKey, forge.md.sha256.create());
+      const pem = forge.pki.certificateToPem(certificate);
+      const findCertificate = () => ({ certificate: pem, createdBy: 'admin', createdAt: '2026-01-01T00:00:00.000Z' });
+
+      const serverTrust = toCertificateStoreServerTrust(
+        { certificateValidation: 'trusted', trustedCertificateId: 'trustedId' },
+        { identity: null, trustOnFirstUse: false },
+        findCertificate
+      );
+      assert.strictEqual(serverTrust.identity!.fingerprint, new crypto.X509Certificate(pem).fingerprint256);
+      assert.strictEqual(serverTrust.identity!.trustedBy, 'admin');
+      assert.strictEqual(serverTrust.identity!.trustedAt, '2026-01-01T00:00:00.000Z');
+
+      assert.deepStrictEqual(
+        toCertificateStoreServerTrust({ certificateValidation: 'standard' }, { identity: null, trustOnFirstUse: true }, findCertificate),
+        { identity: null, trustOnFirstUse: true }
+      );
     });
   });
 

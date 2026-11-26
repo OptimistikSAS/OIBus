@@ -58,6 +58,13 @@ export interface X509ServerIdentityDetails {
    * @example true
    */
   selfSigned: boolean;
+
+  /**
+   * The certificate itself (PEM), for the connectors trusting a certificate of the store (the TLS connectors): trusting the
+   * identity adds it to the store.
+   * @example "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBBQUAMEUx...\n-----END CERTIFICATE-----"
+   */
+  certificate?: string;
 }
 
 /**

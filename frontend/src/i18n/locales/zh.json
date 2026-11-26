@@ -200,7 +200,12 @@
           },
           "rest": {
             "host": "主机",
-            "accept-unauthorized": "接受未授权证书",
+            "certificate-validation": {
+              "title": "服务器证书验证",
+              "standard": "标准",
+              "trusted": "受信任的证书"
+            },
+            "trusted-certificate-id": "受信任的证书",
             "authentication": {
               "title": "认证",
               "type": {
@@ -981,7 +986,12 @@
           },
           "rest": {
             "host": "主机",
-            "accept-unauthorized": "接受未授权证书",
+            "certificate-validation": {
+              "title": "服务器证书验证",
+              "standard": "标准",
+              "trusted": "受信任的证书"
+            },
+            "trusted-certificate-id": "受信任的证书",
             "authentication": {
               "title": "认证",
               "type": {
@@ -2460,6 +2470,7 @@
       "updated": "证书 {{ name }} 已成功更新",
       "created": "证书 {{ name }} 已成功创建",
       "create-new": "创建新证书……",
+      "import-trusted": "导入受信任的证书...",
       "imported": "证书 {{ name }} 已成功导入",
       "deleted": "证书 {{ name }} 已删除",
       "none": "无证书",

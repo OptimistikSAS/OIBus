@@ -47,6 +47,7 @@ import {
   SETPOINT_TRANSFORMER_REPLACEMENTS,
   SQL_SOUTH_TYPES,
   TIME_VALUES_TRANSFORMER_REPLACEMENTS,
+  toCertificateValidation,
   toDatabaseSouthSettings,
   toFieldProcessOperations,
   toFileDataType,
@@ -144,7 +145,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   moveOPCUACertificateToStore,
   removeOPCUAUserCertificateFiles,
   addServerTrust,
-  addTrustedCertificates
+  addTrustedCertificates,
+  useTrustedCertificates
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -2375,4 +2377,29 @@ export async function addTrustedCertificates(knex: Knex): Promise<void> {
   await knex.schema.alterTable(CERTIFICATES_TABLE, table => {
     table.string('kind').notNullable().defaultTo('key-pair');
   });
+}
+
+/**
+ * The TLS connectors and history queries validate the certificate of their server against a certificate of the store
+ * instead of accepting any certificate: as in the config upgrade, with `toCertificateValidation`.
+ */
+export async function useTrustedCertificates(knex: Knex): Promise<void> {
+  for (const [table, typeColumn, side, settingsColumn, trustColumn] of [
+    [SOUTH_CONNECTORS_TABLE, 'type', 'south', 'settings', 'server_trust'],
+    [NORTH_CONNECTORS_TABLE, 'type', 'north', 'settings', 'server_trust'],
+    [HISTORY_QUERIES_TABLE, 'south_type', 'south', 'south_settings', 'south_server_trust'],
+    [HISTORY_QUERIES_TABLE, 'north_type', 'north', 'north_settings', 'north_server_trust']
+  ] as const) {
+    for (const row of await knex(table).select('id', typeColumn, settingsColumn)) {
+      const converted = toCertificateValidation(row[typeColumn], side, JSON.parse(row[settingsColumn]));
+      if (converted) {
+        await knex(table)
+          .where('id', row.id)
+          .update({
+            [settingsColumn]: JSON.stringify(converted.settings),
+            [trustColumn]: JSON.stringify({ identity: null, trustOnFirstUse: converted.trustOnFirstUse })
+          });
+      }
+    }
+  }
 }

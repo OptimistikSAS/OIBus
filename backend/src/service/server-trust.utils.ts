@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 import { DateTime } from 'luxon';
 
 import { ServerTrustCommandDTO, ServerTrustDTO, ServerTrustStateDTO } from '../../shared/model/api/server-identity.model';
@@ -6,9 +8,11 @@ import { OIBusConnectionTestResult } from '../../shared/model/domain/engine.mode
 import {
   PresentedServerIdentity,
   ServerIdentity,
+  ServerIdentityTrustStatus,
   ServerTrust,
   ServerTrustState,
-  TrustedServerIdentity
+  TrustedServerIdentity,
+  X509ServerIdentityDetails
 } from '../../shared/model/domain/server-identity.model';
 
 import { OIBusValidationError } from '../model/types';
@@ -19,6 +23,7 @@ import {
   sameFingerprint,
   toTrustedServerIdentity
 } from './utils-server-identity';
+import { toTlsServerIdentity } from './utils-tls';
 
 /**
  * The trust of a connector saved from a command: an identity other than the one already trusted is trusted by the user
@@ -86,6 +91,7 @@ export const resolveTestedServerTrust = async (
 export const testConnectionWithServerIdentity = async (
   connector: {
     retrieveServerIdentity(): Promise<ServerIdentity | null>;
+    getServerIdentityTrustStatus?(presented: ServerIdentity): ServerIdentityTrustStatus;
     testConnection(): Promise<OIBusConnectionTestResult>;
   },
   trusted: TrustedServerIdentity | null,
@@ -95,7 +101,7 @@ export const testConnectionWithServerIdentity = async (
   if (!presented) {
     return await connector.testConnection();
   }
-  const status = getServerIdentityTrustStatus(presented, trusted);
+  const status = connector.getServerIdentityTrustStatus?.(presented) ?? getServerIdentityTrustStatus(presented, trusted);
   if (status !== 'trusted') {
     if (!withServerIdentity) {
       throw new Error(
@@ -112,11 +118,19 @@ export const testConnectionWithServerIdentity = async (
  * is sent. `null` when the connector does not check the identity of its server.
  */
 export const retrievePresentedServerIdentity = async (
-  connector: { retrieveServerIdentity(): Promise<ServerIdentity | null> },
+  connector: {
+    retrieveServerIdentity(): Promise<ServerIdentity | null>;
+    getServerIdentityTrustStatus?(presented: ServerIdentity): ServerIdentityTrustStatus;
+  },
   trusted: TrustedServerIdentity | null
 ): Promise<PresentedServerIdentity | null> => {
   const presented = await connector.retrieveServerIdentity();
-  return presented ? { identity: presented, status: getServerIdentityTrustStatus(presented, trusted) } : null;
+  return presented
+    ? {
+        identity: presented,
+        status: connector.getServerIdentityTrustStatus?.(presented) ?? getServerIdentityTrustStatus(presented, trusted)
+      }
+    : null;
 };
 
 /**
@@ -166,3 +180,50 @@ export const toServerTrustStateDTO = (state: ServerTrustState, getUserInfo: GetU
   ...toServerTrustDTO(state, getUserInfo),
   pending: state.pending
 });
+
+/**
+ * For a connector trusting a certificate of the store (`serverTrustInCertificateStore`): the identity trusted in its form
+ * (the certificate a connection test showed) is added to the store and selected in its settings, its own trust keeping no
+ * identity but whether it trusts the certificate received at its first connection. Other connectors keep their trust.
+ */
+export const trustFormCertificateInStore = (
+  settings: object,
+  serverTrust: ServerTrust,
+  command: ServerTrustCommandDTO | undefined,
+  inCertificateStore: boolean,
+  trustCertificate: (certificatePem: string) => { id: string }
+): ServerTrust => {
+  if (!inCertificateStore) {
+    return serverTrust;
+  }
+  const certificate = command?.identity?.type === 'x509' ? (command.identity.details as X509ServerIdentityDetails).certificate : undefined;
+  if (!certificate) {
+    return { identity: null, trustOnFirstUse: serverTrust.trustOnFirstUse };
+  }
+  Object.assign(settings, { certificateValidation: 'trusted', trustedCertificateId: trustCertificate(certificate).id });
+  return { identity: null, trustOnFirstUse: false };
+};
+
+/**
+ * The trust of a connector trusting a certificate of the store, as the trust of its identity: the certificate it selected,
+ * trusted by the user who added it to the store, when it validates the certificate of its server against one
+ */
+export const toCertificateStoreServerTrust = (
+  settings: object,
+  serverTrust: ServerTrust,
+  findCertificate: (certificateId: string) => { certificate: string; createdBy: string; createdAt: string }
+): ServerTrust => {
+  const { certificateValidation, trustedCertificateId } = settings as { certificateValidation?: unknown; trustedCertificateId?: unknown };
+  if (certificateValidation !== 'trusted' || typeof trustedCertificateId !== 'string') {
+    return { identity: null, trustOnFirstUse: serverTrust.trustOnFirstUse };
+  }
+  const certificate = findCertificate(trustedCertificateId);
+  return {
+    identity: toTrustedServerIdentity(
+      toTlsServerIdentity(new crypto.X509Certificate(certificate.certificate).raw),
+      certificate.createdBy,
+      certificate.createdAt
+    ),
+    trustOnFirstUse: false
+  };
+};

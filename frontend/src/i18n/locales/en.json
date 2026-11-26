@@ -862,6 +862,7 @@
       "updated": "Certificate {{ name }} successfully updated",
       "created": "Certificate {{ name }} successfully created",
       "create-new": "Create a new certificate...",
+      "import-trusted": "Import a trusted certificate...",
       "imported": "Certificate {{ name }} successfully imported",
       "deleted": "Certificate {{ name }} deleted",
       "none": "No certificate",
@@ -1228,7 +1229,12 @@
           },
           "rest": {
             "host": "Host",
-            "accept-unauthorized": "Accept unauthorized certificate",
+            "certificate-validation": {
+              "title": "Server certificate validation",
+              "standard": "Standard",
+              "trusted": "Trusted certificate"
+            },
+            "trusted-certificate-id": "Trusted certificate",
             "authentication": {
               "title": "Authentication",
               "type": {
@@ -2009,7 +2015,12 @@
           },
           "rest": {
             "host": "Host",
-            "accept-unauthorized": "Accept unauthorized certificate",
+            "certificate-validation": {
+              "title": "Server certificate validation",
+              "standard": "Standard",
+              "trusted": "Trusted certificate"
+            },
+            "trusted-certificate-id": "Trusted certificate",
             "authentication": {
               "title": "Authentication",
               "type": {

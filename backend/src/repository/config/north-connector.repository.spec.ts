@@ -502,6 +502,21 @@ describe('NorthConnectorRepository', () => {
     assert.deepStrictEqual(next!.serverTrust, trustedSshHostKey);
   });
 
+  it('should select a trusted certificate in the settings of a north connector, and audit it', () => {
+    const north = newNorth('north trusting a certificate', { serverTrust: { identity: null, trustOnFirstUse: true } });
+    repository.saveNorth(north, true);
+
+    const calls = auditsDuring(() => repository.trustCertificate(north.id, 'trustedId', 'trustUser'));
+
+    const updated = repository.findNorthById(north.id)!;
+    assert.strictEqual((updated.settings as unknown as Record<string, unknown>).certificateValidation, 'trusted');
+    assert.strictEqual((updated.settings as unknown as Record<string, unknown>).trustedCertificateId, 'trustedId');
+    assert.deepStrictEqual(updated.serverTrust, { identity: null, trustOnFirstUse: false });
+    assert.strictEqual(updated.updatedBy, 'trustUser');
+    assert.strictEqual(calls.length, 1);
+    assert.throws(() => repository.trustCertificate('unknown-north', 'trustedId', 'trustUser'), NotFoundError);
+  });
+
   it('should not update the server trust of an unknown north connector', () => {
     assert.throws(() => repository.updateServerTrust('unknown-north', trustedSshHostKey, 'trustUser'), NotFoundError);
     assert.strictEqual(recorded().length, 0);

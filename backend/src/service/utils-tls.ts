@@ -1,0 +1,316 @@
+import crypto from 'node:crypto';
+import http from 'node:http';
+import https from 'node:https';
+import net from 'node:net';
+import tls from 'node:tls';
+
+import { ServerIdentity, ServerIdentityTrustStatus, X509ServerIdentityDetails } from '../../shared/model/domain/server-identity.model';
+
+import { toX509ServerIdentity } from './utils-server-identity';
+
+/**
+ * How the certificate of a server is validated by a TLS connector:
+ * - `standard`: the validation of Node.js, without any option (the public certification authorities), as `https` does
+ * - `trusted`: against a certificate of the store OIBus trusts (`trustedCertificateId`): a certification authority, or the
+ *   certificate of the server itself
+ */
+export type ServerCertificateValidation = 'standard' | 'trusted';
+
+/** The settings of a TLS connector telling how it validates the certificate of its server */
+export interface TlsTrustSettings {
+  certificateValidation: ServerCertificateValidation;
+  trustedCertificateId?: string | null;
+}
+
+/**
+ * The options of `tls.connect` validating the certificate of a server: none for the standard validation, or the trusted
+ * certificate. Passed as they are to the TLS clients (undici, mqtt.js, pg...), which give them to Node.js.
+ */
+export interface TlsTrust {
+  ca?: Array<string>;
+  allowPartialTrustChain?: boolean;
+  checkServerIdentity?: (hostname: string, certificate: tls.PeerCertificate) => Error | undefined;
+}
+
+/** The code of the error of a server not presenting the trusted certificate */
+export const CERTIFICATE_NOT_TRUSTED_ERROR_CODE = 'ERR_OIBUS_CERTIFICATE_NOT_TRUSTED';
+
+/**
+ * The TLS options validating the certificate of a server against a trusted certificate (PEM), or the standard validation
+ * without one:
+ * - a certification authority validates the certificates it issued, with the standard checks (host name included);
+ * - another certificate is trusted as is: the server must present exactly this certificate, whatever its host name (it is
+ *   given as the only authority, accepted although it is not a root, and its fingerprint is checked instead of the name).
+ */
+export const toTlsTrust = (trustedCertificate: string | null): TlsTrust => {
+  if (!trustedCertificate) {
+    return {};
+  }
+  const certificate = new crypto.X509Certificate(trustedCertificate);
+  if (certificate.ca) {
+    return { ca: [trustedCertificate] };
+  }
+  const fingerprint = certificate.fingerprint256;
+  return {
+    ca: [trustedCertificate],
+    allowPartialTrustChain: true,
+    checkServerIdentity: (_hostname, presented) => {
+      if (presented.fingerprint256 === fingerprint) {
+        return undefined;
+      }
+      return Object.assign(
+        new Error(`The server presents the certificate ${presented.fingerprint256}, not the trusted one (${fingerprint})`),
+        {
+          code: CERTIFICATE_NOT_TRUSTED_ERROR_CODE
+        }
+      );
+    }
+  };
+};
+
+/**
+ * The TLS options refusing every certificate: a connector validating the certificate of its server against a trusted
+ * certificate it has not selected yet refuses its server, instead of falling back on the standard validation.
+ */
+export const REFUSE_EVERY_CERTIFICATE: TlsTrust = Object.freeze({ ca: [] }) as TlsTrust;
+
+/**
+ * The certificate a TLS connector trusts (PEM), from the identity trusted in the form of the connector (not saved yet), or
+ * else from its settings, `null` for the standard validation. `undefined` when the settings ask for a trusted certificate
+ * without selecting one.
+ */
+export const getTrustedCertificate = (
+  settings: TlsTrustSettings,
+  formIdentity: ServerIdentity | null,
+  findCertificate: (certificateId: string) => { certificate: string }
+): string | null | undefined => {
+  const formCertificate = formIdentity?.type === 'x509' ? (formIdentity.details as X509ServerIdentityDetails).certificate : undefined;
+  if (formCertificate) {
+    return formCertificate;
+  }
+  if (settings.certificateValidation !== 'trusted') {
+    return null;
+  }
+  return settings.trustedCertificateId ? findCertificate(settings.trustedCertificateId).certificate : undefined;
+};
+
+/** The TLS options of a TLS connector, from the certificate it trusts (see `getTrustedCertificate`) */
+export const resolveTlsTrust = (trustedCertificate: string | null | undefined): TlsTrust =>
+  trustedCertificate === undefined ? REFUSE_EVERY_CERTIFICATE : toTlsTrust(trustedCertificate);
+
+/**
+ * How the certificate a server presents compares with the trust of the connector: trusted when it validates, otherwise
+ * changed when the connector trusts a certificate, unknown when it trusts none (the standard validation failed)
+ */
+export const toTlsTrustStatus = (authorized: boolean, trustedCertificate: string | null | undefined): ServerIdentityTrustStatus => {
+  if (authorized) {
+    return 'trusted';
+  }
+  return trustedCertificate ? 'changed' : 'unknown';
+};
+
+/** The identity of a server presenting this certificate (DER), with the certificate itself, to be added to the store */
+export const toTlsServerIdentity = (certificate: Buffer): ServerIdentity => {
+  const identity = toX509ServerIdentity(certificate);
+  return {
+    ...identity,
+    details: { ...(identity.details as X509ServerIdentityDetails), certificate: new crypto.X509Certificate(certificate).toString() }
+  };
+};
+
+/** A proxy the connection to the server goes through, with its credentials */
+export interface TlsProbeProxy {
+  url: string;
+  username?: string | null;
+  password?: string | null;
+}
+
+/**
+ * Connects to a TLS server without validating its certificate, only to read it and to tell whether it validates with these
+ * options: nothing is sent to the server once the handshake is done. Through the HTTP proxy the connector uses, when it
+ * uses one.
+ */
+export const probeTlsServer = async (
+  url: string,
+  defaultPort: number,
+  trust: TlsTrust,
+  proxy: TlsProbeProxy | null,
+  timeoutMs: number
+): Promise<{ identity: ServerIdentity; authorized: boolean }> => {
+  const target = new URL(url);
+  const host = target.hostname.replace(/^\[(.*)\]$/, '$1');
+  const port = target.port ? Number(target.port) : defaultPort;
+  const socket = proxy ? await openProxyTunnel(proxy, host, port, timeoutMs) : null;
+  return await new Promise((resolve, reject) => {
+    const secureSocket = tls.connect({
+      ...(socket ? { socket } : { host, port }),
+      servername: net.isIP(host) ? undefined : host,
+      ...trust,
+      rejectUnauthorized: false
+    });
+    const timeout = setTimeout(() => {
+      secureSocket.destroy();
+      reject(new Error(`Connection timeout: no certificate received from ${host}:${port} after ${timeoutMs} ms`));
+    }, timeoutMs);
+    secureSocket.once('secureConnect', () => {
+      clearTimeout(timeout);
+      const presented = secureSocket.getPeerCertificate(true);
+      const authorized = secureSocket.authorized;
+      secureSocket.end();
+      if (!presented?.raw) {
+        reject(new Error(`The server ${host}:${port} presented no certificate`));
+        return;
+      }
+      resolve({ identity: toTlsServerIdentity(presented.raw), authorized });
+    });
+    secureSocket.once('error', error => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+  });
+};
+
+/** Opens a tunnel to the server through an HTTP(S) proxy (`CONNECT`), the TLS connection to the server going through it */
+const openProxyTunnel = (proxy: TlsProbeProxy, host: string, port: number, timeoutMs: number): Promise<net.Socket> => {
+  const proxyUrl = new URL(proxy.url);
+  const username = proxy.username ?? decodeURIComponent(proxyUrl.username);
+  const password = proxy.password ?? decodeURIComponent(proxyUrl.password);
+  const authority = `${net.isIPv6(host) ? `[${host}]` : host}:${port}`;
+  const request = (proxyUrl.protocol === 'https:' ? https : http).request({
+    host: proxyUrl.hostname,
+    port: proxyUrl.port || (proxyUrl.protocol === 'https:' ? 443 : 80),
+    method: 'CONNECT',
+    path: authority,
+    timeout: timeoutMs,
+    headers: {
+      host: authority,
+      ...(username ? { 'proxy-authorization': `Basic ${Buffer.from(`${username}:${password ?? ''}`).toString('base64')}` } : {})
+    }
+  });
+  return new Promise((resolve, reject) => {
+    request.once('connect', (response, socket) => {
+      if (response.statusCode !== 200) {
+        socket.destroy();
+        reject(
+          new Error(`The proxy ${proxyUrl.host} refused to connect to ${authority}: ${response.statusCode} ${response.statusMessage}`)
+        );
+        return;
+      }
+      resolve(socket);
+    });
+    request.once('timeout', () => request.destroy(new Error(`Connection timeout: the proxy ${proxyUrl.host} did not answer`)));
+    request.once('error', reject);
+    request.end();
+  });
+};
+
+/** The codes of the errors of a certificate which does not validate (OpenSSL, Node.js, and the trusted certificate) */
+const CERTIFICATE_ERROR_CODES = new Set([
+  'DEPTH_ZERO_SELF_SIGNED_CERT',
+  'SELF_SIGNED_CERT_IN_CHAIN',
+  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  'UNABLE_TO_GET_ISSUER_CERT',
+  'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+  'CERT_HAS_EXPIRED',
+  'CERT_NOT_YET_VALID',
+  'CERT_UNTRUSTED',
+  'CERT_REJECTED',
+  'CERT_SIGNATURE_FAILURE',
+  'ERR_TLS_CERT_ALTNAME_INVALID',
+  CERTIFICATE_NOT_TRUSTED_ERROR_CODE
+]);
+
+/** Whether a connection failed because the certificate of the server does not validate (the error or one of its causes) */
+export const isCertificateError = (error: unknown): boolean => {
+  let current: unknown = error;
+  for (let depth = 0; current && typeof current === 'object' && depth < 5; depth++) {
+    const code = (current as { code?: unknown }).code;
+    if (typeof code === 'string' && CERTIFICATE_ERROR_CODES.has(code)) {
+      return true;
+    }
+    current = (current as { cause?: unknown }).cause;
+  }
+  return false;
+};
+
+/** Where a TLS connector connects to, to read the certificate of its server (see `probeTlsServer`) */
+export interface TlsProbeTarget {
+  url: string;
+  defaultPort: number;
+  proxy: TlsProbeProxy | null;
+  timeoutMs: number;
+}
+
+/**
+ * The validation of the certificate of the server of a TLS connector, shared by the TLS connectors: the TLS options of
+ * their connections, the identity their server presents (and whether it validates), and the refusal of a server whose
+ * certificate does not validate, kept as pending until a user trusts it.
+ */
+export class TlsServerTrust {
+  private lastProbe: { identity: ServerIdentity; status: ServerIdentityTrustStatus } | null = null;
+
+  constructor(
+    private readonly getSettings: () => TlsTrustSettings,
+    private readonly getFormIdentity: () => ServerIdentity | null,
+    private readonly findCertificate: (certificateId: string) => { certificate: string },
+    private readonly getProbeTarget: () => TlsProbeTarget | null,
+    private readonly refuse: (presented: ServerIdentity, status: Exclude<ServerIdentityTrustStatus, 'trusted'>) => void
+  ) {}
+
+  /** The certificate trusted (see `getTrustedCertificate`) */
+  private trustedCertificate(): string | null | undefined {
+    return getTrustedCertificate(this.getSettings(), this.getFormIdentity(), this.findCertificate);
+  }
+
+  /** The TLS options of the connections to the server */
+  tls(): TlsTrust {
+    return resolveTlsTrust(this.trustedCertificate());
+  }
+
+  /**
+   * The identity the server presents, without validating it nor sending anything: `null` without TLS (an `http://`
+   * server). Also tells whether it validates (see `status`).
+   */
+  async retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    const target = this.getProbeTarget();
+    if (!target) {
+      this.lastProbe = null;
+      return null;
+    }
+    const trustedCertificate = this.trustedCertificate();
+    const { identity, authorized } = await probeTlsServer(
+      target.url,
+      target.defaultPort,
+      resolveTlsTrust(trustedCertificate),
+      target.proxy,
+      target.timeoutMs
+    );
+    this.lastProbe = { identity, status: toTlsTrustStatus(authorized, trustedCertificate) };
+    return identity;
+  }
+
+  /** Whether the identity the server presented at the last `retrieveServerIdentity` validates */
+  status(presented: ServerIdentity): ServerIdentityTrustStatus {
+    return this.lastProbe?.identity.fingerprint === presented.fingerprint ? this.lastProbe.status : 'unknown';
+  }
+
+  /**
+   * After a connection failing because the certificate of the server does not validate, reads the certificate the server
+   * presents and keeps it as pending, for a user to review and trust it. Other errors are left to the caller.
+   */
+  async refuseIfNotTrusted(error: unknown): Promise<boolean> {
+    if (!isCertificateError(error)) {
+      return false;
+    }
+    try {
+      const presented = await this.retrieveServerIdentity();
+      if (presented) {
+        const status = this.status(presented);
+        this.refuse(presented, status === 'trusted' ? 'changed' : status);
+      }
+    } catch {
+      // the error of the connection is the one worth reporting
+    }
+    return true;
+  }
+}

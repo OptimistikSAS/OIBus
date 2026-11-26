@@ -2,6 +2,8 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 
 const manifest: NorthConnectorManifest = {
   id: 'rest',
+  serverIdentity: 'x509',
+  serverTrustInCertificateStore: true,
   category: 'api',
   types: ['file'],
   settings: {
@@ -12,7 +14,13 @@ const manifest: NorthConnectorManifest = {
       visible: true,
       wrapInBox: false
     },
-    enablingConditions: [],
+    enablingConditions: [
+      {
+        referralPathFromRoot: 'certificateValidation',
+        targetPathFromRoot: 'trustedCertificateId',
+        values: ['trusted']
+      }
+    ],
     validators: [],
     attributes: [
       {
@@ -37,10 +45,11 @@ const manifest: NorthConnectorManifest = {
         }
       },
       {
-        type: 'boolean',
-        key: 'acceptUnauthorized',
-        translationKey: 'configuration.oibus.manifest.north.rest.accept-unauthorized',
-        defaultValue: false,
+        type: 'string-select',
+        key: 'certificateValidation',
+        translationKey: 'configuration.oibus.manifest.north.rest.certificate-validation',
+        defaultValue: 'standard',
+        selectableValues: ['standard', 'trusted'],
         validators: [
           {
             type: 'REQUIRED',
@@ -49,6 +58,18 @@ const manifest: NorthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'certificate',
+        key: 'trustedCertificateId',
+        translationKey: 'configuration.oibus.manifest.north.rest.trusted-certificate-id',
+        trusted: true,
+        validators: [],
+        displayProperties: {
+          row: 1,
           columns: 4,
           displayInViewMode: true
         }

@@ -225,7 +225,8 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>,
         addContent,
         southCacheRepository,
-        southCacheFolder
+        southCacheFolder,
+        certificateService
       );
     case 's7':
       return new SouthS7(

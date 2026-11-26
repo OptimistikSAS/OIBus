@@ -68,7 +68,7 @@ export const buildNorth = (
     case 'opcua':
       return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, orchestrator, certificateService);
     case 'rest':
-      return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, orchestrator);
+      return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, orchestrator, certificateService);
     case 'sftp':
       return new NorthSFTP(settings as NorthConnectorEntity<NorthSFTPSettings>, orchestrator);
     default:

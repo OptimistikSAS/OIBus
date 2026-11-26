@@ -3,9 +3,9 @@
   <oib-select-or-create
     [formControlName]="certificateAttribute().key"
     [inputId]="inputId()"
-    [options]="presentedCertificates()"
+    [options]="offeredCertificates()"
     noneLabel="engine.certificate.none"
-    [creator]="certificateCreator"
+    [creator]="certificateCreator()"
   />
   <val-errors [controlName]="certificateAttribute().key" />
 </div>

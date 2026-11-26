@@ -837,6 +837,49 @@ describe('History Query service', () => {
       assert.strictEqual(historyQueryRepository.updateServerTrust.mock.calls.length, 0);
     });
 
+    it('should trust the certificate the server of a side trusting the store presents, by adding it to the store', async () => {
+      const certificateIdentity: ServerIdentity = {
+        ...identity,
+        type: 'x509',
+        details: { certificate: '-----BEGIN CERTIFICATE-----' } as ServerIdentity['details']
+      };
+      throwawayNorth.retrieveServerIdentity.mock.mockImplementation(async () => certificateIdentity);
+      northService.getManifest.mock.mockImplementation(() => ({ ...fileWriterManifest, serverTrustInCertificateStore: true }));
+      southService.trustServerCertificate.mock.mockImplementation(() => ({ id: 'trustedId' }));
+      const historyQuery = testData.historyQueries.list[0];
+
+      await service.trustServerIdentity(historyQuery.id, 'north', identity.fingerprint, 'userTest');
+
+      assert.deepStrictEqual(southService.trustServerCertificate.mock.calls[0].arguments, [
+        '-----BEGIN CERTIFICATE-----',
+        `${historyQuery.name} North server`,
+        'userTest'
+      ]);
+      assert.deepStrictEqual(historyQueryRepository.trustCertificate.mock.calls[0].arguments, [
+        historyQuery.id,
+        'north',
+        'trustedId',
+        'userTest'
+      ]);
+      assert.strictEqual(historyQueryRepository.updateServerTrust.mock.callCount(), 0);
+    });
+
+    it('should show no identity trusted for a side trusting the store without trusted certificate', () => {
+      southService.getManifest.mock.mockImplementation(() => ({ ...southManifestList[0], serverTrustInCertificateStore: true }));
+      historyQueryRepository.findHistoryById.mock.mockImplementation(() => ({
+        ...testData.historyQueries.list[0],
+        southSettings: { certificateValidation: 'standard' } as never,
+        southServerTrust: { identity: null, trustOnFirstUse: true }
+      }));
+
+      assert.deepStrictEqual(service.getServerTrustState(testData.historyQueries.list[0].id, 'south'), {
+        identity: null,
+        trustOnFirstUse: true,
+        pending: null
+      });
+      assert.strictEqual(southService.findCertificate.mock.callCount(), 0);
+    });
+
     it('should trust the identity the server of the south of a running history query presents, and reload it', async () => {
       const historyQuery = testData.historyQueries.list[0];
 
