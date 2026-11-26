@@ -157,7 +157,12 @@ export class SouthListComponent {
 
   /** Shows all the connectors: no search, no filter (the sort is kept) */
   resetFilters() {
-    this.urlState.patch({ ...paramValue(PARAMS.name, ''), ...paramValue(PARAMS.status, []), ...paramValue(PARAMS.type, []), ...FIRST_PAGE });
+    this.urlState.patch({
+      ...paramValue(PARAMS.name, ''),
+      ...paramValue(PARAMS.status, []),
+      ...paramValue(PARAMS.type, []),
+      ...FIRST_PAGE
+    });
   }
 
   private filter(souths: Array<SouthConnectorListDTO>): Array<SouthConnectorListDTO> {

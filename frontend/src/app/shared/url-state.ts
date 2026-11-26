@@ -222,7 +222,11 @@ export class UrlState {
    * Must be called in an injection context.
    * @param elements the elements, null while they are loaded (or while the ones of another entity are still displayed)
    */
-  openLinked<E extends { id: string }>(param: QueryParam<string | null>, elements: () => ReadonlyArray<E> | null, open: (element: E) => void) {
+  openLinked<E extends { id: string }>(
+    param: QueryParam<string | null>,
+    elements: () => ReadonlyArray<E> | null,
+    open: (element: E) => void
+  ) {
     effect(() => {
       const id = this.value(param);
       if (!id || this.shownIds.get(param.name) === id) return;
@@ -257,4 +261,3 @@ export class UrlState {
     });
   }
 }
-
