@@ -28,7 +28,7 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
-  SouthConnectorLightDTO
+  SouthConnectorListDTO
 } from '@oibus/shared/api/south-connector.model';
 import { CustomTransformerCommandDTO, CustomTransformerDTO } from '@oibus/shared/api/transformer.model';
 import { UserCommandDTO, UserDTO } from '@oibus/shared/api/user.model';
@@ -721,13 +721,15 @@ const southList: Array<SouthConnectorDTO> = [
   }
 ];
 
-const southListLight: Array<SouthConnectorLightDTO> = [
+const southListLight: Array<SouthConnectorListDTO> = [
   {
     id: 'southId1',
     name: 'South 1',
     type: 'folder-scanner',
     description: 'my folder scanner',
     enabled: true,
+    itemCount: 3,
+    enabledItemCount: 2,
     createdBy: {
       id: '',
       friendlyName: ''
@@ -745,6 +747,8 @@ const southListLight: Array<SouthConnectorLightDTO> = [
     type: 'mssql',
     description: 'my MSSQL south connector',
     enabled: false,
+    itemCount: 0,
+    enabledItemCount: 0,
     createdBy: {
       id: '',
       friendlyName: ''
@@ -762,6 +766,8 @@ const southListLight: Array<SouthConnectorLightDTO> = [
     type: 'opcua',
     description: 'my OPCUA south connector',
     enabled: true,
+    itemCount: 5,
+    enabledItemCount: 5,
     createdBy: {
       id: '',
       friendlyName: ''
@@ -1670,6 +1676,8 @@ const historyQueryListLight: Array<HistoryQueryLightDTO> = [
     endTime: '2020-03-20T00:00:00.000Z',
     southType: 'mssql',
     northType: 'oianalytics',
+    itemCount: 3,
+    enabledItemCount: 2,
     createdBy: {
       id: '',
       friendlyName: ''
@@ -1690,6 +1698,8 @@ const historyQueryListLight: Array<HistoryQueryLightDTO> = [
     endTime: '2020-03-20T00:00:00.000Z',
     southType: 'mssql',
     northType: 'file-writer',
+    itemCount: 1,
+    enabledItemCount: 1,
     createdBy: {
       id: '',
       friendlyName: ''

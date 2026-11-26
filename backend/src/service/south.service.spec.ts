@@ -18,7 +18,12 @@ import { SouthItemSettings } from '../../shared/model/connector/south-settings.m
 import { ServerIdentity, ServerTrust } from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
-import { SouthConnectorEntityLight, SouthConnectorItemEntity, SouthItemGroupEntity } from '../model/south-connector.model';
+import {
+  SouthConnectorEntityLight,
+  SouthConnectorItemEntity,
+  SouthConnectorListEntity,
+  SouthItemGroupEntity
+} from '../model/south-connector.model';
 import { NotFoundError, OIBusExploreError, OIBusValidationError } from '../model/types';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
 import type NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -464,7 +469,7 @@ describe('South Service', () => {
   it('should not create a south connector with duplicate name', async () => {
     mock.method(service, 'retrieveSecretsFromSouth', () => null);
     southConnectorRepository.findAllSouth.mock.mockImplementation(() => [
-      { ...testData.south.list[0], id: 'existing-id', name: testData.south.command.name } satisfies SouthConnectorEntityLight
+      { ...testData.south.listed[0], id: 'existing-id', name: testData.south.command.name } satisfies SouthConnectorListEntity
     ]);
 
     await assert.rejects(
@@ -474,7 +479,7 @@ describe('South Service', () => {
   });
 
   it('should update a south connector', async () => {
-    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.listed);
     await service.update(testData.south.list[0].id, testData.south.command, 'userTest');
 
     assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
@@ -540,7 +545,7 @@ describe('South Service', () => {
   });
 
   it('should update a south connector with a new unique name', async () => {
-    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.listed);
 
     await service.update(testData.south.list[0].id, { ...testData.south.command, name: 'Updated South Name' }, 'userTest');
 
@@ -560,7 +565,7 @@ describe('South Service', () => {
       }),
       id: 'existingGroupId'
     };
-    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.listed);
 
     await service.update(testData.south.list[0].id, { ...testData.south.command, groups: [groupCommand] }, 'userTest');
 
@@ -584,7 +589,7 @@ describe('South Service', () => {
   it('should update a south connector and set createdBy on new items', async () => {
     const command = structuredClone(testData.south.command);
     command.items[0].id = '';
-    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.listed);
 
     await service.update(testData.south.list[0].id, command, 'user1');
 
@@ -602,7 +607,7 @@ describe('South Service', () => {
   it('should update a south connector and not set createdBy on existing items', async () => {
     const command = structuredClone(testData.south.command);
     command.items[0].id = testData.south.list[0].items[0].id;
-    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.listed);
 
     await service.update(testData.south.list[0].id, command, 'user1');
 
@@ -633,7 +638,7 @@ describe('South Service', () => {
 
   it('should not update a south connector with duplicate name', async () => {
     southConnectorRepository.findAllSouth.mock.mockImplementation(() => [
-      { ...testData.south.list[0], id: 'other-id', name: 'Duplicate Name' } satisfies SouthConnectorEntityLight
+      { ...testData.south.listed[0], id: 'other-id', name: 'Duplicate Name' } satisfies SouthConnectorListEntity
     ]);
 
     await assert.rejects(

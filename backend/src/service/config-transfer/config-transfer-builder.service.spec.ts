@@ -73,7 +73,7 @@ describe('Config Transfer Builder Service', () => {
     ipFilterRepository.list.mock.mockImplementation(() => testData.ipFilters.list);
     certificateRepository.list.mock.mockImplementation(() => testData.certificates.list);
     userRepository.list.mock.mockImplementation(() => testData.users.list);
-    southRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    southRepository.findAllSouth.mock.mockImplementation(() => testData.south.listed);
     southRepository.findSouthById.mock.mockImplementation((id: string) => testData.south.list.find(element => element.id === id) ?? null);
     southRepository.findAllSouthFull.mock.mockImplementation(() => testData.south.list);
     northRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
@@ -341,7 +341,7 @@ describe('Config Transfer Builder Service', () => {
       items: [{ ...testData.south.list[0].items[0], scanMode: null, group }],
       groups: [group]
     };
-    southRepository.findAllSouth.mock.mockImplementation(() => [customSouth]);
+    southRepository.findAllSouth.mock.mockImplementation(() => [{ ...customSouth, itemCount: 1, enabledItemCount: 1 }]);
     southRepository.findSouthById.mock.mockImplementation(() => customSouth);
     southRepository.findAllSouthFull.mock.mockImplementation(() => [customSouth]);
 

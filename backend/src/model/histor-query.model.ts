@@ -17,6 +17,8 @@ export interface HistoryQueryEntityLight extends BaseEntity {
   endTime: Instant;
   southType: OIBusSouthType;
   northType: OIBusNorthType;
+  itemCount: number;
+  enabledItemCount: number;
 }
 
 export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings> extends BaseEntity {

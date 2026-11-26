@@ -198,6 +198,8 @@ describe('SouthConnectorRepository', () => {
       assert.strictEqual(found.type, element.type);
       assert.strictEqual(found.description, element.description);
       assert.strictEqual(found.enabled, element.enabled);
+      assert.strictEqual(found.itemCount, element.items.length);
+      assert.strictEqual(found.enabledItemCount, element.items.filter(item => item.enabled).length);
     }
   });
 

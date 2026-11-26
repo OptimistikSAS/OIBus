@@ -950,6 +950,8 @@ export const toHistoryQueryLightDTO = (
     endTime: historyQuery.endTime,
     southType: historyQuery.southType,
     northType: historyQuery.northType,
+    itemCount: historyQuery.itemCount,
+    enabledItemCount: historyQuery.enabledItemCount,
     currentItemNumber: isRunning ? metrics!.historyMetrics.currentItemNumber : undefined,
     numberOfItems: isRunning ? metrics!.historyMetrics.numberOfItems : undefined,
     createdBy: getUserInfo(historyQuery.createdBy),

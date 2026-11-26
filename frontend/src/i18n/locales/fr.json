@@ -2168,7 +2168,9 @@
       "workflows": "Synchronisations des points",
       "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
       "confirm-connector-change": "Changer de connecteur le recommence : ses paramètres et ses items seront ceux du nouveau choix. Continuer ?"
-    }
+    },
+    "item-count": "Éléments",
+    "item-count-tooltip": "{{enabled}} éléments activés sur {{total}}"
   },
   "field-process": {
     "open": "Configurer le traitement du champ {{field}}",
@@ -3060,7 +3062,9 @@
       "item-changes": "Éléments ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
       "transformer-changes": "Transformateurs ajoutés : {{added}} · modifiés : {{changed}} · supprimés : {{removed}}",
       "confirm-connectors-change": "Changer de connecteurs recommence la requête d'historique : ses paramètres, éléments et transformateurs seront ceux des nouveaux connecteurs. Continuer ?"
-    }
+    },
+    "item-count": "Éléments",
+    "item-count-tooltip": "{{enabled}} éléments activés sur {{total}}"
   },
   "explore-cache": {
     "title": "Cache de {{ name }}",
@@ -3716,7 +3720,9 @@
     "pause": "Mettre en pause",
     "resume": "Reprendre",
     "restart": "Redémarrer",
-    "metrics": "Métriques"
+    "metrics": "Métriques",
+    "filtered-count": "{{shown}} sur {{total}}",
+    "reset-filters": "Réinitialiser les filtres"
   },
   "duration-pipe": {
     "long": {

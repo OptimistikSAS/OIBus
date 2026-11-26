@@ -18,14 +18,22 @@
   <section class="oib-panel">
     <form class="mb-2" id="search-form" [formGroup]="searchForm">
       <label for="name" class="visually-hidden" translate="history-query.search-by-name"></label>
-      <div class="input-group oib-list-search">
-        <span class="input-group-text"><i class="fa-solid fa-search" aria-hidden="true"></i></span>
-        <input
-          type="text"
-          class="form-control"
-          id="name"
-          formControlName="name"
-          [placeholder]="'history-query.search-by-name' | translate"
+      <div class="d-flex align-items-center flex-wrap gap-3">
+        <div class="input-group oib-list-search">
+          <span class="input-group-text"><i class="fa-solid fa-search" aria-hidden="true"></i></span>
+          <input
+            type="text"
+            class="form-control"
+            id="name"
+            formControlName="name"
+            [placeholder]="'history-query.search-by-name' | translate"
+          />
+        </div>
+        <oib-filter-summary
+          [shown]="filteredHistoryQueries().length"
+          [total]="allHistoryQueries()?.length ?? 0"
+          [filtered]="filtered()"
+          (resetFilters)="resetFilters()"
         />
       </div>
 
@@ -140,6 +148,7 @@
                   </button>
                 </th>
                 <th translate="history-query.description"></th>
+                <th class="item-count-column" translate="history-query.item-count"></th>
                 <th>
                   <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
                     <span translate="history-query.updated-at" class="me-2"></span>
@@ -182,6 +191,13 @@
                   <td>{{ query.southType | oIBusSouthTypeEnum }}</td>
                   <td>{{ query.northType | oIBusNorthTypeEnum }}</td>
                   <td>{{ query.description }}</td>
+                  <td>
+                    <span
+                      class="item-count"
+                      [ngbTooltip]="'history-query.item-count-tooltip' | translate: { enabled: query.enabledItemCount, total: query.itemCount }"
+                      >{{ query.enabledItemCount }} / {{ query.itemCount }}</span
+                    >
+                  </td>
                   <td>
                     <oib-audit-info
                       [createdAt]="query.createdAt"

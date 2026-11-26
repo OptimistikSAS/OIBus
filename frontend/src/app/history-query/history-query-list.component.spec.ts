@@ -234,4 +234,49 @@ describe('HistoryQueryListComponent', () => {
 
     expect(auditModal.prepare).toHaveBeenCalledWith('history_query', running.id);
   });
+
+  test('should display how many items of each history query are enabled', async () => {
+    const tester = new HistoryQueryListComponentTester();
+
+    // most recently updated first
+    await expect.element(tester.rows.nth(0).getByCss('.item-count')).toHaveTextContent('1 / 1');
+    await expect.element(tester.rows.nth(1).getByCss('.item-count')).toHaveTextContent('2 / 3');
+  });
+
+  describe('kept in the URL', () => {
+    function queryParams() {
+      const router = TestBed.inject(Router);
+      return router.parseUrl(router.url).queryParams;
+    }
+
+    test('should show the search, the filters and the sort of the URL', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?name=query&status=PENDING&status=FINISHED&northType=console&sort=name:asc');
+      const tester = new HistoryQueryListComponentTester();
+
+      await tester.expectNames('Another query');
+      await expect.element(tester.nameFilter).toHaveValue('query');
+      await expect.element(tester.root.getByRole('button', { name: 'Finished' })).toHaveClass('active');
+      await expect.element(tester.root.getByCss('.filter-count')).toHaveTextContent('1 of 3');
+    });
+
+    test('should keep the search, the filters and the sort in the URL', async () => {
+      const tester = new HistoryQueryListComponentTester();
+
+      await tester.root.getByCss('thead').getByRole('button', { name: 'Name' }).click();
+      await tester.nameFilter.fill('query');
+      await tester.root.getByRole('button', { name: 'Running' }).click();
+      await tester.root.getByRole('button', { name: 'Microsoft SQL Server™' }).click();
+      await tester.root.getByRole('button', { name: 'Console' }).click();
+
+      await vi.waitFor(() =>
+        expect(queryParams()).toEqual({ name: 'query', status: 'RUNNING', southType: 'mssql', northType: 'console', sort: 'name:asc' })
+      );
+      await expect.element(tester.rows).toHaveLength(0);
+
+      await tester.root.getByRole('button', { name: 'Reset filters' }).click();
+
+      await vi.waitFor(() => expect(queryParams()).toEqual({ sort: 'name:asc' }));
+      await tester.expectNames('Another query', 'my first History Query', 'My second History Query');
+    });
+  });
 });

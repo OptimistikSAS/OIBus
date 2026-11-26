@@ -123,6 +123,20 @@ export interface HistoryQueryLightDTO extends BaseEntity {
   northType: OIBusNorthType;
 
   /**
+   * The number of items of the history query.
+   *
+   * @example 12
+   */
+  itemCount: number;
+
+  /**
+   * The number of enabled items of the history query.
+   *
+   * @example 10
+   */
+  enabledItemCount: number;
+
+  /**
    * The 1-based index of the item currently being queried, among the run's enabled items. Only
    * set while the history query is actively running on a connector that queries items one at a
    * time (SOUTH_SINGLE_ITEMS).

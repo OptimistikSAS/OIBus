@@ -10,7 +10,7 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemTestResult,
-  SouthConnectorLightDTO,
+  SouthConnectorListDTO,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
   SouthItemGroupCommandDTO,
@@ -55,8 +55,8 @@ export class SouthConnectorService {
   /**
    * Get the South connectors
    */
-  list(): Observable<Array<SouthConnectorLightDTO>> {
-    return this.http.get<Array<SouthConnectorLightDTO>>(`/api/south`);
+  list(): Observable<Array<SouthConnectorListDTO>> {
+    return this.http.get<Array<SouthConnectorListDTO>>(`/api/south`);
   }
 
   /**

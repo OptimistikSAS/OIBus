@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorListDTO } from '@oibus/shared/api/south-connector.model';
 
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { EmptyRouteComponent } from '../../test/empty-route.component';
@@ -36,6 +36,8 @@ class SouthListComponentTester {
   readonly clearTypes = this.root.getByCss('#clear-types-button');
   readonly empty = this.root.getByText('No south connector matches the search');
   readonly pagination = this.root.getByCss('oib-pagination');
+  readonly filterCount = this.root.getByCss('.filter-count');
+  readonly resetFilters = this.root.getByRole('button', { name: 'Reset filters' });
 
   row(index: number) {
     return this.rows.nth(index);
@@ -46,7 +48,7 @@ class SouthListComponentTester {
   }
 }
 
-function buildSouths(count: number): Array<SouthConnectorLightDTO> {
+function buildSouths(count: number): Array<SouthConnectorListDTO> {
   return Array.from({ length: count }, (_, index) => ({
     ...southConnectors[0],
     id: `south${index}`,
@@ -248,5 +250,91 @@ describe('SouthListComponent', () => {
     await tester.sortByName.click();
     await expect.element(tester.rows).toHaveLength(15);
     await expect.element(tester.row(0)).toMatchTextContent('South 19');
+  });
+
+  test('should display how many items of each connector are enabled', async () => {
+    const tester = new SouthListComponentTester();
+
+    await expect.element(tester.row(0).getByCss('.item-count')).toHaveTextContent('2 / 3');
+    await expect.element(tester.row(1).getByCss('.item-count')).toHaveTextContent('0 / 0');
+  });
+
+  describe('kept in the URL', () => {
+    async function createTester(url: string): Promise<SouthListComponentTester> {
+      await TestBed.inject(Router).navigateByUrl(url);
+      return new SouthListComponentTester();
+    }
+
+    function queryParams() {
+      const router = TestBed.inject(Router);
+      return router.parseUrl(router.url).queryParams;
+    }
+
+    test('should show the search, the filters and the sort of the URL', async () => {
+      const tester = await createTester('/?name=south&status=true&type=opcua&type=folder-scanner&sort=name:desc');
+
+      await expect.element(tester.rows).toHaveLength(2);
+      await expect.element(tester.row(0)).toMatchTextContent('South 3');
+      await expect.element(tester.row(1)).toMatchTextContent('South 1');
+      await expect.element(tester.searchName).toHaveValue('south');
+      await expect.element(tester.enabledChip).toHaveClass('active');
+      await expect.element(tester.typeChip('OPC UA®')).toHaveClass('active');
+      await expect.element(tester.filterCount).toHaveTextContent('2 of 3');
+    });
+
+    test('should ignore the invalid values of the URL', async () => {
+      const tester = await createTester('/?status=maybe&type=unknown&sort=description:asc&page=two');
+
+      await expect.element(tester.rows).toHaveLength(3);
+      await expect.element(tester.row(0)).toMatchTextContent('South 1');
+      await expect.element(tester.filterCount).not.toBeInTheDocument();
+    });
+
+    test('should show a type of the URL that no connector has, to unselect it', async () => {
+      const tester = await createTester('/?type=modbus');
+
+      await expect.element(tester.empty).toBeVisible();
+      await expect.element(tester.typeChip('Modbus')).toHaveClass('active');
+
+      await tester.typeChip('Modbus').click();
+
+      await expect.element(tester.rows).toHaveLength(3);
+      await expect.element(tester.typeChip('Modbus')).not.toBeInTheDocument();
+    });
+
+    test('should keep the search, the filters, the sort and the page in the URL', async () => {
+      southConnectorService.list.mockReturnValue(of(buildSouths(20)));
+      const tester = await createTester('/?other=kept');
+
+      await tester.pagination.getByRole('link', { name: '2' }).click();
+      await vi.waitFor(() => expect(queryParams()).toEqual({ page: '1', other: 'kept' }));
+
+      // back to the first page
+      await tester.sortByName.click();
+      await vi.waitFor(() => expect(queryParams()).toEqual({ sort: 'name:desc', other: 'kept' }));
+
+      await tester.searchName.fill('south 1');
+      await vi.waitFor(() => expect(queryParams()).toEqual({ name: 'south 1', sort: 'name:desc', other: 'kept' }));
+      await tester.enabledChip.click();
+      await tester.typeChip('Folder scanner').click();
+      await vi.waitFor(() =>
+        expect(queryParams()).toEqual({ name: 'south 1', status: 'true', type: 'folder-scanner', sort: 'name:desc', other: 'kept' })
+      );
+      await expect.element(tester.filterCount).toHaveTextContent('10 of 20');
+
+      await tester.resetFilters.click();
+
+      await vi.waitFor(() => expect(queryParams()).toEqual({ sort: 'name:desc', other: 'kept' }));
+      await expect.element(tester.searchName).toHaveValue('');
+      await expect.element(tester.rows).toHaveLength(15);
+    });
+
+    test('should show the last page when the page of the URL is beyond', async () => {
+      southConnectorService.list.mockReturnValue(of(buildSouths(20)));
+      const tester = await createTester('/?page=5');
+
+      await expect.element(tester.rows).toHaveLength(5);
+      await expect.element(tester.row(0)).toMatchTextContent('South 15');
+    });
   });
 });

@@ -9,6 +9,7 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
+  SouthConnectorListDTO,
   SouthConnectorTypedDTO,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
@@ -51,6 +52,7 @@ import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
   SouthConnectorItemEntity,
+  SouthConnectorListEntity,
   SouthItemGroupCommand,
   SouthItemGroupEntity,
   SouthItemGroupEntityLight
@@ -125,7 +127,7 @@ export default class SouthService {
     return manifest;
   }
 
-  list(): Array<SouthConnectorEntityLight> {
+  list(): Array<SouthConnectorListEntity> {
     return this.southConnectorRepository.findAllSouth();
   }
 
@@ -1539,6 +1541,14 @@ export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight, getU
     updatedBy: getUserInfo(entity.updatedBy),
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt
+  };
+};
+
+export const toSouthConnectorListDTO = (entity: SouthConnectorListEntity, getUserInfo: GetUserInfo): SouthConnectorListDTO => {
+  return {
+    ...toSouthConnectorLightDTO(entity, getUserInfo),
+    itemCount: entity.itemCount,
+    enabledItemCount: entity.enabledItemCount
   };
 };
 

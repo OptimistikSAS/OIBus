@@ -273,4 +273,38 @@ describe('NorthListComponent', () => {
     await expect.element(tester.rows).toHaveLength(5);
     await expect.element(tester.cell(0, 1)).toHaveTextContent('North 16');
   });
+
+  describe('kept in the URL', () => {
+    function queryParams() {
+      const router = TestBed.inject(Router);
+      return router.parseUrl(router.url).queryParams;
+    }
+
+    test('should show the search, the filters and the sort of the URL', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?name=north&status=false&type=oianalytics&sort=type:desc');
+      const tester = new NorthListComponentTester();
+
+      await expect.element(tester.rows).toHaveLength(1);
+      await expect.element(tester.rows.nth(0)).toMatchTextContent('North 2');
+      await expect.element(tester.nameFilter).toHaveValue('north');
+      await expect.element(tester.root.getByCss('.filter-count')).toHaveTextContent('1 of 2');
+    });
+
+    test('should keep the search, the filters and the sort in the URL', async () => {
+      const tester = new NorthListComponentTester();
+
+      await tester.nameFilter.fill('north');
+      await tester.root.getByRole('button', { name: 'Enabled', exact: true }).click();
+      await tester.root.getByRole('button', { name: 'File writer', exact: true }).click();
+      await tester.root.getByCss('thead').getByRole('button', { name: 'Type' }).click();
+
+      await vi.waitFor(() => expect(queryParams()).toEqual({ name: 'north', status: 'true', type: 'file-writer', sort: 'type:asc' }));
+      await expect.element(tester.rows).toHaveLength(1);
+
+      await tester.root.getByRole('button', { name: 'Reset filters' }).click();
+
+      await vi.waitFor(() => expect(queryParams()).toEqual({ sort: 'type:asc' }));
+      await expect.element(tester.rows).toHaveLength(2);
+    });
+  });
 });

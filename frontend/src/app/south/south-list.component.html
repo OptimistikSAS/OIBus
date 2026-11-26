@@ -18,9 +18,17 @@
   <section class="oib-panel">
     <form class="mb-2" id="search-form" [formGroup]="searchForm">
       <label for="name" class="visually-hidden" translate="south.search-by-name"></label>
-      <div class="input-group oib-list-search">
-        <span class="input-group-text"><i class="fa-solid fa-search" aria-hidden="true"></i></span>
-        <input type="text" class="form-control" id="name" formControlName="name" [placeholder]="'south.search-by-name' | translate" />
+      <div class="d-flex align-items-center flex-wrap gap-3">
+        <div class="input-group oib-list-search">
+          <span class="input-group-text"><i class="fa-solid fa-search" aria-hidden="true"></i></span>
+          <input type="text" class="form-control" id="name" formControlName="name" [placeholder]="'south.search-by-name' | translate" />
+        </div>
+        <oib-filter-summary
+          [shown]="filteredSouths().length"
+          [total]="allSouths()?.length ?? 0"
+          [filtered]="filtered()"
+          (resetFilters)="resetFilters()"
+        />
       </div>
 
       @if (allSouths()?.length) {
@@ -106,6 +114,7 @@
                   </button>
                 </th>
                 <th translate="south.description"></th>
+                <th class="item-count-column" translate="south.item-count"></th>
                 <th>
                   <button type="button" class="sort-button" (click)="toggleSort('updatedAt')">
                     <span translate="south.updated-at" class="me-2"></span>
@@ -132,6 +141,13 @@
                   </td>
                   <td>{{ south.type | oIBusSouthTypeEnum }}</td>
                   <td>{{ south.description }}</td>
+                  <td>
+                    <span
+                      class="item-count"
+                      [ngbTooltip]="'south.item-count-tooltip' | translate: { enabled: south.enabledItemCount, total: south.itemCount }"
+                      >{{ south.enabledItemCount }} / {{ south.itemCount }}</span
+                    >
+                  </td>
                   <td>
                     <oib-audit-info
                       [createdAt]="south.createdAt"
