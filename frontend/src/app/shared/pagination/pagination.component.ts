@@ -20,6 +20,8 @@ export class PaginationComponent {
   readonly pageChanged = output<number>();
 
   readonly navigate = input(false);
+  /** The query param of the page number, when the pagination navigates */
+  readonly pageParam = input('page');
 
   onPageChanged($event: number) {
     const newPage = $event - 1;
@@ -28,7 +30,7 @@ export class PaginationComponent {
     if (this.navigate() && this.router && this.route) {
       this.router.navigate(['.'], {
         relativeTo: this.route,
-        queryParams: { page: newPage },
+        queryParams: { [this.pageParam()]: newPage },
         queryParamsHandling: 'merge'
       });
     }

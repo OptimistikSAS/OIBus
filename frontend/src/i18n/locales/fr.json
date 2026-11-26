@@ -3722,7 +3722,8 @@
     "restart": "Redémarrer",
     "metrics": "Métriques",
     "filtered-count": "{{shown}} sur {{total}}",
-    "reset-filters": "Réinitialiser les filtres"
+    "reset-filters": "Réinitialiser les filtres",
+    "section-link": "Lien vers cette section"
   },
   "duration-pipe": {
     "long": {

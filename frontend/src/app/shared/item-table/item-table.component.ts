@@ -22,14 +22,17 @@ import { createPageFromArray } from '@oibus/shared/common/types';
 
 import { AuditInfoComponent } from '../audit-info/audit-info.component';
 import { DescribedNameComponent } from '../described-name/described-name.component';
+import { FilterSummaryComponent } from '../filter-summary/filter-summary.component';
 import { PaginationComponent } from '../pagination/pagination.component';
 import { ResizableColumnsDirective } from '../resizable-columns.directive';
+import { paramValue, UrlState } from '../url-state';
 import {
   builtInSortValue,
   filterItems,
   ItemSelection,
   ItemSort,
   itemSortIcon,
+  itemTableParams,
   nextItemSort,
   NO_ITEM_SORT,
   selectItems,
@@ -73,11 +76,14 @@ const PAGE_SIZE = 20;
     NgbDropdownItem,
     AuditInfoComponent,
     DescribedNameComponent,
-    PaginationComponent
-  ]
+    PaginationComponent,
+    FilterSummaryComponent
+  ],
+  providers: [UrlState]
 })
 export class ItemTableComponent<T extends TableItem> {
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly urlState = inject(UrlState);
 
   /** All the items (the table filters, sorts and paginates them) */
   readonly items = input.required<ReadonlyArray<T>>();
@@ -91,8 +97,18 @@ export class ItemTableComponent<T extends TableItem> {
   readonly sortValue = input<(item: T, column: string) => string | number>(builtInSortValue);
   /** Maximum number of action buttons a row displays (1 to 6), to size the actions column */
   readonly actionCount = input(0);
+  /**
+   * Prefix of the query params keeping the search, the status filter, the sort and the page of the table in the URL of
+   * the page (see itemTableParams()), so that they are kept when the page is reloaded or its link shared; null to keep
+   * them in the table only
+   */
+  readonly urlPrefix = input<string | null>(null);
+  /** Whether a filter added by the page hides items, to show how many items are displayed and to reset the filters */
+  readonly extraFiltered = input(false);
   readonly selection = model<ItemSelection<T>>(new Map());
 
+  /** Emitted when the user resets the filters, for the page to reset the filters it adds */
+  readonly resetExtraFilters = output<void>();
   readonly enableSelected = output<void>();
   readonly disableSelected = output<void>();
   readonly deleteSelected = output<void>();
@@ -107,9 +123,30 @@ export class ItemTableComponent<T extends TableItem> {
 
   readonly searchControl = this.fb.control('');
   readonly statusFilterControl = this.fb.control<'enabled' | 'disabled' | null>(null);
-  private readonly searchText = toSignal(this.searchControl.valueChanges, { initialValue: '' });
-  private readonly statusFilter = toSignal(this.statusFilterControl.valueChanges, { initialValue: null });
-  private readonly sort = signal<ItemSort>(NO_ITEM_SORT);
+  /** The query params of the table, null when its state is not kept in the URL */
+  private readonly params = computed(() => {
+    const prefix = this.urlPrefix();
+    return prefix ? itemTableParams(prefix) : null;
+  });
+  // The state of the table when it is not kept in the URL
+  private readonly localSearchText = toSignal(this.searchControl.valueChanges, { initialValue: '' });
+  private readonly localStatusFilter = toSignal(this.statusFilterControl.valueChanges, { initialValue: null });
+  private readonly localSort = signal<ItemSort>(NO_ITEM_SORT);
+
+  private readonly searchText = computed(() => {
+    const params = this.params();
+    return params ? this.urlState.value(params.search) : this.localSearchText();
+  });
+  private readonly statusFilter = computed(() => {
+    const params = this.params();
+    return params ? this.urlState.value(params.status) : this.localStatusFilter();
+  });
+  private readonly sort = computed(() => {
+    const params = this.params();
+    return params ? this.urlState.value(params.sort) : this.localSort();
+  });
+  /** True when the search, the status filter or a filter added by the page hides items */
+  protected readonly filtered = computed(() => !!this.searchText() || !!this.statusFilter() || this.extraFiltered());
 
   /** The filtered and sorted items, from all pages */
   readonly filteredItems = computed(() => {
@@ -118,11 +155,27 @@ export class ItemTableComponent<T extends TableItem> {
     const filtered = filterItems(this.items(), { name: this.searchText(), status: this.statusFilter() }).filter(extraFilter);
     return sortItems(filtered, this.sort(), (item, column) => sortValue(item, column));
   });
-  /** Back to the first page when the filters or the sort change; kept when items are added, edited or removed */
-  private readonly pageNumber = linkedSignal({
+  /**
+   * Back to the first page when the filters or the sort change; kept when items are added, edited or removed.
+   * In the URL, the page goes back to the first one when the URL changes (by the table, or by the page for its filters).
+   */
+  private readonly localPageNumber = linkedSignal({
     source: () => [this.searchText(), this.statusFilter(), this.extraFilter(), this.sort()],
     computation: () => 0
   });
+  private readonly pageNumber = computed(() => {
+    const params = this.params();
+    return params ? this.urlState.value(params.page) : this.localPageNumber();
+  });
+
+  constructor() {
+    const firstPage = () => {
+      const params = this.params();
+      return params ? paramValue(params.page, 0) : {};
+    };
+    this.urlState.syncControl(() => this.params()?.search ?? null, this.searchControl, { debounce: 200, otherChanges: firstPage });
+    this.urlState.syncControl(() => this.params()?.status ?? null, this.statusFilterControl, { otherChanges: firstPage });
+  }
   protected readonly page = computed(() => {
     const items = this.filteredItems();
     const lastPage = Math.max(0, Math.ceil(items.length / PAGE_SIZE) - 1);
@@ -144,16 +197,38 @@ export class ItemTableComponent<T extends TableItem> {
   }
 
   protected toggleSort(column: string) {
-    this.sort.update(sort => nextItemSort(sort, column));
+    const params = this.params();
+    if (params) {
+      this.urlState.patch({ ...paramValue(params.sort, nextItemSort(this.sort(), column)), ...paramValue(params.page, 0) });
+    } else {
+      this.localSort.update(sort => nextItemSort(sort, column));
+    }
   }
 
   /** For the page to show the first page again, e.g. after importing items */
   goToFirstPage() {
-    this.pageNumber.set(0);
+    this.changePage(0);
   }
 
   protected changePage(pageNumber: number) {
-    this.pageNumber.set(pageNumber);
+    const params = this.params();
+    if (params) {
+      this.urlState.patch(paramValue(params.page, pageNumber));
+    } else {
+      this.localPageNumber.set(pageNumber);
+    }
+  }
+
+  /** Shows all the items: no search, no filter (the sort is kept) */
+  protected resetFilters() {
+    const params = this.params();
+    if (params) {
+      this.urlState.patch({ ...paramValue(params.search, ''), ...paramValue(params.status, null), ...paramValue(params.page, 0) });
+    } else {
+      this.searchControl.setValue('');
+      this.statusFilterControl.setValue(null);
+    }
+    this.resetExtraFilters.emit();
   }
 
   protected toggleItem(item: T) {

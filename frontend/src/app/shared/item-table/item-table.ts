@@ -3,6 +3,8 @@
  * Pure functions returning new values, so that the table can keep its state in signals.
  */
 
+import { optionalParam, pageParam, QueryParam, textParam } from '../url-state';
+
 /** What every item displayed in the table has. */
 export interface TableItem {
   name: string;
@@ -103,4 +105,28 @@ export function selectItems<T extends TableItem>(selection: ItemSelection<T>, it
   const newSelection = new Map(selection);
   items.forEach(item => newSelection.set(item.name, item));
   return newSelection;
+}
+
+/** An item sort kept in a query param, written `column:order` (e.g. `name:asc`); no param when no column is sorted */
+export function itemSortParam(name: string): QueryParam<ItemSort> {
+  return {
+    name,
+    parse: values => {
+      const separator = (values[0] ?? '').lastIndexOf(':');
+      const column = values[0]?.slice(0, separator);
+      const order = values[0]?.slice(separator + 1);
+      return column && separator > 0 && (order === 'asc' || order === 'desc') ? { column, order } : NO_ITEM_SORT;
+    },
+    format: sort => (sort.column && sort.order !== 'none' ? `${sort.column}:${sort.order}` : null)
+  };
+}
+
+/** The query params keeping the search, the status filter, the sort and the page of an item table, see ItemTableComponent.urlPrefix */
+export function itemTableParams(prefix: string) {
+  return {
+    search: textParam(`${prefix}Search`),
+    status: optionalParam(`${prefix}Status`, ['enabled', 'disabled'] as const),
+    sort: itemSortParam(`${prefix}Sort`),
+    page: pageParam(`${prefix}Page`)
+  };
 }

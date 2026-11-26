@@ -3722,7 +3722,8 @@
     "restart": "重启",
     "metrics": "指标",
     "filtered-count": "{{total}} 个中的 {{shown}} 个",
-    "reset-filters": "重置筛选"
+    "reset-filters": "重置筛选",
+    "section-link": "此部分的链接"
   },
   "duration-pipe": {
     "long": {
