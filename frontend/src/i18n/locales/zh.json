@@ -2496,7 +2496,12 @@
         "certificate-chain-file": "证书链文件（可选）",
         "private-key-passphrase": "私钥密码",
         "file-too-large": "所选文件过大。最大大小为 1 MB",
-        "hint": "支持的格式：PEM、CRT、CER、DER。仅当上传的私钥文件已加密时才需要密码。"
+        "hint": "支持的格式：PEM、CRT、CER、DER。仅当上传的私钥文件已加密时才需要密码。",
+        "kind": {
+          "key-pair": "由 OIBus 出示的证书，含私钥（HTTPS、OPC UA 等）",
+          "trusted": "由 OIBus 信任的证书，不含私钥：证书颁发机构，或服务器的证书"
+        },
+        "trusted-hint": "支持的格式：PEM、CRT、CER、DER。服务器的证书将依据此证书进行验证：证书颁发机构验证其颁发的证书，服务器证书仅验证其自身。"
       },
       "export": {
         "title": "导出证书",
@@ -2508,6 +2513,12 @@
         "passphrase": "密码",
         "passphrase-confirmation": "确认密码",
         "passphrases-not-identical": "两次输入的密码不一致"
+      },
+      "kind": {
+        "title": "类型",
+        "key-pair": "由 OIBus 出示",
+        "trusted-ca": "受信任的证书颁发机构",
+        "trusted-server": "受信任的服务器证书"
       }
     },
     "ip-filter": {

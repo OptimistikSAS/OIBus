@@ -148,6 +148,13 @@ describe('EditCertificateModalComponent', () => {
     });
   });
 
+  test('should not offer to regenerate a trusted certificate, which has no private key', async () => {
+    tester.componentInstance.prepareForEdition({ ...certificateToUpdate, kind: 'trusted' });
+
+    await expect.element(tester.name).toHaveValue('cert1');
+    await expect.element(tester.regenerateCertificate).not.toBeInTheDocument();
+  });
+
   describe('edit mode', () => {
     beforeEach(() => {
       certificateService.findById.mockReturnValue(of(certificateToUpdate));

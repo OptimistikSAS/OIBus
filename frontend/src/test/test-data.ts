@@ -1963,6 +1963,9 @@ const certificateList: Array<CertificateDTO> = [
     publicKey: 'public key',
     certificate: 'certificate',
     certificateChain: null,
+    kind: 'key-pair',
+    certificationAuthority: false,
+    fingerprint: 'AA:BB',
     expiry: '2020-03-15T00:00:00.000Z',
     createdBy: {
       id: '',
@@ -1982,6 +1985,9 @@ const certificateList: Array<CertificateDTO> = [
     publicKey: 'public key',
     certificate: 'certificate',
     certificateChain: null,
+    kind: 'key-pair',
+    certificationAuthority: false,
+    fingerprint: 'AA:BB',
     expiry: '2020-03-20T00:00:00.000Z',
     createdBy: {
       id: '',

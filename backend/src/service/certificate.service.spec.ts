@@ -37,6 +37,21 @@ const generateSelfSignedCertificate = (commonName: string): { pem: string; priva
   return { pem: forge.pki.certificateToPem(cert), privateKeyPem: forge.pki.privateKeyToPem(keys.privateKey) };
 };
 
+/** An EC certificate of a certification authority (CA:TRUE), valid until 2126: the certificates OIBus trusts may not be RSA */
+const EC_CA_PEM = `-----BEGIN CERTIFICATE-----
+MIIBmTCCAT+gAwIBAgIUD3pRmb8+yx3pRHal3wu7tO38aDEwCgYIKoZIzj0EAwIw
+ITEfMB0GA1UEAwwWT0lCdXMgdGVzdCBpbnRlcm5hbCBDQTAgFw0yNjExMjYyMjAw
+NTFaGA8yMTI2MTEwMjIyMDA1MVowITEfMB0GA1UEAwwWT0lCdXMgdGVzdCBpbnRl
+cm5hbCBDQTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNj2d8+b3cSGEiHJ7TTh
+JaSw/ja9Je8VClY/fSNZfMdj+krB6W7YMx6LuRLv7+xKB9yK4821yvOrwBKqSpwC
+mIujUzBRMB0GA1UdDgQWBBR8ereQLC5aOt1HXp0rcmmZjDRi4jAfBgNVHSMEGDAW
+gBR8ereQLC5aOt1HXp0rcmmZjDRi4jAPBgNVHRMBAf8EBTADAQH/MAoGCCqGSM49
+BAMCA0gAMEUCIQCqtFcCQG03F/eVuxoZjAHvqfMGXc0AzUM85eVUoMjVSAIgXZuV
+m/Z0ClXZGLQnZFMl85Um7U4fEfBsTSrMxGSIe2M=
+-----END CERTIFICATE-----
+`;
+const EC_CA_FINGERPRINT = 'DD:2D:19:AD:56:3D:B4:7E:87:00:FF:EE:EF:A7:99:FA:4C:DC:B6:EC:99:81:A8:BA:77:56:C5:C4:2A:68:46:73';
+
 describe('Certificate Service', () => {
   let decryptTextMock: Mock<(text: string) => string>;
   let validator: Mocked<JoiValidator>;
@@ -275,6 +290,64 @@ describe('Certificate Service', () => {
     assert.strictEqual(createArgs.certificateChain, expectedChain);
   });
 
+  it('should import a trusted certificate without private key, of any key algorithm', async () => {
+    certificateRepository.create.mock.mockImplementationOnce(() => testData.certificates.list[0]);
+
+    await service.import(importCommand({ certificateContent: Buffer.from(EC_CA_PEM), privateKeyContent: null }), 'userTest');
+
+    const createArgs = certificateRepository.create.mock.calls[0].arguments[0];
+    assert.strictEqual(createArgs.kind, 'trusted');
+    assert.strictEqual(createArgs.privateKey, '');
+    assert.strictEqual(createArgs.certificate, EC_CA_PEM);
+    assert.strictEqual(createArgs.certificateChain, null);
+    assert.strictEqual(createArgs.expiry, '2126-11-02T22:00:51.000Z');
+    assert.match(createArgs.publicKey, /^-----BEGIN PUBLIC KEY-----/);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should import a certificate with its private key as presented by OIBus', async () => {
+    certificateRepository.create.mock.mockImplementationOnce(() => testData.certificates.list[0]);
+
+    await service.import(importCommand(), 'userTest');
+
+    assert.strictEqual(certificateRepository.create.mock.calls[0].arguments[0].kind, 'key-pair');
+  });
+
+  it('should not import a trusted certificate with a chain', async () => {
+    await assert.rejects(
+      service.import(importCommand({ privateKeyContent: null, certificateChainContent: Buffer.from(certificateChainPem) }), 'userTest'),
+      { message: 'A trusted certificate is imported without chain: import each certificate to trust' }
+    );
+    assert.strictEqual(certificateRepository.create.mock.calls.length, 0);
+  });
+
+  it('should not present, regenerate or export the private key of a trusted certificate, which has none', async () => {
+    const trusted = { ...testData.certificates.list[0], kind: 'trusted' as const, privateKey: '' };
+    certificateRepository.findById.mock.mockImplementation(() => trusted);
+    const refused = (operation: string) => ({
+      message: `Certificate "${trusted.name}" is a trusted certificate, without private key: cannot ${operation}`
+    });
+
+    assert.throws(() => service.getKeyPair(trusted.id), refused('present it'));
+    await assert.rejects(
+      service.update(trusted.id, { name: 'name', description: '', regenerateCertificate: true, options: null }, 'userTest'),
+      refused('regenerate it')
+    );
+    await assert.rejects(service.exportPrivateKey(trusted.id, 'passphrase', 'userTest'), refused('export its private key'));
+    assert.strictEqual(certificateRepository.update.mock.calls.length, 0);
+  });
+
+  it('should tell whether a certificate is a certification authority, with its fingerprint', () => {
+    const dto = toCertificateDTO({ ...testData.certificates.list[0], kind: 'trusted', certificate: EC_CA_PEM }, id => ({
+      id,
+      friendlyName: id
+    }));
+
+    assert.strictEqual(dto.kind, 'trusted');
+    assert.strictEqual(dto.certificationAuthority, true);
+    assert.strictEqual(dto.fingerprint, EC_CA_FINGERPRINT);
+  });
+
   it('should reject an import when the private key does not match the certificate', async () => {
     const otherKeyPem = generateSelfSignedCertificate('other').privateKeyPem;
 
@@ -363,6 +436,10 @@ describe('Certificate Service', () => {
       certificate: certificate.certificate,
       certificateChain: certificate.certificateChain,
       expiry: certificate.expiry,
+      kind: 'key-pair',
+      // not a parsable certificate in the test data
+      certificationAuthority: false,
+      fingerprint: '',
       createdBy: getUserInfo(certificate.createdBy),
       updatedBy: getUserInfo(certificate.updatedBy),
       createdAt: certificate.createdAt,

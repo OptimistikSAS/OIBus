@@ -48,6 +48,21 @@ openssl pkcs12 -in bundle.pfx -nocerts -nodes -out private-key.pem
 
 :::
 
+## Importer un certificat approuvé {#importing-a-trusted-certificate}
+
+Le magasin contient aussi les certificats qu'OIBus **approuve**, sans clé privée, pour valider le certificat que présente
+un serveur utilisant un certificat interne ou auto-signé :
+
+- une **autorité de certification** (une CA interne) : les certificats qu'elle a émis sont validés avec elle, nom d'hôte
+  compris ;
+- le **certificat d'un serveur** (auto-signé, ou tout certificat approuvé tel quel) : le serveur doit présenter exactement
+  ce certificat, quel que soit son nom d'hôte.
+
+Cliquez sur **Importer**, sélectionnez **Certificat approuvé par OIBus**, et choisissez le fichier du certificat (PEM, CRT,
+CER ou DER). OIBus distingue une autorité de certification d'un certificat de serveur par son contenu, et affiche son
+type dans la liste. Un certificat approuvé n'est jamais proposé là où OIBus présente son propre certificat (HTTPS,
+OPC UA), et il ne peut être ni régénéré ni exporté avec une clé privée.
+
 ## Télécharger un certificat {#downloading-a-certificate}
 
 Le bouton **télécharger** sur une ligne de certificat ouvre une boîte de dialogue proposant :

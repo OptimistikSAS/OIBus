@@ -898,7 +898,12 @@
         "certificate-chain-file": "Certificate chain file (optional)",
         "private-key-passphrase": "Private key passphrase",
         "file-too-large": "The selected file is too large. Maximum size is 1 MB",
-        "hint": "Accepted formats: PEM, CRT, CER, DER. The passphrase is only needed if the uploaded private key file is encrypted."
+        "hint": "Accepted formats: PEM, CRT, CER, DER. The passphrase is only needed if the uploaded private key file is encrypted.",
+        "kind": {
+          "key-pair": "Certificate presented by OIBus, with its private key (HTTPS, OPC UA...)",
+          "trusted": "Certificate trusted by OIBus, without private key: a certification authority, or the certificate of a server"
+        },
+        "trusted-hint": "Accepted formats: PEM, CRT, CER, DER. The certificate of a server is validated against this one: a certification authority validates the certificates it issued, a server certificate only itself."
       },
       "export": {
         "title": "Export certificate",
@@ -910,6 +915,12 @@
         "passphrase": "Passphrase",
         "passphrase-confirmation": "Confirm passphrase",
         "passphrases-not-identical": "The passphrases are not identical"
+      },
+      "kind": {
+        "title": "Kind",
+        "key-pair": "Presented by OIBus",
+        "trusted-ca": "Trusted certification authority",
+        "trusted-server": "Trusted server certificate"
       }
     },
     "ip-filter": {

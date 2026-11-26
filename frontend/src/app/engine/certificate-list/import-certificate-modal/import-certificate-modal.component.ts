@@ -3,10 +3,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { map, Observable } from 'rxjs';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { CertificateKind } from '@oibus/shared/domain/certificate.model';
 
 import { CertificateService } from '../../../services/certificate.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
@@ -22,7 +23,7 @@ type FileField = 'certificateFile' | 'privateKeyFile' | 'certificateChainFile';
   templateUrl: './import-certificate-modal.component.html',
   styleUrl: './import-certificate-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, NgbCollapse]
+  imports: [ReactiveFormsModule, TranslateDirective, TranslatePipe, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, NgbCollapse]
 })
 export class ImportCertificateModalComponent {
   private readonly modal = inject(NgbActiveModal);
@@ -40,6 +41,8 @@ export class ImportCertificateModalComponent {
   readonly certificateChainFile = signal<File>(this.initializeFile);
 
   readonly form = this.fb.group({
+    // A certificate OIBus presents, with its private key, or a certificate it trusts (certification authority, server)
+    kind: this.fb.control<CertificateKind>('key-pair'),
     name: ['', Validators.required],
     description: '',
     privateKeyPassphrase: ''
@@ -47,9 +50,13 @@ export class ImportCertificateModalComponent {
   private readonly formValid = toSignal(this.form.statusChanges.pipe(map(status => status === 'VALID')), {
     initialValue: this.form.valid
   });
+  readonly kind = toSignal(this.form.controls.kind.valueChanges, { initialValue: this.form.controls.kind.value });
 
   readonly canSave = computed(
-    () => this.formValid() && this.certificateFile() !== this.initializeFile && this.privateKeyFile() !== this.initializeFile
+    () =>
+      this.formValid() &&
+      this.certificateFile() !== this.initializeFile &&
+      (this.kind() === 'trusted' || this.privateKeyFile() !== this.initializeFile)
   );
 
   onFileSelected(field: FileField, file: File) {
@@ -104,17 +111,18 @@ export class ImportCertificateModalComponent {
 
     this.error.set(null);
     const formValue = this.form.value;
+    const trusted = this.kind() === 'trusted';
     this.certificateService
       .importCertificate(
         {
           name: formValue.name!,
           description: formValue.description!,
-          privateKeyPassphrase: formValue.privateKeyPassphrase ? formValue.privateKeyPassphrase : null
+          privateKeyPassphrase: !trusted && formValue.privateKeyPassphrase ? formValue.privateKeyPassphrase : null
         },
         {
           certificate: this.certificateFile(),
-          privateKey: this.privateKeyFile(),
-          certificateChain: this.certificateChainFile() !== this.initializeFile ? this.certificateChainFile() : null
+          privateKey: trusted ? null : this.privateKeyFile(),
+          certificateChain: !trusted && this.certificateChainFile() !== this.initializeFile ? this.certificateChainFile() : null
         }
       )
       .pipe(this.state.pendingUntilFinalization())

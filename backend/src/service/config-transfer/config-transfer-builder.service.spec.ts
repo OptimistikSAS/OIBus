@@ -288,7 +288,11 @@ describe('Config Transfer Builder Service', () => {
         publicKey: certificate.publicKey,
         certificate: certificate.certificate,
         certificateChain: certificate.certificateChain,
-        expiry: certificate.expiry
+        expiry: certificate.expiry,
+        kind: certificate.kind,
+        // not a parsable certificate in the test data
+        certificationAuthority: false,
+        fingerprint: ''
       }))
     );
   });

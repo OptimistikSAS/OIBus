@@ -23,6 +23,8 @@ class ImportCertificateModalComponentTester {
   readonly name = this.root.getByLabelText('Name');
   readonly description = this.root.getByLabelText('Description');
   readonly privateKeyPassphrase = this.root.getByLabelText('Private key passphrase');
+  readonly trustedKind = this.root.getByLabelText('Certificate trusted by OIBus', { exact: false });
+  readonly privateKeyFileButton = this.root.getByCss('#private-key-file-button');
   readonly certificateFile = this.root.getByCss('#certificate-file');
   readonly certificateFileButton = this.root.getByCss('#certificate-file-button');
   readonly privateKeyFile = this.root.getByCss('#private-key-file');
@@ -92,6 +94,23 @@ describe('ImportCertificateModalComponent', () => {
       }
     );
     expect(activeModal.close).toHaveBeenCalledWith(importedCertificate);
+  });
+
+  test('should import a trusted certificate, without private key, chain or passphrase', async () => {
+    certificateService.importCertificate.mockReturnValue(of(testData.certificates.list[0]));
+
+    await tester.trustedKind.click();
+    await expect.element(tester.privateKeyFileButton).not.toBeInTheDocument();
+    await expect.element(tester.privateKeyPassphrase).not.toBeInTheDocument();
+    await tester.name.fill('my CA');
+    await tester.certificateFile.upload(certificateFile);
+    await expect.element(tester.save).toBeEnabled();
+    await tester.save.click();
+
+    expect(certificateService.importCertificate).toHaveBeenCalledWith(
+      { name: 'my CA', description: '', privateKeyPassphrase: null },
+      { certificate: expect.objectContaining({ name: 'cert.pem' }), privateKey: null, certificateChain: null }
+    );
   });
 
   test('should include the certificate chain and passphrase when provided', async () => {

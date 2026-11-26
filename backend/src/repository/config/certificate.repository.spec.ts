@@ -37,7 +37,7 @@ describe('CertificateRepository', () => {
   /** The arguments of every audit record made in the test. */
   const recorded = () => auditService.record.mock.calls.map(call => call.arguments);
 
-  it('should find what uses a certificate, by the certificateId of the settings at any depth', () => {
+  it('should find what uses a certificate, by the certificateId or trustedCertificateId of the settings at any depth', () => {
     const certificateId = testData.certificates.list[0].id;
     const setSettings = (table: string, column: string, id: string, settings: object) =>
       database.prepare(`UPDATE ${table} SET ${column} = ? WHERE id = ?;`).run(JSON.stringify(settings), id);
@@ -45,7 +45,7 @@ describe('CertificateRepository', () => {
     setSettings('south_connectors', 'settings', testData.south.list[1].id, { authentication: { type: 'cert', certificateId } });
     // another certificate, or the same value under another key
     setSettings('south_connectors', 'settings', testData.south.list[2].id, { certificateId: 'other', name: certificateId });
-    setSettings('north_connectors', 'settings', testData.north.list[0].id, { specificSettings: { certificateId } });
+    setSettings('north_connectors', 'settings', testData.north.list[0].id, { specificSettings: { trustedCertificateId: certificateId } });
     setSettings('history_queries', 'north_settings', testData.historyQueries.list[0].id, { certificateId });
     database.prepare(`UPDATE engines SET https_certificate_source = 'store', https_certificate_id = ?;`).run(certificateId);
 
@@ -111,6 +111,18 @@ describe('CertificateRepository', () => {
     ]);
     // The private key itself must never be persisted in the audit trail, only the fact that it is set
     assert.notStrictEqual((recorded()[0][4] as { privateKey: string }).privateKey, created.privateKey);
+  });
+
+  it('should create a trusted certificate, without private key', () => {
+    const trusted: Certificate = {
+      ...JSON.parse(JSON.stringify(testData.certificates.list[0])),
+      id: 'trusted id',
+      kind: 'trusted',
+      privateKey: ''
+    };
+    repository.create(trusted);
+
+    assert.deepStrictEqual(stripAuditFields(repository.findById('trusted id')), stripAuditFields(trusted));
   });
 
   it('should update a certificate', () => {

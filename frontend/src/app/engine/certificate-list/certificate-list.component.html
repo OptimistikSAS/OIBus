@@ -34,6 +34,7 @@
         <thead class="light">
           <tr>
             <th class="first-column" translate="engine.certificate.name"></th>
+            <th translate="engine.certificate.kind.title"></th>
             <th translate="engine.certificate.description"></th>
             <th translate="engine.certificate.public-key"></th>
             <th class="copy-column oib-fixed-column"></th>
@@ -53,6 +54,14 @@
           @for (certificate of displayed.content; track certificate.id) {
             <tr>
               <td>{{ certificate.name }}</td>
+              <td class="certificate-kind">
+                <span
+                  [translate]="
+                    'engine.certificate.kind.' +
+                    (certificate.kind === 'key-pair' ? 'key-pair' : certificate.certificationAuthority ? 'trusted-ca' : 'trusted-server')
+                  "
+                ></span>
+              </td>
               <td>{{ certificate.description }}</td>
               <td>{{ certificate.publicKey }}</td>
               <td>

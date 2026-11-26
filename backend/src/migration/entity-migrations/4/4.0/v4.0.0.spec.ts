@@ -28,6 +28,7 @@ import {
   addOPCUATimeoutsAndSubscriptionSettings,
   addRegistrationTokenRefresh,
   addServerTrust,
+  addTrustedCertificates,
   convertFieldProcessesToOperations,
   convertFileWriterLinks,
   convertOIAnalyticsSouths,
@@ -5844,5 +5845,36 @@ describe('Entity migration v4.0.0: addServerTrust', () => {
     const historyColumns = await columnNames(db, 'history_queries');
     assert.ok(!historyColumns.includes('south_server_trust'));
     assert.ok(!historyColumns.includes('north_server_trust'));
+  });
+});
+
+describe('Entity migration v4.0.0: addTrustedCertificates', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(addTrustedCertificates, db)
+  });
+  let db: Knex;
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('certificates').insert({
+      id: 'cert1',
+      name: 'OIBus web server',
+      description: '',
+      public_key: 'public key',
+      private_key: 'private key',
+      certificate: 'certificate',
+      expiry: '2030-01-01T00:00:00.000Z'
+    });
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should keep the certificates of the store as certificates presented by OIBus, with their private key', async () => {
+    await runStepsFrom(addTrustedCertificates, db);
+
+    assert.strictEqual((await db('certificates').where('id', 'cert1').first('kind')).kind, 'key-pair');
   });
 });

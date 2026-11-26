@@ -71,12 +71,14 @@ export class CertificateController extends Controller {
   }
 
   /**
-   * Imports an externally-issued certificate together with its private key, and optionally its CA chain
+   * Imports an externally-issued certificate together with its private key, and optionally its CA chain. Without private
+   * key, imports a trusted certificate: a certification authority, or the certificate of a server trusted as is, which the
+   * certificate a server presents is validated against.
    * @summary Import certificate
    * @param name Certificate name
    * @param description Certificate description
    * @param certificateFile The certificate file, PEM or DER encoded
-   * @param privateKeyFile The private key file, PEM (PKCS#1, PKCS#8, optionally encrypted) or DER encoded
+   * @param privateKeyFile The private key file, PEM (PKCS#1, PKCS#8, optionally encrypted) or DER encoded, omitted for a trusted certificate
    * @param privateKeyPassphrase The passphrase used to decrypt the private key, if it is encrypted
    * @param certificateChainFile The optional CA chain bundle (intermediate/root certificates), PEM encoded
    * @returns {CertificateDTO} The imported certificate
@@ -88,20 +90,17 @@ export class CertificateController extends Controller {
     @FormField() description: string,
     @FormField() privateKeyPassphrase: string | undefined = undefined,
     @UploadedFile('certificate') certificateFile: Express.Multer.File,
-    @UploadedFile('privateKey') privateKeyFile: Express.Multer.File,
+    @UploadedFile('privateKey') privateKeyFile: Express.Multer.File | undefined,
     @UploadedFile('certificateChain') certificateChainFile: Express.Multer.File | undefined,
     @Request() request: CustomExpressRequest
   ): Promise<CertificateDTO> {
     if (!certificateFile || !certificateFile.path) {
       throw new OIBusValidationError('Missing file "certificate"');
     }
-    if (!privateKeyFile || !privateKeyFile.path) {
-      throw new OIBusValidationError('Missing file "privateKey"');
-    }
     const certificateService: CertificateService = request.services.certificateService;
     try {
       const certificateContent = await fs.readFile(certificateFile.path);
-      const privateKeyContent = await fs.readFile(privateKeyFile.path);
+      const privateKeyContent = privateKeyFile?.path ? await fs.readFile(privateKeyFile.path) : null;
       const certificateChainContent =
         certificateChainFile && certificateChainFile.path ? await fs.readFile(certificateChainFile.path) : null;
       const certificate = await certificateService.import(
@@ -122,10 +121,12 @@ export class CertificateController extends Controller {
       } catch {
         // catch the error but don't fail the request
       }
-      try {
-        await fs.unlink(privateKeyFile.path);
-      } catch {
-        // catch the error but don't fail the request
+      if (privateKeyFile?.path) {
+        try {
+          await fs.unlink(privateKeyFile.path);
+        } catch {
+          // catch the error but don't fail the request
+        }
       }
       if (certificateChainFile && certificateChainFile.path) {
         try {

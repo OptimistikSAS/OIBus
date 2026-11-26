@@ -2496,7 +2496,12 @@
         "certificate-chain-file": "Fichier de chaîne de certificats (optionnel)",
         "private-key-passphrase": "Phrase secrète de la clé privée",
         "file-too-large": "Le fichier sélectionné est trop volumineux. La taille maximale est de 1 Mo",
-        "hint": "Formats acceptés : PEM, CRT, CER, DER. La phrase secrète n'est nécessaire que si le fichier de clé privée téléchargé est chiffré."
+        "hint": "Formats acceptés : PEM, CRT, CER, DER. La phrase secrète n'est nécessaire que si le fichier de clé privée téléchargé est chiffré.",
+        "kind": {
+          "key-pair": "Certificat présenté par OIBus, avec sa clé privée (HTTPS, OPC UA...)",
+          "trusted": "Certificat approuvé par OIBus, sans clé privée : une autorité de certification, ou le certificat d'un serveur"
+        },
+        "trusted-hint": "Formats acceptés : PEM, CRT, CER, DER. Le certificat d'un serveur est validé avec celui-ci : une autorité de certification valide les certificats qu'elle a émis, un certificat de serveur seulement lui-même."
       },
       "export": {
         "title": "Exporter le certificat",
@@ -2508,6 +2513,12 @@
         "passphrase": "Phrase secrète",
         "passphrase-confirmation": "Confirmer la phrase secrète",
         "passphrases-not-identical": "Les phrases secrètes ne sont pas identiques"
+      },
+      "kind": {
+        "title": "Type",
+        "key-pair": "Présenté par OIBus",
+        "trusted-ca": "Autorité de certification approuvée",
+        "trusted-server": "Certificat de serveur approuvé"
       }
     },
     "ip-filter": {
