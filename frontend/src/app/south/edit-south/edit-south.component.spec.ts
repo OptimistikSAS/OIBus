@@ -978,6 +978,27 @@ describe('EditSouthComponent', () => {
       expect(importModal.prepare.mock.lastCall![4]).toBe(true);
     });
 
+    test('should keep the filters of the items once an item is created or edited', async () => {
+      const tester = await createTester('edit', 'items');
+      await tester.search.fill('item');
+      await tester.statusFilter.selectOptions('Enabled');
+      await tester.groupFilter.selectOptions('None');
+      await tester.expectItems('item b');
+
+      mockModal(createMock(EditSouthItemModalComponent), { ...itemCommands[0], name: 'item b edited' });
+      await tester.itemAction(0, 'Edit item').click();
+      await tester.expectItems('item b edited');
+
+      const newItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, name: 'item d', enabled: true, groupId: null };
+      mockModal(createMock(EditSouthItemModalComponent), newItem);
+      await tester.addItemButton.click();
+
+      await tester.expectItems('item b edited', 'item d');
+      await expect.element(tester.search).toHaveValue('item');
+      await expect.element(tester.statusFilter).toHaveDisplayValue('Enabled');
+      await expect.element(tester.groupFilter).toHaveDisplayValue('None');
+    });
+
     test('should filter the items', async () => {
       const tester = await createTester('edit', 'items');
 

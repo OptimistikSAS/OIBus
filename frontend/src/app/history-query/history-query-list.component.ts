@@ -101,7 +101,10 @@ export class HistoryQueryListComponent {
   readonly filtered = computed(
     () =>
       !!this.allHistoryQueries() &&
-      (!!this.searchedName() || this.activeStatuses().length > 0 || this.activeSouthTypes().length > 0 || this.activeNorthTypes().length > 0)
+      (!!this.searchedName() ||
+        this.activeStatuses().length > 0 ||
+        this.activeSouthTypes().length > 0 ||
+        this.activeNorthTypes().length > 0)
   );
 
   readonly filteredHistoryQueries = computed(() => this.sort(this.filter(this.allHistoryQueries() ?? [])));

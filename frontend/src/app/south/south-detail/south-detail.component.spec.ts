@@ -1,5 +1,5 @@
 import { Clipboard } from '@angular/cdk/clipboard';
-import { inject,signal } from '@angular/core';
+import { inject, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
@@ -939,6 +939,37 @@ describe('SouthDetailComponent', () => {
       await expect.element(tester.title).toBeVisible();
     });
 
+    test('should keep the filters of the items once an item is created or edited', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?itemsSearch=item&itemsStatus=enabled&itemsGroup=none&itemsSort=name:desc');
+      const tester = await createTester();
+      await tester.expectItems('item b');
+      mockModal(createMock(EditSouthItemModalComponent), { ...testData.south.itemCommand, id: 'itemB', name: 'item b renamed' });
+      southConnectorService.updateItem.mockReturnValue(of(undefined));
+      southConnectorService.findById.mockReturnValue(
+        of({ ...southConnector, items: [{ ...itemB, name: 'item b renamed' }, itemA, itemC, buildItem('itemD', 'item d')] })
+      );
+
+      await tester.itemAction(0, 'Edit item').click();
+
+      await tester.expectItems('item d', 'item b renamed');
+      await expect.element(tester.search).toHaveValue('item');
+      await expect.element(tester.statusFilter).toHaveDisplayValue('Enabled');
+      await expect.element(tester.groupFilter).toHaveDisplayValue('None');
+      expect(queryParams()).toEqual({ itemsSearch: 'item', itemsStatus: 'enabled', itemsGroup: 'none', itemsSort: 'name:desc' });
+
+      mockModal(createMock(EditSouthItemModalComponent), testData.south.itemCommand);
+      southConnectorService.createItem.mockReturnValue(of(buildItem('itemE', 'item e')));
+      southConnectorService.findById.mockReturnValue(
+        of({ ...southConnector, items: [itemB, itemA, itemC, buildItem('itemD', 'item d'), buildItem('itemE', 'item e')] })
+      );
+
+      await tester.addItemButton.click();
+
+      await tester.expectItems('item e', 'item d', 'item b');
+      await expect.element(tester.search).toHaveValue('item');
+      expect(queryParams()).toEqual({ itemsSearch: 'item', itemsStatus: 'enabled', itemsGroup: 'none', itemsSort: 'name:desc' });
+    });
+
     test('should forget an item of the URL that does not exist', async () => {
       await TestBed.inject(Router).navigateByUrl('/?item=deleted&other=kept');
 
@@ -951,8 +982,12 @@ describe('SouthDetailComponent', () => {
       await TestBed.inject(Router).navigateByUrl('/?itemsSearch=item');
       const tester = await createTester();
 
-      await expect.element(tester.items.getByRole('link', { name: 'Link to this section' })).toHaveAttribute('href', '/?itemsSearch=item#items');
-      await expect.element(tester.root.getByRole('link', { name: 'Link to this section' }).nth(1)).toHaveAttribute('href', '/?itemsSearch=item#logs');
+      await expect
+        .element(tester.items.getByRole('link', { name: 'Link to this section' }))
+        .toHaveAttribute('href', '/?itemsSearch=item#items');
+      await expect
+        .element(tester.root.getByRole('link', { name: 'Link to this section' }).nth(1))
+        .toHaveAttribute('href', '/?itemsSearch=item#logs');
     });
   });
 

@@ -158,7 +158,11 @@ class UrlStateHostComponent {
   readonly opened: Array<string> = [];
 
   constructor() {
-    this.urlState.openLinked(ITEM_LINK_PARAM, () => this.elements(), element => this.opened.push(element.id));
+    this.urlState.openLinked(
+      ITEM_LINK_PARAM,
+      () => this.elements(),
+      element => this.opened.push(element.id)
+    );
   }
 }
 

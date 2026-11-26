@@ -194,7 +194,9 @@
                   <td>
                     <span
                       class="item-count"
-                      [ngbTooltip]="'history-query.item-count-tooltip' | translate: { enabled: query.enabledItemCount, total: query.itemCount }"
+                      [ngbTooltip]="
+                        'history-query.item-count-tooltip' | translate: { enabled: query.enabledItemCount, total: query.itemCount }
+                      "
                       >{{ query.enabledItemCount }} / {{ query.itemCount }}</span
                     >
                   </td>
