@@ -1,6 +1,6 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -71,7 +71,7 @@ import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templat
 import { toDisplayedServerTrust } from '../../shared/server-trust/server-trust';
 import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
-import { ITEM_LINK_PARAM, optionalParam, paramValue, UrlState } from '../../shared/url-state';
+import { ITEM_LINK_PARAM, optionalParam, paramValue, QueryParam, UrlState } from '../../shared/url-state';
 
 /** Prefix of the query params of the items table, distinct from the ones of the logs of the connector, on the same page */
 const ITEM_PARAMS_PREFIX = 'items';
@@ -130,8 +130,11 @@ export class SouthDetailComponent {
 
   readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
 
-  readonly scanModes = toSignal(this.scanModeService.list(), { initialValue: [] });
-  readonly certificates = toSignal(this.certificateService.list(), { initialValue: [] });
+  /** The scan modes and the certificates, null while they are loaded */
+  private readonly loadedScanModes = toSignal(this.scanModeService.list(), { initialValue: null });
+  private readonly loadedCertificates = toSignal(this.certificateService.list(), { initialValue: null });
+  readonly scanModes = computed(() => this.loadedScanModes() ?? []);
+  readonly certificates = computed(() => this.loadedCertificates() ?? []);
   readonly oibusInfo = toSignal(this.engineService.info$, { initialValue: null });
 
   private readonly southId = toSignal(this.route.paramMap.pipe(map(params => params.get('southId'))), { initialValue: null });
@@ -202,15 +205,37 @@ export class SouthDetailComponent {
   readonly groupFilterControl = this.fb.control(null as string | null);
   readonly scanModeFilterControl = this.fb.control(null as string | null);
   /** The group filtered on: `none` for the items without group, null for all; a group that does not exist (anymore) is ignored */
-  private readonly groupFilter = computed(() => {
-    const groupFilter = this.urlState.value(ITEM_PARAMS.group);
-    const groups = this.southConnector()?.groups;
-    return groupFilter === 'none' || (groupFilter && groups?.some(group => group.id === groupFilter)) ? groupFilter : null;
-  });
+  private readonly groupParam: QueryParam<string | null> = {
+    ...ITEM_PARAMS.group,
+    parse: values => {
+      const groupId = ITEM_PARAMS.group.parse(values);
+      const groups = this.southConnector()?.groups;
+      return groupId === 'none' || (groupId && groups?.some(group => group.id === groupId)) ? groupId : null;
+    }
+  };
   /** The scan mode filtered on, null for all; a scan mode that does not exist (anymore) is ignored */
-  private readonly scanModeFilter = computed(() => {
-    const scanModeFilter = this.urlState.value(ITEM_PARAMS.scanMode);
-    return scanModeFilter && this.scanModes().some(scanMode => scanMode.id === scanModeFilter) ? scanModeFilter : null;
+  private readonly scanModeParam: QueryParam<string | null> = {
+    ...ITEM_PARAMS.scanMode,
+    parse: values => {
+      const scanModeId = ITEM_PARAMS.scanMode.parse(values);
+      return scanModeId && this.scanModes().some(scanMode => scanMode.id === scanModeId) ? scanModeId : null;
+    }
+  };
+  private readonly groupFilter = this.urlState.get(this.groupParam);
+  private readonly scanModeFilter = this.urlState.get(this.scanModeParam);
+  /**
+   * The connector of the page, once what its items refer to is loaded too, to open an item: null while loading, or while
+   * the connector of the previous page is still displayed (the component is reused when only the URL changes)
+   */
+  private readonly loadedSouthConnector = computed(() => {
+    const southConnector = this.southConnector();
+    return southConnector?.id === this.southId() &&
+      this.manifest() &&
+      !this.manifestResource.isLoading() &&
+      this.loadedScanModes() &&
+      this.loadedCertificates()
+      ? southConnector
+      : null;
   });
   /** True when the group or scan mode filter hides items */
   readonly extraItemFiltered = computed(() => !!this.groupFilter() || !!this.scanModeFilter());
@@ -232,11 +257,22 @@ export class SouthDetailComponent {
 
   constructor() {
     const firstPage = () => paramValue(ITEM_PARAMS.page, 0);
-    this.urlState.syncControl(ITEM_PARAMS.group, this.groupFilterControl, { otherChanges: firstPage });
-    this.urlState.syncControl(ITEM_PARAMS.scanMode, this.scanModeFilterControl, { otherChanges: firstPage });
+    this.urlState.syncControl(this.groupParam, this.groupFilterControl, { otherChanges: firstPage });
+    this.urlState.syncControl(this.scanModeParam, this.scanModeFilterControl, { otherChanges: firstPage });
+    // a group or a scan mode of the URL that does not exist (anymore) is ignored, and removed from the URL once known
+    effect(() => {
+      if (!this.loadedSouthConnector()) return;
+      const changes = {
+        ...(this.urlState.value(ITEM_PARAMS.group) && !this.groupFilter() ? paramValue(ITEM_PARAMS.group, null) : {}),
+        ...(this.urlState.value(ITEM_PARAMS.scanMode) && !this.scanModeFilter() ? paramValue(ITEM_PARAMS.scanMode, null) : {})
+      };
+      if (Object.keys(changes).length) {
+        untracked(() => this.urlState.patch(changes));
+      }
+    });
     this.urlState.openLinked<SouthConnectorItemDTO>(
       ITEM_LINK_PARAM,
-      () => (this.manifest() ? (this.southConnector()?.items ?? null) : null),
+      () => this.loadedSouthConnector()?.items ?? null,
       item => this.viewItem(item)
     );
   }

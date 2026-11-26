@@ -81,8 +81,10 @@ export class SouthListComponent {
   readonly activeEnabledStates = this.urlState.get(PARAMS.status);
   readonly activeTypes = this.urlState.get(PARAMS.type);
   private readonly searchedName = this.urlState.get(PARAMS.name);
-  /** True when the search or a filter hides connectors */
-  readonly filtered = computed(() => !!this.searchedName() || this.activeEnabledStates().length > 0 || this.activeTypes().length > 0);
+  /** True when the search or a filter hides connectors, once they are loaded */
+  readonly filtered = computed(
+    () => !!this.allSouths() && (!!this.searchedName() || this.activeEnabledStates().length > 0 || this.activeTypes().length > 0)
+  );
 
   readonly filteredSouths = computed(() => this.sortSouths(this.filter(this.allSouths() ?? [])));
   /** The displayed page, the last one when the page of the URL is beyond (e.g. connectors deleted since the link was shared) */

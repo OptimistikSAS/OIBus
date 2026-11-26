@@ -131,6 +131,17 @@ let pendingChanges: Params | null = null;
 export class UrlState {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  /**
+   * True once the component is destroyed, i.e. its page left: the URL is not changed anymore, since it is the URL of
+   * another page (e.g. when a modal opened by the page is closed after going back to the previous page)
+   */
+  private destroyed = false;
+  /** The ids of the elements shown in the URL by showInUrl(), by query param, for openLinked() not to open them again */
+  private readonly shownIds = new Map<string, string>();
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => (this.destroyed = true));
+  }
 
   private readonly paramMap: Signal<ParamMap> = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap
@@ -192,31 +203,47 @@ export class UrlState {
    * page shows the element again (see openLinked())
    */
   showInUrl(param: QueryParam<string | null>, id: string, modalResult: Observable<unknown>) {
+    this.shownIds.set(param.name, id);
     this.patch(paramValue(param, id));
-    const remove = () => this.patch(paramValue(param, null));
+    const remove = () => {
+      // another element may be shown since (e.g. a view modal followed by the edit modal of the same element)
+      if (this.shownIds.get(param.name) === id) {
+        this.shownIds.delete(param.name);
+        this.patch(paramValue(param, null));
+      }
+    };
     modalResult.subscribe({ complete: remove, error: remove });
   }
 
   /**
    * Opens the element whose id is in the given query param, once the elements are loaded: when a link to the element
-   * is followed (see showInUrl()). An element not found (e.g. deleted since) is removed from the URL.
+   * is followed (see showInUrl()), when the page is displayed or while it is (the component of a page is reused when
+   * only its URL changes). An element not found (e.g. deleted since) is removed from the URL.
    * Must be called in an injection context.
-   * @param elements the elements, null while they are loaded
+   * @param elements the elements, null while they are loaded (or while the ones of another entity are still displayed)
    */
   openLinked<E extends { id: string }>(param: QueryParam<string | null>, elements: () => ReadonlyArray<E> | null, open: (element: E) => void) {
-    const id = this.value(param);
-    if (!id) return;
-    const ref = effect(() => {
+    effect(() => {
+      const id = this.value(param);
+      if (!id || this.shownIds.get(param.name) === id) return;
       const loaded = elements();
       if (!loaded) return;
-      ref.destroy();
       const element = loaded.find(candidate => candidate.id === id);
-      untracked(() => (element ? open(element) : this.patch(paramValue(param, null))));
+      untracked(() => {
+        if (element) {
+          open(element);
+          // in case the element is opened without showInUrl(), not to open it again
+          this.shownIds.set(param.name, id);
+        } else {
+          this.patch(paramValue(param, null));
+        }
+      });
     });
   }
 
   /** Sets the given query params (see paramValue()), keeping the others */
   patch(queryParams: Params) {
+    if (this.destroyed) return;
     if (pendingChanges) {
       Object.assign(pendingChanges, queryParams);
       return;
@@ -225,6 +252,7 @@ export class UrlState {
     pendingChanges = changes;
     queueMicrotask(() => {
       pendingChanges = null;
+      if (this.destroyed) return;
       this.router.navigate([], { relativeTo: this.route, queryParams: changes, queryParamsHandling: 'merge', replaceUrl: true });
     });
   }

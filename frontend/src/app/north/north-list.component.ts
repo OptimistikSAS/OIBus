@@ -79,8 +79,10 @@ export class NorthListComponent {
   readonly activeEnabledStates = this.urlState.get(PARAMS.status);
   readonly activeTypes = this.urlState.get(PARAMS.type);
   private readonly searchedName = this.urlState.get(PARAMS.name);
-  /** True when the search or a filter hides connectors */
-  readonly filtered = computed(() => !!this.searchedName() || this.activeEnabledStates().length > 0 || this.activeTypes().length > 0);
+  /** True when the search or a filter hides connectors, once they are loaded */
+  readonly filtered = computed(
+    () => !!this.allNorths() && (!!this.searchedName() || this.activeEnabledStates().length > 0 || this.activeTypes().length > 0)
+  );
 
   readonly searchForm = this.fb.group({
     name: ''

@@ -7,7 +7,8 @@ import { ActivatedRoute } from '@angular/router';
  * name of the section (e.g. `/south/id#logs`), once the section is displayed. See SectionLinkComponent for the link.
  */
 @Directive({
-  selector: '[oibSectionAnchor]'
+  selector: '[oibSectionAnchor]',
+  host: { '[attr.data-section]': 'oibSectionAnchor()' }
 })
 export class SectionAnchorDirective {
   /** The name of the section, as the fragment of the URL */
@@ -19,10 +20,16 @@ export class SectionAnchorDirective {
     inject(ActivatedRoute)
       .fragment.pipe(takeUntilDestroyed(inject(DestroyRef)))
       .subscribe(fragment => {
-        if (fragment && fragment === this.oibSectionAnchor()) {
-          // once the section and what comes before it are rendered, so that it does not move after the scroll
-          afterNextRender(() => element.scrollIntoView({ block: 'start' }), { injector });
-        }
+        // once the section and what comes before it are rendered, so that it does not move after the scroll (and once
+        // the name of the section is set: the current fragment is given as soon as the directive is created)
+        afterNextRender(
+          () => {
+            if (fragment && fragment === this.oibSectionAnchor()) {
+              element.scrollIntoView({ block: 'start' });
+            }
+          },
+          { injector }
+        );
       });
   }
 }

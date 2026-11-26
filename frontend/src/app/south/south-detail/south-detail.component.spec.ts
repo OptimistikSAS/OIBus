@@ -159,10 +159,11 @@ describe('SouthDetailComponent', () => {
   let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
   let clipboard: MockObject<Clipboard>;
   let modalService: MockModalService<unknown>;
+  let scanModeService: MockObject<ScanModeService>;
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
-    const scanModeService = createMock(ScanModeService, { created: signal([]) });
+    scanModeService = createMock(ScanModeService, { created: signal([]) });
     const certificateService = createMock(CertificateService, { created: signal([]) });
     const engineService = createMock(EngineService, { info$: of(testData.engine.oIBusInfo) });
     const logService = createMock(LogService);
@@ -859,12 +860,14 @@ describe('SouthDetailComponent', () => {
       await expect.element(tester.items.getByCss('.filter-count')).toHaveTextContent('1 of 3');
     });
 
-    test('should ignore a group or a schedule of the URL that does not exist', async () => {
-      await TestBed.inject(Router).navigateByUrl('/?itemsGroup=deleted&itemsScanMode=deleted');
+    test('should ignore a group or a schedule of the URL that does not exist, and remove it from the URL', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?itemsGroup=deleted&itemsScanMode=deleted&itemsSearch=item');
       const tester = await createTester();
 
       await tester.expectItems('item b', 'item a', 'item c');
-      await expect.element(tester.items.getByCss('.filter-count')).not.toBeInTheDocument();
+      await expect.element(tester.groupFilter).toHaveDisplayValue('All groups');
+      await expect.element(tester.scanModeFilter).toHaveDisplayValue('All schedules');
+      await vi.waitFor(() => expect(queryParams()).toEqual({ itemsSearch: 'item' }));
     });
 
     test('should keep the filters of the items in the URL, apart from the ones of the logs', async () => {
@@ -907,6 +910,33 @@ describe('SouthDetailComponent', () => {
       await vi.waitFor(() => expect(viewModal.prepare).toHaveBeenCalledWith(itemC, southConnector, manifest, scanModes, []));
       // dismissed
       await vi.waitFor(() => expect(queryParams()).toEqual({}));
+    });
+
+    test('should view the item of the URL once the schedules it refers to are loaded', async () => {
+      const loadedScanModes = new Subject<typeof scanModes>();
+      scanModeService.list.mockReturnValue(loadedScanModes);
+      const viewModal = createMock(ViewSouthItemModalComponent);
+      modalService.mockDismissedModal(viewModal);
+      southConnectorService.getItemLastValue.mockReturnValue(of({ itemLastValue: null, groupLastValue: null }));
+      await TestBed.inject(Router).navigateByUrl('/?item=itemC');
+
+      await createTester();
+      expect(viewModal.prepare).not.toHaveBeenCalled();
+      loadedScanModes.next(scanModes);
+
+      await vi.waitFor(() => expect(viewModal.prepare).toHaveBeenCalledWith(itemC, southConnector, manifest, scanModes, []));
+    });
+
+    test('should view the item of a link followed while the page is displayed', async () => {
+      const tester = await createTester();
+      const viewModal = createMock(ViewSouthItemModalComponent);
+      modalService.mockDismissedModal(viewModal);
+      southConnectorService.getItemLastValue.mockReturnValue(of({ itemLastValue: null, groupLastValue: null }));
+
+      await TestBed.inject(Router).navigateByUrl('/?item=itemA');
+
+      await vi.waitFor(() => expect(viewModal.prepare).toHaveBeenCalledWith(itemA, southConnector, manifest, scanModes, []));
+      await expect.element(tester.title).toBeVisible();
     });
 
     test('should forget an item of the URL that does not exist', async () => {

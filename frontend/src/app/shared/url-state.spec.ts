@@ -1,10 +1,13 @@
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
+import { Subject } from 'rxjs';
 import { describe, expect, test, vi } from 'vitest';
 
 import {
   booleanListParam,
+  ITEM_LINK_PARAM,
   listParam,
   nextSort,
   optionalParam,
@@ -92,5 +95,76 @@ describe('url-state', () => {
       expect(navigate.mock.lastCall![1]).toEqual(expect.objectContaining({ replaceUrl: true, queryParamsHandling: 'merge' }));
       expect(name()).toBe('south');
     });
+
+    test('should not change the URL once its component is destroyed', async () => {
+      const { fixture, router } = await createHost('/?other=kept');
+      const urlState = fixture.componentInstance.urlState;
+
+      fixture.destroy();
+      urlState.patch({ name: 'south' });
+
+      await new Promise(resolve => setTimeout(resolve));
+      expect(router.url).toBe('/?other=kept');
+    });
+
+    test('should keep an element shown in the URL while its modal is open, until its page is left', async () => {
+      const { fixture, router } = await createHost('/?other=kept');
+      const urlState = fixture.componentInstance.urlState;
+      const modalResult = new Subject<void>();
+
+      urlState.showInUrl(ITEM_LINK_PARAM, 'item1', modalResult);
+      await vi.waitFor(() => expect(router.url).toBe('/?other=kept&item=item1'));
+
+      // the page is left while the modal is open: closing it does not change the URL of the other page
+      await router.navigateByUrl('/?page=other');
+      fixture.destroy();
+      modalResult.complete();
+
+      await new Promise(resolve => setTimeout(resolve));
+      expect(router.url).toBe('/?page=other');
+    });
+
+    test('should open the element of the URL once loaded, and the ones linked while the page is displayed', async () => {
+      const { fixture, router } = await createHost('/?item=item1');
+      const host = fixture.componentInstance;
+      fixture.detectChanges();
+      expect(host.opened).toEqual([]);
+
+      host.elements.set([{ id: 'item1' }, { id: 'item2' }]);
+      await vi.waitFor(() => expect(host.opened).toEqual(['item1']));
+
+      // the element is shown by its modal (see showInUrl()), and not opened again
+      host.urlState.showInUrl(ITEM_LINK_PARAM, 'item1', new Subject());
+      await new Promise(resolve => setTimeout(resolve));
+      expect(host.opened).toEqual(['item1']);
+      await router.navigateByUrl('/?item=item2');
+      await vi.waitFor(() => expect(host.opened).toEqual(['item1', 'item2']));
+
+      await router.navigateByUrl('/?item=unknown&other=kept');
+      await vi.waitFor(() => expect(router.url).toBe('/?other=kept'));
+      expect(host.opened).toEqual(['item1', 'item2']);
+    });
   });
 });
+
+@Component({
+  template: '',
+  providers: [UrlState],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+class UrlStateHostComponent {
+  readonly urlState = inject(UrlState);
+  readonly elements = signal<Array<{ id: string }> | null>(null);
+  readonly opened: Array<string> = [];
+
+  constructor() {
+    this.urlState.openLinked(ITEM_LINK_PARAM, () => this.elements(), element => this.opened.push(element.id));
+  }
+}
+
+async function createHost(url: string) {
+  TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  const router = TestBed.inject(Router);
+  await router.navigateByUrl(url);
+  return { fixture: TestBed.createComponent(UrlStateHostComponent), router };
+}
