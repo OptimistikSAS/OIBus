@@ -195,8 +195,16 @@ export class LogsComponent implements OnInit {
   /** Selected groups grouped by their owning connector/history query, for the pills display. */
   readonly selectedGroupsByScope = computed(() => groupByScope(this.selectedGroups()));
 
+  /**
+   * The name of a query param of the search. Embedded on the page of a connector or of a history query, the query params
+   * are prefixed (`logsPage`…), to be told apart from the ones of the page (e.g. the page of its items).
+   */
+  readonly paramName = (name: keyof LogSearchParam): string =>
+    this.standalone() ? name : `logs${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+
   ngOnInit(): void {
     // The inputs (scope lock) are only available from here, hence the initialization in ngOnInit
+    this.pageLoader.configure(this.paramName('page'), this.standalone() ? null : SEARCH_PARAMS.map(name => this.paramName(name)));
     const searchParams = this.toSearchParams();
     this.searchForm.setValue({
       messageContent: searchParams.messageContent || null,
@@ -214,9 +222,11 @@ export class LogsComponent implements OnInit {
       this.searchForm.controls.scopeIds.disable();
     }
     const queryParamMap = this.route.snapshot.queryParamMap;
-    loadSelection(queryParamMap.getAll('scopeIds'), id => this.logService.getScopeById(id), this.selectedScopes);
-    loadSelection(queryParamMap.getAll('itemIds'), id => this.logService.getItemById(id), this.selectedItems);
-    loadSelection(queryParamMap.getAll('groupIds'), id => this.logService.getGroupById(id), this.selectedGroups);
+    if (this.standalone()) {
+      loadSelection(queryParamMap.getAll('scopeIds'), id => this.logService.getScopeById(id), this.selectedScopes);
+    }
+    loadSelection(queryParamMap.getAll(this.paramName('itemIds')), id => this.logService.getItemById(id), this.selectedItems);
+    loadSelection(queryParamMap.getAll(this.paramName('groupIds')), id => this.logService.getGroupById(id), this.selectedGroups);
 
     this.pageLoader.pageLoads$
       .pipe(
@@ -245,7 +255,9 @@ export class LogsComponent implements OnInit {
   private toSearchParams(): LogSearchParam {
     const now = DateTime.now().endOf('minute');
     const queryParamMap = this.route.snapshot.queryParamMap;
-    const messageContent = queryParamMap.get('messageContent') || undefined;
+    const get = (name: keyof LogSearchParam) => queryParamMap.get(this.paramName(name));
+    const getAll = (name: keyof LogSearchParam) => queryParamMap.getAll(this.paramName(name));
+    const messageContent = get('messageContent') || undefined;
     let scopeTypes: Array<ScopeType>;
     let scopeIds: Array<string>;
     const scopeId = this.scopeId();
@@ -254,15 +266,15 @@ export class LogsComponent implements OnInit {
       scopeTypes = [scopeType];
       scopeIds = [scopeId];
     } else {
-      scopeTypes = queryParamMap.getAll('scopeTypes') as Array<ScopeType>;
-      scopeIds = queryParamMap.getAll('scopeIds');
+      scopeTypes = getAll('scopeTypes') as Array<ScopeType>;
+      scopeIds = getAll('scopeIds');
     }
-    const start = queryParamMap.get('start') ?? now.minus({ days: 1 }).toISO();
-    const end = queryParamMap.get('end') || undefined;
-    const levels = queryParamMap.getAll('levels') as Array<LogLevel>;
-    const itemIds = queryParamMap.getAll('itemIds');
-    const groupIds = queryParamMap.getAll('groupIds');
-    const page = queryParamMap.get('page') ? parseInt(queryParamMap.get('page')!, 10) : 0;
+    const start = get('start') ?? now.minus({ days: 1 }).toISO();
+    const end = get('end') || undefined;
+    const levels = getAll('levels') as Array<LogLevel>;
+    const itemIds = getAll('itemIds');
+    const groupIds = getAll('groupIds');
+    const page = get('page') ? parseInt(get('page')!, 10) : 0;
     return { messageContent, scopeTypes, scopeIds, itemIds, groupIds, start, end, levels, page };
   }
 
@@ -284,7 +296,12 @@ export class LogsComponent implements OnInit {
       groupIds: this.selectedGroups().map(group => group.groupId),
       page: 0
     };
-    this.router.navigate([], { queryParams: criteria });
+    // the query params of the search only: embedded, the other query params are the page's, and the scope is the page's
+    const scopeLocked = (name: keyof LogSearchParam) => !this.standalone() && (name === 'scopeTypes' || name === 'scopeIds');
+    const queryParams = Object.fromEntries(
+      SEARCH_PARAMS.map(name => [this.paramName(name), scopeLocked(name) ? null : (criteria[name] ?? null)])
+    );
+    this.router.navigate([], { relativeTo: this.route, queryParams, queryParamsHandling: 'merge' });
   }
 
   toggleAutoReload() {
@@ -399,6 +416,19 @@ export class LogsComponent implements OnInit {
     this.triggerSearch();
   }
 }
+
+/** The query params of the search (prefixed when the logs are embedded, see LogsComponent.paramName) */
+const SEARCH_PARAMS: ReadonlyArray<keyof LogSearchParam> = [
+  'messageContent',
+  'start',
+  'end',
+  'scopeTypes',
+  'scopeIds',
+  'itemIds',
+  'groupIds',
+  'levels',
+  'page'
+];
 
 /**
  * Loads the entries (scopes, items or groups) whose ids are given (from the query params) into the given selection.

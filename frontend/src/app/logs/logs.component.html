@@ -248,7 +248,7 @@
 
       @if (logs().totalElements !== 0) {
         <div class="d-flex justify-content-end mb-2">
-          <oib-pagination [page]="logs()" [navigate]="true" />
+          <oib-pagination [page]="logs()" [navigate]="true" [pageParam]="paramName('page')" />
         </div>
       }
       @if (logs().totalElements !== 0) {

@@ -43,6 +43,8 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
 import { PageLoader } from '../../shared/page-loader.service';
 import { pollMetrics } from '../../shared/polling';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
+import { SectionAnchorDirective } from '../../shared/section-anchor/section-anchor.directive';
+import { SectionLinkComponent } from '../../shared/section-anchor/section-link.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
@@ -63,16 +65,28 @@ function sortValue(item: SouthConnectorItemDTO, column: string): string | number
 
 import { PresentedServerIdentity, ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
-import { builtInSortValue, ItemSelection } from '../../shared/item-table/item-table';
+import { builtInSortValue, ItemSelection, itemTableParams } from '../../shared/item-table/item-table';
 import { ItemTableComponent } from '../../shared/item-table/item-table.component';
 import { ITEM_TABLE_TEMPLATES } from '../../shared/item-table/item-table-templates';
 import { toDisplayedServerTrust } from '../../shared/server-trust/server-trust';
 import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
+import { ITEM_LINK_PARAM, optionalParam, paramValue, UrlState } from '../../shared/url-state';
+
+/** Prefix of the query params of the items table, distinct from the ones of the logs of the connector, on the same page */
+const ITEM_PARAMS_PREFIX = 'items';
+/** The query params of the filters added to the items table: the group and the scan mode of the items */
+const ITEM_PARAMS = {
+  ...itemTableParams(ITEM_PARAMS_PREFIX),
+  group: optionalParam(`${ITEM_PARAMS_PREFIX}Group`),
+  scanMode: optionalParam(`${ITEM_PARAMS_PREFIX}ScanMode`)
+};
 
 @Component({
   selector: 'oib-south-detail',
   imports: [
+    SectionAnchorDirective,
+    SectionLinkComponent,
     TranslateDirective,
     RouterLink,
     SouthMetricsComponent,
@@ -97,7 +111,7 @@ import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trus
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [PageLoader]
+  providers: [PageLoader, UrlState]
 })
 export class SouthDetailComponent {
   private readonly southConnectorService = inject(SouthConnectorService);
@@ -112,6 +126,7 @@ export class SouthDetailComponent {
   private readonly docsUrlService = inject(DocsUrlService);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly urlState = inject(UrlState);
 
   readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
 
@@ -183,10 +198,22 @@ export class SouthDetailComponent {
   readonly serverTrust = computed(() => toDisplayedServerTrust(this.polledServerTrust(), this.southConnector()?.enabled ?? false));
 
   // --- Items table: the group and scan mode filters are added to the name and status filters of the table ---
+  // They are kept in the URL with the filters of the table (see ITEM_PARAMS)
   readonly groupFilterControl = this.fb.control(null as string | null);
   readonly scanModeFilterControl = this.fb.control(null as string | null);
-  private readonly groupFilter = toSignal(this.groupFilterControl.valueChanges, { initialValue: null });
-  private readonly scanModeFilter = toSignal(this.scanModeFilterControl.valueChanges, { initialValue: null });
+  /** The group filtered on: `none` for the items without group, null for all; a group that does not exist (anymore) is ignored */
+  private readonly groupFilter = computed(() => {
+    const groupFilter = this.urlState.value(ITEM_PARAMS.group);
+    const groups = this.southConnector()?.groups;
+    return groupFilter === 'none' || (groupFilter && groups?.some(group => group.id === groupFilter)) ? groupFilter : null;
+  });
+  /** The scan mode filtered on, null for all; a scan mode that does not exist (anymore) is ignored */
+  private readonly scanModeFilter = computed(() => {
+    const scanModeFilter = this.urlState.value(ITEM_PARAMS.scanMode);
+    return scanModeFilter && this.scanModes().some(scanMode => scanMode.id === scanModeFilter) ? scanModeFilter : null;
+  });
+  /** True when the group or scan mode filter hides items */
+  readonly extraItemFiltered = computed(() => !!this.groupFilter() || !!this.scanModeFilter());
   readonly itemFilter = computed(() => {
     const groupFilter = this.groupFilter();
     const scanModeFilter = this.scanModeFilter();
@@ -199,8 +226,25 @@ export class SouthDetailComponent {
   });
   /** The items of the connector, as an array of the item union type (the DTO is typed by connector type) */
   readonly items = computed<Array<SouthConnectorItemDTO>>(() => this.southConnector()?.items ?? []);
+  protected readonly itemParamsPrefix = ITEM_PARAMS_PREFIX;
   protected readonly itemSortValue = sortValue;
   private readonly itemTable = viewChild(ItemTableComponent);
+
+  constructor() {
+    const firstPage = () => paramValue(ITEM_PARAMS.page, 0);
+    this.urlState.syncControl(ITEM_PARAMS.group, this.groupFilterControl, { otherChanges: firstPage });
+    this.urlState.syncControl(ITEM_PARAMS.scanMode, this.scanModeFilterControl, { otherChanges: firstPage });
+    this.urlState.openLinked<SouthConnectorItemDTO>(
+      ITEM_LINK_PARAM,
+      () => (this.manifest() ? (this.southConnector()?.items ?? null) : null),
+      item => this.viewItem(item)
+    );
+  }
+
+  /** Resets the group and scan mode filters, when the filters of the items table are reset */
+  resetItemExtraFilters() {
+    this.urlState.patch({ ...paramValue(ITEM_PARAMS.group, null), ...paramValue(ITEM_PARAMS.scanMode, null) });
+  }
 
   /** The groups, as given to the modals that list or change them: saved through the API, then the connector is reloaded */
   private readonly itemGroups: SouthItemGroups = {
@@ -753,6 +797,7 @@ export class SouthDetailComponent {
       error: error => component.setError(error.message)
     });
     modalRef.result.subscribe(() => this.editItem(item));
+    this.urlState.showInUrl(ITEM_LINK_PARAM, item.id, modalRef.result);
   }
 
   testConnection() {

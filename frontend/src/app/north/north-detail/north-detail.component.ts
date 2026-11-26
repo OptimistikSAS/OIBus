@@ -27,6 +27,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { PageLoader } from '../../shared/page-loader.service';
 import { pollMetrics } from '../../shared/polling';
+import { SectionAnchorDirective } from '../../shared/section-anchor/section-anchor.directive';
+import { SectionLinkComponent } from '../../shared/section-anchor/section-link.component';
 import { toDisplayedServerTrust } from '../../shared/server-trust/server-trust';
 import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
@@ -38,6 +40,8 @@ import { NorthTransformersComponent } from '../north-transformers/north-transfor
 @Component({
   selector: 'oib-north-detail',
   imports: [
+    SectionAnchorDirective,
+    SectionLinkComponent,
     TranslateDirective,
     RouterLink,
     NorthMetricsComponent,

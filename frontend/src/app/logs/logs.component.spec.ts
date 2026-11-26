@@ -57,6 +57,8 @@ class LogsComponentTester {
 const START = '2022-12-31T23:00:00.000Z';
 const END = '2023-02-28T23:00:00.000Z';
 const SEARCH_URL = `/?start=${START}&end=${END}&levels=info&levels=error&page=2`;
+/** The same search embedded in the page of a connector, whose query params are prefixed, with a query param of the page */
+const EMBEDDED_SEARCH_URL = `/?logsStart=${START}&logsEnd=${END}&logsLevels=info&logsLevels=error&logsPage=2&itemsSearch=temp`;
 /** The criteria of SEARCH_URL */
 const URL_CRITERIA: LogSearchParam = {
   messageContent: undefined,
@@ -508,8 +510,8 @@ describe('LogsComponent', () => {
   describe('embedded in a connector or history query page', () => {
     test('should only search the logs of a north connector', async () => {
       logService.getScopeById.mockReturnValue(of({ scopeId: 'other', scopeName: 'Other' }));
-      // the scope filters of the URL do not apply
-      const tester = await createTester(`${SEARCH_URL}&scopeTypes=south&scopeIds=other`, {
+      // the scope filters of the URL do not apply, nor the ones of the logs page
+      const tester = await createTester(`${EMBEDDED_SEARCH_URL}&logsScopeTypes=south&logsScopeIds=other&levels=warn`, {
         scopeId: 'north1',
         scopeType: 'north',
         embedded: true
@@ -540,12 +542,32 @@ describe('LogsComponent', () => {
         scopeIds: ['north1'],
         page: 0
       });
+      // the query params of the search are prefixed, and the other ones are the page's
+      const router = TestBed.inject(Router);
+      expect(router.parseUrl(router.url).queryParams).toEqual({
+        logsStart: START,
+        logsEnd: END,
+        logsLevels: ['info', 'error', 'warn'],
+        logsPage: '0',
+        itemsSearch: 'temp',
+        levels: 'warn'
+      });
+    });
+
+    test('should not search again when a query param of the page changes', async () => {
+      const tester = await createTester(EMBEDDED_SEARCH_URL, { scopeId: 'north1', scopeType: 'north', embedded: true });
+      await expect.element(tester.rows).toHaveLength(3);
+
+      await TestBed.inject(Router).navigateByUrl(`${EMBEDDED_SEARCH_URL}&itemsPage=2`);
+      await TestBed.inject(Router).navigateByUrl(EMBEDDED_SEARCH_URL.replace('logsPage=2', 'logsPage=1'));
+
+      expect(await lastSearch(2)).toEqual({ ...URL_CRITERIA, scopeTypes: ['north'], scopeIds: ['north1'], page: 1 });
     });
 
     test('should search the items and groups of a south connector only', async () => {
       logService.suggestItems.mockReturnValue(of([item]));
       logService.suggestGroups.mockReturnValue(of([group]));
-      const tester = await createTester(SEARCH_URL, { scopeId: 's1', scopeType: 'south', embedded: true });
+      const tester = await createTester(EMBEDDED_SEARCH_URL, { scopeId: 's1', scopeType: 'south', embedded: true });
       await tester.searchAreaToggle.click();
       await expect.element(tester.scopeInput).not.toBeInTheDocument();
 

@@ -51,6 +51,11 @@ export class MockModalService<T> {
     this.modal = new FakeModal(componentInstance, of());
   }
 
+  /** A modal open until the given result emits (closed) or completes (dismissed), e.g. a Subject */
+  mockOpenModal(componentInstance: T, result: Observable<unknown>) {
+    this.modal = new FakeModal(componentInstance, result);
+  }
+
   mockDismissedWithErrorModal(componentInstance: T) {
     this.modal = new FakeModal(
       componentInstance,

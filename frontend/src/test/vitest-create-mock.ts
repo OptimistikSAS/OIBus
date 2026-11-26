@@ -1,7 +1,7 @@
 import { Type } from '@angular/core';
-import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, NavigationEnd, Params, Router } from '@angular/router';
 
-import { of } from 'rxjs';
+import { filter, map, Observable, of, startWith } from 'rxjs';
 import { MockedFunction, vi } from 'vitest';
 
 function collectMethodNames(proto: unknown): Array<string> {
@@ -46,6 +46,12 @@ export function createMock<T>(type: Type<T>, overrides: Partial<T> = {}): MockOb
 interface StubRouteOptions {
   params?: Params;
   queryParams?: Params;
+  fragment?: string | null;
+  /**
+   * When given, the query params are the ones of the URL of this router, instead of the given ones: for a component
+   * keeping its state in the query params (see UrlState). Create the route in a factory to inject the router.
+   */
+  router?: Router;
 }
 
 /**
@@ -56,16 +62,27 @@ interface StubRouteOptions {
  */
 export function stubRoute(options: StubRouteOptions = {}): Partial<ActivatedRoute> {
   const params = options.params ?? {};
-  const queryParams = options.queryParams ?? {};
+  const fragment = options.fragment ?? null;
+  const router = options.router;
+  const queryParams = router ? router.parseUrl(router.url).queryParams : (options.queryParams ?? {});
+  const queryParams$: Observable<Params> = router
+    ? router.events.pipe(
+        filter(event => event instanceof NavigationEnd),
+        map(() => router.parseUrl(router.url).queryParams),
+        startWith(queryParams)
+      )
+    : of(queryParams);
 
   return {
     params: of(params),
-    queryParams: of(queryParams),
+    queryParams: queryParams$,
     paramMap: of(convertToParamMap(params)),
-    queryParamMap: of(convertToParamMap(queryParams)),
+    queryParamMap: queryParams$.pipe(map(convertToParamMap)),
+    fragment: of(fragment),
     snapshot: {
       params,
       queryParams,
+      fragment,
       paramMap: convertToParamMap(params),
       queryParamMap: convertToParamMap(queryParams)
     }

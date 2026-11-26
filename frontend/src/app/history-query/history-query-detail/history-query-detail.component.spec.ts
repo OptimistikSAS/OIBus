@@ -1,11 +1,11 @@
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { signal } from '@angular/core';
+import { inject,signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
-import { firstValueFrom, of, throwError } from 'rxjs';
+import { firstValueFrom, of, Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -131,7 +131,7 @@ describe('HistoryQueryDetailComponent', () => {
         provideHttpClientTesting(),
         provideCurrentUser(),
         provideModalTesting(),
-        { provide: ActivatedRoute, useValue: stubRoute({ params: { historyQueryId: historyQuery.id } }) },
+        { provide: ActivatedRoute, useFactory: () => stubRoute({ params: { historyQueryId: historyQuery.id }, router: inject(Router) }) },
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: SouthConnectorService, useValue: southConnectorService },
@@ -444,6 +444,55 @@ describe('HistoryQueryDetailComponent', () => {
     );
     expect(historyQueryService.updateItem).toHaveBeenCalledWith(historyQuery.id, command.id, command);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.updated');
+  });
+
+  describe('kept in the URL', () => {
+    function queryParams() {
+      const router = TestBed.inject(Router);
+      return router.parseUrl(router.url).queryParams;
+    }
+
+    test('should filter the items with the filters of the URL', async () => {
+      await TestBed.inject(Router).navigateByUrl(`/?itemsSearch=${encodeURIComponent(historyQuery.items[1].name)}`);
+      const tester = new HistoryQueryDetailComponentTester();
+
+      await expect.element(tester.items).toHaveLength(1);
+      await expect.element(tester.itemName(0)).toHaveTextContent(historyQuery.items[1].name);
+      await expect.element(tester.root.getByCss('.filter-count')).toHaveTextContent(`1 of ${historyQuery.items.length}`);
+    });
+
+    test('should keep the item edited in the URL', async () => {
+      const itemModalResult = new Subject<HistoryQueryItemCommandDTO>();
+      TestBed.inject(MockModalService).mockOpenModal(createMock(EditHistoryQueryItemModalComponent), itemModalResult);
+      const tester = new HistoryQueryDetailComponentTester();
+
+      await tester.item(1).getByRole('button', { name: 'Edit item' }).click();
+      await vi.waitFor(() => expect(queryParams()).toEqual({ item: historyQuery.items[1].id }));
+
+      itemModalResult.complete();
+      await vi.waitFor(() => expect(queryParams()).toEqual({}));
+    });
+
+    test('should edit the item of the URL', async () => {
+      const itemModal = createMock(EditHistoryQueryItemModalComponent);
+      TestBed.inject(MockModalService).mockDismissedModal(itemModal);
+      await TestBed.inject(Router).navigateByUrl(`/?item=${historyQuery.items[1].id}`);
+
+      new HistoryQueryDetailComponentTester();
+
+      await vi.waitFor(() =>
+        expect(itemModal.prepareForEdition).toHaveBeenCalledWith(
+          historyQuery.items,
+          historyQuery.items[1],
+          historyQuery.id,
+          null,
+          { type: testData.south.manifest.id, settings: historyQuery.southSettings },
+          testData.south.manifest,
+          1
+        )
+      );
+      await vi.waitFor(() => expect(queryParams()).toEqual({}));
+    });
   });
 
   test('should duplicate an item', async () => {

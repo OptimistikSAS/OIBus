@@ -1,9 +1,9 @@
 import { Clipboard } from '@angular/cdk/clipboard';
-import { signal } from '@angular/core';
+import { inject,signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 
-import { firstValueFrom, of, throwError } from 'rxjs';
+import { firstValueFrom, of, Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -186,7 +186,7 @@ describe('SouthDetailComponent', () => {
         provideRouter([]),
         provideCurrentUser(),
         provideModalTesting(),
-        { provide: ActivatedRoute, useValue: stubRoute({ params: { southId: southConnector.id } }) },
+        { provide: ActivatedRoute, useFactory: () => stubRoute({ params: { southId: southConnector.id }, router: inject(Router) }) },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: CertificateService, useValue: certificateService },
@@ -840,6 +840,89 @@ describe('SouthDetailComponent', () => {
         expect.any(Function)
       );
       expect(southConnectorService.importItems).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('kept in the URL', () => {
+    function queryParams() {
+      const router = TestBed.inject(Router);
+      return router.parseUrl(router.url).queryParams;
+    }
+
+    test('should filter the items with the filters of the URL', async () => {
+      await TestBed.inject(Router).navigateByUrl(`/?itemsGroup=none&itemsScanMode=${scanModes[1].id}&itemsSort=name:desc`);
+      const tester = await createTester();
+
+      await tester.expectItems('item a');
+      await expect.element(tester.groupFilter).toHaveDisplayValue('None');
+      await expect.element(tester.scanModeFilter).toHaveDisplayValue(scanModes[1].name);
+      await expect.element(tester.items.getByCss('.filter-count')).toHaveTextContent('1 of 3');
+    });
+
+    test('should ignore a group or a schedule of the URL that does not exist', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?itemsGroup=deleted&itemsScanMode=deleted');
+      const tester = await createTester();
+
+      await tester.expectItems('item b', 'item a', 'item c');
+      await expect.element(tester.items.getByCss('.filter-count')).not.toBeInTheDocument();
+    });
+
+    test('should keep the filters of the items in the URL, apart from the ones of the logs', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?logsLevels=error');
+      const tester = await createTester();
+
+      await tester.groupFilter.selectOptions('Group A');
+      await tester.search.fill('item');
+      await vi.waitFor(() => expect(queryParams()).toEqual({ itemsGroup: 'groupA', itemsSearch: 'item', logsLevels: 'error' }));
+      await tester.expectItems('item c');
+
+      await tester.items.getByRole('button', { name: 'Reset filters' }).click();
+
+      await vi.waitFor(() => expect(queryParams()).toEqual({ logsLevels: 'error' }));
+      await tester.expectItems('item b', 'item a', 'item c');
+      await expect.element(tester.groupFilter).toHaveDisplayValue('All groups');
+    });
+
+    test('should keep the item viewed in the URL', async () => {
+      const tester = await createTester();
+      const viewModalResult = new Subject<void>();
+      modalService.mockOpenModal(createMock(ViewSouthItemModalComponent), viewModalResult);
+      southConnectorService.getItemLastValue.mockReturnValue(of({ itemLastValue: null, groupLastValue: null }));
+
+      await tester.itemAction(1, 'View item').click();
+      await vi.waitFor(() => expect(queryParams()).toEqual({ item: 'itemA' }));
+
+      viewModalResult.complete();
+      await vi.waitFor(() => expect(queryParams()).toEqual({}));
+    });
+
+    test('should view the item of the URL', async () => {
+      const viewModal = createMock(ViewSouthItemModalComponent);
+      modalService.mockDismissedModal(viewModal);
+      southConnectorService.getItemLastValue.mockReturnValue(of({ itemLastValue: null, groupLastValue: null }));
+      await TestBed.inject(Router).navigateByUrl('/?item=itemC');
+
+      await createTester();
+
+      await vi.waitFor(() => expect(viewModal.prepare).toHaveBeenCalledWith(itemC, southConnector, manifest, scanModes, []));
+      // dismissed
+      await vi.waitFor(() => expect(queryParams()).toEqual({}));
+    });
+
+    test('should forget an item of the URL that does not exist', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?item=deleted&other=kept');
+
+      await createTester();
+
+      await vi.waitFor(() => expect(queryParams()).toEqual({ other: 'kept' }));
+    });
+
+    test('should link to the items and to the logs', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?itemsSearch=item');
+      const tester = await createTester();
+
+      await expect.element(tester.items.getByRole('link', { name: 'Link to this section' })).toHaveAttribute('href', '/?itemsSearch=item#items');
+      await expect.element(tester.root.getByRole('link', { name: 'Link to this section' }).nth(1)).toHaveAttribute('href', '/?itemsSearch=item#logs');
     });
   });
 

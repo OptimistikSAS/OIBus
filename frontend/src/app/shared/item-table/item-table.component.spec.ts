@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 
 import { NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -39,6 +40,9 @@ const buildItem = (name: string, enabled: boolean, group: string, createdAt = '2
       translationPrefix="south.items"
       [showDates]="showDates()"
       [extraFilter]="groupFilter()"
+      [extraFiltered]="groupFiltered()"
+      [urlPrefix]="urlPrefix()"
+      (resetExtraFilters)="groupFilter.set(allGroups)"
       [sortValue]="sortValue"
       [(selection)]="selection"
       (enableSelected)="enableSelected()"
@@ -78,7 +82,10 @@ class HostComponent {
     buildItem('item c', true, 'A')
   ]);
   readonly showDates = signal(true);
-  readonly groupFilter = signal<(item: TestItem) => boolean>(() => true);
+  readonly allGroups = () => true;
+  readonly groupFilter = signal<(item: TestItem) => boolean>(this.allGroups);
+  readonly groupFiltered = computed(() => this.groupFilter() !== this.allGroups);
+  readonly urlPrefix = signal<string | null>(null);
   readonly selection = signal<ItemSelection<TestItem>>(new Map());
   readonly hovered = signal<TestItem | null>(null);
   readonly sortValue = (item: TestItem, column: string) => (column === 'group' ? item.group : builtInSortValue(item, column));
@@ -105,6 +112,8 @@ class ItemTableTester {
   readonly massActions = this.root.getByCss('#mass-actions-dropdown');
   readonly headers = this.root.getByCss('thead th');
   readonly menu = this.root.getByCss('.dropdown-menu');
+  readonly filterCount = this.root.getByCss('.filter-count');
+  readonly resetFilters = this.root.getByRole('button', { name: 'Reset filters' });
 
   row(name: string) {
     return this.rows.filter({ hasText: name });
@@ -124,7 +133,7 @@ describe('ItemTableComponent', () => {
   let tester: ItemTableTester;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideI18nTesting(), provideCurrentUser()] });
+    TestBed.configureTestingModule({ providers: [provideI18nTesting(), provideCurrentUser(), provideRouter([])] });
     tester = new ItemTableTester();
   });
 
@@ -171,6 +180,21 @@ describe('ItemTableComponent', () => {
 
     await tester.search.fill('unknown');
     await expect.element(tester.root.getByText('No items match the search criteria')).toBeInTheDocument();
+  });
+
+  test('should tell how many items the filters show, and reset them', async () => {
+    await expect.element(tester.filterCount).not.toBeInTheDocument();
+    await tester.status.selectOptions('Enabled');
+    await tester.root.getByRole('button', { name: 'Only group A' }).click();
+    await expect.element(tester.filterCount).toHaveTextContent('1 of 3');
+
+    await tester.resetFilters.click();
+
+    await tester.expectItems('item b', 'item a', 'item c');
+    await expect.element(tester.status).toHaveDisplayValue('All statuses');
+    await expect.element(tester.filterCount).not.toBeInTheDocument();
+    // the filter of the page is reset too
+    expect(tester.host.groupFiltered()).toBe(false);
   });
 
   test('should tell when there is no item', async () => {
@@ -261,5 +285,83 @@ describe('ItemTableComponent', () => {
     await tester.row('item c').hover();
 
     expect(tester.host.hovered()).toEqual(tester.host.items()[2]);
+  });
+
+  describe('kept in the URL', () => {
+    let router: Router;
+
+    async function createTester(url: string): Promise<ItemTableTester> {
+      router = TestBed.inject(Router);
+      await router.navigateByUrl(url);
+      tester.fixture.destroy();
+      const urlTester = new ItemTableTester();
+      urlTester.host.urlPrefix.set('items');
+      return urlTester;
+    }
+
+    function queryParams() {
+      return router.parseUrl(router.url).queryParams;
+    }
+
+    test('should show the search, the filter, the sort and the page of the URL', async () => {
+      const urlTester = await createTester('/?itemsSearch=item&itemsStatus=enabled&itemsSort=name:desc&other=kept');
+
+      await urlTester.expectItems('item c', 'item b');
+      await expect.element(urlTester.search).toHaveValue('item');
+      await expect.element(urlTester.status).toHaveValue('enabled');
+      await expect.element(urlTester.sortBy('Name').getByCss('.fa-sort-down')).toBeInTheDocument();
+      await expect.element(urlTester.filterCount).toHaveTextContent('2 of 3');
+    });
+
+    test('should ignore the invalid values of the URL', async () => {
+      const urlTester = await createTester('/?itemsStatus=unknown&itemsSort=name:sideways&itemsPage=-1');
+
+      await urlTester.expectItems('item b', 'item a', 'item c');
+      await expect.element(urlTester.filterCount).not.toBeInTheDocument();
+    });
+
+    test('should keep the search, the filter and the sort in the URL, back to the first page', async () => {
+      const urlTester = await createTester('/?itemsPage=1&other=kept');
+
+      await urlTester.search.fill('item');
+      await vi.waitFor(() => expect(queryParams()).toEqual({ itemsSearch: 'item', other: 'kept' }));
+
+      await urlTester.status.selectOptions('Disabled');
+      await vi.waitFor(() => expect(queryParams()).toEqual({ itemsSearch: 'item', itemsStatus: 'disabled', other: 'kept' }));
+      await urlTester.expectItems('item a');
+
+      await urlTester.sortBy('Status').click();
+      await vi.waitFor(() =>
+        expect(queryParams()).toEqual({ itemsSearch: 'item', itemsStatus: 'disabled', itemsSort: 'enabled:asc', other: 'kept' })
+      );
+
+      await urlTester.resetFilters.click();
+      await vi.waitFor(() => expect(queryParams()).toEqual({ itemsSort: 'enabled:asc', other: 'kept' }));
+      await expect.element(urlTester.search).toHaveValue('');
+      await urlTester.expectItems('item a', 'item b', 'item c');
+    });
+
+    test('should keep the page in the URL', async () => {
+      const urlTester = await createTester('/?itemsPage=1');
+      const items = Array.from({ length: 25 }, (_, index) => buildItem(`item ${String(index).padStart(2, '0')}`, true, 'A'));
+      urlTester.host.items.set(items);
+      await expect.element(urlTester.rows).toHaveLength(5);
+
+      await urlTester.root.getByRole('link', { name: '1' }).click();
+
+      await vi.waitFor(() => expect(queryParams()).toEqual({}));
+      await expect.element(urlTester.rows).toHaveLength(20);
+    });
+
+    test('should follow the URL when it changes', async () => {
+      const urlTester = await createTester('/?itemsSearch=item a');
+      await urlTester.expectItems('item a');
+
+      await router.navigateByUrl('/?itemsSearch=item c');
+
+      await expect.element(urlTester.search).toHaveValue('item c');
+      await expect.element(urlTester.row('item c')).toBeInTheDocument();
+      await urlTester.expectItems('item c');
+    });
   });
 });

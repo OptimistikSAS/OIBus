@@ -138,10 +138,11 @@
           <oib-oibus-settings-summary id="south-settings" [settings]="southDisplayedSettings()" />
         </section>
         <!-- Items -->
-        <section class="oib-panel oib-south-items" id="history-query-items">
+        <section class="oib-panel oib-south-items" id="history-query-items" oibSectionAnchor="items">
           <div class="oib-section-title">
             <h5>
               <span translate="south.items.title"></span>
+              <oib-section-link fragment="items" />
               <!-- rendered once the item table below has its inputs: an embedded view is refreshed after the bindings of its parent -->
               <ng-container [ngTemplateOutlet]="itemCount" />
               <ng-template #itemCount>
@@ -170,6 +171,7 @@
               #itemTable
               [items]="items()"
               translationPrefix="history-query.items"
+              urlPrefix="items"
               [actionCount]="4"
               [(selection)]="selectedItems"
               (enableSelected)="enableSelectedItems()"
@@ -281,9 +283,9 @@
           />
         </section>
         <!-- Logs -->
-        <section class="oib-panel">
+        <section class="oib-panel" oibSectionAnchor="logs">
           <div class="oib-section-title">
-            <h5 id="logs-title" translate="logs.title"></h5>
+            <h5 id="logs-title"><span translate="logs.title"></span><oib-section-link fragment="logs" /></h5>
           </div>
           <oib-logs [scopeId]="historyQueryId()" scopeType="history-query" [embedded]="true" />
         </section>

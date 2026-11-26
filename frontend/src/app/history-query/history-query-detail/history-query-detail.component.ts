@@ -53,10 +53,13 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
 import { pollMetrics } from '../../shared/polling';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
+import { SectionAnchorDirective } from '../../shared/section-anchor/section-anchor.directive';
+import { SectionLinkComponent } from '../../shared/section-anchor/section-link.component';
 import { toDisplayedServerTrust } from '../../shared/server-trust/server-trust';
 import { askServerTrust, reviewServerIdentity } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { ITEM_LINK_PARAM, UrlState } from '../../shared/url-state';
 import { openExploreWizard } from '../../south/south-workflows/edit-workflow-modal/edit-workflow-modal.component';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { toHistoryQueryItemCommand } from '../history-query-items/history-query-item-command';
@@ -68,6 +71,8 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
 @Component({
   selector: 'oib-history-query-detail',
   imports: [
+    SectionAnchorDirective,
+    SectionLinkComponent,
     TranslateDirective,
     RouterLink,
     HistoryMetricsComponent,
@@ -91,7 +96,8 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
     ServerTrustPanelComponent
   ],
   templateUrl: './history-query-detail.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [UrlState]
 })
 export class HistoryQueryDetailComponent {
   private readonly historyQueryService = inject(HistoryQueryService);
@@ -103,6 +109,7 @@ export class HistoryQueryDetailComponent {
   private readonly certificateService = inject(CertificateService);
   private readonly transformerService = inject(TransformerService);
   private readonly modalService = inject(ModalService);
+  private readonly urlState = inject(UrlState);
   private readonly engineService = inject(EngineService);
   protected readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -149,6 +156,15 @@ export class HistoryQueryDetailComponent {
   });
   readonly northManifest = computed<NorthConnectorManifest | null>(() => (this.manifests.hasValue() ? this.manifests.value()[0] : null));
   readonly southManifest = computed<SouthConnectorManifest | null>(() => (this.manifests.hasValue() ? this.manifests.value()[1] : null));
+
+  constructor() {
+    // an item whose link is followed is opened, to be displayed (and edited) as on a south connector
+    this.urlState.openLinked<HistoryQueryItemDTO>(
+      ITEM_LINK_PARAM,
+      () => (this.southManifest() ? (this.historyQuery()?.items ?? null) : null),
+      item => this.editItem(item)
+    );
+  }
 
   /** Bumped to read again the trust of the history query in the identities of its servers, once a user trusted one */
   private readonly serverTrustRefresh = signal(0);
@@ -481,6 +497,7 @@ export class HistoryQueryDetailComponent {
         this.notificationService.success('history-query.items.updated');
         this.refreshHistoryQuery();
       });
+    this.urlState.showInUrl(ITEM_LINK_PARAM, historyQueryItem.id, modalRef.result);
   }
 
   duplicateItem(item: HistoryQueryItemDTO) {

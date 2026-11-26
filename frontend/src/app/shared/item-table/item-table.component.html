@@ -15,6 +15,7 @@
     <option value="enabled" [translate]="label('enabled-label')"></option>
     <option value="disabled" [translate]="label('disabled-label')"></option>
   </select>
+  <oib-filter-summary [shown]="filteredItems().length" [total]="items().length" [filtered]="filtered()" (resetFilters)="resetFilters()" />
 </div>
 
 @let itemsPage = page();

@@ -123,7 +123,8 @@
     "restart": "Restart",
     "metrics": "Metrics",
     "filtered-count": "{{shown}} of {{total}}",
-    "reset-filters": "Reset filters"
+    "reset-filters": "Reset filters",
+    "section-link": "Link to this section"
   },
   "datepicker": {
     "parse-pattern": "d/M/yyyy",

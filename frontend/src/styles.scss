@@ -1258,6 +1258,17 @@ val-errors > div {
 }
 
 // What qualifies the title of a section, next to it (e.g. since when the metrics are counted): in the case of the text
+// The link to a section (oib-section-link), shown when its title is hovered or the link focused
+.oib-section-title .section-link {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.oib-section-title:hover .section-link,
+.oib-section-title .section-link:focus-visible {
+  opacity: 1;
+}
+
 .oib-section-title .oib-section-note {
   font-size: 0.8125rem;
   font-weight: 400;
