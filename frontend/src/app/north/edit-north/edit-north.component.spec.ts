@@ -480,7 +480,7 @@ describe('EditNorthComponent', () => {
       configure({});
     });
 
-    test('should start a new connector with the type chosen in the first step', async () => {
+    test('should start a new connector with the type chosen in the first step, opening the next step', async () => {
       const tester = new EditNorthComponentTester();
       await expect.element(tester.step('connector')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.title).toHaveTextContent('Create a north connector');
@@ -494,8 +494,8 @@ describe('EditNorthComponent', () => {
       await expect.element(tester.step('connector')).toHaveClass('modal-step-invalid');
       expect(northConnectorService.getNorthManifest).not.toHaveBeenCalled();
 
+      // choosing the type opens the next step, without Next
       await tester.connectorCard('File writer').click();
-      await tester.nextButton.click();
 
       await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.title).toHaveTextContent('Create File writer north connector');
@@ -526,7 +526,6 @@ describe('EditNorthComponent', () => {
       const tester = new EditNorthComponentTester();
       await tester.connectorMode('Duplicate existing').click();
       await tester.connectorCard('North 1').click();
-      await tester.nextButton.click();
       await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
 
       // back to the same connector: it is kept
@@ -540,6 +539,9 @@ describe('EditNorthComponent', () => {
       await tester.goTo('connector');
       await tester.connectorMode('New settings').click();
       await tester.connectorCard('Console').click();
+      // coming back to the step, choosing another connector does not leave it: Next does, once confirmed
+      await expect.element(tester.step('connector')).toHaveAttribute('aria-current', 'step');
+      expect(confirmationService.confirm).not.toHaveBeenCalled();
       await tester.nextButton.click();
       expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'north.steps.confirm-connector-change' });
       await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
@@ -550,10 +552,25 @@ describe('EditNorthComponent', () => {
       await expect.element(tester.deleteTransformerButtons).toHaveLength(0);
     });
 
+    test('should not open the next step when a type is chosen again after going back to the connector step', async () => {
+      const tester = new EditNorthComponentTester();
+      await tester.connectorCard('File writer').click();
+      await expect.element(tester.step('settings')).toHaveAttribute('aria-current', 'step');
+
+      await tester.backButton.click();
+      await expect.element(tester.step('connector')).toHaveAttribute('aria-current', 'step');
+      // picking a type no longer leaves the step: Next does
+      await tester.connectorCard('File writer').click();
+      await tester.connectorCard('Console').click();
+
+      await expect.element(tester.step('connector')).toHaveAttribute('aria-current', 'step');
+      expect(northConnectorService.getNorthManifest).toHaveBeenCalledTimes(1);
+      expect(confirmationService.confirm).not.toHaveBeenCalled();
+    });
+
     test('should not ask for confirmation to leave once the connector is saved', async () => {
       const tester = new EditNorthComponentTester();
       await tester.connectorCard('File writer').click();
-      await tester.nextButton.click();
       await tester.outputFolder.fill('/out');
       await tester.goTo('caching');
       await chooseSelectOrCreateEntry(tester.scanMode, 'scanMode1');

@@ -25,6 +25,7 @@ const southTypes: Array<SouthType> = [
     [form]="form"
     [existing]="existing()"
     [types]="types"
+    (picked)="picks = picks + 1"
   />`,
   imports: [ConnectorChoiceComponent]
 })
@@ -35,6 +36,8 @@ class TestComponent {
     { id: 'southId2', name: 'South 2', type: 'mssql' }
   ]);
   readonly types = southTypes;
+  /** The number of times the user picked a connector or a type */
+  picks = 0;
 }
 
 class ConnectorChoiceComponentTester {
@@ -76,6 +79,19 @@ describe('ConnectorChoiceComponent', () => {
     await expect.element(tester.card('Folder scanner')).toHaveAttribute('aria-pressed', 'false');
     expect(tester.form.value).toEqual({ fromExisting: false, type: 'mssql' });
     expect(tester.form.dirty).toBe(true);
+  });
+
+  test('should tell when a connector or a type is picked, not when the mode changes', async () => {
+    const tester = new ConnectorChoiceComponentTester();
+
+    await tester.mode('Duplicate existing').click();
+    expect(tester.fixture.componentInstance.picks).toBe(0);
+    await tester.card('South 2').click();
+    expect(tester.fixture.componentInstance.picks).toBe(1);
+    await tester.mode('New settings').click();
+    await tester.card('Folder scanner').click();
+
+    expect(tester.fixture.componentInstance.picks).toBe(2);
   });
 
   test('should display a beta badge only for beta types', async () => {

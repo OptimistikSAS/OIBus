@@ -688,9 +688,11 @@ describe('EditHistoryQueryComponent', () => {
       await expect.element(tester.root.getByText('This field is required').first()).toBeVisible();
       expect(southConnectorService.getSouthManifest).not.toHaveBeenCalled();
 
+      // the next step opens once both connectors are chosen, without Next
       await tester.connectorType('south', 'Microsoft SQL Server™').click();
+      await expect.element(tester.step('connectors')).toHaveAttribute('aria-current', 'step');
+      expect(southConnectorService.getSouthManifest).not.toHaveBeenCalled();
       await tester.connectorType('north', 'Console').click();
-      await tester.nextButton.click();
 
       await expect.element(tester.step('south')).toHaveAttribute('aria-current', 'step');
       await expect.element(tester.testSouthButton).toBeVisible();
@@ -709,6 +711,9 @@ describe('EditHistoryQueryComponent', () => {
       // other connectors start it over, once confirmed
       await tester.goTo('connectors');
       await tester.connectorType('north', 'File writer').click();
+      // coming back to the step, choosing other connectors does not leave it: Next does
+      await expect.element(tester.step('connectors')).toHaveAttribute('aria-current', 'step');
+      expect(confirmationService.confirm).not.toHaveBeenCalled();
       await tester.nextButton.click();
       expect(confirmationService.confirm).toHaveBeenCalledWith({ messageKey: 'history-query.steps.confirm-connectors-change' });
       await expect.element(tester.step('south')).toHaveAttribute('aria-current', 'step');

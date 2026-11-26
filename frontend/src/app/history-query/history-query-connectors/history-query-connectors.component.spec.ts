@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { of } from 'rxjs';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { NorthType } from '@oibus/shared/connector/north-manifest.model';
@@ -119,6 +119,21 @@ describe('HistoryQueryConnectorsComponent', () => {
     expect(tester.choice()).toBeNull();
     await expect.element(tester.north.getByText('This field is required')).toBeInTheDocument();
     await expect.element(tester.south.getByText('This field is required')).not.toBeInTheDocument();
+  });
+
+  test('should tell once both a South and a North are picked', async () => {
+    const tester = new HistoryQueryConnectorsComponentTester();
+    const picked = vi.fn();
+    tester.component.picked.subscribe(picked);
+
+    await tester.card('south', 'South 2').click();
+    expect(picked).not.toHaveBeenCalled();
+    await tester.card('north', 'North 2').click();
+    expect(picked).toHaveBeenCalledTimes(1);
+    // another pick, both sides still chosen
+    await tester.card('south', 'South 3').click();
+
+    expect(picked).toHaveBeenCalledTimes(2);
   });
 
   test('should only offer connector types when there is no existing connector', async () => {
