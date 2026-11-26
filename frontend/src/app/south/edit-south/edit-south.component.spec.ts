@@ -10,7 +10,7 @@ import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration
 import {
   SouthConnectorFolderScannerDTO,
   SouthConnectorItemCommandDTO,
-  SouthConnectorLightDTO,
+  SouthConnectorListDTO,
   SouthItemGroupCommandDTO
 } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
@@ -493,7 +493,7 @@ describe('EditSouthComponent', () => {
     });
 
     test('should check the name is unique', async () => {
-      const otherSouths: Array<SouthConnectorLightDTO> = testData.south.listLight;
+      const otherSouths: Array<SouthConnectorListDTO> = testData.south.listLight;
       southConnectorService.list.mockReturnValue(of(otherSouths));
       const tester = await createTester('create');
 

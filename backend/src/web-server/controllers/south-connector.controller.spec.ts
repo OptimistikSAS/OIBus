@@ -37,7 +37,7 @@ const createSouthServiceModuleMocks = () => ({
     getUserInfo('');
     return connector;
   }),
-  toSouthConnectorLightDTO: mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
+  toSouthConnectorListDTO: mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
     getUserInfo('');
     return connector;
   }),
@@ -140,7 +140,7 @@ describe('SouthConnectorController', () => {
   });
 
   it('should return a list of south connectors', async () => {
-    const mockSouthConnectors = testData.south.list;
+    const mockSouthConnectors = testData.south.listed;
     southService.list.mock.mockImplementation(() => mockSouthConnectors);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);

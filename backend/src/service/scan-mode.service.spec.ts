@@ -5,7 +5,7 @@ import type { SouthItemSettings } from '../../shared/model/connector/south-setti
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import type { ScanMode } from '../model/scan-mode.model';
-import type { SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
+import type { SouthConnectorItemEntity, SouthConnectorListEntity } from '../model/south-connector.model';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
 import type ScanModeRepository from '../repository/config/scan-mode.repository';
 import type SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -189,8 +189,8 @@ describe('Scan Mode Service', () => {
   it('delete() should delete a scan mode', async () => {
     scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0]);
     southConnectorRepository.findAllSouth.mock.mockImplementationOnce(() => [
-      { ...testData.south.list[0], id: 'south1' } satisfies SouthConnectorEntityLight,
-      { ...testData.south.list[0], id: 'south2' } satisfies SouthConnectorEntityLight
+      { ...testData.south.listed[0], id: 'south1' } satisfies SouthConnectorListEntity,
+      { ...testData.south.listed[0], id: 'south2' } satisfies SouthConnectorListEntity
     ]);
 
     const mockItem: SouthConnectorItemEntity<SouthItemSettings> = {

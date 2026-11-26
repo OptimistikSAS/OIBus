@@ -37,11 +37,16 @@ export default class HistoryQueryRepository {
   ) {}
 
   findAllHistoriesLight(): Array<HistoryQueryEntityLight> {
-    const query = `SELECT id, name, description, status, start_time, end_time, south_type, north_type, created_by, updated_by, created_at, updated_at FROM ${HISTORY_QUERIES_TABLE};`;
+    const query =
+      `SELECT h.id, h.name, h.description, h.status, h.start_time, h.end_time, h.south_type, h.north_type, ` +
+      `h.created_by, h.updated_by, h.created_at, h.updated_at, ` +
+      `(SELECT COUNT(*) FROM ${HISTORY_ITEMS_TABLE} i WHERE i.history_id = h.id) AS item_count, ` +
+      `(SELECT COUNT(*) FROM ${HISTORY_ITEMS_TABLE} i WHERE i.history_id = h.id AND i.enabled = 1) AS enabled_item_count ` +
+      `FROM ${HISTORY_QUERIES_TABLE} h;`;
     return this.database
       .prepare(query)
       .all()
-      .map(result => toHistoryQueryLight(result as Record<string, string>));
+      .map(result => toHistoryQueryLight(result as Record<string, string | number>));
   }
 
   findAllHistoriesFull(): Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> {
@@ -865,19 +870,21 @@ export default class HistoryQueryRepository {
   }
 }
 
-export const toHistoryQueryLight = (result: Record<string, string>): HistoryQueryEntityLight => {
+export const toHistoryQueryLight = (result: Record<string, string | number>): HistoryQueryEntityLight => {
   return {
-    id: result.id,
-    name: result.name,
-    description: result.description,
+    id: result.id as string,
+    name: result.name as string,
+    description: result.description as string,
     status: result.status as HistoryQueryStatus,
-    startTime: result.start_time,
-    endTime: result.end_time,
+    startTime: result.start_time as string,
+    endTime: result.end_time as string,
     southType: result.south_type as OIBusSouthType,
     northType: result.north_type as OIBusNorthType,
-    createdBy: result.created_by,
-    updatedBy: result.updated_by,
-    createdAt: result.created_at,
-    updatedAt: result.updated_at
+    itemCount: result.item_count as number,
+    enabledItemCount: result.enabled_item_count as number,
+    createdBy: result.created_by as string,
+    updatedBy: result.updated_by as string,
+    createdAt: result.created_at as string,
+    updatedAt: result.updated_at as string
   };
 };

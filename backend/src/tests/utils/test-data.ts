@@ -37,7 +37,7 @@ import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import { ScanMode } from '../../model/scan-mode.model';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorListEntity } from '../../model/south-connector.model';
 import { Transformer } from '../../model/transformer.model';
 import { User } from '../../model/user.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
@@ -905,6 +905,19 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     groups: []
   }
 ];
+const southConnectorsListed: Array<SouthConnectorListEntity> = southConnectors.map(south => ({
+  id: south.id,
+  name: south.name,
+  type: south.type,
+  description: south.description,
+  enabled: south.enabled,
+  itemCount: south.items.length,
+  enabledItemCount: south.items.filter(item => item.enabled).length,
+  createdBy: south.createdBy,
+  updatedBy: south.updatedBy,
+  createdAt: south.createdAt,
+  updatedAt: south.updatedAt
+}));
 const southConnectorCommand: SouthConnectorCommandDTO = {
   name: 'South 1',
   type: 'folder-scanner',
@@ -1447,6 +1460,8 @@ const historyQueriesLight: Array<HistoryQueryEntityLight> = historyQueries.map(h
   endTime: hq.queryTimeRange.endTime,
   createdBy: hq.createdBy,
   updatedBy: hq.updatedBy,
+  itemCount: hq.items.length,
+  enabledItemCount: hq.items.filter(item => item.enabled).length,
   createdAt: hq.createdAt,
   updatedAt: hq.updatedAt
 }));
@@ -2462,6 +2477,7 @@ export default Object.freeze({
   },
   south: {
     list: southConnectors,
+    listed: southConnectorsListed,
     command: southConnectorCommand,
     itemCommand: southConnectorItemCommand,
     itemTestingSettings,

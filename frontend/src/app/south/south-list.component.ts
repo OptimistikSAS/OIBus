@@ -1,30 +1,43 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { debounceTime, distinctUntilChanged, finalize, switchMap } from 'rxjs';
+import { finalize, switchMap } from 'rxjs';
 
-import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorListDTO } from '@oibus/shared/api/south-connector.model';
 import { createPageFromArray } from '@oibus/shared/common/types';
-import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { OIBUS_SOUTH_TYPES, OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 
 import { SouthConnectorService } from '../services/south-connector.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
 import { ConfirmationService } from '../shared/confirmation.service';
+import { FilterSummaryComponent } from '../shared/filter-summary/filter-summary.component';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { ModalService } from '../shared/modal.service';
 import { NotificationService } from '../shared/notification.service';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ResizableColumnsDirective } from '../shared/resizable-columns.directive';
+import { booleanListParam, listParam, nextSort, pageParam, paramValue, sortParam, textParam, toggled, UrlState } from '../shared/url-state';
 
-type SouthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
-type SortDirection = 'asc' | 'desc';
+const SORT_FIELDS = ['name', 'type', 'createdAt', 'updatedAt'] as const;
+type SouthSortField = (typeof SORT_FIELDS)[number];
 const PAGE_SIZE = 15;
+
+/** The search, the filters, the sort and the page of the list, kept in the URL */
+const PARAMS = {
+  name: textParam('name'),
+  status: booleanListParam('status'),
+  type: listParam('type', OIBUS_SOUTH_TYPES),
+  sort: sortParam('sort', SORT_FIELDS, { field: 'name', direction: 'asc' }),
+  page: pageParam('page')
+};
+/** The changes of the URL that go back to the first page, when the search, the filters or the sort change */
+const FIRST_PAGE = paramValue(PARAMS.page, 0);
 
 @Component({
   selector: 'oib-south-list',
@@ -38,20 +51,23 @@ const PAGE_SIZE = 15;
     OIBusSouthTypeEnumPipe,
     NgbTooltip,
     TranslatePipe,
-    AuditInfoComponent
+    AuditInfoComponent,
+    FilterSummaryComponent
   ],
   templateUrl: './south-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './south-list.component.scss'
+  styleUrl: './south-list.component.scss',
+  providers: [UrlState]
 })
 export class SouthListComponent {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly notificationService = inject(NotificationService);
   private readonly modalService = inject(ModalService);
   private readonly southConnectorService = inject(SouthConnectorService);
+  private readonly urlState = inject(UrlState);
 
   readonly searchForm = inject(NonNullableFormBuilder).group({
-    name: [null as string | null]
+    name: ''
   });
 
   private readonly southsResource = rxResource({ stream: () => this.southConnectorService.list() });
@@ -59,27 +75,30 @@ export class SouthListComponent {
   readonly allSouths = computed(() => (this.southsResource.hasValue() ? this.southsResource.value() : null));
   /** IDs of the connectors being started or stopped. */
   readonly pendingToggles = signal<ReadonlySet<string>>(new Set());
-  readonly sortField = signal<SouthSortField>('name');
-  readonly sortDirection = signal<SortDirection>('asc');
+  private readonly sort = this.urlState.get(PARAMS.sort);
 
   // Active filters for the clickable status/type legends. Empty array means "no filter" (show all).
-  readonly activeEnabledStates = signal<Array<boolean>>([]);
-  readonly activeTypes = signal<Array<OIBusSouthType>>([]);
-  private readonly searchedName = toSignal(this.searchForm.controls.name.valueChanges.pipe(debounceTime(200), distinctUntilChanged()), {
-    initialValue: null
-  });
+  readonly activeEnabledStates = this.urlState.get(PARAMS.status);
+  readonly activeTypes = this.urlState.get(PARAMS.type);
+  private readonly searchedName = this.urlState.get(PARAMS.name);
+  /** True when the search or a filter hides connectors */
+  readonly filtered = computed(() => !!this.searchedName() || this.activeEnabledStates().length > 0 || this.activeTypes().length > 0);
 
-  private readonly filteredSouths = computed(() => this.sortSouths(this.filter(this.allSouths() ?? [])));
-  /** The displayed page, back to the first one whenever the filters or the sort change. */
-  private readonly pageNumber = linkedSignal({
-    source: () => [this.searchedName(), this.activeEnabledStates(), this.activeTypes(), this.sortField(), this.sortDirection()],
-    computation: () => 0
+  readonly filteredSouths = computed(() => this.sortSouths(this.filter(this.allSouths() ?? [])));
+  /** The displayed page, the last one when the page of the URL is beyond (e.g. connectors deleted since the link was shared) */
+  readonly displayedSouths = computed(() => {
+    const souths = this.filteredSouths();
+    const lastPage = Math.max(0, Math.ceil(souths.length / PAGE_SIZE) - 1);
+    return createPageFromArray(souths, PAGE_SIZE, Math.min(this.urlState.value(PARAMS.page), lastPage));
   });
-  readonly displayedSouths = computed(() => createPageFromArray(this.filteredSouths(), PAGE_SIZE, this.pageNumber()));
 
   // Each status pairs a distinct icon shape with its color, so meaning does not rely on color alone
   // (e.g. colorblind users can still tell enabled from disabled even when green and grey look the same).
   // Avoids fa-play/fa-pause/fa-toggle-* shapes, which could be mistaken for the row's own action control.
+  constructor() {
+    this.urlState.syncControl(PARAMS.name, this.searchForm.controls.name, { debounce: 200, otherChanges: () => FIRST_PAGE });
+  }
+
   readonly LEGEND: Array<{ label: string; enabled: boolean; class: string }> = [
     { label: 'south.disabled', enabled: false, class: 'fa-solid fa-minus-circle status-grey' },
     { label: 'south.enabled', enabled: true, class: 'fa-solid fa-check-circle status-green' }
@@ -87,14 +106,15 @@ export class SouthListComponent {
 
   /** Distinct South connector types among the currently loaded connectors, used to build the filter chips. */
   readonly types = computed(() => {
-    const types = new Set((this.allSouths() ?? []).map(south => south.type));
+    // the types filtered on are shown too, so that they can be unselected even if no connector has them (e.g. from a link)
+    const types = new Set([...(this.allSouths() ?? []).map(south => south.type), ...this.activeTypes()]);
     return Array.from(types).sort((a, b) => a.localeCompare(b));
   });
 
   /**
    * Delete a South connector by its ID
    */
-  deleteSouth(south: SouthConnectorLightDTO) {
+  deleteSouth(south: SouthConnectorListDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'south.confirm-deletion',
@@ -102,7 +122,6 @@ export class SouthListComponent {
       })
       .pipe(switchMap(() => this.southConnectorService.delete(south.id)))
       .subscribe(() => {
-        this.pageNumber.set(0);
         this.southsResource.reload();
         this.notificationService.success('south.deleted', {
           name: south.name
@@ -113,34 +132,33 @@ export class SouthListComponent {
   /**
    * Open a modal to view the audit history of a South connector
    */
-  showAudit(south: SouthConnectorLightDTO) {
+  showAudit(south: SouthConnectorListDTO) {
     const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare('south_connector', south.id);
   }
 
   toggleSort(field: SouthSortField) {
-    if (!field) return;
-
-    if (this.sortField() === field) {
-      this.sortDirection.update(direction => (direction === 'asc' ? 'desc' : 'asc'));
-    } else {
-      this.sortField.set(field);
-      this.sortDirection.set('asc');
-    }
+    this.urlState.patch({ ...paramValue(PARAMS.sort, nextSort(this.sort(), field)), ...FIRST_PAGE });
   }
 
   getSortIcon(field: SouthSortField): string {
-    if (this.sortField() !== field) {
+    const sort = this.sort();
+    if (sort.field !== field) {
       return 'fa-sort';
     }
-    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+    return sort.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {
-    this.pageNumber.set(pageNumber);
+    this.urlState.patch(paramValue(PARAMS.page, pageNumber));
   }
 
-  private filter(souths: Array<SouthConnectorLightDTO>): Array<SouthConnectorLightDTO> {
+  /** Shows all the connectors: no search, no filter (the sort is kept) */
+  resetFilters() {
+    this.urlState.patch({ ...paramValue(PARAMS.name, ''), ...paramValue(PARAMS.status, []), ...paramValue(PARAMS.type, []), ...FIRST_PAGE });
+  }
+
+  private filter(souths: Array<SouthConnectorListDTO>): Array<SouthConnectorListDTO> {
     const name = this.searchedName();
     let filteredItems = souths;
 
@@ -161,27 +179,25 @@ export class SouthListComponent {
 
   /** Toggles an enabled/disabled state in/out of the active status filter and re-applies filtering. */
   toggleEnabledState(enabled: boolean) {
-    this.activeEnabledStates.update(states => (states.includes(enabled) ? states.filter(e => e !== enabled) : [...states, enabled]));
+    this.urlState.patch({ ...paramValue(PARAMS.status, toggled(this.activeEnabledStates(), enabled)), ...FIRST_PAGE });
   }
 
   clearEnabledStates() {
-    this.activeEnabledStates.set([]);
+    this.urlState.patch({ ...paramValue(PARAMS.status, []), ...FIRST_PAGE });
   }
 
   /** Toggles a South type in/out of the active filter and re-applies filtering. */
   toggleType(type: OIBusSouthType) {
-    this.activeTypes.update(types => (types.includes(type) ? types.filter(t => t !== type) : [...types, type]));
+    this.urlState.patch({ ...paramValue(PARAMS.type, toggled(this.activeTypes(), type)), ...FIRST_PAGE });
   }
 
   clearTypes() {
-    this.activeTypes.set([]);
+    this.urlState.patch({ ...paramValue(PARAMS.type, []), ...FIRST_PAGE });
   }
 
-  private sortSouths(souths: Array<SouthConnectorLightDTO>): Array<SouthConnectorLightDTO> {
-    const field = this.sortField();
-    if (!field) return souths;
-
-    const direction = this.sortDirection() === 'asc' ? 1 : -1;
+  private sortSouths(souths: Array<SouthConnectorListDTO>): Array<SouthConnectorListDTO> {
+    const { field, direction: sortDirection } = this.sort();
+    const direction = sortDirection === 'asc' ? 1 : -1;
     return [...souths].sort((a, b) => {
       if (field === 'createdAt') {
         return (a.createdAt ?? '').localeCompare(b.createdAt ?? '') * direction;
@@ -195,7 +211,7 @@ export class SouthListComponent {
     });
   }
 
-  toggleConnector(south: SouthConnectorLightDTO) {
+  toggleConnector(south: SouthConnectorListDTO) {
     const start = !south.enabled;
     this.pendingToggles.update(ids => new Set(ids).add(south.id));
     (start ? this.southConnectorService.start(south.id) : this.southConnectorService.stop(south.id))

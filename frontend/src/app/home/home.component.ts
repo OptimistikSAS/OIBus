@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective } from '@ngx-translate/core';
 
 import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
-import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorListDTO } from '@oibus/shared/api/south-connector.model';
 
 import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.component';
 import { NorthMetricsComponent } from '../north/north-metrics/north-metrics.component';
@@ -33,7 +33,7 @@ function toRows<T>(items: Array<T>): Array<Array<T>> {
 })
 export class HomeComponent {
   private readonly engineService = inject(EngineService);
-  private readonly souths = toSignal(inject(SouthConnectorService).list(), { initialValue: [] as Array<SouthConnectorLightDTO> });
+  private readonly souths = toSignal(inject(SouthConnectorService).list(), { initialValue: [] as Array<SouthConnectorListDTO> });
   private readonly norths = toSignal(inject(NorthConnectorService).list(), { initialValue: [] as Array<NorthConnectorLightDTO> });
 
   readonly southRows = computed(() => toRows(this.souths().filter(s => s.enabled)));

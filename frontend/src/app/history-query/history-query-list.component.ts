@@ -1,24 +1,25 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import { switchMap } from 'rxjs';
 
 import { HistoryQueryLightDTO } from '@oibus/shared/api/history-query.model';
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
-import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
-import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
-import { HistoryQueryStatus } from '@oibus/shared/domain/history-query.model';
+import { OIBUS_NORTH_TYPES, OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
+import { OIBUS_SOUTH_TYPES, OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { HISTORY_QUERY_STATUS, HistoryQueryStatus } from '@oibus/shared/domain/history-query.model';
 
 import { HistoryQueryService } from '../services/history-query.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { DatetimePipe } from '../shared/datetime.pipe';
+import { FilterSummaryComponent } from '../shared/filter-summary/filter-summary.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { ModalService } from '../shared/modal.service';
@@ -28,12 +29,25 @@ import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ResizableColumnsDirective } from '../shared/resizable-columns.directive';
 import { ObservableState } from '../shared/save-button/save-button.component';
+import { listParam, nextSort, pageParam, paramValue, sortParam, textParam, toggled, UrlState } from '../shared/url-state';
 import { HISTORY_QUERY_STATUS_ICONS } from './history-query-status';
 
-type HistorySortField = 'name' | 'interval' | 'southType' | 'northType' | 'createdAt' | 'updatedAt' | null;
-type SortDirection = 'asc' | 'desc';
+const SORT_FIELDS = ['name', 'interval', 'southType', 'northType', 'createdAt', 'updatedAt'] as const;
+type HistorySortField = (typeof SORT_FIELDS)[number];
 
 const PAGE_SIZE = 15;
+
+/** The search, the filters, the sort and the page of the list, kept in the URL */
+const PARAMS = {
+  name: textParam('name'),
+  status: listParam('status', HISTORY_QUERY_STATUS),
+  southType: listParam('southType', OIBUS_SOUTH_TYPES),
+  northType: listParam('northType', OIBUS_NORTH_TYPES),
+  sort: sortParam('sort', SORT_FIELDS, { field: 'updatedAt', direction: 'desc' }),
+  page: pageParam('page')
+};
+/** The changes of the URL that go back to the first page, when the search, the filters or the sort change */
+const FIRST_PAGE = paramValue(PARAMS.page, 0);
 
 @Component({
   selector: 'oib-history-query-list',
@@ -52,11 +66,13 @@ const PAGE_SIZE = 15;
     OI_FORM_VALIDATION_DIRECTIVES,
     AuditInfoComponent,
     OIBusSouthTypeEnumPipe,
-    OIBusNorthTypeEnumPipe
+    OIBusNorthTypeEnumPipe,
+    FilterSummaryComponent
   ],
   templateUrl: './history-query-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './history-query-list.component.scss'
+  styleUrl: './history-query-list.component.scss',
+  providers: [UrlState]
 })
 export class HistoryQueryListComponent {
   private readonly confirmationService = inject(ConfirmationService);
@@ -64,42 +80,39 @@ export class HistoryQueryListComponent {
   private readonly modalService = inject(ModalService);
   private readonly historyQueryService = inject(HistoryQueryService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly urlState = inject(UrlState);
 
   private readonly historyQueries = rxResource({ stream: () => this.historyQueryService.list() });
   /** The loaded history queries, null while loading */
   readonly allHistoryQueries = computed(() => (this.historyQueries.hasValue() ? this.historyQueries.value() : null));
   private readonly states = new Map<string, ObservableState>();
-  readonly sortField = signal<HistorySortField>('updatedAt');
-  readonly sortDirection = signal<SortDirection>('desc');
+  private readonly currentSort = this.urlState.get(PARAMS.sort);
 
   // Active filters for the clickable status/south type/north type legends. Empty array means "no filter" (show all).
-  readonly activeStatuses = signal<Array<HistoryQueryStatus>>([]);
-  readonly activeSouthTypes = signal<Array<OIBusSouthType>>([]);
-  readonly activeNorthTypes = signal<Array<OIBusNorthType>>([]);
+  readonly activeStatuses = this.urlState.get(PARAMS.status);
+  readonly activeSouthTypes = this.urlState.get(PARAMS.southType);
+  readonly activeNorthTypes = this.urlState.get(PARAMS.northType);
 
   readonly searchForm = this.fb.group({
-    name: [null as string | null]
+    name: ''
   });
-  private readonly searchedName = toSignal(this.searchForm.controls.name.valueChanges.pipe(debounceTime(200), distinctUntilChanged()), {
-    initialValue: null
-  });
+  private readonly searchedName = this.urlState.get(PARAMS.name);
+  /** True when the search or a filter hides history queries */
+  readonly filtered = computed(
+    () => !!this.searchedName() || this.activeStatuses().length > 0 || this.activeSouthTypes().length > 0 || this.activeNorthTypes().length > 0
+  );
 
   readonly filteredHistoryQueries = computed(() => this.sort(this.filter(this.allHistoryQueries() ?? [])));
-  /** Back to the first page when the filters or the sort change */
-  private readonly pageNumber = linkedSignal({
-    source: () => [
-      this.searchedName(),
-      this.activeStatuses(),
-      this.activeSouthTypes(),
-      this.activeNorthTypes(),
-      this.sortField(),
-      this.sortDirection()
-    ],
-    computation: () => 0
+  /** The displayed page, the last one when the page of the URL is beyond (e.g. history queries deleted since the link was shared) */
+  readonly displayedHistoryQueries = computed<Page<HistoryQueryLightDTO>>(() => {
+    const historyQueries = this.filteredHistoryQueries();
+    const lastPage = Math.max(0, Math.ceil(historyQueries.length / PAGE_SIZE) - 1);
+    return createPageFromArray(historyQueries, PAGE_SIZE, Math.min(this.urlState.value(PARAMS.page), lastPage));
   });
-  readonly displayedHistoryQueries = computed<Page<HistoryQueryLightDTO>>(() =>
-    createPageFromArray(this.filteredHistoryQueries(), PAGE_SIZE, this.pageNumber())
-  );
+
+  constructor() {
+    this.urlState.syncControl(PARAMS.name, this.searchForm.controls.name, { debounce: 200, otherChanges: () => FIRST_PAGE });
+  }
 
   // Each status pairs a distinct icon shape with its color, so meaning does not rely on color alone
   // (e.g. colorblind users can still tell ERRORED from RUNNING even when red and green look the same).
@@ -112,13 +125,17 @@ export class HistoryQueryListComponent {
   ];
 
   /** Distinct South connector types among the currently loaded history queries, used to build the filter chips. */
-  readonly southTypes = computed<Array<OIBusSouthType>>(() => this.distinctTypes(query => query.southType));
+  readonly southTypes = computed<Array<OIBusSouthType>>(() => this.distinctTypes(query => query.southType, this.activeSouthTypes()));
 
   /** Distinct North connector types among the currently loaded history queries, used to build the filter chips. */
-  readonly northTypes = computed<Array<OIBusNorthType>>(() => this.distinctTypes(query => query.northType));
+  readonly northTypes = computed<Array<OIBusNorthType>>(() => this.distinctTypes(query => query.northType, this.activeNorthTypes()));
 
-  private distinctTypes<T extends string>(getType: (query: HistoryQueryLightDTO) => T): Array<T> {
-    const types = new Set((this.allHistoryQueries() ?? []).map(getType));
+  /**
+   * The types the history queries have, and the types filtered on: they can be unselected even if no history query has
+   * them (e.g. from a link)
+   */
+  private distinctTypes<T extends string>(getType: (query: HistoryQueryLightDTO) => T, activeTypes: Array<T>): Array<T> {
+    const types = new Set([...(this.allHistoryQueries() ?? []).map(getType), ...activeTypes]);
     return Array.from(types).sort((a, b) => a.localeCompare(b));
   }
 
@@ -140,7 +157,6 @@ export class HistoryQueryListComponent {
       })
       .pipe(switchMap(() => this.historyQueryService.delete(historyQuery.id)))
       .subscribe(() => {
-        this.pageNumber.set(0);
         this.historyQueries.reload();
         this.notificationService.success('history-query.deleted', {
           name: historyQuery.name
@@ -157,25 +173,30 @@ export class HistoryQueryListComponent {
   }
 
   toggleSort(field: HistorySortField) {
-    if (!field) return;
-
-    if (this.sortField() === field) {
-      this.sortDirection.update(direction => (direction === 'asc' ? 'desc' : 'asc'));
-    } else {
-      this.sortField.set(field);
-      this.sortDirection.set('asc');
-    }
+    this.urlState.patch({ ...paramValue(PARAMS.sort, nextSort(this.currentSort(), field)), ...FIRST_PAGE });
   }
 
   getSortIcon(field: HistorySortField): string {
-    if (this.sortField() !== field) {
+    const sort = this.currentSort();
+    if (sort.field !== field) {
       return 'fa-sort';
     }
-    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+    return sort.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {
-    this.pageNumber.set(pageNumber);
+    this.urlState.patch(paramValue(PARAMS.page, pageNumber));
+  }
+
+  /** Shows all the history queries: no search, no filter (the sort is kept) */
+  resetFilters() {
+    this.urlState.patch({
+      ...paramValue(PARAMS.name, ''),
+      ...paramValue(PARAMS.status, []),
+      ...paramValue(PARAMS.southType, []),
+      ...paramValue(PARAMS.northType, []),
+      ...FIRST_PAGE
+    });
   }
 
   private filter(historyQueries: Array<HistoryQueryLightDTO>): Array<HistoryQueryLightDTO> {
@@ -202,10 +223,8 @@ export class HistoryQueryListComponent {
   }
 
   private sort(historyQueries: Array<HistoryQueryLightDTO>): Array<HistoryQueryLightDTO> {
-    const field = this.sortField();
-    if (!field) return historyQueries;
-
-    const direction = this.sortDirection() === 'asc' ? 1 : -1;
+    const { field, direction: sortDirection } = this.currentSort();
+    const direction = sortDirection === 'asc' ? 1 : -1;
     return [...historyQueries].sort((a, b) => {
       if (field === 'name') {
         return a.name.localeCompare(b.name) * direction;
@@ -256,28 +275,28 @@ export class HistoryQueryListComponent {
 
   /** Toggles a status in/out of the active status filter and re-applies filtering. */
   toggleStatus(status: HistoryQueryStatus) {
-    this.activeStatuses.update(statuses => (statuses.includes(status) ? statuses.filter(s => s !== status) : [...statuses, status]));
+    this.urlState.patch({ ...paramValue(PARAMS.status, toggled(this.activeStatuses(), status)), ...FIRST_PAGE });
   }
 
   clearStatuses() {
-    this.activeStatuses.set([]);
+    this.urlState.patch({ ...paramValue(PARAMS.status, []), ...FIRST_PAGE });
   }
 
   /** Toggles a South type in/out of the active filter and re-applies filtering. */
   toggleSouthType(type: OIBusSouthType) {
-    this.activeSouthTypes.update(types => (types.includes(type) ? types.filter(t => t !== type) : [...types, type]));
+    this.urlState.patch({ ...paramValue(PARAMS.southType, toggled(this.activeSouthTypes(), type)), ...FIRST_PAGE });
   }
 
   clearSouthTypes() {
-    this.activeSouthTypes.set([]);
+    this.urlState.patch({ ...paramValue(PARAMS.southType, []), ...FIRST_PAGE });
   }
 
   /** Toggles a North type in/out of the active filter and re-applies filtering. */
   toggleNorthType(type: OIBusNorthType) {
-    this.activeNorthTypes.update(types => (types.includes(type) ? types.filter(t => t !== type) : [...types, type]));
+    this.urlState.patch({ ...paramValue(PARAMS.northType, toggled(this.activeNorthTypes(), type)), ...FIRST_PAGE });
   }
 
   clearNorthTypes() {
-    this.activeNorthTypes.set([]);
+    this.urlState.patch({ ...paramValue(PARAMS.northType, []), ...FIRST_PAGE });
   }
 }

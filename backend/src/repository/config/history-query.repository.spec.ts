@@ -115,6 +115,8 @@ describe('HistoryQueryRepository', () => {
       assert.strictEqual(found.endTime, element.queryTimeRange.endTime);
       assert.strictEqual(found.southType, element.southType);
       assert.strictEqual(found.northType, element.northType);
+      assert.strictEqual(found.itemCount, element.items.length);
+      assert.strictEqual(found.enabledItemCount, element.items.filter(item => item.enabled).length);
     }
   });
 

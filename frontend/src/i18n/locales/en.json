@@ -121,7 +121,9 @@
     "pause": "Pause",
     "resume": "Resume",
     "restart": "Restart",
-    "metrics": "Metrics"
+    "metrics": "Metrics",
+    "filtered-count": "{{shown}} of {{total}}",
+    "reset-filters": "Reset filters"
   },
   "datepicker": {
     "parse-pattern": "d/M/yyyy",
@@ -3182,7 +3184,9 @@
       "workflows": "Items synchronisations",
       "item-changes": "Items added: {{added}} · changed: {{changed}} · removed: {{removed}}",
       "confirm-connector-change": "Changing the connector starts it over: its settings and items will be those of the new choice. Continue?"
-    }
+    },
+    "item-count": "Items",
+    "item-count-tooltip": "{{enabled}} enabled items out of {{total}}"
   },
   "north": {
     "list": "North list",
@@ -3665,7 +3669,9 @@
       "item-changes": "Items added: {{added}} · changed: {{changed}} · removed: {{removed}}",
       "transformer-changes": "Transformers added: {{added}} · changed: {{changed}} · removed: {{removed}}",
       "confirm-connectors-change": "Changing the connectors starts the history query over: its settings, items and transformers will be those of the new connectors. Continue?"
-    }
+    },
+    "item-count": "Items",
+    "item-count-tooltip": "{{enabled}} enabled items out of {{total}}"
   },
   "explore-cache": {
     "title": "Cache of {{ name }}",

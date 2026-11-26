@@ -2168,7 +2168,9 @@
       "workflows": "项同步",
       "item-changes": "已添加项：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
       "confirm-connector-change": "更改连接器将重新开始：其设置和数据项将来自新的选择。是否继续？"
-    }
+    },
+    "item-count": "项",
+    "item-count-tooltip": "{{total}} 项中已启用 {{enabled}} 项"
   },
   "field-process": {
     "open": "设置字段 {{field}} 的处理",
@@ -3060,7 +3062,9 @@
       "item-changes": "已添加项目：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
       "transformer-changes": "已添加转换器：{{added}} · 已修改：{{changed}} · 已删除：{{removed}}",
       "confirm-connectors-change": "更换连接器将重新开始历史查询：其设置、项目和转换器将来自新的连接器。是否继续？"
-    }
+    },
+    "item-count": "项",
+    "item-count-tooltip": "{{total}} 项中已启用 {{enabled}} 项"
   },
   "explore-cache": {
     "title": "{{ name }} 的缓存",
@@ -3716,7 +3720,9 @@
     "pause": "暂停",
     "resume": "恢复",
     "restart": "重启",
-    "metrics": "指标"
+    "metrics": "指标",
+    "filtered-count": "{{total}} 个中的 {{shown}} 个",
+    "reset-filters": "重置筛选"
   },
   "duration-pipe": {
     "long": {

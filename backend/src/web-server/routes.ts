@@ -740,7 +740,7 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthConnectorLightDTO": {
+    "SouthConnectorListDTO": {
         "dataType": "refObject",
         "properties": {
             "id": {"dataType":"string","required":true},
@@ -752,6 +752,8 @@ const models: TsoaRoute.Models = {
             "type": {"ref":"OIBusSouthType","required":true},
             "description": {"dataType":"string","required":true},
             "enabled": {"dataType":"boolean","required":true},
+            "itemCount": {"dataType":"double","required":true},
+            "enabledItemCount": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -8907,6 +8909,22 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorLightDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "createdBy": {"ref":"UserInfo","required":true},
+            "updatedBy": {"ref":"UserInfo","required":true},
+            "createdAt": {"ref":"Instant","required":true},
+            "updatedAt": {"ref":"Instant","required":true},
+            "name": {"dataType":"string","required":true},
+            "type": {"ref":"OIBusSouthType","required":true},
+            "description": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthItemGroupLightDTO": {
         "dataType": "refObject",
         "properties": {
@@ -9364,6 +9382,8 @@ const models: TsoaRoute.Models = {
             "endTime": {"dataType":"string","required":true},
             "southType": {"ref":"OIBusSouthType","required":true},
             "northType": {"ref":"OIBusNorthType","required":true},
+            "itemCount": {"dataType":"double","required":true},
+            "enabledItemCount": {"dataType":"double","required":true},
             "currentItemNumber": {"dataType":"double"},
             "numberOfItems": {"dataType":"double"},
         },

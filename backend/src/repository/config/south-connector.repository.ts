@@ -19,6 +19,7 @@ import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
   SouthConnectorItemEntity,
+  SouthConnectorListEntity,
   SouthItemGroupEntity,
   SouthItemGroupEntityLight
 } from '../../model/south-connector.model';
@@ -76,12 +77,23 @@ export default class SouthConnectorRepository {
     this.configurationWorkflowRepository = new ConfigurationWorkflowRepository(database, auditService);
   }
 
-  findAllSouth(): Array<SouthConnectorEntityLight> {
-    const query = `SELECT id, name, type, description, enabled, created_by, updated_by, created_at, updated_at FROM ${SOUTH_CONNECTORS_TABLE};`;
+  findAllSouth(): Array<SouthConnectorListEntity> {
+    const query =
+      `SELECT s.id, s.name, s.type, s.description, s.enabled, s.created_by, s.updated_by, s.created_at, s.updated_at, ` +
+      `(SELECT COUNT(*) FROM ${SOUTH_ITEMS_TABLE} i WHERE i.connector_id = s.id) AS item_count, ` +
+      `(SELECT COUNT(*) FROM ${SOUTH_ITEMS_TABLE} i WHERE i.connector_id = s.id AND i.enabled = 1) AS enabled_item_count ` +
+      `FROM ${SOUTH_CONNECTORS_TABLE} s;`;
     return this.database
       .prepare(query)
       .all()
-      .map(result => toSouthConnectorLight(result as Record<string, string>));
+      .map(result => {
+        const row = result as Record<string, string | number>;
+        return {
+          ...toSouthConnectorLight(row as Record<string, string>),
+          itemCount: row.item_count as number,
+          enabledItemCount: row.enabled_item_count as number
+        };
+      });
   }
 
   /**

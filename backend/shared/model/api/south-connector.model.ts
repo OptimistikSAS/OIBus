@@ -97,6 +97,25 @@ export interface SouthConnectorLightDTO extends BaseEntity {
   enabled: boolean;
 }
 
+/**
+ * A South connector as listed, with how many items it has
+ */
+export interface SouthConnectorListDTO extends SouthConnectorLightDTO {
+  /**
+   * The number of items of the South connector.
+   *
+   * @example 12
+   */
+  itemCount: number;
+
+  /**
+   * The number of enabled items of the South connector.
+   *
+   * @example 10
+   */
+  enabledItemCount: number;
+}
+
 export interface SouthConnectorTypedDTO<T extends OIBusSouthType, S, IS> extends BaseEntity {
   /**
    * The name of the South connector.

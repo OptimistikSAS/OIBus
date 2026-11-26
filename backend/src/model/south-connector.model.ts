@@ -18,6 +18,12 @@ export interface SouthConnectorEntityLight extends BaseEntity {
   enabled: boolean;
 }
 
+/** A South connector as listed, with how many items it has */
+export interface SouthConnectorListEntity extends SouthConnectorEntityLight {
+  itemCount: number;
+  enabledItemCount: number;
+}
+
 export interface SouthConnectorItemEntityLight extends BaseEntity {
   name: string;
   enabled: boolean;

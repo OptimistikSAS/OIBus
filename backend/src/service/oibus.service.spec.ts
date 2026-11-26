@@ -166,7 +166,7 @@ describe('OIBus Service', () => {
 
   it('should start OIBus and stop it', async () => {
     northService.list.mock.mockImplementation(() => testData.north.list);
-    southService.list.mock.mockImplementation(() => testData.south.list);
+    southService.list.mock.mockImplementation(() => testData.south.listed);
     historyQueryService.list.mock.mockImplementation(() => testData.historyQueries.listLight);
     southService.findById.mock.mockImplementation((id: string) => testData.south.list.find(el => el.id === id) ?? testData.south.list[0]);
     northService.findById.mock.mockImplementation((id: string) => testData.north.list.find(el => el.id === id) ?? testData.north.list[0]);
@@ -179,7 +179,7 @@ describe('OIBus Service', () => {
     assert.strictEqual(engine.start.mock.calls.length, 1);
     assert.deepStrictEqual(engine.start.mock.calls[0].arguments, [
       testData.north.list,
-      testData.south.list,
+      testData.south.listed,
       testData.historyQueries.listLight
     ]);
     assert.ok((logger.info.mock.calls[0].arguments[0] as string).includes('Starting OIBus...'));

@@ -26,7 +26,7 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemTestResult,
-  SouthConnectorLightDTO,
+  SouthConnectorListDTO,
   SouthExploreBrowseCommand,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
@@ -47,7 +47,7 @@ import { toServerTrustStateDTO } from '../../service/server-trust.utils';
 import SouthService, {
   toSouthConnectorDTO,
   toSouthConnectorItemDTO,
-  toSouthConnectorLightDTO,
+  toSouthConnectorListDTO,
   toSouthItemGroupDTO
 } from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
@@ -160,13 +160,13 @@ export class SouthConnectorController extends Controller {
   /**
    * Retrieves a list of all configured south connectors
    * @summary List all south connectors
-   * @returns {Promise<Array<SouthConnectorLightDTO>>} Array of south connector objects
+   * @returns {Promise<Array<SouthConnectorListDTO>>} Array of south connector objects, with how many items they have
    */
   @Get('/')
-  list(@Request() request: CustomExpressRequest): Array<SouthConnectorLightDTO> {
+  list(@Request() request: CustomExpressRequest): Array<SouthConnectorListDTO> {
     const southService = request.services.southService as SouthService;
     const southConnectors = southService.list();
-    return southConnectors.map(connector => toSouthConnectorLightDTO(connector, id => request.services.userService.getUserInfo(id)));
+    return southConnectors.map(connector => toSouthConnectorListDTO(connector, id => request.services.userService.getUserInfo(id)));
   }
 
   /**

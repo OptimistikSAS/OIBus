@@ -1,21 +1,21 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
+import { switchMap, tap } from 'rxjs';
 
 import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
-import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
+import { OIBUS_NORTH_TYPES, OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 
 import { NorthConnectorService } from '../services/north-connector.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
 import { ConfirmationService } from '../shared/confirmation.service';
+import { FilterSummaryComponent } from '../shared/filter-summary/filter-summary.component';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { ModalService } from '../shared/modal.service';
 import { NotificationService } from '../shared/notification.service';
@@ -23,12 +23,23 @@ import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ResizableColumnsDirective } from '../shared/resizable-columns.directive';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { emptyPage } from '../shared/utils/page.utils';
+import { booleanListParam, listParam, nextSort, pageParam, paramValue, sortParam, textParam, toggled, UrlState } from '../shared/url-state';
 
-type NorthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
-type SortDirection = 'asc' | 'desc';
+const SORT_FIELDS = ['name', 'type', 'createdAt', 'updatedAt'] as const;
+type NorthSortField = (typeof SORT_FIELDS)[number];
 
 const PAGE_SIZE = 15;
+
+/** The search, the filters, the sort and the page of the list, kept in the URL */
+const PARAMS = {
+  name: textParam('name'),
+  status: booleanListParam('status'),
+  type: listParam('type', OIBUS_NORTH_TYPES),
+  sort: sortParam('sort', SORT_FIELDS, { field: 'name', direction: 'asc' }),
+  page: pageParam('page')
+};
+/** The changes of the URL that go back to the first page, when the search, the filters or the sort change */
+const FIRST_PAGE = paramValue(PARAMS.page, 0);
 
 @Component({
   selector: 'oib-north-list',
@@ -43,11 +54,13 @@ const PAGE_SIZE = 15;
     OIBusNorthTypeEnumPipe,
     NgbTooltip,
     TranslatePipe,
-    AuditInfoComponent
+    AuditInfoComponent,
+    FilterSummaryComponent
   ],
   templateUrl: './north-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './north-list.component.scss'
+  styleUrl: './north-list.component.scss',
+  providers: [UrlState]
 })
 export class NorthListComponent {
   private readonly confirmationService = inject(ConfirmationService);
@@ -55,21 +68,30 @@ export class NorthListComponent {
   private readonly modalService = inject(ModalService);
   private readonly northConnectorService = inject(NorthConnectorService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly urlState = inject(UrlState);
 
   readonly allNorths = signal<Array<NorthConnectorLightDTO> | null>(null);
-  private filteredNorths: Array<NorthConnectorLightDTO> = [];
-  readonly displayedNorths = signal<Page<NorthConnectorLightDTO>>(emptyPage());
   // one pending state per connector, rendered through the async pipe
   readonly states = new Map<string, ObservableState>();
-  readonly sortField = signal<NorthSortField>('name');
-  readonly sortDirection = signal<SortDirection>('asc');
+  private readonly sort = this.urlState.get(PARAMS.sort);
 
   // Active filters for the clickable status/type legends. Empty array means "no filter" (show all).
-  readonly activeEnabledStates = signal<Array<boolean>>([]);
-  readonly activeTypes = signal<Array<OIBusNorthType>>([]);
+  readonly activeEnabledStates = this.urlState.get(PARAMS.status);
+  readonly activeTypes = this.urlState.get(PARAMS.type);
+  private readonly searchedName = this.urlState.get(PARAMS.name);
+  /** True when the search or a filter hides connectors */
+  readonly filtered = computed(() => !!this.searchedName() || this.activeEnabledStates().length > 0 || this.activeTypes().length > 0);
 
   readonly searchForm = this.fb.group({
-    name: [null as string | null]
+    name: ''
+  });
+
+  readonly filteredNorths = computed(() => this.sortNorths(this.filter(this.allNorths() ?? [])));
+  /** The displayed page, the last one when the page of the URL is beyond (e.g. connectors deleted since the link was shared) */
+  readonly displayedNorths = computed<Page<NorthConnectorLightDTO>>(() => {
+    const norths = this.filteredNorths();
+    const lastPage = Math.max(0, Math.ceil(norths.length / PAGE_SIZE) - 1);
+    return createPageFromArray(norths, PAGE_SIZE, Math.min(this.urlState.value(PARAMS.page), lastPage));
   });
 
   // Each status pairs a distinct icon shape with its color, so meaning does not rely on color alone
@@ -82,28 +104,26 @@ export class NorthListComponent {
 
   constructor() {
     this.loadNorths();
-
-    this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed()).subscribe(() => {
-      if (this.allNorths()) {
-        this.updateList(0);
-      }
-    });
+    this.urlState.syncControl(PARAMS.name, this.searchForm.controls.name, { debounce: 200, otherChanges: () => FIRST_PAGE });
   }
 
   private loadNorths() {
-    this.northConnectorService.list().subscribe(norths => {
-      this.states.clear();
-      norths.forEach(north => {
+    this.northConnectorService.list().subscribe(norths => this.setNorths(norths));
+  }
+
+  private setNorths(norths: Array<NorthConnectorLightDTO>) {
+    norths.forEach(north => {
+      if (!this.states.has(north.id)) {
         this.states.set(north.id, new ObservableState());
-      });
-      this.allNorths.set(norths);
-      this.updateList(0);
+      }
     });
+    this.allNorths.set(norths);
   }
 
   /** Distinct North connector types among the currently loaded connectors, used to build the filter chips. */
   readonly types = computed(() => {
-    const types = new Set((this.allNorths() ?? []).map(north => north.type));
+    // the types filtered on are shown too, so that they can be unselected even if no connector has them (e.g. from a link)
+    const types = new Set([...(this.allNorths() ?? []).map(north => north.type), ...this.activeTypes()]);
     return Array.from(types).sort((a, b) => a.localeCompare(b));
   });
 
@@ -116,11 +136,7 @@ export class NorthListComponent {
         messageKey: 'north.confirm-deletion',
         interpolateParams: { name: north.name }
       })
-      .pipe(
-        switchMap(() => {
-          return this.northConnectorService.delete(north.id);
-        })
-      )
+      .pipe(switchMap(() => this.northConnectorService.delete(north.id)))
       .subscribe(() => {
         this.loadNorths();
         this.notificationService.success('north.deleted', {
@@ -138,45 +154,32 @@ export class NorthListComponent {
   }
 
   toggleSort(field: NorthSortField) {
-    if (!field) return;
-
-    if (this.sortField() === field) {
-      this.sortDirection.update(direction => (direction === 'asc' ? 'desc' : 'asc'));
-    } else {
-      this.sortField.set(field);
-      this.sortDirection.set('asc');
-    }
-
-    this.updateList(0);
+    this.urlState.patch({ ...paramValue(PARAMS.sort, nextSort(this.sort(), field)), ...FIRST_PAGE });
   }
 
   getSortIcon(field: NorthSortField): string {
-    if (this.sortField() !== field) {
+    const sort = this.sort();
+    if (sort.field !== field) {
       return 'fa-sort';
     }
-    return this.sortDirection() === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+    return sort.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   }
 
   changePage(pageNumber: number) {
-    this.displayedNorths.set(this.createPage(pageNumber));
+    this.urlState.patch(paramValue(PARAMS.page, pageNumber));
   }
 
-  private createPage(pageNumber: number): Page<NorthConnectorLightDTO> {
-    return createPageFromArray(this.filteredNorths, PAGE_SIZE, pageNumber);
+  /** Shows all the connectors: no search, no filter (the sort is kept) */
+  resetFilters() {
+    this.urlState.patch({ ...paramValue(PARAMS.name, ''), ...paramValue(PARAMS.status, []), ...paramValue(PARAMS.type, []), ...FIRST_PAGE });
   }
 
-  private updateList(pageNumber: number) {
-    this.filteredNorths = this.filter(this.allNorths() ?? []);
-    this.sortNorths();
-    this.changePage(pageNumber);
-  }
-
-  filter(norths: Array<NorthConnectorLightDTO>): Array<NorthConnectorLightDTO> {
-    const formValue = this.searchForm.value;
+  private filter(norths: Array<NorthConnectorLightDTO>): Array<NorthConnectorLightDTO> {
+    const name = this.searchedName();
     let filteredItems = norths;
 
-    if (formValue.name) {
-      filteredItems = filteredItems.filter(item => item.name.toLowerCase().includes(formValue.name!.toLowerCase()));
+    if (name) {
+      filteredItems = filteredItems.filter(item => item.name.toLowerCase().includes(name.toLowerCase()));
     }
     const activeEnabledStates = this.activeEnabledStates();
     if (activeEnabledStates.length > 0) {
@@ -192,34 +195,26 @@ export class NorthListComponent {
 
   /** Toggles an enabled/disabled state in/out of the active status filter and re-applies filtering. */
   toggleEnabledState(enabled: boolean) {
-    this.activeEnabledStates.update(activeEnabledStates =>
-      activeEnabledStates.includes(enabled) ? activeEnabledStates.filter(e => e !== enabled) : [...activeEnabledStates, enabled]
-    );
-    this.updateList(0);
+    this.urlState.patch({ ...paramValue(PARAMS.status, toggled(this.activeEnabledStates(), enabled)), ...FIRST_PAGE });
   }
 
   clearEnabledStates() {
-    this.activeEnabledStates.set([]);
-    this.updateList(0);
+    this.urlState.patch({ ...paramValue(PARAMS.status, []), ...FIRST_PAGE });
   }
 
   /** Toggles a North type in/out of the active filter and re-applies filtering. */
   toggleType(type: OIBusNorthType) {
-    this.activeTypes.update(activeTypes => (activeTypes.includes(type) ? activeTypes.filter(t => t !== type) : [...activeTypes, type]));
-    this.updateList(0);
+    this.urlState.patch({ ...paramValue(PARAMS.type, toggled(this.activeTypes(), type)), ...FIRST_PAGE });
   }
 
   clearTypes() {
-    this.activeTypes.set([]);
-    this.updateList(0);
+    this.urlState.patch({ ...paramValue(PARAMS.type, []), ...FIRST_PAGE });
   }
 
-  private sortNorths() {
-    const field = this.sortField();
-    if (!field) return;
-
-    const direction = this.sortDirection() === 'asc' ? 1 : -1;
-    this.filteredNorths = [...this.filteredNorths].sort((a, b) => {
+  private sortNorths(norths: Array<NorthConnectorLightDTO>): Array<NorthConnectorLightDTO> {
+    const { field, direction: sortDirection } = this.sort();
+    const direction = sortDirection === 'asc' ? 1 : -1;
+    return [...norths].sort((a, b) => {
       if (field === 'createdAt') {
         return (a.createdAt ?? '').localeCompare(b.createdAt ?? '') * direction;
       }
@@ -245,10 +240,7 @@ export class NorthListComponent {
             return this.northConnectorService.list();
           })
         )
-        .subscribe(norths => {
-          this.allNorths.set(norths);
-          this.updateList(this.displayedNorths().number);
-        });
+        .subscribe(norths => this.setNorths(norths));
     } else {
       this.northConnectorService
         .stop(northId)
@@ -261,10 +253,7 @@ export class NorthListComponent {
             return this.northConnectorService.list();
           })
         )
-        .subscribe(norths => {
-          this.allNorths.set(norths);
-          this.updateList(this.displayedNorths().number);
-        });
+        .subscribe(norths => this.setNorths(norths));
     }
   }
 }

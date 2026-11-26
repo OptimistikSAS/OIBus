@@ -1,0 +1,7 @@
+@if (filtered()) {
+  <span class="text-muted filter-count" translate="common.filtered-count" [translateParams]="{ shown: shown(), total: total() }"></span>
+  <button type="button" class="btn btn-sm btn-link text-secondary p-0" (click)="resetFilters.emit()">
+    <span class="fa-solid fa-filter-circle-xmark me-1" aria-hidden="true"></span>
+    <span translate="common.reset-filters"></span>
+  </button>
+}
