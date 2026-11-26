@@ -184,19 +184,30 @@ describe('CertificateController', () => {
     );
   });
 
-  it('should not import a certificate if the private key file is missing', async () => {
-    await assert.rejects(
-      controller.import(
-        'my cert',
-        'my description',
-        undefined,
-        certificateFile,
-        undefined!,
-        undefined,
-        mockRequest as CustomExpressRequest
-      ),
-      { message: 'Missing file "privateKey"' }
+  it('should import a trusted certificate without private key file', async () => {
+    certificateService.import.mock.mockImplementation(async () => testData.certificates.list[0]);
+    mock.method(fs, 'readFile', async (path: string) => Buffer.from(`content-of-${path}`));
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
+
+    await controller.import(
+      'my CA',
+      'my description',
+      undefined,
+      certificateFile,
+      undefined,
+      undefined,
+      mockRequest as CustomExpressRequest
     );
+
+    assert.deepStrictEqual(certificateService.import.mock.calls[0].arguments[0], {
+      name: 'my CA',
+      description: 'my description',
+      certificateContent: Buffer.from('content-of-certPath'),
+      privateKeyContent: null,
+      privateKeyPassphrase: null,
+      certificateChainContent: null
+    });
+    assert.strictEqual(unlinkMock.mock.calls.length, 1);
   });
 
   it('should unlink uploaded files even if the import fails', async () => {

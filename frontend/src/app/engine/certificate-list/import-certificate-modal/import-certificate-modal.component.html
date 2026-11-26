@@ -4,7 +4,19 @@
 <div class="modal-body">
   <form [formGroup]="form" (ngSubmit)="save()" id="form">
     <div [ngbCollapse]="!error()" class="alert alert-danger">{{ error() }}</div>
-    <div class="alert alert-info" translate="engine.certificate.import.hint"></div>
+    <!-- Kind of the certificate -->
+    <div class="form-group" role="radiogroup" [attr.aria-label]="'engine.certificate.kind.title' | translate">
+      @for (kind of ['key-pair', 'trusted']; track kind) {
+        <div class="form-check">
+          <input class="form-check-input" type="radio" formControlName="kind" [value]="kind" [id]="'kind-' + kind" />
+          <label class="form-check-label" [for]="'kind-' + kind" [translate]="'engine.certificate.import.kind.' + kind"></label>
+        </div>
+      }
+    </div>
+    <div
+      class="alert alert-info"
+      [translate]="kind() === 'trusted' ? 'engine.certificate.import.trusted-hint' : 'engine.certificate.import.hint'"
+    ></div>
 
     <div class="row">
       <!-- Name -->
@@ -41,55 +53,59 @@
           </button>
         </div>
       </div>
-      <!-- Private key file -->
-      <div class="col-6">
-        <div class="form-group">
-          <label class="form-label" for="private-key-file" translate="engine.certificate.import.private-key-file"></label>
-          <button
-            type="button"
-            class="btn btn-secondary w-100"
-            id="private-key-file-button"
-            (click)="privateKeyFileInput.click()"
-            (drop)="onDrop('privateKeyFile', $event)"
-            (dragover)="onDragOver($event)"
-          >
-            <span>{{ privateKeyFile().name }}</span>
-          </button>
+      @if (kind() === 'key-pair') {
+        <!-- Private key file -->
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="private-key-file" translate="engine.certificate.import.private-key-file"></label>
+            <button
+              type="button"
+              class="btn btn-secondary w-100"
+              id="private-key-file-button"
+              (click)="privateKeyFileInput.click()"
+              (drop)="onDrop('privateKeyFile', $event)"
+              (dragover)="onDragOver($event)"
+            >
+              <span>{{ privateKeyFile().name }}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      }
     </div>
 
-    <div class="row">
-      <!-- Private key passphrase -->
-      <div class="col-6">
-        <div class="form-group">
-          <label class="form-label" for="private-key-passphrase" translate="engine.certificate.import.private-key-passphrase"></label>
-          <input
-            formControlName="privateKeyPassphrase"
-            type="password"
-            id="private-key-passphrase"
-            class="form-control"
-            autocomplete="new-password"
-          />
+    @if (kind() === 'key-pair') {
+      <div class="row">
+        <!-- Private key passphrase -->
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="private-key-passphrase" translate="engine.certificate.import.private-key-passphrase"></label>
+            <input
+              formControlName="privateKeyPassphrase"
+              type="password"
+              id="private-key-passphrase"
+              class="form-control"
+              autocomplete="new-password"
+            />
+          </div>
+        </div>
+        <!-- Certificate chain file -->
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="certificate-chain-file" translate="engine.certificate.import.certificate-chain-file"></label>
+            <button
+              type="button"
+              class="btn btn-secondary w-100"
+              id="certificate-chain-file-button"
+              (click)="certificateChainFileInput.click()"
+              (drop)="onDrop('certificateChainFile', $event)"
+              (dragover)="onDragOver($event)"
+            >
+              <span>{{ certificateChainFile().name }}</span>
+            </button>
+          </div>
         </div>
       </div>
-      <!-- Certificate chain file -->
-      <div class="col-6">
-        <div class="form-group">
-          <label class="form-label" for="certificate-chain-file" translate="engine.certificate.import.certificate-chain-file"></label>
-          <button
-            type="button"
-            class="btn btn-secondary w-100"
-            id="certificate-chain-file-button"
-            (click)="certificateChainFileInput.click()"
-            (drop)="onDrop('certificateChainFile', $event)"
-            (dragover)="onDragOver($event)"
-          >
-            <span>{{ certificateChainFile().name }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
+    }
 
     @if (fileError()) {
       <div class="alert alert-danger" role="alert" translate="engine.certificate.import.file-too-large"></div>

@@ -18,6 +18,7 @@ export default class CertificateRepository {
     const query = `SELECT id,
                               name,
                               description,
+                              kind,
                               public_key,
                               private_key,
                               certificate,
@@ -35,12 +36,13 @@ export default class CertificateRepository {
   }
 
   /**
-   * What uses a certificate: the settings of the connectors and history queries refer to it by a `certificateId` key, at any
-   * depth (as their manifests name every certificate field), and the web server by its HTTPS certificate
+   * What uses a certificate: the settings of the connectors and history queries refer to it by a `certificateId` key (or
+   * `trustedCertificateId` for a trusted certificate), at any depth (as their manifests name every certificate field), and
+   * the web server by its HTTPS certificate
    */
   findUsages(certificateId: string): Array<CertificateUsage> {
     const referringTo = (column: string) =>
-      `EXISTS (SELECT 1 FROM json_tree(${column}) WHERE key = 'certificateId' AND type = 'text' AND atom = @certificateId)`;
+      `EXISTS (SELECT 1 FROM json_tree(${column}) WHERE key IN ('certificateId', 'trustedCertificateId') AND type = 'text' AND atom = @certificateId)`;
     const query =
       `SELECT 'south' AS type, name FROM south_connectors WHERE ${referringTo('settings')} ` +
       `UNION ALL SELECT 'north' AS type, name FROM north_connectors WHERE ${referringTo('settings')} ` +
@@ -53,6 +55,7 @@ export default class CertificateRepository {
     const query = `SELECT id,
                               name,
                               description,
+                              kind,
                               public_key,
                               private_key,
                               certificate,
@@ -70,14 +73,15 @@ export default class CertificateRepository {
 
   create(certificate: Omit<Certificate, 'createdAt' | 'updatedAt'>): Certificate {
     const insertQuery =
-      `INSERT INTO ${CERTIFICATES_TABLE} (id, name, description, public_key, private_key, certificate, certificate_chain, expiry, created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `INSERT INTO ${CERTIFICATES_TABLE} (id, name, description, kind, public_key, private_key, certificate, certificate_chain, expiry, created_by, updated_by, created_at, updated_at) ` +
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     const result = this.database
       .prepare(insertQuery)
       .run(
         certificate.id,
         certificate.name,
         certificate.description,
+        certificate.kind,
         certificate.publicKey,
         certificate.privateKey,
         certificate.certificate,
@@ -90,6 +94,7 @@ export default class CertificateRepository {
     const query = `SELECT id,
                               name,
                               description,
+                              kind,
                               public_key,
                               private_key,
                               certificate,
@@ -112,7 +117,7 @@ export default class CertificateRepository {
     return created;
   }
 
-  update(certificate: Omit<Certificate, 'createdBy' | 'createdAt' | 'updatedAt'>): void {
+  update(certificate: Omit<Certificate, 'kind' | 'createdBy' | 'createdAt' | 'updatedAt'>): void {
     const before = this.findById(certificate.id);
     const query =
       `UPDATE ${CERTIFICATES_TABLE} SET name = ?, description = ?, public_key  = ?, private_key = ?, certificate = ?, certificate_chain = ?, ` +
@@ -184,6 +189,7 @@ export default class CertificateRepository {
       id: result.id,
       name: result.name,
       description: result.description,
+      kind: (result.kind as Certificate['kind'] | undefined) ?? 'key-pair',
       publicKey: result.public_key,
       privateKey: result.private_key,
       certificate: result.certificate,

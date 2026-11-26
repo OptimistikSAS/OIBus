@@ -43,6 +43,21 @@ openssl pkcs12 -in bundle.pfx -nocerts -nodes -out private-key.pem
 
 :::
 
+## Importing a trusted certificate {#importing-a-trusted-certificate}
+
+The store also holds the certificates OIBus **trusts**, without private key, to validate the certificate a server
+presents when it uses an internal or self-signed certificate:
+
+- a **certification authority** (an internal CA): the certificates it issued are validated against it, host name
+  included;
+- the **certificate of a server** (self-signed, or any certificate trusted as is): the server must present exactly this
+  certificate, whatever its host name.
+
+Click **Import**, select **Certificate trusted by OIBus**, and choose the certificate file (PEM, CRT, CER or DER). OIBus
+tells a certification authority from a server certificate by its content, and shows the kind in the list. A trusted
+certificate is never offered where OIBus presents its own certificate (HTTPS, OPC UA), and it can be neither regenerated
+nor exported with a private key.
+
 ## Downloading a certificate {#downloading-a-certificate}
 
 The **download** button on a certificate row opens a dialog offering:

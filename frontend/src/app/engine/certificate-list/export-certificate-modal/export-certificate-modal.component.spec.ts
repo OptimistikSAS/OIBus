@@ -44,6 +44,9 @@ describe('ExportCertificateModalComponent', () => {
     publicKey: 'pp',
     certificate: 'cert',
     certificateChain: '-----BEGIN CERTIFICATE-----chain',
+    kind: 'key-pair',
+    certificationAuthority: false,
+    fingerprint: 'AA:BB',
     expiry: '2033-01-01T00:00:00Z',
     createdBy: { id: '', friendlyName: '' },
     updatedBy: { id: '', friendlyName: '' },
@@ -102,6 +105,14 @@ describe('ExportCertificateModalComponent', () => {
     await tester.format.selectOptions('PEM (.pem)');
     await expect.element(tester.includeChain).toBeEnabled();
     await expect.element(tester.derHint).not.toBeInTheDocument();
+  });
+
+  test('should not offer to export the private key of a trusted certificate, which has none', async () => {
+    const tester = new ExportCertificateModalComponentTester();
+    tester.componentInstance.prepare({ ...certificate, kind: 'trusted' });
+
+    await expect.element(tester.format).toBeInTheDocument();
+    await expect.element(tester.includePrivateKey).not.toBeInTheDocument();
   });
 
   test('should not offer to include the chain of a certificate without one', async () => {

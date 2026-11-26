@@ -16,7 +16,7 @@
     </div>
 
     <!-- Regenerate certificate -->
-    @if (mode() === 'edit') {
+    @if (mode() === 'edit' && !trusted()) {
       <div class="form-group">
         <div class="form-check form-switch padded">
           <label class="form-check-label" for="regenerate-certificate" translate="engine.certificate.regenerate-certificate"></label>

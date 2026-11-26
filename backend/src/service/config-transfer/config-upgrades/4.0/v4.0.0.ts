@@ -10,6 +10,7 @@ import recordListToMqttManifest from '../../../../transformers/record-list/recor
 import recordListToOianalyticsManifest from '../../../../transformers/record-list/record-list-to-oianalytics/manifest';
 import recordListToOpcuaManifest from '../../../../transformers/record-list/record-list-to-opcua/manifest';
 import { generateRandomId } from '../../../utils';
+import { describeCertificate } from '../../../utils-certificate';
 import {
   ConfigUpgrade,
   forEachHistoryQuery,
@@ -1914,7 +1915,8 @@ export const upgrade: ConfigUpgrade = {
     'remove the paths of the user certificate of the OPC UA connectors, which select it in the certificate store, as their ' +
     'communication certificate; ' +
     'add the trust in the identity of the server of the connectors and history queries, the OPC UA and SFTP ones trusting ' +
-    'the identity they receive at their first connection',
+    'the identity they receive at their first connection; ' +
+    'add the kind of the certificates of the store, which are all presented by OIBus with their private key',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -1925,7 +1927,13 @@ export const upgrade: ConfigUpgrade = {
       setMissing(settings, 'activationWindow', null);
     }
     for (const certificate of asObjects(config.certificates)) {
-      setMissing(certificate.settings as JsonObject, 'certificateChain', null);
+      const settings = certificate.settings as JsonObject;
+      setMissing(settings, 'certificateChain', null);
+      // Every certificate exported until now is presented by OIBus, with its private key
+      setMissing(settings, 'kind', 'key-pair');
+      const { certificationAuthority, fingerprint } = describeCertificate(String(settings.certificate ?? ''));
+      setMissing(settings, 'certificationAuthority', certificationAuthority);
+      setMissing(settings, 'fingerprint', fingerprint);
     }
 
     migrateSqlSouthItems(config, catalog);

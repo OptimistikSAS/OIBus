@@ -143,7 +143,8 @@ export const STEPS: Array<(knex: Knex) => Promise<void>> = [
   flagDefaultPasswords,
   moveOPCUACertificateToStore,
   removeOPCUAUserCertificateFiles,
-  addServerTrust
+  addServerTrust,
+  addTrustedCertificates
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -236,7 +237,7 @@ export async function down(knex: Knex): Promise<void> {
   await dropColumns(knex, ENGINES_TABLE, ['audit_retention_duration']);
 
   await dropColumns(knex, SCAN_MODES_TABLE, ['type', 'interval', 'activation_window']);
-  await dropColumns(knex, CERTIFICATES_TABLE, ['certificate_chain']);
+  await dropColumns(knex, CERTIFICATES_TABLE, ['certificate_chain', 'kind']);
 }
 
 async function dropColumns(knex: Knex, table: string, columns: Array<string>): Promise<void> {
@@ -2363,4 +2364,15 @@ export async function addServerTrust(knex: Knex): Promise<void> {
         .update({ [trustColumn]: JSON.stringify(toServerTrust(row[typeColumn], JSON.parse(row[settingsColumn]))) });
     }
   }
+}
+
+/**
+ * The certificate store gains the certificates OIBus trusts (certification authorities and certificates of servers),
+ * without private key, besides the ones it presents with their private key: every certificate stored until now is one of
+ * these. A trusted certificate keeps an empty private key, the column staying NOT NULL.
+ */
+export async function addTrustedCertificates(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(CERTIFICATES_TABLE, table => {
+    table.string('kind').notNullable().defaultTo('key-pair');
+  });
 }

@@ -10869,7 +10869,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Pick_CertificateDTO.Exclude_keyofCertificateDTO.id-or-createdAt-or-createdBy-or-updatedAt-or-updatedBy__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"certificate":{"dataType":"string","required":true},"name":{"dataType":"string","required":true},"description":{"dataType":"string","required":true},"publicKey":{"dataType":"string","required":true},"expiry":{"dataType":"string","required":true},"certificateChain":{"dataType":"string","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"certificate":{"dataType":"string","required":true},"name":{"dataType":"string","required":true},"description":{"dataType":"string","required":true},"publicKey":{"dataType":"string","required":true},"expiry":{"dataType":"string","required":true},"certificateChain":{"dataType":"string","required":true},"kind":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["trusted"]},{"dataType":"enum","enums":["key-pair"]}],"required":true},"certificationAuthority":{"dataType":"boolean","required":true},"fingerprint":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Omit_CertificateDTO.id-or-createdAt-or-createdBy-or-updatedAt-or-updatedBy_": {
@@ -11005,6 +11005,11 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CertificateKind": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["trusted"]},{"dataType":"enum","enums":["key-pair"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CertificateDTO": {
         "dataType": "refObject",
         "properties": {
@@ -11019,6 +11024,9 @@ const models: TsoaRoute.Models = {
             "certificate": {"dataType":"string","required":true},
             "expiry": {"ref":"Instant","required":true},
             "certificateChain": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "kind": {"ref":"CertificateKind","required":true},
+            "certificationAuthority": {"dataType":"boolean","required":true},
+            "fingerprint": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },

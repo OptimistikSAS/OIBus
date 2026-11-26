@@ -27,6 +27,8 @@ export class EditCertificateModalComponent {
   private readonly fb = inject(NonNullableFormBuilder);
 
   readonly mode = signal<'create' | 'edit'>('create');
+  /** A trusted certificate has no private key: it is not regenerated */
+  readonly trusted = signal(false);
   readonly state = new ObservableState();
   private certificate: CertificateDTO | null = null;
   readonly form = this.fb.group({
@@ -66,6 +68,7 @@ export class EditCertificateModalComponent {
   prepareForEdition(certificate: CertificateDTO) {
     this.mode.set('edit');
     this.certificate = certificate;
+    this.trusted.set(certificate.kind === 'trusted');
 
     this.form.patchValue({
       name: certificate.name,

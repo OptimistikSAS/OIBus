@@ -35,7 +35,14 @@ describe('OibusCertificateFormControlComponent', () => {
     control = new FormControl<string | null>(null);
     tester = await renderOIBusFormControl(
       OibusCertificateFormControlComponent,
-      { certificateAttribute, certificates: testData.certificates.list },
+      // a trusted certificate has no private key: it is not offered where OIBus presents its certificate
+      {
+        certificateAttribute,
+        certificates: [
+          ...testData.certificates.list,
+          { ...testData.certificates.list[0], id: 'trusted', name: 'Trusted CA', kind: 'trusted' }
+        ]
+      },
       'fieldName',
       control
     );

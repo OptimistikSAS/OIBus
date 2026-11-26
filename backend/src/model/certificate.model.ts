@@ -1,11 +1,19 @@
 import { Instant } from '../../shared/model/common/types';
+import { CertificateKind } from '../../shared/model/domain/certificate.model';
 
 import { BaseEntity } from './types';
 
 export interface Certificate extends BaseEntity {
   name: string;
   description: string;
+  /**
+   * Whether OIBus presents the certificate (`key-pair`) or trusts it (`trusted`)
+   */
+  kind: CertificateKind;
   publicKey: string;
+  /**
+   * The private key, encrypted: empty for a trusted certificate, and for a certificate imported from a configuration file
+   */
   privateKey: string;
   certificate: string;
   certificateChain: string | null;
@@ -34,7 +42,11 @@ export interface CertificateImportCommand {
   name: string;
   description: string;
   certificateContent: Buffer;
-  privateKeyContent: Buffer;
+  /**
+   * The private key of the certificate, `null` to import a trusted certificate (a certification authority, or the
+   * certificate of a server)
+   */
+  privateKeyContent: Buffer | null;
   privateKeyPassphrase: string | null;
   certificateChainContent: Buffer | null;
 }

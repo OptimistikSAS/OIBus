@@ -29,6 +29,8 @@ export class OibusCertificateFormControlComponent {
 
   readonly certificateAttribute = input.required<OIBusCertificateAttribute>();
   readonly certificates = input.required<Array<CertificateDTO>>();
+  /** The certificates OIBus presents, with their private key: a trusted certificate has none */
+  readonly presentedCertificates = computed(() => this.certificates().filter(certificate => certificate.kind === 'key-pair'));
   /**
    * Prefixed by the groups nesting the control under the settings, when there are: nested settings can have the key of
    * another certificate (the OPC UA certificate and the certificate authenticating the user are both `certificateId`)

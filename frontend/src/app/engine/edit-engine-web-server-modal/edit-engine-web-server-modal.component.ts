@@ -4,6 +4,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
+import { map } from 'rxjs';
 
 import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
 import { AuthTokenDuration, WebServerCertificateSource } from '@oibus/shared/domain/engine.model';
@@ -48,7 +49,11 @@ export class EditEngineWebServerModalComponent {
     { value: 'file', labelKey: 'engine.web-server-settings.certificate-sources.file' }
   ];
 
-  readonly certificates = toSignal(this.certificateService.list(), { initialValue: [] });
+  // HTTPS presents a certificate with its private key: a trusted certificate has none
+  readonly certificates = toSignal(
+    this.certificateService.list().pipe(map(certificates => certificates.filter(certificate => certificate.kind === 'key-pair'))),
+    { initialValue: [] }
+  );
 
   readonly form = this.fb.group({
     port: [null as number | null, Validators.required],

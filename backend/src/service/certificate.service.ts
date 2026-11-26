@@ -23,9 +23,11 @@ import {
   assertKeyMatchesCertificate,
   certificateContentToPem,
   certificatePemToDer,
+  describeCertificate,
   privateKeyContentToPem,
   privateKeyToEncryptedPkcs8Pem,
   readCertificate,
+  readTrustedCertificate,
   splitPemChain
 } from './utils-certificate';
 
@@ -55,6 +57,7 @@ export default class CertificateService {
    */
   getKeyPair(certificateId: string): CertificateKeyPair {
     const certificate = this.findById(certificateId);
+    assertKeyPair(certificate, 'present it');
     return {
       name: certificate.name,
       certificate: certificate.certificate,
@@ -87,6 +90,7 @@ export default class CertificateService {
       id: generateRandomId(6),
       name,
       description,
+      kind: 'key-pair',
       publicKey: cert.public,
       privateKey: encryptionService.encryptText(cert.private),
       certificate: cert.cert,
@@ -103,6 +107,7 @@ export default class CertificateService {
     await this.validator.validate(certificateSchema, command);
     const certificate = this.findById(certificateId);
     if (command.regenerateCertificate) {
+      assertKeyPair(certificate, 'regenerate it');
       const cert = await encryptionService.generateSelfSignedCertificate({
         commonName: command.options!.commonName,
         organizationName: command.options!.organizationName,
@@ -129,10 +134,34 @@ export default class CertificateService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
+  /**
+   * Imports a certificate OIBus presents, with its private key, or a certificate OIBus trusts (without private key): a
+   * certification authority, or the certificate of a server trusted as is
+   */
   async import(command: CertificateImportCommand, createdBy: string): Promise<Certificate> {
     await this.validator.validate(certificateImportSchema, { name: command.name, description: command.description });
 
     const certificatePem = certificateContentToPem(command.certificateContent);
+    if (!command.privateKeyContent) {
+      if (command.certificateChainContent) {
+        throw new OIBusValidationError('A trusted certificate is imported without chain: import each certificate to trust');
+      }
+      const trusted = readTrustedCertificate(certificatePem);
+      return this.createCertificate(
+        {
+          name: command.name,
+          description: command.description,
+          kind: 'trusted',
+          publicKey: trusted.publicKeyPem,
+          privateKey: '',
+          certificate: trusted.pem,
+          certificateChain: null,
+          expiry: trusted.expiry
+        },
+        createdBy
+      );
+    }
+
     const parsed = readCertificate(certificatePem);
     const privateKeyPem = privateKeyContentToPem(command.privateKeyContent, command.privateKeyPassphrase);
     assertKeyMatchesCertificate(parsed.pem, privateKeyPem);
@@ -140,20 +169,28 @@ export default class CertificateService {
       ? splitPemChain(certificateContentToPem(command.certificateChainContent)).join('\n')
       : null;
 
-    const certificate = this.certificateRepository.create({
-      id: generateRandomId(6),
-      name: command.name,
-      description: command.description,
-      publicKey: parsed.publicKeyPem,
-      privateKey: encryptionService.encryptText(privateKeyPem),
-      certificate: parsed.pem,
-      certificateChain,
-      expiry: parsed.expiry,
-      createdBy,
-      updatedBy: createdBy
-    });
+    return this.createCertificate(
+      {
+        name: command.name,
+        description: command.description,
+        kind: 'key-pair',
+        publicKey: parsed.publicKeyPem,
+        privateKey: encryptionService.encryptText(privateKeyPem),
+        certificate: parsed.pem,
+        certificateChain,
+        expiry: parsed.expiry
+      },
+      createdBy
+    );
+  }
+
+  private createCertificate(
+    certificate: Omit<Certificate, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>,
+    createdBy: string
+  ): Certificate {
+    const created = this.certificateRepository.create({ ...certificate, id: generateRandomId(6), createdBy, updatedBy: createdBy });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    return certificate;
+    return created;
   }
 
   exportCertificate(
@@ -183,6 +220,7 @@ export default class CertificateService {
   async exportPrivateKey(certificateId: string, passphrase: string, requestedBy: string): Promise<string> {
     await this.validator.validate(certificatePrivateKeyExportSchema, { passphrase });
     const certificate = this.findById(certificateId);
+    assertKeyPair(certificate, 'export its private key');
     const privateKeyPem = encryptionService.decryptText(certificate.privateKey);
     const content = privateKeyToEncryptedPkcs8Pem(privateKeyPem, passphrase);
     this.logger.info(`Private key of certificate "${certificate.name}" (${certificate.id}) exported by ${requestedBy}`);
@@ -225,9 +263,20 @@ export const toCertificateDTO = (certificate: Certificate, getUserInfo: GetUserI
     certificate: certificate.certificate,
     certificateChain: certificate.certificateChain,
     expiry: certificate.expiry,
+    kind: certificate.kind,
+    ...describeCertificate(certificate.certificate),
     createdBy: getUserInfo(certificate.createdBy),
     updatedBy: getUserInfo(certificate.updatedBy),
     createdAt: certificate.createdAt,
     updatedAt: certificate.updatedAt
   };
+};
+
+/**
+ * Refuses an operation needing the private key of a certificate on a trusted certificate, which has none
+ */
+const assertKeyPair = (certificate: Certificate, operation: string): void => {
+  if (certificate.kind === 'trusted') {
+    throw new OIBusValidationError(`Certificate "${certificate.name}" is a trusted certificate, without private key: cannot ${operation}`);
+  }
 };

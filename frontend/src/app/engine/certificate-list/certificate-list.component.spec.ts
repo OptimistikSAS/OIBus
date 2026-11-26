@@ -70,6 +70,19 @@ describe('CertificateListComponent', () => {
     modalService = TestBed.inject(MockModalService);
   });
 
+  test('should tell the trusted certification authorities and server certificates apart', async () => {
+    certificateService.list.mockReturnValue(
+      of([
+        { ...testData.certificates.list[0], kind: 'trusted' as const, certificationAuthority: true },
+        { ...testData.certificates.list[1], kind: 'trusted' as const, certificationAuthority: false }
+      ])
+    );
+    const tester = new CertificateListComponentTester();
+
+    await expect.element(tester.row(0).getByCss('td.certificate-kind')).toHaveTextContent('Trusted certification authority');
+    await expect.element(tester.row(1).getByCss('td.certificate-kind')).toHaveTextContent('Trusted server certificate');
+  });
+
   describe('with certificates', () => {
     let tester: CertificateListComponentTester;
 
@@ -84,12 +97,13 @@ describe('CertificateListComponent', () => {
       await expect.element(tester.rows).toHaveLength(2);
 
       const secondCertificateCells = tester.row(1).getByCss('td');
-      await expect.element(tester.row(0).getByCss('td')).toHaveLength(9);
+      await expect.element(tester.row(0).getByCss('td')).toHaveLength(10);
       await expect.element(secondCertificateCells.nth(0)).toHaveTextContent('Certificate 2');
-      await expect.element(secondCertificateCells.nth(1)).toHaveTextContent('');
-      await expect.element(secondCertificateCells.nth(2)).toHaveTextContent('public key');
-      await expect.element(secondCertificateCells.nth(4)).toHaveTextContent('certificate');
-      await expect.element(secondCertificateCells.nth(6)).toMatchTextContent('20 Mar 2020');
+      await expect.element(secondCertificateCells.nth(1)).toHaveTextContent('Presented by OIBus');
+      await expect.element(secondCertificateCells.nth(2)).toHaveTextContent('');
+      await expect.element(secondCertificateCells.nth(3)).toHaveTextContent('public key');
+      await expect.element(secondCertificateCells.nth(5)).toHaveTextContent('certificate');
+      await expect.element(secondCertificateCells.nth(7)).toMatchTextContent('20 Mar 2020');
       await expect.element(tester.rowButton(1, 'Edit certificate')).toBeInTheDocument();
       await expect.element(tester.rowButton(1, 'Delete certificate')).toBeInTheDocument();
     });

@@ -34,6 +34,7 @@ import { getAllowedCommands } from '../oia/command-permissions.utils';
 import { southManifestList } from '../south-manifests';
 import { getStandardManifest } from '../transformer.service';
 import { getOIBusInfo } from '../utils';
+import { describeCertificate } from '../utils-certificate';
 
 /**
  * The shape `NorthConnectorEntity['caching']` and `HistoryQueryEntity['caching']` both share —
@@ -290,7 +291,9 @@ export default class ConfigTransferBuilderService {
         publicKey: certificate.publicKey,
         certificate: certificate.certificate,
         certificateChain: certificate.certificateChain,
-        expiry: certificate.expiry
+        expiry: certificate.expiry,
+        kind: certificate.kind,
+        ...describeCertificate(certificate.certificate)
       }
     }));
   }

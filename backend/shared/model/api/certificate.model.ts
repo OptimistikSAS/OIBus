@@ -1,4 +1,5 @@
 import { BaseEntity, Instant } from '../common/types';
+import { CertificateKind } from '../domain/certificate.model';
 
 /**
  * Data Transfer Object for a certificate.
@@ -41,6 +42,25 @@ export interface CertificateDTO extends BaseEntity {
    * @example "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBBQUAMEUx...\n-----END CERTIFICATE-----"
    */
   certificateChain: string | null;
+
+  /**
+   * Whether OIBus presents the certificate, with its private key (`key-pair`), or trusts it to validate the certificate of a
+   * server (`trusted`, without private key).
+   */
+  kind: CertificateKind;
+
+  /**
+   * Whether the certificate is a certification authority (its basic constraints allow it to issue certificates): a trusted
+   * certification authority validates the certificates it issued, a trusted server certificate only itself.
+   * @example false
+   */
+  certificationAuthority: boolean;
+
+  /**
+   * The SHA-256 fingerprint of the certificate, to compare with the one shown by the server or its administrator.
+   * @example "C3:5D:A2:4A:30:F6:52:27:1F:C4:30:16:79:99:DD:60:8A:D4:43:9C:EA:12:94:D7:F4:88:63:CE:A4:73:B6:1A"
+   */
+  fingerprint: string;
 }
 
 /**

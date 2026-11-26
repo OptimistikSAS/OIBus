@@ -74,11 +74,14 @@ export class CertificateService {
    */
   importCertificate(
     command: { name: string; description: string; privateKeyPassphrase: string | null },
-    files: { certificate: File; privateKey: File; certificateChain: File | null }
+    // Without private key, the certificate is imported as trusted (a certification authority, or the certificate of a server)
+    files: { certificate: File; privateKey: File | null; certificateChain: File | null }
   ): Observable<CertificateDTO> {
     const formData = new FormData();
     formData.set('certificate', files.certificate);
-    formData.set('privateKey', files.privateKey);
+    if (files.privateKey) {
+      formData.set('privateKey', files.privateKey);
+    }
     if (files.certificateChain) {
       formData.set('certificateChain', files.certificateChain);
     }

@@ -3,7 +3,7 @@
   <oib-select-or-create
     [formControlName]="certificateAttribute().key"
     [inputId]="inputId()"
-    [options]="certificates()"
+    [options]="presentedCertificates()"
     noneLabel="engine.certificate.none"
     [creator]="certificateCreator"
   />

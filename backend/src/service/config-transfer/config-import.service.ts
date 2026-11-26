@@ -688,11 +688,14 @@ export default class ConfigImportService {
     for (const certificate of config.certificates) {
       // Private keys are never exported (`CertificateDTO` has no such field) — the certificate is
       // still recreated under its original id, so anything referencing it by id keeps resolving, but
-      // with an empty private key that makes it unusable for TLS until re-imported.
+      // with an empty private key that makes it unusable for TLS until re-imported. A trusted certificate has none: it is
+      // imported as is (an export before trusted certificates only has certificates presented with their private key).
+      const kind = certificate.settings.kind ?? 'key-pair';
       this.certificateRepository!.create({
         id: certificate.oIBusInternalId,
         name: certificate.settings.name,
         description: certificate.settings.description,
+        kind,
         publicKey: certificate.settings.publicKey,
         privateKey: '',
         certificate: certificate.settings.certificate,
@@ -701,7 +704,11 @@ export default class ConfigImportService {
         createdBy: importedBy,
         updatedBy: importedBy
       });
-      warnings.push(`Certificate "${certificate.settings.name}" was imported without its private key; re-import its private key manually.`);
+      if (kind === 'key-pair') {
+        warnings.push(
+          `Certificate "${certificate.settings.name}" was imported without its private key; re-import its private key manually.`
+        );
+      }
     }
 
     const transformerIdMap = this.recreateTransformers(config, importedBy, warnings);

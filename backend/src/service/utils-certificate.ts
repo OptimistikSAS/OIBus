@@ -70,6 +70,39 @@ export const readCertificate = (pem: string): ParsedCertificate => {
 };
 
 /**
+ * Parses a certificate OIBus trusts (the first one of the PEM): of any key algorithm, as the certificates of servers are
+ * (RSA, EC...), unlike the certificates OIBus presents.
+ */
+export const readTrustedCertificate = (pem: string): ParsedCertificate => {
+  let certificate: X509Certificate;
+  try {
+    certificate = new X509Certificate(pem);
+  } catch (error) {
+    throw new OIBusValidationError(`Unable to parse the certificate: ${(error as Error).message}`);
+  }
+  return {
+    // re-serialize so that a bundle is reduced to its first certificate
+    pem: certificate.toString(),
+    publicKeyPem: certificate.publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+    expiry: DateTime.fromJSDate(certificate.validToDate).toUTC().toISO()!
+  };
+};
+
+/**
+ * What the DTO of a certificate of the store tells about it: whether it is a certification authority, and its SHA-256
+ * fingerprint
+ */
+export const describeCertificate = (pem: string): { certificationAuthority: boolean; fingerprint: string } => {
+  try {
+    const certificate = new X509Certificate(pem);
+    return { certificationAuthority: certificate.ca, fingerprint: certificate.fingerprint256 };
+  } catch {
+    // a certificate imported from a configuration file without its content
+    return { certificationAuthority: false, fingerprint: '' };
+  }
+};
+
+/**
  * PEM (PKCS#1 / PKCS#8 / encrypted) or DER key content -> canonical PKCS#1 PEM (the at-rest format).
  */
 export const privateKeyContentToPem = (content: Buffer, passphrase: string | null): string => {
