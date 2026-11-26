@@ -410,6 +410,42 @@ export default class HistoryQueryRepository {
     });
     transaction();
   }
+  /**
+   * Selects a trusted certificate of the store in the settings of a side, to validate the certificate of its server (the
+   * TLS connectors, see `serverTrustInCertificateStore`), no longer trusting the identity received at the first connection
+   */
+  trustCertificate(id: string, side: 'south' | 'north', certificateId: string, updatedBy: string): void {
+    const before = this.findHistoryById(id);
+    if (!before) {
+      throw new NotFoundError(`History query "${id}" not found`);
+    }
+    const settingsColumn = side === 'south' ? 'south_settings' : 'north_settings';
+    const trustColumn = side === 'south' ? 'south_server_trust' : 'north_server_trust';
+    const transaction = this.database.transaction(() => {
+      const settings = `json_set(${settingsColumn}, '$.certificateValidation', 'trusted', '$.trustedCertificateId', ?)`;
+      const serverTrust = JSON.stringify({ identity: null, trustOnFirstUse: false });
+      if (updatedBy === 'system') {
+        // Trusted by the history query at its first connection: not an edition of the history query
+        this.database
+          .prepare(`UPDATE ${HISTORY_QUERIES_TABLE} SET ${settingsColumn} = ${settings}, ${trustColumn} = ? WHERE id = ?;`)
+          .run(certificateId, serverTrust, id);
+      } else {
+        this.database
+          .prepare(
+            `UPDATE ${HISTORY_QUERIES_TABLE} SET ${settingsColumn} = ${settings}, ${trustColumn} = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+          )
+          .run(certificateId, serverTrust, updatedBy, id);
+      }
+      this.auditService.record(
+        'history_query',
+        id,
+        'UPDATE',
+        ...redactAuditSnapshots(before, this.findHistoryById(id), entity => this.redactHistory(entity)),
+        updatedBy
+      );
+    });
+    transaction();
+  }
 
   updateHistoryStatus(id: string, status: HistoryQueryStatus) {
     const query = `UPDATE ${HISTORY_QUERIES_TABLE} SET status = ? WHERE id = ?;`;

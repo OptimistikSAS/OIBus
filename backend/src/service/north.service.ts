@@ -12,7 +12,12 @@ import { OIBusRecordListContent } from '../../shared/model/common/content.model'
 import { GetUserInfo } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
-import { PresentedServerIdentity, ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
+import {
+  PresentedServerIdentity,
+  ServerTrust,
+  ServerTrustState,
+  X509ServerIdentityDetails
+} from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { CacheMetadataSource } from '../model/engine.model';
@@ -39,8 +44,10 @@ import {
   retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
   testConnectionWithServerIdentity,
+  toCertificateStoreServerTrust,
   toServerTrust,
-  toServerTrustDTO
+  toServerTrustDTO,
+  trustFormCertificateInStore
 } from './server-trust.utils';
 import { toSouthConnectorLightDTO, toSouthItemLightDTO } from './south.service';
 import TransformerService, { toTransformerDTO } from './transformer.service';
@@ -111,7 +118,12 @@ export default class NorthService {
     );
     // A new connector, even copied from another one, only trusts the identity its command sends: the one the connector
     // copied trusts may not be the identity of the server of the copy
-    northEntity.serverTrust = toServerTrust(command.serverTrust, null, createdBy);
+    northEntity.serverTrust = this.trustFormCertificate(
+      northEntity,
+      toServerTrust(command.serverTrust, null, createdBy),
+      command,
+      createdBy
+    );
     northEntity.createdBy = createdBy;
     northEntity.updatedBy = createdBy;
     const transformers = this.transformerService.findAll();
@@ -152,6 +164,7 @@ export default class NorthService {
 
     const northEntity = { id: previousSettings.id } as NorthConnectorEntity<NorthSettings>;
     copyNorthConnectorCommandToNorthEntity(northEntity, command, previousSettings, this.scanModeRepository.findAll(), updatedBy);
+    northEntity.serverTrust = this.trustFormCertificate(northEntity, northEntity.serverTrust, command, updatedBy);
     northEntity.createdBy = previousSettings.createdBy;
     northEntity.updatedBy = updatedBy;
     const transformers = this.transformerService.findAll();
@@ -214,7 +227,37 @@ export default class NorthService {
     } catch {
       // Not in the engine
     }
+    if (this.getManifest(northConnector.type).serverTrustInCertificateStore) {
+      return {
+        ...toCertificateStoreServerTrust(northConnector.settings, northConnector.serverTrust, id => this.certificateService.findById(id)),
+        pending
+      };
+    }
     return { ...northConnector.serverTrust, pending };
+  }
+
+  /**
+   * Trusts the certificate a server presents, adding it to the certificate store (or reusing the same certificate of the
+   * store): for the connectors trusting a certificate of the store, as a history query using one does
+   */
+  trustServerCertificate(certificatePem: string, name: string, trustedBy: string): { id: string } {
+    return this.certificateService.trustServerCertificate(certificatePem, name, trustedBy);
+  }
+
+  /** The trust of a connector saved with an identity trusted in its form (see `trustFormCertificateInStore`) */
+  private trustFormCertificate(
+    northEntity: NorthConnectorEntity<NorthSettings>,
+    serverTrust: ServerTrust,
+    command: NorthConnectorCommandDTO,
+    user: string
+  ): ServerTrust {
+    return trustFormCertificateInStore(
+      northEntity.settings,
+      serverTrust,
+      command.serverTrust,
+      !!this.getManifest(northEntity.type).serverTrustInCertificateStore,
+      certificatePem => this.trustServerCertificate(certificatePem, `${northEntity.name} server`, user)
+    );
   }
 
   /**
@@ -235,11 +278,17 @@ export default class NorthService {
     const northConnector = this.findById(northId);
     const north = this.buildThrowawayNorth({ ...northConnector, enabled: false, transformers: [] });
     const identity = await retrieveServerIdentityToTrust(north, fingerprint);
-    this.northConnectorRepository.updateServerTrust(
-      northId,
-      { identity: toTrustedServerIdentity(identity, trustedBy, DateTime.now().toUTC().toISO()!), trustOnFirstUse: false },
-      trustedBy
-    );
+    const certificate = (identity.details as X509ServerIdentityDetails).certificate;
+    if (this.getManifest(northConnector.type).serverTrustInCertificateStore && certificate) {
+      const trusted = this.trustServerCertificate(certificate, `${northConnector.name} server`, trustedBy);
+      this.northConnectorRepository.trustCertificate(northId, trusted.id, trustedBy);
+    } else {
+      this.northConnectorRepository.updateServerTrust(
+        northId,
+        { identity: toTrustedServerIdentity(identity, trustedBy, DateTime.now().toUTC().toISO()!), trustOnFirstUse: false },
+        trustedBy
+      );
+    }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadNorth(northConnector);
     this.engine.logger.info(

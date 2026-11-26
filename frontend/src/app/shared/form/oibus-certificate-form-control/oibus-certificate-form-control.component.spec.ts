@@ -12,6 +12,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { CertificateCreator } from '../../../engine/certificate-list/certificate-creator.service';
+import { TrustedCertificateCreator } from '../../../engine/certificate-list/trusted-certificate-creator.service';
 import { OIBusFormControlTester, renderOIBusFormControl } from '../oibus-form-control.testing';
 import { chooseSelectOrCreateEntry, selectOrCreateEntryNames } from '../select-or-create/select-or-create.testing';
 import { OibusCertificateFormControlComponent } from './oibus-certificate-form-control.component';
@@ -24,57 +25,100 @@ describe('OibusCertificateFormControlComponent', () => {
     validators: [],
     displayProperties: { row: 0, columns: 4, displayInViewMode: true }
   };
+  const certificates: Array<CertificateDTO> = [
+    ...testData.certificates.list,
+    { ...testData.certificates.list[0], id: 'trusted', name: 'Trusted CA', kind: 'trusted' }
+  ];
   let control: FormControl<string | null>;
   let tester: OIBusFormControlTester<OibusCertificateFormControlComponent>;
 
   let certificateCreator: MockObject<CertificateCreator>;
+  let trustedCertificateCreator: MockObject<TrustedCertificateCreator>;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     certificateCreator = createMock(CertificateCreator, { createLabel: 'engine.certificate.create-new', created: signal([]) });
-    TestBed.configureTestingModule({ providers: [provideI18nTesting(), { provide: CertificateCreator, useValue: certificateCreator }] });
+    trustedCertificateCreator = createMock(TrustedCertificateCreator, {
+      createLabel: 'engine.certificate.import-trusted',
+      created: signal([])
+    });
+    TestBed.configureTestingModule({
+      providers: [
+        provideI18nTesting(),
+        { provide: CertificateCreator, useValue: certificateCreator },
+        { provide: TrustedCertificateCreator, useValue: trustedCertificateCreator }
+      ]
+    });
     control = new FormControl<string | null>(null);
-    tester = await renderOIBusFormControl(
-      OibusCertificateFormControlComponent,
+  });
+
+  describe('with a certificate trusted by OIBus', () => {
+    beforeEach(async () => {
+      tester = await renderOIBusFormControl(
+        OibusCertificateFormControlComponent,
+        { certificateAttribute: { ...certificateAttribute, trusted: true }, certificates },
+        'fieldName',
+        control
+      );
+    });
+
+    test('should offer only the trusted certificates, and to import one', async () => {
+      expect(await selectOrCreateEntryNames(tester.root.getByLabelText('Field name'))).toEqual([
+        'No certificate',
+        'Trusted CA',
+        'Import a trusted certificate...'
+      ]);
+    });
+
+    test('should select an imported trusted certificate', async () => {
+      const imported: CertificateDTO = { ...certificates[2], id: 'imported', name: 'Imported CA' };
+      trustedCertificateCreator.create.mockReturnValue(of(imported));
+
+      await chooseSelectOrCreateEntry(tester.root.getByLabelText('Field name'), 'Import a trusted certificate...');
+
+      expect(control.value).toBe('imported');
+      expect(certificateCreator.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('with a certificate presented by OIBus', () => {
+    beforeEach(async () => {
       // a trusted certificate has no private key: it is not offered where OIBus presents its certificate
-      {
-        certificateAttribute,
-        certificates: [
-          ...testData.certificates.list,
-          { ...testData.certificates.list[0], id: 'trusted', name: 'Trusted CA', kind: 'trusted' }
-        ]
-      },
-      'fieldName',
-      control
-    );
-  });
+      tester = await renderOIBusFormControl(
+        OibusCertificateFormControlComponent,
+        { certificateAttribute, certificates },
+        'fieldName',
+        control
+      );
+    });
 
-  test('should offer no certificate, each certificate, and to create one', async () => {
-    expect(await selectOrCreateEntryNames(tester.root.getByLabelText('Field name'))).toEqual([
-      'No certificate',
-      'Certificate 1',
-      'Certificate 2',
-      'Create a new certificate...'
-    ]);
-  });
+    test('should offer no certificate, each certificate, and to create one', async () => {
+      expect(await selectOrCreateEntryNames(tester.root.getByLabelText('Field name'))).toEqual([
+        'No certificate',
+        'Certificate 1',
+        'Certificate 2',
+        'Create a new certificate...'
+      ]);
+    });
 
-  test('should update the control with the id of the selected certificate', async () => {
-    await chooseSelectOrCreateEntry(tester.root.getByLabelText('Field name'), 'Certificate 2');
+    test('should update the control with the id of the selected certificate', async () => {
+      await chooseSelectOrCreateEntry(tester.root.getByLabelText('Field name'), 'Certificate 2');
 
-    expect(control.value).toBe(testData.certificates.list[1].id);
-  });
+      expect(control.value).toBe(testData.certificates.list[1].id);
+    });
 
-  test('should select a created certificate', async () => {
-    const created: CertificateDTO = { ...testData.certificates.list[0], id: 'created', name: 'Created certificate' };
-    certificateCreator.create.mockReturnValue(of(created));
+    test('should select a created certificate', async () => {
+      const created: CertificateDTO = { ...testData.certificates.list[0], id: 'created', name: 'Created certificate' };
+      certificateCreator.create.mockReturnValue(of(created));
 
-    await chooseSelectOrCreateEntry(tester.root.getByLabelText('Field name'), 'Create a new certificate...');
+      await chooseSelectOrCreateEntry(tester.root.getByLabelText('Field name'), 'Create a new certificate...');
 
-    expect(control.value).toBe('created');
-  });
+      expect(control.value).toBe('created');
+    });
 
-  test('should display a value patched from outside', async () => {
-    control.setValue(testData.certificates.list[0].id);
+    test('should display a value patched from outside', async () => {
+      control.setValue(testData.certificates.list[0].id);
 
-    await expect.element(tester.root.getByLabelText('Field name')).toHaveTextContent('Certificate 1');
+      await expect.element(tester.root.getByLabelText('Field name')).toHaveTextContent('Certificate 1');
+    });
   });
 });

@@ -555,6 +555,35 @@ export function toServerTrust(type: string, settings: Record<string, unknown> | 
   return { identity: null, trustOnFirstUse: checksServerIdentity(type, settings) };
 }
 
+/**
+ * The TLS connectors validating the certificate of their server against a certificate of the store, with the key of the
+ * switch they accepted any certificate with until now
+ */
+export const TRUSTED_CERTIFICATE_SWITCHES: Record<string, { south: string | null; north: string | null }> = {
+  rest: { south: 'acceptUnauthorized', north: 'acceptUnauthorized' }
+};
+
+/**
+ * The settings of a TLS connector validating the certificate of its server (see `TRUSTED_CERTIFICATE_SWITCHES`): a
+ * connector accepting any certificate until now trusts a certificate of the store, which it is to trust at its first
+ * connection (it has none yet), the others keep the standard validation. `null` for the other connectors.
+ */
+export function toCertificateValidation(
+  type: string,
+  side: 'south' | 'north',
+  settings: Record<string, unknown> | null | undefined
+): { settings: Record<string, unknown>; trustOnFirstUse: boolean } | null {
+  const key = TRUSTED_CERTIFICATE_SWITCHES[type]?.[side];
+  if (!key || !settings || !(key in settings)) {
+    return null;
+  }
+  const { [key]: acceptsAnyCertificate, ...rest } = settings;
+  return {
+    settings: { ...rest, certificateValidation: acceptsAnyCertificate ? 'trusted' : 'standard', trustedCertificateId: null },
+    trustOnFirstUse: !!acceptsAnyCertificate
+  };
+}
+
 /** The database souths whose work-units can now query in parallel, gaining a `maxParallelRun` setting */
 export const MAX_PARALLEL_RUN_SOUTH_TYPES = ['influxdb', 'mssql', 'mysql', 'odbc', 'oracle', 'postgresql'];
 
@@ -1772,6 +1801,26 @@ function addServerTrust(config: JsonObject): void {
 }
 
 /**
+ * The TLS connectors validate the certificate of their server against a certificate of the store instead of accepting any
+ * certificate (see `toCertificateValidation`), for the connectors and the history queries.
+ */
+function useTrustedCertificates(config: JsonObject): void {
+  const convert = (entry: JsonObject, type: string, side: 'south' | 'north', settingsKey: string, trustKey: string): void => {
+    const converted = toCertificateValidation(type, side, entry[settingsKey] as JsonObject | undefined);
+    if (converted) {
+      entry[settingsKey] = converted.settings as JsonObject;
+      entry[trustKey] = { identity: null, trustOnFirstUse: converted.trustOnFirstUse };
+    }
+  };
+  forEachSouth(config, null, south => convert(south.settings as JsonObject, south.type as string, 'south', 'settings', 'serverTrust'));
+  forEachNorth(config, null, north => convert(north.settings as JsonObject, north.type as string, 'north', 'settings', 'serverTrust'));
+  forEachHistoryQuery(config, null, settings => {
+    convert(settings, settings.southType as string, 'south', 'southSettings', 'southServerTrust');
+    convert(settings, settings.northType as string, 'north', 'northSettings', 'northServerTrust');
+  });
+}
+
+/**
  * The database South settings gain a `maxParallelRun` and a `connectionSettings` group (see `toDatabaseSouthSettings`), for
  * the connectors and the history queries. The request timeout of the MSSQL and PostgreSQL ones moves to their items.
  */
@@ -1916,7 +1965,9 @@ export const upgrade: ConfigUpgrade = {
     'communication certificate; ' +
     'add the trust in the identity of the server of the connectors and history queries, the OPC UA and SFTP ones trusting ' +
     'the identity they receive at their first connection; ' +
-    'add the kind of the certificates of the store, which are all presented by OIBus with their private key',
+    'add the kind of the certificates of the store, which are all presented by OIBus with their private key; ' +
+    'validate the certificate of the server of the REST connectors against a certificate of the store instead of accepting ' +
+    'any certificate, trusting the one they receive at their first connection, the others keeping the standard validation',
   apply: config => {
     const catalog = transformerCatalog(config);
 
@@ -2037,6 +2088,7 @@ export const upgrade: ConfigUpgrade = {
     useLocalOleDbDriver(config);
     removePiAgentSettings(config);
     addServerTrust(config);
+    useTrustedCertificates(config);
     forEachNorth(config, null, north => addFolderMaxSizes((north.settings as JsonObject).caching as JsonObject | undefined));
     forEachHistoryQuery(config, null, settings => addFolderMaxSizes(settings.caching as JsonObject | undefined));
 

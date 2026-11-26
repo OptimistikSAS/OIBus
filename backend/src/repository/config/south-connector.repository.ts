@@ -503,6 +503,40 @@ export default class SouthConnectorRepository {
     });
     transaction();
   }
+  /**
+   * Selects a trusted certificate of the store in the settings, to validate the certificate of the server (the TLS
+   * connectors, see `serverTrustInCertificateStore`), no longer trusting the identity received at the first connection
+   */
+  trustCertificate(id: string, certificateId: string, updatedBy: string): void {
+    const before = this.findSouthById(id);
+    if (!before) {
+      throw new NotFoundError(`South connector "${id}" not found`);
+    }
+    const transaction = this.database.transaction(() => {
+      const settings = `json_set(settings, '$.certificateValidation', 'trusted', '$.trustedCertificateId', ?)`;
+      const serverTrust = JSON.stringify({ identity: null, trustOnFirstUse: false });
+      if (updatedBy === 'system') {
+        // Trusted by the connector at its first connection: not an edition of the connector
+        this.database
+          .prepare(`UPDATE ${SOUTH_CONNECTORS_TABLE} SET settings = ${settings}, server_trust = ? WHERE id = ?;`)
+          .run(certificateId, serverTrust, id);
+      } else {
+        this.database
+          .prepare(
+            `UPDATE ${SOUTH_CONNECTORS_TABLE} SET settings = ${settings}, server_trust = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+          )
+          .run(certificateId, serverTrust, updatedBy, id);
+      }
+      this.auditService.record(
+        'south_connector',
+        id,
+        'UPDATE',
+        ...redactAuditSnapshots(before, this.findSouthById(id), connector => this.redactConnector(connector)),
+        updatedBy
+      );
+    });
+    transaction();
+  }
 
   start(id: string): void {
     const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET enabled = ? WHERE id = ?;`;

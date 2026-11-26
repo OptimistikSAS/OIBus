@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { Database } from 'better-sqlite3';
+import * as forge from 'node-forge';
 
 import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
 import {
@@ -10,12 +12,13 @@ import {
   SouthConnectorFolderScannerCommandDTO,
   SouthConnectorFolderScannerItemCommandDTO,
   SouthConnectorItemCommandDTO,
+  SouthConnectorRESTCommandDTO,
   SouthItemGroupCommandDTO
 } from '../../shared/model/api/south-connector.model';
 import { OIBusContent } from '../../shared/model/common/content.model';
 import { OIBUS_SOUTH_TYPES } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
-import { ServerIdentity, ServerTrust } from '../../shared/model/domain/server-identity.model';
+import { ServerIdentity, ServerTrust, X509ServerIdentityDetails } from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import {
@@ -55,6 +58,7 @@ import type {
 } from './south.service';
 import type TransformerService from './transformer.service';
 import type * as Utils from './utils';
+import { toTlsServerIdentity } from './utils-tls';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -214,6 +218,7 @@ describe('South Service', () => {
   let service: SouthServiceType;
   let validator: Mocked<JoiValidator>;
   let southConnectorRepository: Mocked<SouthConnectorRepository>;
+  let certificateService: Mocked<CertificateService>;
   let logRepository: Mocked<LogRepository>;
   let southMetricsRepository: Mocked<SouthConnectorMetricsRepository>;
   let southCacheRepository: Mocked<SouthCacheRepository>;
@@ -280,6 +285,7 @@ describe('South Service', () => {
     northConnectorRepository = createMock<NorthConnectorRepository>({ findNorthById: () => testData.north.list[0] });
     database = createMock<Database>({ transaction: fn => fn });
 
+    certificateService = createMock<CertificateService>();
     service = new SouthService(
       validator,
       southConnectorRepository,
@@ -288,7 +294,7 @@ describe('South Service', () => {
       southCacheRepository,
       createMock<ScanModeRepository>({ findAll: () => testData.scanMode.list }),
       createMock<OIAnalyticsRegistrationRepository>(),
-      createMock<CertificateService>(),
+      certificateService,
       oIAnalyticsMessageService,
       engine,
       southItemGroupRepository,
@@ -1089,6 +1095,98 @@ describe('South Service', () => {
 
     afterEach(() => {
       mock.timers.reset();
+    });
+
+    describe('of a connector trusting a certificate of the store', () => {
+      let certificatePem: string;
+      let certificateIdentity: ServerIdentity;
+      const restSouth = () => ({
+        ...testData.south.list[0],
+        type: 'rest' as const,
+        settings: { host: 'https://server', certificateValidation: 'trusted', trustedCertificateId: 'trustedId' }
+      });
+
+      beforeEach(() => {
+        const keys = forge.pki.rsa.generateKeyPair(1024);
+        const certificate = forge.pki.createCertificate();
+        certificate.publicKey = keys.publicKey;
+        certificate.setSubject([{ shortName: 'CN', value: 'server' }]);
+        certificate.setIssuer([{ shortName: 'CN', value: 'server' }]);
+        certificate.sign(keys.privateKey, forge.md.sha256.create());
+        certificatePem = forge.pki.certificateToPem(certificate);
+        certificateIdentity = toTlsServerIdentity(new crypto.X509Certificate(certificatePem).raw);
+        certificateService.findById.mock.mockImplementation(
+          () =>
+            ({
+              ...testData.certificates.list[0],
+              kind: 'trusted',
+              certificate: certificatePem,
+              createdBy: 'admin',
+              createdAt: 'at'
+            }) as never
+        );
+        certificateService.trustServerCertificate.mock.mockImplementation(() => ({ ...testData.certificates.list[0], id: 'newId' }));
+        mock.method(mockedSouth1, 'retrieveServerIdentity', async () => certificateIdentity);
+      });
+
+      it('should show the certificate it trusts as the identity it trusts', () => {
+        southConnectorRepository.findSouthById.mock.mockImplementation(() => restSouth() as never);
+
+        const state = service.getServerTrustState(testData.south.list[0].id);
+
+        assert.strictEqual(state.identity!.fingerprint, certificateIdentity.fingerprint);
+        assert.strictEqual(state.identity!.trustedBy, 'admin');
+        assert.deepStrictEqual(certificateService.findById.mock.calls[0].arguments, ['trustedId']);
+      });
+
+      it('should trust the certificate its server presents by adding it to the store, and select it', async () => {
+        southConnectorRepository.findSouthById.mock.mockImplementation(() => restSouth() as never);
+
+        await service.trustServerIdentity(testData.south.list[0].id, certificateIdentity.fingerprint, 'userTest');
+
+        assert.deepStrictEqual(certificateService.trustServerCertificate.mock.calls[0].arguments, [
+          (certificateIdentity.details as X509ServerIdentityDetails).certificate,
+          `${testData.south.list[0].name} server`,
+          'userTest'
+        ]);
+        assert.deepStrictEqual(southConnectorRepository.trustCertificate.mock.calls[0].arguments, [
+          testData.south.list[0].id,
+          'newId',
+          'userTest'
+        ]);
+        assert.strictEqual(southConnectorRepository.updateServerTrust.mock.callCount(), 0);
+        assert.strictEqual(engine.reloadSouth.mock.callCount(), 1);
+      });
+
+      it('should save the certificate trusted in its form in the store, and select it', async () => {
+        mock.method(service, 'retrieveSecretsFromSouth', () => null);
+
+        const command: SouthConnectorRESTCommandDTO = {
+          name: 'REST',
+          description: '',
+          enabled: true,
+          type: 'rest',
+          settings: {
+            host: 'https://server',
+            certificateValidation: 'standard',
+            trustedCertificateId: null,
+            timeout: 30,
+            authentication: { type: 'none' },
+            proxy: { useProxy: false },
+            test: { endpoint: '/', method: 'GET', successCode: 200 }
+          },
+          items: [],
+          groups: [],
+          configurationWorkflows: [],
+          serverTrust: { identity: certificateIdentity }
+        };
+        await service.create(command, null, 'userTest');
+
+        const saved = southConnectorRepository.saveSouth.mock.calls[0].arguments[0];
+        assert.deepStrictEqual(saved.serverTrust, { identity: null, trustOnFirstUse: false });
+        assert.strictEqual((saved.settings as unknown as Record<string, unknown>).certificateValidation, 'trusted');
+        assert.strictEqual((saved.settings as unknown as Record<string, unknown>).trustedCertificateId, 'newId');
+      });
     });
 
     it('should trust the identity of the command when creating a south connector, by its creator', async () => {

@@ -12,6 +12,7 @@ import {
   COMPRESSED_FILE_OPTIONS,
   FILE_AS_IS_OPTIONS,
   keepsResolvedTransformer,
+  toCertificateValidation,
   toCsvDelimiter,
   toFieldProcessOperations,
   toFileOutputTransformerOptions,
@@ -924,6 +925,25 @@ describe('4.0.0 config upgrade', () => {
       assert.deepStrictEqual(toServerTrust('opcua', { securityMode: 'sign' }), TRUST_ON_FIRST_USE);
       assert.deepStrictEqual(toServerTrust('opcua', { securityMode: 'none' }), NO_TRUST);
       assert.deepStrictEqual(toServerTrust('console', {}), NO_TRUST);
+    });
+  });
+
+  describe('certificate validation of the TLS connectors', () => {
+    it('trusts a certificate of the store, at the first use, for a connector which accepted any certificate', () => {
+      assert.deepStrictEqual(toCertificateValidation('rest', 'south', { host: 'https://h', acceptUnauthorized: true }), {
+        settings: { host: 'https://h', certificateValidation: 'trusted', trustedCertificateId: null },
+        trustOnFirstUse: true
+      });
+      assert.deepStrictEqual(toCertificateValidation('rest', 'north', { host: 'https://h', acceptUnauthorized: false }), {
+        settings: { host: 'https://h', certificateValidation: 'standard', trustedCertificateId: null },
+        trustOnFirstUse: false
+      });
+    });
+
+    it('leaves the other connectors, and the settings already converted', () => {
+      assert.strictEqual(toCertificateValidation('console', 'north', { acceptUnauthorized: true }), null);
+      assert.strictEqual(toCertificateValidation('rest', 'south', { host: 'https://h', certificateValidation: 'standard' }), null);
+      assert.strictEqual(toCertificateValidation('rest', 'south', null), null);
     });
   });
 

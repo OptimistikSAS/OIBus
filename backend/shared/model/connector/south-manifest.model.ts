@@ -275,6 +275,15 @@ export interface SouthConnectorManifest {
   serverIdentity?: ServerIdentityType;
 
   /**
+   * Whether the identity of the server is trusted through a certificate of the certificate store (a certification authority,
+   * or the certificate of the server), selected in the settings (`trustedCertificateId`), instead of the trust of the
+   * connector itself: the TLS connectors.
+   *
+   * @example true
+   */
+  serverTrustInCertificateStore?: boolean;
+
+  /**
    * The configuration schema for the connector settings.
    */
   settings: OIBusObjectAttribute;

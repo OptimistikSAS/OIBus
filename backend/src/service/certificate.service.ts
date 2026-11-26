@@ -184,6 +184,34 @@ export default class CertificateService {
     );
   }
 
+  /**
+   * Trusts the certificate a server presents (PEM), as a connector trusting it reviewed it: added to the store as a trusted
+   * certificate, unless the store already trusts this very certificate, which is then reused
+   */
+  trustServerCertificate(certificatePem: string, name: string, createdBy: string): Certificate {
+    const trusted = readTrustedCertificate(certificatePem);
+    const fingerprint = describeCertificate(trusted.pem).fingerprint;
+    const existing = this.certificateRepository
+      .list()
+      .find(certificate => certificate.kind === 'trusted' && describeCertificate(certificate.certificate).fingerprint === fingerprint);
+    if (existing) {
+      return existing;
+    }
+    return this.createCertificate(
+      {
+        name,
+        description: 'Certificate of a server, trusted from its connector',
+        kind: 'trusted',
+        publicKey: trusted.publicKeyPem,
+        privateKey: '',
+        certificate: trusted.pem,
+        certificateChain: null,
+        expiry: trusted.expiry
+      },
+      createdBy
+    );
+  }
+
   private createCertificate(
     certificate: Omit<Certificate, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>,
     createdBy: string

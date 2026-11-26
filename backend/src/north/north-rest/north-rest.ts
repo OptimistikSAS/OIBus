@@ -7,10 +7,12 @@ import { UndiciHeaders } from 'undici/types/dispatcher';
 
 import { NorthRESTSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity, ServerIdentityTrustStatus } from '../../../shared/model/domain/server-identity.model';
 
 import { OIBusError } from '../../model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type CacheService from '../../service/cache/cache.service';
+import type CertificateService from '../../service/certificate.service';
 import { encryptionService } from '../../service/encryption.service';
 import {
   HTTPRequest,
@@ -20,6 +22,8 @@ import {
   ReqResponse,
   retryableHttpStatusCodes
 } from '../../service/http-request.utils';
+import { toServerNotTrustedError } from '../../service/server-trust.utils';
+import { TlsServerTrust } from '../../service/utils-tls';
 import NorthConnector from '../north-connector';
 
 async function* multipartStream(boundary: string, filename: string, dataStream: AsyncIterable<Buffer>) {
@@ -36,8 +40,63 @@ async function* multipartStream(boundary: string, filename: string, dataStream: 
  * Class Console - display values and file path into the console
  */
 export default class NorthREST extends NorthConnector<NorthRESTSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, cacheService: CacheService) {
+  constructor(
+    configuration: NorthConnectorEntity<NorthRESTSettings>,
+    cacheService: CacheService,
+    private readonly certificateService: CertificateService
+  ) {
     super(configuration, cacheService);
+  }
+
+  /** The validation of the certificate of the server (see `TlsServerTrust`) */
+  private readonly tlsServerTrust = new TlsServerTrust(
+    () => this.connector.settings,
+    () => this.connector.serverTrust.identity,
+    certificateId => this.certificateService.findById(certificateId),
+    () => {
+      const { host, proxy, timeout } = this.connector.settings;
+      if (!/^https:\/\//i.test(host)) {
+        return null;
+      }
+      return {
+        url: host,
+        defaultPort: 443,
+        proxy:
+          proxy.useProxy && proxy.proxyUrl
+            ? {
+                url: proxy.proxyUrl,
+                username: proxy.proxyUsername,
+                password: proxy.proxyPassword ? encryptionService.decryptText(proxy.proxyPassword) : null
+              }
+            : null,
+        timeoutMs: timeout * 1000
+      };
+    },
+    (presented, status) => this.serverIdentityVerifier.refuse(presented, status)
+  );
+
+  override async retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    return await this.tlsServerTrust.retrieveServerIdentity();
+  }
+
+  /** Whether the certificate the server presents validates (see `testConnectionWithServerIdentity`) */
+  getServerIdentityTrustStatus(presented: ServerIdentity): ServerIdentityTrustStatus {
+    return this.tlsServerTrust.status(presented);
+  }
+
+  /**
+   * Sends a request to the server, validating its certificate: when it does not validate, the certificate the server
+   * presents is kept as pending, for a user to review and trust it
+   */
+  private async request(url: string | URL, options: ReqOptions): Promise<ReqResponse> {
+    try {
+      return await HTTPRequest(url, { ...options, tls: this.tlsServerTrust.tls() });
+    } catch (error: unknown) {
+      if (await this.tlsServerTrust.refuseIfNotTrusted(error)) {
+        throw toServerNotTrustedError(this, error);
+      }
+      throw error;
+    }
   }
 
   supportedTypes(): Array<string> {
@@ -53,19 +112,18 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
 
     let response: ReqResponse;
     try {
-      const { proxy, acceptUnauthorized } = this.getProxyOptions();
+      const proxy = this.getProxyOptions();
       const fetchOptions: ReqOptions = {
         method: testMethod,
         auth: this.getAuthorizationOptions(),
         proxy,
         timeout: this.connector.settings.timeout * 1000,
-        acceptUnauthorized,
         body: this.connector.settings.test.body && ['POST', 'PUT'].includes(testMethod) ? this.connector.settings.test.body : undefined
       };
 
       this.handleApiKeyAuth(fetchOptions, requestUrl);
 
-      response = await HTTPRequest(requestUrl, fetchOptions);
+      response = await this.request(requestUrl, fetchOptions);
     } catch (error: unknown) {
       throw new Error(`Fetch error: ${(error as Error).message}`);
     }
@@ -125,7 +183,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       headers[header.key] = header.value;
     }
 
-    const { proxy, acceptUnauthorized } = this.getProxyOptions();
+    const proxy = this.getProxyOptions();
 
     const fetchOptions: ReqOptions = {
       method: this.connector.settings.method,
@@ -134,15 +192,14 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       headers: headers,
       auth: this.getAuthorizationOptions(),
       proxy,
-      timeout: this.connector.settings.timeout * 1000,
-      acceptUnauthorized
+      timeout: this.connector.settings.timeout * 1000
     };
 
     this.handleApiKeyAuth(fetchOptions, requestUrl);
 
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(requestUrl, fetchOptions);
+      response = await this.request(requestUrl, fetchOptions);
     } catch (error) {
       const message = this.getMessageFromError(error);
       throw new OIBusError(`Failed to reach file endpoint "${requestUrl.toString()}": ${message}`, true);
@@ -158,11 +215,11 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     await response.body.dump();
   }
 
-  private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
+  private getProxyOptions(): ReqProxyOptions | undefined {
     const settings = this.connector.settings;
 
     if (!settings.proxy.useProxy) {
-      return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
+      return undefined;
     }
     if (!settings.proxy.proxyUrl) {
       throw new Error('Proxy URL not specified');
@@ -180,7 +237,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       };
     }
 
-    return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
+    return options;
   }
 
   private getAuthorizationOptions(): ReqAuthOptions | undefined {

@@ -56,7 +56,8 @@ import {
   reworkRegistrationPermissions,
   STEPS,
   up,
-  useLocalOleDbDriver
+  useLocalOleDbDriver,
+  useTrustedCertificates
 } from './v4.0.0';
 
 const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
@@ -5876,5 +5877,61 @@ describe('Entity migration v4.0.0: addTrustedCertificates', () => {
     await runStepsFrom(addTrustedCertificates, db);
 
     assert.strictEqual((await db('certificates').where('id', 'cert1').first('kind')).kind, 'key-pair');
+  });
+});
+
+describe('Entity migration v4.0.0: useTrustedCertificates', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBeforeStep(useTrustedCertificates, db)
+  });
+  let db: Knex;
+  const settingsOf = async (table: string, id: string, column = 'settings') =>
+    JSON.parse((await db(table).where('id', id).first(column))[column]);
+
+  before(() => harness.before());
+  after(() => harness.after());
+
+  beforeEach(async () => {
+    await harness.beforeEach();
+    db = harness.getDb();
+    await db('south_connectors').insert([
+      {
+        id: 'rest-any',
+        name: 'REST any',
+        type: 'rest',
+        enabled: true,
+        settings: JSON.stringify({ host: 'https://h', acceptUnauthorized: true })
+      },
+      {
+        id: 'rest-standard',
+        name: 'REST',
+        type: 'rest',
+        enabled: true,
+        settings: JSON.stringify({ host: 'https://h', acceptUnauthorized: false })
+      },
+      { id: 'sftp', name: 'SFTP', type: 'sftp', enabled: true, settings: JSON.stringify({ host: 'h' }) }
+    ]);
+  });
+  afterEach(() => harness.afterEach());
+
+  it('should trust a certificate of the store, at the first use, instead of accepting any certificate', async () => {
+    await runStepsFrom(useTrustedCertificates, db);
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'rest-any'), {
+      host: 'https://h',
+      certificateValidation: 'trusted',
+      trustedCertificateId: null
+    });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'rest-any', 'server_trust'), { identity: null, trustOnFirstUse: true });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'rest-standard'), {
+      host: 'https://h',
+      certificateValidation: 'standard',
+      trustedCertificateId: null
+    });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'rest-standard', 'server_trust'), {
+      identity: null,
+      trustOnFirstUse: false
+    });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'sftp'), { host: 'h' });
   });
 });

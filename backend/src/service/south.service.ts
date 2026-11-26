@@ -43,7 +43,12 @@ import { GetUserInfo, Page } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../shared/model/domain/engine.model';
-import { PresentedServerIdentity, ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
+import {
+  PresentedServerIdentity,
+  ServerTrust,
+  ServerTrustState,
+  X509ServerIdentityDetails
+} from '../../shared/model/domain/server-identity.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowSouthCommand } from '../model/configuration-workflow.model';
@@ -84,9 +89,11 @@ import {
   retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
   testConnectionWithServerIdentity,
+  toCertificateStoreServerTrust,
   toServerNotTrustedError,
   toServerTrust,
-  toServerTrustDTO
+  toServerTrustDTO,
+  trustFormCertificateInStore
 } from './server-trust.utils';
 import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import SouthExploreSessionManager from './south-explore-session-manager';
@@ -176,7 +183,12 @@ export default class SouthService {
     );
     // A new connector, even copied from another one, only trusts the identity its command sends: the one the connector
     // copied trusts may not be the identity of the server of the copy
-    southEntity.serverTrust = toServerTrust(command.serverTrust, null, createdBy);
+    southEntity.serverTrust = this.trustFormCertificate(
+      southEntity,
+      toServerTrust(command.serverTrust, null, createdBy),
+      command,
+      createdBy
+    );
 
     southEntity.createdBy = createdBy;
     southEntity.updatedBy = createdBy;
@@ -233,6 +245,7 @@ export default class SouthService {
       false,
       updatedBy
     );
+    southEntity.serverTrust = this.trustFormCertificate(southEntity, southEntity.serverTrust, command, updatedBy);
     southEntity.createdBy = previousSettings.createdBy;
     southEntity.updatedBy = updatedBy;
     for (const item of southEntity.items) {
@@ -334,7 +347,42 @@ export default class SouthService {
   getServerTrustState(southId: string): ServerTrustState {
     const southConnector = this.findById(southId);
     const pending = this.engine.hasSouth(southId) ? this.engine.getSouth(southId).south.getPendingServerIdentity() : null;
+    if (this.getManifest(southConnector.type).serverTrustInCertificateStore) {
+      return {
+        ...toCertificateStoreServerTrust(southConnector.settings, southConnector.serverTrust, id => this.certificateService.findById(id)),
+        pending
+      };
+    }
     return { ...southConnector.serverTrust, pending };
+  }
+
+  /**
+   * Trusts the certificate a server presents, adding it to the certificate store (or reusing the same certificate of the
+   * store): for the connectors trusting a certificate of the store, as a history query using one does
+   */
+  trustServerCertificate(certificatePem: string, name: string, trustedBy: string): { id: string } {
+    return this.certificateService.trustServerCertificate(certificatePem, name, trustedBy);
+  }
+
+  /** A certificate of the store, as a history query trusting one shows it */
+  findCertificate(certificateId: string): { certificate: string; createdBy: string; createdAt: string } {
+    return this.certificateService.findById(certificateId);
+  }
+
+  /** The trust of a connector saved with an identity trusted in its form (see `trustFormCertificateInStore`) */
+  private trustFormCertificate(
+    southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+    serverTrust: ServerTrust,
+    command: SouthConnectorCommandDTO,
+    user: string
+  ): ServerTrust {
+    return trustFormCertificateInStore(
+      southEntity.settings,
+      serverTrust,
+      command.serverTrust,
+      !!this.getManifest(southEntity.type).serverTrustInCertificateStore,
+      certificatePem => this.trustServerCertificate(certificatePem, `${southEntity.name} server`, user)
+    );
   }
 
   /**
@@ -355,11 +403,17 @@ export default class SouthService {
     const southConnector = this.findById(southId);
     const south = this.buildThrowawaySouth({ ...southConnector, enabled: false, items: [], groups: [] });
     const identity = await retrieveServerIdentityToTrust(south, fingerprint);
-    this.southConnectorRepository.updateServerTrust(
-      southId,
-      { identity: toTrustedServerIdentity(identity, trustedBy, DateTime.now().toUTC().toISO()!), trustOnFirstUse: false },
-      trustedBy
-    );
+    const certificate = (identity.details as X509ServerIdentityDetails).certificate;
+    if (this.getManifest(southConnector.type).serverTrustInCertificateStore && certificate) {
+      const trusted = this.trustServerCertificate(certificate, `${southConnector.name} server`, trustedBy);
+      this.southConnectorRepository.trustCertificate(southId, trusted.id, trustedBy);
+    } else {
+      this.southConnectorRepository.updateServerTrust(
+        southId,
+        { identity: toTrustedServerIdentity(identity, trustedBy, DateTime.now().toUTC().toISO()!), trustOnFirstUse: false },
+        trustedBy
+      );
+    }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouth(southConnector);
     this.engine.logger.info(

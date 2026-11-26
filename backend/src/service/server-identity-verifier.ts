@@ -3,6 +3,7 @@ import { DateTime } from 'luxon';
 import {
   PresentedServerIdentity,
   ServerIdentity,
+  ServerIdentityTrustStatus,
   ServerTrust,
   TrustedServerIdentity
 } from '../../shared/model/domain/server-identity.model';
@@ -52,13 +53,23 @@ export default class ServerIdentityVerifier {
       this.events.emit('trusted-on-first-use', identity);
       return true;
     }
+    this.refuse(presented, status, trust.identity);
+    return false;
+  }
+
+  /**
+   * Keeps the identity a server presented as pending, the connection having been refused: by `verify`, or by the TLS
+   * validation of a connector trusting a certificate of the store (which the identity does not validate against).
+   */
+  refuse(presented: ServerIdentity, status: Exclude<ServerIdentityTrustStatus, 'trusted'>, trusted: ServerIdentity | null = null): void {
     this.pending = { identity: presented, status };
     this.getLogger().error(
-      status === 'changed'
-        ? `Connection refused: the server presents the ${describeServerIdentity(presented)}, which is not the trusted one (${describeServerIdentity(trust.identity!)}). Review it and trust it to connect`
-        : `Connection refused: the server presents the ${describeServerIdentity(presented)}, which is not trusted. Review it and trust it to connect`
+      status === 'changed' && trusted
+        ? `Connection refused: the server presents the ${describeServerIdentity(presented)}, which is not the trusted one (${describeServerIdentity(trusted)}). Review it and trust it to connect`
+        : status === 'changed'
+          ? `Connection refused: the server presents the ${describeServerIdentity(presented)}, which does not validate against the trusted certificate. Review it and trust it to connect`
+          : `Connection refused: the server presents the ${describeServerIdentity(presented)}, which is not trusted. Review it and trust it to connect`
     );
-    return false;
   }
 
   /** The identity the server presented at the last connection refused, `null` when the last connection was not refused. */

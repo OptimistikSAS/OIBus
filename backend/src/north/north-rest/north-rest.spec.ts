@@ -4,14 +4,19 @@ import { createRequire } from 'node:module';
 import { Readable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
+import * as forge from 'node-forge';
+
 import type { NorthRESTSettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
+import type CertificateService from '../../service/certificate.service';
 import type * as HttpRequestUtils from '../../service/http-request.utils';
 import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import { assertContains, buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import testData from '../../tests/utils/test-data';
+import { assertContains, buildNorthEntity, createMock, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type NorthRESTClass from './north-rest';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -32,7 +37,8 @@ const buildConfiguration = (settings: Partial<NorthRESTSettings> = {}) =>
     endpoint: '/upload',
     method: 'POST',
     timeout: 30,
-    acceptUnauthorized: true,
+    certificateValidation: 'standard',
+    trustedCertificateId: null,
     authentication: {
       type: 'basic',
       username: 'user',
@@ -60,10 +66,11 @@ describe('NorthREST', () => {
   let north: NorthRESTClass;
 
   let HTTPRequest: Mock<typeof HttpRequestUtils.HTTPRequest>;
+  let certificateService: Mocked<CertificateService>;
   const httpRequestExports: typeof HttpRequestUtils = { ...nodeRequire('../../service/http-request.utils') };
 
   const createNorth = (settings: Partial<NorthRESTSettings> = {}) => {
-    north = new NorthREST(buildConfiguration(settings), createCacheServiceMock());
+    north = new NorthREST(buildConfiguration(settings), createCacheServiceMock(), certificateService);
   };
 
   before(() => {
@@ -85,6 +92,7 @@ describe('NorthREST', () => {
   beforeEach(() => {
     HTTPRequest = mock.fn(async () => createMockResponse(200, 'OK'));
     httpRequestExports.HTTPRequest = HTTPRequest;
+    certificateService = createMock<CertificateService>();
     createNorth();
   });
 
@@ -94,6 +102,34 @@ describe('NorthREST', () => {
 
   it('should return any', () => {
     assert.deepStrictEqual(north.supportedTypes(), ['file']);
+  });
+
+  it('should validate the certificate of the server against the trusted certificate of the store', async () => {
+    const keys = forge.pki.rsa.generateKeyPair(1024);
+    const certificate = forge.pki.createCertificate();
+    certificate.publicKey = keys.publicKey;
+    certificate.setSubject([{ shortName: 'CN', value: 'CA' }]);
+    certificate.setIssuer([{ shortName: 'CN', value: 'CA' }]);
+    certificate.setExtensions([{ name: 'basicConstraints', cA: true }]);
+    certificate.sign(keys.privateKey, forge.md.sha256.create());
+    const pem = forge.pki.certificateToPem(certificate);
+    certificateService.findById.mock.mockImplementation(() => ({ ...testData.certificates.list[0], certificate: pem }));
+    createNorth({ certificateValidation: 'trusted', trustedCertificateId: 'trustedId' });
+
+    await north.testConnection();
+
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1]?.tls, { ca: [pem] });
+  });
+
+  it('should keep the certificate of a server which does not validate as pending', async () => {
+    const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
+    HTTPRequest.mock.mockImplementation(async () => {
+      throw new Error('fetch failed', { cause: Object.assign(new Error('expired'), { code: 'CERT_HAS_EXPIRED' }) });
+    });
+    mock.method(north['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+    await assert.rejects(north.testConnection(), /The server presents the certificate AB:CD, which is not trusted/);
+    assert.deepStrictEqual(north.getPendingServerIdentity(), { identity, status: 'unknown' });
   });
 
   it('should test connection successfully', async () => {
@@ -271,7 +307,7 @@ describe('NorthREST', () => {
     north.connectorConfiguration.settings.proxy.proxyPassword = 'pass';
 
     const result = north['getProxyOptions']();
-    assert.deepStrictEqual(result.proxy, {
+    assert.deepStrictEqual(result, {
       url: 'http://proxy:8080',
       auth: { type: 'url', username: 'user', password: 'pass' }
     });
@@ -282,7 +318,7 @@ describe('NorthREST', () => {
     north.connectorConfiguration.settings.proxy.proxyUrl = 'http://proxy:8080';
 
     const result = north['getProxyOptions']();
-    assert.deepStrictEqual(result.proxy, { url: 'http://proxy:8080' });
+    assert.deepStrictEqual(result, { url: 'http://proxy:8080' });
   });
 
   it('should manage error', () => {

@@ -7,6 +7,7 @@ import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { OIBusCertificateAttribute } from '@oibus/shared/connector/form.model';
 
 import { CertificateCreator } from '../../../engine/certificate-list/certificate-creator.service';
+import { TrustedCertificateCreator } from '../../../engine/certificate-list/trusted-certificate-creator.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
 import { SelectOrCreateComponent } from '../select-or-create/select-or-create.component';
 
@@ -24,13 +25,24 @@ import { SelectOrCreateComponent } from '../select-or-create/select-or-create.co
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SelectOrCreateComponent]
 })
 export class OibusCertificateFormControlComponent {
-  readonly certificateCreator = inject(CertificateCreator);
+  private readonly presentedCertificateCreator = inject(CertificateCreator);
+  private readonly trustedCertificateCreator = inject(TrustedCertificateCreator);
   private readonly controlContainer = inject(ControlContainer);
 
   readonly certificateAttribute = input.required<OIBusCertificateAttribute>();
   readonly certificates = input.required<Array<CertificateDTO>>();
-  /** The certificates OIBus presents, with their private key: a trusted certificate has none */
-  readonly presentedCertificates = computed(() => this.certificates().filter(certificate => certificate.kind === 'key-pair'));
+  /**
+   * The certificates OIBus presents, with their private key, or the certificates it trusts, which have none, as the attribute
+   * asks for
+   */
+  readonly offeredCertificates = computed(() => {
+    const kind = this.certificateAttribute().trusted ? 'trusted' : 'key-pair';
+    return this.certificates().filter(certificate => certificate.kind === kind);
+  });
+  /** Creates a certificate OIBus presents, or imports one it trusts */
+  readonly certificateCreator = computed(() =>
+    this.certificateAttribute().trusted ? this.trustedCertificateCreator : this.presentedCertificateCreator
+  );
   /**
    * Prefixed by the groups nesting the control under the settings, when there are: nested settings can have the key of
    * another certificate (the OPC UA certificate and the certificate authenticating the user are both `certificateId`)

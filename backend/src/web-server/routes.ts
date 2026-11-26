@@ -296,6 +296,7 @@ const models: TsoaRoute.Models = {
             "translationKey": {"dataType":"string","required":true},
             "validators": {"dataType":"array","array":{"dataType":"refObject","ref":"OIBusAttributeValidator"},"required":true},
             "displayProperties": {"ref":"OIBusAttributeDisplayProperties","required":true},
+            "trusted": {"dataType":"boolean"},
         },
         "additionalProperties": false,
     },
@@ -734,6 +735,7 @@ const models: TsoaRoute.Models = {
             "explore": {"dataType":"boolean"},
             "discovery": {"ref":"SouthConnectorDiscovery"},
             "serverIdentity": {"ref":"ServerIdentityType"},
+            "serverTrustInCertificateStore": {"dataType":"boolean"},
             "settings": {"ref":"OIBusObjectAttribute","required":true},
             "items": {"ref":"OIBusArrayAttribute","required":true},
         },
@@ -991,6 +993,7 @@ const models: TsoaRoute.Models = {
             "dnsNames": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "ipAddresses": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "selfSigned": {"dataType":"boolean","required":true},
+            "certificate": {"dataType":"string"},
         },
         "additionalProperties": false,
     },
@@ -3569,6 +3572,11 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestSettingsCertificateValidation": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["standard"]},{"dataType":"enum","enums":["trusted"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestSettingsAuthenticationType": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["bearer"]},{"dataType":"enum","enums":["api-key"]}],"validators":{}},
@@ -3624,7 +3632,8 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "host": {"dataType":"string","required":true},
-            "acceptUnauthorized": {"dataType":"boolean","required":true},
+            "certificateValidation": {"ref":"SouthRestSettingsCertificateValidation","required":true},
+            "trustedCertificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "timeout": {"dataType":"double","required":true},
             "authentication": {"ref":"SouthRestSettingsAuthentication","required":true},
             "proxy": {"ref":"SouthRestSettingsProxy","required":true},
@@ -7308,6 +7317,11 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthRESTSettingsCertificateValidation": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["standard"]},{"dataType":"enum","enums":["trusted"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthRESTSettingsMethod": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["POST"]},{"dataType":"enum","enums":["PUT"]},{"dataType":"enum","enums":["PATCH"]}],"validators":{}},
@@ -7391,7 +7405,8 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "host": {"dataType":"string","required":true},
-            "acceptUnauthorized": {"dataType":"boolean","required":true},
+            "certificateValidation": {"ref":"NorthRESTSettingsCertificateValidation","required":true},
+            "trustedCertificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "method": {"ref":"NorthRESTSettingsMethod","required":true},
             "endpoint": {"dataType":"string","required":true},
             "timeout": {"dataType":"double","required":true},
@@ -8888,6 +8903,7 @@ const models: TsoaRoute.Models = {
             "beta": {"dataType":"boolean"},
             "types": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "serverIdentity": {"ref":"ServerIdentityType"},
+            "serverTrustInCertificateStore": {"dataType":"boolean"},
             "settings": {"ref":"OIBusObjectAttribute","required":true},
         },
         "additionalProperties": false,

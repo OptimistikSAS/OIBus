@@ -882,6 +882,11 @@
 					"displayProperties": {
 						"$ref": "#/components/schemas/OIBusAttributeDisplayProperties",
 						"description": "Display properties for this attribute."
+					},
+					"trusted": {
+						"type": "boolean",
+						"description": "Whether a certificate OIBus trusts is selected (a certification authority, or the certificate of a server, without\nprivate key) instead of a certificate OIBus presents, with its private key (the default).",
+						"example": true
 					}
 				},
 				"required": [
@@ -2327,6 +2332,11 @@
 						"description": "The kind of identity the server of this connector type presents, when the connector checks it: the connector refuses a\nserver whose identity is not trusted. UI capability flag — mirrors the connector's `retrieveServerIdentity()` (which\nmay still return none with some settings, as OPC UA with the security mode None).",
 						"example": "x509"
 					},
+					"serverTrustInCertificateStore": {
+						"type": "boolean",
+						"description": "Whether the identity of the server is trusted through a certificate of the certificate store (a certification authority,\nor the certificate of the server), selected in the settings (`trustedCertificateId`), instead of the trust of the\nconnector itself: the TLS connectors.",
+						"example": true
+					},
 					"settings": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The configuration schema for the connector settings."
@@ -3380,6 +3390,11 @@
 						"type": "boolean",
 						"description": "Whether the certificate is self-signed, rather than issued by a certificate authority.",
 						"example": true
+					},
+					"certificate": {
+						"type": "string",
+						"description": "The certificate itself (PEM), for the connectors trusting a certificate of the store (the TLS connectors): trusting the\nidentity adds it to the store.",
+						"example": "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBBQUAMEUx...\n-----END CERTIFICATE-----"
 					}
 				},
 				"required": [
@@ -14811,6 +14826,13 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestSettingsCertificateValidation": {
+				"type": "string",
+				"enum": [
+					"standard",
+					"trusted"
+				]
+			},
 			"SouthRestSettingsAuthenticationType": {
 				"type": "string",
 				"enum": [
@@ -14921,8 +14943,12 @@
 					"host": {
 						"type": "string"
 					},
-					"acceptUnauthorized": {
-						"type": "boolean"
+					"certificateValidation": {
+						"$ref": "#/components/schemas/SouthRestSettingsCertificateValidation"
+					},
+					"trustedCertificateId": {
+						"type": "string",
+						"nullable": true
 					},
 					"timeout": {
 						"type": "number",
@@ -14940,7 +14966,7 @@
 				},
 				"required": [
 					"host",
-					"acceptUnauthorized",
+					"certificateValidation",
 					"timeout",
 					"authentication",
 					"proxy",
@@ -34855,6 +34881,13 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"NorthRESTSettingsCertificateValidation": {
+				"type": "string",
+				"enum": [
+					"standard",
+					"trusted"
+				]
+			},
 			"NorthRESTSettingsMethod": {
 				"type": "string",
 				"enum": [
@@ -35012,8 +35045,12 @@
 					"host": {
 						"type": "string"
 					},
-					"acceptUnauthorized": {
-						"type": "boolean"
+					"certificateValidation": {
+						"$ref": "#/components/schemas/NorthRESTSettingsCertificateValidation"
+					},
+					"trustedCertificateId": {
+						"type": "string",
+						"nullable": true
 					},
 					"method": {
 						"$ref": "#/components/schemas/NorthRESTSettingsMethod"
@@ -35056,7 +35093,7 @@
 				},
 				"required": [
 					"host",
-					"acceptUnauthorized",
+					"certificateValidation",
 					"method",
 					"endpoint",
 					"timeout",
@@ -41019,6 +41056,11 @@
 						"$ref": "#/components/schemas/ServerIdentityType",
 						"description": "The kind of identity the server of this connector type presents, when the connector checks it: the connector refuses a\nserver whose identity is not trusted. UI capability flag — mirrors the connector's `retrieveServerIdentity()` (which\nmay still return none with some settings, as OPC UA with the security mode None).",
 						"example": "x509"
+					},
+					"serverTrustInCertificateStore": {
+						"type": "boolean",
+						"description": "Whether the identity of the server is trusted through a certificate of the certificate store (a certification authority,\nor the certificate of the server), selected in the settings (`trustedCertificateId`), instead of the trust of the\nconnector itself: the TLS connectors.",
+						"example": true
 					},
 					"settings": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",

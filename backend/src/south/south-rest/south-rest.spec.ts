@@ -2,17 +2,21 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
+import * as forge from 'node-forge';
+
 import type { SouthRestItemSettings, SouthRestSettings } from '../../../shared/model/connector/south-settings.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type CertificateService from '../../service/certificate.service';
 import type { ReqOptions, ReqResponse } from '../../service/http-request.utils';
 import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import testData from '../../tests/utils/test-data';
-import { assertContains, createMock, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import { assertContains, createMock, type Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import type SouthRestClass from './south-rest';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -28,7 +32,8 @@ const createConfiguration = (): SouthConnectorEntity<SouthRestSettings, SouthRes
   serverTrust: { identity: null, trustOnFirstUse: false },
   settings: {
     host: 'https://api.example.com/',
-    acceptUnauthorized: true,
+    certificateValidation: 'standard',
+    trustedCertificateId: null,
     authentication: {
       type: 'basic',
       username: 'rest-user',
@@ -91,6 +96,7 @@ describe('SouthRestAPI connector', () => {
   let logger: PinoLogger;
   let addContentCallback: Mock<ConstructorParameters<typeof SouthRestClass>[1]>;
   let HTTPRequest: Mock<(url: URL, options?: ReqOptions) => Promise<ReqResponse>>;
+  let certificateService: Mocked<CertificateService>;
 
   const httpRequestExports: Record<string, unknown> = { HTTPRequest: undefined };
 
@@ -124,6 +130,7 @@ describe('SouthRestAPI connector', () => {
   beforeEach(() => {
     logger = new PinoLogger();
     addContentCallback = mock.fn(async () => undefined);
+    certificateService = createMock<CertificateService>();
     HTTPRequest = mock.fn(async () => createMockResponse(200));
     httpRequestExports.HTTPRequest = HTTPRequest;
     Object.assign(utilsExports, createUtilsMocks());
@@ -138,7 +145,7 @@ describe('SouthRestAPI connector', () => {
   });
 
   const createSouth = (configuration: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>) =>
-    new SouthRest(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+    new SouthRest(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder', certificateService);
 
   // Recreates the connector with its settings edited by `edit`, and returns its configuration
   const configure = (edit: (settings: SouthRestSettings) => void) => {
@@ -175,6 +182,68 @@ describe('SouthRestAPI connector', () => {
       throw new Error('http error');
     });
     await assert.rejects(south.testConnection(), new Error('Fetch error: http error'));
+  });
+
+  describe('with the certificate of the server', () => {
+    const certificationAuthority = (): string => {
+      const keys = forge.pki.rsa.generateKeyPair(1024);
+      const certificate = forge.pki.createCertificate();
+      certificate.publicKey = keys.publicKey;
+      certificate.setSubject([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setIssuer([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setExtensions([{ name: 'basicConstraints', cA: true }]);
+      certificate.sign(keys.privateKey, forge.md.sha256.create());
+      return forge.pki.certificateToPem(certificate);
+    };
+    const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
+
+    it('should validate the certificate of the server with the standard validation', async () => {
+      respondWith(200, 'OK');
+
+      await south.testConnection();
+
+      assert.deepStrictEqual(getRequestOptions().tls, {});
+    });
+
+    it('should validate the certificate of the server against the trusted certificate of the store', async () => {
+      const pem = certificationAuthority();
+      certificateService.findById.mock.mockImplementation(() => ({ ...testData.certificates.list[0], certificate: pem }));
+      configure(settings => {
+        settings.certificateValidation = 'trusted';
+        settings.trustedCertificateId = 'trustedId';
+      });
+      respondWith(200, 'OK');
+
+      await south.testConnection();
+
+      assert.deepStrictEqual(getRequestOptions().tls, { ca: [pem] });
+      assert.deepStrictEqual(certificateService.findById.mock.calls[0].arguments, ['trustedId']);
+    });
+
+    it('should keep the certificate of a server which does not validate as pending, and tell how to trust it', async () => {
+      HTTPRequest.mock.mockImplementation(async () => {
+        throw new Error('fetch failed', {
+          cause: Object.assign(new Error('self-signed certificate'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' })
+        });
+      });
+      mock.method(south['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+      await assert.rejects(
+        south.testConnection(),
+        new Error(
+          'Fetch error: The server presents the certificate AB:CD, which is not trusted: test the connection to review its identity and trust it'
+        )
+      );
+      assert.deepStrictEqual(south.getPendingServerIdentity(), { identity, status: 'unknown' });
+    });
+
+    it('should not read the certificate of a server without TLS', async () => {
+      configure(settings => {
+        settings.host = 'http://api.example.com/';
+      });
+
+      assert.strictEqual(await south.retrieveServerIdentity(), null);
+    });
   });
 
   it('should handle API Key authentication in query params', async () => {
@@ -653,26 +722,23 @@ describe('SouthRestAPI connector', () => {
   });
 
   it('should get proxy', () => {
-    const configuration = configure(settings => {
+    configure(settings => {
       settings.proxy.useProxy = true;
       settings.proxy.proxyUrl = 'http://localhost:8080/';
     });
-    assert.deepStrictEqual(south['getProxyOptions'](), {
-      proxy: { url: 'http://localhost:8080/' },
-      acceptUnauthorized: configuration.settings.acceptUnauthorized
-    });
+    assert.deepStrictEqual(south['getProxyOptions'](), { url: 'http://localhost:8080/' });
   });
 
   it('should get proxy with auth', () => {
-    const configuration = configure(settings => {
+    configure(settings => {
       settings.proxy.useProxy = true;
       settings.proxy.proxyUrl = 'http://localhost:8080/';
       settings.proxy.proxyUsername = 'username';
       settings.proxy.proxyPassword = 'password';
     });
     assert.deepStrictEqual(south['getProxyOptions'](), {
-      proxy: { url: 'http://localhost:8080/', auth: { type: 'url', username: 'username', password: 'password' } },
-      acceptUnauthorized: configuration.settings.acceptUnauthorized
+      url: 'http://localhost:8080/',
+      auth: { type: 'url', username: 'username', password: 'password' }
     });
   });
 

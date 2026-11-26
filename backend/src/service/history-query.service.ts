@@ -18,7 +18,12 @@ import { OIBusSouthType, SouthConnectorManifest } from '../../shared/model/conne
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
 import { HistoryQueryItemSearchParam } from '../../shared/model/domain/history-query.model';
-import { PresentedServerIdentity, ServerTrust, ServerTrustState } from '../../shared/model/domain/server-identity.model';
+import {
+  PresentedServerIdentity,
+  ServerTrust,
+  ServerTrustState,
+  X509ServerIdentityDetails
+} from '../../shared/model/domain/server-identity.model';
 import { SouthConnectorItemTestingSettings } from '../../shared/model/domain/south-connector.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
@@ -40,7 +45,14 @@ import type NorthService from './north.service';
 import { northManifestList } from './north-manifests';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
-import { retrievePresentedServerIdentity, retrieveServerIdentityToTrust, toServerTrust, toServerTrustDTO } from './server-trust.utils';
+import {
+  retrievePresentedServerIdentity,
+  retrieveServerIdentityToTrust,
+  toCertificateStoreServerTrust,
+  toServerTrust,
+  toServerTrustDTO,
+  trustFormCertificateInStore
+} from './server-trust.utils';
 import type SouthService from './south.service';
 import { southManifestList } from './south-manifests';
 import type TransformerService from './transformer.service';
@@ -119,6 +131,7 @@ export default class HistoryQueryService {
     // identity of the server of the copy
     historyQuery.southServerTrust = toServerTrust(command.southServerTrust, null, createdBy);
     historyQuery.northServerTrust = toServerTrust(command.northServerTrust, null, createdBy);
+    this.trustFormCertificates(historyQuery, command, createdBy);
     historyQuery.createdBy = createdBy;
     historyQuery.updatedBy = createdBy;
     for (const item of historyQuery.items) {
@@ -198,6 +211,7 @@ export default class HistoryQueryService {
 
     const historyQuery = { id: previousSettings.id } as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
     copyHistoryQueryCommandToHistoryQueryEntity(historyQuery, command, previousSettings, this.scanModeRepository.findAll(), updatedBy);
+    this.trustFormCertificates(historyQuery, command, updatedBy);
     historyQuery.createdBy = previousSettings.createdBy;
     historyQuery.updatedBy = updatedBy;
     for (const item of historyQuery.items) {
@@ -416,7 +430,43 @@ export default class HistoryQueryService {
     } catch {
       // Not in the engine
     }
-    return { ...(side === 'south' ? historyQuery.southServerTrust : historyQuery.northServerTrust), pending };
+    const serverTrust = side === 'south' ? historyQuery.southServerTrust : historyQuery.northServerTrust;
+    if (this.trustsCertificateStore(historyQuery, side)) {
+      const settings = side === 'south' ? historyQuery.southSettings : historyQuery.northSettings;
+      return { ...toCertificateStoreServerTrust(settings, serverTrust, id => this.southService.findCertificate(id)), pending };
+    }
+    return { ...serverTrust, pending };
+  }
+
+  /** Whether the connector of a side trusts a certificate of the store (see `serverTrustInCertificateStore`) */
+  private trustsCertificateStore(historyQuery: { southType: string; northType: string }, side: 'south' | 'north'): boolean {
+    return side === 'south'
+      ? !!this.southService.getManifest(historyQuery.southType as OIBusSouthType).serverTrustInCertificateStore
+      : !!this.northService.getManifest(historyQuery.northType).serverTrustInCertificateStore;
+  }
+
+  /** The trust of the sides of a history query saved with identities trusted in its form (see `trustFormCertificateInStore`) */
+  private trustFormCertificates(
+    historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
+    command: HistoryQueryCommandDTO,
+    user: string
+  ): void {
+    const trustCertificate = (side: 'South' | 'North') => (certificatePem: string) =>
+      this.southService.trustServerCertificate(certificatePem, `${historyQuery.name} ${side} server`, user);
+    historyQuery.southServerTrust = trustFormCertificateInStore(
+      historyQuery.southSettings,
+      historyQuery.southServerTrust,
+      command.southServerTrust,
+      this.trustsCertificateStore(historyQuery, 'south'),
+      trustCertificate('South')
+    );
+    historyQuery.northServerTrust = trustFormCertificateInStore(
+      historyQuery.northSettings,
+      historyQuery.northServerTrust,
+      command.northServerTrust,
+      this.trustsCertificateStore(historyQuery, 'north'),
+      trustCertificate('North')
+    );
   }
 
   /**
@@ -439,12 +489,22 @@ export default class HistoryQueryService {
     const historyQuery = this.findById(historyId);
     const connector = this.buildThrowawayConnector(historyQuery, side);
     const identity = await retrieveServerIdentityToTrust(connector, fingerprint);
-    this.historyQueryRepository.updateServerTrust(
-      historyId,
-      side,
-      { identity: toTrustedServerIdentity(identity, trustedBy, DateTime.now().toUTC().toISO()!), trustOnFirstUse: false },
-      trustedBy
-    );
+    const certificate = (identity.details as X509ServerIdentityDetails).certificate;
+    if (this.trustsCertificateStore(historyQuery, side) && certificate) {
+      const trusted = this.southService.trustServerCertificate(
+        certificate,
+        `${historyQuery.name} ${side === 'south' ? 'South' : 'North'} server`,
+        trustedBy
+      );
+      this.historyQueryRepository.trustCertificate(historyId, side, trusted.id, trustedBy);
+    } else {
+      this.historyQueryRepository.updateServerTrust(
+        historyId,
+        side,
+        { identity: toTrustedServerIdentity(identity, trustedBy, DateTime.now().toUTC().toISO()!), trustOnFirstUse: false },
+        trustedBy
+      );
+    }
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     if (historyQuery.status === 'RUNNING') {
       await this.engine.reloadHistoryQuery(historyQuery, false);

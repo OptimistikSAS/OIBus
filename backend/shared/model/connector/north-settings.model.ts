@@ -57,6 +57,9 @@ export type NorthRESTSettingsAuthenticationAddTo = (typeof NORTH_R_E_S_T_SETTING
 export const NORTH_R_E_S_T_SETTINGS_TEST_TEST_METHODS = ['GET', 'POST', 'PUT'] as const;
 export type NorthRESTSettingsTestTestMethod = (typeof NORTH_R_E_S_T_SETTINGS_TEST_TEST_METHODS)[number];
 
+export const NORTH_R_E_S_T_SETTINGS_CERTIFICATE_VALIDATIONS = ['standard', 'trusted'] as const;
+export type NorthRESTSettingsCertificateValidation = (typeof NORTH_R_E_S_T_SETTINGS_CERTIFICATE_VALIDATIONS)[number];
+
 export const NORTH_R_E_S_T_SETTINGS_METHODS = ['POST', 'PUT', 'PATCH'] as const;
 export type NorthRESTSettingsMethod = (typeof NORTH_R_E_S_T_SETTINGS_METHODS)[number];
 
@@ -235,7 +238,8 @@ export interface NorthOPCUASettings {
 
 export interface NorthRESTSettings {
   host: string;
-  acceptUnauthorized: boolean;
+  certificateValidation: NorthRESTSettingsCertificateValidation;
+  trustedCertificateId?: string | null;
   method: NorthRESTSettingsMethod;
   endpoint: string;
   timeout: number;

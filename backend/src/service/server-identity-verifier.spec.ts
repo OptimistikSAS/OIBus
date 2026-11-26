@@ -52,6 +52,17 @@ describe('ServerIdentityVerifier', () => {
     ]);
   });
 
+  it('should keep as pending an identity a TLS validation refused', () => {
+    verifier.refuse(presented, 'changed');
+    assert.deepStrictEqual(verifier.pendingIdentity, { identity: presented, status: 'changed' });
+    assert.deepStrictEqual(logger.error.mock.calls[0].arguments, [
+      'Connection refused: the server presents the host key SHA256:presented, which does not validate against the trusted certificate. Review it and trust it to connect'
+    ]);
+
+    verifier.refuse(presented, 'unknown');
+    assert.deepStrictEqual(verifier.pendingIdentity, { identity: presented, status: 'unknown' });
+  });
+
   it('should refuse an identity which is not the trusted one', () => {
     trust = { identity: trusted, trustOnFirstUse: true };
 

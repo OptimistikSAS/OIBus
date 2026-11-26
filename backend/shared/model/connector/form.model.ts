@@ -394,6 +394,13 @@ export interface OIBusCertificateAttribute extends BaseOIBusDisplayableAttribute
    * The type of this attribute (always "certificate").
    */
   type: 'certificate';
+
+  /**
+   * Whether a certificate OIBus trusts is selected (a certification authority, or the certificate of a server, without
+   * private key) instead of a certificate OIBus presents, with its private key (the default).
+   * @example true
+   */
+  trusted?: boolean;
 }
 
 /**

@@ -62,11 +62,11 @@ describe('CertificateRepository', () => {
     assert.ok(!repository.findUsages(certificateId).some(usage => usage.type === 'web-server'));
   });
 
-  it('should rely on manifests naming every certificate field certificateId, and giving none to the items', () => {
+  it('should rely on manifests naming every certificate field certificateId (trustedCertificateId when trusted), and giving none to the items', () => {
     const certificateKeys = (attribute: OIBusAttribute): Array<string> => {
       switch (attribute.type) {
         case 'certificate':
-          return [attribute.key];
+          return [`${attribute.trusted ? 'trusted:' : ''}${attribute.key}`];
         case 'object':
           return attribute.attributes.flatMap(certificateKeys);
         case 'array':
@@ -77,7 +77,10 @@ describe('CertificateRepository', () => {
     };
     const manifests = [...southManifestList, ...northManifestList];
     assert.ok(manifests.flatMap(manifest => certificateKeys(manifest.settings)).length > 0);
-    assert.deepStrictEqual([...new Set(manifests.flatMap(manifest => certificateKeys(manifest.settings)))], ['certificateId']);
+    assert.deepStrictEqual([...new Set(manifests.flatMap(manifest => certificateKeys(manifest.settings)))].sort(), [
+      'certificateId',
+      'trusted:trustedCertificateId'
+    ]);
     assert.deepStrictEqual(
       southManifestList.flatMap(manifest => certificateKeys(manifest.items.rootAttribute)),
       []

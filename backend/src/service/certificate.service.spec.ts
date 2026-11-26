@@ -337,6 +337,24 @@ describe('Certificate Service', () => {
     assert.strictEqual(certificateRepository.update.mock.calls.length, 0);
   });
 
+  it('should trust the certificate a server presents, reusing the same trusted certificate of the store', () => {
+    certificateRepository.create.mock.mockImplementation(certificate => ({ ...certificate, createdAt: '', updatedAt: '' }));
+    certificateRepository.list.mock.mockImplementation(() => [testData.certificates.list[0]]);
+
+    const created = service.trustServerCertificate(EC_CA_PEM, 'REST server', 'userTest');
+
+    assert.strictEqual(created.kind, 'trusted');
+    assert.strictEqual(created.name, 'REST server');
+    assert.strictEqual(created.certificate, EC_CA_PEM);
+    assert.strictEqual(created.privateKey, '');
+    assert.strictEqual(created.createdBy, 'userTest');
+
+    const existing = { ...testData.certificates.list[1], kind: 'trusted' as const, certificate: EC_CA_PEM };
+    certificateRepository.list.mock.mockImplementation(() => [testData.certificates.list[0], existing]);
+    assert.strictEqual(service.trustServerCertificate(EC_CA_PEM, 'Other server', 'userTest'), existing);
+    assert.strictEqual(certificateRepository.create.mock.callCount(), 1);
+  });
+
   it('should tell whether a certificate is a certification authority, with its fingerprint', () => {
     const dto = toCertificateDTO({ ...testData.certificates.list[0], kind: 'trusted', certificate: EC_CA_PEM }, id => ({
       id,

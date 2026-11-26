@@ -200,7 +200,12 @@
           },
           "rest": {
             "host": "Hôte",
-            "accept-unauthorized": "Accepter certificat non autorisé",
+            "certificate-validation": {
+              "title": "Validation du certificat serveur",
+              "standard": "Standard",
+              "trusted": "Certificat approuvé"
+            },
+            "trusted-certificate-id": "Certificat approuvé",
             "authentication": {
               "title": "Authentification",
               "type": {
@@ -981,7 +986,12 @@
           },
           "rest": {
             "host": "Hôte",
-            "accept-unauthorized": "Accepter certificat non autorisé",
+            "certificate-validation": {
+              "title": "Validation du certificat serveur",
+              "standard": "Standard",
+              "trusted": "Certificat approuvé"
+            },
+            "trusted-certificate-id": "Certificat approuvé",
             "authentication": {
               "title": "Authentification",
               "type": {
@@ -2460,6 +2470,7 @@
       "updated": "Certificat {{ name }} mis à jour avec succès",
       "created": "Certificat {{ name }} créé avec succès",
       "create-new": "Créer un nouveau certificat...",
+      "import-trusted": "Importer un certificat approuvé...",
       "imported": "Certificat {{ name }} importé avec succès",
       "deleted": "Certificat {{ name }} supprimé",
       "none": "Aucun certificat",
