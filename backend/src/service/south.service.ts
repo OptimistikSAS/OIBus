@@ -85,6 +85,7 @@ import {
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import {
+  getCertificateStoreTrustSettings,
   resolveTestedServerTrust,
   retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
@@ -347,9 +348,14 @@ export default class SouthService {
   getServerTrustState(southId: string): ServerTrustState {
     const southConnector = this.findById(southId);
     const pending = this.engine.hasSouth(southId) ? this.engine.getSouth(southId).south.getPendingServerIdentity() : null;
-    if (this.getManifest(southConnector.type).serverTrustInCertificateStore) {
+    const manifest = this.getManifest(southConnector.type);
+    if (manifest.serverTrustInCertificateStore) {
       return {
-        ...toCertificateStoreServerTrust(southConnector.settings, southConnector.serverTrust, id => this.certificateService.findById(id)),
+        ...toCertificateStoreServerTrust(
+          getCertificateStoreTrustSettings(manifest, southConnector.settings),
+          southConnector.serverTrust,
+          id => this.certificateService.findById(id)
+        ),
         pending
       };
     }
@@ -376,11 +382,12 @@ export default class SouthService {
     command: SouthConnectorCommandDTO,
     user: string
   ): ServerTrust {
+    const manifest = this.getManifest(southEntity.type);
     return trustFormCertificateInStore(
-      southEntity.settings,
+      getCertificateStoreTrustSettings(manifest, southEntity.settings),
       serverTrust,
       command.serverTrust,
-      !!this.getManifest(southEntity.type).serverTrustInCertificateStore,
+      !!manifest.serverTrustInCertificateStore,
       certificatePem => this.trustServerCertificate(certificatePem, `${southEntity.name} server`, user)
     );
   }
@@ -404,9 +411,10 @@ export default class SouthService {
     const south = this.buildThrowawaySouth({ ...southConnector, enabled: false, items: [], groups: [] });
     const identity = await retrieveServerIdentityToTrust(south, fingerprint);
     const certificate = (identity.details as X509ServerIdentityDetails).certificate;
-    if (this.getManifest(southConnector.type).serverTrustInCertificateStore && certificate) {
+    const manifest = this.getManifest(southConnector.type);
+    if (manifest.serverTrustInCertificateStore && certificate) {
       const trusted = this.trustServerCertificate(certificate, `${southConnector.name} server`, trustedBy);
-      this.southConnectorRepository.trustCertificate(southId, trusted.id, trustedBy);
+      this.southConnectorRepository.trustCertificate(southId, trusted.id, trustedBy, manifest.serverTrustSettingsKey);
     } else {
       this.southConnectorRepository.updateServerTrust(
         southId,

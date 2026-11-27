@@ -10,11 +10,12 @@ import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from 
 import { OIAnalyticsMessageHistoryQueries, OIAnalyticsMessageSyncMetadata } from '../../model/oianalytics-message.model';
 import type OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
 import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
-import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
+import { createOIAnalyticsClientMock } from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import type ConfigTransferBuilderService from '../config-transfer/config-transfer-builder.service';
 import DeferredPromise from '../deferred-promise';
+import type OIAnalyticsClient from './oianalytics-client.service';
 import type OIAnalyticsMessageServiceType from './oianalytics-message.service';
 import type OIAnalyticsRegistrationService from './oianalytics-registration.service';
 
@@ -45,7 +46,7 @@ describe('OIAnalytics Message Service', () => {
   let oIAnalyticsMessageRepository: Mocked<OIAnalyticsMessageRepository>;
   let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
   let configTransferBuilderService: Mocked<ConfigTransferBuilderService>;
-  let oIAnalyticsClient: OianalyticsClientMock;
+  let oIAnalyticsClient: Mocked<OIAnalyticsClient>;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
 
@@ -53,7 +54,7 @@ describe('OIAnalytics Message Service', () => {
     oIAnalyticsMessageRepository = createMock<OIAnalyticsMessageRepository>();
     oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({ registrationEvent: new EventEmitter() });
     configTransferBuilderService = createMock<ConfigTransferBuilderService>();
-    oIAnalyticsClient = new OianalyticsClientMock();
+    oIAnalyticsClient = createOIAnalyticsClientMock();
     logger = new LoggerMock();
     activeLogger = logger;
 
@@ -302,7 +303,7 @@ describe('OIAnalytics message service without message', () => {
   let oIAnalyticsMessageRepository: Mocked<OIAnalyticsMessageRepository>;
   let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
   let configTransferBuilderService: Mocked<ConfigTransferBuilderService>;
-  let oIAnalyticsClient: OianalyticsClientMock;
+  let oIAnalyticsClient: Mocked<OIAnalyticsClient>;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
 
@@ -310,7 +311,7 @@ describe('OIAnalytics message service without message', () => {
     oIAnalyticsMessageRepository = createMock<OIAnalyticsMessageRepository>();
     oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({ registrationEvent: new EventEmitter() });
     configTransferBuilderService = createMock<ConfigTransferBuilderService>();
-    oIAnalyticsClient = new OianalyticsClientMock();
+    oIAnalyticsClient = createOIAnalyticsClientMock();
     logger = new LoggerMock();
     activeLogger = logger;
 
@@ -345,7 +346,7 @@ describe('OIAnalytics message service without completed registration', () => {
   let oIAnalyticsMessageRepository: Mocked<OIAnalyticsMessageRepository>;
   let oIAnalyticsRegistrationService: Mocked<OIAnalyticsRegistrationService>;
   let configTransferBuilderService: Mocked<ConfigTransferBuilderService>;
-  let oIAnalyticsClient: OianalyticsClientMock;
+  let oIAnalyticsClient: Mocked<OIAnalyticsClient>;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
 
@@ -353,7 +354,7 @@ describe('OIAnalytics message service without completed registration', () => {
     oIAnalyticsMessageRepository = createMock<OIAnalyticsMessageRepository>();
     oIAnalyticsRegistrationService = createMock<OIAnalyticsRegistrationService>({ registrationEvent: new EventEmitter() });
     configTransferBuilderService = createMock<ConfigTransferBuilderService>();
-    oIAnalyticsClient = new OianalyticsClientMock();
+    oIAnalyticsClient = createOIAnalyticsClientMock();
     logger = new LoggerMock();
     activeLogger = logger;
 

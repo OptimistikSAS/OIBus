@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -11,9 +12,12 @@ import { RegistrationSettingsCommandDTO } from '@oibus/shared/api/engine.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
+import { CertificateService } from '../../../services/certificate.service';
 import { EngineService } from '../../../services/engine.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { chooseSelectOrCreateEntry, selectOrCreateEntryNames } from '../../../shared/form/select-or-create/select-or-create.testing';
 import { NotificationService } from '../../../shared/notification.service';
+import { TrustedCertificateCreator } from '../../certificate-list/trusted-certificate-creator.service';
 import { RegisterOibusModalComponent } from './register-oibus-modal.component';
 
 const registration = testData.oIAnalytics.registration.completed;
@@ -22,6 +26,8 @@ class RegisterOibusModalComponentTester {
   readonly fixture = TestBed.createComponent(RegisterOibusModalComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly host = this.root.getByLabelText('Host');
+  readonly certificateValidation = this.root.getByLabelText('Server certificate validation');
+  readonly trustedCertificate = this.root.getByLabelText('Trusted certificate', { exact: true });
   readonly useProxy = this.root.getByLabelText('Use proxy');
   readonly proxyUrl = this.root.getByLabelText('Proxy URL');
   readonly proxyPassword = this.root.getByLabelText('Proxy password');
@@ -61,12 +67,25 @@ describe('RegisterOibusModalComponent', () => {
     engineService.register.mockReturnValue(of(undefined));
     engineService.editRegistrationSettings.mockReturnValue(of(undefined));
     engineService.testOIAnalyticsConnection.mockReturnValue(of(undefined));
+    const certificateService = createMock(CertificateService);
+    certificateService.list.mockReturnValue(
+      of([
+        { ...testData.certificates.list[0], id: 'presented', name: 'Presented', kind: 'key-pair' as const },
+        { ...testData.certificates.list[1], id: 'trusted', name: 'OIAnalytics CA', kind: 'trusted' as const }
+      ])
+    );
+    const trustedCertificateCreator = createMock(TrustedCertificateCreator, {
+      createLabel: 'engine.certificate.import-trusted',
+      created: signal([])
+    });
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: EngineService, useValue: engineService },
+        { provide: CertificateService, useValue: certificateService },
+        { provide: TrustedCertificateCreator, useValue: trustedCertificateCreator },
         { provide: NotificationService, useValue: notificationService }
       ]
     });
@@ -76,7 +95,8 @@ describe('RegisterOibusModalComponent', () => {
   function expectedCommand(overrides: Partial<RegistrationSettingsCommandDTO> = {}): RegistrationSettingsCommandDTO {
     return {
       host: registration.host,
-      acceptUnauthorized: registration.acceptUnauthorized,
+      certificateValidation: registration.certificateValidation,
+      trustedCertificateId: registration.trustedCertificateId,
       useProxy: registration.useProxy,
       proxyUrl: '',
       proxyUsername: '',
@@ -92,6 +112,36 @@ describe('RegisterOibusModalComponent', () => {
       ...overrides
     };
   }
+
+  test('should validate the certificate of OIAnalytics against a trusted certificate', async () => {
+    const tester = new RegisterOibusModalComponentTester();
+    tester.fixture.componentInstance.prepare(registration, 'register', false);
+
+    await expect.element(tester.certificateValidation).toHaveDisplayValue('Standard');
+    await expect.element(tester.trustedCertificate).not.toBeInTheDocument();
+    await tester.certificateValidation.selectOptions('Trusted certificate');
+    expect(await selectOrCreateEntryNames(tester.trustedCertificate)).toEqual(['OIAnalytics CA', 'Import a trusted certificate...']);
+    await chooseSelectOrCreateEntry(tester.trustedCertificate, 'OIAnalytics CA');
+    await tester.saveButton.click();
+
+    expect(engineService.register).toHaveBeenCalledWith(
+      expectedCommand({ certificateValidation: 'trusted', trustedCertificateId: 'trusted' })
+    );
+  });
+
+  test('should require a trusted certificate with the trusted validation', async () => {
+    const tester = new RegisterOibusModalComponentTester();
+    tester.fixture.componentInstance.prepare(
+      { ...registration, certificateValidation: 'trusted', trustedCertificateId: null },
+      'register',
+      false
+    );
+
+    await expect.element(tester.trustedCertificate).toBeInTheDocument();
+    await tester.saveButton.click();
+
+    expect(engineService.register).not.toHaveBeenCalled();
+  });
 
   test('should register with the given settings', async () => {
     const tester = new RegisterOibusModalComponentTester();

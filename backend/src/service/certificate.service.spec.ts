@@ -234,13 +234,14 @@ describe('Certificate Service', () => {
     certificateRepository.findById.mock.mockImplementation(() => testData.certificates.list[0]);
     certificateRepository.findUsages.mock.mockImplementation(() => [
       { type: 'south', name: 'OPC UA' },
-      { type: 'web-server', name: 'OIBus' }
+      { type: 'web-server', name: 'OIBus' },
+      { type: 'registration', name: 'https://oia' }
     ]);
 
     assert.throws(
       () => service.delete(testData.certificates.list[0].id, 'userTest'),
       new OIBusValidationError(
-        `Certificate "${testData.certificates.list[0].name}" is used by the South connector "OPC UA", the web server (HTTPS): ` +
+        `Certificate "${testData.certificates.list[0].name}" is used by the South connector "OPC UA", the web server (HTTPS), the registration with OIAnalytics: ` +
           'select another certificate there before deleting it'
       )
     );

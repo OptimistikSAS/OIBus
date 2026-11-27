@@ -46,6 +46,7 @@ import { northManifestList } from './north-manifests';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import {
+  getCertificateStoreTrustSettings,
   retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
   toCertificateStoreServerTrust,
@@ -432,17 +433,36 @@ export default class HistoryQueryService {
     }
     const serverTrust = side === 'south' ? historyQuery.southServerTrust : historyQuery.northServerTrust;
     if (this.trustsCertificateStore(historyQuery, side)) {
-      const settings = side === 'south' ? historyQuery.southSettings : historyQuery.northSettings;
-      return { ...toCertificateStoreServerTrust(settings, serverTrust, id => this.southService.findCertificate(id)), pending };
+      return {
+        ...toCertificateStoreServerTrust(this.getCertificateStoreTrustSettings(historyQuery, side), serverTrust, id =>
+          this.southService.findCertificate(id)
+        ),
+        pending
+      };
     }
     return { ...serverTrust, pending };
   }
 
   /** Whether the connector of a side trusts a certificate of the store (see `serverTrustInCertificateStore`) */
   private trustsCertificateStore(historyQuery: { southType: string; northType: string }, side: 'south' | 'north'): boolean {
+    return !!this.getSideManifest(historyQuery, side).serverTrustInCertificateStore;
+  }
+
+  private getSideManifest(historyQuery: { southType: string; northType: string }, side: 'south' | 'north') {
     return side === 'south'
-      ? !!this.southService.getManifest(historyQuery.southType as OIBusSouthType).serverTrustInCertificateStore
-      : !!this.northService.getManifest(historyQuery.northType).serverTrustInCertificateStore;
+      ? this.southService.getManifest(historyQuery.southType as OIBusSouthType)
+      : this.northService.getManifest(historyQuery.northType);
+  }
+
+  /** Where the connector of a side selects the certificate it trusts (see `getCertificateStoreTrustSettings`) */
+  private getCertificateStoreTrustSettings(
+    historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
+    side: 'south' | 'north'
+  ): Record<string, unknown> | null {
+    return getCertificateStoreTrustSettings(
+      this.getSideManifest(historyQuery, side),
+      side === 'south' ? historyQuery.southSettings : historyQuery.northSettings
+    );
   }
 
   /** The trust of the sides of a history query saved with identities trusted in its form (see `trustFormCertificateInStore`) */
@@ -454,14 +474,14 @@ export default class HistoryQueryService {
     const trustCertificate = (side: 'South' | 'North') => (certificatePem: string) =>
       this.southService.trustServerCertificate(certificatePem, `${historyQuery.name} ${side} server`, user);
     historyQuery.southServerTrust = trustFormCertificateInStore(
-      historyQuery.southSettings,
+      this.getCertificateStoreTrustSettings(historyQuery, 'south'),
       historyQuery.southServerTrust,
       command.southServerTrust,
       this.trustsCertificateStore(historyQuery, 'south'),
       trustCertificate('South')
     );
     historyQuery.northServerTrust = trustFormCertificateInStore(
-      historyQuery.northSettings,
+      this.getCertificateStoreTrustSettings(historyQuery, 'north'),
       historyQuery.northServerTrust,
       command.northServerTrust,
       this.trustsCertificateStore(historyQuery, 'north'),
@@ -496,7 +516,13 @@ export default class HistoryQueryService {
         `${historyQuery.name} ${side === 'south' ? 'South' : 'North'} server`,
         trustedBy
       );
-      this.historyQueryRepository.trustCertificate(historyId, side, trusted.id, trustedBy);
+      this.historyQueryRepository.trustCertificate(
+        historyId,
+        side,
+        trusted.id,
+        trustedBy,
+        this.getSideManifest(historyQuery, side).serverTrustSettingsKey
+      );
     } else {
       this.historyQueryRepository.updateServerTrust(
         historyId,

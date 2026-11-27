@@ -141,7 +141,12 @@
             "specific-settings": {
               "title": "连接",
               "host": "URL",
-              "accept-unauthorized": "接受未授权",
+              "certificate-validation": {
+                "title": "服务器证书验证",
+                "standard": "标准",
+                "trusted": "受信任的证书"
+              },
+              "trusted-certificate-id": "受信任的证书",
               "authentication": {
                 "title": "认证",
                 "basic": "访问密钥/密钥",
@@ -868,7 +873,12 @@
             "specific-settings": {
               "title": "特定设置",
               "host": "主机",
-              "accept-unauthorized": "接受未授权证书",
+              "certificate-validation": {
+                "title": "服务器证书验证",
+                "standard": "标准",
+                "trusted": "受信任的证书"
+              },
+              "trusted-certificate-id": "受信任的证书",
               "authentication": {
                 "title": "认证",
                 "basic": "访问密钥/密钥",
@@ -3425,7 +3435,13 @@
     "registration": {
       "title": "注册 OIBus",
       "host": "主机",
-      "accept-unauthorized": "接受未经授权的证书",
+      "certificate-validation": {
+        "title": "服务器证书验证",
+        "standard": "标准",
+        "trusted": "受信任的证书"
+      },
+      "trusted-certificate-id": "受信任的证书",
+      "trusted-certificate-hint": "证书存储中的证书颁发机构（用于验证 OIAnalytics 的证书及其主机名），或 OIAnalytics 本身的证书。",
       "use-proxy": "使用代理",
       "proxy-url": "代理 URL",
       "proxy-username": "代理用户名",

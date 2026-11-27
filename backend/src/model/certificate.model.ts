@@ -31,10 +31,11 @@ export interface CertificateKeyPair {
 }
 
 /**
- * What uses a certificate of the store: a connector, a history query or the web server (HTTPS)
+ * What uses a certificate of the store: a connector, a history query, the web server (HTTPS) or the registration of OIBus
+ * with OIAnalytics (validating the certificate of OIAnalytics)
  */
 export interface CertificateUsage {
-  type: 'south' | 'north' | 'history-query' | 'web-server';
+  type: 'south' | 'north' | 'history-query' | 'web-server' | 'registration';
   name: string;
 }
 

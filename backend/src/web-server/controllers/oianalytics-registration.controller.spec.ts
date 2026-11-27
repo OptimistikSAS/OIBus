@@ -3,7 +3,10 @@ import { createRequire } from 'node:module';
 import { before, beforeEach, describe, it, mock } from 'node:test';
 
 import { RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine.model';
+import { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
+import { OIBusTestingError, OIBusValidationError } from '../../model/types';
+import type CertificateService from '../../service/certificate.service';
 import type OIAnalyticsRegistrationService from '../../service/oia/oianalytics-registration.service';
 import testData from '../../tests/utils/test-data';
 import { createMock, createMockServices, fixTsoaModuleResolution, Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
@@ -34,13 +37,15 @@ before(() => {
 describe('OIAnalyticsRegistrationController', () => {
   let controller: OIAnalyticsRegistrationControllerShape;
   let registrationService: Mocked<OIAnalyticsRegistrationService>;
+  let certificateService: Mocked<CertificateService>;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
     registrationService = createMock<OIAnalyticsRegistrationService>();
+    certificateService = createMock<CertificateService>({ trustServerCertificate: () => ({ id: 'trustedCertificateId' }) });
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
-      services: createMockServices({ oIAnalyticsRegistrationService: registrationService })
+      services: createMockServices({ oIAnalyticsRegistrationService: registrationService, certificateService })
     } as Partial<CustomExpressRequest>;
     mockRegistrationServiceModule.toOIAnalyticsRegistrationDTO = mock.fn((settings: unknown, getUserInfo: (id: string) => unknown) => {
       getUserInfo('');
@@ -66,7 +71,14 @@ describe('OIAnalyticsRegistrationController', () => {
     await controller.register(command, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(registrationService.register.mock.calls.length, 1);
-    assert.deepStrictEqual(registrationService.register.mock.calls[0].arguments, [command, testData.users.list[0].id]);
+    const [registered, user, trustCertificate] = registrationService.register.mock.calls[0].arguments;
+    assert.deepStrictEqual([registered, user], [command, testData.users.list[0].id]);
+    assert.deepStrictEqual(trustCertificate('pem'), { id: 'trustedCertificateId' });
+    assert.deepStrictEqual(certificateService.trustServerCertificate.mock.calls[0].arguments, [
+      'pem',
+      'OIAnalytics server',
+      testData.users.list[0].id
+    ]);
   });
 
   it('should update registration settings', async () => {
@@ -76,7 +88,9 @@ describe('OIAnalyticsRegistrationController', () => {
     await controller.editRegistrationSettings(command, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(registrationService.editRegistrationSettings.mock.calls.length, 1);
-    assert.deepStrictEqual(registrationService.editRegistrationSettings.mock.calls[0].arguments, [command, testData.users.list[0].id]);
+    const [edited, user, trustCertificate] = registrationService.editRegistrationSettings.mock.calls[0].arguments;
+    assert.deepStrictEqual([edited, user], [command, testData.users.list[0].id]);
+    assert.deepStrictEqual(trustCertificate!('pem'), { id: 'trustedCertificateId' });
   });
 
   it('should unregister from OIAnalytics service', async () => {
@@ -89,11 +103,72 @@ describe('OIAnalyticsRegistrationController', () => {
 
   it('should test connection', async () => {
     const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
-    registrationService.testConnection.mock.mockImplementation(async () => undefined);
+    registrationService.testConnection.mock.mockImplementation(async () => ({ items: [] }));
 
-    await controller.testConnection(command, mockRequest as CustomExpressRequest);
+    assert.deepStrictEqual(await controller.testConnection(command, mockRequest as CustomExpressRequest), { items: [] });
+    await controller.testConnection(command, mockRequest as CustomExpressRequest, true);
 
-    assert.strictEqual(registrationService.testConnection.mock.calls.length, 1);
-    assert.deepStrictEqual(registrationService.testConnection.mock.calls[0].arguments, [command]);
+    assert.deepStrictEqual(registrationService.testConnection.mock.calls[0].arguments, [command, false]);
+    assert.deepStrictEqual(registrationService.testConnection.mock.calls[1].arguments, [command, true]);
+  });
+
+  describe('identity of OIAnalytics', () => {
+    const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
+
+    it('should give the trust of the registration in the identity of OIAnalytics', () => {
+      registrationService.getServerTrustState.mock.mockImplementation(() => ({
+        identity: null,
+        trustOnFirstUse: false,
+        pending: { identity, status: 'unknown' }
+      }));
+
+      assert.deepStrictEqual(controller.getServerTrust(mockRequest as CustomExpressRequest), {
+        identity: null,
+        trustOnFirstUse: false,
+        pending: { identity, status: 'unknown' }
+      });
+    });
+
+    it('should trust the identity of OIAnalytics', async () => {
+      await controller.trustServerIdentity({ fingerprint: 'AB:CD' }, mockRequest as CustomExpressRequest);
+
+      const [fingerprint, user, trustCertificate] = registrationService.trustServerIdentity.mock.calls[0].arguments;
+      assert.deepStrictEqual([fingerprint, user], ['AB:CD', testData.users.list[0].id]);
+      assert.deepStrictEqual(trustCertificate('pem'), { id: 'trustedCertificateId' });
+    });
+
+    it('should report the errors of trusting the identity of OIAnalytics', async () => {
+      registrationService.trustServerIdentity.mock.mockImplementation(async () => {
+        throw new OIBusValidationError('not the one to trust');
+      });
+      await assert.rejects(
+        controller.trustServerIdentity({ fingerprint: 'AB:CD' }, mockRequest as CustomExpressRequest),
+        OIBusValidationError
+      );
+
+      registrationService.trustServerIdentity.mock.mockImplementation(async () => {
+        throw new Error('connection refused');
+      });
+      await assert.rejects(
+        controller.trustServerIdentity({ fingerprint: 'AB:CD' }, mockRequest as CustomExpressRequest),
+        new OIBusTestingError('connection refused')
+      );
+    });
+
+    it('should retrieve the identity OIAnalytics presents', async () => {
+      registrationService.retrieveServerIdentity.mock.mockImplementation(async () => ({ identity, status: 'trusted' }));
+      assert.deepStrictEqual(await controller.retrieveServerIdentity(mockRequest as CustomExpressRequest), {
+        identity,
+        status: 'trusted'
+      });
+
+      registrationService.retrieveServerIdentity.mock.mockImplementation(async () => {
+        throw new Error('connection refused');
+      });
+      await assert.rejects(
+        controller.retrieveServerIdentity(mockRequest as CustomExpressRequest),
+        new OIBusTestingError('connection refused')
+      );
+    });
   });
 });

@@ -284,6 +284,15 @@ export interface SouthConnectorManifest {
   serverTrustInCertificateStore?: boolean;
 
   /**
+   * The key of the object attribute of the settings holding `certificateValidation` and `trustedCertificateId`, when they are
+   * not at the root of the settings: the specific settings of the OIAnalytics connectors, which use the registration of OIBus
+   * with OIAnalytics instead while this attribute is disabled.
+   *
+   * @example "specificSettings"
+   */
+  serverTrustSettingsKey?: string;
+
+  /**
    * The configuration schema for the connector settings.
    */
   settings: OIBusObjectAttribute;

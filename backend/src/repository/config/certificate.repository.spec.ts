@@ -48,18 +48,22 @@ describe('CertificateRepository', () => {
     setSettings('north_connectors', 'settings', testData.north.list[0].id, { specificSettings: { trustedCertificateId: certificateId } });
     setSettings('history_queries', 'north_settings', testData.historyQueries.list[0].id, { certificateId });
     database.prepare(`UPDATE engines SET https_certificate_source = 'store', https_certificate_id = ?;`).run(certificateId);
+    database.prepare(`UPDATE registrations SET certificate_validation = 'trusted', trusted_certificate_id = ?;`).run(certificateId);
+    const registrationHost = (database.prepare('SELECT host FROM registrations;').get() as { host: string }).host;
 
     assert.deepStrictEqual(repository.findUsages(certificateId), [
       { type: 'south', name: testData.south.list[0].name },
       { type: 'south', name: testData.south.list[1].name },
       { type: 'north', name: testData.north.list[0].name },
       { type: 'history-query', name: testData.historyQueries.list[0].name },
-      { type: 'web-server', name: testData.engine.settings.general.name }
+      { type: 'web-server', name: testData.engine.settings.general.name },
+      { type: 'registration', name: registrationHost }
     ]);
     assert.deepStrictEqual(repository.findUsages('unused'), []);
 
     database.prepare(`UPDATE engines SET https_certificate_source = 'file';`).run();
-    assert.ok(!repository.findUsages(certificateId).some(usage => usage.type === 'web-server'));
+    database.prepare(`UPDATE registrations SET certificate_validation = 'standard';`).run();
+    assert.ok(!repository.findUsages(certificateId).some(usage => usage.type === 'web-server' || usage.type === 'registration'));
   });
 
   it('should rely on manifests naming every certificate field certificateId (trustedCertificateId when trusted), and giving none to the items', () => {

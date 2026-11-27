@@ -116,51 +116,6 @@ describe('HTTPRequest Service', () => {
     assert.strictEqual(response.ok, true);
   });
 
-  it('should make a request with accept unauthorized', async () => {
-    const options: ReqOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'a custom user agent',
-        'X-Custom-Header': 'value123'
-      },
-      body: JSON.stringify({ data: 'test' }),
-      acceptUnauthorized: true
-    };
-    const response = await HTTPRequest(testUrl, options);
-
-    assert.strictEqual(agentInstances.length, 1);
-    assert.deepStrictEqual((undiciModule.Agent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
-      {
-        connect: {
-          rejectUnauthorized: false
-        }
-      }
-    ]);
-    assert.strictEqual(requestMock.mock.calls.length, 1);
-    const calledWith = requestMock.mock.calls[0].arguments[1];
-    assert.ok(calledWith);
-    assert.deepStrictEqual(calledWith.method, 'POST');
-    assert.deepStrictEqual(calledWith.headers, {
-      'Content-Type': 'application/json',
-      'X-Custom-Header': 'value123',
-      'User-Agent': 'a custom user agent'
-    });
-    assert.ok(calledWith.dispatcher?.isMockAgent);
-    assert.strictEqual(response.ok, true);
-  });
-
-  it('should reuse Agent instance for repeated acceptUnauthorized requests', async () => {
-    const options: ReqOptions = { acceptUnauthorized: true };
-
-    await HTTPRequest(testUrl, options);
-    await HTTPRequest(testUrl, { acceptUnauthorized: true });
-
-    assert.strictEqual(agentInstances.length, 1);
-    assert.strictEqual((undiciModule.Agent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual(requestMock.mock.calls.length, 2);
-  });
-
   it('should validate the certificate of the server with the TLS options given, reusing their agent', async () => {
     const tls = { ca: ['trusted certificate'], allowPartialTrustChain: true, checkServerIdentity: () => undefined };
 
@@ -428,30 +383,6 @@ describe('HTTPRequest Service', () => {
           dispatcher
         }
       ]);
-      assert.strictEqual(decryptTextMock.mock.calls.length, 0);
-    });
-
-    it('should configure ProxyAgent without auth and accept unauthorized', async () => {
-      const options: ReqOptions = {
-        proxy: {
-          url: testProxyUrl
-        },
-        acceptUnauthorized: true
-      };
-
-      await HTTPRequest(testUrl, options);
-
-      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
-        {
-          uri: testProxyUrl,
-          requestTls: {
-            rejectUnauthorized: false
-          }
-        }
-      ]);
-      const dispatcher = requestMock.mock.calls[0].arguments[1]?.dispatcher;
-      assert.ok(dispatcher?.isMockProxyAgent);
       assert.strictEqual(decryptTextMock.mock.calls.length, 0);
     });
 

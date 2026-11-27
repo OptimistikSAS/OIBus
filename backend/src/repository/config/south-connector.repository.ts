@@ -28,6 +28,7 @@ import AuditService, { redactAuditSnapshots } from '../../service/audit.service'
 import { encryptionService } from '../../service/encryption.service';
 import { southManifestList } from '../../service/south-manifests';
 import { generateRandomId } from '../../service/utils';
+import { toTrustSettingsJsonPath } from '../../service/utils-tls';
 import ConfigurationWorkflowRepository from './configuration-workflow.repository';
 import { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
@@ -507,13 +508,14 @@ export default class SouthConnectorRepository {
    * Selects a trusted certificate of the store in the settings, to validate the certificate of the server (the TLS
    * connectors, see `serverTrustInCertificateStore`), no longer trusting the identity received at the first connection
    */
-  trustCertificate(id: string, certificateId: string, updatedBy: string): void {
+  trustCertificate(id: string, certificateId: string, updatedBy: string, settingsKey?: string): void {
     const before = this.findSouthById(id);
     if (!before) {
       throw new NotFoundError(`South connector "${id}" not found`);
     }
+    const path = toTrustSettingsJsonPath(settingsKey);
     const transaction = this.database.transaction(() => {
-      const settings = `json_set(settings, '$.certificateValidation', 'trusted', '$.trustedCertificateId', ?)`;
+      const settings = `json_set(settings, '${path}.certificateValidation', 'trusted', '${path}.trustedCertificateId', ?)`;
       const serverTrust = JSON.stringify({ identity: null, trustOnFirstUse: false });
       if (updatedBy === 'system') {
         // Trusted by the connector at its first connection: not an edition of the connector

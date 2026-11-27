@@ -276,11 +276,12 @@ const USAGE_LABELS: Record<CertificateUsage['type'], string> = {
   south: 'the South connector',
   north: 'the North connector',
   'history-query': 'the history query',
-  'web-server': 'the web server (HTTPS)'
+  'web-server': 'the web server (HTTPS)',
+  registration: 'the registration with OIAnalytics'
 };
 
 const describeUsage = (usage: CertificateUsage): string =>
-  usage.type === 'web-server' ? USAGE_LABELS[usage.type] : `${USAGE_LABELS[usage.type]} "${usage.name}"`;
+  usage.type === 'web-server' || usage.type === 'registration' ? USAGE_LABELS[usage.type] : `${USAGE_LABELS[usage.type]} "${usage.name}"`;
 
 export const toCertificateDTO = (certificate: Certificate, getUserInfo: GetUserInfo): CertificateDTO => {
   return {

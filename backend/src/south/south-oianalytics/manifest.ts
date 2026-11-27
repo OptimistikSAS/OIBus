@@ -2,6 +2,9 @@ import { SouthConnectorManifest } from '../../../shared/model/connector/south-ma
 
 const manifest: SouthConnectorManifest = {
   id: 'oianalytics',
+  serverIdentity: 'x509',
+  serverTrustInCertificateStore: true,
+  serverTrustSettingsKey: 'specificSettings',
   category: 'api',
   modes: {
     subscription: false,
@@ -70,6 +73,11 @@ const manifest: SouthConnectorManifest = {
           wrapInBox: false
         },
         enablingConditions: [
+          {
+            referralPathFromRoot: 'certificateValidation',
+            targetPathFromRoot: 'trustedCertificateId',
+            values: ['trusted']
+          },
           {
             referralPathFromRoot: 'authentication',
             targetPathFromRoot: 'accessKey',
@@ -140,15 +148,16 @@ const manifest: SouthConnectorManifest = {
             ],
             displayProperties: {
               row: 0,
-              columns: 8,
+              columns: 6,
               displayInViewMode: true
             }
           },
           {
-            type: 'boolean',
-            key: 'acceptUnauthorized',
-            translationKey: 'configuration.oibus.manifest.south.oianalytics.specific-settings.accept-unauthorized',
-            defaultValue: false,
+            type: 'string-select',
+            key: 'certificateValidation',
+            translationKey: 'configuration.oibus.manifest.south.oianalytics.specific-settings.certificate-validation',
+            defaultValue: 'standard',
+            selectableValues: ['standard', 'trusted'],
             validators: [
               {
                 type: 'REQUIRED',
@@ -157,7 +166,19 @@ const manifest: SouthConnectorManifest = {
             ],
             displayProperties: {
               row: 0,
-              columns: 4,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'certificate',
+            key: 'trustedCertificateId',
+            translationKey: 'configuration.oibus.manifest.south.oianalytics.specific-settings.trusted-certificate-id',
+            trusted: true,
+            validators: [],
+            displayProperties: {
+              row: 0,
+              columns: 3,
               displayInViewMode: true
             }
           },

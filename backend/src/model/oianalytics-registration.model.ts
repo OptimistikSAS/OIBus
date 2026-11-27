@@ -1,4 +1,5 @@
 import { RegistrationCommandPermissions, RegistrationStatus } from '../../shared/model/domain/engine.model';
+import { ServerCertificateValidation } from '../../shared/model/domain/server-identity.model';
 
 import { BaseEntity, Instant } from './types';
 
@@ -36,7 +37,10 @@ export interface OIAnalyticsRegistration extends BaseEntity {
   apiGatewayHeaderKey: string | null;
   apiGatewayHeaderValue: string | null;
   apiGatewayBaseEndpoint: string | null;
-  acceptUnauthorized: boolean;
+  /** How the certificate of OIAnalytics is validated */
+  certificateValidation: ServerCertificateValidation;
+  /** The trusted certificate of the store the certificate of OIAnalytics is validated against */
+  trustedCertificateId: string | null;
   commandRefreshInterval: number;
   commandRetryInterval: number;
   messageRetryInterval: number;
@@ -53,7 +57,10 @@ export interface OIAnalyticsRegistrationEditCommand {
   apiGatewayHeaderKey: string | null;
   apiGatewayHeaderValue: string | null;
   apiGatewayBaseEndpoint: string | null;
-  acceptUnauthorized: boolean;
+  /** How the certificate of OIAnalytics is validated */
+  certificateValidation: ServerCertificateValidation;
+  /** The trusted certificate of the store the certificate of OIAnalytics is validated against */
+  trustedCertificateId: string | null;
   commandRefreshInterval: number;
   commandRetryInterval: number;
   messageRetryInterval: number;

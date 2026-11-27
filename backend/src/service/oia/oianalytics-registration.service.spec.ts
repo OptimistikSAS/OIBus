@@ -1,21 +1,26 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
-import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
+
+import * as forge from 'node-forge';
 
 import { RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine.model';
+import { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { NotFoundError } from '../../model/types';
+import type CertificateRepository from '../../repository/config/certificate.repository';
 import type EngineRepository from '../../repository/config/engine.repository';
 import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import type LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
-import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
+import { createOIAnalyticsClientMock } from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { getErrorMessage } from '../utils';
+import type OIAnalyticsClient from './oianalytics-client.service';
 import { OIAnalyticsInvalidGrantError, OIAnalyticsTokenRefreshUnsupportedError } from './oianalytics-client.service';
 import type OIAnalyticsRegistrationServiceType from './oianalytics-registration.service';
 import type {
@@ -27,7 +32,6 @@ const nodeRequire = createRequire(import.meta.url);
 
 // Mocked module exports — mutated in-place between tests
 let mockUtils: Record<string, unknown>;
-let mockUtilsOianalytics: Record<string, ReturnType<typeof mock.fn>>;
 let mockEncryptionService: { encryptionService: EncryptionServiceMock };
 
 let OIAnalyticsRegistrationService: new (
@@ -43,15 +47,11 @@ before(() => {
     filesExists: mock.fn(),
     getErrorMessage
   };
-  mockUtilsOianalytics = {
-    testOIAnalyticsConnection: mock.fn()
-  };
   mockEncryptionService = {
     encryptionService: new EncryptionServiceMock()
   };
 
   mockModule(nodeRequire, '../utils', mockUtils);
-  mockModule(nodeRequire, '../utils-oianalytics', mockUtilsOianalytics);
   mockModule(nodeRequire, '../encryption.service', mockEncryptionService);
 
   const mod = reloadModule<{
@@ -69,20 +69,23 @@ before(() => {
 describe('OIAnalytics Registration Service', () => {
   let oIAnalyticsRegistrationRepository: Mocked<OIAnalyticsRegistrationRepository>;
   let engineRepository: Mocked<EngineRepository>;
-  let oIAnalyticsClient: OianalyticsClientMock;
+  let oIAnalyticsClient: Mocked<OIAnalyticsClient>;
+  let certificateRepository: Mocked<CertificateRepository>;
+  let trustCertificate: Mock<(certificatePem: string) => { id: string }>;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsRegistrationServiceType>;
   beforeEach(() => {
     oIAnalyticsRegistrationRepository = createMock<OIAnalyticsRegistrationRepository>();
     engineRepository = createMock<EngineRepository>();
-    oIAnalyticsClient = new OianalyticsClientMock();
+    oIAnalyticsClient = createOIAnalyticsClientMock();
+    certificateRepository = createMock<CertificateRepository>();
+    trustCertificate = mock.fn(() => ({ id: 'trustedCertificateId' }));
     logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
 
     mockUtils.getOIBusInfo = mock.fn(() => testData.engine.oIBusInfo);
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     // Reset encryptionService mock fns
     mockEncryptionService.encryptionService = new EncryptionServiceMock();
-    mockUtilsOianalytics.testOIAnalyticsConnection = mock.fn();
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
@@ -93,6 +96,7 @@ describe('OIAnalytics Registration Service', () => {
       oIAnalyticsClient,
       oIAnalyticsRegistrationRepository,
       engineRepository as EngineRepository,
+      certificateRepository,
       logger
     );
   });
@@ -172,7 +176,7 @@ describe('OIAnalytics Registration Service', () => {
     const checkRegistrationMock = mock.fn(async () => undefined);
     service.checkRegistration = checkRegistrationMock;
 
-    await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id);
+    await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id, trustCertificate);
 
     assert.strictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls.length, 1);
     assert.strictEqual(engineRepository.get.mock.calls.length, 1);
@@ -191,7 +195,7 @@ describe('OIAnalytics Registration Service', () => {
     mock.timers.tick(10_000);
     assert.strictEqual(checkRegistrationMock.mock.calls.length, 1);
 
-    await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id);
+    await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id, trustCertificate);
     mock.timers.tick(10_000);
     assert.strictEqual(checkRegistrationMock.mock.calls.length, 2);
   });
@@ -208,7 +212,10 @@ describe('OIAnalytics Registration Service', () => {
       }
     );
 
-    await assert.rejects(service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id), keyPairError);
+    await assert.rejects(
+      service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id, trustCertificate),
+      keyPairError
+    );
 
     assert.strictEqual(oIAnalyticsClient.register.mock.calls.length, 0);
   });
@@ -216,7 +223,8 @@ describe('OIAnalytics Registration Service', () => {
   it('should register with proxy', async () => {
     const command: Omit<OIAnalyticsRegistration, 'id' | 'status' | 'activationDate'> = {
       host: 'http://localhost:4200/',
-      acceptUnauthorized: false,
+      certificateValidation: 'standard',
+      trustedCertificateId: null,
       useProxy: true,
       proxyUrl: 'http://localhost:3128',
       proxyUsername: 'user',
@@ -266,7 +274,7 @@ describe('OIAnalytics Registration Service', () => {
     });
     oIAnalyticsClient.register.mock.mockImplementationOnce(async () => result);
 
-    await service.register(command, testData.users.list[0].id);
+    await service.register(command, testData.users.list[0].id, trustCertificate);
     assert.strictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls.length, 3);
     assert.strictEqual(oIAnalyticsClient.register.mock.calls.length, 1);
     assert.deepStrictEqual(oIAnalyticsRegistrationRepository.register.mock.calls[0].arguments, [
@@ -283,7 +291,7 @@ describe('OIAnalytics Registration Service', () => {
   it('should edit registration connection settings', async () => {
     oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
-    await service.editRegistrationSettings(testData.oIAnalytics.registration.command, testData.users.list[0].id);
+    await service.editRegistrationSettings(testData.oIAnalytics.registration.command, testData.users.list[0].id, trustCertificate);
 
     assert.deepStrictEqual(oIAnalyticsRegistrationRepository.update.mock.calls[0].arguments, [
       testData.oIAnalytics.registration.command,
@@ -306,14 +314,15 @@ describe('OIAnalytics Registration Service', () => {
       apiGatewayBaseEndpoint: null
     };
 
-    await assert.doesNotReject(service.editRegistrationSettings(command, testData.users.list[0].id));
+    await assert.doesNotReject(service.editRegistrationSettings(command, testData.users.list[0].id, trustCertificate));
     assert.strictEqual(oIAnalyticsRegistrationRepository.update.mock.calls.length, 1);
   });
 
   it('should edit registration with proxy', async () => {
     const command: RegistrationSettingsCommandDTO = {
       host: 'http://localhost:4200/',
-      acceptUnauthorized: false,
+      certificateValidation: 'standard',
+      trustedCertificateId: null,
       useProxy: true,
       proxyUrl: 'http://localhost:3128',
       proxyUsername: 'user',
@@ -341,7 +350,7 @@ describe('OIAnalytics Registration Service', () => {
     };
     oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
-    await service.editRegistrationSettings(command, testData.users.list[0].id);
+    await service.editRegistrationSettings(command, testData.users.list[0].id, trustCertificate);
 
     assert.deepStrictEqual(oIAnalyticsRegistrationRepository.update.mock.calls[0].arguments, [command, testData.users.list[0].id]);
   });
@@ -756,16 +765,136 @@ describe('OIAnalytics Registration Service', () => {
   it('should test connection', async () => {
     oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
-    await service.testConnection(testData.oIAnalytics.registration.command);
+    assert.deepStrictEqual(await service.testConnection(testData.oIAnalytics.registration.command), { items: [] });
 
-    assert.deepStrictEqual(mockUtilsOianalytics.testOIAnalyticsConnection.mock.calls[0].arguments, [
-      true,
+    assert.deepStrictEqual(oIAnalyticsClient.retrieveServerIdentity.mock.calls[0].arguments, [
       testData.oIAnalytics.registration.command,
-      null,
-      30000,
-      null,
-      false
+      null
     ]);
+    assert.deepStrictEqual(oIAnalyticsClient.testConnection.mock.calls[0].arguments, [testData.oIAnalytics.registration.command, false]);
+  });
+
+  describe('identity of OIAnalytics', () => {
+    const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa', certificate: 'pem' } };
+
+    it('should test the connection with a certificate which validates', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.pending);
+      oIAnalyticsClient.retrieveServerIdentity.mock.mockImplementation(async () => ({ identity, status: 'trusted' }));
+      const command = { ...testData.oIAnalytics.registration.command, serverTrust: { identity, trustOnFirstUse: false } };
+
+      assert.deepStrictEqual(await service.testConnection(command, true), {
+        items: [],
+        serverIdentity: { identity, status: 'trusted' }
+      });
+      assert.deepStrictEqual(oIAnalyticsClient.retrieveServerIdentity.mock.calls[0].arguments, [command, identity]);
+      assert.deepStrictEqual(oIAnalyticsClient.testConnection.mock.calls[0].arguments, [command, true]);
+    });
+
+    it('should not test the connection further with a certificate which does not validate', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+      oIAnalyticsClient.retrieveServerIdentity.mock.mockImplementation(async () => ({ identity, status: 'unknown' }));
+
+      assert.deepStrictEqual(await service.testConnection(testData.oIAnalytics.registration.command, true), {
+        items: [],
+        serverIdentity: { identity, status: 'unknown' }
+      });
+      await assert.rejects(service.testConnection(testData.oIAnalytics.registration.command, false));
+      assert.strictEqual(oIAnalyticsClient.testConnection.mock.calls.length, 0);
+    });
+
+    it('should give the trusted certificate of the registration, and the identity refused', () => {
+      const pending = { identity, status: 'unknown' as const };
+      Object.assign(oIAnalyticsClient, { pendingServerIdentity: pending });
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+
+      assert.deepStrictEqual(service.getServerTrustState(), { identity: null, trustOnFirstUse: false, pending });
+    });
+
+    it('should give the certificate of the store the registration trusts', () => {
+      const keys = forge.pki.rsa.generateKeyPair(1024);
+      const forgeCertificate = forge.pki.createCertificate();
+      forgeCertificate.publicKey = keys.publicKey;
+      forgeCertificate.setSubject([{ shortName: 'CN', value: 'OIAnalytics' }]);
+      forgeCertificate.setIssuer([{ shortName: 'CN', value: 'OIAnalytics' }]);
+      forgeCertificate.sign(keys.privateKey, forge.md.sha256.create());
+      const certificate = { ...testData.certificates.list[0], certificate: forge.pki.certificateToPem(forgeCertificate) };
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => ({
+        ...testData.oIAnalytics.registration.completed,
+        certificateValidation: 'trusted',
+        trustedCertificateId: certificate.id
+      }));
+      certificateRepository.findById.mock.mockImplementation(() => certificate);
+
+      const state = service.getServerTrustState();
+
+      assert.strictEqual(state.identity!.fingerprint, new crypto.X509Certificate(certificate.certificate).fingerprint256);
+      assert.strictEqual(state.identity!.trustedBy, certificate.createdBy);
+      assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, [certificate.id]);
+    });
+
+    it('should fail to give a trusted certificate missing from the store', () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => ({
+        ...testData.oIAnalytics.registration.completed,
+        certificateValidation: 'trusted',
+        trustedCertificateId: 'missing'
+      }));
+
+      assert.throws(() => service.getServerTrustState(), { message: 'Certificate "missing" not found' });
+    });
+
+    it('should retrieve the identity OIAnalytics presents with the saved settings', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+      oIAnalyticsClient.retrieveServerIdentity.mock.mockImplementation(async () => ({ identity, status: 'unknown' }));
+
+      assert.deepStrictEqual(await service.retrieveServerIdentity(), { identity, status: 'unknown' });
+      assert.deepStrictEqual(oIAnalyticsClient.retrieveServerIdentity.mock.calls[0].arguments, [
+        testData.oIAnalytics.registration.completed
+      ]);
+    });
+
+    it('should trust the certificate OIAnalytics presents, adding it to the store', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+      oIAnalyticsClient.retrieveServerIdentity.mock.mockImplementation(async () => ({ identity, status: 'unknown' }));
+      const updated = mock.fn();
+      service.registrationEvent.on('updated', updated);
+
+      await service.trustServerIdentity('AB:CD', 'userId', trustCertificate);
+
+      assert.deepStrictEqual(trustCertificate.mock.calls[0].arguments, ['pem']);
+      assert.deepStrictEqual(oIAnalyticsRegistrationRepository.trustCertificate.mock.calls[0].arguments, [
+        'trustedCertificateId',
+        'userId'
+      ]);
+      assert.strictEqual(updated.mock.calls.length, 1);
+    });
+
+    it('should not trust another identity than the one reviewed, nor one without certificate', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+      oIAnalyticsClient.retrieveServerIdentity.mock.mockImplementation(async () => ({ identity, status: 'unknown' }));
+      await assert.rejects(service.trustServerIdentity('EF:01', 'userId', trustCertificate), /not the one to trust/);
+
+      oIAnalyticsClient.retrieveServerIdentity.mock.mockImplementation(async () => ({
+        identity: { ...identity, details: { keyType: 'rsa' } },
+        status: 'unknown'
+      }));
+      await assert.rejects(service.trustServerIdentity('AB:CD', 'userId', trustCertificate), {
+        message: 'OIAnalytics does not present a certificate to trust'
+      });
+      assert.strictEqual(oIAnalyticsRegistrationRepository.trustCertificate.mock.calls.length, 0);
+    });
+
+    it('should save the registration trusting the certificate trusted in its form', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+      const command = { ...testData.oIAnalytics.registration.command, serverTrust: { identity, trustOnFirstUse: false } };
+
+      await service.editRegistrationSettings(command, 'userId', trustCertificate);
+
+      assert.deepStrictEqual(trustCertificate.mock.calls[0].arguments, ['pem']);
+      const saved = oIAnalyticsRegistrationRepository.update.mock.calls[0].arguments[0];
+      assert.strictEqual(saved.certificateValidation, 'trusted');
+      assert.strictEqual(saved.trustedCertificateId, 'trustedCertificateId');
+      assert.ok(!('serverTrust' in saved));
+    });
   });
 
   it('should give the current private key, then the previous one, to decrypt the secrets from OIAnalytics', () => {
@@ -800,7 +929,8 @@ describe('OIAnalytics Registration Service', () => {
       useApiGateway: registration.useApiGateway,
       apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
       apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
-      acceptUnauthorized: registration.acceptUnauthorized,
+      certificateValidation: registration.certificateValidation,
+      trustedCertificateId: registration.trustedCertificateId,
       commandRefreshInterval: registration.commandRefreshInterval,
       commandRetryInterval: registration.commandRetryInterval,
       messageRetryInterval: registration.messageRetryInterval,

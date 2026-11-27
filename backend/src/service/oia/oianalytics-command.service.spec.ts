@@ -84,7 +84,7 @@ import { NotFoundError } from '../../model/types';
 import type OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
-import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
+import { createOIAnalyticsClientMock } from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, Mocked, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import type CertificateService from '../certificate.service';
@@ -100,6 +100,7 @@ import type SouthService from '../south.service';
 import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
 import type TransformerService from '../transformer.service';
 import type * as Utils from '../utils';
+import type OIAnalyticsClient from './oianalytics-client.service';
 import type OIAnalyticsCommandServiceType from './oianalytics-command.service';
 import type { toOIBusCommandDTO as toOIBusCommandDTOType } from './oianalytics-command.service';
 import type OIAnalyticsMessageService from './oianalytics-message.service';
@@ -144,7 +145,7 @@ let historyQueryService: Mocked<HistoryQueryService>;
 let transformerService: Mocked<TransformerService>;
 let configImportService: Mocked<ConfigImportService>;
 let oIAnalyticsSessionService: Mocked<OIAnalyticsSessionService>;
-let oIAnalyticsClient: OianalyticsClientMock;
+let oIAnalyticsClient: Mocked<OIAnalyticsClient>;
 let service: OIAnalyticsCommandServiceType;
 
 before(() => {
@@ -186,7 +187,7 @@ beforeEach(() => {
   transformerService = createMock<TransformerService>();
   configImportService = createMock<ConfigImportService>();
   oIAnalyticsSessionService = createMock<OIAnalyticsSessionService>();
-  oIAnalyticsClient = new OianalyticsClientMock();
+  oIAnalyticsClient = createOIAnalyticsClientMock();
 });
 
 afterEach(() => {
@@ -423,7 +424,8 @@ function expectedRegistrationEdit(registration: OIAnalyticsRegistration) {
     apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
     apiGatewayHeaderValue: '',
     apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
-    acceptUnauthorized: registration.acceptUnauthorized,
+    certificateValidation: registration.certificateValidation,
+    trustedCertificateId: registration.trustedCertificateId,
     commandRefreshInterval: updateRegistrationCommand.commandContent.commandRefreshInterval,
     commandRetryInterval: updateRegistrationCommand.commandContent.commandRetryInterval,
     messageRetryInterval: updateRegistrationCommand.commandContent.messageRetryInterval,

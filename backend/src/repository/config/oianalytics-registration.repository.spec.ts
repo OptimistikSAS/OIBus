@@ -3,7 +3,7 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
-import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import AuditService from '../../service/audit.service';
 import { emptyDatabase, initDatabase } from '../../tests/utils/database-utils';
 import testData from '../../tests/utils/test-data';
@@ -141,10 +141,19 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.deepStrictEqual(stripAuditFields(repository.get()), stripAuditFields(expectedResult));
   });
 
+  it('should validate the certificate of OIAnalytics against a trusted certificate, and audit it', () => {
+    repository.trustCertificate('trustedId', testData.users.list[0].id);
+
+    const result = repository.get()!;
+    assert.strictEqual(result.certificateValidation, 'trusted');
+    assert.strictEqual(result.trustedCertificateId, 'trustedId');
+    assert.strictEqual(result.updatedBy, testData.users.list[0].id);
+    assert.strictEqual(auditService.record.mock.calls.length, 1);
+  });
+
   it('should update registration', () => {
-    const specificCommand = {
+    const specificCommand: OIAnalyticsRegistrationEditCommand = {
       ...testData.oIAnalytics.registration.command,
-      acceptUnauthorized: false,
       useProxy: true,
       proxyUrl: 'http://localhost:9000',
       proxyUsername: 'oibus',
@@ -223,7 +232,8 @@ describe('OianalyticsRegistrationRepository with empty database', () => {
     assert.ok(result);
     assert.strictEqual(result.host, '');
     assert.strictEqual(result.status, 'NOT_REGISTERED');
-    assert.strictEqual(result.acceptUnauthorized, false);
+    assert.strictEqual(result.certificateValidation, 'standard');
+    assert.strictEqual(result.trustedCertificateId, null);
     assert.strictEqual(result.useProxy, false);
     assert.strictEqual(result.commandRefreshInterval, 60);
     assert.strictEqual(result.commandRetryInterval, 5);

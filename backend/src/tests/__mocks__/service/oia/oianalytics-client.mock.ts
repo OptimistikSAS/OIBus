@@ -1,89 +1,32 @@
-import { mock } from 'node:test';
-
-import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../../../shared/model/api/engine.model';
 import { Instant } from '../../../../../shared/model/common/types';
-import {
-  OIBusInteractiveSessionRequestCompletionDTO,
-  OIBusInteractiveSessionRequestDTO
-} from '../../../../../shared/model/oia/interactive-session.model';
 
-import { OIBusCommand } from '../../../../model/oianalytics-command.model';
-import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registration.model';
-import {
-  OIAnalyticsCheckRegistrationDTO,
-  OIAnalyticsFetchCommandDTO,
-  OIAnalyticsTokensDTO
-} from '../../../../service/oia/oianalytics.model';
+import type OIAnalyticsClient from '../../../../service/oia/oianalytics-client.service';
+import { createMock, Mocked } from '../../../utils/test-utils';
 
 /**
- * Create a mock object for OIAnalytics Client
+ * A mock of the OIAnalytics client, whose requests succeed with empty results
  */
-export default class OIAnalyticsClientMock {
-  updateCommandStatus = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
-  retrieveCancelledCommands = mock.fn(
-    async (_registrationSettings: OIAnalyticsRegistration, _commands: Array<OIBusCommand>): Promise<Array<OIAnalyticsFetchCommandDTO>> => []
-  );
-  retrievePendingCommands = mock.fn(
-    async (_registrationSettings: OIAnalyticsRegistration): Promise<Array<OIAnalyticsFetchCommandDTO>> => []
-  );
-  register = mock.fn(
-    async (
-      _registration: RegistrationSettingsCommandDTO,
-      _oibusInfo: OIBusInfo,
-      _publicKey: string
-    ): Promise<{ redirectUrl: string; expirationDate: Instant; activationCode: string }> => ({
-      redirectUrl: '',
-      expirationDate: '' as Instant,
-      activationCode: ''
-    })
-  );
-  checkRegistration = mock.fn(async (_registrationSettings: OIAnalyticsRegistration): Promise<OIAnalyticsCheckRegistrationDTO> => ({
-    status: '',
-    expired: false
-  }));
-  refreshToken = mock.fn(async (_registrationSettings: OIAnalyticsRegistration): Promise<OIAnalyticsTokensDTO> => ({
-    accessToken: '',
-    accessTokenExpiresIn: 0,
-    refreshToken: '',
-    refreshTokenExpiresIn: 0
-  }));
-  exchangeToken = mock.fn(async (_registrationSettings: OIAnalyticsRegistration): Promise<OIAnalyticsTokensDTO> => ({
-    accessToken: '',
-    accessTokenExpiresIn: 0,
-    refreshToken: '',
-    refreshTokenExpiresIn: 0
-  }));
-  sendConfiguration = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
-  sendHistoryQuery = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
-  sendSyncMetadata = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
-  deleteHistoryQuery = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _historyId: string): Promise<void> => undefined);
-  downloadFile = mock.fn(
-    async (_registrationSettings: OIAnalyticsRegistration, _assetId: string, _filename: string): Promise<void> => undefined
-  );
-  retrieveConfigurationFile = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _fileId: string): Promise<string> => '');
-  uploadCommandFile = mock.fn(
-    async (_registrationSettings: OIAnalyticsRegistration, _commandId: string, _filePath: string, _filename: string): Promise<string> =>
-      'fileId'
-  );
-  retrieveSessionRequests = mock.fn(
-    async (_registrationSettings: OIAnalyticsRegistration, _sessionId: string): Promise<Array<OIBusInteractiveSessionRequestDTO>> => []
-  );
-  completeSessionRequest = mock.fn(
-    async (
-      _registrationSettings: OIAnalyticsRegistration,
-      _sessionId: string,
-      _requestId: string,
-      _completion: OIBusInteractiveSessionRequestCompletionDTO
-    ): Promise<void> => undefined
-  );
-  uploadSessionRequestFile = mock.fn(
-    async (
-      _registrationSettings: OIAnalyticsRegistration,
-      _sessionId: string,
-      _requestId: string,
-      _filePath: string,
-      _filename: string
-    ): Promise<void> => undefined
-  );
-  closeSession = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _sessionId: string): Promise<void> => undefined);
-}
+export const createOIAnalyticsClientMock = (): Mocked<OIAnalyticsClient> =>
+  createMock<OIAnalyticsClient>({
+    pendingServerIdentity: null,
+    retrieveCancelledCommands: async () => [],
+    retrievePendingCommands: async () => [],
+    register: async () => ({ redirectUrl: '', expirationDate: '' as Instant, activationCode: '' }),
+    checkRegistration: async () => ({ status: '', expired: false }),
+    refreshToken: async () => ({ accessToken: '', accessTokenExpiresIn: 0, refreshToken: '', refreshTokenExpiresIn: 0 }),
+    exchangeToken: async () => ({ accessToken: '', accessTokenExpiresIn: 0, refreshToken: '', refreshTokenExpiresIn: 0 }),
+    retrieveConfigurationFile: async () => '',
+    uploadCommandFile: async () => 'fileId',
+    retrieveSessionRequests: async () => [],
+    updateCommandStatus: async () => undefined,
+    sendConfiguration: async () => undefined,
+    sendHistoryQuery: async () => undefined,
+    sendSyncMetadata: async () => undefined,
+    deleteHistoryQuery: async () => undefined,
+    downloadFile: async () => undefined,
+    completeSessionRequest: async () => undefined,
+    uploadSessionRequestFile: async () => undefined,
+    closeSession: async () => undefined,
+    retrieveServerIdentity: async () => null,
+    testConnection: async () => undefined
+  });

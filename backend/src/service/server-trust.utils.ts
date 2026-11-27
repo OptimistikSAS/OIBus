@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 
 import { ServerTrustCommandDTO, ServerTrustDTO, ServerTrustStateDTO } from '../../shared/model/api/server-identity.model';
 import { GetUserInfo } from '../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
 import {
   PresentedServerIdentity,
@@ -182,12 +183,38 @@ export const toServerTrustStateDTO = (state: ServerTrustState, getUserInfo: GetU
 });
 
 /**
+ * The settings in which a connector trusting a certificate of the store (`serverTrustInCertificateStore`) tells how it
+ * validates the certificate of its server: its settings, or their object attribute named by `serverTrustSettingsKey` while
+ * it is enabled. `null` for another connector, or when this attribute is disabled (an OIAnalytics connector using the
+ * registration of OIBus, whose certificate validation applies).
+ */
+export const getCertificateStoreTrustSettings = (
+  manifest: { serverTrustInCertificateStore?: boolean; serverTrustSettingsKey?: string; settings: OIBusObjectAttribute },
+  settings: object
+): Record<string, unknown> | null => {
+  if (!manifest.serverTrustInCertificateStore) {
+    return null;
+  }
+  const key = manifest.serverTrustSettingsKey;
+  if (!key) {
+    return settings as Record<string, unknown>;
+  }
+  const values = settings as Record<string, unknown>;
+  const enabled = manifest.settings.enablingConditions
+    .filter(condition => condition.targetPathFromRoot === key)
+    .every(condition => condition.values.includes(values[condition.referralPathFromRoot] as string | number | boolean | null));
+  const trustSettings = values[key];
+  return enabled && trustSettings && typeof trustSettings === 'object' ? (trustSettings as Record<string, unknown>) : null;
+};
+
+/**
  * For a connector trusting a certificate of the store (`serverTrustInCertificateStore`): the identity trusted in its form
  * (the certificate a connection test showed) is added to the store and selected in its settings, its own trust keeping no
  * identity but whether it trusts the certificate received at its first connection. Other connectors keep their trust.
+ * `trustSettings` are where the connector selects the certificate (see `getCertificateStoreTrustSettings`).
  */
 export const trustFormCertificateInStore = (
-  settings: object,
+  trustSettings: object | null,
   serverTrust: ServerTrust,
   command: ServerTrustCommandDTO | undefined,
   inCertificateStore: boolean,
@@ -197,10 +224,10 @@ export const trustFormCertificateInStore = (
     return serverTrust;
   }
   const certificate = command?.identity?.type === 'x509' ? (command.identity.details as X509ServerIdentityDetails).certificate : undefined;
-  if (!certificate) {
+  if (!certificate || !trustSettings) {
     return { identity: null, trustOnFirstUse: serverTrust.trustOnFirstUse };
   }
-  Object.assign(settings, { certificateValidation: 'trusted', trustedCertificateId: trustCertificate(certificate).id });
+  Object.assign(trustSettings, { certificateValidation: 'trusted', trustedCertificateId: trustCertificate(certificate).id });
   return { identity: null, trustOnFirstUse: false };
 };
 
@@ -209,11 +236,14 @@ export const trustFormCertificateInStore = (
  * trusted by the user who added it to the store, when it validates the certificate of its server against one
  */
 export const toCertificateStoreServerTrust = (
-  settings: object,
+  trustSettings: object | null,
   serverTrust: ServerTrust,
   findCertificate: (certificateId: string) => { certificate: string; createdBy: string; createdAt: string }
 ): ServerTrust => {
-  const { certificateValidation, trustedCertificateId } = settings as { certificateValidation?: unknown; trustedCertificateId?: unknown };
+  const { certificateValidation, trustedCertificateId } = (trustSettings ?? {}) as {
+    certificateValidation?: unknown;
+    trustedCertificateId?: unknown;
+  };
   if (certificateValidation !== 'trusted' || typeof trustedCertificateId !== 'string') {
     return { identity: null, trustOnFirstUse: serverTrust.trustOnFirstUse };
   }

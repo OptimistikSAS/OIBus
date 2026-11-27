@@ -940,6 +940,30 @@ describe('4.0.0 config upgrade', () => {
       });
     });
 
+    it('converts the specific settings of the OIAnalytics connectors', () => {
+      assert.deepStrictEqual(
+        toCertificateValidation('oianalytics', 'south', {
+          useOiaModule: false,
+          specificSettings: { host: 'https://h', acceptUnauthorized: true }
+        }),
+        {
+          settings: {
+            useOiaModule: false,
+            specificSettings: { host: 'https://h', certificateValidation: 'trusted', trustedCertificateId: null }
+          },
+          trustOnFirstUse: true
+        }
+      );
+      assert.deepStrictEqual(
+        toCertificateValidation('oianalytics', 'north', { useOiaModule: true, specificSettings: { acceptUnauthorized: false } }),
+        {
+          settings: { useOiaModule: true, specificSettings: { certificateValidation: 'standard', trustedCertificateId: null } },
+          trustOnFirstUse: false
+        }
+      );
+      assert.strictEqual(toCertificateValidation('oianalytics', 'south', { useOiaModule: true, specificSettings: null }), null);
+    });
+
     it('leaves the other connectors, and the settings already converted', () => {
       assert.strictEqual(toCertificateValidation('console', 'north', { acceptUnauthorized: true }), null);
       assert.strictEqual(toCertificateValidation('rest', 'south', { host: 'https://h', certificateValidation: 'standard' }), null);

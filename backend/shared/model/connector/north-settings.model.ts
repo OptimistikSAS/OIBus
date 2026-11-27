@@ -23,6 +23,10 @@ export type NorthMQTTSettingsAuthenticationType = (typeof NORTH_M_Q_T_T_SETTINGS
 export const NORTH_M_Q_T_T_SETTINGS_QOSS = ['0', '1', '2'] as const;
 export type NorthMQTTSettingsQos = (typeof NORTH_M_Q_T_T_SETTINGS_QOSS)[number];
 
+export const NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_CERTIFICATE_VALIDATIONS = ['standard', 'trusted'] as const;
+export type NorthOIAnalyticsSettingsSpecificSettingsCertificateValidation =
+  (typeof NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_CERTIFICATE_VALIDATIONS)[number];
+
 export const NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const;
 export type NorthOIAnalyticsSettingsSpecificSettingsAuthentication =
   (typeof NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS)[number];
@@ -80,7 +84,8 @@ export interface NorthMQTTSettingsAuthentication {
 
 export interface NorthOIAnalyticsSettingsSpecificSettings {
   host: string;
-  acceptUnauthorized: boolean;
+  certificateValidation: NorthOIAnalyticsSettingsSpecificSettingsCertificateValidation;
+  trustedCertificateId?: string | null;
   authentication: NorthOIAnalyticsSettingsSpecificSettingsAuthentication;
   accessKey?: string;
   secretKey?: string | null;

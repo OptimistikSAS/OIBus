@@ -5909,10 +5909,46 @@ describe('Entity migration v4.0.0: useTrustedCertificates', () => {
         enabled: true,
         settings: JSON.stringify({ host: 'https://h', acceptUnauthorized: false })
       },
-      { id: 'sftp', name: 'SFTP', type: 'sftp', enabled: true, settings: JSON.stringify({ host: 'h' }) }
+      { id: 'sftp', name: 'SFTP', type: 'sftp', enabled: true, settings: JSON.stringify({ host: 'h' }) },
+      {
+        id: 'oianalytics',
+        name: 'OIAnalytics',
+        type: 'oianalytics',
+        enabled: true,
+        settings: JSON.stringify({ useOiaModule: false, specificSettings: { host: 'https://h', acceptUnauthorized: true } })
+      }
     ]);
   });
   afterEach(() => harness.afterEach());
+
+  it('should trust a certificate of the store for the registration which accepted any certificate', async () => {
+    await db('registrations').insert({ id: 'registration-id', host: 'https://oia', status: 'REGISTERED', accept_unauthorized: 1 });
+
+    await runStepsFrom(useTrustedCertificates, db);
+
+    assert.deepStrictEqual(await db('registrations').select('certificate_validation', 'trusted_certificate_id'), [
+      { certificate_validation: 'trusted', trusted_certificate_id: null }
+    ]);
+    assert.ok(!(await db.schema.hasColumn('registrations', 'accept_unauthorized')));
+  });
+
+  it('should keep the standard validation for the registration which did not accept any certificate', async () => {
+    await db('registrations').insert({ id: 'registration-id', host: 'https://oia', status: 'REGISTERED', accept_unauthorized: 0 });
+
+    await runStepsFrom(useTrustedCertificates, db);
+
+    assert.deepStrictEqual(await db('registrations').select('certificate_validation'), [{ certificate_validation: 'standard' }]);
+  });
+
+  it('should convert the specific settings of the OIAnalytics connectors', async () => {
+    await runStepsFrom(useTrustedCertificates, db);
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'oianalytics'), {
+      useOiaModule: false,
+      specificSettings: { host: 'https://h', certificateValidation: 'trusted', trustedCertificateId: null }
+    });
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'oianalytics', 'server_trust'), { identity: null, trustOnFirstUse: true });
+  });
 
   it('should trust a certificate of the store, at the first use, instead of accepting any certificate', async () => {
     await runStepsFrom(useTrustedCertificates, db);

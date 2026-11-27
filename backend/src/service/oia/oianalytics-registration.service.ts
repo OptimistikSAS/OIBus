@@ -5,21 +5,45 @@ import { DateTime } from 'luxon';
 
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/api/engine.model';
 import { GetUserInfo } from '../../../shared/model/common/types';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { PresentedServerIdentity, ServerTrustState, X509ServerIdentityDetails } from '../../../shared/model/domain/server-identity.model';
 
 import type { ILogger } from '../../model/logger.model';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationTokens } from '../../model/oianalytics-registration.model';
-import { NotFoundError } from '../../model/types';
+import { NotFoundError, OIBusValidationError } from '../../model/types';
+import CertificateRepository from '../../repository/config/certificate.repository';
 import EngineRepository from '../../repository/config/engine.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { registrationSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
 import { encryptionService } from '../encryption.service';
+import {
+  retrieveServerIdentityToTrust,
+  testConnectionWithServerIdentity,
+  toCertificateStoreServerTrust,
+  trustFormCertificateInStore
+} from '../server-trust.utils';
 import { getErrorMessage, getOIBusInfo } from '../utils';
-import { testOIAnalyticsConnection } from '../utils-oianalytics';
 import { OIAnalyticsTokensDTO } from './oianalytics.model';
-import OIAnalyticsClient, { OIAnalyticsInvalidGrantError, OIAnalyticsTokenRefreshUnsupportedError } from './oianalytics-client.service';
+import OIAnalyticsClient, {
+  formServerIdentity,
+  OIAnalyticsInvalidGrantError,
+  OIAnalyticsTokenRefreshUnsupportedError
+} from './oianalytics-client.service';
 
 const CHECK_REGISTRATION_INTERVAL = 10_000;
+
+/** Adds the certificate of a server to the certificate store as a trusted certificate (see `CertificateService`) */
+export type TrustCertificate = (certificatePem: string) => { id: string };
+
+/**
+ * The registration settings validate the certificate of OIAnalytics against the certificate trusted in their form (see
+ * `RegistrationSettingsCommandDTO.serverTrust`), added to the certificate store
+ */
+const trustFormCertificate = (command: RegistrationSettingsCommandDTO, trustCertificate: TrustCertificate): void => {
+  trustFormCertificateInStore(command, { identity: null, trustOnFirstUse: false }, command.serverTrust, true, trustCertificate);
+  delete command.serverTrust;
+};
 const TOKEN_REFRESH_INTERVAL = 60_000;
 // The access token is renewed when it expires in less than this delay
 const TOKEN_REFRESH_MARGIN_MS = 10 * 60_000;
@@ -96,6 +120,7 @@ export default class OIAnalyticsRegistrationService {
     private oIAnalyticsClient: OIAnalyticsClient,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private engineRepository: EngineRepository,
+    private certificateRepository: CertificateRepository,
     private logger: ILogger
   ) {}
 
@@ -124,7 +149,7 @@ export default class OIAnalyticsRegistrationService {
    * First step, the user wants to register: the service try to reach OIAnalytics to send
    * the activation code. On success, it runs an interval to regularly check if it has been accepted on OIAnalytics
    */
-  async register(command: RegistrationSettingsCommandDTO, updatedBy: string): Promise<void> {
+  async register(command: RegistrationSettingsCommandDTO, updatedBy: string, trustCertificate: TrustCertificate): Promise<void> {
     await this.validator.validate(registrationSchema, command);
     const engineSettings = this.engineRepository.get()!;
 
@@ -145,6 +170,7 @@ export default class OIAnalyticsRegistrationService {
     const { publicKey, privateKey } = await generateCipherKeys();
 
     const result = await this.oIAnalyticsClient.register(command, oibusInfo, publicKey);
+    trustFormCertificate(command, trustCertificate);
     this.oIAnalyticsRegistrationRepository.register(
       command,
       result.activationCode,
@@ -283,8 +309,15 @@ export default class OIAnalyticsRegistrationService {
     return current.status === 'REGISTERED' && current.token === registration.token && current.refreshToken === registration.refreshToken;
   }
 
-  async editRegistrationSettings(command: RegistrationSettingsCommandDTO, updatedBy: string): Promise<void> {
+  async editRegistrationSettings(
+    command: RegistrationSettingsCommandDTO,
+    updatedBy: string,
+    trustCertificate: TrustCertificate | null = null
+  ): Promise<void> {
     await this.validator.validate(registrationSchema, command);
+    if (trustCertificate) {
+      trustFormCertificate(command, trustCertificate);
+    }
 
     const currentRegistration = this.oIAnalyticsRegistrationRepository.get()!;
 
@@ -302,7 +335,12 @@ export default class OIAnalyticsRegistrationService {
     this.registrationEvent.emit('updated');
   }
 
-  async testConnection(command: RegistrationSettingsCommandDTO): Promise<void> {
+  /**
+   * Tests the connection to OIAnalytics with these settings, after reading the certificate it presents: when it does not
+   * validate, the connection is not tested further. With `withServerIdentity` (a client which shows the identity for the
+   * user to review and trust it), the result then carries the identity presented; otherwise the test fails.
+   */
+  async testConnection(command: RegistrationSettingsCommandDTO, withServerIdentity = false): Promise<OIBusConnectionTestResult> {
     await this.validator.validate(registrationSchema, command);
 
     // When registering for the first time (PENDING status), accept 401 as success
@@ -310,8 +348,67 @@ export default class OIAnalyticsRegistrationService {
     const currentRegistration = this.oIAnalyticsRegistrationRepository.get()!;
     const accept401AsSuccess = currentRegistration.status !== 'REGISTERED' || !currentRegistration.token;
 
-    // Test the connection with the provided settings
-    await testOIAnalyticsConnection(true, command as OIAnalyticsRegistration, null, 30_000, null, accept401AsSuccess);
+    let presented: PresentedServerIdentity | null = null;
+    return await testConnectionWithServerIdentity(
+      {
+        retrieveServerIdentity: async () => {
+          presented = await this.oIAnalyticsClient.retrieveServerIdentity(command as OIAnalyticsRegistration, formServerIdentity(command));
+          return presented?.identity ?? null;
+        },
+        getServerIdentityTrustStatus: identity => (presented?.identity.fingerprint === identity.fingerprint ? presented.status : 'unknown'),
+        testConnection: async () => {
+          await this.oIAnalyticsClient.testConnection(command, accept401AsSuccess);
+          return { items: [] };
+        }
+      },
+      null,
+      withServerIdentity
+    );
+  }
+
+  /**
+   * The trust of the registration in the identity of OIAnalytics: the certificate of the store it validates the certificate
+   * of OIAnalytics against, and the identity OIAnalytics presented at the last request refused
+   */
+  getServerTrustState(): ServerTrustState {
+    const registration = this.getRegistrationSettings();
+    return {
+      ...toCertificateStoreServerTrust(registration, { identity: null, trustOnFirstUse: false }, certificateId => {
+        const certificate = this.certificateRepository.findById(certificateId);
+        if (!certificate) {
+          throw new NotFoundError(`Certificate "${certificateId}" not found`);
+        }
+        return certificate;
+      }),
+      pending: this.oIAnalyticsClient.pendingServerIdentity
+    };
+  }
+
+  /**
+   * The identity OIAnalytics presents now with the saved settings, and whether it validates, without sending anything.
+   * `null` without TLS (an `http://` host).
+   */
+  async retrieveServerIdentity(): Promise<PresentedServerIdentity | null> {
+    return await this.oIAnalyticsClient.retrieveServerIdentity(this.getRegistrationSettings());
+  }
+
+  /**
+   * Trusts the certificate OIAnalytics presents, when its fingerprint is the one the user reviewed: it is added to the
+   * certificate store (see `trustCertificate`) and the registration validates the certificate of OIAnalytics against it
+   */
+  async trustServerIdentity(fingerprint: string, trustedBy: string, trustCertificate: TrustCertificate): Promise<void> {
+    const registration = this.getRegistrationSettings();
+    const identity = await retrieveServerIdentityToTrust(
+      { retrieveServerIdentity: async () => (await this.oIAnalyticsClient.retrieveServerIdentity(registration))?.identity ?? null },
+      fingerprint
+    );
+    const certificate = (identity.details as X509ServerIdentityDetails).certificate;
+    if (!certificate) {
+      throw new OIBusValidationError('OIAnalytics does not present a certificate to trust');
+    }
+    this.oIAnalyticsRegistrationRepository.trustCertificate(trustCertificate(certificate).id, trustedBy);
+    this.registrationEvent.emit('updated');
+    this.logger.info(`Identity of OIAnalytics ${identity.fingerprint} trusted by "${trustedBy}"`);
   }
 
   unregister(): void {
@@ -356,7 +453,8 @@ export const toOIAnalyticsRegistrationDTO = (registration: OIAnalyticsRegistrati
     useApiGateway: registration.useApiGateway,
     apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
     apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
-    acceptUnauthorized: registration.acceptUnauthorized,
+    certificateValidation: registration.certificateValidation,
+    trustedCertificateId: registration.trustedCertificateId,
     commandRefreshInterval: registration.commandRefreshInterval,
     commandRetryInterval: registration.commandRetryInterval,
     messageRetryInterval: registration.messageRetryInterval,

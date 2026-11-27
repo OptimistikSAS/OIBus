@@ -13,16 +13,36 @@
         </div>
       </div>
 
-      <!-- Accept unauthorized -->
+      <!-- Validation of the certificate of OIAnalytics -->
       <div class="col-6">
         <div class="form-group">
-          <div class="form-check form-switch padded">
-            <input formControlName="acceptUnauthorized" id="accept-unauthorized" type="checkbox" class="form-check-input" />
-            <label class="form-check-label" for="accept-unauthorized" translate="oia-module.registration.accept-unauthorized"></label>
-          </div>
+          <label class="form-label" for="certificate-validation" translate="oia-module.registration.certificate-validation.title"></label>
+          <select class="form-select" id="certificate-validation" formControlName="certificateValidation">
+            @for (validation of certificateValidations; track validation) {
+              <option [ngValue]="validation" [translate]="'oia-module.registration.certificate-validation.' + validation"></option>
+            }
+          </select>
         </div>
       </div>
     </div>
+
+    @if (certificateValidation() === 'trusted') {
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="trusted-certificate-id" translate="oia-module.registration.trusted-certificate-id"></label>
+            <oib-select-or-create
+              formControlName="trustedCertificateId"
+              inputId="trusted-certificate-id"
+              [options]="trustedCertificates()"
+              [creator]="trustedCertificateCreator"
+            />
+            <val-errors controlName="trustedCertificateId" />
+            <div class="form-text" translate="oia-module.registration.trusted-certificate-hint"></div>
+          </div>
+        </div>
+      </div>
+    }
 
     <div class="row">
       <!-- Use proxy -->

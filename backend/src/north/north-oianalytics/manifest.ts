@@ -2,6 +2,9 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 
 const manifest: NorthConnectorManifest = {
   id: 'oianalytics',
+  serverIdentity: 'x509',
+  serverTrustInCertificateStore: true,
+  serverTrustSettingsKey: 'specificSettings',
   category: 'api',
   types: ['file', 'oianalytics'],
   settings: {
@@ -87,6 +90,11 @@ const manifest: NorthConnectorManifest = {
         },
         enablingConditions: [
           {
+            referralPathFromRoot: 'certificateValidation',
+            targetPathFromRoot: 'trustedCertificateId',
+            values: ['trusted']
+          },
+          {
             referralPathFromRoot: 'authentication',
             targetPathFromRoot: 'accessKey',
             values: ['basic']
@@ -161,10 +169,11 @@ const manifest: NorthConnectorManifest = {
             }
           },
           {
-            type: 'boolean',
-            key: 'acceptUnauthorized',
-            translationKey: 'configuration.oibus.manifest.north.oianalytics.specific-settings.accept-unauthorized',
-            defaultValue: false,
+            type: 'string-select',
+            key: 'certificateValidation',
+            translationKey: 'configuration.oibus.manifest.north.oianalytics.specific-settings.certificate-validation',
+            defaultValue: 'standard',
+            selectableValues: ['standard', 'trusted'],
             validators: [
               {
                 type: 'REQUIRED',
@@ -173,8 +182,20 @@ const manifest: NorthConnectorManifest = {
             ],
             displayProperties: {
               row: 0,
-              columns: 6,
-              displayInViewMode: false
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'certificate',
+            key: 'trustedCertificateId',
+            translationKey: 'configuration.oibus.manifest.north.oianalytics.specific-settings.trusted-certificate-id',
+            trusted: true,
+            validators: [],
+            displayProperties: {
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
             }
           },
           {
