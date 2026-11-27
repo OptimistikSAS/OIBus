@@ -1,9 +1,18 @@
-import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
+import { Body, Controller, Get, Post, Put, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
 
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/api/engine.model';
+import { ServerTrustStateDTO, TrustServerIdentityCommandDTO } from '../../../shared/model/api/server-identity.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { PresentedServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
+import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import { toOIAnalyticsRegistrationDTO } from '../../service/oia/oianalytics-registration.service';
+import { toServerTrustStateDTO } from '../../service/server-trust.utils';
 import { CustomExpressRequest } from '../express';
+
+/** Adds the certificate OIAnalytics presents to the certificate store, as trusted by the user of the request */
+const trustCertificate = (request: CustomExpressRequest) => (certificatePem: string) =>
+  request.services.certificateService.trustServerCertificate(certificatePem, 'OIAnalytics server', request.user.id);
 
 @Route('/api/oianalytics')
 @Tags('OIAnalytics Registration')
@@ -34,7 +43,7 @@ export class OIAnalyticsRegistrationController extends Controller {
   @SuccessResponse(204, 'Registration completed successfully')
   async register(@Body() requestBody: RegistrationSettingsCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
-    await oIAnalyticsRegistrationService.register(requestBody, request.user.id);
+    await oIAnalyticsRegistrationService.register(requestBody, request.user.id, trustCertificate(request));
   }
 
   /**
@@ -49,19 +58,70 @@ export class OIAnalyticsRegistrationController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
-    await oIAnalyticsRegistrationService.editRegistrationSettings(requestBody, request.user.id);
+    await oIAnalyticsRegistrationService.editRegistrationSettings(requestBody, request.user.id, trustCertificate(request));
   }
 
   /**
-   * Test connection to OIAnalytics service with the provided settings
+   * Test connection to OIAnalytics service with the provided settings. The result carries the identity OIAnalytics presents
+   * when its certificate does not validate, and the connection is only tested further when it does
    * @summary Test connection
    * @param {RegistrationSettingsCommandDTO} requestBody.body.required - Connection settings to test
+   * @param withServerIdentity Whether to return the identity of OIAnalytics when its certificate does not validate, for the
+   * user to review it, instead of failing
    */
   @Post('/registration/test-connection')
-  @SuccessResponse(204, 'Connection test successful')
-  async testConnection(@Body() requestBody: RegistrationSettingsCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+  async testConnection(
+    @Body() requestBody: RegistrationSettingsCommandDTO,
+    @Request() request: CustomExpressRequest,
+    @Query() withServerIdentity?: boolean
+  ): Promise<OIBusConnectionTestResult> {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
-    await oIAnalyticsRegistrationService.testConnection(requestBody);
+    return await oIAnalyticsRegistrationService.testConnection(requestBody, withServerIdentity ?? false);
+  }
+
+  /**
+   * Retrieves the trust of the registration in the identity of OIAnalytics (the certificate of the store its certificate is
+   * validated against), with the identity OIAnalytics presented at the last request refused (pending, until a user trusts it)
+   * @summary Get the trust in the identity of OIAnalytics
+   */
+  @Get('/registration/server-trust')
+  getServerTrust(@Request() request: CustomExpressRequest): ServerTrustStateDTO {
+    return toServerTrustStateDTO(request.services.oIAnalyticsRegistrationService.getServerTrustState(), id =>
+      request.services.userService.getUserInfo(id)
+    );
+  }
+
+  /**
+   * Trusts the identity OIAnalytics presents, when its fingerprint is the one given: its certificate is added to the
+   * certificate store, and the registration validates the certificate of OIAnalytics against it
+   * @summary Trust the identity of OIAnalytics
+   */
+  @Post('/registration/server-trust')
+  @SuccessResponse(204, 'No Content')
+  async trustServerIdentity(@Body() command: TrustServerIdentityCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+    try {
+      await request.services.oIAnalyticsRegistrationService.trustServerIdentity(
+        command.fingerprint,
+        request.user.id,
+        trustCertificate(request)
+      );
+    } catch (error: unknown) {
+      throw error instanceof OIBusValidationError ? error : new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Retrieves the identity OIAnalytics presents with the saved registration settings, and whether its certificate validates,
+   * without sending anything. Null without TLS
+   * @summary Retrieve the identity of OIAnalytics
+   */
+  @Post('/registration/server-identity')
+  async retrieveServerIdentity(@Request() request: CustomExpressRequest): Promise<PresentedServerIdentity | null> {
+    try {
+      return await request.services.oIAnalyticsRegistrationService.retrieveServerIdentity();
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
   }
 
   /**

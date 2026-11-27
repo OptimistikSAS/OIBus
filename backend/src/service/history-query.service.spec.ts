@@ -859,7 +859,8 @@ describe('History Query service', () => {
         historyQuery.id,
         'north',
         'trustedId',
-        'userTest'
+        'userTest',
+        undefined
       ]);
       assert.strictEqual(historyQueryRepository.updateServerTrust.mock.callCount(), 0);
     });

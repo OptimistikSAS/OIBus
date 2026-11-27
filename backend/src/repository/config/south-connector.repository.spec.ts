@@ -3,7 +3,7 @@ import { after, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { SouthItemSettings, SouthOIAnalyticsSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import { ServerTrust } from '../../../shared/model/domain/server-identity.model';
 
 import { ConfigurationWorkflowCommand } from '../../model/configuration-workflow.model';
@@ -527,6 +527,33 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(updated.updatedBy, 'trustUser');
     assert.strictEqual(calls.length, 1);
     assert.throws(() => repository.trustCertificate('unknown-south', 'trustedId', 'trustUser'), NotFoundError);
+  });
+
+  it('should select a trusted certificate in the object attribute of the settings holding it', () => {
+    const settings: SouthOIAnalyticsSettings = {
+      useOiaModule: false,
+      timeout: 30,
+      specificSettings: {
+        host: 'https://oia',
+        certificateValidation: 'standard',
+        trustedCertificateId: null,
+        authentication: 'basic',
+        useProxy: false
+      }
+    };
+    const south = newSouth('south trusting a certificate in its specific settings', { type: 'oianalytics', settings, groups: [] });
+    repository.saveSouth(south, true);
+
+    repository.trustCertificate(south.id, 'trustedId', 'trustUser', 'specificSettings');
+
+    assert.deepStrictEqual((repository.findSouthById(south.id)!.settings as SouthOIAnalyticsSettings).specificSettings, {
+      ...settings.specificSettings,
+      certificateValidation: 'trusted',
+      trustedCertificateId: 'trustedId'
+    });
+    assert.throws(() => repository.trustCertificate(south.id, 'trustedId', 'trustUser', "x', 'y"), {
+      message: `Invalid settings key "x', 'y"`
+    });
   });
 
   it('should update the server trust of a south connector and audit it', () => {

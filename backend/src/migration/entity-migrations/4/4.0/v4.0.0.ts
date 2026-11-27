@@ -167,6 +167,11 @@ export async function up(knex: Knex): Promise<void> {
  * is enabled.
  */
 export async function down(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
+    table.boolean('accept_unauthorized').defaultTo(false);
+  });
+  await knex(REGISTRATIONS_TABLE).where('certificate_validation', 'trusted').update({ accept_unauthorized: 1 });
+  await dropColumns(knex, REGISTRATIONS_TABLE, ['certificate_validation', 'trusted_certificate_id']);
   await dropColumns(knex, SOUTH_CONNECTORS_TABLE, ['server_trust']);
   await dropColumns(knex, NORTH_CONNECTORS_TABLE, ['server_trust']);
   await dropColumns(knex, HISTORY_QUERIES_TABLE, ['south_server_trust', 'north_server_trust']);
@@ -2381,9 +2386,17 @@ export async function addTrustedCertificates(knex: Knex): Promise<void> {
 
 /**
  * The TLS connectors and history queries validate the certificate of their server against a certificate of the store
- * instead of accepting any certificate: as in the config upgrade, with `toCertificateValidation`.
+ * instead of accepting any certificate: as in the config upgrade, with `toCertificateValidation`. So does the registration
+ * of OIBus with OIAnalytics, which trusts a certificate of the store when it accepted any certificate until now.
  */
 export async function useTrustedCertificates(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
+    table.string('certificate_validation').notNullable().defaultTo('standard');
+    table.string('trusted_certificate_id').nullable();
+  });
+  await knex(REGISTRATIONS_TABLE).where('accept_unauthorized', 1).update({ certificate_validation: 'trusted' });
+  await dropColumns(knex, REGISTRATIONS_TABLE, ['accept_unauthorized']);
+
   for (const [table, typeColumn, side, settingsColumn, trustColumn] of [
     [SOUTH_CONNECTORS_TABLE, 'type', 'south', 'settings', 'server_trust'],
     [NORTH_CONNECTORS_TABLE, 'type', 'north', 'settings', 'server_trust'],

@@ -2377,7 +2377,8 @@ const registrationCompleted: RegistrationSettingsDTO = {
   useApiGateway: false,
   apiGatewayHeaderKey: null,
   apiGatewayBaseEndpoint: null,
-  acceptUnauthorized: false,
+  certificateValidation: 'standard',
+  trustedCertificateId: null,
   commandRefreshInterval: 10,
   commandRetryInterval: 5,
   messageRetryInterval: 5,
@@ -2398,7 +2399,8 @@ const registrationCompleted: RegistrationSettingsDTO = {
 
 const registrationCommand: RegistrationSettingsCommandDTO = {
   host: 'http://localhost:4200',
-  acceptUnauthorized: false,
+  certificateValidation: 'standard',
+  trustedCertificateId: null,
   useProxy: false,
   proxyUrl: null,
   proxyUsername: null,

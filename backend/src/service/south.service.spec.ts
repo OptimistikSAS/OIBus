@@ -1152,7 +1152,8 @@ describe('South Service', () => {
         assert.deepStrictEqual(southConnectorRepository.trustCertificate.mock.calls[0].arguments, [
           testData.south.list[0].id,
           'newId',
-          'userTest'
+          'userTest',
+          undefined
         ]);
         assert.strictEqual(southConnectorRepository.updateServerTrust.mock.callCount(), 0);
         assert.strictEqual(engine.reloadSouth.mock.callCount(), 1);

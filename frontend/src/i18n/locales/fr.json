@@ -141,7 +141,12 @@
             "specific-settings": {
               "title": "Connexion",
               "host": "URL",
-              "accept-unauthorized": "Accepter non autorisé",
+              "certificate-validation": {
+                "title": "Validation du certificat serveur",
+                "standard": "Standard",
+                "trusted": "Certificat approuvé"
+              },
+              "trusted-certificate-id": "Certificat approuvé",
               "authentication": {
                 "title": "Authentification",
                 "basic": "Clé d'accès/Secret",
@@ -868,7 +873,12 @@
             "specific-settings": {
               "title": "Paramètres spécifiques",
               "host": "Hôte",
-              "accept-unauthorized": "Accepter certificat non autorisé",
+              "certificate-validation": {
+                "title": "Validation du certificat serveur",
+                "standard": "Standard",
+                "trusted": "Certificat approuvé"
+              },
+              "trusted-certificate-id": "Certificat approuvé",
               "authentication": {
                 "title": "Authentification",
                 "basic": "Clé d'accès/Secret",
@@ -3425,7 +3435,13 @@
     "registration": {
       "title": "Enregistrer OIBus",
       "host": "Hôte",
-      "accept-unauthorized": "Accepter les connexions non autorisées",
+      "certificate-validation": {
+        "title": "Validation du certificat serveur",
+        "standard": "Standard",
+        "trusted": "Certificat approuvé"
+      },
+      "trusted-certificate-id": "Certificat approuvé",
+      "trusted-certificate-hint": "Une autorité de certification du magasin de certificats, avec laquelle le certificat d'OIAnalytics et son nom d'hôte sont validés, ou le certificat d'OIAnalytics lui-même.",
       "use-proxy": "Utiliser un proxy",
       "proxy-url": "URL du proxy",
       "proxy-username": "Nom d'utilisateur du proxy",

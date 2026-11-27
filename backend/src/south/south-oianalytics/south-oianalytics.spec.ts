@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
+import * as forge from 'node-forge';
+
 import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type {
   SouthItemSettings,
   SouthOIAnalyticsItemSettings,
   SouthOIAnalyticsSettings
 } from '../../../shared/model/connector/south-settings.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 import type { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
+import type { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -41,7 +45,8 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
     timeout: 30,
     specificSettings: {
       host: 'http://localhost:4200/',
-      acceptUnauthorized: true,
+      certificateValidation: 'standard',
+      trustedCertificateId: null,
       authentication: 'basic',
       accessKey: 'user',
       secretKey: 'pass',
@@ -101,7 +106,7 @@ describe('SouthOIAnalytics', () => {
 
   const httpRequestExports: Record<string, unknown> = {};
 
-  // utils-oianalytics pulls the Azure SDK: it stays fully mocked
+  // utils-oianalytics pulls the Azure SDK, which is mocked
   const createUtilsOianalyticsMocks = () => ({
     buildHttpOptions: mock.fn(async () => ({ headers: {}, auth: {}, timeout: 30000 })),
     getHost: mock.fn(() => 'http://mock-host'),
@@ -110,7 +115,7 @@ describe('SouthOIAnalytics', () => {
       formattedResult: [],
       maxInstant: '2023-01-01T00:00:00.000Z'
     })),
-    testOIAnalyticsConnection: mock.fn(async () => undefined)
+    testOIAnalyticsConnection: mock.fn<(...args: Array<unknown>) => Promise<void>>(async () => undefined)
   });
   const utilsOianalyticsExports = createUtilsOianalyticsMocks();
 
@@ -122,6 +127,8 @@ describe('SouthOIAnalytics', () => {
 
   before(() => {
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
+    mockModule(nodeRequire, '@azure/identity', {});
+    Object.assign(utilsOianalyticsExports, { ...nodeRequire('../../service/utils-oianalytics'), ...createUtilsOianalyticsMocks() });
     mockModule(nodeRequire, '../../service/utils-oianalytics', utilsOianalyticsExports);
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
@@ -166,14 +173,20 @@ describe('SouthOIAnalytics', () => {
       const result = south.testConnection();
       await assert.doesNotReject(result);
 
-      assert.deepStrictEqual(utilsOianalyticsExports.testOIAnalyticsConnection.mock.calls[0].arguments, [
-        baseConfiguration.settings.useOiaModule,
-        testData.oIAnalytics.registration.completed,
-        baseConfiguration.settings.specificSettings,
-        baseConfiguration.settings.timeout * 1000,
-        certificateService,
-        false
-      ]);
+      const [useOiaModule, registration, specificSettings, request, acceptNotRegistered] =
+        utilsOianalyticsExports.testOIAnalyticsConnection.mock.calls[0].arguments;
+      assert.deepStrictEqual(
+        [useOiaModule, registration, specificSettings, acceptNotRegistered],
+        [
+          baseConfiguration.settings.useOiaModule,
+          testData.oIAnalytics.registration.completed,
+          baseConfiguration.settings.specificSettings,
+          false
+        ]
+      );
+      // the request validates the certificate of OIAnalytics
+      await (request as (url: URL, options: ReqOptions) => Promise<ReqResponse>)(new URL('http://localhost:4200/status'), {});
+      assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], { tls: {} });
     });
   });
 
@@ -288,6 +301,94 @@ describe('SouthOIAnalytics', () => {
       const result = await south.historyQuery(items, 'start', 'end');
 
       assert.deepStrictEqual(result, { trackedInstant: '2023-01-02', value: null });
+    });
+  });
+
+  describe('certificate of OIAnalytics', () => {
+    const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
+    const certificateError = () =>
+      new Error('fetch failed', { cause: Object.assign(new Error('self-signed certificate'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' }) });
+    const certificationAuthority = (): string => {
+      const keys = forge.pki.rsa.generateKeyPair(1024);
+      const certificate = forge.pki.createCertificate();
+      certificate.publicKey = keys.publicKey;
+      certificate.setSubject([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setIssuer([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setExtensions([{ name: 'basicConstraints', cA: true }]);
+      certificate.sign(keys.privateKey, forge.md.sha256.create());
+      return forge.pki.certificateToPem(certificate);
+    };
+    const build = (
+      settings: Partial<SouthOIAnalyticsSettings>,
+      registration: OIAnalyticsRegistration = testData.oIAnalytics.registration.completed
+    ) =>
+      new SouthOIAnalytics(
+        { ...baseConfiguration, settings: { ...baseConfiguration.settings, ...settings } },
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder',
+        certificateService,
+        createMock<OIAnalyticsRegistrationRepository>({ get: () => registration })
+      );
+
+    it('should validate the certificate against the trusted certificate of its specific settings', async () => {
+      const pem = certificationAuthority();
+      certificateService.findById.mock.mockImplementation(() => ({ ...testData.certificates.list[0], certificate: pem }));
+      south = build({
+        specificSettings: { ...baseConfiguration.settings.specificSettings!, certificateValidation: 'trusted', trustedCertificateId: 'ca' }
+      });
+
+      await south.queryData(baseConfiguration.items[0], 'start', 'end');
+
+      assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1]!.tls, { ca: [pem] });
+      assert.deepStrictEqual(certificateService.findById.mock.calls[0].arguments, ['ca']);
+    });
+
+    it('should validate the certificate as the registration does, when it uses it', async () => {
+      const pem = certificationAuthority();
+      certificateService.findById.mock.mockImplementation(() => ({ ...testData.certificates.list[0], certificate: pem }));
+      south = build(
+        { useOiaModule: true },
+        { ...testData.oIAnalytics.registration.completed, certificateValidation: 'trusted', trustedCertificateId: 'registrationCa' }
+      );
+
+      await south.queryData(baseConfiguration.items[0], 'start', 'end');
+
+      assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1]!.tls, { ca: [pem] });
+      assert.deepStrictEqual(certificateService.findById.mock.calls[0].arguments, ['registrationCa']);
+      assert.strictEqual(await south.retrieveServerIdentity(), null);
+    });
+
+    it('should keep the identity refused as pending, and tell how to trust it', async () => {
+      HTTPRequest.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      mock.method(south['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+      await assert.rejects(south.queryData(baseConfiguration.items[0], 'start', 'end'), /which is not trusted: test the connection/);
+      assert.deepStrictEqual(south.getPendingServerIdentity(), { identity, status: 'unknown' });
+      assert.strictEqual(south.getServerIdentityTrustStatus(identity), 'unknown');
+    });
+
+    it('should tell to review the identity of OIAnalytics from the registration, when it uses it', async () => {
+      HTTPRequest.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      south = build({ useOiaModule: true });
+
+      await assert.rejects(
+        south.queryData(baseConfiguration.items[0], 'start', 'end'),
+        /review the identity of OIAnalytics from the registration/
+      );
+      assert.strictEqual(south.getPendingServerIdentity(), null);
+    });
+
+    it('should keep other errors', async () => {
+      HTTPRequest.mock.mockImplementation(async () => {
+        throw new Error('Network Error');
+      });
+
+      await assert.rejects(south.queryData(baseConfiguration.items[0], 'start', 'end'), { message: 'Network Error' });
     });
   });
 });

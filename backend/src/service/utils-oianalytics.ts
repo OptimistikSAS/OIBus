@@ -5,7 +5,7 @@ import { SouthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/con
 
 import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
 import { BoundedCache } from './bounded-cache';
-import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from './http-request.utils';
+import { ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from './http-request.utils';
 
 // Bounded well above any realistic number of distinct AAD credential configs in use at once, so
 // eviction only ever kicks in for genuinely stale entries left behind by connector reconfiguration.
@@ -23,6 +23,7 @@ import { Instant } from '../model/types';
 import type CertificateService from './certificate.service';
 import { encryptionService } from './encryption.service';
 import { getErrorMessage } from './utils';
+import { isCertificateError, TlsProbeTarget, TlsTrustSettings } from './utils-tls';
 
 export interface OIATimeValues {
   type: string;
@@ -131,13 +132,12 @@ export const getProxyOptions = (
   useOIAnalyticsRegistration: boolean,
   registrationSettings: OIAnalyticsRegistration,
   specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null
-): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } => {
+): ReqProxyOptions | undefined => {
   let settings: {
     useProxy: boolean;
     proxyUrl?: string | null;
     proxyUsername?: string | null;
     proxyPassword?: string | null;
-    acceptUnauthorized: boolean;
   };
   let scope: string;
 
@@ -147,8 +147,7 @@ export const getProxyOptions = (
       useProxy: registrationSettings.useProxy,
       proxyUrl: registrationSettings.proxyUrl,
       proxyUsername: registrationSettings.proxyUsername,
-      proxyPassword: registrationSettings.proxyPassword,
-      acceptUnauthorized: registrationSettings.acceptUnauthorized
+      proxyPassword: registrationSettings.proxyPassword
     };
     scope = 'registered OIAnalytics module';
   }
@@ -158,14 +157,13 @@ export const getProxyOptions = (
       useProxy: specificSettings!.useProxy,
       proxyUrl: specificSettings!.proxyUrl,
       proxyUsername: specificSettings!.proxyUsername,
-      proxyPassword: specificSettings!.proxyPassword,
-      acceptUnauthorized: specificSettings!.acceptUnauthorized
+      proxyPassword: specificSettings!.proxyPassword
     };
     scope = 'specific settings';
   }
 
   if (!settings.useProxy) {
-    return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
+    return undefined;
   }
   if (!settings.proxyUrl) {
     throw new Error(`Proxy URL not specified using ${scope}`);
@@ -183,8 +181,62 @@ export const getProxyOptions = (
     };
   }
 
-  return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
+  return options;
 };
+
+/**
+ * How the certificate of OIAnalytics is validated: as the registration of OIBus validates it, or as the specific settings
+ * of a connector do
+ */
+export const getOIAnalyticsTlsSettings = (
+  useOIAnalyticsRegistration: boolean,
+  registrationSettings: OIAnalyticsRegistration,
+  specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null
+): TlsTrustSettings =>
+  useOIAnalyticsRegistration
+    ? { certificateValidation: registrationSettings.certificateValidation, trustedCertificateId: registrationSettings.trustedCertificateId }
+    : { certificateValidation: specificSettings!.certificateValidation, trustedCertificateId: specificSettings!.trustedCertificateId };
+
+/**
+ * Where the certificate OIAnalytics presents is read, through the proxy the requests use: `null` without TLS (an `http://`
+ * host)
+ */
+export const getOIAnalyticsProbeTarget = (
+  useOIAnalyticsRegistration: boolean,
+  registrationSettings: OIAnalyticsRegistration,
+  specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null,
+  timeoutMs: number
+): TlsProbeTarget | null => {
+  const host = getHost(useOIAnalyticsRegistration, registrationSettings, specificSettings);
+  if (!/^https:\/\//i.test(host)) {
+    return null;
+  }
+  const settings = useOIAnalyticsRegistration ? registrationSettings : specificSettings!;
+  return {
+    url: host,
+    defaultPort: 443,
+    proxy:
+      settings.useProxy && settings.proxyUrl
+        ? {
+            url: settings.proxyUrl,
+            username: settings.proxyUsername,
+            password: settings.proxyPassword ? encryptionService.decryptText(settings.proxyPassword) : null
+          }
+        : null,
+    timeoutMs
+  };
+};
+
+/**
+ * The error of a request to OIAnalytics refused because its certificate does not validate as the registration of OIBus
+ * validates it: the identity OIAnalytics presents is reviewed and trusted from the registration. Other errors as they are.
+ */
+export const toRegistrationNotTrustedError = (error: unknown): unknown =>
+  isCertificateError(error)
+    ? new Error(
+        `The certificate of OIAnalytics does not validate as the registration of OIBus validates it: review the identity of OIAnalytics from the registration (${getErrorMessage(error)})`
+      )
+    : error;
 
 export const buildHttpOptions = async (
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
@@ -201,14 +253,13 @@ export const buildHttpOptions = async (
 
   const headers = getHeaders(useOIAnalyticsRegistration, registrationSettings);
   const auth = await getAuthorizationOptions(useOIAnalyticsRegistration, registrationSettings, specificSettings, certificateService!);
-  const { proxy, acceptUnauthorized } = getProxyOptions(useOIAnalyticsRegistration, registrationSettings, specificSettings);
+  const proxy = getProxyOptions(useOIAnalyticsRegistration, registrationSettings, specificSettings);
   return {
     method,
     headers,
     auth,
     proxy,
-    timeout,
-    acceptUnauthorized
+    timeout
   };
 };
 
@@ -285,8 +336,8 @@ export const testOIAnalyticsConnection = async (
   useOIAnalyticsRegistration: boolean,
   registrationSettings: OIAnalyticsRegistration,
   specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null,
-  timeout: number,
-  certificateService: CertificateService | null,
+  // sends the request, validating the certificate of OIAnalytics
+  request: (url: URL, options: ReqOptions) => Promise<ReqResponse>,
   acceptNotRegistered: boolean
 ): Promise<void> => {
   const httpOptions = await buildHttpOptions(
@@ -310,7 +361,7 @@ export const testOIAnalyticsConnection = async (
 
   let response: ReqResponse;
   try {
-    response = await HTTPRequest(requestUrl, httpOptions);
+    response = await request(requestUrl, httpOptions);
   } catch (error) {
     throw new Error(`Fetch error: ${getErrorMessage(error)}`);
   }

@@ -11,7 +11,7 @@ import testData from '../tests/utils/test-data';
 import { createMock, type Mocked, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type CertificateService from './certificate.service';
 import { encryptionService } from './encryption.service';
-import type { ReqResponse } from './http-request.utils';
+import { HTTPRequest, type ReqResponse } from './http-request.utils';
 import type { OIATimeValues } from './utils-oianalytics';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -40,6 +40,9 @@ const {
   getHost,
   getHeaders,
   getProxyOptions,
+  getOIAnalyticsTlsSettings,
+  getOIAnalyticsProbeTarget,
+  toRegistrationNotTrustedError,
   buildHttpOptions,
   parseData,
   getUrl,
@@ -178,15 +181,15 @@ describe('utils-oianalytics', () => {
 
   describe('getProxyOptions', () => {
     it('should return undefined proxy if useProxy is false (registration)', () => {
-      const reg = { useProxy: false, acceptUnauthorized: true } as OIAnalyticsRegistration;
+      const reg = { useProxy: false } as OIAnalyticsRegistration;
       const result = getProxyOptions(true, reg, null);
-      assert.deepStrictEqual(result, { proxy: undefined, acceptUnauthorized: true });
+      assert.strictEqual(result, undefined);
     });
 
     it('should return undefined proxy if useProxy is false (specific)', () => {
-      const spec = { useProxy: false, acceptUnauthorized: false } as NorthOIAnalyticsSettingsSpecificSettings;
+      const spec = { useProxy: false } as NorthOIAnalyticsSettingsSpecificSettings;
       const result = getProxyOptions(false, {} as OIAnalyticsRegistration, spec);
-      assert.deepStrictEqual(result, { proxy: undefined, acceptUnauthorized: false });
+      assert.strictEqual(result, undefined);
     });
 
     it('should throw error if proxyUrl is missing (registration)', () => {
@@ -202,12 +205,9 @@ describe('utils-oianalytics', () => {
     });
 
     it('should return proxy options without auth', () => {
-      const spec = { useProxy: true, proxyUrl: 'http://proxy.com', acceptUnauthorized: true } as NorthOIAnalyticsSettingsSpecificSettings;
+      const spec = { useProxy: true, proxyUrl: 'http://proxy.com' } as NorthOIAnalyticsSettingsSpecificSettings;
       const result = getProxyOptions(false, {} as OIAnalyticsRegistration, spec);
-      assert.deepStrictEqual(result, {
-        proxy: { url: 'http://proxy.com' },
-        acceptUnauthorized: true
-      });
+      assert.deepStrictEqual(result, { url: 'http://proxy.com' });
     });
 
     it('should return proxy options with auth', () => {
@@ -215,16 +215,12 @@ describe('utils-oianalytics', () => {
         useProxy: true,
         proxyUrl: 'http://proxy.com',
         proxyUsername: 'user',
-        proxyPassword: 'pwd',
-        acceptUnauthorized: false
+        proxyPassword: 'pwd'
       } as NorthOIAnalyticsSettingsSpecificSettings;
       const result = getProxyOptions(false, {} as OIAnalyticsRegistration, spec);
       assert.deepStrictEqual(result, {
-        proxy: {
-          url: 'http://proxy.com',
-          auth: { type: 'url', username: 'user', password: 'pwd' }
-        },
-        acceptUnauthorized: false
+        url: 'http://proxy.com',
+        auth: { type: 'url', username: 'user', password: 'pwd' }
       });
     });
   });
@@ -240,8 +236,7 @@ describe('utils-oianalytics', () => {
         status: 'REGISTERED',
         token: 'token',
         useApiGateway: false,
-        useProxy: false,
-        acceptUnauthorized: false
+        useProxy: false
       } as OIAnalyticsRegistration;
 
       const result = await buildHttpOptions('POST', true, reg, null, 5000, certificateService);
@@ -251,9 +246,70 @@ describe('utils-oianalytics', () => {
         headers: {},
         auth: { type: 'bearer', token: 'token' },
         proxy: undefined,
-        timeout: 5000,
-        acceptUnauthorized: false
+        timeout: 5000
       });
+    });
+  });
+
+  describe('getOIAnalyticsTlsSettings', () => {
+    it('should validate the certificate as the registration does', () => {
+      const reg = { certificateValidation: 'trusted', trustedCertificateId: 'ca' } as OIAnalyticsRegistration;
+      const spec = { certificateValidation: 'standard' } as NorthOIAnalyticsSettingsSpecificSettings;
+      assert.deepStrictEqual(getOIAnalyticsTlsSettings(true, reg, spec), { certificateValidation: 'trusted', trustedCertificateId: 'ca' });
+    });
+
+    it('should validate the certificate as the specific settings do', () => {
+      const reg = { certificateValidation: 'standard', trustedCertificateId: null } as OIAnalyticsRegistration;
+      const spec = { certificateValidation: 'trusted', trustedCertificateId: 'server' } as NorthOIAnalyticsSettingsSpecificSettings;
+      assert.deepStrictEqual(getOIAnalyticsTlsSettings(false, reg, spec), {
+        certificateValidation: 'trusted',
+        trustedCertificateId: 'server'
+      });
+    });
+  });
+
+  describe('getOIAnalyticsProbeTarget', () => {
+    it('should read nothing from an http host', () => {
+      const reg = { host: 'http://oia' } as OIAnalyticsRegistration;
+      assert.strictEqual(getOIAnalyticsProbeTarget(true, reg, null, 1000), null);
+    });
+
+    it('should read the certificate of the registration host, directly', () => {
+      const reg = { host: 'https://oia', useProxy: false } as OIAnalyticsRegistration;
+      assert.deepStrictEqual(getOIAnalyticsProbeTarget(true, reg, null, 1000), {
+        url: 'https://oia',
+        defaultPort: 443,
+        proxy: null,
+        timeoutMs: 1000
+      });
+    });
+
+    it('should read the certificate of the specific host, through its proxy', () => {
+      const spec = {
+        host: 'https://spec',
+        useProxy: true,
+        proxyUrl: 'http://proxy',
+        proxyUsername: 'user',
+        proxyPassword: 'pwd'
+      } as NorthOIAnalyticsSettingsSpecificSettings;
+      assert.deepStrictEqual(getOIAnalyticsProbeTarget(false, {} as OIAnalyticsRegistration, spec, 2000), {
+        url: 'https://spec',
+        defaultPort: 443,
+        proxy: { url: 'http://proxy', username: 'user', password: 'decrypted-pwd' },
+        timeoutMs: 2000
+      });
+    });
+  });
+
+  describe('toRegistrationNotTrustedError', () => {
+    it('should tell to review the identity of OIAnalytics from the registration', () => {
+      const error = Object.assign(new Error('self-signed certificate'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' });
+      assert.match((toRegistrationNotTrustedError(error) as Error).message, /review the identity of OIAnalytics from the registration/);
+    });
+
+    it('should keep other errors', () => {
+      const error = new Error('Network Error');
+      assert.strictEqual(toRegistrationNotTrustedError(error), error);
     });
   });
 
@@ -337,7 +393,7 @@ describe('utils-oianalytics', () => {
     });
 
     it('should succeed when API returns 200', async () => {
-      await assert.doesNotReject(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false));
+      await assert.doesNotReject(testOIAnalyticsConnection(true, mockRegistration, null, HTTPRequest, false));
 
       assert.strictEqual(requestMock.mock.calls.length, 1);
       assert.ok(String(requestMock.mock.calls[0].arguments[0]).includes('/api/oianalytics/oibus/status'));
@@ -345,7 +401,7 @@ describe('utils-oianalytics', () => {
     });
 
     it('should use specific settings host when useOIAnalyticsRegistration is false', async () => {
-      await assert.doesNotReject(testOIAnalyticsConnection(false, mockRegistration, mockSpecificSettings, 30000, null, false));
+      await assert.doesNotReject(testOIAnalyticsConnection(false, mockRegistration, mockSpecificSettings, HTTPRequest, false));
 
       assert.strictEqual(requestMock.mock.calls.length, 1);
       assert.ok(String(requestMock.mock.calls[0].arguments[0]).includes('/api/oianalytics/oibus/status'));
@@ -358,7 +414,7 @@ describe('utils-oianalytics', () => {
         throw error;
       });
 
-      await assert.rejects(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false), {
+      await assert.rejects(testOIAnalyticsConnection(true, mockRegistration, null, HTTPRequest, false), {
         message: `Fetch error: ${error.message}`
       });
     });
@@ -367,7 +423,7 @@ describe('utils-oianalytics', () => {
       requestMock.mock.mockImplementation(async () => createMockResponse(500, 'Internal Server Error'));
 
       await assert.rejects(
-        testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false),
+        testOIAnalyticsConnection(true, mockRegistration, null, HTTPRequest, false),
         /HTTP request failed with status code 500/
       );
     });
@@ -377,7 +433,7 @@ describe('utils-oianalytics', () => {
         requestMock.mock.mockImplementation(async () => createMockResponse(401, 'Unauthorized'));
 
         await assert.rejects(
-          testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false),
+          testOIAnalyticsConnection(true, mockRegistration, null, HTTPRequest, false),
           /HTTP request failed with status code 401/
         );
       });
@@ -385,14 +441,14 @@ describe('utils-oianalytics', () => {
       it('should SUCCEED on 401 if accept401AsSuccess is true', async () => {
         requestMock.mock.mockImplementation(async () => createMockResponse(401, 'Unauthorized'));
 
-        await assert.doesNotReject(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, true));
+        await assert.doesNotReject(testOIAnalyticsConnection(true, mockRegistration, null, HTTPRequest, true));
       });
 
       it('should still throw on other errors (e.g. 403) even if accept401AsSuccess is true', async () => {
         requestMock.mock.mockImplementation(async () => createMockResponse(403, 'Forbidden'));
 
         await assert.rejects(
-          testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, true),
+          testOIAnalyticsConnection(true, mockRegistration, null, HTTPRequest, true),
           /HTTP request failed with status code 403/
         );
       });
@@ -405,7 +461,7 @@ describe('utils-oianalytics', () => {
         apiGatewayBaseEndpoint: '/gateway'
       } as OIAnalyticsRegistration;
 
-      await assert.doesNotReject(testOIAnalyticsConnection(true, gatewayRegistration, null, 30000, null, false));
+      await assert.doesNotReject(testOIAnalyticsConnection(true, gatewayRegistration, null, HTTPRequest, false));
 
       assert.strictEqual(requestMock.mock.calls.length, 1);
       assert.ok(String(requestMock.mock.calls[0].arguments[0]).includes('/gateway/api/oianalytics/oibus/status'));

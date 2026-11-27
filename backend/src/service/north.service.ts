@@ -40,6 +40,7 @@ import type CertificateService from './certificate.service';
 import type OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { toScanModeDTO } from './scan-mode.service';
 import {
+  getCertificateStoreTrustSettings,
   resolveTestedServerTrust,
   retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
@@ -227,9 +228,14 @@ export default class NorthService {
     } catch {
       // Not in the engine
     }
-    if (this.getManifest(northConnector.type).serverTrustInCertificateStore) {
+    const manifest = this.getManifest(northConnector.type);
+    if (manifest.serverTrustInCertificateStore) {
       return {
-        ...toCertificateStoreServerTrust(northConnector.settings, northConnector.serverTrust, id => this.certificateService.findById(id)),
+        ...toCertificateStoreServerTrust(
+          getCertificateStoreTrustSettings(manifest, northConnector.settings),
+          northConnector.serverTrust,
+          id => this.certificateService.findById(id)
+        ),
         pending
       };
     }
@@ -251,11 +257,12 @@ export default class NorthService {
     command: NorthConnectorCommandDTO,
     user: string
   ): ServerTrust {
+    const manifest = this.getManifest(northEntity.type);
     return trustFormCertificateInStore(
-      northEntity.settings,
+      getCertificateStoreTrustSettings(manifest, northEntity.settings),
       serverTrust,
       command.serverTrust,
-      !!this.getManifest(northEntity.type).serverTrustInCertificateStore,
+      !!manifest.serverTrustInCertificateStore,
       certificatePem => this.trustServerCertificate(certificatePem, `${northEntity.name} server`, user)
     );
   }
@@ -279,9 +286,10 @@ export default class NorthService {
     const north = this.buildThrowawayNorth({ ...northConnector, enabled: false, transformers: [] });
     const identity = await retrieveServerIdentityToTrust(north, fingerprint);
     const certificate = (identity.details as X509ServerIdentityDetails).certificate;
-    if (this.getManifest(northConnector.type).serverTrustInCertificateStore && certificate) {
+    const manifest = this.getManifest(northConnector.type);
+    if (manifest.serverTrustInCertificateStore && certificate) {
       const trusted = this.trustServerCertificate(certificate, `${northConnector.name} server`, trustedBy);
-      this.northConnectorRepository.trustCertificate(northId, trusted.id, trustedBy);
+      this.northConnectorRepository.trustCertificate(northId, trusted.id, trustedBy, manifest.serverTrustSettingsKey);
     } else {
       this.northConnectorRepository.updateServerTrust(
         northId,

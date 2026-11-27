@@ -4,6 +4,7 @@ import { pipeline } from 'node:stream/promises';
 
 import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine.model';
 import { Instant } from '../../../shared/model/common/types';
+import { PresentedServerIdentity, ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 import {
   OIBusInteractiveSessionRequestCompletionDTO,
   OIBusInteractiveSessionRequestDTO
@@ -14,7 +15,17 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 import { encryptionService } from '../encryption.service';
 import { HTTPRequest, ReqOptions, ReqResponse } from '../http-request.utils';
 import { generateRandomId } from '../utils';
-import { buildHttpOptions, getHeaders, getProxyOptions, getUrl } from '../utils-oianalytics';
+import {
+  buildHttpOptions,
+  getHeaders,
+  getOIAnalyticsProbeTarget,
+  getOIAnalyticsTlsSettings,
+  getProxyOptions,
+  getUrl,
+  testOIAnalyticsConnection,
+  toRegistrationNotTrustedError
+} from '../utils-oianalytics';
+import { TlsServerTrust } from '../utils-tls';
 import { OIAnalyticsCheckRegistrationDTO, OIAnalyticsFetchCommandDTO, OIAnalyticsTokensDTO } from './oianalytics.model';
 
 const OIANALYTICS_TIMEOUT = 30_000;
@@ -77,7 +88,92 @@ async function tokenRequestError(response: ReqResponse): Promise<Error> {
   return new Error(`${response.statusCode} - ${text}`);
 }
 
+/** The identity of OIAnalytics trusted in the form of the registration (not saved yet), see `RegistrationSettingsCommandDTO` */
+export const formServerIdentity = (command: RegistrationSettingsCommandDTO): ServerIdentity | null => command.serverTrust?.identity ?? null;
+
 export default class OIAnalyticsClient {
+  private pending: PresentedServerIdentity | null = null;
+
+  constructor(private readonly findCertificate: (certificateId: string) => { certificate: string }) {}
+
+  /**
+   * The identity OIAnalytics presented at the last request refused because its certificate does not validate as the
+   * registration validates it (for a user to review and trust it), `null` when the last request was not refused
+   */
+  get pendingServerIdentity(): PresentedServerIdentity | null {
+    return this.pending;
+  }
+
+  /** The validation of the certificate of OIAnalytics, as the registration (or its form) validates it */
+  private tlsServerTrust(registration: OIAnalyticsRegistration, formIdentity: ServerIdentity | null, refuse: boolean): TlsServerTrust {
+    return new TlsServerTrust(
+      () => getOIAnalyticsTlsSettings(true, registration, null),
+      () => formIdentity,
+      certificateId => this.findCertificate(certificateId),
+      () => getOIAnalyticsProbeTarget(true, registration, null, OIANALYTICS_TIMEOUT),
+      (identity, status) => {
+        if (refuse) {
+          this.pending = { identity, status };
+        }
+      }
+    );
+  }
+
+  /**
+   * Sends a request to OIAnalytics, validating its certificate as the registration validates it. When it does not validate,
+   * the identity OIAnalytics presents is kept as pending, for a user to review and trust it from the registration (unless the
+   * request tests settings not saved yet).
+   */
+  private async request(
+    registration: OIAnalyticsRegistration,
+    url: URL,
+    options: ReqOptions,
+    formIdentity: ServerIdentity | null = null,
+    saved = formIdentity === null
+  ): Promise<ReqResponse> {
+    const tlsServerTrust = this.tlsServerTrust(registration, formIdentity, saved);
+    let response: ReqResponse;
+    try {
+      response = await HTTPRequest(url, { ...options, tls: tlsServerTrust.tls() });
+    } catch (error: unknown) {
+      if (await tlsServerTrust.refuseIfNotTrusted(error)) {
+        throw toRegistrationNotTrustedError(error);
+      }
+      throw error;
+    }
+    if (saved) {
+      this.pending = null;
+    }
+    return response;
+  }
+
+  /**
+   * The identity OIAnalytics presents with these registration settings, and whether it validates, without sending anything:
+   * `null` without TLS (an `http://` host)
+   */
+  async retrieveServerIdentity(
+    registration: OIAnalyticsRegistration,
+    formIdentity: ServerIdentity | null = null
+  ): Promise<PresentedServerIdentity | null> {
+    const tlsServerTrust = this.tlsServerTrust(registration, formIdentity, false);
+    const identity = await tlsServerTrust.retrieveServerIdentity();
+    return identity ? { identity, status: tlsServerTrust.status(identity) } : null;
+  }
+
+  /**
+   * Tests the connection to OIAnalytics with registration settings, not saved yet: a 401 is a success while OIBus is not
+   * registered (it has no token yet)
+   */
+  async testConnection(command: RegistrationSettingsCommandDTO, acceptNotRegistered: boolean): Promise<void> {
+    const registration = command as OIAnalyticsRegistration;
+    await testOIAnalyticsConnection(
+      true,
+      registration,
+      null,
+      (url, options) => this.request(registration, url, options, formServerIdentity(command), false),
+      acceptNotRegistered
+    );
+  }
   async updateCommandStatus(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
     const httpOptions = await buildHttpOptions('PUT', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
     const url = getUrl(COMMAND_STATUS_OIANALYTICS_ENDPOINT, registrationSettings.host, {
@@ -87,7 +183,7 @@ export default class OIAnalyticsClient {
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     httpOptions.body = payload;
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -106,7 +202,7 @@ export default class OIAnalyticsClient {
     const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
     httpOptions.query = { ids: commands.map(command => command.id) };
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -120,7 +216,7 @@ export default class OIAnalyticsClient {
     });
     const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -140,7 +236,7 @@ export default class OIAnalyticsClient {
 
     const headers = getHeaders(true, registration as OIAnalyticsRegistration);
     headers['Content-Type'] = 'application/json';
-    const { proxy, acceptUnauthorized } = getProxyOptions(true, registration as OIAnalyticsRegistration, null);
+    const proxy = getProxyOptions(true, registration as OIAnalyticsRegistration, null);
     const httpOptions: ReqOptions = {
       method: 'POST',
       headers,
@@ -154,12 +250,11 @@ export default class OIAnalyticsClient {
         publicKey,
         tokenRefresh: true
       }),
-      acceptUnauthorized,
       proxy,
       timeout: OIANALYTICS_TIMEOUT
     };
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registration as OIAnalyticsRegistration, url, httpOptions, formServerIdentity(registration));
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -181,16 +276,15 @@ export default class OIAnalyticsClient {
     });
     const headers = getHeaders(true, registrationSettings);
     headers['Content-Type'] = 'application/json';
-    const { proxy, acceptUnauthorized } = getProxyOptions(true, registrationSettings, null);
+    const proxy = getProxyOptions(true, registrationSettings, null);
     const httpOptions: ReqOptions = {
       method: 'GET',
       headers,
-      acceptUnauthorized,
       proxy,
       timeout: OIANALYTICS_TIMEOUT
     };
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -209,7 +303,7 @@ export default class OIAnalyticsClient {
     });
     const headers = getHeaders(true, registrationSettings);
     headers['Content-Type'] = 'application/json';
-    const { proxy, acceptUnauthorized } = getProxyOptions(true, registrationSettings, null);
+    const proxy = getProxyOptions(true, registrationSettings, null);
     const httpOptions: ReqOptions = {
       method: 'POST',
       headers,
@@ -218,12 +312,11 @@ export default class OIAnalyticsClient {
         refreshToken: encryptionService.decryptText(registrationSettings.refreshToken!),
         publicKey: registrationSettings.publicCipherKey
       }),
-      acceptUnauthorized,
       proxy,
       timeout: OIANALYTICS_TIMEOUT
     };
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw await tokenRequestError(response);
     }
@@ -242,7 +335,7 @@ export default class OIAnalyticsClient {
     });
     const httpOptions = await buildHttpOptions('POST', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw await tokenRequestError(response);
     }
@@ -258,7 +351,7 @@ export default class OIAnalyticsClient {
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     httpOptions.body = payload;
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -275,7 +368,7 @@ export default class OIAnalyticsClient {
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     httpOptions.body = payload;
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -292,7 +385,7 @@ export default class OIAnalyticsClient {
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     httpOptions.body = payload;
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -308,7 +401,7 @@ export default class OIAnalyticsClient {
     const httpOptions = await buildHttpOptions('DELETE', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
     httpOptions.query = { historyId };
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -324,7 +417,7 @@ export default class OIAnalyticsClient {
     const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_DOWNLOAD_TIMEOUT, null);
     httpOptions.query = { assetId };
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -342,7 +435,7 @@ export default class OIAnalyticsClient {
     const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_DOWNLOAD_TIMEOUT, null);
     httpOptions.query = { fileId };
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -367,7 +460,7 @@ export default class OIAnalyticsClient {
     httpOptions.body = Readable.from(multipartStream(boundary, filename, createReadStream(filePath)));
     httpOptions.headers = { ...httpOptions.headers, 'content-type': `multipart/form-data; boundary=${boundary}` };
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -389,7 +482,7 @@ export default class OIAnalyticsClient {
     });
     const httpOptions = await buildHttpOptions('GET', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -413,7 +506,7 @@ export default class OIAnalyticsClient {
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     httpOptions.body = JSON.stringify(completion);
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -440,7 +533,7 @@ export default class OIAnalyticsClient {
     httpOptions.body = Readable.from(multipartStream(boundary, filename, createReadStream(filePath), 'application/json'));
     httpOptions.headers = { ...httpOptions.headers, 'content-type': `multipart/form-data; boundary=${boundary}` };
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
@@ -457,7 +550,7 @@ export default class OIAnalyticsClient {
     });
     const httpOptions = await buildHttpOptions('DELETE', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
 
-    const response = await HTTPRequest(url, httpOptions);
+    const response = await this.request(registrationSettings, url, httpOptions);
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }

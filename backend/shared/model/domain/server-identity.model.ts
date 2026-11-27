@@ -177,3 +177,18 @@ export interface ServerTrustState extends ServerTrust {
    */
   pending: PresentedServerIdentity | null;
 }
+
+/**
+ * How a TLS client validates the certificate of its server:
+ * - `standard`: the validation of Node.js, without any option (the public certification authorities), as `https` does
+ * - `trusted`: against a trusted certificate of the certificate store: a certification authority, or the certificate of the
+ *   server itself
+ */
+export const SERVER_CERTIFICATE_VALIDATIONS = ['standard', 'trusted'] as const;
+
+/**
+ * How a TLS client validates the certificate of its server (see `SERVER_CERTIFICATE_VALIDATIONS`).
+ *
+ * @example "standard"
+ */
+export type ServerCertificateValidation = (typeof SERVER_CERTIFICATE_VALIDATIONS)[number];

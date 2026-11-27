@@ -126,6 +126,10 @@ export const SOUTH_O_D_B_C_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES 
 export type SouthODBCItemSettingsTrackingInstantDateTimeInputType =
   (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
+export const SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_CERTIFICATE_VALIDATIONS = ['standard', 'trusted'] as const;
+export type SouthOIAnalyticsSettingsSpecificSettingsCertificateValidation =
+  (typeof SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_CERTIFICATE_VALIDATIONS)[number];
+
 export const SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const;
 export type SouthOIAnalyticsSettingsSpecificSettingsAuthentication =
   (typeof SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS)[number];
@@ -342,7 +346,8 @@ export interface SouthMySQLSettingsConnectionSettings {
 
 export interface SouthOIAnalyticsSettingsSpecificSettings {
   host: string;
-  acceptUnauthorized: boolean;
+  certificateValidation: SouthOIAnalyticsSettingsSpecificSettingsCertificateValidation;
+  trustedCertificateId?: string | null;
   authentication: SouthOIAnalyticsSettingsSpecificSettingsAuthentication;
   accessKey?: string;
   secretKey?: string | null;

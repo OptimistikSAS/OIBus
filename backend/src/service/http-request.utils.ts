@@ -11,16 +11,11 @@ import type { TlsTrust } from './utils-tls';
 // only ever kicks in for genuinely stale entries left behind by connector reconfiguration.
 const MAX_CACHED_PROXY_AGENTS = 50;
 const proxyAgentCache = new BoundedCache<string, ProxyAgent>(MAX_CACHED_PROXY_AGENTS, agent => void agent.destroy?.());
-let noTlsVerifyAgent: Agent | null = null;
 const tlsTrustAgentCache = new BoundedCache<string, Agent>(MAX_CACHED_PROXY_AGENTS, agent => void agent.destroy?.());
 
 export function clearProxyAgentCache(): void {
   proxyAgentCache.clear();
   tlsTrustAgentCache.clear();
-  if (noTlsVerifyAgent) {
-    void noTlsVerifyAgent.destroy?.();
-    noTlsVerifyAgent = null;
-  }
 }
 
 export type ReqURL = Parameters<typeof request>['0'];
@@ -38,7 +33,6 @@ export type ReqOptions = Parameters<typeof request>['1'] & {
    */
   auth?: ReqAuthOptions;
   proxy?: ReqProxyOptions;
-  acceptUnauthorized?: boolean;
   /**
    * How the certificate of the server is validated (see `toTlsTrust`): with the standard validation of Node.js when
    * omitted or empty
@@ -117,18 +111,10 @@ export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promis
   const tlsTrust = options.tls && Object.keys(options.tls).length > 0 ? options.tls : null;
   delete options.tls; // remove non-standard option
   if (options.proxy) {
-    options.dispatcher = createProxy(options.proxy, options.acceptUnauthorized || false, tlsTrust);
+    options.dispatcher = createProxy(options.proxy, tlsTrust);
     delete options.proxy; // remove non-standard option
-    delete options.acceptUnauthorized;
   } else if (tlsTrust) {
     options.dispatcher = tlsTrustAgent(tlsTrust);
-    delete options.acceptUnauthorized;
-  } else if (options.acceptUnauthorized) {
-    if (!noTlsVerifyAgent) {
-      noTlsVerifyAgent = new Agent({ connect: { rejectUnauthorized: false } });
-    }
-    options.dispatcher = noTlsVerifyAgent;
-    delete options.acceptUnauthorized;
   }
 
   if (options.timeout) {
@@ -223,13 +209,11 @@ function tlsTrustAgent(trust: TlsTrust): Agent {
   return agent;
 }
 
-function createProxy(options: NonNullable<ReqOptions['proxy']>, acceptUnauthorized: boolean, tlsTrust: TlsTrust | null = null): ProxyAgent {
+function createProxy(options: NonNullable<ReqOptions['proxy']>, tlsTrust: TlsTrust | null): ProxyAgent {
   const proxyOptions: ProxyAgent.Options = { uri: options.url };
 
   if (tlsTrust) {
     proxyOptions.requestTls = { ...tlsTrust };
-  } else if (acceptUnauthorized) {
-    proxyOptions.requestTls = { rejectUnauthorized: false };
   }
 
   if (options.auth) {
@@ -238,7 +222,7 @@ function createProxy(options: NonNullable<ReqOptions['proxy']>, acceptUnauthoriz
     proxyOptions.uri = url;
   }
 
-  const cacheKey = `${proxyOptions.uri}|${acceptUnauthorized}|${proxyOptions.token ?? ''}|${tlsTrust ? tlsTrustKey(tlsTrust) : ''}`;
+  const cacheKey = `${proxyOptions.uri}|${proxyOptions.token ?? ''}|${tlsTrust ? tlsTrustKey(tlsTrust) : ''}`;
   const cached = proxyAgentCache.get(cacheKey);
   if (cached) return cached;
 

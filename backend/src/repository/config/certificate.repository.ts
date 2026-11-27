@@ -38,7 +38,7 @@ export default class CertificateRepository {
   /**
    * What uses a certificate: the settings of the connectors and history queries refer to it by a `certificateId` key (or
    * `trustedCertificateId` for a trusted certificate), at any depth (as their manifests name every certificate field), and
-   * the web server by its HTTPS certificate
+   * the web server by its HTTPS certificate, and the registration by the certificate it validates OIAnalytics against
    */
   findUsages(certificateId: string): Array<CertificateUsage> {
     const referringTo = (column: string) =>
@@ -47,7 +47,8 @@ export default class CertificateRepository {
       `SELECT 'south' AS type, name FROM south_connectors WHERE ${referringTo('settings')} ` +
       `UNION ALL SELECT 'north' AS type, name FROM north_connectors WHERE ${referringTo('settings')} ` +
       `UNION ALL SELECT 'history-query' AS type, name FROM history_queries WHERE ${referringTo('south_settings')} OR ${referringTo('north_settings')} ` +
-      `UNION ALL SELECT 'web-server' AS type, name FROM engines WHERE https_certificate_source = 'store' AND https_certificate_id = @certificateId;`;
+      `UNION ALL SELECT 'web-server' AS type, name FROM engines WHERE https_certificate_source = 'store' AND https_certificate_id = @certificateId ` +
+      `UNION ALL SELECT 'registration' AS type, host AS name FROM registrations WHERE certificate_validation = 'trusted' AND trusted_certificate_id = @certificateId;`;
     return this.database.prepare(query).all({ certificateId }) as Array<CertificateUsage>;
   }
 

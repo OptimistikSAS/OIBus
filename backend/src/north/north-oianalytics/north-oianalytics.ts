@@ -4,6 +4,7 @@ import zlib from 'node:zlib';
 
 import { NorthOIAnalyticsSettings } from '../../../shared/model/connector/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity, ServerIdentityTrustStatus } from '../../../shared/model/domain/server-identity.model';
 
 import { OIBusError } from '../../model/engine.model';
 import type { ILogger } from '../../model/logger.model';
@@ -11,9 +12,19 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import type CacheService from '../../service/cache/cache.service';
 import type CertificateService from '../../service/certificate.service';
-import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
+import { HTTPRequest, ReqOptions, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
+import { toServerNotTrustedError } from '../../service/server-trust.utils';
 import { getErrorMessage } from '../../service/utils';
-import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
+import {
+  buildHttpOptions,
+  getHost,
+  getOIAnalyticsProbeTarget,
+  getOIAnalyticsTlsSettings,
+  getUrl,
+  testOIAnalyticsConnection,
+  toRegistrationNotTrustedError
+} from '../../service/utils-oianalytics';
+import { TlsServerTrust } from '../../service/utils-tls';
 import NorthConnector from '../north-connector';
 
 /**
@@ -57,6 +68,58 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     super(connector, cacheService);
   }
 
+  /**
+   * The validation of the certificate of OIAnalytics (see `TlsServerTrust`): as the registration of OIBus validates it when
+   * the connector uses it (the identity of OIAnalytics is then reviewed from the registration), or as its specific settings do
+   */
+  private readonly tlsServerTrust = new TlsServerTrust(
+    () =>
+      getOIAnalyticsTlsSettings(
+        this.connector.settings.useOiaModule,
+        this.oIAnalyticsRegistrationRepository.get()!,
+        this.connector.settings.specificSettings
+      ),
+    () => (this.connector.settings.useOiaModule ? null : this.connector.serverTrust.identity),
+    certificateId => this.certificateService.findById(certificateId),
+    () =>
+      this.connector.settings.useOiaModule
+        ? null
+        : getOIAnalyticsProbeTarget(
+            false,
+            this.oIAnalyticsRegistrationRepository.get()!,
+            this.connector.settings.specificSettings,
+            this.connector.settings.timeout * 1000
+          ),
+    (presented, status) => this.serverIdentityVerifier.refuse(presented, status)
+  );
+
+  override async retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    return await this.tlsServerTrust.retrieveServerIdentity();
+  }
+
+  /** Whether the certificate OIAnalytics presents validates (see `testConnectionWithServerIdentity`) */
+  getServerIdentityTrustStatus(presented: ServerIdentity): ServerIdentityTrustStatus {
+    return this.tlsServerTrust.status(presented);
+  }
+
+  /**
+   * Sends a request to OIAnalytics, validating its certificate: when it does not validate, the certificate OIAnalytics
+   * presents is kept as pending, for a user to review and trust it (from the registration, when the connector uses it)
+   */
+  private async request(url: URL, options: ReqOptions): Promise<ReqResponse> {
+    try {
+      return await HTTPRequest(url, { ...options, tls: this.tlsServerTrust.tls() });
+    } catch (error: unknown) {
+      if (this.connector.settings.useOiaModule) {
+        throw toRegistrationNotTrustedError(error);
+      }
+      if (await this.tlsServerTrust.refuseIfNotTrusted(error)) {
+        throw toServerNotTrustedError(this, error);
+      }
+      throw error;
+    }
+  }
+
   supportedTypes(): Array<string> {
     return ['file', 'oianalytics'];
   }
@@ -67,8 +130,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       this.connector.settings.useOiaModule,
       registrationSettings,
       this.connector.settings.specificSettings,
-      this.connector.settings.timeout * 1000,
-      this.certificateService,
+      (url, options) => this.request(url, options),
       false
     );
     return { items: [] };
@@ -116,7 +178,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(url, httpOptions);
+      response = await this.request(url, httpOptions);
     } catch (fetchError) {
       throw new OIBusError(`Fail to reach values endpoint ${url}. ${fetchError}`, true);
     }
@@ -157,7 +219,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     httpOptions.headers = { ...httpOptions.headers, 'content-type': `multipart/form-data; boundary=${boundary}` };
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(url, httpOptions);
+      response = await this.request(url, httpOptions);
     } catch (fetchError) {
       throw new OIBusError(`Fail to reach file endpoint ${url}. ${fetchError}`, true);
     }

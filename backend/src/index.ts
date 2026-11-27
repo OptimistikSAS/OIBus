@@ -132,13 +132,20 @@ export async function bootstrap(): Promise<void> {
   loggerService.init(path.resolve(LOG_FOLDER_NAME), path.resolve(CONFIG_DATABASE));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
 
-  const oIAnalyticsClient = new OIAnalyticsClient();
+  const oIAnalyticsClient = new OIAnalyticsClient(certificateId => {
+    const certificate = repositoryService.certificateRepository.findById(certificateId);
+    if (!certificate) {
+      throw new Error(`Certificate "${certificateId}" not found`);
+    }
+    return certificate;
+  });
 
   const oIAnalyticsRegistrationService = new OianalyticsRegistrationService(
     new JoiValidator(),
     oIAnalyticsClient,
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.engineRepository,
+    repositoryService.certificateRepository,
     loggerService.createChildLogger('internal')
   );
   oIAnalyticsRegistrationService.start();

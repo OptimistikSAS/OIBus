@@ -736,6 +736,7 @@ const models: TsoaRoute.Models = {
             "discovery": {"ref":"SouthConnectorDiscovery"},
             "serverIdentity": {"ref":"ServerIdentityType"},
             "serverTrustInCertificateStore": {"dataType":"boolean"},
+            "serverTrustSettingsKey": {"dataType":"string"},
             "settings": {"ref":"OIBusObjectAttribute","required":true},
             "items": {"ref":"OIBusArrayAttribute","required":true},
         },
@@ -2513,6 +2514,11 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthOIAnalyticsSettingsSpecificSettingsCertificateValidation": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["standard"]},{"dataType":"enum","enums":["trusted"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOIAnalyticsSettingsSpecificSettingsAuthentication": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["aad-client-secret"]},{"dataType":"enum","enums":["aad-certificate"]}],"validators":{}},
@@ -2522,7 +2528,8 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "host": {"dataType":"string","required":true},
-            "acceptUnauthorized": {"dataType":"boolean","required":true},
+            "certificateValidation": {"ref":"SouthOIAnalyticsSettingsSpecificSettingsCertificateValidation","required":true},
+            "trustedCertificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "authentication": {"ref":"SouthOIAnalyticsSettingsSpecificSettingsAuthentication","required":true},
             "accessKey": {"dataType":"string"},
             "secretKey": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
@@ -5226,6 +5233,11 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["NOT_REGISTERED"]},{"dataType":"enum","enums":["PENDING"]},{"dataType":"enum","enums":["REGISTERED"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ServerCertificateValidation": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["standard"]},{"dataType":"enum","enums":["trusted"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "RegistrationCommandPermissions": {
         "dataType": "refObject",
         "properties": {
@@ -5264,7 +5276,8 @@ const models: TsoaRoute.Models = {
             "useApiGateway": {"dataType":"boolean","required":true},
             "apiGatewayHeaderKey": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "apiGatewayBaseEndpoint": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "acceptUnauthorized": {"dataType":"boolean","required":true},
+            "certificateValidation": {"ref":"ServerCertificateValidation","required":true},
+            "trustedCertificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "commandRefreshInterval": {"dataType":"double","required":true},
             "commandRetryInterval": {"dataType":"double","required":true},
             "messageRetryInterval": {"dataType":"double","required":true},
@@ -5285,7 +5298,9 @@ const models: TsoaRoute.Models = {
             "apiGatewayHeaderKey": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "apiGatewayHeaderValue": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "apiGatewayBaseEndpoint": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "acceptUnauthorized": {"dataType":"boolean","required":true},
+            "certificateValidation": {"ref":"ServerCertificateValidation","required":true},
+            "trustedCertificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "serverTrust": {"ref":"ServerTrustCommandDTO"},
             "commandRefreshInterval": {"dataType":"double","required":true},
             "commandRetryInterval": {"dataType":"double","required":true},
             "messageRetryInterval": {"dataType":"double","required":true},
@@ -7208,6 +7223,11 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthOIAnalyticsSettingsSpecificSettingsCertificateValidation": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["standard"]},{"dataType":"enum","enums":["trusted"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthOIAnalyticsSettingsSpecificSettingsAuthentication": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["aad-client-secret"]},{"dataType":"enum","enums":["aad-certificate"]}],"validators":{}},
@@ -7217,7 +7237,8 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "host": {"dataType":"string","required":true},
-            "acceptUnauthorized": {"dataType":"boolean","required":true},
+            "certificateValidation": {"ref":"NorthOIAnalyticsSettingsSpecificSettingsCertificateValidation","required":true},
+            "trustedCertificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "authentication": {"ref":"NorthOIAnalyticsSettingsSpecificSettingsAuthentication","required":true},
             "accessKey": {"dataType":"string"},
             "secretKey": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
@@ -8904,6 +8925,7 @@ const models: TsoaRoute.Models = {
             "types": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "serverIdentity": {"ref":"ServerIdentityType"},
             "serverTrustInCertificateStore": {"dataType":"boolean"},
+            "serverTrustSettingsKey": {"dataType":"string"},
             "settings": {"ref":"OIBusObjectAttribute","required":true},
         },
         "additionalProperties": false,
@@ -13444,6 +13466,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsOIAnalyticsRegistrationController_testConnection: Record<string, TsoaRoute.ParameterSchema> = {
                 requestBody: {"in":"body","name":"requestBody","required":true,"ref":"RegistrationSettingsCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                withServerIdentity: {"in":"query","name":"withServerIdentity","dataType":"boolean"},
         };
         app.post('/api/oianalytics/registration/test-connection',
             ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController)),
@@ -13465,7 +13488,98 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 response,
                 next,
                 validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsOIAnalyticsRegistrationController_getServerTrust: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/oianalytics/registration/server-trust',
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController)),
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController.prototype.getServerTrust)),
+
+            async function OIAnalyticsRegistrationController_getServerTrust(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsOIAnalyticsRegistrationController_getServerTrust, request, response });
+
+                const controller = new OIAnalyticsRegistrationController();
+
+              await templateService.apiHandler({
+                methodName: 'getServerTrust',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsOIAnalyticsRegistrationController_trustServerIdentity: Record<string, TsoaRoute.ParameterSchema> = {
+                command: {"in":"body","name":"command","required":true,"ref":"TrustServerIdentityCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/oianalytics/registration/server-trust',
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController)),
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController.prototype.trustServerIdentity)),
+
+            async function OIAnalyticsRegistrationController_trustServerIdentity(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsOIAnalyticsRegistrationController_trustServerIdentity, request, response });
+
+                const controller = new OIAnalyticsRegistrationController();
+
+              await templateService.apiHandler({
+                methodName: 'trustServerIdentity',
+                controller,
+                response,
+                next,
+                validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsOIAnalyticsRegistrationController_retrieveServerIdentity: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/oianalytics/registration/server-identity',
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController)),
+            ...(fetchMiddlewares<RequestHandler>(OIAnalyticsRegistrationController.prototype.retrieveServerIdentity)),
+
+            async function OIAnalyticsRegistrationController_retrieveServerIdentity(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsOIAnalyticsRegistrationController_retrieveServerIdentity, request, response });
+
+                const controller = new OIAnalyticsRegistrationController();
+
+              await templateService.apiHandler({
+                methodName: 'retrieveServerIdentity',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);

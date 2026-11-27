@@ -556,11 +556,27 @@ export function toServerTrust(type: string, settings: Record<string, unknown> | 
 }
 
 /**
- * The TLS connectors validating the certificate of their server against a certificate of the store, with the key of the
- * switch they accepted any certificate with until now
+ * The switch a TLS connector accepted any certificate with until now: its key, in the object attribute of its settings named
+ * `settingsKey`, or in its settings themselves
  */
-export const TRUSTED_CERTIFICATE_SWITCHES: Record<string, { south: string | null; north: string | null }> = {
-  rest: { south: 'acceptUnauthorized', north: 'acceptUnauthorized' }
+interface TrustedCertificateSwitch {
+  key: string;
+  settingsKey?: string;
+}
+
+/**
+ * The TLS connectors validating the certificate of their server against a certificate of the store, with the switch they
+ * accepted any certificate with until now
+ */
+export const TRUSTED_CERTIFICATE_SWITCHES: Record<
+  string,
+  { south: TrustedCertificateSwitch | null; north: TrustedCertificateSwitch | null }
+> = {
+  rest: { south: { key: 'acceptUnauthorized' }, north: { key: 'acceptUnauthorized' } },
+  oianalytics: {
+    south: { key: 'acceptUnauthorized', settingsKey: 'specificSettings' },
+    north: { key: 'acceptUnauthorized', settingsKey: 'specificSettings' }
+  }
 };
 
 /**
@@ -573,13 +589,19 @@ export function toCertificateValidation(
   side: 'south' | 'north',
   settings: Record<string, unknown> | null | undefined
 ): { settings: Record<string, unknown>; trustOnFirstUse: boolean } | null {
-  const key = TRUSTED_CERTIFICATE_SWITCHES[type]?.[side];
-  if (!key || !settings || !(key in settings)) {
+  const trustedCertificateSwitch = TRUSTED_CERTIFICATE_SWITCHES[type]?.[side];
+  if (!trustedCertificateSwitch || !settings) {
     return null;
   }
-  const { [key]: acceptsAnyCertificate, ...rest } = settings;
+  const { key, settingsKey } = trustedCertificateSwitch;
+  const switchSettings = settingsKey ? settings[settingsKey] : settings;
+  if (!switchSettings || typeof switchSettings !== 'object' || !(key in switchSettings)) {
+    return null;
+  }
+  const { [key]: acceptsAnyCertificate, ...rest } = switchSettings as Record<string, unknown>;
+  const converted = { ...rest, certificateValidation: acceptsAnyCertificate ? 'trusted' : 'standard', trustedCertificateId: null };
   return {
-    settings: { ...rest, certificateValidation: acceptsAnyCertificate ? 'trusted' : 'standard', trustedCertificateId: null },
+    settings: settingsKey ? { ...settings, [settingsKey]: converted } : converted,
     trustOnFirstUse: !!acceptsAnyCertificate
   };
 }

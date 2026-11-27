@@ -11,6 +11,8 @@ import {
   WebServerProtocol
 } from '../domain/engine.model';
 import { LogLevel } from '../domain/logs.model';
+import { ServerCertificateValidation } from '../domain/server-identity.model';
+import { ServerTrustCommandDTO } from './server-identity.model';
 
 /**
  * Engine settings Data Transfer Object.
@@ -349,10 +351,18 @@ export interface RegistrationSettingsDTO extends BaseEntity {
   apiGatewayBaseEndpoint: string | null;
 
   /**
-   * Whether to accept unauthorized certificates.
-   * @example false
+   * How the certificate of OIAnalytics is validated: `standard` (the public certification authorities), or `trusted`
+   * (against `trustedCertificateId`).
+   * @example "standard"
    */
-  acceptUnauthorized: boolean;
+  certificateValidation: ServerCertificateValidation;
+
+  /**
+   * The id of the trusted certificate of the store the certificate of OIAnalytics is validated against (a certification
+   * authority, or the certificate of OIAnalytics itself), with the `trusted` validation.
+   * @example null
+   */
+  trustedCertificateId: string | null;
 
   /**
    * The interval in seconds for refreshing commands.
@@ -438,10 +448,24 @@ export interface RegistrationSettingsCommandDTO {
   apiGatewayBaseEndpoint: string | null;
 
   /**
-   * Whether to accept unauthorized certificates.
-   * @example false
+   * How the certificate of OIAnalytics is validated: `standard` (the public certification authorities), or `trusted`
+   * (against `trustedCertificateId`).
+   * @example "standard"
    */
-  acceptUnauthorized: boolean;
+  certificateValidation: ServerCertificateValidation;
+
+  /**
+   * The id of the trusted certificate of the store the certificate of OIAnalytics is validated against (a certification
+   * authority, or the certificate of OIAnalytics itself), with the `trusted` validation.
+   * @example null
+   */
+  trustedCertificateId: string | null;
+
+  /**
+   * The identity of OIAnalytics trusted in the form of the registration, after a connection test: its certificate is added to
+   * the certificate store as a trusted certificate, and selected (`trustedCertificateId`). Nothing is trusted when omitted.
+   */
+  serverTrust?: ServerTrustCommandDTO;
 
   /**
    * The interval in seconds for refreshing commands.

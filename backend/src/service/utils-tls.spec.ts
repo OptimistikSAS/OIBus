@@ -17,7 +17,8 @@ import {
   TlsServerTrust,
   toTlsServerIdentity,
   toTlsTrust,
-  toTlsTrustStatus
+  toTlsTrustStatus,
+  toTrustSettingsJsonPath
 } from './utils-tls';
 
 interface KeyPair {
@@ -214,6 +215,12 @@ describe('Service utils TLS', () => {
     );
     assert.ok(!isCertificateError(Object.assign(new Error('refused'), { code: 'ECONNREFUSED' })));
     assert.ok(!isCertificateError('error'));
+  });
+
+  it('should give the JSON path of the settings telling how the certificate is validated', () => {
+    assert.strictEqual(toTrustSettingsJsonPath(), '$');
+    assert.strictEqual(toTrustSettingsJsonPath('specificSettings'), '$.specificSettings');
+    assert.throws(() => toTrustSettingsJsonPath("a'"), { message: `Invalid settings key "a'"` });
   });
 
   describe('TlsServerTrust', () => {

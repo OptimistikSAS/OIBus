@@ -4,17 +4,14 @@ import https from 'node:https';
 import net from 'node:net';
 import tls from 'node:tls';
 
-import { ServerIdentity, ServerIdentityTrustStatus, X509ServerIdentityDetails } from '../../shared/model/domain/server-identity.model';
+import {
+  ServerCertificateValidation,
+  ServerIdentity,
+  ServerIdentityTrustStatus,
+  X509ServerIdentityDetails
+} from '../../shared/model/domain/server-identity.model';
 
 import { toX509ServerIdentity } from './utils-server-identity';
-
-/**
- * How the certificate of a server is validated by a TLS connector:
- * - `standard`: the validation of Node.js, without any option (the public certification authorities), as `https` does
- * - `trusted`: against a certificate of the store OIBus trusts (`trustedCertificateId`): a certification authority, or the
- *   certificate of the server itself
- */
-export type ServerCertificateValidation = 'standard' | 'trusted';
 
 /** The settings of a TLS connector telling how it validates the certificate of its server */
 export interface TlsTrustSettings {
@@ -66,6 +63,20 @@ export const toTlsTrust = (trustedCertificate: string | null): TlsTrust => {
       );
     }
   };
+};
+
+/**
+ * The JSON path (in SQLite) of the settings of a connector telling how it validates the certificate of its server: the
+ * settings themselves, or their object attribute named by the `serverTrustSettingsKey` of its manifest
+ */
+export const toTrustSettingsJsonPath = (settingsKey?: string): string => {
+  if (!settingsKey) {
+    return '$';
+  }
+  if (!/^[A-Za-z][A-Za-z0-9]*$/.test(settingsKey)) {
+    throw new Error(`Invalid settings key "${settingsKey}"`);
+  }
+  return `$.${settingsKey}`;
 };
 
 /**

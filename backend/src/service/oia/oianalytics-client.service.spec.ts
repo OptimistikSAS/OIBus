@@ -4,10 +4,16 @@ import { createRequire } from 'node:module';
 import { PassThrough, Readable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import * as forge from 'node-forge';
+
+import { RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine.model';
+import { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
+
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import testData from '../../tests/utils/test-data';
 import { assertContains, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type { ReqOptions, ReqResponse } from '../http-request.utils';
+import type * as UtilsTls from '../utils-tls';
 import type OIAnalyticsClientType from './oianalytics-client.service';
 import type {
   OIAnalyticsInvalidGrantError as OIAnalyticsInvalidGrantErrorType,
@@ -29,15 +35,30 @@ const createHttpRequestMocks = () => ({
 });
 const createUtilsMocks = () => ({ generateRandomId: mock.fn(() => '123ABC') });
 const createUtilsOIAnalyticsMocks = () => ({
+  ...nodeRequire('../utils-oianalytics'),
   buildHttpOptions: mock.fn(async (method: string) => ({ ...mockHttpOptions, method })),
   getHeaders: mock.fn(() => ({})),
-  getProxyOptions: mock.fn(() => ({ acceptUnauthorized: false, proxy: undefined })),
+  getProxyOptions: mock.fn(() => undefined),
   getUrl: mock.fn((endpoint: string, host: string) => new URL(endpoint, host))
 });
 const createEncryptionMocks = () => ({
   encryptionService: { decryptText: mock.fn((text: string) => `decrypted ${text}`) }
 });
+// The identity OIAnalytics presents when its certificate is read: the probe is not run
+const presentedIdentity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
+const createUtilsTlsMocks = () => {
+  const real: typeof UtilsTls = nodeRequire('../utils-tls');
+  return {
+    ...real,
+    TlsServerTrust: class extends real.TlsServerTrust {
+      override async retrieveServerIdentity(): Promise<ServerIdentity | null> {
+        return presentedIdentity;
+      }
+    }
+  };
+};
 const httpRequestExports = createHttpRequestMocks();
+const utilsTlsExports = createUtilsTlsMocks();
 const encryptionExports = createEncryptionMocks();
 const utilsExports = createUtilsMocks();
 const utilsOIAnalyticsExports = createUtilsOIAnalyticsMocks();
@@ -51,6 +72,7 @@ before(() => {
   mockModule(nodeRequire, '../http-request.utils', httpRequestExports);
   mockModule(nodeRequire, '../utils', utilsExports);
   mockModule(nodeRequire, '../utils-oianalytics', utilsOIAnalyticsExports);
+  mockModule(nodeRequire, '../utils-tls', utilsTlsExports);
 
   const clientModule = reloadModule<{
     default: typeof OIAnalyticsClientType;
@@ -75,7 +97,7 @@ describe('OIAnalytics Client', () => {
     Object.assign(utilsExports, createUtilsMocks());
     Object.assign(utilsOIAnalyticsExports, createUtilsOIAnalyticsMocks());
 
-    service = new OIAnalyticsClient();
+    service = new OIAnalyticsClient(certificateId => ({ certificate: `certificate ${certificateId}` }));
   });
 
   afterEach(() => {
@@ -143,7 +165,7 @@ describe('OIAnalytics Client', () => {
       assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
       const [calledUrl, calledOptions] = sentRequest();
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/commands/pending'));
-      assert.deepStrictEqual(calledOptions, { ...mockHttpOptions, method: 'GET' });
+      assert.deepStrictEqual(calledOptions, { ...mockHttpOptions, method: 'GET', tls: {} });
     });
 
     it('should throw on error response', async () => {
@@ -207,9 +229,9 @@ describe('OIAnalytics Client', () => {
       assert.deepStrictEqual(calledOptions, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        acceptUnauthorized: false,
         proxy: undefined,
-        timeout: 30000
+        timeout: 30000,
+        tls: {}
       });
       assert.deepStrictEqual(result, mockResponse);
     });
@@ -241,9 +263,9 @@ describe('OIAnalytics Client', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken: 'decrypted refresh token', publicKey: 'public key' }),
-        acceptUnauthorized: false,
         proxy: undefined,
-        timeout: 30000
+        timeout: 30000,
+        tls: {}
       });
       assert.deepStrictEqual(result, tokens);
     });
@@ -623,6 +645,61 @@ describe('OIAnalytics Client', () => {
       respondWith(404, 'Not Found');
 
       await assert.rejects(() => service.closeSession(registration, 'session1'), /404 - Not Found/);
+    });
+  });
+
+  describe('certificate of OIAnalytics', () => {
+    const certificationAuthority = (): string => {
+      const keys = forge.pki.rsa.generateKeyPair(1024);
+      const certificate = forge.pki.createCertificate();
+      certificate.publicKey = keys.publicKey;
+      certificate.setSubject([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setIssuer([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setExtensions([{ name: 'basicConstraints', cA: true }]);
+      certificate.sign(keys.privateKey, forge.md.sha256.create());
+      return forge.pki.certificateToPem(certificate);
+    };
+    const certificateError = () =>
+      new Error('fetch failed', { cause: Object.assign(new Error('self-signed certificate'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' }) });
+    const registration = { ...testData.oIAnalytics.registration.completed, host: 'https://oia.example.com' };
+
+    it('should validate the certificate of OIAnalytics against the trusted certificate of the registration', async () => {
+      const pem = certificationAuthority();
+      service = new OIAnalyticsClient(() => ({ certificate: pem }));
+
+      await service.sendConfiguration({ ...registration, certificateValidation: 'trusted', trustedCertificateId: 'ca' }, 'payload');
+
+      assert.deepStrictEqual(sentRequest()[1].tls, { ca: [pem] });
+    });
+
+    it('should keep the identity of OIAnalytics refused as pending, until a request succeeds', async () => {
+      httpRequestExports.HTTPRequest.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+
+      await assert.rejects(service.sendConfiguration(registration, 'payload'), /review the identity of OIAnalytics from the registration/);
+      assert.deepStrictEqual(service.pendingServerIdentity, { identity: presentedIdentity, status: 'unknown' });
+
+      respondWith(204);
+      await service.sendConfiguration(registration, 'payload');
+      assert.strictEqual(service.pendingServerIdentity, null);
+    });
+
+    it('should not keep the identity refused when testing settings with an identity trusted in their form', async () => {
+      httpRequestExports.HTTPRequest.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      const command: RegistrationSettingsCommandDTO = {
+        ...registration,
+        serverTrust: { identity: presentedIdentity, trustOnFirstUse: false }
+      };
+
+      await assert.rejects(service.testConnection(command, true), /review the identity of OIAnalytics from the registration/);
+      assert.strictEqual(service.pendingServerIdentity, null);
+    });
+
+    it('should retrieve the identity OIAnalytics presents', async () => {
+      assert.deepStrictEqual(await service.retrieveServerIdentity(registration), { identity: presentedIdentity, status: 'unknown' });
     });
   });
 });

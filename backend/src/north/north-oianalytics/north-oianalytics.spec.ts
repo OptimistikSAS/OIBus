@@ -6,7 +6,9 @@ import zlib from 'node:zlib';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import type { NorthOIAnalyticsSettings } from '../../../shared/model/connector/north-settings.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
+import type { OIBusError } from '../../model/engine.model';
 import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import type CertificateService from '../../service/certificate.service';
 import type * as HttpRequestUtils from '../../service/http-request.utils';
@@ -49,7 +51,7 @@ describe('NorthOIAnalytics', () => {
   let utilsOIAnalyticsExports: typeof UtilsOIAnalytics;
   const createUtilsOIAnalyticsMocks = () => ({
     buildHttpOptions: mock.fn(async () => ({ headers: { 'custom-header': 'val' }, auth: { type: 'basic' as const }, timeout: 30000 })),
-    testOIAnalyticsConnection: mock.fn(async () => undefined)
+    testOIAnalyticsConnection: mock.fn<(...args: Array<unknown>) => Promise<void>>(async () => undefined)
   });
   let utilsOIAnalyticsMocks: ReturnType<typeof createUtilsOIAnalyticsMocks>;
 
@@ -86,7 +88,8 @@ describe('NorthOIAnalytics', () => {
       compress: false,
       specificSettings: {
         host: 'https://mock-host',
-        acceptUnauthorized: true,
+        certificateValidation: 'standard',
+        trustedCertificateId: null,
         authentication: 'basic',
         accessKey: 'user',
         secretKey: 'pass',
@@ -118,14 +121,66 @@ describe('NorthOIAnalytics', () => {
     await north.testConnection();
 
     assert.strictEqual(utilsOIAnalyticsMocks.testOIAnalyticsConnection.mock.calls.length, 1);
-    assert.deepStrictEqual(utilsOIAnalyticsMocks.testOIAnalyticsConnection.mock.calls[0].arguments, [
-      configuration.settings.useOiaModule,
-      testData.oIAnalytics.registration.completed,
-      configuration.settings.specificSettings,
-      configuration.settings.timeout * 1000,
-      certificateService,
-      false
-    ]);
+    const [useOiaModule, registration, specificSettings, request, acceptNotRegistered] =
+      utilsOIAnalyticsMocks.testOIAnalyticsConnection.mock.calls[0].arguments;
+    assert.deepStrictEqual(
+      [useOiaModule, registration, specificSettings, acceptNotRegistered],
+      [configuration.settings.useOiaModule, testData.oIAnalytics.registration.completed, configuration.settings.specificSettings, false]
+    );
+    // the request validates the certificate of OIAnalytics
+    await (request as (url: URL, options: HttpRequestUtils.ReqOptions) => Promise<HttpRequestUtils.ReqResponse>)(
+      new URL('http://localhost:4200/status'),
+      {}
+    );
+    assert.deepStrictEqual(HTTPRequest.mock.calls[0].arguments[1], { tls: {} });
+  });
+
+  describe('certificate of OIAnalytics', () => {
+    const metadata = {
+      contentFile: 'file.json',
+      contentSize: 100,
+      numberOfElement: 2,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'oianalytics'
+    };
+    const certificateError = () =>
+      new Error('fetch failed', { cause: Object.assign(new Error('self-signed certificate'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' }) });
+    const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
+
+    it('should validate the certificate of OIAnalytics with the standard validation', async () => {
+      await north.handleContent(fileStreamOf('{}'), metadata);
+
+      assert.deepStrictEqual(sentRequest().options.tls, {});
+    });
+
+    it('should keep the identity refused as pending, and retry later', async () => {
+      HTTPRequest.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      mock.method(north['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+      await assert.rejects(north.handleContent(fileStreamOf('{}'), metadata), (error: OIBusError) => {
+        assert.match(error.message, /which is not trusted: test the connection/);
+        return error.forceRetry;
+      });
+      assert.deepStrictEqual(north.getPendingServerIdentity(), { identity, status: 'unknown' });
+      assert.strictEqual(north.getServerIdentityTrustStatus(identity), 'unknown');
+    });
+
+    it('should tell to review the identity of OIAnalytics from the registration, when it uses it', async () => {
+      HTTPRequest.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      north = new NorthOIAnalytics(
+        { ...configuration, settings: { ...configuration.settings, useOiaModule: true } },
+        createCacheServiceMock(),
+        certificateService,
+        createMock<OIAnalyticsRegistrationRepository>({ get: () => testData.oIAnalytics.registration.completed })
+      );
+
+      await assert.rejects(north.handleContent(fileStreamOf('{}'), metadata), /review the identity of OIAnalytics from the registration/);
+      assert.strictEqual(await north.retrieveServerIdentity(), null);
+    });
   });
 
   it('should return correct types', () => {

@@ -10,6 +10,7 @@ import { Instant } from '../../model/types';
 import { encryptionService } from '../encryption.service';
 import { HTTPRequest } from '../http-request.utils';
 import { buildHttpOptions, getUrl } from '../utils-oianalytics';
+import { getTrustedCertificate, resolveTlsTrust } from '../utils-tls';
 
 interface OIAnalyticsLog {
   message: string;
@@ -65,11 +66,13 @@ class OianalyticsTransport {
   private stopping = false;
   private readonly configDatabase: Database.Database;
   private readonly selectToken: Database.Statement<[], { token: string | null }>;
+  private readonly selectCertificate: Database.Statement<[string], { certificate: string }>;
 
   constructor(options: OIAnalyticsOptions) {
     this.options = options;
     this.configDatabase = new Database(this.options.configDatabasePath, { readonly: true, fileMustExist: true });
     this.selectToken = this.configDatabase.prepare('SELECT token FROM registrations WHERE rowid=(SELECT MIN(rowid) FROM registrations);');
+    this.selectCertificate = this.configDatabase.prepare('SELECT certificate FROM certificates WHERE id = ?;');
     if (this.options.registrationSettings.host.endsWith('/')) {
       this.options.registrationSettings.host = this.options.registrationSettings.host.slice(
         0,
@@ -97,7 +100,18 @@ class OianalyticsTransport {
     const dataBuffer = JSON.stringify(this.batchLogs);
     this.batchLogs = [];
 
-    const httpOptions = await buildHttpOptions('POST', true, this.currentRegistrationSettings(), null, timeout, null);
+    const registrationSettings = this.currentRegistrationSettings();
+    const httpOptions = await buildHttpOptions('POST', true, registrationSettings, null, timeout, null);
+    // the certificate of OIAnalytics is validated as the registration validates it
+    httpOptions.tls = resolveTlsTrust(
+      getTrustedCertificate(registrationSettings, null, certificateId => {
+        const row = this.selectCertificate.get(certificateId);
+        if (!row) {
+          throw new Error(`Certificate "${certificateId}" not found`);
+        }
+        return row;
+      })
+    );
     httpOptions.body = dataBuffer;
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
 

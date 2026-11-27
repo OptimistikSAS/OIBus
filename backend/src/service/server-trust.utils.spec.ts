@@ -5,11 +5,13 @@ import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import { DateTime } from 'luxon';
 import * as forge from 'node-forge';
 
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
 import { PresentedServerIdentity, ServerIdentity, TrustedServerIdentity } from '../../shared/model/domain/server-identity.model';
 
 import { OIBusValidationError } from '../model/types';
 import {
+  getCertificateStoreTrustSettings,
   resolveTestedServerTrust,
   retrievePresentedServerIdentity,
   retrieveServerIdentityToTrust,
@@ -215,6 +217,42 @@ describe('Server trust utils', () => {
     });
   });
 
+  describe('getCertificateStoreTrustSettings', () => {
+    const objectAttribute = (enablingConditions: OIBusObjectAttribute['enablingConditions']): OIBusObjectAttribute => ({
+      type: 'object',
+      key: 'settings',
+      translationKey: '',
+      displayProperties: { visible: true, wrapInBox: false },
+      enablingConditions,
+      validators: [],
+      attributes: []
+    });
+    const enabledWithoutModule = objectAttribute([
+      { referralPathFromRoot: 'useOiaModule', targetPathFromRoot: 'specificSettings', values: [false] }
+    ]);
+
+    it('should give no settings for a connector not trusting a certificate of the store', () => {
+      assert.strictEqual(getCertificateStoreTrustSettings({ settings: objectAttribute([]) }, { certificateValidation: 'trusted' }), null);
+    });
+
+    it('should give the settings themselves', () => {
+      const settings = { certificateValidation: 'trusted' };
+      assert.strictEqual(
+        getCertificateStoreTrustSettings({ serverTrustInCertificateStore: true, settings: objectAttribute([]) }, settings),
+        settings
+      );
+    });
+
+    it('should give their object attribute named by the manifest, while it is enabled', () => {
+      const manifest = { serverTrustInCertificateStore: true, serverTrustSettingsKey: 'specificSettings', settings: enabledWithoutModule };
+      const specificSettings = { certificateValidation: 'trusted' };
+
+      assert.strictEqual(getCertificateStoreTrustSettings(manifest, { useOiaModule: false, specificSettings }), specificSettings);
+      assert.strictEqual(getCertificateStoreTrustSettings(manifest, { useOiaModule: true, specificSettings }), null);
+      assert.strictEqual(getCertificateStoreTrustSettings(manifest, { useOiaModule: false, specificSettings: null }), null);
+    });
+  });
+
   describe('trustFormCertificateInStore', () => {
     const certificateIdentity: ServerIdentity = {
       type: 'x509',
@@ -250,6 +288,22 @@ describe('Server trust utils', () => {
       assert.strictEqual(trustCertificate.mock.callCount(), 0);
     });
 
+    it('should keep no identity when the settings selecting the certificate are disabled', () => {
+      const trustCertificate = mock.fn((_certificate: string) => ({ id: 'trustedId' }));
+
+      assert.deepStrictEqual(
+        trustFormCertificateInStore(
+          null,
+          { identity: null, trustOnFirstUse: true },
+          { identity: certificateIdentity },
+          true,
+          trustCertificate
+        ),
+        { identity: null, trustOnFirstUse: true }
+      );
+      assert.strictEqual(trustCertificate.mock.callCount(), 0);
+    });
+
     it('should keep the trust of the other connectors', () => {
       const serverTrust = { identity: trusted, trustOnFirstUse: false };
 
@@ -279,6 +333,10 @@ describe('Server trust utils', () => {
       assert.strictEqual(serverTrust.identity!.fingerprint, new crypto.X509Certificate(pem).fingerprint256);
       assert.strictEqual(serverTrust.identity!.trustedBy, 'admin');
       assert.strictEqual(serverTrust.identity!.trustedAt, '2026-01-01T00:00:00.000Z');
+      assert.deepStrictEqual(toCertificateStoreServerTrust(null, { identity: null, trustOnFirstUse: true }, findCertificate), {
+        identity: null,
+        trustOnFirstUse: true
+      });
 
       assert.deepStrictEqual(
         toCertificateStoreServerTrust({ certificateValidation: 'standard' }, { identity: null, trustOnFirstUse: true }, findCertificate),

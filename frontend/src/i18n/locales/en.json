@@ -481,7 +481,13 @@
     "registration": {
       "title": "Register OIBus",
       "host": "Host",
-      "accept-unauthorized": "Accept unauthorized",
+      "certificate-validation": {
+        "title": "Server certificate validation",
+        "standard": "Standard",
+        "trusted": "Trusted certificate"
+      },
+      "trusted-certificate-id": "Trusted certificate",
+      "trusted-certificate-hint": "A certification authority of the certificate store, against which the certificate of OIAnalytics and its host name are validated, or the certificate of OIAnalytics itself.",
       "use-proxy": "Use proxy",
       "proxy-url": "Proxy URL",
       "proxy-username": "Proxy username",
@@ -1170,7 +1176,12 @@
             "specific-settings": {
               "title": "Connection",
               "host": "URL",
-              "accept-unauthorized": "Accept unauthorized",
+              "certificate-validation": {
+                "title": "Server certificate validation",
+                "standard": "Standard",
+                "trusted": "Trusted certificate"
+              },
+              "trusted-certificate-id": "Trusted certificate",
               "authentication": {
                 "title": "Authentication",
                 "basic": "Access key/Secret",
@@ -1897,7 +1908,12 @@
             "specific-settings": {
               "title": "Specific settings",
               "host": "Host",
-              "accept-unauthorized": "Accept unauthorized certificate",
+              "certificate-validation": {
+                "title": "Server certificate validation",
+                "standard": "Standard",
+                "trusted": "Trusted certificate"
+              },
+              "trusted-certificate-id": "Trusted certificate",
               "authentication": {
                 "title": "Authentication",
                 "basic": "Access key/Secret",
