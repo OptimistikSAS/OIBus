@@ -2,6 +2,8 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 
 const manifest: NorthConnectorManifest = {
   id: 'mqtt',
+  serverIdentity: 'x509',
+  serverTrustInCertificateStore: true,
   category: 'iot',
   types: ['mqtt'],
   settings: {
@@ -13,6 +15,11 @@ const manifest: NorthConnectorManifest = {
       wrapInBox: false
     },
     enablingConditions: [
+      {
+        referralPathFromRoot: 'certificateValidation',
+        targetPathFromRoot: 'trustedCertificateId',
+        values: ['trusted']
+      },
       {
         referralPathFromRoot: 'qos',
         targetPathFromRoot: 'persistent',
@@ -105,11 +112,6 @@ const manifest: NorthConnectorManifest = {
             referralPathFromRoot: 'type',
             targetPathFromRoot: 'keyFilePath',
             values: ['cert']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'caFilePath',
-            values: ['cert']
           }
         ],
         validators: [
@@ -198,37 +200,33 @@ const manifest: NorthConnectorManifest = {
               columns: 4,
               displayInViewMode: true
             }
-          },
-          {
-            type: 'string',
-            key: 'caFilePath',
-            translationKey: 'configuration.oibus.manifest.north.mqtt.authentication.ca-file-path',
-            defaultValue: null,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 1,
-              columns: 4,
-              displayInViewMode: true
-            }
           }
         ]
       },
       {
-        type: 'boolean',
-        key: 'rejectUnauthorized',
-        translationKey: 'configuration.oibus.manifest.north.mqtt.reject-unauthorized',
-        defaultValue: false,
+        type: 'string-select',
+        key: 'certificateValidation',
+        translationKey: 'configuration.oibus.manifest.north.mqtt.certificate-validation',
+        defaultValue: 'standard',
+        selectableValues: ['standard', 'trusted'],
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
           }
         ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'certificate',
+        key: 'trustedCertificateId',
+        translationKey: 'configuration.oibus.manifest.north.mqtt.trusted-certificate-id',
+        trusted: true,
+        validators: [],
         displayProperties: {
           row: 2,
           columns: 4,

@@ -3,10 +3,14 @@ import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
+import * as forge from 'node-forge';
+
 import type { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/connector/south-settings.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type CertificateService from '../../service/certificate.service';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
 import { createMock, flushPromises, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
@@ -79,13 +83,13 @@ const buildConfiguration = (): SouthConnectorEntity<SouthMQTTSettings, SouthMQTT
       type: 'none',
       username: '',
       password: '',
-      caFilePath: '',
       certFilePath: '',
       keyFilePath: ''
     },
     connectTimeout: 1000,
     reconnectPeriod: 1000,
-    rejectUnauthorized: false,
+    certificateValidation: 'standard',
+    trustedCertificateId: null,
     maxNumberOfMessages: 1,
     flushMessageTimeout: 1000
   },
@@ -124,6 +128,7 @@ describe('SouthMQTT', () => {
   let logger: PinoLogger;
   let addContentCallback: Mock<ConstructorParameters<typeof SouthMQTTClass>[1]>;
   let southCacheRepository: Mocked<SouthCacheRepository>;
+  let certificateService: Mocked<CertificateService>;
   let mqttClient: MqttClientMock;
   let connectAsync: Mock<(...args: Array<unknown>) => Promise<MqttClientMock>>;
   let connect: Mock<(url: string) => MqttClientMock>;
@@ -135,10 +140,11 @@ describe('SouthMQTT', () => {
     createConnectionOptions: mock.fn(async () => ({})),
     getItem: mock.fn((_topic: string, _items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>>) => configuration.items[0])
   });
-  const utilsMqttExports = createUtilsMqttMocks();
+  const utilsMqttExports: ReturnType<typeof createUtilsMqttMocks> & Record<string, unknown> = createUtilsMqttMocks();
 
   before(() => {
     mockModule(nodeRequire, 'mqtt', { __esModule: true, default: mqttDefault });
+    Object.assign(utilsMqttExports, { ...nodeRequire('../../service/utils-mqtt'), ...createUtilsMqttMocks() });
     mockModule(nodeRequire, '../../service/utils-mqtt', utilsMqttExports);
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: () => logger },
@@ -159,7 +165,8 @@ describe('SouthMQTT', () => {
     Object.assign(mqttDefault, { connectAsync, connect });
     Object.assign(utilsMqttExports, createUtilsMqttMocks());
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+    certificateService = createMock<CertificateService>();
+    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, 'cacheFolder', certificateService);
   });
 
   afterEach(() => {
@@ -566,6 +573,66 @@ describe('SouthMQTT', () => {
     await assert.rejects(south.testConnection(), connectionError);
     assert.strictEqual(mqttClient.end.mock.calls.length, 1);
     assert.deepStrictEqual(mqttClient.end.mock.calls[0].arguments, [true]);
+  });
+
+  describe('certificate of the broker', () => {
+    const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
+    const certificateError = () => Object.assign(new Error('self-signed certificate'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' });
+
+    it('should keep the certificate refused at a test as pending, and tell how to trust it', async () => {
+      connect.mock.mockImplementation(() => {
+        setImmediate(() => mqttClient.emit('error', certificateError()));
+        return mqttClient;
+      });
+      mock.method(south['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+      await assert.rejects(south.testConnection(), /which is not trusted: test the connection to review its identity/);
+      assert.deepStrictEqual(south.getPendingServerIdentity(), { identity, status: 'unknown' });
+      assert.strictEqual(south.getServerIdentityTrustStatus(identity), 'unknown');
+    });
+
+    it('should keep the certificate refused at a connection as pending', async () => {
+      connectAsync.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      mock.method(south['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+      await south.connect();
+
+      assert.ok(logger.error.mock.calls.some(c => /which is not trusted: test the connection/.test(String(c.arguments[0]))));
+      assert.deepStrictEqual(south.getPendingServerIdentity(), { identity, status: 'unknown' });
+    });
+
+    it('should tell how to trust the certificate refused when testing an item', async () => {
+      connectAsync.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      mock.method(south['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+      await assert.rejects(south.testItem(configuration.items[0], { history: undefined }), (error: unknown) =>
+        /which is not trusted: test the connection/.test(String(error))
+      );
+    });
+
+    it('should validate the certificate against the trusted certificate of the store', async () => {
+      const keys = forge.pki.rsa.generateKeyPair(1024);
+      const certificate = forge.pki.createCertificate();
+      certificate.publicKey = keys.publicKey;
+      certificate.setSubject([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setIssuer([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setExtensions([{ name: 'basicConstraints', cA: true }]);
+      certificate.sign(keys.privateKey, forge.md.sha256.create());
+      const pem = forge.pki.certificateToPem(certificate);
+      certificateService.findById.mock.mockImplementation(() => ({ ...testData.certificates.list[0], certificate: pem }));
+      configuration.settings.certificateValidation = 'trusted';
+      configuration.settings.trustedCertificateId = 'trustedId';
+
+      await south.connect();
+
+      const createConnectionOptions = utilsMqttExports.createConnectionOptions as Mock<(...args: Array<unknown>) => unknown>;
+      assert.deepStrictEqual(createConnectionOptions.mock.calls[0].arguments[3], { ca: [pem] });
+      assert.strictEqual(await south.retrieveServerIdentity(), null);
+    });
   });
 
   it('should properly test connection and populate all connack properties', async () => {

@@ -127,10 +127,14 @@
               "username": "Nom d'utilisateur",
               "password": "Mot de passe",
               "cert-file-path": "Chemin du fichier de certificat",
-              "key-file-path": "Chemin du fichier de clé",
-              "ca-file-path": "Chemin du fichier CA"
+              "key-file-path": "Chemin du fichier de clé"
             },
-            "reject-unauthorized": "Rejeter les connexions non autorisées",
+            "certificate-validation": {
+              "title": "Validation du certificat serveur",
+              "standard": "Standard",
+              "trusted": "Certificat approuvé"
+            },
+            "trusted-certificate-id": "Certificat approuvé",
             "reconnect-period": "Période de reconnexion",
             "connect-timeout": "Délai de connexion"
           },
@@ -783,10 +787,14 @@
               "username": "Nom d'utilisateur",
               "password": "Mot de passe",
               "cert-file-path": "Chemin du fichier de certificat",
-              "key-file-path": "Chemin du fichier de clé",
-              "ca-file-path": "Chemin du fichier CA"
+              "key-file-path": "Chemin du fichier de clé"
             },
-            "reject-unauthorized": "Rejeter les connexions non autorisées",
+            "certificate-validation": {
+              "title": "Validation du certificat serveur",
+              "standard": "Standard",
+              "trusted": "Certificat approuvé"
+            },
+            "trusted-certificate-id": "Certificat approuvé",
             "reconnect-period": "Période de reconnexion",
             "connect-timeout": "Délai de connexion",
             "flush-message-timeout": "Délai entre les vidages",

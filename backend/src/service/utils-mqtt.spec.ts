@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import { SouthMQTTItemSettings } from '../../shared/model/connector/south-settings.model';
+import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../shared/model/connector/south-settings.model';
 
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -309,18 +309,19 @@ describe('Service utils MQTT', () => {
           authentication: {
             type: 'none'
           },
-          rejectUnauthorized: false,
+          certificateValidation: 'standard',
+          trustedCertificateId: null,
           connectTimeout: 10_000,
           persistent: false
         },
-        logger
+        logger,
+        {}
       );
       assert.deepStrictEqual(
         { ...result, log: undefined },
         {
           reconnectPeriod: 0,
           connectTimeout: 10_000,
-          rejectUnauthorized: false,
           queueQoSZero: false,
           clean: true,
           log: undefined,
@@ -351,11 +352,13 @@ describe('Service utils MQTT', () => {
           authentication: {
             type: 'none'
           },
-          rejectUnauthorized: false,
+          certificateValidation: 'standard',
+          trustedCertificateId: null,
           connectTimeout: 10_000,
           persistent: false
         },
-        logger
+        logger,
+        {}
       );
 
       result.log!('should not be logged');
@@ -377,17 +380,18 @@ describe('Service utils MQTT', () => {
             username: 'username',
             password: 'password'
           },
-          rejectUnauthorized: false,
+          certificateValidation: 'standard',
+          trustedCertificateId: null,
           connectTimeout: 10_000
         },
-        logger
+        logger,
+        {}
       );
       assert.deepStrictEqual(
         { ...result, log: undefined },
         {
           reconnectPeriod: 0,
           connectTimeout: 10_000,
-          rejectUnauthorized: false,
           queueQoSZero: false,
           log: undefined,
           resubscribe: true,
@@ -420,35 +424,33 @@ describe('Service utils MQTT', () => {
           authentication: {
             type: 'cert',
             certFilePath: 'cert',
-            keyFilePath: 'key',
-            caFilePath: 'ca'
+            keyFilePath: 'key'
           },
-          rejectUnauthorized: false,
+          certificateValidation: 'standard',
+          trustedCertificateId: null,
           connectTimeout: 10_000
         },
-        logger
+        logger,
+        {}
       );
       assert.deepStrictEqual(
         { ...result, log: undefined },
         {
           reconnectPeriod: 0,
           connectTimeout: 10_000,
-          rejectUnauthorized: false,
           queueQoSZero: false,
           log: undefined,
           resubscribe: false,
           clean: true,
           clientId: 'connectorId',
           cert: 'cert',
-          key: 'key',
-          ca: 'ca'
+          key: 'key'
         }
       );
       assert.strictEqual(decryptTextMock.mock.calls.length, 0);
-      assert.strictEqual(readFileMock.mock.calls.length, 3);
+      assert.strictEqual(readFileMock.mock.calls.length, 2);
       assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], path.resolve('cert'));
       assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], path.resolve('key'));
-      assert.deepStrictEqual(readFileMock.mock.calls[2].arguments[0], path.resolve('ca'));
     });
 
     it('should create connection options without cert', async () => {
@@ -464,32 +466,86 @@ describe('Service utils MQTT', () => {
           authentication: {
             type: 'cert',
             certFilePath: '',
-            keyFilePath: '',
-            caFilePath: ''
+            keyFilePath: ''
           },
-          rejectUnauthorized: false,
+          certificateValidation: 'standard',
+          trustedCertificateId: null,
           connectTimeout: 10_000
         },
-        logger
+        logger,
+        {}
       );
       assert.deepStrictEqual(
         { ...result, log: undefined },
         {
           reconnectPeriod: 0,
           connectTimeout: 10_000,
-          rejectUnauthorized: false,
           queueQoSZero: false,
           log: undefined,
           resubscribe: false,
           clean: true,
           clientId: 'connectorId',
           cert: '',
-          key: '',
-          ca: ''
+          key: ''
         }
       );
       assert.strictEqual(decryptTextMock.mock.calls.length, 0);
       assert.strictEqual(readFileMock.mock.calls.length, 0);
+    });
+
+    it('should validate the certificate of the broker with the TLS options given', async () => {
+      const tls = { ca: ['trusted certificate'] };
+      const result = await utils.createConnectionOptions(
+        'connectorId',
+        {
+          url: 'mqtts://broker',
+          qos: '1',
+          reconnectPeriod: 10000,
+          maxNumberOfMessages: 1000,
+          flushMessageTimeout: 100,
+          authentication: { type: 'none' },
+          certificateValidation: 'trusted',
+          trustedCertificateId: 'trustedId',
+          connectTimeout: 10_000,
+          persistent: false
+        },
+        logger,
+        tls
+      );
+      assert.deepStrictEqual(result.ca, ['trusted certificate']);
+      assert.strictEqual(result.rejectUnauthorized, undefined);
+    });
+  });
+
+  describe('getMQTTProbeTarget', () => {
+    const settings = (url: string): SouthMQTTSettings => ({
+      url,
+      qos: '1',
+      reconnectPeriod: 10000,
+      maxNumberOfMessages: 1000,
+      flushMessageTimeout: 100,
+      authentication: { type: 'none' },
+      certificateValidation: 'standard',
+      trustedCertificateId: null,
+      connectTimeout: 5000,
+      persistent: false
+    });
+
+    it('should read the certificate of the brokers over TLS, on their default port', () => {
+      assert.deepStrictEqual(utils.getMQTTProbeTarget(settings('mqtts://broker')), {
+        url: 'mqtts://broker',
+        defaultPort: 8883,
+        proxy: null,
+        timeoutMs: 5000
+      });
+      assert.strictEqual(utils.getMQTTProbeTarget(settings('tls://broker:8884'))!.defaultPort, 8883);
+      assert.strictEqual(utils.getMQTTProbeTarget(settings('wss://broker/mqtt'))!.defaultPort, 443);
+    });
+
+    it('should read nothing without TLS, or from an invalid URL', () => {
+      assert.strictEqual(utils.getMQTTProbeTarget(settings('mqtt://broker')), null);
+      assert.strictEqual(utils.getMQTTProbeTarget(settings('ws://broker')), null);
+      assert.strictEqual(utils.getMQTTProbeTarget(settings('not a url')), null);
     });
   });
 

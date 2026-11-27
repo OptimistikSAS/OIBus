@@ -145,7 +145,8 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
         addContent,
         southCacheRepository,
-        southCacheFolder
+        southCacheFolder,
+        certificateService
       );
     case 'mssql':
       return new SouthMSSQL(

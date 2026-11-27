@@ -57,7 +57,7 @@ export const buildNorth = (
     case 'modbus':
       return new NorthModbus(settings as NorthConnectorEntity<NorthModbusSettings>, orchestrator);
     case 'mqtt':
-      return new NorthMQTT(settings as NorthConnectorEntity<NorthMQTTSettings>, orchestrator);
+      return new NorthMQTT(settings as NorthConnectorEntity<NorthMQTTSettings>, orchestrator, certificateService);
     case 'oianalytics':
       return new NorthOIAnalytics(
         settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,

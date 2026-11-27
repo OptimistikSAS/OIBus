@@ -93,6 +93,9 @@ export type SouthMQTTSettingsAuthenticationType = (typeof SOUTH_M_Q_T_T_SETTINGS
 export const SOUTH_M_Q_T_T_SETTINGS_QOSS = ['0', '1', '2'] as const;
 export type SouthMQTTSettingsQos = (typeof SOUTH_M_Q_T_T_SETTINGS_QOSS)[number];
 
+export const SOUTH_M_Q_T_T_SETTINGS_CERTIFICATE_VALIDATIONS = ['standard', 'trusted'] as const;
+export type SouthMQTTSettingsCertificateValidation = (typeof SOUTH_M_Q_T_T_SETTINGS_CERTIFICATE_VALIDATIONS)[number];
+
 export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
   'string',
   'date',
@@ -318,7 +321,6 @@ export interface SouthMQTTSettingsAuthentication {
   password?: string | null;
   certFilePath?: string;
   keyFilePath?: string;
-  caFilePath?: string;
 }
 
 export interface SouthMSSQLSettingsConnectionSettings {
@@ -512,7 +514,8 @@ export interface SouthMQTTSettings {
   qos: SouthMQTTSettingsQos;
   persistent?: boolean;
   authentication: SouthMQTTSettingsAuthentication;
-  rejectUnauthorized: boolean;
+  certificateValidation: SouthMQTTSettingsCertificateValidation;
+  trustedCertificateId?: string | null;
   reconnectPeriod: number;
   connectTimeout: number;
   maxNumberOfMessages: number;

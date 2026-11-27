@@ -2,12 +2,14 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import argon2 from 'argon2';
 import Database from 'better-sqlite3';
 import { Knex } from 'knex';
+import * as forge from 'node-forge';
 
 import { COMPRESSED_FILE_OPTIONS, toOIAnalyticsItemFileOptions } from '../../../../service/config-transfer/config-upgrades/4.0/v4.0.0';
 import EncryptionService from '../../../../service/encryption.service';
@@ -5938,6 +5940,69 @@ describe('Entity migration v4.0.0: useTrustedCertificates', () => {
     await runStepsFrom(useTrustedCertificates, db);
 
     assert.deepStrictEqual(await db('registrations').select('certificate_validation'), [{ certificate_validation: 'standard' }]);
+  });
+
+  it('should add the certification authority files of the MQTT connectors to the store, and trust them', async t => {
+    const keys = forge.pki.rsa.generateKeyPair(1024);
+    const authority = forge.pki.createCertificate();
+    authority.publicKey = keys.publicKey;
+    authority.validity.notAfter = new Date('2040-01-01T00:00:00.000Z');
+    authority.setSubject([{ shortName: 'CN', value: 'Broker CA' }]);
+    authority.setIssuer([{ shortName: 'CN', value: 'Broker CA' }]);
+    authority.setExtensions([{ name: 'basicConstraints', cA: true }]);
+    authority.sign(keys.privateKey, forge.md.sha256.create());
+    const pem = forge.pki.certificateToPem(authority);
+    const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-ca-'));
+    t.after(() => fs.rm(folder, { recursive: true, force: true }));
+    const caFilePath = path.join(folder, 'ca.pem');
+    const bundleFilePath = path.join(folder, 'bundle.pem');
+    await fs.writeFile(caFilePath, pem);
+    await fs.writeFile(bundleFilePath, pem + pem);
+    const mqtt = (id: string, rejectUnauthorized: boolean, caFile: string) => ({
+      id,
+      name: id,
+      type: 'mqtt',
+      enabled: true,
+      settings: JSON.stringify({
+        url: 'mqtts://broker',
+        authentication: { type: 'cert', certFilePath: 'cert.pem', keyFilePath: 'key.pem', caFilePath: caFile },
+        rejectUnauthorized
+      })
+    });
+    await db('south_connectors').insert([
+      mqtt('mqtt-ca', true, caFilePath),
+      mqtt('mqtt-same-ca', true, caFilePath),
+      mqtt('mqtt-missing-ca', true, path.join(folder, 'missing.pem')),
+      mqtt('mqtt-bundle', true, bundleFilePath),
+      mqtt('mqtt-any', false, caFilePath)
+    ]);
+
+    await runStepsFrom(useTrustedCertificates, db);
+
+    const certificates = await db('certificates').where('kind', 'trusted').select('id', 'name', 'certificate', 'private_key', 'expiry');
+    assert.strictEqual(certificates.length, 1);
+    assert.strictEqual(certificates[0].name, 'CA ca.pem');
+    assert.strictEqual(certificates[0].private_key, '');
+    assert.strictEqual(certificates[0].expiry, '2040-01-01T00:00:00.000Z');
+    assert.strictEqual(
+      new crypto.X509Certificate(certificates[0].certificate).fingerprint256,
+      new crypto.X509Certificate(pem).fingerprint256
+    );
+    const authentication = { type: 'cert', certFilePath: 'cert.pem', keyFilePath: 'key.pem' };
+    const converted = (certificateValidation: string, trustedCertificateId: string | null) => ({
+      url: 'mqtts://broker',
+      authentication,
+      certificateValidation,
+      trustedCertificateId
+    });
+    for (const id of ['mqtt-ca', 'mqtt-same-ca']) {
+      assert.deepStrictEqual(await settingsOf('south_connectors', id), converted('trusted', certificates[0].id));
+      assert.deepStrictEqual(await settingsOf('south_connectors', id, 'server_trust'), { identity: null, trustOnFirstUse: false });
+    }
+    for (const id of ['mqtt-missing-ca', 'mqtt-bundle', 'mqtt-any']) {
+      assert.deepStrictEqual(await settingsOf('south_connectors', id), converted('trusted', null));
+      assert.deepStrictEqual(await settingsOf('south_connectors', id, 'server_trust'), { identity: null, trustOnFirstUse: true });
+    }
   });
 
   it('should convert the specific settings of the OIAnalytics connectors', async () => {

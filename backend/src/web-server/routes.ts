@@ -1980,9 +1980,13 @@ const models: TsoaRoute.Models = {
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "certFilePath": {"dataType":"string"},
             "keyFilePath": {"dataType":"string"},
-            "caFilePath": {"dataType":"string"},
         },
         "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthMQTTSettingsCertificateValidation": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["standard"]},{"dataType":"enum","enums":["trusted"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthMQTTSettings": {
@@ -1992,7 +1996,8 @@ const models: TsoaRoute.Models = {
             "qos": {"ref":"SouthMQTTSettingsQos","required":true},
             "persistent": {"dataType":"boolean"},
             "authentication": {"ref":"SouthMQTTSettingsAuthentication","required":true},
-            "rejectUnauthorized": {"dataType":"boolean","required":true},
+            "certificateValidation": {"ref":"SouthMQTTSettingsCertificateValidation","required":true},
+            "trustedCertificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "reconnectPeriod": {"dataType":"double","required":true},
             "connectTimeout": {"dataType":"double","required":true},
             "maxNumberOfMessages": {"dataType":"double","required":true},
@@ -7189,9 +7194,13 @@ const models: TsoaRoute.Models = {
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "certFilePath": {"dataType":"string"},
             "keyFilePath": {"dataType":"string"},
-            "caFilePath": {"dataType":"string"},
         },
         "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthMQTTSettingsCertificateValidation": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["standard"]},{"dataType":"enum","enums":["trusted"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthMQTTSettings": {
@@ -7201,7 +7210,8 @@ const models: TsoaRoute.Models = {
             "qos": {"ref":"NorthMQTTSettingsQos","required":true},
             "persistent": {"dataType":"boolean"},
             "authentication": {"ref":"NorthMQTTSettingsAuthentication","required":true},
-            "rejectUnauthorized": {"dataType":"boolean","required":true},
+            "certificateValidation": {"ref":"NorthMQTTSettingsCertificateValidation","required":true},
+            "trustedCertificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "reconnectPeriod": {"dataType":"double","required":true},
             "connectTimeout": {"dataType":"double","required":true},
         },

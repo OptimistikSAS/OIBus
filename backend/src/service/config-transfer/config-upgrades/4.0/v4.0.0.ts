@@ -562,6 +562,13 @@ export function toServerTrust(type: string, settings: Record<string, unknown> | 
 interface TrustedCertificateSwitch {
   key: string;
   settingsKey?: string;
+  /** Whether the switch rejects the certificates which do not validate (`rejectUnauthorized`), instead of accepting them */
+  rejects?: boolean;
+  /**
+   * The path of the file of the certification authority the certificate of the server was validated against, in the object
+   * attribute of the settings named `settingsKey`, while `type` is `cert` there: it is no longer a setting
+   */
+  caFile?: { settingsKey: string; key: string };
 }
 
 /**
@@ -576,33 +583,68 @@ export const TRUSTED_CERTIFICATE_SWITCHES: Record<
   oianalytics: {
     south: { key: 'acceptUnauthorized', settingsKey: 'specificSettings' },
     north: { key: 'acceptUnauthorized', settingsKey: 'specificSettings' }
+  },
+  mqtt: {
+    south: { key: 'rejectUnauthorized', rejects: true, caFile: { settingsKey: 'authentication', key: 'caFilePath' } },
+    north: { key: 'rejectUnauthorized', rejects: true, caFile: { settingsKey: 'authentication', key: 'caFilePath' } }
   }
 };
 
 /**
+ * The file of the certification authority a TLS connector validated the certificate of its server against (see
+ * `TrustedCertificateSwitch.caFile`), `null` without one
+ */
+export function getCertificationAuthorityFile(
+  type: string,
+  side: 'south' | 'north',
+  settings: Record<string, unknown> | null | undefined
+): string | null {
+  const caFile = TRUSTED_CERTIFICATE_SWITCHES[type]?.[side]?.caFile;
+  const caFileSettings = caFile && settings ? (settings[caFile.settingsKey] as Record<string, unknown> | null | undefined) : null;
+  const filePath = caFileSettings?.type === 'cert' ? caFileSettings[caFile!.key] : null;
+  return typeof filePath === 'string' && filePath ? filePath : null;
+}
+
+/**
  * The settings of a TLS connector validating the certificate of its server (see `TRUSTED_CERTIFICATE_SWITCHES`): a
  * connector accepting any certificate until now trusts a certificate of the store, which it is to trust at its first
- * connection (it has none yet), the others keep the standard validation. `null` for the other connectors.
+ * connection (it has none yet). A connector validating the certificate against the file of a certification authority
+ * trusts this authority, added to the store (`certificationAuthorityId`, see `getCertificationAuthorityFile`), or else the
+ * certificate received at its first connection when the file could not be added. The others keep the standard validation.
+ * `null` for the other connectors.
  */
 export function toCertificateValidation(
   type: string,
   side: 'south' | 'north',
-  settings: Record<string, unknown> | null | undefined
+  settings: Record<string, unknown> | null | undefined,
+  certificationAuthorityId: string | null = null
 ): { settings: Record<string, unknown>; trustOnFirstUse: boolean } | null {
   const trustedCertificateSwitch = TRUSTED_CERTIFICATE_SWITCHES[type]?.[side];
   if (!trustedCertificateSwitch || !settings) {
     return null;
   }
-  const { key, settingsKey } = trustedCertificateSwitch;
+  const { key, settingsKey, rejects, caFile } = trustedCertificateSwitch;
   const switchSettings = settingsKey ? settings[settingsKey] : settings;
   if (!switchSettings || typeof switchSettings !== 'object' || !(key in switchSettings)) {
     return null;
   }
-  const { [key]: acceptsAnyCertificate, ...rest } = switchSettings as Record<string, unknown>;
-  const converted = { ...rest, certificateValidation: acceptsAnyCertificate ? 'trusted' : 'standard', trustedCertificateId: null };
+  const { [key]: switchValue, ...rest } = switchSettings as Record<string, unknown>;
+  const acceptsAnyCertificate = rejects ? !switchValue : !!switchValue;
+  const usesCertificationAuthority = !acceptsAnyCertificate && getCertificationAuthorityFile(type, side, settings) !== null;
+  const trustedCertificateId = usesCertificationAuthority ? certificationAuthorityId : null;
+  const converted = {
+    ...rest,
+    certificateValidation: acceptsAnyCertificate || usesCertificationAuthority ? 'trusted' : 'standard',
+    trustedCertificateId
+  };
+  let convertedSettings: Record<string, unknown> = settingsKey ? { ...settings, [settingsKey]: converted } : converted;
+  if (caFile) {
+    const { [caFile.key]: _caFilePath, ...caFileSettings } = (convertedSettings[caFile.settingsKey] ?? {}) as Record<string, unknown>;
+    convertedSettings = { ...convertedSettings, [caFile.settingsKey]: caFileSettings };
+  }
   return {
-    settings: settingsKey ? { ...settings, [settingsKey]: converted } : converted,
-    trustOnFirstUse: !!acceptsAnyCertificate
+    settings: convertedSettings,
+    trustOnFirstUse: acceptsAnyCertificate || (usesCertificationAuthority && !trustedCertificateId)
   };
 }
 
