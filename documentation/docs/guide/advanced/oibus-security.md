@@ -203,6 +203,12 @@ impersonating the server to collect the credentials, or the data.
   trusted identity (its certificate or host key was renewed, or another server impersonates it), the connector refuses
   to connect, and stops retrying. The page of the connector or history query shows the identity presented: **Review and
   trust** trusts it, and restarts the connector.
+- **TLS connectors**: the REST, OIAnalytics and MQTT connectors, the PostgreSQL connector with SSL, and the
+  registration of OIBus with OIAnalytics validate the certificate of their server with the **Standard** validation (the
+  public certification authorities), or against a **Trusted certificate** of the [certificate store](../engine/certificates.md#importing-a-trusted-certificate): a
+  certification authority, or the certificate of the server itself. Trusting the identity a server presents adds its
+  certificate to the store and selects it. The identity of OIAnalytics is reviewed and trusted from the registration
+  page.
 - **Traceability**: the page of the connector shows who trusted the identity of its server, and when. Trusting an
   identity is logged, and the trusted identity is kept when the configuration is
   [exported and imported](../engine/config-export-import.mdx).

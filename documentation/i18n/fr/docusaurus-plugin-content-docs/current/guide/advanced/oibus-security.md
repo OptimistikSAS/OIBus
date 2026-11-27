@@ -204,6 +204,12 @@ machine ne peut ainsi pas se faire passer pour le serveur afin de récupérer le
   l'identité approuvée (son certificat ou sa clé d'hôte a été renouvelé, ou un autre serveur se fait passer pour lui), le
   connecteur refuse de se connecter et cesse de réessayer. La page du connecteur ou de la requête d'historique affiche
   l'identité présentée : **Vérifier et approuver** l'approuve et redémarre le connecteur.
+- **Connecteurs TLS** : les connecteurs REST, OIAnalytics et MQTT, le connecteur PostgreSQL avec SSL, et
+  l'enregistrement d'OIBus auprès d'OIAnalytics valident le certificat de leur serveur avec la validation **Standard**
+  (les autorités de certification publiques), ou avec un **Certificat approuvé** du
+  [magasin de certificats](../engine/certificates.md#importing-a-trusted-certificate) : une autorité de certification, ou le certificat du serveur lui-même. Approuver
+  l'identité présentée par un serveur ajoute son certificat au magasin et le sélectionne. L'identité d'OIAnalytics est
+  vérifiée et approuvée depuis la page d'enregistrement.
 - **Traçabilité** : la page du connecteur indique qui a approuvé l'identité de son serveur, et quand. L'approbation d'une
   identité est journalisée, et l'identité approuvée est conservée quand la configuration est
   [exportée et importée](../engine/config-export-import.mdx).

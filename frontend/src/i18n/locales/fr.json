@@ -3535,6 +3535,19 @@
             "description": "Écrire des valeurs dans les équipements via les connecteurs South"
           }
         }
+      },
+      "server-trust": {
+        "title": "Identité d'OIAnalytics",
+        "refused": {
+          "unknown": "OIBus a refusé de se connecter à OIAnalytics : son certificat n'est pas validé, et aucun certificat n'est approuvé pour lui.",
+          "changed": "OIBus a refusé de se connecter à OIAnalytics : son certificat n'est pas validé par le certificat approuvé."
+        },
+        "status-message": {
+          "unknown": "Le certificat d'OIAnalytics n'est pas validé : OIBus refuse de s'y connecter tant que son identité n'est pas approuvée.",
+          "changed": "Le certificat d'OIAnalytics n'est pas validé par le certificat approuvé : il a pu être renouvelé, ou un autre serveur peut se faire passer pour OIAnalytics. OIBus refuse de s'y connecter tant que cette identité n'est pas approuvée."
+        },
+        "trusted": "Identité d'OIAnalytics approuvée",
+        "trusted-in-form": "Identité d'OIAnalytics approuvée : son certificat est ajouté au magasin de certificats et sélectionné à l'enregistrement de l'inscription."
       }
     },
     "commands": {

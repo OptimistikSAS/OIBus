@@ -1,7 +1,7 @@
 import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 
-import { map, Observable } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 
 import {
   HistoryQueryCommandDTO,
@@ -38,6 +38,7 @@ import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-co
 
 import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
+import { CertificateService } from './certificate.service';
 import { DownloadService } from './download.service';
 
 /**
@@ -46,6 +47,7 @@ import { DownloadService } from './download.service';
 @Service()
 export class HistoryQueryService {
   private readonly http = inject(HttpClient);
+  private readonly certificateService = inject(CertificateService);
   private readonly formServerTrust = inject(FormServerTrustService);
   private readonly downloadService = inject(DownloadService);
 
@@ -87,7 +89,9 @@ export class HistoryQueryService {
     if (retrieveSecretsFromNorth) {
       params['fromNorth'] = retrieveSecretsFromNorth;
     }
-    return this.http.post<HistoryQueryDTO>(`/api/history`, command, { params });
+    return this.http
+      .post<HistoryQueryDTO>(`/api/history`, command, { params })
+      .pipe(tap(() => this.refreshCertificatesWhenTrusting(command)));
   }
 
   /**
@@ -101,7 +105,9 @@ export class HistoryQueryService {
     if (resetCache) {
       params['resetCache'] = resetCache.toString();
     }
-    return this.http.put<void>(`/api/history/${historyId}`, command, { params });
+    return this.http
+      .put<void>(`/api/history/${historyId}`, command, { params })
+      .pipe(tap(() => this.refreshCertificatesWhenTrusting(command)));
   }
 
   /**
@@ -200,7 +206,16 @@ export class HistoryQueryService {
 
   /** Trust the identity the server of a side of the history query presents (with this fingerprint) */
   trustServerIdentity(historyId: string, side: 'south' | 'north', fingerprint: string): Observable<void> {
-    return this.http.post<void>(`/api/history/${historyId}/server-trust/${side}`, { fingerprint });
+    return this.http
+      .post<void>(`/api/history/${historyId}/server-trust/${side}`, { fingerprint })
+      .pipe(tap(() => this.certificateService.refreshList()));
+  }
+
+  /** The certificates of the identities trusted in the form are added to the store with the history query */
+  private refreshCertificatesWhenTrusting(command: HistoryQueryCommandDTO) {
+    if (command.southServerTrust?.identity || command.northServerTrust?.identity) {
+      this.certificateService.refreshList();
+    }
   }
 
   /**

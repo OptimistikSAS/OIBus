@@ -40,6 +40,18 @@ describe('ServerTrustPanelComponent', () => {
     });
   });
 
+  test('should display the messages of another client than a connector', async () => {
+    const tester = new ServerTrustPanelComponentTester(states.unknownRefused, 'oia-module.registration.server-trust.title');
+    tester.fixture.componentRef.setInput('refusedKey', 'oia-module.registration.server-trust.refused');
+
+    await expect.element(tester.title).toHaveTextContent('Identity of OIAnalytics');
+    await expect
+      .element(tester.notTrustedMessage)
+      .toHaveTextContent(
+        'OIBus refused to connect to OIAnalytics: its certificate does not validate, and no certificate is trusted for it.'
+      );
+  });
+
   test('should display the identity trusted', async () => {
     const tester = new ServerTrustPanelComponentTester(states.trusted);
 

@@ -567,6 +567,19 @@
             "description": "Write values to the equipment through the South connectors"
           }
         }
+      },
+      "server-trust": {
+        "title": "Identity of OIAnalytics",
+        "refused": {
+          "unknown": "OIBus refused to connect to OIAnalytics: its certificate does not validate, and no certificate is trusted for it.",
+          "changed": "OIBus refused to connect to OIAnalytics: its certificate does not validate against the trusted certificate."
+        },
+        "status-message": {
+          "unknown": "The certificate of OIAnalytics does not validate: OIBus refuses to connect to it until its identity is trusted.",
+          "changed": "The certificate of OIAnalytics does not validate against the trusted certificate: it may have been renewed, or another server may impersonate OIAnalytics. OIBus refuses to connect to it until this identity is trusted."
+        },
+        "trusted": "Identity of OIAnalytics trusted",
+        "trusted-in-form": "Identity of OIAnalytics trusted: its certificate is added to the certificate store and selected when the registration is saved."
       }
     },
     "commands": {

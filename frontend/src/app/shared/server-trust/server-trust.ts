@@ -1,13 +1,30 @@
 import { ServerTrustDTO, ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
-/** The settings telling which server a connector connects to: an identity is trusted for this server only */
-const ENDPOINT_SETTINGS = ['url', 'host', 'port', 'securityMode', 'securityPolicy'];
+/**
+ * The settings telling which server a connector connects to, and how it validates its certificate: an identity is trusted
+ * for this server only
+ */
+const ENDPOINT_SETTINGS = [
+  'url',
+  'host',
+  'port',
+  'securityMode',
+  'securityPolicy',
+  'sslMode',
+  'useOiaModule',
+  'certificateValidation',
+  'trustedCertificateId'
+];
+
+/** The objects of the settings holding them, besides the settings themselves (OIAnalytics and database connectors) */
+const NESTED_ENDPOINT_SETTINGS = ['specificSettings', 'connectionSettings'];
 
 /** The server the settings connect to, to drop an identity trusted in a form when it changes */
 export function serverEndpointOf(settings: object | null | undefined): string {
   const values = (settings ?? {}) as Record<string, unknown>;
-  return JSON.stringify(ENDPOINT_SETTINGS.map(key => values[key] ?? null));
+  const endpointOf = (object: unknown) => ENDPOINT_SETTINGS.map(key => ((object ?? {}) as Record<string, unknown>)[key] ?? null);
+  return JSON.stringify([endpointOf(values), ...NESTED_ENDPOINT_SETTINGS.map(key => endpointOf(values[key]))]);
 }
 
 /**

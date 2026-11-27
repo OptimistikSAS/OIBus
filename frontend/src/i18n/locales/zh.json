@@ -3535,6 +3535,19 @@
             "description": "通过南向连接器向设备写入数值"
           }
         }
+      },
+      "server-trust": {
+        "title": "OIAnalytics 的身份",
+        "refused": {
+          "unknown": "OIBus 拒绝连接到 OIAnalytics：其证书未通过验证，且没有为其信任任何证书。",
+          "changed": "OIBus 拒绝连接到 OIAnalytics：其证书未通过受信任证书的验证。"
+        },
+        "status-message": {
+          "unknown": "OIAnalytics 的证书未通过验证：在信任其身份之前，OIBus 拒绝连接。",
+          "changed": "OIAnalytics 的证书未通过受信任证书的验证：证书可能已更新，或者其他服务器可能在冒充 OIAnalytics。在信任此身份之前，OIBus 拒绝连接。"
+        },
+        "trusted": "已信任 OIAnalytics 的身份",
+        "trusted-in-form": "已信任 OIAnalytics 的身份：保存注册时，其证书将添加到证书存储并被选中。"
       }
     },
     "commands": {

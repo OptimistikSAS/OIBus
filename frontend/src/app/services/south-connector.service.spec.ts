@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@a
 import { TestBed } from '@angular/core/testing';
 
 import { firstValueFrom, Observable } from 'rxjs';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
   SouthConnectorItemDTO,
@@ -24,6 +24,7 @@ import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
 import { toPage } from '../shared/utils/page.utils';
+import { CertificateService } from './certificate.service';
 import { DownloadService } from './download.service';
 import { SouthConnectorService } from './south-connector.service';
 
@@ -109,6 +110,26 @@ describe('SouthConnectorService', () => {
   });
 
   afterEach(() => http.verify());
+
+  test('should load the certificates again once a server is trusted, adding its certificate to the store', async () => {
+    const certificateService = TestBed.inject(CertificateService);
+    const refreshList = vi.spyOn(certificateService, 'refreshList').mockImplementation(() => undefined);
+    const trusting = { ...testData.south.command, serverTrust: { identity: testData.serverTrust.identities.x509, trustOnFirstUse: false } };
+
+    await expectHttp(http, service.create(testData.south.command, ''), { method: 'POST', url: '/api/south' }, { response: south });
+    await expectHttp(http, service.update('id1', testData.south.command), { method: 'PUT', url: '/api/south/id1' }, { response: null });
+    expect(refreshList).not.toHaveBeenCalled();
+
+    await expectHttp(http, service.create(trusting, ''), { method: 'POST', url: '/api/south' }, { response: south });
+    await expectHttp(http, service.update('id1', trusting), { method: 'PUT', url: '/api/south/id1' }, { response: null });
+    await expectHttp(
+      http,
+      service.trustServerIdentity('id1', 'AB:CD'),
+      { method: 'POST', url: '/api/south/id1/server-trust' },
+      { response: null }
+    );
+    expect(refreshList).toHaveBeenCalledTimes(3);
+  });
 
   const command = testData.south.command;
   const south = testData.south.list[0];
