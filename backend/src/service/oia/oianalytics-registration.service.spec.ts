@@ -225,6 +225,7 @@ describe('OIAnalytics Registration Service', () => {
       host: 'http://localhost:4200/',
       certificateValidation: 'standard',
       trustedCertificateId: null,
+      trustOnFirstUse: false,
       useProxy: true,
       proxyUrl: 'http://localhost:3128',
       proxyUsername: 'user',
@@ -881,6 +882,37 @@ describe('OIAnalytics Registration Service', () => {
         message: 'OIAnalytics does not present a certificate to trust'
       });
       assert.strictEqual(oIAnalyticsRegistrationRepository.trustCertificate.mock.calls.length, 0);
+    });
+
+    it('should add the certificate trusted at the first connection to the store, and select it', () => {
+      const updated = mock.fn();
+      service.registrationEvent.on('updated', updated);
+
+      service.trustCertificateOnFirstUse(identity, trustCertificate);
+
+      assert.deepStrictEqual(trustCertificate.mock.calls[0].arguments, ['pem']);
+      assert.deepStrictEqual(oIAnalyticsRegistrationRepository.trustCertificate.mock.calls[0].arguments, [
+        'trustedCertificateId',
+        'system'
+      ]);
+      assert.strictEqual(updated.mock.calls.length, 1);
+    });
+
+    it('should log an error when the certificate trusted at the first connection cannot be saved', () => {
+      service.trustCertificateOnFirstUse({ ...identity, details: { keyType: 'rsa' } }, trustCertificate);
+
+      assert.strictEqual(oIAnalyticsRegistrationRepository.trustCertificate.mock.calls.length, 0);
+      assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('no certificate presented')));
+    });
+
+    it('should tell the registration trusts the certificate of the first connection', () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => ({
+        ...testData.oIAnalytics.registration.completed,
+        certificateValidation: 'trusted',
+        trustOnFirstUse: true
+      }));
+
+      assert.deepStrictEqual(service.getServerTrustState(), { identity: null, trustOnFirstUse: true, pending: null });
     });
 
     it('should save the registration trusting the certificate trusted in its form', async () => {

@@ -3547,7 +3547,8 @@
           "changed": "OIAnalytics 的证书未通过受信任证书的验证：证书可能已更新，或者其他服务器可能在冒充 OIAnalytics。在信任此身份之前，OIBus 拒绝连接。"
         },
         "trusted": "已信任 OIAnalytics 的身份",
-        "trusted-in-form": "已信任 OIAnalytics 的身份：保存注册时，其证书将添加到证书存储并被选中。"
+        "trusted-in-form": "已信任 OIAnalytics 的身份：保存注册时，其证书将添加到证书存储并被选中。",
+        "trust-on-first-use": "尚未信任任何证书：OIBus 会信任 OIAnalytics 在下次连接时提供的证书，并将其添加到证书存储。"
       }
     },
     "commands": {

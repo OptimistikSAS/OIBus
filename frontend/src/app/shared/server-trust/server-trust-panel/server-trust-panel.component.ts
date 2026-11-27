@@ -24,5 +24,7 @@ export class ServerTrustPanelComponent {
   readonly titleKey = input('server-trust.panel.title');
   /** The messages of the identity refused, by status, for another client than a connector (the registration of OIBus) */
   readonly refusedKey = input('server-trust.panel.refused');
+  /** The message of an identity to trust at the first connection, for another client than a connector */
+  readonly trustOnFirstUseKey = input('server-trust.panel.trust-on-first-use');
   readonly review = output<PresentedServerIdentity>();
 }

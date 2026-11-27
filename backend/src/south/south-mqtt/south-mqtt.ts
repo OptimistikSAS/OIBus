@@ -56,7 +56,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     () => this.connector.serverTrust.identity,
     certificateId => this.certificateService.findById(certificateId),
     () => getMQTTProbeTarget(this.connector.settings),
-    (presented, status) => this.serverIdentityVerifier.refuse(presented, status)
+    (presented, status) => this.serverIdentityVerifier.refuseCertificate(presented, status)
   );
 
   override async retrieveServerIdentity(): Promise<ServerIdentity | null> {

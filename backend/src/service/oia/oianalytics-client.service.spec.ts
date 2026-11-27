@@ -685,6 +685,21 @@ describe('OIAnalytics Client', () => {
       assert.strictEqual(service.pendingServerIdentity, null);
     });
 
+    it('should trust the certificate of the first connection of a registration which accepted any certificate', async () => {
+      httpRequestExports.HTTPRequest.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      const trusted = mock.fn((_identity: ServerIdentity) => undefined);
+      service.events.on('certificate-trusted-on-first-use', trusted);
+
+      await assert.rejects(
+        service.sendConfiguration({ ...registration, certificateValidation: 'trusted', trustOnFirstUse: true }, 'payload')
+      );
+
+      assert.deepStrictEqual(trusted.mock.calls[0].arguments, [presentedIdentity]);
+      assert.strictEqual(service.pendingServerIdentity, null);
+    });
+
     it('should not keep the identity refused when testing settings with an identity trusted in their form', async () => {
       httpRequestExports.HTTPRequest.mock.mockImplementation(async () => {
         throw certificateError();

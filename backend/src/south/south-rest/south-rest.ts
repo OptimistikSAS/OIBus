@@ -83,7 +83,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
         timeoutMs: timeout * 1000
       };
     },
-    (presented, status) => this.serverIdentityVerifier.refuse(presented, status)
+    (presented, status) => this.serverIdentityVerifier.refuseCertificate(presented, status)
   );
 
   override async retrieveServerIdentity(): Promise<ServerIdentity | null> {

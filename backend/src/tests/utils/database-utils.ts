@@ -371,6 +371,7 @@ const createOIAnalyticsRegistration = async (database: knex.Knex, registration: 
       api_gateway_base_endpoint: registration.apiGatewayBaseEndpoint,
       certificate_validation: registration.certificateValidation,
       trusted_certificate_id: registration.trustedCertificateId,
+      trust_on_first_use: registration.trustOnFirstUse,
       public_key: registration.publicCipherKey,
       private_key: registration.privateCipherKey,
       previous_private_key: registration.previousPrivateCipherKey,

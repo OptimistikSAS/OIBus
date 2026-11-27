@@ -5935,8 +5935,8 @@ describe('Entity migration v4.0.0: useTrustedCertificates', () => {
 
     await runStepsFrom(useTrustedCertificates, db);
 
-    assert.deepStrictEqual(await db('registrations').select('certificate_validation', 'trusted_certificate_id'), [
-      { certificate_validation: 'trusted', trusted_certificate_id: null }
+    assert.deepStrictEqual(await db('registrations').select('certificate_validation', 'trusted_certificate_id', 'trust_on_first_use'), [
+      { certificate_validation: 'trusted', trusted_certificate_id: null, trust_on_first_use: 1 }
     ]);
     assert.ok(!(await db.schema.hasColumn('registrations', 'accept_unauthorized')));
   });
@@ -5946,7 +5946,9 @@ describe('Entity migration v4.0.0: useTrustedCertificates', () => {
 
     await runStepsFrom(useTrustedCertificates, db);
 
-    assert.deepStrictEqual(await db('registrations').select('certificate_validation'), [{ certificate_validation: 'standard' }]);
+    assert.deepStrictEqual(await db('registrations').select('certificate_validation', 'trust_on_first_use'), [
+      { certificate_validation: 'standard', trust_on_first_use: 0 }
+    ]);
   });
 
   it('should add the certification authority files of the MQTT connectors to the store, and trust them', async t => {

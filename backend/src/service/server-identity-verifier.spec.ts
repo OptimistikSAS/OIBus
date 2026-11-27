@@ -94,6 +94,35 @@ describe('ServerIdentityVerifier', () => {
     assert.strictEqual(verifier.verify({ ...presented, fingerprint: 'SHA256:other' }), false);
   });
 
+  it('should trust the certificate a TLS validation refused at the first connection, and publish it to be added to the store', () => {
+    trust = { identity: null, trustOnFirstUse: true };
+    const saved = mock.fn((_identity: ServerIdentity) => undefined);
+    verifier.events.on('certificate-trusted-on-first-use', saved);
+
+    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown'), true);
+
+    assert.deepStrictEqual(saved.mock.calls[0].arguments, [presented]);
+    assert.deepStrictEqual(setTrust.mock.calls[0].arguments, [{ identity: null, trustOnFirstUse: false }]);
+    assert.strictEqual(verifier.pendingIdentity, null);
+    assert.deepStrictEqual(logger.info.mock.calls[0].arguments, ['Server host key SHA256:presented trusted at the first connection']);
+    // the next refusals keep the certificate as pending
+    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown'), false);
+    assert.deepStrictEqual(verifier.pendingIdentity, { identity: presented, status: 'unknown' });
+  });
+
+  it('should refuse the certificate a TLS validation refused otherwise', () => {
+    trust = { identity: null, trustOnFirstUse: true };
+
+    // a certificate selected, which the server does not present
+    assert.strictEqual(verifier.refuseCertificate(presented, 'changed'), false);
+    assert.deepStrictEqual(verifier.pendingIdentity, { identity: presented, status: 'changed' });
+
+    trust = { identity: null, trustOnFirstUse: false };
+    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown'), false);
+    assert.deepStrictEqual(verifier.pendingIdentity, { identity: presented, status: 'unknown' });
+    assert.strictEqual(setTrust.mock.callCount(), 0);
+  });
+
   it('should forget the pending identity once the trusted identity is presented, or on reset', () => {
     verifier.verify(presented);
     trust = { identity: { ...trusted, fingerprint: presented.fingerprint }, trustOnFirstUse: false };

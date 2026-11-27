@@ -4,6 +4,7 @@
  * never starts real databases, HTTP servers, or connectivity.
  */
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
@@ -99,7 +100,14 @@ describe('index.ts bootstrap()', () => {
   let oianalyticsSessionServiceMock: ReturnType<typeof makeServiceMock>;
   let oianalyticsMessageServiceMock: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> };
   let cleanupServiceMock: ReturnType<typeof makeServiceMock>;
-  let oianalyticsRegistrationServiceMock: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> };
+  let oianalyticsRegistrationServiceMock: {
+    start: ReturnType<typeof mock.fn>;
+    stop: ReturnType<typeof mock.fn>;
+    trustCertificateOnFirstUse: ReturnType<typeof mock.fn<(identity: unknown, trust: (pem: string) => { id: string }) => void>>;
+  };
+  // the events of the OIAnalytics client created by the bootstrap
+  let oianalyticsClientEvents: EventEmitter;
+  let trustServerCertificateMock: ReturnType<typeof mock.fn>;
   let createOwnerOnlyFileMock: ReturnType<typeof mock.fn>;
 
   beforeEach(() => {
@@ -120,7 +128,8 @@ describe('index.ts bootstrap()', () => {
     oianalyticsSessionServiceMock = makeServiceMock();
     oianalyticsMessageServiceMock = { start: mock.fn(), stop: mock.fn(async () => undefined) };
     cleanupServiceMock = makeServiceMock();
-    oianalyticsRegistrationServiceMock = { start: mock.fn(), stop: mock.fn() };
+    oianalyticsRegistrationServiceMock = { start: mock.fn(), stop: mock.fn(), trustCertificateOnFirstUse: mock.fn() };
+    trustServerCertificateMock = mock.fn(() => ({ id: 'certificateId' }));
 
     mockModule(nodeRequire, './service/utils', {
       __esModule: true,
@@ -177,7 +186,12 @@ describe('index.ts bootstrap()', () => {
 
     mockModule(nodeRequire, './service/oia/oianalytics-client.service', {
       __esModule: true,
-      default: class FakeOIAnalyticsClient {}
+      default: class FakeOIAnalyticsClient {
+        readonly events = new EventEmitter();
+        constructor() {
+          oianalyticsClientEvents = this.events;
+        }
+      }
     });
 
     const regMock = oianalyticsRegistrationServiceMock;
@@ -261,7 +275,9 @@ describe('index.ts bootstrap()', () => {
 
     mockModule(nodeRequire, './service/certificate.service', {
       __esModule: true,
-      default: class FakeCertificateService {}
+      default: class FakeCertificateService {
+        trustServerCertificate = trustServerCertificateMock;
+      }
     });
 
     const sessionMock = oianalyticsSessionServiceMock;
@@ -352,6 +368,19 @@ describe('index.ts bootstrap()', () => {
     assert.equal(oibusServiceMock.start.mock.calls.length, 1);
     assert.equal(oianalyticsCommandServiceMock.start.mock.calls.length, 1);
     assert.equal(cleanupServiceMock.start.mock.calls.length, 1);
+  });
+
+  it('adds the certificate of OIAnalytics trusted at the first connection to the store', async () => {
+    setupMocks(fakeEngineSettings, fakeCryptoSettings);
+    await indexMod.bootstrap();
+    const identity = { type: 'x509', fingerprint: 'AB:CD', details: { certificate: 'pem' } };
+
+    oianalyticsClientEvents.emit('certificate-trusted-on-first-use', identity);
+
+    const [trusted, trustCertificate] = oianalyticsRegistrationServiceMock.trustCertificateOnFirstUse.mock.calls[0].arguments;
+    assert.strictEqual(trusted, identity);
+    assert.deepStrictEqual(trustCertificate('pem'), { id: 'certificateId' });
+    assert.deepStrictEqual(trustServerCertificateMock.mock.calls[0].arguments, ['pem', 'OIAnalytics server', 'system']);
   });
 
   it('creates the configuration and crypto databases for their owner only', async () => {

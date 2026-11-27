@@ -321,6 +321,23 @@ describe('Service utils TLS', () => {
       assert.strictEqual(refuse.mock.calls.length, 1);
     });
 
+    it('should validate the certificate trusted at the first connection, until the settings select it', async () => {
+      const trust = new TlsServerTrust(
+        () => ({ certificateValidation: 'trusted', trustedCertificateId: null }),
+        () => null,
+        () => ({ certificate: '' }),
+        () => ({ url: `https://localhost:${selfSignedServer.port}`, defaultPort: 443, proxy: null, timeoutMs: 5000 }),
+        () => true
+      );
+      // no certificate selected yet: every certificate is refused
+      assert.strictEqual(trust.tls(), REFUSE_EVERY_CERTIFICATE);
+
+      assert.strictEqual(await trust.refuseIfNotTrusted(Object.assign(new Error('x'), { code: 'CERT_UNTRUSTED' })), true);
+
+      assert.strictEqual(await connect(selfSignedServer.port, trust.tls()), 'connected');
+      assert.strictEqual(trust.status((await trust.retrieveServerIdentity())!), 'trusted');
+    });
+
     it('should refuse a server trusted when connecting, but not when probing, as changed', async () => {
       // the probe validates the certificate, the connection failed on it: the server changed meanwhile
       const { trust, refuse } = create(`https://localhost:${selfSignedServer.port}`, 'selfSigned');

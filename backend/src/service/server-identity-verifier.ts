@@ -16,6 +16,11 @@ import { describeServerIdentity, getServerIdentityTrustStatus, toTrustedServerId
 export interface ServerTrustEvents {
   /** The connector trusted the identity it received at its first connection (see `ServerTrust.trustOnFirstUse`): to be saved. */
   'trusted-on-first-use': TrustedServerIdentity;
+  /**
+   * A connector trusting a certificate of the store trusted the certificate its server presented at its first connection
+   * (see `refuseCertificate`): to be added to the store and selected in its settings.
+   */
+  'certificate-trusted-on-first-use': ServerIdentity;
 }
 
 /**
@@ -70,6 +75,23 @@ export default class ServerIdentityVerifier {
           ? `Connection refused: the server presents the ${describeServerIdentity(presented)}, which does not validate against the trusted certificate. Review it and trust it to connect`
           : `Connection refused: the server presents the ${describeServerIdentity(presented)}, which is not trusted. Review it and trust it to connect`
     );
+  }
+
+  /**
+   * For a connector trusting a certificate of the store, whose TLS validation refused the certificate of its server: the
+   * certificate is trusted when the connector trusts the one received at its first connection and none is trusted yet (a
+   * connector which accepted any certificate before), else refused (see `refuse`). Whether it is trusted.
+   */
+  refuseCertificate(presented: ServerIdentity, status: Exclude<ServerIdentityTrustStatus, 'trusted'>): boolean {
+    if (status === 'unknown' && this.getTrust().trustOnFirstUse) {
+      this.setTrust({ identity: null, trustOnFirstUse: false });
+      this.pending = null;
+      this.getLogger().info(`Server ${describeServerIdentity(presented)} trusted at the first connection`);
+      this.events.emit('certificate-trusted-on-first-use', presented);
+      return true;
+    }
+    this.refuse(presented, status);
+    return false;
   }
 
   /** The identity the server presented at the last connection refused, `null` when the last connection was not refused. */

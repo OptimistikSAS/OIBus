@@ -81,7 +81,7 @@ export default class OIAnalyticsRegistrationRepository {
   get(): OIAnalyticsRegistration | null {
     const query =
       `SELECT id, host, token, refresh_token, token_expiration_date, refresh_token_expiration_date, public_key, private_key, previous_private_key, cipher_key_rotation_date, activation_code, status, activation_date, check_url, ` +
-      `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, certificate_validation, trusted_certificate_id, use_api_gateway, api_gateway_header_key, api_gateway_header_value, api_gateway_base_endpoint, ` +
+      `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, certificate_validation, trusted_certificate_id, trust_on_first_use, use_api_gateway, api_gateway_header_key, api_gateway_header_value, api_gateway_base_endpoint, ` +
       `command_refresh_interval, command_retry_interval, message_retry_interval, ${PERMISSION_COLUMNS_SELECT}, ` +
       `created_by, updated_by, created_at, updated_at ` +
       `FROM ${REGISTRATIONS_TABLE};`;
@@ -114,7 +114,7 @@ export default class OIAnalyticsRegistrationRepository {
       `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', refresh_token = NULL, token_expiration_date = NULL, refresh_token_expiration_date = NULL, activation_code = ?, ` +
       `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
       `use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?,` +
-      `certificate_validation = ?, trusted_certificate_id = ?, public_key = ?, private_key = ?, previous_private_key = NULL, cipher_key_rotation_date = NULL, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
+      `certificate_validation = ?, trusted_certificate_id = ?, trust_on_first_use = 0, public_key = ?, private_key = ?, previous_private_key = NULL, cipher_key_rotation_date = NULL, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
       `${PERMISSION_COLUMNS_UPDATE}, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
@@ -189,7 +189,10 @@ export default class OIAnalyticsRegistrationRepository {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET ` +
       `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?, ` +
-      `certificate_validation = ?, trusted_certificate_id = ?, command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
+      `certificate_validation = ?, trusted_certificate_id = ?, ` +
+      // still trusts the certificate received at the first connection while no certificate is selected
+      `trust_on_first_use = (trust_on_first_use AND ? = 'trusted' AND ? IS NULL), ` +
+      `command_refresh_interval = ?, command_retry_interval = ?, message_retry_interval = ?, ` +
       `${PERMISSION_COLUMNS_UPDATE}, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
@@ -204,6 +207,8 @@ export default class OIAnalyticsRegistrationRepository {
         command.apiGatewayHeaderKey,
         command.apiGatewayHeaderValue,
         command.apiGatewayBaseEndpoint,
+        command.certificateValidation,
+        command.trustedCertificateId,
         command.certificateValidation,
         command.trustedCertificateId,
         command.commandRefreshInterval,
@@ -223,16 +228,21 @@ export default class OIAnalyticsRegistrationRepository {
   }
 
   /**
-   * Validates the certificate of OIAnalytics against a trusted certificate of the store, from now on
+   * Validates the certificate of OIAnalytics against a trusted certificate of the store, from now on, no longer trusting the
+   * certificate received at the first connection. `system` when trusted at the first connection: not an edition of the
+   * registration.
    */
   trustCertificate(certificateId: string, updatedBy: string): void {
     const before = this.get();
-    this.database
-      .prepare(
-        `UPDATE ${REGISTRATIONS_TABLE} SET certificate_validation = 'trusted', trusted_certificate_id = ?, updated_by = ?, ` +
-          `updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`
-      )
-      .run(certificateId, updatedBy);
+    const trust = `certificate_validation = 'trusted', trusted_certificate_id = ?, trust_on_first_use = 0`;
+    const where = `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    if (updatedBy === 'system') {
+      this.database.prepare(`UPDATE ${REGISTRATIONS_TABLE} SET ${trust} ${where}`).run(certificateId);
+    } else {
+      this.database
+        .prepare(`UPDATE ${REGISTRATIONS_TABLE} SET ${trust}, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ${where}`)
+        .run(certificateId, updatedBy);
+    }
     const after = this.get();
     this.auditService.record(
       'oianalytics_registration',
@@ -339,6 +349,7 @@ export default class OIAnalyticsRegistrationRepository {
       apiGatewayBaseEndpoint: result.api_gateway_base_endpoint as string,
       certificateValidation: result.certificate_validation as ServerCertificateValidation,
       trustedCertificateId: result.trusted_certificate_id as string | null,
+      trustOnFirstUse: Boolean(result.trust_on_first_use),
       commandRefreshInterval: result.command_refresh_interval as number,
       commandRetryInterval: result.command_retry_interval as number,
       messageRetryInterval: result.message_retry_interval as number,

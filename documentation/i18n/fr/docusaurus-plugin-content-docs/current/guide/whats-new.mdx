@@ -78,6 +78,10 @@ PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
 - Les connecteurs OPC UA et SFTP ne se connectent qu'à un serveur présentant
   [**l'identité qu'ils approuvent**](./advanced/oibus-security.md#server-identity) (son certificat ou sa clé d'hôte),
   approuvée en testant la connexion ou en enregistrant le connecteur, et depuis OIAnalytics.
+- Les connecteurs REST, OIAnalytics, MQTT et PostgreSQL, et l'enregistrement d'OIBus auprès d'OIAnalytics, valident le
+  certificat de leur serveur avec la validation standard, ou avec un [**certificat approuvé**](./engine/certificates.md#importing-a-trusted-certificate) du
+  magasin de certificats (une autorité de certification, ou le certificat du serveur lui-même), au lieu d'accepter tout
+  certificat.
 - Les [**points d'accès de contenu**](./engine/engine-settings.mdx#content-endpoints) de l'API OIBus (`/api/content`)
   peuvent être désactivés.
 - Le moteur a une [**description**](./engine/engine-settings.mdx#description).
@@ -146,6 +150,14 @@ PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
   UA (avec un mode de sécurité autre que None) et SFTP approuvent l'identité que présente leur serveur à leur première
   connexion après la mise à niveau. Vérifiez-la sur leur page, et approuvez-y désormais un nouveau certificat ou une
   nouvelle clé d'hôte de leur serveur (voir [Identité des serveurs](./advanced/oibus-security.md#server-identity)).
+- **Vérifiez les certificats approuvés par vos connecteurs TLS** : les connecteurs et requêtes d'historique REST,
+  OIAnalytics et MQTT, et l'enregistrement d'OIBus auprès d'OIAnalytics, qui acceptaient tout certificat (**Accepter
+  certificat non autorisé** activé, ou **Rejeter les connexions non autorisées** désactivé pour MQTT) approuvent le
+  certificat que présente leur serveur à leur première connexion après la mise à niveau : il est ajouté au
+  [magasin de certificats](./engine/certificates.md#importing-a-trusted-certificate) et sélectionné. Les connecteurs MQTT validant le certificat de leur
+  broker avec un fichier CA approuvent cette autorité de certification, ajoutée au magasin (ou, quand le fichier ne peut
+  pas être lu, le certificat de leur première connexion). Les autres gardent la validation standard. Vérifiez ces
+  certificats dans le magasin.
 - **API REST** : les paramètres généraux du moteur se mettent à jour avec `PUT /api/engine/general` (au lieu de
   `PUT /api/engine/name`), et les points d'accès de contenu sont désactivés quand aucun transformateur North ne
   s'appliquait à l'API OIBus.

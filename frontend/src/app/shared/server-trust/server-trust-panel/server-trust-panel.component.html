@@ -24,6 +24,6 @@
     ></p>
     <oib-server-identity [identity]="identity" />
   } @else if (!serverTrust.pending && serverTrust.trustOnFirstUse) {
-    <p class="mb-0 text-body-secondary" id="no-server-identity" translate="server-trust.panel.trust-on-first-use"></p>
+    <p class="mb-0 text-body-secondary" id="no-server-identity" [translate]="trustOnFirstUseKey()"></p>
   }
 </section>
