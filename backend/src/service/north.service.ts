@@ -119,12 +119,7 @@ export default class NorthService {
     );
     // A new connector, even copied from another one, only trusts the identity its command sends: the one the connector
     // copied trusts may not be the identity of the server of the copy
-    northEntity.serverTrust = this.trustFormCertificate(
-      northEntity,
-      toServerTrust(command.serverTrust, null, createdBy),
-      command,
-      createdBy
-    );
+    const serverTrust = toServerTrust(command.serverTrust, null, createdBy);
     northEntity.createdBy = createdBy;
     northEntity.updatedBy = createdBy;
     const transformers = this.transformerService.findAll();
@@ -140,7 +135,10 @@ export default class NorthService {
         source: this.transformerSourceFromCommand(transformerWithOptions.source)
       };
     });
-    this.northConnectorRepository.saveNorth(northEntity, true);
+    await this.certificateService.saveTrustingServerCertificates(createdBy, trustCertificate => {
+      northEntity.serverTrust = this.trustFormCertificate(northEntity, serverTrust, command, trustCertificate);
+      this.northConnectorRepository.saveNorth(northEntity, true);
+    });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     await this.engine.createNorth(northEntity.id);
@@ -165,7 +163,6 @@ export default class NorthService {
 
     const northEntity = { id: previousSettings.id } as NorthConnectorEntity<NorthSettings>;
     copyNorthConnectorCommandToNorthEntity(northEntity, command, previousSettings, this.scanModeRepository.findAll(), updatedBy);
-    northEntity.serverTrust = this.trustFormCertificate(northEntity, northEntity.serverTrust, command, updatedBy);
     northEntity.createdBy = previousSettings.createdBy;
     northEntity.updatedBy = updatedBy;
     const transformers = this.transformerService.findAll();
@@ -182,7 +179,10 @@ export default class NorthService {
       };
     });
 
-    this.northConnectorRepository.saveNorth(northEntity, false);
+    await this.certificateService.saveTrustingServerCertificates(updatedBy, trustCertificate => {
+      northEntity.serverTrust = this.trustFormCertificate(northEntity, northEntity.serverTrust, command, trustCertificate);
+      this.northConnectorRepository.saveNorth(northEntity, false);
+    });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadNorth(northEntity);
   }
@@ -255,7 +255,7 @@ export default class NorthService {
     northEntity: NorthConnectorEntity<NorthSettings>,
     serverTrust: ServerTrust,
     command: NorthConnectorCommandDTO,
-    user: string
+    trustCertificate: (certificatePem: string, name: string) => { id: string }
   ): ServerTrust {
     const manifest = this.getManifest(northEntity.type);
     return trustFormCertificateInStore(
@@ -263,7 +263,7 @@ export default class NorthService {
       serverTrust,
       command.serverTrust,
       !!manifest.serverTrustInCertificateStore,
-      certificatePem => this.trustServerCertificate(certificatePem, `${northEntity.name} server`, user)
+      certificatePem => trustCertificate(certificatePem, `${northEntity.name} server`)
     );
   }
 

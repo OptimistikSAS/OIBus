@@ -122,11 +122,11 @@ export default class OIAnalyticsClient {
       () => formIdentity,
       certificateId => this.findCertificate(certificateId),
       () => getOIAnalyticsProbeTarget(true, registration, null, OIANALYTICS_TIMEOUT),
-      (identity, status) => {
+      (identity, status, awaitingCertificate) => {
         if (!refuse) {
           return false;
         }
-        if (status === 'unknown' && registration.trustOnFirstUse) {
+        if (status === 'unknown' && awaitingCertificate && registration.trustOnFirstUse) {
           // saved synchronously: the next requests read the registration validating against it
           this.pending = null;
           this.events.emit('certificate-trusted-on-first-use', identity);

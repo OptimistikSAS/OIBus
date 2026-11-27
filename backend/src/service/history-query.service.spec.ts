@@ -120,7 +120,10 @@ describe('History Query service', () => {
     historyQueryMetricsRepository = createMock<HistoryQueryMetricsRepository>();
     southService = createMock<SouthService>({
       getManifest: () => southManifestList[0], // folder-scanner
-      findById: () => testData.south.list[0]
+      findById: () => testData.south.list[0],
+      // saves with a trust adding the certificates as `trustServerCertificate` does
+      saveTrustingServerCertificates: async (trustedBy, trustAndSave) =>
+        trustAndSave((certificatePem, name) => southService.trustServerCertificate(certificatePem, name, trustedBy))
     });
     northService = createMock<NorthService>({
       getManifest: () => fileWriterManifest,

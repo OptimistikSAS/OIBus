@@ -27,10 +27,14 @@ export class ServerIdentityComponent {
   readonly sshHostKey = computed(() =>
     this.identity().type === 'ssh-host-key' ? (this.identity().details as SshHostKeyServerIdentityDetails) : null
   );
-  /** The identity trusted before, when it is not the one presented */
+  /**
+   * The identity trusted before, when it is not the one presented: not a certification authority, which validates the
+   * certificate of the server rather than being it
+   */
   readonly changedFrom = computed(() => {
     const previous = this.previous();
-    return previous && previous.fingerprint !== this.identity().fingerprint ? previous : null;
+    const authority = previous?.type === 'x509' && !!(previous.details as X509ServerIdentityDetails).certificationAuthority;
+    return previous && !authority && previous.fingerprint !== this.identity().fingerprint ? previous : null;
   });
   /** Whether the certificate is not valid now */
   readonly outOfValidity = computed(() => {

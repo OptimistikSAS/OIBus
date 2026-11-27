@@ -60,6 +60,14 @@ export interface X509ServerIdentityDetails {
   selfSigned: boolean;
 
   /**
+   * Whether the certificate is a certification authority trusted by a connector: the certificate of its server is validated
+   * against it, rather than compared with it. Only set on the identity trusted by a connector trusting a certificate of the
+   * store.
+   * @example false
+   */
+  certificationAuthority?: boolean;
+
+  /**
    * The certificate itself (PEM), for the connectors trusting a certificate of the store (the TLS connectors): trusting the
    * identity adds it to the store.
    * @example "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBBQUAMEUx...\n-----END CERTIFICATE-----"

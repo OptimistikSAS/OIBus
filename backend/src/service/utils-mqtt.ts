@@ -14,6 +14,15 @@ import { TlsProbeTarget, TlsTrust } from './utils-tls';
 /** The default port of the MQTT brokers over TLS, by protocol of their URL */
 const TLS_DEFAULT_PORTS: Record<string, number> = { 'mqtts:': 8883, 'tls:': 8883, 'wss:': 443 };
 
+/** Whether the broker is reached over WebSocket with TLS (`wss://`) */
+const isWebSocketOverTls = (url: string): boolean => {
+  try {
+    return new URL(url).protocol === 'wss:';
+  } catch {
+    return false;
+  }
+};
+
 /** Where the certificate of the broker is read: `null` without TLS (`mqtt://`, `tcp://` or `ws://`) */
 export const getMQTTProbeTarget = (connectionSettings: NorthMQTTSettings | SouthMQTTSettings): TlsProbeTarget | null => {
   let protocol: string;
@@ -61,6 +70,12 @@ export const createConnectionOptions = async (
       : '';
   }
   options.clean = !connectionSettings.persistent;
+  if (isWebSocketOverTls(connectionSettings.url)) {
+    // over WebSocket, mqtt.js only gives a few TLS options to the connection (not the check of a certificate trusted as is):
+    // they are all given here, mqtt.js adding the certificate of OIBus
+    // (the typings of ws declare another `checkServerIdentity`: ws gives these options as they are to `tls.connect`)
+    Object.assign(options, { wsOptions: { ...tls } });
+  }
   return options;
 };
 

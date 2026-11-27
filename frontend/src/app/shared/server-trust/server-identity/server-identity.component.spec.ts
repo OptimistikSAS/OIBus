@@ -131,6 +131,19 @@ describe('ServerIdentityComponent', () => {
     await expect.element(tester.rows.filter({ hasText: 'Fingerprint trusted until now' })).toHaveClass('table-warning');
   });
 
+  test('should tell a certificate is a certification authority, and not compare a certificate with it', async () => {
+    const authority: ServerIdentity = { ...otherX509, details: { ...otherX509.details, certificationAuthority: true } };
+
+    const trustedAuthority = new ServerIdentityComponentTester(authority);
+    await expect
+      .element(trustedAuthority.type)
+      .toHaveTextContent('CertificateCertification authority: the certificate of the server is validated against it');
+
+    const presented = new ServerIdentityComponentTester(x509, authority);
+    await expect.element(presented.root.getByCss('#server-identity-certification-authority')).not.toBeInTheDocument();
+    await expect.element(presented.previousFingerprint).not.toBeInTheDocument();
+  });
+
   test.each([
     { name: 'the same identity', previous: x509 },
     { name: 'no identity', previous: null }

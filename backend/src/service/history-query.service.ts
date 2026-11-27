@@ -132,7 +132,6 @@ export default class HistoryQueryService {
     // identity of the server of the copy
     historyQuery.southServerTrust = toServerTrust(command.southServerTrust, null, createdBy);
     historyQuery.northServerTrust = toServerTrust(command.northServerTrust, null, createdBy);
-    this.trustFormCertificates(historyQuery, command, createdBy);
     historyQuery.createdBy = createdBy;
     historyQuery.updatedBy = createdBy;
     for (const item of historyQuery.items) {
@@ -181,7 +180,10 @@ export default class HistoryQueryService {
       };
     });
 
-    this.historyQueryRepository.saveHistory(historyQuery, true);
+    await this.southService.saveTrustingServerCertificates(createdBy, trustCertificate => {
+      this.trustFormCertificates(historyQuery, command, trustCertificate);
+      this.historyQueryRepository.saveHistory(historyQuery, true);
+    });
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
     await this.engine.createHistoryQuery(historyQuery.id);
@@ -212,7 +214,6 @@ export default class HistoryQueryService {
 
     const historyQuery = { id: previousSettings.id } as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
     copyHistoryQueryCommandToHistoryQueryEntity(historyQuery, command, previousSettings, this.scanModeRepository.findAll(), updatedBy);
-    this.trustFormCertificates(historyQuery, command, updatedBy);
     historyQuery.createdBy = previousSettings.createdBy;
     historyQuery.updatedBy = updatedBy;
     for (const item of historyQuery.items) {
@@ -265,7 +266,10 @@ export default class HistoryQueryService {
       };
     });
 
-    this.historyQueryRepository.saveHistory(historyQuery, false);
+    await this.southService.saveTrustingServerCertificates(updatedBy, trustCertificate => {
+      this.trustFormCertificates(historyQuery, command, trustCertificate);
+      this.historyQueryRepository.saveHistory(historyQuery, false);
+    });
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, resetCache);
   }
@@ -469,10 +473,10 @@ export default class HistoryQueryService {
   private trustFormCertificates(
     historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
     command: HistoryQueryCommandDTO,
-    user: string
+    trustServerCertificate: (certificatePem: string, name: string) => { id: string }
   ): void {
     const trustCertificate = (side: 'South' | 'North') => (certificatePem: string) =>
-      this.southService.trustServerCertificate(certificatePem, `${historyQuery.name} ${side} server`, user);
+      trustServerCertificate(certificatePem, `${historyQuery.name} ${side} server`);
     historyQuery.southServerTrust = trustFormCertificateInStore(
       this.getCertificateStoreTrustSettings(historyQuery, 'south'),
       historyQuery.southServerTrust,

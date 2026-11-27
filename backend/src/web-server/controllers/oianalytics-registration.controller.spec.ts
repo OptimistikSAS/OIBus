@@ -42,7 +42,12 @@ describe('OIAnalyticsRegistrationController', () => {
 
   beforeEach(() => {
     registrationService = createMock<OIAnalyticsRegistrationService>();
-    certificateService = createMock<CertificateService>({ trustServerCertificate: () => ({ id: 'trustedCertificateId' }) });
+    certificateService = createMock<CertificateService>({
+      trustServerCertificate: () => ({ id: 'trustedCertificateId' }),
+      // saves with a trust adding the certificates as `trustServerCertificate` does
+      saveTrustingServerCertificates: async (trustedBy, trustAndSave) =>
+        trustAndSave((certificatePem, name) => certificateService.trustServerCertificate(certificatePem, name, trustedBy))
+    });
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
       services: createMockServices({ oIAnalyticsRegistrationService: registrationService, certificateService })

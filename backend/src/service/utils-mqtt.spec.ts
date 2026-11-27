@@ -514,6 +514,31 @@ describe('Service utils MQTT', () => {
       );
       assert.deepStrictEqual(result.ca, ['trusted certificate']);
       assert.strictEqual(result.rejectUnauthorized, undefined);
+      assert.strictEqual(result.wsOptions, undefined);
+    });
+
+    it('should give the TLS options to the WebSocket connection of a broker reached over wss', async () => {
+      const checkServerIdentity = () => undefined;
+      const tls = { ca: ['trusted certificate'], allowPartialTrustChain: true, checkServerIdentity };
+      const result = await utils.createConnectionOptions(
+        'connectorId',
+        {
+          url: 'wss://broker/mqtt',
+          qos: '1',
+          reconnectPeriod: 10000,
+          maxNumberOfMessages: 1000,
+          flushMessageTimeout: 100,
+          authentication: { type: 'none' },
+          certificateValidation: 'trusted',
+          trustedCertificateId: 'trustedId',
+          connectTimeout: 10_000,
+          persistent: false
+        },
+        logger,
+        tls
+      );
+
+      assert.deepStrictEqual(result.wsOptions, tls);
     });
   });
 

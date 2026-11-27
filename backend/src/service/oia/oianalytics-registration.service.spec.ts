@@ -787,8 +787,25 @@ describe('OIAnalytics Registration Service', () => {
         items: [],
         serverIdentity: { identity, status: 'trusted' }
       });
-      assert.deepStrictEqual(oIAnalyticsClient.retrieveServerIdentity.mock.calls[0].arguments, [command, identity]);
-      assert.deepStrictEqual(oIAnalyticsClient.testConnection.mock.calls[0].arguments, [command, true]);
+      // the secrets left empty in the form are the saved ones
+      const tested = {
+        ...command,
+        proxyPassword: testData.oIAnalytics.registration.pending.proxyPassword,
+        apiGatewayHeaderValue: testData.oIAnalytics.registration.pending.apiGatewayHeaderValue
+      };
+      assert.deepStrictEqual(oIAnalyticsClient.retrieveServerIdentity.mock.calls[0].arguments, [tested, identity]);
+      assert.deepStrictEqual(oIAnalyticsClient.testConnection.mock.calls[0].arguments, [tested, true]);
+    });
+
+    it('should test the connection with the secrets of the form encrypted, as they are saved', async () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+      mockEncryptionService.encryptionService.encryptText.mock.mockImplementation(text => `encrypted ${text}`);
+
+      await service.testConnection({ ...testData.oIAnalytics.registration.command, proxyPassword: 'pass', apiGatewayHeaderValue: 'key' });
+
+      const [tested] = oIAnalyticsClient.testConnection.mock.calls[0].arguments;
+      assert.strictEqual(tested.proxyPassword, 'encrypted pass');
+      assert.strictEqual(tested.apiGatewayHeaderValue, 'encrypted key');
     });
 
     it('should not test the connection further with a certificate which does not validate', async () => {
@@ -884,7 +901,14 @@ describe('OIAnalytics Registration Service', () => {
       assert.strictEqual(oIAnalyticsRegistrationRepository.trustCertificate.mock.calls.length, 0);
     });
 
+    const awaitingCertificate = {
+      ...testData.oIAnalytics.registration.completed,
+      certificateValidation: 'trusted' as const,
+      trustOnFirstUse: true
+    };
+
     it('should add the certificate trusted at the first connection to the store, and select it', () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => awaitingCertificate);
       const updated = mock.fn();
       service.registrationEvent.on('updated', updated);
 
@@ -898,7 +922,23 @@ describe('OIAnalytics Registration Service', () => {
       assert.strictEqual(updated.mock.calls.length, 1);
     });
 
+    it('should not trust a certificate at the first connection once the registration no longer awaits one', () => {
+      for (const registration of [
+        { ...awaitingCertificate, trustOnFirstUse: false },
+        { ...awaitingCertificate, trustedCertificateId: 'alreadyTrusted' },
+        { ...awaitingCertificate, certificateValidation: 'standard' as const }
+      ]) {
+        oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => registration);
+
+        service.trustCertificateOnFirstUse(identity, trustCertificate);
+      }
+
+      assert.strictEqual(trustCertificate.mock.calls.length, 0);
+      assert.strictEqual(oIAnalyticsRegistrationRepository.trustCertificate.mock.calls.length, 0);
+    });
+
     it('should log an error when the certificate trusted at the first connection cannot be saved', () => {
+      oIAnalyticsRegistrationRepository.get.mock.mockImplementation(() => awaitingCertificate);
       service.trustCertificateOnFirstUse({ ...identity, details: { keyType: 'rsa' } }, trustCertificate);
 
       assert.strictEqual(oIAnalyticsRegistrationRepository.trustCertificate.mock.calls.length, 0);

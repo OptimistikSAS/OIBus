@@ -2,7 +2,16 @@
   <tbody>
     <tr>
       <th scope="row" class="w-25" translate="server-trust.identity.type"></th>
-      <td id="server-identity-type" [translate]="'server-trust.identity.types.' + identity().type"></td>
+      <td id="server-identity-type">
+        <span [translate]="'server-trust.identity.types.' + identity().type"></span>
+        @if (x509()?.certificationAuthority) {
+          <span
+            class="badge text-bg-info ms-1"
+            id="server-identity-certification-authority"
+            translate="server-trust.identity.certification-authority"
+          ></span>
+        }
+      </td>
     </tr>
     <tr>
       <th scope="row" translate="server-trust.identity.fingerprint"></th>

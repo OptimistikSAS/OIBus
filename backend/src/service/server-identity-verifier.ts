@@ -79,11 +79,16 @@ export default class ServerIdentityVerifier {
 
   /**
    * For a connector trusting a certificate of the store, whose TLS validation refused the certificate of its server: the
-   * certificate is trusted when the connector trusts the one received at its first connection and none is trusted yet (a
-   * connector which accepted any certificate before), else refused (see `refuse`). Whether it is trusted.
+   * certificate is trusted when the connector trusts the one received at its first connection and its settings ask for a
+   * trusted certificate without selecting one yet (`awaitingCertificate`: a connector which accepted any certificate
+   * before), else refused (see `refuse`). Whether it is trusted.
    */
-  refuseCertificate(presented: ServerIdentity, status: Exclude<ServerIdentityTrustStatus, 'trusted'>): boolean {
-    if (status === 'unknown' && this.getTrust().trustOnFirstUse) {
+  refuseCertificate(
+    presented: ServerIdentity,
+    status: Exclude<ServerIdentityTrustStatus, 'trusted'>,
+    awaitingCertificate: boolean
+  ): boolean {
+    if (status === 'unknown' && awaitingCertificate && this.getTrust().trustOnFirstUse) {
       this.setTrust({ identity: null, trustOnFirstUse: false });
       this.pending = null;
       this.getLogger().info(`Server ${describeServerIdentity(presented)} trusted at the first connection`);

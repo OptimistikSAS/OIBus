@@ -78,7 +78,7 @@ export default class SouthOIAnalytics
             this.connector.settings.specificSettings,
             this.connector.settings.timeout * 1000
           ),
-    (presented, status) => this.serverIdentityVerifier.refuseCertificate(presented, status)
+    (presented, status, awaitingCertificate) => this.serverIdentityVerifier.refuseCertificate(presented, status, awaitingCertificate)
   );
 
   override async retrieveServerIdentity(): Promise<ServerIdentity | null> {

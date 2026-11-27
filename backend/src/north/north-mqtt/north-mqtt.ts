@@ -40,7 +40,7 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
     () => this.connector.serverTrust.identity,
     certificateId => this.certificateService.findById(certificateId),
     () => getMQTTProbeTarget(this.connector.settings),
-    (presented, status) => this.serverIdentityVerifier.refuseCertificate(presented, status)
+    (presented, status, awaitingCertificate) => this.serverIdentityVerifier.refuseCertificate(presented, status, awaitingCertificate)
   );
 
   override async retrieveServerIdentity(): Promise<ServerIdentity | null> {
