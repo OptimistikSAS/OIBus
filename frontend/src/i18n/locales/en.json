@@ -2029,6 +2029,12 @@
               "host": "Host",
               "port": "Port",
               "ssl-mode": "SSL",
+              "certificate-validation": {
+                "title": "Server certificate validation",
+                "standard": "Standard",
+                "trusted": "Trusted certificate"
+              },
+              "trusted-certificate-id": "Trusted certificate",
               "connection-timeout": "Connection timeout",
               "database": "Database",
               "username": "Username",

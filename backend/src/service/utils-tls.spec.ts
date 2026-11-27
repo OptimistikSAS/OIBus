@@ -130,6 +130,61 @@ describe('Service utils TLS', () => {
     assert.strictEqual(fingerprintOf(details.certificate!), fingerprintOf(selfSigned.certificate));
   });
 
+  it('should read the certificate of a PostgreSQL server, after its SSL request', async () => {
+    let request: Buffer | null = null;
+    // a PostgreSQL server accepting TLS ('S') or not ('N') once it receives the SSL request
+    const startPostgreSQL = async (acceptsTls: boolean) => {
+      const server = net.createServer(socket => {
+        socket.once('data', (data: Buffer) => {
+          request = data;
+          socket.write(acceptsTls ? 'S' : 'N');
+          if (acceptsTls) {
+            const secure = new tls.TLSSocket(socket, {
+              isServer: true,
+              secureContext: tls.createSecureContext({ cert: selfSigned.certificate, key: selfSigned.privateKey })
+            });
+            secure.on('error', () => undefined);
+          } else {
+            socket.end();
+          }
+        });
+      });
+      await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+      return { server, port: (server.address() as net.AddressInfo).port };
+    };
+    const accepting = await startPostgreSQL(true);
+    const refusing = await startPostgreSQL(false);
+    try {
+      const { identity, authorized } = await probeTlsServer(`postgresql://127.0.0.1:${accepting.port}`, 5432, {}, null, 5000, 'postgresql');
+
+      assert.deepStrictEqual(request, Buffer.from([0, 0, 0, 8, 0x04, 0xd2, 0x16, 0x2f]));
+      assert.strictEqual(identity.fingerprint, fingerprintOf(selfSigned.certificate));
+      assert.strictEqual(authorized, false);
+      await assert.rejects(probeTlsServer(`postgresql://127.0.0.1:${refusing.port}`, 5432, {}, null, 5000, 'postgresql'), {
+        message: `The server 127.0.0.1:${refusing.port} does not accept TLS connections`
+      });
+    } finally {
+      accepting.server.close();
+      refusing.server.close();
+    }
+  });
+
+  it('should time out when a PostgreSQL server does not answer the SSL request', async () => {
+    const connections = new Set<net.Socket>();
+    const silent = net.createServer(socket => connections.add(socket));
+    await new Promise<void>(resolve => silent.listen(0, '127.0.0.1', resolve));
+    const port = (silent.address() as net.AddressInfo).port;
+    try {
+      await assert.rejects(probeTlsServer(`postgresql://127.0.0.1:${port}`, 5432, {}, null, 100, 'postgresql'), {
+        message: `Connection timeout: 127.0.0.1:${port} did not answer the SSL request after 100 ms`
+      });
+      await assert.rejects(probeTlsServer('postgresql://127.0.0.1:1', 5432, {}, null, 1000, 'postgresql'));
+    } finally {
+      connections.forEach(socket => socket.destroy());
+      silent.close();
+    }
+  });
+
   it('should read the certificate a server presents through an HTTP proxy', async () => {
     let tunnelled: string | null = null;
     let authorization: string | undefined;

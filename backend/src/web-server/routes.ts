@@ -3354,12 +3354,19 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthPostgreSQLSettingsConnectionSettingsCertificateValidation": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["standard"]},{"dataType":"enum","enums":["trusted"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthPostgreSQLSettingsConnectionSettings": {
         "dataType": "refObject",
         "properties": {
             "host": {"dataType":"string","required":true},
             "port": {"dataType":"double","required":true},
             "sslMode": {"dataType":"boolean","required":true},
+            "certificateValidation": {"ref":"SouthPostgreSQLSettingsConnectionSettingsCertificateValidation"},
+            "trustedCertificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "database": {"dataType":"string","required":true},
             "connectionTimeout": {"dataType":"double","required":true},
             "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},

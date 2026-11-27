@@ -14005,6 +14005,13 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthPostgreSQLSettingsConnectionSettingsCertificateValidation": {
+				"type": "string",
+				"enum": [
+					"standard",
+					"trusted"
+				]
+			},
 			"SouthPostgreSQLSettingsConnectionSettings": {
 				"properties": {
 					"host": {
@@ -14016,6 +14023,13 @@
 					},
 					"sslMode": {
 						"type": "boolean"
+					},
+					"certificateValidation": {
+						"$ref": "#/components/schemas/SouthPostgreSQLSettingsConnectionSettingsCertificateValidation"
+					},
+					"trustedCertificateId": {
+						"type": "string",
+						"nullable": true
 					},
 					"database": {
 						"type": "string"

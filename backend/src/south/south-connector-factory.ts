@@ -219,7 +219,8 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
         addContent,
         southCacheRepository,
-        southCacheFolder
+        southCacheFolder,
+        certificateService
       );
     case 'rest':
       return new SouthRest(

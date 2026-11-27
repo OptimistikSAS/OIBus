@@ -137,21 +137,34 @@ export interface TlsProbeProxy {
 }
 
 /**
+ * A protocol negotiating TLS on its connection before the TLS handshake:
+ * - `postgresql`: the client sends an SSL request, which the server accepts with `S`
+ */
+export type TlsStartProtocol = 'postgresql';
+
+/** The SSL request of the PostgreSQL protocol: its length, then its code */
+const POSTGRESQL_SSL_REQUEST = Buffer.from([0, 0, 0, 8, 0x04, 0xd2, 0x16, 0x2f]);
+
+/**
  * Connects to a TLS server without validating its certificate, only to read it and to tell whether it validates with these
- * options: nothing is sent to the server once the handshake is done. Through the HTTP proxy the connector uses, when it
- * uses one.
+ * options: nothing is sent to the server once the handshake is done, but what the protocol negotiating TLS needs before it
+ * (`startTls`). Through the HTTP proxy the connector uses, when it uses one.
  */
 export const probeTlsServer = async (
   url: string,
   defaultPort: number,
   trust: TlsTrust,
   proxy: TlsProbeProxy | null,
-  timeoutMs: number
+  timeoutMs: number,
+  startTls: TlsStartProtocol | null = null
 ): Promise<{ identity: ServerIdentity; authorized: boolean }> => {
   const target = new URL(url);
   const host = target.hostname.replace(/^\[(.*)\]$/, '$1');
   const port = target.port ? Number(target.port) : defaultPort;
-  const socket = proxy ? await openProxyTunnel(proxy, host, port, timeoutMs) : null;
+  let socket = proxy ? await openProxyTunnel(proxy, host, port, timeoutMs) : null;
+  if (startTls === 'postgresql') {
+    socket = await requestPostgreSQLTls(socket ?? net.connect({ host, port }), host, port, timeoutMs);
+  }
   return await new Promise((resolve, reject) => {
     const secureSocket = tls.connect({
       ...(socket ? { socket } : { host, port }),
@@ -180,6 +193,36 @@ export const probeTlsServer = async (
     });
   });
 };
+
+/** Sends the SSL request of the PostgreSQL protocol on the connection: the TLS handshake follows when the server accepts it */
+const requestPostgreSQLTls = (socket: net.Socket, host: string, port: number, timeoutMs: number): Promise<net.Socket> =>
+  new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      socket.destroy();
+      reject(new Error(`Connection timeout: ${host}:${port} did not answer the SSL request after ${timeoutMs} ms`));
+    }, timeoutMs);
+    const send = () => socket.write(POSTGRESQL_SSL_REQUEST);
+    socket.once('data', (answer: Buffer) => {
+      clearTimeout(timeout);
+      socket.removeListener('error', fail);
+      if (answer[0] === 0x53) {
+        resolve(socket);
+      } else {
+        socket.destroy();
+        reject(new Error(`The server ${host}:${port} does not accept TLS connections`));
+      }
+    });
+    const fail = (error: Error) => {
+      clearTimeout(timeout);
+      reject(error);
+    };
+    socket.once('error', fail);
+    if (socket.connecting) {
+      socket.once('connect', send);
+    } else {
+      send();
+    }
+  });
 
 /** Opens a tunnel to the server through an HTTP(S) proxy (`CONNECT`), the TLS connection to the server going through it */
 const openProxyTunnel = (proxy: TlsProbeProxy, host: string, port: number, timeoutMs: number): Promise<net.Socket> => {
@@ -250,6 +293,8 @@ export interface TlsProbeTarget {
   defaultPort: number;
   proxy: TlsProbeProxy | null;
   timeoutMs: number;
+  /** The protocol negotiating TLS on the connection before its handshake, when it is not TLS from the start */
+  startTls?: TlsStartProtocol;
 }
 
 /**
@@ -294,7 +339,8 @@ export class TlsServerTrust {
       target.defaultPort,
       resolveTlsTrust(trustedCertificate),
       target.proxy,
-      target.timeoutMs
+      target.timeoutMs,
+      target.startTls ?? null
     );
     this.lastProbe = { identity, status: toTlsTrustStatus(authorized, trustedCertificate) };
     return identity;

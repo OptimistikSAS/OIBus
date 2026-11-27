@@ -4,6 +4,9 @@ import { SQL_TABLE_RECORD_FIELDS } from '../sql-table-discovery';
 
 const manifest: SouthConnectorManifest = {
   id: 'postgresql',
+  serverIdentity: 'x509',
+  serverTrustInCertificateStore: true,
+  serverTrustSettingsKey: 'connectionSettings',
   category: 'database',
   modes: {
     subscription: false,
@@ -46,7 +49,18 @@ const manifest: SouthConnectorManifest = {
           visible: true,
           wrapInBox: true
         },
-        enablingConditions: [],
+        enablingConditions: [
+          {
+            referralPathFromRoot: 'sslMode',
+            targetPathFromRoot: 'certificateValidation',
+            values: [true]
+          },
+          {
+            referralPathFromRoot: 'certificateValidation',
+            targetPathFromRoot: 'trustedCertificateId',
+            values: ['trusted']
+          }
+        ],
         validators: [
           {
             type: 'REQUIRED',
@@ -111,6 +125,36 @@ const manifest: SouthConnectorManifest = {
             displayProperties: {
               row: 0,
               columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'string-select',
+            key: 'certificateValidation',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.certificate-validation',
+            defaultValue: 'standard',
+            selectableValues: ['standard', 'trusted'],
+            validators: [
+              {
+                type: 'REQUIRED',
+                arguments: []
+              }
+            ],
+            displayProperties: {
+              row: 3,
+              columns: 6,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'certificate',
+            key: 'trustedCertificateId',
+            translationKey: 'configuration.oibus.manifest.south.postgresql.connection-settings.trusted-certificate-id',
+            trusted: true,
+            validators: [],
+            displayProperties: {
+              row: 3,
+              columns: 6,
               displayInViewMode: true
             }
           },
