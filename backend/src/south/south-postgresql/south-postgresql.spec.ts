@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
+import * as forge from 'node-forge';
 
 import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type {
@@ -11,14 +12,16 @@ import type {
   SouthPostgreSQLSettings,
   SouthPostgreSQLSettingsConnectionSettings
 } from '../../../shared/model/connector/south-settings.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type CertificateService from '../../service/certificate.service';
 import type * as Utils from '../../service/utils';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { createMock, flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { createMock, flushPromises, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthPostgreSQLClass from './south-postgresql';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -197,7 +200,13 @@ describe('SouthPostgreSQL', () => {
     const configuration = buildConfiguration({ sslMode: true }, items);
 
     beforeEach(() => {
-      south = new SouthPostgreSQL(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      south = new SouthPostgreSQL(
+        configuration,
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder',
+        createMock<CertificateService>()
+      );
     });
 
     it('should analyze the time variables of the item query', () => {
@@ -303,7 +312,7 @@ describe('SouthPostgreSQL', () => {
         database: configuration.settings.connectionSettings.database,
         connectionTimeoutMillis: configuration.settings.connectionSettings.connectionTimeout,
         query_timeout: 15_000,
-        ssl: true
+        ssl: {}
       });
 
       assert.strictEqual(clientConnect.mock.calls.length, 1);
@@ -484,7 +493,13 @@ describe('SouthPostgreSQL', () => {
     const configuration = buildConfiguration({ port: 1521, username: '', password: '' }, items);
 
     beforeEach(() => {
-      south = new SouthPostgreSQL(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      south = new SouthPostgreSQL(
+        configuration,
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder',
+        createMock<CertificateService>()
+      );
     });
 
     it('should manage connection error', async () => {
@@ -505,7 +520,13 @@ describe('SouthPostgreSQL', () => {
     const configuration = buildConfiguration({}, []);
 
     beforeEach(() => {
-      south = new SouthPostgreSQL(configuration, addContentCallback, createMock<SouthCacheRepository>(), 'cacheFolder');
+      south = new SouthPostgreSQL(
+        configuration,
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder',
+        createMock<CertificateService>()
+      );
     });
 
     it('Database is reachable and has tables', async () => {
@@ -603,7 +624,8 @@ describe('SouthPostgreSQL', () => {
           buildConfiguration({}, items, maxParallelRun),
           addContentCallback,
           createMock<SouthCacheRepository>(),
-          'cacheFolder'
+          'cacheFolder',
+          createMock<CertificateService>()
         );
         assert.strictEqual(south['getMaxParallelRun'](), expected);
       }
@@ -614,7 +636,8 @@ describe('SouthPostgreSQL', () => {
         buildConfiguration({}, items, 2),
         addContentCallback,
         createMock<SouthCacheRepository>(),
-        'cacheFolder'
+        'cacheFolder',
+        createMock<CertificateService>()
       );
       const resolvers: Array<() => void> = [];
       clientQuery.mock.mockImplementation(() => new Promise(resolve => resolvers.push(() => resolve({ rows: [{ value: 1 }] }))));
@@ -643,7 +666,8 @@ describe('SouthPostgreSQL', () => {
         buildConfiguration({}, items, 2),
         addContentCallback,
         createMock<SouthCacheRepository>(),
-        'cacheFolder'
+        'cacheFolder',
+        createMock<CertificateService>()
       );
       await south.connect();
 
@@ -677,7 +701,8 @@ describe('SouthPostgreSQL', () => {
         buildConfiguration({}, items, 2),
         addContentCallback,
         createMock<SouthCacheRepository>(),
-        'cacheFolder'
+        'cacheFolder',
+        createMock<CertificateService>()
       );
       await south.connect();
 
@@ -685,6 +710,88 @@ describe('SouthPostgreSQL', () => {
         message: 'query error'
       });
       assert.deepStrictEqual(release.mock.calls[0].arguments, [error]);
+    });
+  });
+
+  describe('certificate of the server', () => {
+    const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
+    const certificateError = () => Object.assign(new Error('self-signed certificate'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' });
+    const certificationAuthority = (): string => {
+      const keys = forge.pki.rsa.generateKeyPair(1024);
+      const certificate = forge.pki.createCertificate();
+      certificate.publicKey = keys.publicKey;
+      certificate.setSubject([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setIssuer([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setExtensions([{ name: 'basicConstraints', cA: true }]);
+      certificate.sign(keys.privateKey, forge.md.sha256.create());
+      return forge.pki.certificateToPem(certificate);
+    };
+    let certificateService: Mocked<CertificateService>;
+    const build = (connectionSettings: Partial<SouthPostgreSQLSettingsConnectionSettings>) =>
+      new SouthPostgreSQL(
+        buildConfiguration(connectionSettings, items),
+        addContentCallback,
+        createMock<SouthCacheRepository>(),
+        'cacheFolder',
+        certificateService
+      );
+
+    beforeEach(() => {
+      certificateService = createMock<CertificateService>();
+    });
+
+    it('should connect without TLS, reading no certificate', async () => {
+      const south = build({ sslMode: false });
+
+      assert.strictEqual(south.createConnectionOptions().ssl, false);
+      assert.strictEqual(await south.retrieveServerIdentity(), null);
+    });
+
+    it('should validate the certificate of the server against the trusted certificate of the store', () => {
+      const pem = certificationAuthority();
+      certificateService.findById.mock.mockImplementation(() => ({ ...testData.certificates.list[0], certificate: pem }));
+      const south = build({ sslMode: true, certificateValidation: 'trusted', trustedCertificateId: 'trustedId' });
+
+      assert.deepStrictEqual(south.createConnectionOptions().ssl, { ca: [pem] });
+      assert.deepStrictEqual(certificateService.findById.mock.calls[0].arguments, ['trustedId']);
+    });
+
+    it('should keep the certificate refused at a test as pending, and tell how to trust it', async () => {
+      clientConnect.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      const south = build({ sslMode: true });
+      mock.method(south['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+      await assert.rejects(south.testConnection(), /which is not trusted: test the connection to review its identity/);
+      assert.deepStrictEqual(south.getPendingServerIdentity(), { identity, status: 'unknown' });
+      assert.strictEqual(south.getServerIdentityTrustStatus(identity), 'unknown');
+    });
+
+    it('should keep the certificate refused by a query as pending', async () => {
+      clientConnect.mock.mockImplementation(async () => {
+        throw certificateError();
+      });
+      const south = build({ sslMode: true });
+      mock.method(south['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+      await assert.rejects(
+        south.queryData(items[0], '2020-01-01T00:00:00.000Z', '2020-01-02T00:00:00.000Z'),
+        /which is not trusted: test the connection/
+      );
+      assert.deepStrictEqual(south.getPendingServerIdentity(), { identity, status: 'unknown' });
+    });
+
+    it('should read the certificate of the server after its SSL request', async () => {
+      const south = build({ sslMode: true, host: '::1', port: 5433 });
+
+      assert.deepStrictEqual(south['tlsServerTrust']['getProbeTarget'](), {
+        url: 'postgresql://[::1]:5433',
+        defaultPort: 5432,
+        proxy: null,
+        timeoutMs: 1000,
+        startTls: 'postgresql'
+      });
     });
   });
 });

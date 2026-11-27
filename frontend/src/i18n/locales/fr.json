@@ -994,6 +994,12 @@
               "host": "Hôte",
               "port": "Port",
               "ssl-mode": "SSL",
+              "certificate-validation": {
+                "title": "Validation du certificat serveur",
+                "standard": "Standard",
+                "trusted": "Certificat approuvé"
+              },
+              "trusted-certificate-id": "Certificat approuvé",
               "connection-timeout": "Délai de connexion",
               "database": "Base de données",
               "username": "Nom d'utilisateur",

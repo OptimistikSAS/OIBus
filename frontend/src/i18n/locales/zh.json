@@ -994,6 +994,12 @@
               "host": "主机",
               "port": "端口",
               "ssl-mode": "SSL",
+              "certificate-validation": {
+                "title": "服务器证书验证",
+                "standard": "标准",
+                "trusted": "受信任的证书"
+              },
+              "trusted-certificate-id": "受信任的证书",
               "connection-timeout": "连接超时",
               "database": "数据库",
               "username": "用户名",

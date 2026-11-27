@@ -565,6 +565,11 @@ interface TrustedCertificateSwitch {
   /** Whether the switch rejects the certificates which do not validate (`rejectUnauthorized`), instead of accepting them */
   rejects?: boolean;
   /**
+   * Whether the switch only turns TLS on, the certificate of the server being validated with the standard validation
+   * (`sslMode`): it stays a setting
+   */
+  turnsTlsOn?: boolean;
+  /**
    * The path of the file of the certification authority the certificate of the server was validated against, in the object
    * attribute of the settings named `settingsKey`, while `type` is `cert` there: it is no longer a setting
    */
@@ -584,6 +589,7 @@ export const TRUSTED_CERTIFICATE_SWITCHES: Record<
     south: { key: 'acceptUnauthorized', settingsKey: 'specificSettings' },
     north: { key: 'acceptUnauthorized', settingsKey: 'specificSettings' }
   },
+  postgresql: { south: { key: 'sslMode', settingsKey: 'connectionSettings', turnsTlsOn: true }, north: null },
   mqtt: {
     south: { key: 'rejectUnauthorized', rejects: true, caFile: { settingsKey: 'authentication', key: 'caFilePath' } },
     north: { key: 'rejectUnauthorized', rejects: true, caFile: { settingsKey: 'authentication', key: 'caFilePath' } }
@@ -623,10 +629,17 @@ export function toCertificateValidation(
   if (!trustedCertificateSwitch || !settings) {
     return null;
   }
-  const { key, settingsKey, rejects, caFile } = trustedCertificateSwitch;
+  const { key, settingsKey, rejects, turnsTlsOn, caFile } = trustedCertificateSwitch;
   const switchSettings = settingsKey ? settings[settingsKey] : settings;
   if (!switchSettings || typeof switchSettings !== 'object' || !(key in switchSettings)) {
     return null;
+  }
+  if (turnsTlsOn) {
+    if ('certificateValidation' in switchSettings) {
+      return null;
+    }
+    const converted = { ...switchSettings, certificateValidation: 'standard', trustedCertificateId: null };
+    return { settings: settingsKey ? { ...settings, [settingsKey]: converted } : converted, trustOnFirstUse: false };
   }
   const { [key]: switchValue, ...rest } = switchSettings as Record<string, unknown>;
   const acceptsAnyCertificate = rejects ? !switchValue : !!switchValue;

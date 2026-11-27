@@ -5918,6 +5918,13 @@ describe('Entity migration v4.0.0: useTrustedCertificates', () => {
         type: 'oianalytics',
         enabled: true,
         settings: JSON.stringify({ useOiaModule: false, specificSettings: { host: 'https://h', acceptUnauthorized: true } })
+      },
+      {
+        id: 'postgresql',
+        name: 'PostgreSQL',
+        type: 'postgresql',
+        enabled: true,
+        settings: JSON.stringify({ maxParallelRun: 1, connectionSettings: { host: 'h', sslMode: true } })
       }
     ]);
   });
@@ -6003,6 +6010,15 @@ describe('Entity migration v4.0.0: useTrustedCertificates', () => {
       assert.deepStrictEqual(await settingsOf('south_connectors', id), converted('trusted', null));
       assert.deepStrictEqual(await settingsOf('south_connectors', id, 'server_trust'), { identity: null, trustOnFirstUse: true });
     }
+  });
+
+  it('should keep the standard validation of the PostgreSQL connectors using TLS', async () => {
+    await runStepsFrom(useTrustedCertificates, db);
+
+    assert.deepStrictEqual(await settingsOf('south_connectors', 'postgresql'), {
+      maxParallelRun: 1,
+      connectionSettings: { host: 'h', sslMode: true, certificateValidation: 'standard', trustedCertificateId: null }
+    });
   });
 
   it('should convert the specific settings of the OIAnalytics connectors', async () => {

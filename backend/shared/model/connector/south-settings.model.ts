@@ -227,6 +227,10 @@ export type SouthOracleItemSettingsTrackingInstantDateTimeInputType =
 export const SOUTH_P_I_ITEM_SETTINGS_TYPES = ['point-id', 'point-query'] as const;
 export type SouthPIItemSettingsType = (typeof SOUTH_P_I_ITEM_SETTINGS_TYPES)[number];
 
+export const SOUTH_POSTGRE_S_Q_L_SETTINGS_CONNECTION_SETTINGS_CERTIFICATE_VALIDATIONS = ['standard', 'trusted'] as const;
+export type SouthPostgreSQLSettingsConnectionSettingsCertificateValidation =
+  (typeof SOUTH_POSTGRE_S_Q_L_SETTINGS_CONNECTION_SETTINGS_CERTIFICATE_VALIDATIONS)[number];
+
 export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
   'string',
   'iso-string',
@@ -394,6 +398,8 @@ export interface SouthPostgreSQLSettingsConnectionSettings {
   host: string;
   port: number;
   sslMode: boolean;
+  certificateValidation?: SouthPostgreSQLSettingsConnectionSettingsCertificateValidation;
+  trustedCertificateId?: string | null;
   database: string;
   connectionTimeout: number;
   username: string | null;

@@ -1,3 +1,5 @@
+import net from 'node:net';
+
 import { DateTime } from 'luxon';
 import * as pg from 'pg';
 import { ClientConfig } from 'pg';
@@ -10,6 +12,7 @@ import {
   SouthPostgreSQLSettings
 } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity, ServerIdentityTrustStatus } from '../../../shared/model/domain/server-identity.model';
 import {
   SouthConnectorExploreEntry,
   SouthConnectorItemQueryResult,
@@ -18,7 +21,9 @@ import {
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type CertificateService from '../../service/certificate.service';
 import { encryptionService } from '../../service/encryption.service';
+import { toServerNotTrustedError } from '../../service/server-trust.utils';
 import {
   convertDateTimeToInstant,
   extractDiscoveryQuery,
@@ -30,6 +35,7 @@ import {
   QueryTimeVariablesUsage,
   workUnitLogCtx
 } from '../../service/utils';
+import { TlsServerTrust } from '../../service/utils-tls';
 import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { POSTGRESQL_DIALECT } from '../sql-dialects';
@@ -71,9 +77,51 @@ export default class SouthPostgreSQL
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    cacheFolderPath: string
+    cacheFolderPath: string,
+    private readonly certificateService: CertificateService
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
+  }
+
+  /** The validation of the certificate of the server, with TLS (`sslMode`) (see `TlsServerTrust`) */
+  private readonly tlsServerTrust = new TlsServerTrust(
+    () => ({
+      certificateValidation: this.connector.settings.connectionSettings.certificateValidation ?? 'standard',
+      trustedCertificateId: this.connector.settings.connectionSettings.trustedCertificateId
+    }),
+    () => this.connector.serverTrust.identity,
+    certificateId => this.certificateService.findById(certificateId),
+    () => {
+      const { sslMode, host, port, connectionTimeout } = this.connector.settings.connectionSettings;
+      if (!sslMode) {
+        return null;
+      }
+      return {
+        url: `postgresql://${net.isIPv6(host) ? `[${host}]` : host}:${port}`,
+        defaultPort: 5432,
+        proxy: null,
+        timeoutMs: connectionTimeout,
+        startTls: 'postgresql'
+      };
+    },
+    (presented, status) => this.serverIdentityVerifier.refuse(presented, status)
+  );
+
+  override async retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    return await this.tlsServerTrust.retrieveServerIdentity();
+  }
+
+  /** Whether the certificate the server presents validates (see `testConnectionWithServerIdentity`) */
+  getServerIdentityTrustStatus(presented: ServerIdentity): ServerIdentityTrustStatus {
+    return this.tlsServerTrust.status(presented);
+  }
+
+  /**
+   * The error of a connection: when the certificate of the server does not validate, the certificate it presents is kept
+   * as pending, for a user to review and trust it, and the error tells how to
+   */
+  private async toConnectionError(error: unknown): Promise<unknown> {
+    return (await this.tlsServerTrust.refuseIfNotTrusted(error)) ? toServerNotTrustedError(this, error) : error;
   }
 
   createConnectionOptions(): ClientConfig {
@@ -86,7 +134,8 @@ export default class SouthPostgreSQL
       database: settings.database,
       query_timeout: DEFAULT_REQUEST_TIMEOUT,
       connectionTimeoutMillis: settings.connectionTimeout,
-      ssl: settings.sslMode
+      // without option, the standard validation of the certificate of the server
+      ssl: settings.sslMode ? { ...this.tlsServerTrust.tls() } : false
     };
   }
 
@@ -118,14 +167,23 @@ export default class SouthPostgreSQL
     if (!this.poolEnabled) {
       const client = new pg.Client(this.createConnectionOptions());
       try {
-        await client.connect();
+        try {
+          await client.connect();
+        } catch (error: unknown) {
+          throw await this.toConnectionError(error);
+        }
         return await fn(client);
       } finally {
         await client.end();
       }
     }
     this.pool ??= this.createPool();
-    const client = await this.pool.connect();
+    let client: pg.PoolClient;
+    try {
+      client = await this.pool.connect();
+    } catch (error: unknown) {
+      throw await this.toConnectionError(error);
+    }
     try {
       const result = await fn(client);
       client.release();
@@ -158,6 +216,10 @@ export default class SouthPostgreSQL
     } catch (error: unknown) {
       if (connection) {
         await connection.end();
+      }
+      const connectionError = await this.toConnectionError(error);
+      if (connectionError !== error) {
+        throw connectionError;
       }
 
       // Dispatch is on the driver's raw .message (exact text / regex), not getErrorMessage(): pg

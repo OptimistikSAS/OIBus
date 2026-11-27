@@ -1002,6 +1002,17 @@ describe('4.0.0 config upgrade', () => {
       });
     });
 
+    it('keeps the TLS switch of the PostgreSQL connectors, with the standard validation', () => {
+      const settings = { maxParallelRun: 1, connectionSettings: { host: 'h', sslMode: true } };
+      const converted = {
+        maxParallelRun: 1,
+        connectionSettings: { host: 'h', sslMode: true, certificateValidation: 'standard', trustedCertificateId: null }
+      };
+
+      assert.deepStrictEqual(toCertificateValidation('postgresql', 'south', settings), { settings: converted, trustOnFirstUse: false });
+      assert.strictEqual(toCertificateValidation('postgresql', 'south', converted), null);
+    });
+
     it('leaves the other connectors, and the settings already converted', () => {
       assert.strictEqual(toCertificateValidation('console', 'north', { acceptUnauthorized: true }), null);
       assert.strictEqual(toCertificateValidation('rest', 'south', { host: 'https://h', certificateValidation: 'standard' }), null);
