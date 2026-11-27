@@ -8,7 +8,7 @@ import type { OIBusContent } from '../../shared/model/common/content.model';
 import type { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import type { CacheContentUpdateCommand, CacheSearchParam, HistoryQueryMetrics } from '../../shared/model/domain/engine.model';
-import type { TrustedServerIdentity } from '../../shared/model/domain/server-identity.model';
+import type { ServerIdentity, TrustedServerIdentity } from '../../shared/model/domain/server-identity.model';
 
 import type { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import type { HistoryQueryEntity, HistoryQueryEntityLight } from '../model/histor-query.model';
@@ -91,6 +91,7 @@ let northConnectorRepository: Mocked<NorthConnectorRepository>;
 let southConnectorRepository: Mocked<SouthConnectorRepository>;
 let historyQueryRepository: Mocked<HistoryQueryRepository>;
 let oianalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+let certificateService: Mocked<CertificateService>;
 let scanModeRepository: Mocked<ScanModeRepository>;
 let configurationWorkflowRepository: Mocked<ConfigurationWorkflowRepository>;
 
@@ -108,6 +109,13 @@ const trustedOnFirstUse: TrustedServerIdentity = {
   details: { keyType: 'ssh-ed25519' },
   trustedBy: 'system',
   trustedAt: testData.constants.dates.FAKE_NOW
+};
+
+// The certificate a connector trusting a certificate of the store trusted at its first connection
+const certificateTrustedOnFirstUse: ServerIdentity = {
+  type: 'x509',
+  fingerprint: 'AB:CD',
+  details: { keyType: 'rsa', certificate: '-----BEGIN CERTIFICATE-----' }
 };
 
 const loggedError = (text: string) => logger.error.mock.calls.some(c => String(c.arguments[0]).includes(text));
@@ -179,6 +187,7 @@ describe('DataStreamEngine', () => {
       findHistoryById: id => testData.historyQueries.list.find(el => el.id === id) ?? null
     });
     oianalyticsMessageService = createMock<OIAnalyticsMessageService>();
+    certificateService = createMock<CertificateService>({ trustServerCertificate: () => ({ id: 'trustedCertificateId' }) });
     scanModeRepository = createMock<ScanModeRepository>({ findAll: () => [] });
     configurationWorkflowRepository = createMock<ConfigurationWorkflowRepository>({ findBySouthId: () => [] });
 
@@ -190,7 +199,7 @@ describe('DataStreamEngine', () => {
       historyQueryRepository,
       createMock<HistoryQueryMetricsRepository>(),
       createMock<SouthCacheRepository>(),
-      createMock<CertificateService>(),
+      certificateService,
       createMock<OIAnalyticsRegistrationRepository>(),
       oianalyticsMessageService,
       scanModeRepository,
@@ -440,6 +449,26 @@ describe('DataStreamEngine', () => {
       ]);
       assert.strictEqual(oianalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     });
+
+    it('should add the certificate a north connector trusted on first use to the store, and select it', () => {
+      engine.startNorth(testData.north.list[0].id);
+      engine.startNorth(testData.north.list[0].id);
+
+      mockedNorth1.serverIdentityVerifier.events.emit('certificate-trusted-on-first-use', certificateTrustedOnFirstUse);
+
+      assert.deepStrictEqual(certificateService.trustServerCertificate.mock.calls[0].arguments, [
+        '-----BEGIN CERTIFICATE-----',
+        `${testData.north.list[0].name} server`,
+        'system'
+      ]);
+      assert.strictEqual(northConnectorRepository.trustCertificate.mock.calls.length, 1);
+      assert.deepStrictEqual(northConnectorRepository.trustCertificate.mock.calls[0].arguments.slice(0, 3), [
+        testData.north.list[0].id,
+        'trustedCertificateId',
+        'system'
+      ]);
+      assert.strictEqual(oianalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    });
   });
 
   describe('South Connector Management', () => {
@@ -620,6 +649,36 @@ describe('DataStreamEngine', () => {
       ]);
       assert.strictEqual(oianalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     });
+
+    it('should add the certificate a south connector trusted on first use to the store, and select it', () => {
+      engine.startSouth(testData.south.list[0].id);
+
+      mockedSouth1.serverIdentityVerifier.events.emit('certificate-trusted-on-first-use', certificateTrustedOnFirstUse);
+
+      assert.deepStrictEqual(certificateService.trustServerCertificate.mock.calls[0].arguments, [
+        '-----BEGIN CERTIFICATE-----',
+        `${testData.south.list[0].name} server`,
+        'system'
+      ]);
+      assert.deepStrictEqual(southConnectorRepository.trustCertificate.mock.calls[0].arguments.slice(0, 3), [
+        testData.south.list[0].id,
+        'trustedCertificateId',
+        'system'
+      ]);
+      assert.strictEqual(oianalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    });
+
+    it('should log an error when the certificate trusted on first use is missing', () => {
+      engine.startSouth(testData.south.list[0].id);
+
+      mockedSouth1.serverIdentityVerifier.events.emit('certificate-trusted-on-first-use', {
+        ...certificateTrustedOnFirstUse,
+        details: { keyType: 'rsa' }
+      });
+
+      assert.ok(loggedError('at its first connection: no certificate presented'));
+      assert.strictEqual(southConnectorRepository.trustCertificate.mock.calls.length, 0);
+    });
   });
 
   describe('saving the identity trusted on first use', () => {
@@ -718,6 +777,25 @@ describe('DataStreamEngine', () => {
         ]);
         assert.strictEqual(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
         assert.strictEqual(oianalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
+      });
+
+      it(`should add the certificate the ${side} of a history query trusted on first use to the store, and select it`, () => {
+        engine.startHistoryQuery(testData.historyQueries.list[0].id);
+
+        mockedHistoryQuery1.serverIdentityVerifiers[side].events.emit('certificate-trusted-on-first-use', certificateTrustedOnFirstUse);
+
+        assert.deepStrictEqual(certificateService.trustServerCertificate.mock.calls[0].arguments, [
+          '-----BEGIN CERTIFICATE-----',
+          `${testData.historyQueries.list[0].name} ${side === 'south' ? 'South' : 'North'} server`,
+          'system'
+        ]);
+        assert.deepStrictEqual(historyQueryRepository.trustCertificate.mock.calls[0].arguments.slice(0, 4), [
+          testData.historyQueries.list[0].id,
+          side,
+          'trustedCertificateId',
+          'system'
+        ]);
+        assert.strictEqual(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
       });
     }
   });

@@ -579,7 +579,8 @@
           "changed": "The certificate of OIAnalytics does not validate against the trusted certificate: it may have been renewed, or another server may impersonate OIAnalytics. OIBus refuses to connect to it until this identity is trusted."
         },
         "trusted": "Identity of OIAnalytics trusted",
-        "trusted-in-form": "Identity of OIAnalytics trusted: its certificate is added to the certificate store and selected when the registration is saved."
+        "trusted-in-form": "Identity of OIAnalytics trusted: its certificate is added to the certificate store and selected when the registration is saved.",
+        "trust-on-first-use": "No certificate trusted yet: OIBus trusts the certificate OIAnalytics presents at its next connection, and adds it to the certificate store."
       }
     },
     "commands": {

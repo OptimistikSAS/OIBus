@@ -52,6 +52,17 @@ describe('ServerTrustPanelComponent', () => {
       );
   });
 
+  test('should tell the identity of the first connection is trusted, for another client than a connector', async () => {
+    const tester = new ServerTrustPanelComponentTester(states.trustOnFirstUse);
+    tester.fixture.componentRef.setInput('trustOnFirstUseKey', 'oia-module.registration.server-trust.trust-on-first-use');
+
+    await expect
+      .element(tester.noIdentity)
+      .toHaveTextContent(
+        'No certificate trusted yet: OIBus trusts the certificate OIAnalytics presents at its next connection, and adds it to the certificate store.'
+      );
+  });
+
   test('should display the identity trusted', async () => {
     const tester = new ServerTrustPanelComponentTester(states.trusted);
 

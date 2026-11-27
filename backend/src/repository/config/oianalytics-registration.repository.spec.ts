@@ -141,6 +141,34 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.deepStrictEqual(stripAuditFields(repository.get()), stripAuditFields(expectedResult));
   });
 
+  it('should trust the certificate of the first connection only while no certificate is selected', () => {
+    const command: OIAnalyticsRegistrationEditCommand = {
+      ...testData.oIAnalytics.registration.command,
+      certificateValidation: 'trusted',
+      trustedCertificateId: null
+    };
+    database.prepare('UPDATE registrations SET trust_on_first_use = 1;').run();
+
+    repository.update(command, testData.users.list[0].id);
+    assert.strictEqual(repository.get()!.trustOnFirstUse, true);
+
+    repository.update({ ...command, trustedCertificateId: 'trustedId' }, testData.users.list[0].id);
+    assert.strictEqual(repository.get()!.trustOnFirstUse, false);
+  });
+
+  it('should select the certificate trusted at the first connection without editing the registration', () => {
+    database.prepare('UPDATE registrations SET trust_on_first_use = 1;').run();
+    const before = repository.get()!;
+
+    repository.trustCertificate('trustedId', 'system');
+
+    const result = repository.get()!;
+    assert.strictEqual(result.trustedCertificateId, 'trustedId');
+    assert.strictEqual(result.trustOnFirstUse, false);
+    assert.strictEqual(result.updatedBy, before.updatedBy);
+    assert.strictEqual(result.updatedAt, before.updatedAt);
+  });
+
   it('should validate the certificate of OIAnalytics against a trusted certificate, and audit it', () => {
     repository.trustCertificate('trustedId', testData.users.list[0].id);
 

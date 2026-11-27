@@ -6,7 +6,12 @@ import { DateTime } from 'luxon';
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/api/engine.model';
 import { GetUserInfo } from '../../../shared/model/common/types';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
-import { PresentedServerIdentity, ServerTrustState, X509ServerIdentityDetails } from '../../../shared/model/domain/server-identity.model';
+import {
+  PresentedServerIdentity,
+  ServerIdentity,
+  ServerTrustState,
+  X509ServerIdentityDetails
+} from '../../../shared/model/domain/server-identity.model';
 
 import type { ILogger } from '../../model/logger.model';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationTokens } from '../../model/oianalytics-registration.model';
@@ -373,7 +378,7 @@ export default class OIAnalyticsRegistrationService {
   getServerTrustState(): ServerTrustState {
     const registration = this.getRegistrationSettings();
     return {
-      ...toCertificateStoreServerTrust(registration, { identity: null, trustOnFirstUse: false }, certificateId => {
+      ...toCertificateStoreServerTrust(registration, { identity: null, trustOnFirstUse: registration.trustOnFirstUse }, certificateId => {
         const certificate = this.certificateRepository.findById(certificateId);
         if (!certificate) {
           throw new NotFoundError(`Certificate "${certificateId}" not found`);
@@ -390,6 +395,24 @@ export default class OIAnalyticsRegistrationService {
    */
   async retrieveServerIdentity(): Promise<PresentedServerIdentity | null> {
     return await this.oIAnalyticsClient.retrieveServerIdentity(this.getRegistrationSettings());
+  }
+
+  /**
+   * Trusts the certificate OIAnalytics presented at the first connection of a registration which accepted any certificate
+   * before (see `OIAnalyticsRegistration.trustOnFirstUse`): it is added to the certificate store and selected
+   */
+  trustCertificateOnFirstUse(identity: ServerIdentity, trustCertificate: TrustCertificate): void {
+    try {
+      const certificate = (identity.details as X509ServerIdentityDetails).certificate;
+      if (!certificate) {
+        throw new Error('no certificate presented');
+      }
+      this.oIAnalyticsRegistrationRepository.trustCertificate(trustCertificate(certificate).id, 'system');
+      this.logger.info(`Certificate of OIAnalytics ${identity.fingerprint} trusted at the first connection`);
+      this.registrationEvent.emit('updated');
+    } catch (error: unknown) {
+      this.logger.error(`Could not save the certificate of OIAnalytics trusted at the first connection: ${getErrorMessage(error)}`);
+    }
   }
 
   /**

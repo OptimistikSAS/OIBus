@@ -304,18 +304,25 @@ export interface TlsProbeTarget {
  */
 export class TlsServerTrust {
   private lastProbe: { identity: ServerIdentity; status: ServerIdentityTrustStatus } | null = null;
+  /** The certificate trusted at the first connection, until the settings selecting it are reloaded */
+  private trustedOnFirstUse: ServerIdentity | null = null;
 
   constructor(
     private readonly getSettings: () => TlsTrustSettings,
     private readonly getFormIdentity: () => ServerIdentity | null,
     private readonly findCertificate: (certificateId: string) => { certificate: string },
     private readonly getProbeTarget: () => TlsProbeTarget | null,
-    private readonly refuse: (presented: ServerIdentity, status: Exclude<ServerIdentityTrustStatus, 'trusted'>) => void
+    /** Refuses the certificate presented, unless it trusts it at the first connection (then true) */
+    private readonly refuse: (presented: ServerIdentity, status: Exclude<ServerIdentityTrustStatus, 'trusted'>) => boolean | void
   ) {}
 
-  /** The certificate trusted (see `getTrustedCertificate`) */
+  /** The certificate trusted (see `getTrustedCertificate`), or the one trusted at the first connection */
   private trustedCertificate(): string | null | undefined {
-    return getTrustedCertificate(this.getSettings(), this.getFormIdentity(), this.findCertificate);
+    const trusted = getTrustedCertificate(this.getSettings(), this.getFormIdentity(), this.findCertificate);
+    if (trusted === undefined && this.trustedOnFirstUse) {
+      return (this.trustedOnFirstUse.details as X509ServerIdentityDetails).certificate ?? undefined;
+    }
+    return trusted;
   }
 
   /** The TLS options of the connections to the server */
@@ -353,7 +360,8 @@ export class TlsServerTrust {
 
   /**
    * After a connection failing because the certificate of the server does not validate, reads the certificate the server
-   * presents and keeps it as pending, for a user to review and trust it. Other errors are left to the caller.
+   * presents and keeps it as pending, for a user to review and trust it, unless it is trusted at the first connection (the
+   * next connections then validate it). Other errors are left to the caller.
    */
   async refuseIfNotTrusted(error: unknown): Promise<boolean> {
     if (!isCertificateError(error)) {
@@ -363,7 +371,9 @@ export class TlsServerTrust {
       const presented = await this.retrieveServerIdentity();
       if (presented) {
         const status = this.status(presented);
-        this.refuse(presented, status === 'trusted' ? 'changed' : status);
+        if (this.refuse(presented, status === 'trusted' ? 'changed' : status) === true) {
+          this.trustedOnFirstUse = presented;
+        }
       }
     } catch {
       // the error of the connection is the one worth reporting

@@ -3547,7 +3547,8 @@
           "changed": "Le certificat d'OIAnalytics n'est pas validé par le certificat approuvé : il a pu être renouvelé, ou un autre serveur peut se faire passer pour OIAnalytics. OIBus refuse de s'y connecter tant que cette identité n'est pas approuvée."
         },
         "trusted": "Identité d'OIAnalytics approuvée",
-        "trusted-in-form": "Identité d'OIAnalytics approuvée : son certificat est ajouté au magasin de certificats et sélectionné à l'enregistrement de l'inscription."
+        "trusted-in-form": "Identité d'OIAnalytics approuvée : son certificat est ajouté au magasin de certificats et sélectionné à l'enregistrement de l'inscription.",
+        "trust-on-first-use": "Aucun certificat approuvé pour l'instant : OIBus approuve le certificat que présente OIAnalytics à sa prochaine connexion, et l'ajoute au magasin de certificats."
       }
     },
     "commands": {

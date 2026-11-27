@@ -14,6 +14,7 @@ import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { encryptionService } from '../encryption.service';
 import { HTTPRequest, ReqOptions, ReqResponse } from '../http-request.utils';
+import TypedEventEmitter from '../typed-event-emitter';
 import { generateRandomId } from '../utils';
 import {
   buildHttpOptions,
@@ -91,7 +92,17 @@ async function tokenRequestError(response: ReqResponse): Promise<Error> {
 /** The identity of OIAnalytics trusted in the form of the registration (not saved yet), see `RegistrationSettingsCommandDTO` */
 export const formServerIdentity = (command: RegistrationSettingsCommandDTO): ServerIdentity | null => command.serverTrust?.identity ?? null;
 
+/** Events published by the {@link OIAnalyticsClient}. */
+export interface OIAnalyticsClientEvents {
+  /**
+   * The registration trusted the certificate OIAnalytics presented at its first connection (see
+   * `OIAnalyticsRegistration.trustOnFirstUse`): to be added to the store and selected.
+   */
+  'certificate-trusted-on-first-use': ServerIdentity;
+}
+
 export default class OIAnalyticsClient {
+  readonly events = new TypedEventEmitter<OIAnalyticsClientEvents>();
   private pending: PresentedServerIdentity | null = null;
 
   constructor(private readonly findCertificate: (certificateId: string) => { certificate: string }) {}
@@ -112,9 +123,17 @@ export default class OIAnalyticsClient {
       certificateId => this.findCertificate(certificateId),
       () => getOIAnalyticsProbeTarget(true, registration, null, OIANALYTICS_TIMEOUT),
       (identity, status) => {
-        if (refuse) {
-          this.pending = { identity, status };
+        if (!refuse) {
+          return false;
         }
+        if (status === 'unknown' && registration.trustOnFirstUse) {
+          // saved synchronously: the next requests read the registration validating against it
+          this.pending = null;
+          this.events.emit('certificate-trusted-on-first-use', identity);
+          return true;
+        }
+        this.pending = { identity, status };
+        return false;
       }
     );
   }

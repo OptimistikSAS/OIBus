@@ -41,6 +41,11 @@ export interface OIAnalyticsRegistration extends BaseEntity {
   certificateValidation: ServerCertificateValidation;
   /** The trusted certificate of the store the certificate of OIAnalytics is validated against */
   trustedCertificateId: string | null;
+  /**
+   * Whether the certificate OIAnalytics presents at the next connection is trusted (added to the store and selected), while
+   * none is selected: a registration which accepted any certificate before
+   */
+  trustOnFirstUse: boolean;
   commandRefreshInterval: number;
   commandRetryInterval: number;
   messageRetryInterval: number;

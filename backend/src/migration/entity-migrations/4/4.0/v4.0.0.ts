@@ -172,7 +172,7 @@ export async function down(knex: Knex): Promise<void> {
     table.boolean('accept_unauthorized').defaultTo(false);
   });
   await knex(REGISTRATIONS_TABLE).where('certificate_validation', 'trusted').update({ accept_unauthorized: 1 });
-  await dropColumns(knex, REGISTRATIONS_TABLE, ['certificate_validation', 'trusted_certificate_id']);
+  await dropColumns(knex, REGISTRATIONS_TABLE, ['certificate_validation', 'trusted_certificate_id', 'trust_on_first_use']);
   await dropColumns(knex, SOUTH_CONNECTORS_TABLE, ['server_trust']);
   await dropColumns(knex, NORTH_CONNECTORS_TABLE, ['server_trust']);
   await dropColumns(knex, HISTORY_QUERIES_TABLE, ['south_server_trust', 'north_server_trust']);
@@ -2430,8 +2430,9 @@ export async function useTrustedCertificates(knex: Knex): Promise<void> {
   await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
     table.string('certificate_validation').notNullable().defaultTo('standard');
     table.string('trusted_certificate_id').nullable();
+    table.boolean('trust_on_first_use').notNullable().defaultTo(false);
   });
-  await knex(REGISTRATIONS_TABLE).where('accept_unauthorized', 1).update({ certificate_validation: 'trusted' });
+  await knex(REGISTRATIONS_TABLE).where('accept_unauthorized', 1).update({ certificate_validation: 'trusted', trust_on_first_use: true });
   await dropColumns(knex, REGISTRATIONS_TABLE, ['accept_unauthorized']);
 
   for (const [table, typeColumn, side, settingsColumn, trustColumn] of [

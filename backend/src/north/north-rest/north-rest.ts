@@ -72,7 +72,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
         timeoutMs: timeout * 1000
       };
     },
-    (presented, status) => this.serverIdentityVerifier.refuse(presented, status)
+    (presented, status) => this.serverIdentityVerifier.refuseCertificate(presented, status)
   );
 
   override async retrieveServerIdentity(): Promise<ServerIdentity | null> {

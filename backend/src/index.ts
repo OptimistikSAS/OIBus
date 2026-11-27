@@ -179,6 +179,12 @@ export async function bootstrap(): Promise<void> {
     oIAnalyticsMessageService,
     loggerService.createChildLogger('internal')
   );
+  // the certificate of OIAnalytics trusted at the first connection of a registration which accepted any certificate before
+  oIAnalyticsClient.events.on('certificate-trusted-on-first-use', identity =>
+    oIAnalyticsRegistrationService.trustCertificateOnFirstUse(identity, certificatePem =>
+      certificateService.trustServerCertificate(certificatePem, 'OIAnalytics server', 'system')
+    )
+  );
 
   const configTransferService = new ConfigTransferService(
     configTransferBuilderService,

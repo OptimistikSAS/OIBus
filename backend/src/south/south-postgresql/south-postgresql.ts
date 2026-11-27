@@ -104,7 +104,7 @@ export default class SouthPostgreSQL
         startTls: 'postgresql'
       };
     },
-    (presented, status) => this.serverIdentityVerifier.refuse(presented, status)
+    (presented, status) => this.serverIdentityVerifier.refuseCertificate(presented, status)
   );
 
   override async retrieveServerIdentity(): Promise<ServerIdentity | null> {

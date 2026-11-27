@@ -16,6 +16,7 @@ import {
   NorthConnectorMetrics,
   SouthConnectorMetrics
 } from '../../shared/model/domain/engine.model';
+import { ServerIdentity, X509ServerIdentityDetails } from '../../shared/model/domain/server-identity.model';
 
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
@@ -41,6 +42,7 @@ import { loggerService } from '../service/logger/logger.service';
 import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
+import { northManifestList } from '../service/north-manifests';
 import type OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
 import {
   intervalToMs,
@@ -49,6 +51,7 @@ import {
   MAX_INTERVAL_MS,
   MIN_INTERVAL_MS
 } from '../service/scan-mode.utils';
+import { southManifestList } from '../service/south-manifests';
 import { validateCronExpression } from '../service/utils';
 import { clearOIAnalyticsCredentialCache } from '../service/utils-oianalytics';
 import SouthConnector from '../south/south-connector';
@@ -369,6 +372,18 @@ export default class DataStreamEngine {
         this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
       })
     );
+    north.serverIdentityVerifier.events.on('certificate-trusted-on-first-use', identity =>
+      this.trustCertificateOnFirstUse(
+        `North connector "${north.connectorConfiguration.name}"`,
+        `${north.connectorConfiguration.name} server`,
+        identity,
+        certificateId => {
+          const settingsKey = northManifestList.find(manifest => manifest.id === north.connectorConfiguration.type)?.serverTrustSettingsKey;
+          this.northConnectorRepository.trustCertificate(northId, certificateId, 'system', settingsKey);
+          this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
+        }
+      )
+    );
     north // Do not await here, so it can start all connectors without blocking the thread
       .start()
       .catch(error => {
@@ -428,6 +443,25 @@ export default class DataStreamEngine {
    * the protocol library (an SSH host key verifier, an OPC UA certificate check): an error is logged, never thrown there.
    * The connector trusts the identity until it restarts, when it trusts the identity of its first connection again.
    */
+  /**
+   * Adds the certificate a connector trusting a certificate of the store trusted at its first connection to the store (or
+   * the same certificate of the store), and selects it (see `ServerIdentityVerifier.refuseCertificate`)
+   */
+  private trustCertificateOnFirstUse(
+    owner: string,
+    certificateName: string,
+    identity: ServerIdentity,
+    select: (certificateId: string) => void
+  ): void {
+    this.saveServerTrust(owner, () => {
+      const certificate = (identity.details as X509ServerIdentityDetails).certificate;
+      if (!certificate) {
+        throw new Error('no certificate presented');
+      }
+      select(this.certificateService.trustServerCertificate(certificate, certificateName, 'system').id);
+    });
+  }
+
   private saveServerTrust(owner: string, save: () => void): void {
     try {
       save();
@@ -469,6 +503,18 @@ export default class DataStreamEngine {
         this.southConnectorRepository.updateServerTrust(southId, { identity, trustOnFirstUse: false }, 'system');
         this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
       })
+    );
+    south.serverIdentityVerifier.events.on('certificate-trusted-on-first-use', identity =>
+      this.trustCertificateOnFirstUse(
+        `South connector "${south.connectorConfiguration.name}"`,
+        `${south.connectorConfiguration.name} server`,
+        identity,
+        certificateId => {
+          const settingsKey = southManifestList.find(manifest => manifest.id === south.connectorConfiguration.type)?.serverTrustSettingsKey;
+          this.southConnectorRepository.trustCertificate(southId, certificateId, 'system', settingsKey);
+          this.oianalyticsMessageService.createFullConfigMessageIfNotPending();
+        }
+      )
     );
     south.connectedEvent.on('connected', async () => {
       if (south.hasSubscription()) {
@@ -590,6 +636,22 @@ export default class DataStreamEngine {
           this.historyQueryRepository.updateServerTrust(historyId, side, { identity, trustOnFirstUse: false }, 'system');
           this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
         })
+      );
+      verifier.events.on('certificate-trusted-on-first-use', identity =>
+        this.trustCertificateOnFirstUse(
+          `History query "${historyQuery.historyQueryConfiguration.name}"`,
+          `${historyQuery.historyQueryConfiguration.name} ${side === 'south' ? 'South' : 'North'} server`,
+          identity,
+          certificateId => {
+            const configuration = historyQuery.historyQueryConfiguration;
+            const settingsKey =
+              side === 'south'
+                ? southManifestList.find(manifest => manifest.id === configuration.southType)?.serverTrustSettingsKey
+                : northManifestList.find(manifest => manifest.id === configuration.northType)?.serverTrustSettingsKey;
+            this.historyQueryRepository.trustCertificate(historyId, side, certificateId, 'system', settingsKey);
+            this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+          }
+        )
       );
     }
     historyQuery.finishEvent.removeAllListeners();
