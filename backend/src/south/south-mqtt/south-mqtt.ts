@@ -6,12 +6,16 @@ import { OIBusContent } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/connector/south-settings.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { ServerIdentity, ServerIdentityTrustStatus } from '../../../shared/model/domain/server-identity.model';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type CertificateService from '../../service/certificate.service';
+import { toServerNotTrustedError } from '../../service/server-trust.utils';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
-import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
+import { createConnectionOptions, getItem, getMQTTProbeTarget } from '../../service/utils-mqtt';
+import { TlsServerTrust } from '../../service/utils-tls';
 import SouthConnector from '../south-connector';
 import { SouthSubscription } from '../south-interface';
 
@@ -40,9 +44,41 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    cacheFolderPath: string
+    cacheFolderPath: string,
+    private readonly certificateService: CertificateService
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
+  }
+
+  /** The validation of the certificate of the broker (see `TlsServerTrust`) */
+  private readonly tlsServerTrust = new TlsServerTrust(
+    () => this.connector.settings,
+    () => this.connector.serverTrust.identity,
+    certificateId => this.certificateService.findById(certificateId),
+    () => getMQTTProbeTarget(this.connector.settings),
+    (presented, status) => this.serverIdentityVerifier.refuse(presented, status)
+  );
+
+  override async retrieveServerIdentity(): Promise<ServerIdentity | null> {
+    return await this.tlsServerTrust.retrieveServerIdentity();
+  }
+
+  /** Whether the certificate the broker presents validates (see `testConnectionWithServerIdentity`) */
+  getServerIdentityTrustStatus(presented: ServerIdentity): ServerIdentityTrustStatus {
+    return this.tlsServerTrust.status(presented);
+  }
+
+  /** The options of the MQTT client, validating the certificate of the broker */
+  private async connectionOptions(): Promise<mqtt.IClientOptions> {
+    return await createConnectionOptions(this.connector.id, this.connector.settings, this.logger, this.tlsServerTrust.tls());
+  }
+
+  /**
+   * The error of a connection: when the certificate of the broker does not validate, the certificate it presents is kept
+   * as pending, for a user to review and trust it, and the error tells how to
+   */
+  private async toConnectionError(error: unknown): Promise<unknown> {
+    return (await this.tlsServerTrust.refuseIfNotTrusted(error)) ? toServerNotTrustedError(this, error) : error;
   }
 
   override async connect(): Promise<void> {
@@ -54,7 +90,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       clearTimeout(this.flushTimeout);
       this.flushTimeout = null;
     }
-    const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
+    const options = await this.connectionOptions();
     try {
       this.logger.debug(`Connecting to "${this.connector.settings.url}"`);
       const connectStart = DateTime.now().toMillis();
@@ -97,7 +133,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
       await super.connect();
     } catch (error: unknown) {
-      this.logger.error(`Error while connecting to the MQTT broker: ${getErrorMessage(error)}`);
+      this.logger.error(`Error while connecting to the MQTT broker: ${getErrorMessage(await this.toConnectionError(error))}`);
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
@@ -207,20 +243,25 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
+    const options = await this.connectionOptions();
     this.logger.debug(`Connecting to "${this.connector.settings.url}"`);
     const connectStart = DateTime.now().toMillis();
-    const connack = await new Promise<IConnackPacket>((resolve, reject) => {
-      const client = mqtt.connect(this.connector.settings.url, options);
-      client.once('connect', (packet: IConnackPacket) => {
-        client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
-        resolve(packet);
+    let connack: IConnackPacket;
+    try {
+      connack = await new Promise<IConnackPacket>((resolve, reject) => {
+        const client = mqtt.connect(this.connector.settings.url, options);
+        client.once('connect', (packet: IConnackPacket) => {
+          client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
+          resolve(packet);
+        });
+        client.once('error', (error: Error) => {
+          client.end(true);
+          reject(error);
+        });
       });
-      client.once('error', (error: Error) => {
-        client.end(true);
-        reject(error);
-      });
-    });
+    } catch (error: unknown) {
+      throw await this.toConnectionError(error);
+    }
     this.logger.info(`Connected to "${this.connector.settings.url}" in ${DateTime.now().toMillis() - connectStart} ms`);
 
     const items: Array<{ key: string; value: string }> = [];
@@ -244,7 +285,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     item: SouthConnectorItemEntity<SouthMQTTItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
-    const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
+    const options = await this.connectionOptions();
     // This is a short-lived local client used only for this one-off test, kept fully separate from
     // this.client (the connector's persistent, shared subscription connection). It must be closed here,
     // on every path (success, message-handling error, connect/subscribe error) — never through
@@ -287,7 +328,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
             });
             await client.subscribeAsync(item.settings.topic);
           } catch (error: unknown) {
-            reject(`Error when testing item ${item.settings.topic}: ${getErrorMessage(error)}`);
+            reject(`Error when testing item ${item.settings.topic}: ${getErrorMessage(await this.toConnectionError(error))}`);
           }
         })().catch(reject); // Immediately invoke the async IIFE and catch any errors
       });

@@ -23,6 +23,9 @@ export type NorthMQTTSettingsAuthenticationType = (typeof NORTH_M_Q_T_T_SETTINGS
 export const NORTH_M_Q_T_T_SETTINGS_QOSS = ['0', '1', '2'] as const;
 export type NorthMQTTSettingsQos = (typeof NORTH_M_Q_T_T_SETTINGS_QOSS)[number];
 
+export const NORTH_M_Q_T_T_SETTINGS_CERTIFICATE_VALIDATIONS = ['standard', 'trusted'] as const;
+export type NorthMQTTSettingsCertificateValidation = (typeof NORTH_M_Q_T_T_SETTINGS_CERTIFICATE_VALIDATIONS)[number];
+
 export const NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_CERTIFICATE_VALIDATIONS = ['standard', 'trusted'] as const;
 export type NorthOIAnalyticsSettingsSpecificSettingsCertificateValidation =
   (typeof NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_CERTIFICATE_VALIDATIONS)[number];
@@ -79,7 +82,6 @@ export interface NorthMQTTSettingsAuthentication {
   password?: string | null;
   certFilePath?: string;
   keyFilePath?: string;
-  caFilePath?: string;
 }
 
 export interface NorthOIAnalyticsSettingsSpecificSettings {
@@ -217,7 +219,8 @@ export interface NorthMQTTSettings {
   qos: NorthMQTTSettingsQos;
   persistent?: boolean;
   authentication: NorthMQTTSettingsAuthentication;
-  rejectUnauthorized: boolean;
+  certificateValidation: NorthMQTTSettingsCertificateValidation;
+  trustedCertificateId?: string | null;
   reconnectPeriod: number;
   connectTimeout: number;
 }

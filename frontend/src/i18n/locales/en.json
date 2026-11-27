@@ -1162,10 +1162,14 @@
               "username": "Username",
               "password": "Password",
               "cert-file-path": "Cert file path",
-              "key-file-path": "Key file path",
-              "ca-file-path": "CA file path"
+              "key-file-path": "Key file path"
             },
-            "reject-unauthorized": "Reject unauthorized connection",
+            "certificate-validation": {
+              "title": "Server certificate validation",
+              "standard": "Standard",
+              "trusted": "Trusted certificate"
+            },
+            "trusted-certificate-id": "Trusted certificate",
             "reconnect-period": "Reconnect period",
             "connect-timeout": "Connect timeout"
           },
@@ -1818,10 +1822,14 @@
               "username": "Username",
               "password": "Password",
               "cert-file-path": "Cert file path",
-              "key-file-path": "Key file path",
-              "ca-file-path": "CA file path"
+              "key-file-path": "Key file path"
             },
-            "reject-unauthorized": "Reject unauthorized connection",
+            "certificate-validation": {
+              "title": "Server certificate validation",
+              "standard": "Standard",
+              "trusted": "Trusted certificate"
+            },
+            "trusted-certificate-id": "Trusted certificate",
             "reconnect-period": "Reconnect period",
             "connect-timeout": "Connect timeout",
             "flush-message-timeout": "Delay between flush",

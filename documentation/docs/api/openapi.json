@@ -7919,9 +7919,6 @@
 					},
 					"keyFilePath": {
 						"type": "string"
-					},
-					"caFilePath": {
-						"type": "string"
 					}
 				},
 				"required": [
@@ -7929,6 +7926,13 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"SouthMQTTSettingsCertificateValidation": {
+				"type": "string",
+				"enum": [
+					"standard",
+					"trusted"
+				]
 			},
 			"SouthMQTTSettings": {
 				"properties": {
@@ -7944,8 +7948,12 @@
 					"authentication": {
 						"$ref": "#/components/schemas/SouthMQTTSettingsAuthentication"
 					},
-					"rejectUnauthorized": {
-						"type": "boolean"
+					"certificateValidation": {
+						"$ref": "#/components/schemas/SouthMQTTSettingsCertificateValidation"
+					},
+					"trustedCertificateId": {
+						"type": "string",
+						"nullable": true
 					},
 					"reconnectPeriod": {
 						"type": "number",
@@ -7968,7 +7976,7 @@
 					"url",
 					"qos",
 					"authentication",
-					"rejectUnauthorized",
+					"certificateValidation",
 					"reconnectPeriod",
 					"connectTimeout",
 					"maxNumberOfMessages",
@@ -34089,9 +34097,6 @@
 					},
 					"keyFilePath": {
 						"type": "string"
-					},
-					"caFilePath": {
-						"type": "string"
 					}
 				},
 				"required": [
@@ -34099,6 +34104,13 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"NorthMQTTSettingsCertificateValidation": {
+				"type": "string",
+				"enum": [
+					"standard",
+					"trusted"
+				]
 			},
 			"NorthMQTTSettings": {
 				"properties": {
@@ -34114,8 +34126,12 @@
 					"authentication": {
 						"$ref": "#/components/schemas/NorthMQTTSettingsAuthentication"
 					},
-					"rejectUnauthorized": {
-						"type": "boolean"
+					"certificateValidation": {
+						"$ref": "#/components/schemas/NorthMQTTSettingsCertificateValidation"
+					},
+					"trustedCertificateId": {
+						"type": "string",
+						"nullable": true
 					},
 					"reconnectPeriod": {
 						"type": "number",
@@ -34130,7 +34146,7 @@
 					"url",
 					"qos",
 					"authentication",
-					"rejectUnauthorized",
+					"certificateValidation",
 					"reconnectPeriod",
 					"connectTimeout"
 				],

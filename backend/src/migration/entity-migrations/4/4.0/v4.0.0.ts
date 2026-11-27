@@ -31,6 +31,7 @@ import {
   FILE_TRANSFORMER_REPLACEMENTS,
   FILE_WRITER_REMOVED_DATA_TYPES,
   FILENAME_FUNCTION_NAMES,
+  getCertificationAuthorityFile,
   HISTORY_SOUTH_TYPES,
   IOT_FAMILY_SOUTH_TYPES,
   ITEM_REQUEST_TIMEOUT_SOUTH_TYPES,
@@ -2385,11 +2386,47 @@ export async function addTrustedCertificates(knex: Knex): Promise<void> {
 }
 
 /**
+ * Adds the certification authority of a file (PEM or DER) to the certificate store, as a trusted certificate: its id, or
+ * `null` when the file cannot be read, or holds several certificates (a chain, which the store does not keep)
+ */
+async function importCertificationAuthority(knex: Knex, filePath: string, imported: Map<string, string | null>): Promise<string | null> {
+  if (imported.has(filePath)) {
+    return imported.get(filePath)!;
+  }
+  let id: string | null = null;
+  try {
+    const content = readFileSync(path.resolve(filePath));
+    if ((content.toString('latin1').match(/-----BEGIN CERTIFICATE-----/g) ?? []).length <= 1) {
+      const certificate = new crypto.X509Certificate(content);
+      id = crypto.randomUUID();
+      await knex(CERTIFICATES_TABLE).insert({
+        id,
+        name: `CA ${path.basename(filePath)}`,
+        description: `Certification authority of the file ${filePath}`,
+        kind: 'trusted',
+        public_key: certificate.publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+        private_key: '',
+        certificate: certificate.toString(),
+        expiry: certificate.validToDate.toISOString(),
+        created_by: 'system',
+        updated_by: 'system'
+      });
+    }
+  } catch {
+    id = null;
+  }
+  imported.set(filePath, id);
+  return id;
+}
+
+/**
  * The TLS connectors and history queries validate the certificate of their server against a certificate of the store
  * instead of accepting any certificate: as in the config upgrade, with `toCertificateValidation`. So does the registration
  * of OIBus with OIAnalytics, which trusts a certificate of the store when it accepted any certificate until now.
  */
 export async function useTrustedCertificates(knex: Knex): Promise<void> {
+  // the certificates of the files already imported, by path
+  const importedAuthorities = new Map<string, string | null>();
   await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
     table.string('certificate_validation').notNullable().defaultTo('standard');
     table.string('trusted_certificate_id').nullable();
@@ -2404,7 +2441,14 @@ export async function useTrustedCertificates(knex: Knex): Promise<void> {
     [HISTORY_QUERIES_TABLE, 'north_type', 'north', 'north_settings', 'north_server_trust']
   ] as const) {
     for (const row of await knex(table).select('id', typeColumn, settingsColumn)) {
-      const converted = toCertificateValidation(row[typeColumn], side, JSON.parse(row[settingsColumn]));
+      const settings = JSON.parse(row[settingsColumn]);
+      const caFile = getCertificationAuthorityFile(row[typeColumn], side, settings);
+      const converted = toCertificateValidation(
+        row[typeColumn],
+        side,
+        settings,
+        caFile ? await importCertificationAuthority(knex, caFile, importedAuthorities) : null
+      );
       if (converted) {
         await knex(table)
           .where('id', row.id)

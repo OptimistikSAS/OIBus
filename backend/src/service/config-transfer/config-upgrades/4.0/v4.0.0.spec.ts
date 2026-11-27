@@ -11,6 +11,7 @@ import {
   checksServerIdentity,
   COMPRESSED_FILE_OPTIONS,
   FILE_AS_IS_OPTIONS,
+  getCertificationAuthorityFile,
   keepsResolvedTransformer,
   toCertificateValidation,
   toCsvDelimiter,
@@ -962,6 +963,43 @@ describe('4.0.0 config upgrade', () => {
         }
       );
       assert.strictEqual(toCertificateValidation('oianalytics', 'south', { useOiaModule: true, specificSettings: null }), null);
+    });
+
+    it('converts the MQTT connectors, rejecting the certificates which do not validate', () => {
+      const authentication = { type: 'cert', certFilePath: 'cert', keyFilePath: 'key', caFilePath: 'ca.pem' };
+      const settings = (rejectUnauthorized: boolean, type = 'cert') => ({
+        url: 'mqtts://b',
+        authentication: { ...authentication, type },
+        rejectUnauthorized
+      });
+      const converted = (certificateValidation: string, trustedCertificateId: string | null, type = 'cert') => ({
+        url: 'mqtts://b',
+        authentication: { type, certFilePath: 'cert', keyFilePath: 'key' },
+        certificateValidation,
+        trustedCertificateId
+      });
+
+      assert.strictEqual(getCertificationAuthorityFile('mqtt', 'south', settings(true)), 'ca.pem');
+      assert.strictEqual(getCertificationAuthorityFile('mqtt', 'south', settings(true, 'basic')), null);
+      assert.strictEqual(getCertificationAuthorityFile('rest', 'south', settings(true)), null);
+      // the certification authority added to the store
+      assert.deepStrictEqual(toCertificateValidation('mqtt', 'south', settings(true), 'caId'), {
+        settings: converted('trusted', 'caId'),
+        trustOnFirstUse: false
+      });
+      // a certification authority which could not be added: the certificate of the first connection
+      assert.deepStrictEqual(toCertificateValidation('mqtt', 'north', settings(true)), {
+        settings: converted('trusted', null),
+        trustOnFirstUse: true
+      });
+      assert.deepStrictEqual(toCertificateValidation('mqtt', 'south', settings(false), 'caId'), {
+        settings: converted('trusted', null),
+        trustOnFirstUse: true
+      });
+      assert.deepStrictEqual(toCertificateValidation('mqtt', 'south', settings(true, 'basic')), {
+        settings: converted('standard', null, 'basic'),
+        trustOnFirstUse: false
+      });
     });
 
     it('leaves the other connectors, and the settings already converted', () => {

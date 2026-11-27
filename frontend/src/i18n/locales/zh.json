@@ -127,10 +127,14 @@
               "username": "用户名",
               "password": "密码",
               "cert-file-path": "证书文件路径",
-              "key-file-path": "密钥文件路径",
-              "ca-file-path": "CA 文件路径"
+              "key-file-path": "密钥文件路径"
             },
-            "reject-unauthorized": "拒绝未授权连接",
+            "certificate-validation": {
+              "title": "服务器证书验证",
+              "standard": "标准",
+              "trusted": "受信任的证书"
+            },
+            "trusted-certificate-id": "受信任的证书",
             "reconnect-period": "重连周期",
             "connect-timeout": "连接超时"
           },
@@ -783,10 +787,14 @@
               "username": "用户名",
               "password": "密码",
               "cert-file-path": "证书文件路径",
-              "key-file-path": "密钥文件路径",
-              "ca-file-path": "CA 文件路径"
+              "key-file-path": "密钥文件路径"
             },
-            "reject-unauthorized": "拒绝未授权连接",
+            "certificate-validation": {
+              "title": "服务器证书验证",
+              "standard": "标准",
+              "trusted": "受信任的证书"
+            },
+            "trusted-certificate-id": "受信任的证书",
             "reconnect-period": "重连周期",
             "connect-timeout": "连接超时",
             "flush-message-timeout": "刷新间隔",

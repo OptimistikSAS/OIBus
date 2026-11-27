@@ -9,16 +9,36 @@ import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../shared/model/con
 import type { ILogger } from '../model/logger.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { encryptionService } from './encryption.service';
+import { TlsProbeTarget, TlsTrust } from './utils-tls';
 
+/** The default port of the MQTT brokers over TLS, by protocol of their URL */
+const TLS_DEFAULT_PORTS: Record<string, number> = { 'mqtts:': 8883, 'tls:': 8883, 'wss:': 443 };
+
+/** Where the certificate of the broker is read: `null` without TLS (`mqtt://`, `tcp://` or `ws://`) */
+export const getMQTTProbeTarget = (connectionSettings: NorthMQTTSettings | SouthMQTTSettings): TlsProbeTarget | null => {
+  let protocol: string;
+  try {
+    protocol = new URL(connectionSettings.url).protocol;
+  } catch {
+    return null;
+  }
+  const defaultPort = TLS_DEFAULT_PORTS[protocol];
+  return defaultPort ? { url: connectionSettings.url, defaultPort, proxy: null, timeoutMs: connectionSettings.connectTimeout } : null;
+};
+
+/**
+ * The options of the MQTT client: `tls` tells how the certificate of the broker is validated (see `TlsServerTrust`)
+ */
 export const createConnectionOptions = async (
   connectorId: string,
   connectionSettings: NorthMQTTSettings | SouthMQTTSettings,
-  logger: ILogger
+  logger: ILogger,
+  tls: TlsTrust
 ): Promise<mqtt.IClientOptions> => {
   const options: mqtt.IClientOptions = {
+    ...tls,
     reconnectPeriod: 0, // managed by OIBus
     connectTimeout: connectionSettings.connectTimeout,
-    rejectUnauthorized: connectionSettings.rejectUnauthorized,
     queueQoSZero: false,
     log: (...args: Array<object | string>) => {
       // The MQTT client calls this on every internal event (chatty). Without
@@ -38,9 +58,6 @@ export const createConnectionOptions = async (
       : '';
     options.key = connectionSettings.authentication.keyFilePath
       ? await fs.readFile(path.resolve(connectionSettings.authentication.keyFilePath))
-      : '';
-    options.ca = connectionSettings.authentication.caFilePath
-      ? await fs.readFile(path.resolve(connectionSettings.authentication.caFilePath))
       : '';
   }
   options.clean = !connectionSettings.persistent;

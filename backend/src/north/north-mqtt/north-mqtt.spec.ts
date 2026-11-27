@@ -8,13 +8,15 @@ import type { MqttClient } from 'mqtt';
 
 import type { NorthMQTTSettings } from '../../../shared/model/connector/north-settings.model';
 import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
+import type { ServerIdentity } from '../../../shared/model/domain/server-identity.model';
 
 import type { NorthConnectorEntity } from '../../model/north-connector.model';
+import type CertificateService from '../../service/certificate.service';
 import type * as Utils from '../../service/utils';
 import { createCacheServiceMock } from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { buildNorthEntity, createMock, type Mocked, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type { OIBusMQTTValue } from '../../transformers/connector-types.model';
 import type NorthMQTTClass from './north-mqtt';
 
@@ -45,6 +47,7 @@ const values: Array<OIBusMQTTValue> = [
 describe('NorthMQTT', () => {
   let NorthMQTT: typeof NorthMQTTClass;
   let north: NorthMQTTClass;
+  let certificateService: Mocked<CertificateService>;
   let configuration: NorthConnectorEntity<NorthMQTTSettings>;
   let logger: PinoLogger;
   let mqttClient: MockMqttClient;
@@ -60,6 +63,7 @@ describe('NorthMQTT', () => {
   before(() => {
     mockModule(nodeRequire, 'mqtt', mqttExports);
     mockModule(nodeRequire, '../../service/utils', utilsExports);
+    Object.assign(utilsMqttExports, nodeRequire('../../service/utils-mqtt'));
     mockModule(nodeRequire, '../../service/utils-mqtt', utilsMqttExports);
     // No transformation here: don't pay for loading every transformer
     mockModule(nodeRequire, '../../service/transformer.service', {});
@@ -92,15 +96,16 @@ describe('NorthMQTT', () => {
         type: 'none',
         username: '',
         password: '',
-        caFilePath: '',
         certFilePath: '',
         keyFilePath: ''
       },
       connectTimeout: 1000,
       reconnectPeriod: 1000,
-      rejectUnauthorized: false
+      certificateValidation: 'standard',
+      trustedCertificateId: null
     });
-    north = new NorthMQTT(configuration, createCacheServiceMock());
+    certificateService = createMock<CertificateService>();
+    north = new NorthMQTT(configuration, createCacheServiceMock(), certificateService);
   });
 
   afterEach(() => {
@@ -132,6 +137,8 @@ describe('NorthMQTT', () => {
 
     assert.strictEqual(createConnectionOptions.mock.calls.length, 1);
     assert.deepStrictEqual(createConnectionOptions.mock.calls[0].arguments[0], configuration.id);
+    // the certificate of the broker is validated with the standard validation
+    assert.deepStrictEqual(createConnectionOptions.mock.calls[0].arguments[3], {});
     assert.strictEqual(connectAsync.mock.calls.length, 1);
     assert.deepStrictEqual(connectAsync.mock.calls[0].arguments[0], configuration.settings.url);
     assert.ok(logger.info.mock.calls.some(c => c.arguments[0] === `MQTT North connector "${configuration.name}" connected`));
@@ -256,6 +263,37 @@ describe('NorthMQTT', () => {
 
     assert.strictEqual(mqttClient.end.mock.calls.length, 1);
     assert.deepStrictEqual(mqttClient.end.mock.calls[0].arguments, [true]);
+  });
+
+  describe('certificate of the broker', () => {
+    const identity: ServerIdentity = { type: 'x509', fingerprint: 'AB:CD', details: { keyType: 'rsa' } };
+    const certificateError = () => Object.assign(new Error('self-signed certificate'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' });
+
+    it('should keep the certificate refused at a test as pending, and tell how to trust it', async () => {
+      emitOnTestConnection('error', certificateError());
+      mock.method(north['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+
+      await assert.rejects(north.testConnection(), /which is not trusted: test the connection to review its identity/);
+      assert.deepStrictEqual(north.getPendingServerIdentity(), { identity, status: 'unknown' });
+      assert.strictEqual(north.getServerIdentityTrustStatus(identity), 'unknown');
+    });
+
+    it('should keep the certificate refused at a connection as pending, and retry', async () => {
+      connectAsync.mock.mockImplementationOnce(async () => {
+        throw certificateError();
+      });
+      mock.method(north['tlsServerTrust'], 'retrieveServerIdentity', async () => identity);
+      mock.method(north, 'disconnect', async () => undefined);
+
+      await north.connect();
+
+      assert.ok(logger.error.mock.calls.some(c => /which is not trusted: test the connection/.test(String(c.arguments[0]))));
+      assert.deepStrictEqual(north.getPendingServerIdentity(), { identity, status: 'unknown' });
+    });
+
+    it('should read the certificate of a broker over TLS only', async () => {
+      assert.strictEqual(await north.retrieveServerIdentity(), null);
+    });
   });
 
   it('should throw error if connector is in reconnecting state', async () => {

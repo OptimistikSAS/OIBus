@@ -2,6 +2,8 @@ import { SouthConnectorManifest } from '../../../shared/model/connector/south-ma
 
 const manifest: SouthConnectorManifest = {
   id: 'mqtt',
+  serverIdentity: 'x509',
+  serverTrustInCertificateStore: true,
   category: 'iot',
   modes: {
     subscription: true,
@@ -18,6 +20,11 @@ const manifest: SouthConnectorManifest = {
       wrapInBox: false
     },
     enablingConditions: [
+      {
+        referralPathFromRoot: 'certificateValidation',
+        targetPathFromRoot: 'trustedCertificateId',
+        values: ['trusted']
+      },
       {
         referralPathFromRoot: 'qos',
         targetPathFromRoot: 'persistent',
@@ -110,11 +117,6 @@ const manifest: SouthConnectorManifest = {
             referralPathFromRoot: 'type',
             targetPathFromRoot: 'keyFilePath',
             values: ['cert']
-          },
-          {
-            referralPathFromRoot: 'type',
-            targetPathFromRoot: 'caFilePath',
-            values: ['cert']
           }
         ],
         validators: [
@@ -203,37 +205,33 @@ const manifest: SouthConnectorManifest = {
               columns: 4,
               displayInViewMode: true
             }
-          },
-          {
-            type: 'string',
-            key: 'caFilePath',
-            translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.ca-file-path',
-            defaultValue: null,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 1,
-              columns: 4,
-              displayInViewMode: true
-            }
           }
         ]
       },
       {
-        type: 'boolean',
-        key: 'rejectUnauthorized',
-        translationKey: 'configuration.oibus.manifest.south.mqtt.reject-unauthorized',
-        defaultValue: false,
+        type: 'string-select',
+        key: 'certificateValidation',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.certificate-validation',
+        defaultValue: 'standard',
+        selectableValues: ['standard', 'trusted'],
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
           }
         ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'certificate',
+        key: 'trustedCertificateId',
+        translationKey: 'configuration.oibus.manifest.south.mqtt.trusted-certificate-id',
+        trusted: true,
+        validators: [],
         displayProperties: {
           row: 2,
           columns: 4,
