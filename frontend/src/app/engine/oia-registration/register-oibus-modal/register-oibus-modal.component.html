@@ -244,6 +244,34 @@
         @if (testSuccess()) {
           <div class="alert alert-info" id="test-success" translate="oia-module.registration.test-connection-success"></div>
         }
+        @if (testServerIdentity(); as presented) {
+          <div
+            class="alert"
+            id="server-not-trusted"
+            [class.alert-warning]="presented.status === 'unknown'"
+            [class.alert-danger]="presented.status === 'changed'"
+          >
+            <div [translate]="'oia-module.registration.server-trust.status-message.' + presented.status"></div>
+            <div class="mt-1" translate="server-trust.test-connection.not-tested"></div>
+          </div>
+          <h6 class="mt-3" translate="oia-module.registration.server-trust.title"></h6>
+          <oib-server-identity [identity]="presented.identity" />
+          <p class="mt-3" translate="server-trust.modal.compare" [translateParams]="{ type: presented.identity.type }"></p>
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="trust-server-identity"
+            (click)="trustServerIdentity(presented.identity)"
+            translate="server-trust.test-connection.trust"
+          ></button>
+        }
+        @if (trustedIdentity() && !testServerIdentity()) {
+          <p
+            class="mt-2 mb-0 text-body-secondary"
+            id="server-trusted-in-form"
+            translate="oia-module.registration.server-trust.trusted-in-form"
+          ></p>
+        }
       </div>
     </div>
   </form>

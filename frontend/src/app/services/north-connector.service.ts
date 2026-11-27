@@ -1,10 +1,10 @@
 import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
-import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
+import { ServerTrustCommandDTO, ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import { TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { NorthConnectorManifest, NorthType, OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 import { NorthSettings } from '@oibus/shared/connector/north-settings.model';
@@ -21,6 +21,7 @@ import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.mo
 
 import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
+import { CertificateService } from './certificate.service';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
@@ -28,6 +29,7 @@ import { FormServerTrustService } from '../shared/server-trust/form-server-trust
 @Service()
 export class NorthConnectorService {
   private readonly http = inject(HttpClient);
+  private readonly certificateService = inject(CertificateService);
   private readonly formServerTrust = inject(FormServerTrustService);
 
   /**
@@ -69,7 +71,9 @@ export class NorthConnectorService {
     if (retrieveSecretsFromNorth) {
       params['duplicate'] = retrieveSecretsFromNorth;
     }
-    return this.http.post<NorthConnectorDTO>(`/api/north`, command, { params });
+    return this.http
+      .post<NorthConnectorDTO>(`/api/north`, command, { params })
+      .pipe(tap(() => this.refreshCertificatesWhenTrusting(command.serverTrust)));
   }
 
   /**
@@ -78,7 +82,7 @@ export class NorthConnectorService {
    * @param command - the new values of the selected North connector
    */
   update(northId: string, command: NorthConnectorCommandDTO): Observable<void> {
-    return this.http.put<void>(`/api/north/${northId}`, command);
+    return this.http.put<void>(`/api/north/${northId}`, command).pipe(tap(() => this.refreshCertificatesWhenTrusting(command.serverTrust)));
   }
 
   /**
@@ -148,7 +152,16 @@ export class NorthConnectorService {
 
   /** Trust the identity the server of the North presents (with this fingerprint), and restart the connector */
   trustServerIdentity(northId: string, fingerprint: string): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/server-trust`, { fingerprint });
+    return this.http
+      .post<void>(`/api/north/${northId}/server-trust`, { fingerprint })
+      .pipe(tap(() => this.certificateService.refreshList()));
+  }
+
+  /** The certificate of an identity trusted in the form is added to the store with the connector */
+  private refreshCertificatesWhenTrusting(serverTrust: ServerTrustCommandDTO | undefined) {
+    if (serverTrust?.identity) {
+      this.certificateService.refreshList();
+    }
   }
 
   /**

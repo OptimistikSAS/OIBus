@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@a
 import { TestBed } from '@angular/core/testing';
 
 import { firstValueFrom, Observable } from 'rxjs';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { EngineSettingsDTO, HomeMetrics } from '@oibus/shared/api/engine.model';
 
@@ -11,6 +11,7 @@ import { buildEngineSettings } from '../../test/builders';
 import { expectHttp } from '../../test/http-testing';
 import testData from '../../test/test-data';
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { CertificateService } from './certificate.service';
 import { EngineService } from './engine.service';
 
 interface HttpCase {
@@ -79,6 +80,29 @@ describe('EngineService', () => {
   afterEach(() => http.verify());
 
   const registrationCommand = testData.oIAnalytics.registration.command;
+
+  test('should load the certificates again once OIAnalytics is trusted, adding its certificate to the store', async () => {
+    const refreshList = vi.spyOn(TestBed.inject(CertificateService), 'refreshList').mockImplementation(() => undefined);
+    const trusting = { ...registrationCommand, serverTrust: { identity: testData.serverTrust.identities.x509, trustOnFirstUse: false } };
+
+    await expectHttp(http, service.register(registrationCommand), { method: 'POST', url: '/api/oianalytics/register' }, { response: null });
+    expect(refreshList).not.toHaveBeenCalled();
+
+    await expectHttp(http, service.register(trusting), { method: 'POST', url: '/api/oianalytics/register' }, { response: null });
+    await expectHttp(
+      http,
+      service.editRegistrationSettings(trusting),
+      { method: 'PUT', url: '/api/oianalytics/registration' },
+      { response: null }
+    );
+    await expectHttp(
+      http,
+      service.trustRegistrationServerIdentity('AB:CD'),
+      { method: 'POST', url: '/api/oianalytics/registration/server-trust' },
+      { response: null }
+    );
+    expect(refreshList).toHaveBeenCalledTimes(3);
+  });
 
   test.each<HttpCase>([
     {
@@ -182,8 +206,24 @@ describe('EngineService', () => {
       name: 'test the OIAnalytics connection',
       call: s => s.testOIAnalyticsConnection(registrationCommand),
       method: 'POST',
-      url: '/api/oianalytics/registration/test-connection',
+      url: '/api/oianalytics/registration/test-connection?withServerIdentity=true',
       body: registrationCommand,
+      response: { items: [] }
+    },
+    {
+      name: 'get the trust of the registration in the identity of OIAnalytics',
+      call: s => s.getRegistrationServerTrust(),
+      method: 'GET',
+      url: '/api/oianalytics/registration/server-trust',
+      body: null,
+      response: testData.serverTrust.states.none
+    },
+    {
+      name: 'trust the identity of OIAnalytics',
+      call: s => s.trustRegistrationServerIdentity('AB:CD'),
+      method: 'POST',
+      url: '/api/oianalytics/registration/server-trust',
+      body: { fingerprint: 'AB:CD' },
       response: null
     },
     { name: 'unregister', call: s => s.unregister(), method: 'POST', url: '/api/oianalytics/unregister', body: null, response: null }

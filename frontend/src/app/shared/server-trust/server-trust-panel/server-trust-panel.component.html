@@ -5,7 +5,7 @@
   </div>
   @if (serverTrust.pending; as pending) {
     <div class="alert alert-danger d-flex align-items-center justify-content-between gap-2" id="server-not-trusted">
-      <span [translate]="'server-trust.panel.refused.' + pending.status"></span>
+      <span [translate]="refusedKey() + '.' + pending.status"></span>
       <button
         type="button"
         class="btn btn-sm btn-danger text-nowrap"

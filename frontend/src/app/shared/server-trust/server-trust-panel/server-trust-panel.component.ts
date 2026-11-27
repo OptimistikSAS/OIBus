@@ -22,5 +22,7 @@ export class ServerTrustPanelComponent {
   readonly serverTrust = input.required<ServerTrustStateDTO>();
   /** The title of the panel, for a side of a history query */
   readonly titleKey = input('server-trust.panel.title');
+  /** The messages of the identity refused, by status, for another client than a connector (the registration of OIBus) */
+  readonly refusedKey = input('server-trust.panel.refused');
   readonly review = output<PresentedServerIdentity>();
 }

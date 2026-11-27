@@ -17,6 +17,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { provideCurrentUser } from '../../shared/current-user-testing';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { NotificationService } from '../../shared/notification.service';
+import { ServerTrustModalComponent } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
 import { toPage } from '../../shared/utils/page.utils';
 import { OIARegistrationComponent } from './oia-registration.component';
 import { OiaCommandDetailsModalComponent } from './oibus-command-details-modal/oia-command-details-modal.component';
@@ -54,7 +55,7 @@ describe('OIARegistrationComponent', () => {
   let oibusCommandService: MockObject<OibusCommandService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
-  let modalService: MockModalService<RegisterOibusModalComponent | OiaCommandDetailsModalComponent>;
+  let modalService: MockModalService<RegisterOibusModalComponent | OiaCommandDetailsModalComponent | ServerTrustModalComponent>;
 
   beforeEach(() => {
     engineService = createMock(EngineService);
@@ -64,6 +65,7 @@ describe('OIARegistrationComponent', () => {
 
     engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
     engineService.getRegistrationSettings.mockReturnValue(of(registered));
+    engineService.getRegistrationServerTrust.mockReturnValue(of(testData.serverTrust.states.none));
     oibusCommandService.search.mockReturnValue(of(toPage(commands)));
 
     TestBed.configureTestingModule({
@@ -276,6 +278,52 @@ describe('OIARegistrationComponent', () => {
 
       await expect.element(tester.registerButton).toBeInTheDocument();
       await expect.element(tester.commandRows).toHaveLength(0);
+    });
+  });
+
+  describe('identity of OIAnalytics', () => {
+    const { unknownRefused } = testData.serverTrust.states;
+
+    test('should show nothing when there is nothing to review', async () => {
+      const tester = new OIARegistrationComponentTester();
+
+      await expect.element(tester.hostLink).toBeInTheDocument();
+      await vi.waitFor(() => expect(engineService.getRegistrationServerTrust).toHaveBeenCalled());
+      await expect.element(tester.root.getByRole('heading', { name: 'Identity of OIAnalytics' })).not.toBeInTheDocument();
+    });
+
+    test('should not read the identity of OIAnalytics when OIBus is not registered', async () => {
+      engineService.getRegistrationSettings.mockReturnValue(of(notRegistered));
+      const tester = new OIARegistrationComponentTester();
+
+      await expect.element(tester.registerButton).toBeInTheDocument();
+      expect(engineService.getRegistrationServerTrust).not.toHaveBeenCalled();
+    });
+
+    test('should review the identity OIAnalytics presented, and trust it', async () => {
+      engineService.getRegistrationServerTrust.mockReturnValue(of(unknownRefused));
+      engineService.trustRegistrationServerIdentity.mockReturnValue(of(undefined));
+      const trustModal = createMock(ServerTrustModalComponent);
+      modalService.mockClosedModal(trustModal, 'trust');
+      const tester = new OIARegistrationComponentTester();
+
+      await expect.element(tester.root.getByRole('heading', { name: 'Identity of OIAnalytics' })).toBeInTheDocument();
+      await expect.element(tester.root.getByCss('#server-not-trusted')).toMatchTextContent(/OIBus refused to connect to OIAnalytics/);
+      await tester.root.getByRole('button', { name: 'Review and trust' }).click();
+
+      expect(trustModal.prepare).toHaveBeenCalledWith('review', unknownRefused.pending, null);
+      expect(engineService.trustRegistrationServerIdentity).toHaveBeenCalledWith(unknownRefused.pending!.identity.fingerprint);
+      expect(notificationService.success).toHaveBeenCalledWith('oia-module.registration.server-trust.trusted');
+    });
+
+    test('should not trust the identity of OIAnalytics when the review is cancelled', async () => {
+      engineService.getRegistrationServerTrust.mockReturnValue(of(unknownRefused));
+      modalService.mockDismissedModal(createMock(ServerTrustModalComponent));
+      const tester = new OIARegistrationComponentTester();
+
+      await tester.root.getByRole('button', { name: 'Review and trust' }).click();
+
+      expect(engineService.trustRegistrationServerIdentity).not.toHaveBeenCalled();
     });
   });
 });

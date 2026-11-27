@@ -9,7 +9,12 @@ import { map } from 'rxjs';
 
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
 import { CommandPermission } from '@oibus/shared/domain/engine.model';
-import { SERVER_CERTIFICATE_VALIDATIONS, ServerCertificateValidation } from '@oibus/shared/domain/server-identity.model';
+import {
+  PresentedServerIdentity,
+  SERVER_CERTIFICATE_VALIDATIONS,
+  ServerCertificateValidation,
+  ServerIdentity
+} from '@oibus/shared/domain/server-identity.model';
 
 import { CertificateService } from '../../../services/certificate.service';
 import { EngineService } from '../../../services/engine.service';
@@ -20,6 +25,8 @@ import { SelectOrCreateComponent } from '../../../shared/form/select-or-create/s
 import { trackControl } from '../../../shared/form/tracked-control';
 import { NotificationService } from '../../../shared/notification.service';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+import { ServerIdentityComponent } from '../../../shared/server-trust/server-identity/server-identity.component';
+import { serverEndpointOf } from '../../../shared/server-trust/server-trust';
 import { TrustedCertificateCreator } from '../../certificate-list/trusted-certificate-creator.service';
 
 interface CommandPermissionGroup {
@@ -49,7 +56,8 @@ const COMMAND_PERMISSION_GROUPS: ReadonlyArray<CommandPermissionGroup> = [
     BoxTitleDirective,
     OI_FORM_VALIDATION_DIRECTIVES,
     SaveButtonComponent,
-    SelectOrCreateComponent
+    SelectOrCreateComponent,
+    ServerIdentityComponent
   ]
 })
 export class RegisterOibusModalComponent {
@@ -70,6 +78,14 @@ export class RegisterOibusModalComponent {
   readonly testLoading = signal(false);
   readonly testSuccess = signal(false);
   readonly testError = signal<string | null>(null);
+  /** The identity OIAnalytics presented at the last test when its certificate does not validate, to review and trust */
+  readonly testServerIdentity = signal<PresentedServerIdentity | null>(null);
+  /**
+   * The identity of OIAnalytics trusted in the form, not saved yet: the tests trust it, and saving the registration adds its
+   * certificate to the store and selects it. Dropped when the settings connect to another server.
+   */
+  readonly trustedIdentity = signal<ServerIdentity | null>(null);
+  private trustedEndpoint: string | null = null;
   readonly ignoreRemoteUpdate = signal(false);
 
   readonly form = this.fb.group({
@@ -112,6 +128,11 @@ export class RegisterOibusModalComponent {
   });
 
   constructor() {
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.trustedIdentity() && this.endpoint() !== this.trustedEndpoint) {
+        this.trustedIdentity.set(null);
+      }
+    });
     // the trusted certificate is only selected, and required, with the trusted validation
     this.form.controls.certificateValidation.valueChanges.pipe(takeUntilDestroyed()).subscribe(validation => {
       if (validation === 'trusted') {
@@ -179,14 +200,20 @@ export class RegisterOibusModalComponent {
     this.testLoading.set(true);
     this.testSuccess.set(false);
     this.testError.set(null);
+    this.testServerIdentity.set(null);
 
     this.oibusService
       .testOIAnalyticsConnection(command)
       .pipe(this.testState.pendingUntilFinalization())
       .subscribe({
-        next: () => {
-          this.testSuccess.set(true);
+        next: result => {
           this.testLoading.set(false);
+          if (result.serverIdentity && result.serverIdentity.status !== 'trusted') {
+            // the connection was not tested further: the user reviews the identity of OIAnalytics first
+            this.testServerIdentity.set(result.serverIdentity);
+            return;
+          }
+          this.testSuccess.set(true);
           this.notificationService.success('oia-module.registration.test-connection-success');
         },
         error: (httpError: HttpErrorResponse) => {
@@ -194,6 +221,19 @@ export class RegisterOibusModalComponent {
           this.testLoading.set(false);
         }
       });
+  }
+
+  /** Trusts the identity OIAnalytics presented in the form (saved with the registration), and tests the connection again */
+  trustServerIdentity(identity: ServerIdentity) {
+    this.trustedIdentity.set(identity);
+    this.trustedEndpoint = this.endpoint();
+    this.testConnection();
+  }
+
+  /** The server the settings connect to, and how its certificate is validated (see serverEndpointOf) */
+  private endpoint(): string {
+    const { host, certificateValidation, trustedCertificateId } = this.form.getRawValue();
+    return serverEndpointOf({ host: this.mode === 'edit' ? this.host : host, certificateValidation, trustedCertificateId });
   }
 
   save() {
@@ -236,7 +276,8 @@ export class RegisterOibusModalComponent {
       commandRefreshInterval: formValue.commandRefreshInterval,
       commandRetryInterval: formValue.commandRetryInterval,
       messageRetryInterval: formValue.messageRetryInterval,
-      commandPermissions: { ...formValue.commandPermissions }
+      commandPermissions: { ...formValue.commandPermissions },
+      ...(this.trustedIdentity() ? { serverTrust: { identity: this.trustedIdentity()!, trustOnFirstUse: false } } : {})
     };
   }
 

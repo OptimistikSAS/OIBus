@@ -1,14 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { catchError, EMPTY, exhaustMap, map, startWith, Subject, switchMap, takeWhile, tap } from 'rxjs';
+import { catchError, distinctUntilChanged, EMPTY, exhaustMap, map, merge, of, startWith, Subject, switchMap, takeWhile, tap } from 'rxjs';
 
 import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
 import { Page } from '@oibus/shared/common/types';
+import { RegistrationStatus } from '@oibus/shared/domain/engine.model';
+import { PresentedServerIdentity } from '@oibus/shared/domain/server-identity.model';
 import {
   OIBUS_COMMAND_STATUS,
   OIBUS_COMMAND_TYPES,
@@ -31,11 +33,15 @@ import { PageLoader } from '../../shared/page-loader.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { visibleTimer } from '../../shared/polling';
 import { ResizableColumnsDirective } from '../../shared/resizable-columns.directive';
+import { toDisplayedServerTrust } from '../../shared/server-trust/server-trust';
+import { askServerTrust } from '../../shared/server-trust/server-trust-modal/server-trust-modal.component';
+import { ServerTrustPanelComponent } from '../../shared/server-trust/server-trust-panel/server-trust-panel.component';
 import { emptyPage } from '../../shared/utils/page.utils';
 import { OiaCommandDetailsModalComponent } from './oibus-command-details-modal/oia-command-details-modal.component';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
 
 const REGISTRATION_CHECK_DURATION = 3000;
+const SERVER_TRUST_REFRESH_DURATION = 10_000;
 
 @Component({
   selector: 'oib-oia-module',
@@ -50,7 +56,8 @@ const REGISTRATION_CHECK_DURATION = 3000;
     PaginationComponent,
     OibusCommandStatusEnumPipe,
     NgbTooltip,
-    TranslatePipe
+    TranslatePipe,
+    ServerTrustPanelComponent
   ],
   templateUrl: './oia-registration.component.html',
   styleUrl: './oia-registration.component.scss',
@@ -69,6 +76,25 @@ export class OIARegistrationComponent {
   private readonly fb = inject(NonNullableFormBuilder);
 
   readonly registration = signal<RegistrationSettingsDTO | null>(null);
+  // refreshes the trust in the identity of OIAnalytics right away, once trusted
+  private readonly serverTrustRefresh = new Subject<void>();
+  // the status of the registration: the identity of OIAnalytics is only read while OIBus is (being) registered
+  private readonly registrationStatus = new Subject<RegistrationStatus>();
+  private readonly polledServerTrust = toSignal(
+    this.registrationStatus.pipe(
+      distinctUntilChanged(),
+      switchMap(status =>
+        status === 'NOT_REGISTERED'
+          ? of(null)
+          : merge(visibleTimer(SERVER_TRUST_REFRESH_DURATION), this.serverTrustRefresh).pipe(
+              exhaustMap(() => this.oibusService.getRegistrationServerTrust().pipe(catchError(() => EMPTY)))
+            )
+      )
+    ),
+    { initialValue: null }
+  );
+  /** The trust of the registration in the identity of OIAnalytics, when there is something to show (see toDisplayedServerTrust) */
+  readonly serverTrust = computed(() => toDisplayedServerTrust(this.polledServerTrust(), true));
   private readonly ignoreRemoteUpdate = toSignal(this.oibusService.getInfo().pipe(map(info => info.ignoreRemoteUpdate)), {
     initialValue: false
   });
@@ -97,7 +123,7 @@ export class OIARegistrationComponent {
         ),
         takeUntilDestroyed()
       )
-      .subscribe(registration => this.registration.set(registration));
+      .subscribe(registration => this.setRegistration(registration));
     this.pageLoader.pageLoads$
       .pipe(
         switchMap(page => {
@@ -119,6 +145,22 @@ export class OIARegistrationComponent {
       )
       .subscribe(commands => {
         this.commands.set(commands);
+      });
+  }
+
+  private setRegistration(registration: RegistrationSettingsDTO) {
+    this.registration.set(registration);
+    this.registrationStatus.next(registration.status);
+  }
+
+  /** Reviews the identity of OIAnalytics the registration refused, and trusts it if the user does */
+  reviewServerIdentity(pending: PresentedServerIdentity) {
+    askServerTrust(this.modalService, 'review', pending, this.serverTrust()?.identity ?? null)
+      .pipe(switchMap(() => this.oibusService.trustRegistrationServerIdentity(pending.identity.fingerprint)))
+      .subscribe(() => {
+        this.notificationService.success('oia-module.registration.server-trust.trusted');
+        this.serverTrustRefresh.next();
+        this.registrationCheck.next(true);
       });
   }
 
@@ -149,7 +191,7 @@ export class OIARegistrationComponent {
       )
       .subscribe(registration => {
         this.registrationCheck.next(false);
-        this.registration.set(registration);
+        this.setRegistration(registration);
       });
   }
 
@@ -172,7 +214,7 @@ export class OIARegistrationComponent {
     modalRef.result
       .pipe(switchMap(() => this.oibusService.getRegistrationSettings()))
       .subscribe((registration: RegistrationSettingsDTO) => {
-        this.registration.set(registration);
+        this.setRegistration(registration);
         this.notificationService.success('oia-module.registration.saved');
       });
   }

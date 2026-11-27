@@ -14,21 +14,35 @@ describe('serverEndpointOf', () => {
     const settings = { url: 'opc.tcp://server:4840', securityMode: 'sign', securityPolicy: 'basic256', username: 'user' };
 
     expect(serverEndpointOf(settings)).toBe(serverEndpointOf({ ...settings, username: 'other', timeout: 1000 }));
-    expect(serverEndpointOf(settings)).toBe(JSON.stringify(['opc.tcp://server:4840', null, null, 'sign', 'basic256']));
   });
 
-  test.each(['url', 'host', 'port', 'securityMode', 'securityPolicy'])('should change when %s changes', key => {
+  test.each([
+    'url',
+    'host',
+    'port',
+    'securityMode',
+    'securityPolicy',
+    'sslMode',
+    'useOiaModule',
+    'certificateValidation',
+    'trustedCertificateId'
+  ])('should change when %s changes', key => {
     const settings = { url: 'opc.tcp://server:4840', host: 'server', port: 22, securityMode: 'sign', securityPolicy: 'basic256' };
 
     expect(serverEndpointOf({ ...settings, [key]: 'changed' })).not.toBe(serverEndpointOf(settings));
   });
 
-  test('should consider missing settings as empty', () => {
-    const empty = JSON.stringify([null, null, null, null, null]);
+  test.each(['specificSettings', 'connectionSettings'])('should change when the server of the %s changes', key => {
+    const server = { host: 'server', port: 5432, certificateValidation: 'standard' };
+    const settings = { [key]: server, username: 'user' };
 
-    expect(serverEndpointOf(null)).toBe(empty);
-    expect(serverEndpointOf(undefined)).toBe(empty);
-    expect(serverEndpointOf({})).toBe(empty);
+    expect(serverEndpointOf({ ...settings, [key]: { ...server, host: 'other' } })).not.toBe(serverEndpointOf(settings));
+    expect(serverEndpointOf({ ...settings, [key]: { ...server, username: 'other' } })).toBe(serverEndpointOf(settings));
+  });
+
+  test('should consider missing settings as empty', () => {
+    expect(serverEndpointOf(null)).toBe(serverEndpointOf({}));
+    expect(serverEndpointOf(undefined)).toBe(serverEndpointOf({ specificSettings: null }));
   });
 });
 

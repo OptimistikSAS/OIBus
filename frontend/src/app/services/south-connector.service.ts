@@ -1,9 +1,9 @@
 import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 
-import { map, Observable } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 
-import { ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
+import { ServerTrustCommandDTO, ServerTrustStateDTO } from '@oibus/shared/api/server-identity.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -27,6 +27,7 @@ import { SouthConnectorItemSearchParam, SouthConnectorItemTestingSettings } from
 
 import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import { FormServerTrustService } from '../shared/server-trust/form-server-trust.service';
+import { CertificateService } from './certificate.service';
 import { DownloadService } from './download.service';
 
 /**
@@ -35,6 +36,7 @@ import { DownloadService } from './download.service';
 @Service()
 export class SouthConnectorService {
   private readonly http = inject(HttpClient);
+  private readonly certificateService = inject(CertificateService);
   private readonly downloadService = inject(DownloadService);
   private readonly formServerTrust = inject(FormServerTrustService);
 
@@ -77,7 +79,9 @@ export class SouthConnectorService {
     if (retrieveSecretsFromSouth) {
       params['duplicate'] = retrieveSecretsFromSouth;
     }
-    return this.http.post<SouthConnectorDTO>(`/api/south`, command, { params });
+    return this.http
+      .post<SouthConnectorDTO>(`/api/south`, command, { params })
+      .pipe(tap(() => this.refreshCertificatesWhenTrusting(command.serverTrust)));
   }
 
   /**
@@ -86,7 +90,7 @@ export class SouthConnectorService {
    * @param command - the new values of the selected South connector
    */
   update(southId: string, command: SouthConnectorCommandDTO) {
-    return this.http.put<void>(`/api/south/${southId}`, command);
+    return this.http.put<void>(`/api/south/${southId}`, command).pipe(tap(() => this.refreshCertificatesWhenTrusting(command.serverTrust)));
   }
 
   /**
@@ -219,7 +223,16 @@ export class SouthConnectorService {
 
   /** Trust the identity the server of the South presents (with this fingerprint), and restart the connector */
   trustServerIdentity(southId: string, fingerprint: string): Observable<void> {
-    return this.http.post<void>(`/api/south/${southId}/server-trust`, { fingerprint });
+    return this.http
+      .post<void>(`/api/south/${southId}/server-trust`, { fingerprint })
+      .pipe(tap(() => this.certificateService.refreshList()));
+  }
+
+  /** The certificate of an identity trusted in the form is added to the store with the connector */
+  private refreshCertificatesWhenTrusting(serverTrust: ServerTrustCommandDTO | undefined) {
+    if (serverTrust?.identity) {
+      this.certificateService.refreshList();
+    }
   }
 
   /**

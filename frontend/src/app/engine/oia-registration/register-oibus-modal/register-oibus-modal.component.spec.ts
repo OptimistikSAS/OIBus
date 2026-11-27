@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { RegistrationSettingsCommandDTO } from '@oibus/shared/api/engine.model';
+import { ServerIdentity } from '@oibus/shared/domain/server-identity.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../test/test-data';
@@ -66,7 +67,7 @@ describe('RegisterOibusModalComponent', () => {
     notificationService = createMock(NotificationService);
     engineService.register.mockReturnValue(of(undefined));
     engineService.editRegistrationSettings.mockReturnValue(of(undefined));
-    engineService.testOIAnalyticsConnection.mockReturnValue(of(undefined));
+    engineService.testOIAnalyticsConnection.mockReturnValue(of({ items: [] }));
     const certificateService = createMock(CertificateService);
     certificateService.list.mockReturnValue(
       of([
@@ -210,6 +211,48 @@ describe('RegisterOibusModalComponent', () => {
     await expect.element(tester.testError).not.toBeInTheDocument();
     expect(notificationService.success).toHaveBeenCalledWith('oia-module.registration.test-connection-success');
     expect(activeModal.close).not.toHaveBeenCalled();
+  });
+
+  describe('identity of OIAnalytics', () => {
+    const { presented } = testData.serverTrust;
+    const x509: ServerIdentity = { ...testData.serverTrust.identities.x509 };
+
+    test('should show the identity OIAnalytics presents when its certificate does not validate, and trust it in the form', async () => {
+      engineService.testOIAnalyticsConnection.mockReturnValueOnce(of({ items: [], serverIdentity: { identity: x509, status: 'unknown' } }));
+      const tester = new RegisterOibusModalComponentTester();
+      tester.fixture.componentInstance.prepare(registration, 'register', false);
+
+      await tester.testButton.click();
+      await expect
+        .element(tester.root.getByCss('#server-not-trusted'))
+        .toMatchTextContent(/The certificate of OIAnalytics does not validate/);
+      await expect.element(tester.testSuccess).not.toBeInTheDocument();
+      await tester.root.getByRole('button', { name: 'Trust this identity' }).click();
+
+      // tested again, trusting the identity
+      expect(engineService.testOIAnalyticsConnection).toHaveBeenLastCalledWith(
+        expectedCommand({ serverTrust: { identity: x509, trustOnFirstUse: false } })
+      );
+      await expect.element(tester.testSuccess).toBeInTheDocument();
+      await expect.element(tester.root.getByCss('#server-trusted-in-form')).toBeInTheDocument();
+
+      await tester.saveButton.click();
+      expect(engineService.register).toHaveBeenCalledWith(expectedCommand({ serverTrust: { identity: x509, trustOnFirstUse: false } }));
+    });
+
+    test('should drop the identity trusted in the form when the settings connect to another server', async () => {
+      engineService.testOIAnalyticsConnection.mockReturnValueOnce(of({ items: [], serverIdentity: presented.changed }));
+      const tester = new RegisterOibusModalComponentTester();
+      tester.fixture.componentInstance.prepare(registration, 'register', false);
+
+      await tester.testButton.click();
+      await expect.element(tester.root.getByCss('#server-not-trusted')).toHaveClass('alert-danger');
+      await tester.root.getByRole('button', { name: 'Trust this identity' }).click();
+      await tester.host.fill('https://another-oia');
+      await tester.saveButton.click();
+
+      expect(engineService.register).toHaveBeenCalledWith(expectedCommand({ host: 'https://another-oia' }));
+    });
   });
 
   test('should display the error of a failed connection test', async () => {

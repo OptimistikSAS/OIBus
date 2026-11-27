@@ -98,6 +98,15 @@ describe('CertificateService', () => {
     expect(result).toEqual(response);
   });
 
+  test('should load the certificate list again when refreshed', async () => {
+    await expectHttp(http, service.list(), { method: 'GET', url: '/api/certificates' }, { response: testData.certificates.list });
+
+    service.refreshList();
+
+    http.expectOne({ method: 'GET', url: '/api/certificates' }).flush([certificate]);
+    await expect(firstValueFrom(service.list())).resolves.toEqual([certificate]);
+  });
+
   test('should share the certificate list between subscribers', async () => {
     const list = await expectHttp(
       http,

@@ -41,6 +41,16 @@
             </div>
           </div>
         }
+        @if (serverTrust(); as serverTrust) {
+          <div class="mt-3">
+            <oib-server-trust-panel
+              [serverTrust]="serverTrust"
+              titleKey="oia-module.registration.server-trust.title"
+              refusedKey="oia-module.registration.server-trust.refused"
+              (review)="reviewServerIdentity($event)"
+            />
+          </div>
+        }
         @if (reg.status === 'REGISTERED') {
           <div class="oib-search-form mt-2 py-3">
             <div class="w-100 text-center">

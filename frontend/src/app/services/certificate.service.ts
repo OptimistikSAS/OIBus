@@ -39,6 +39,14 @@ export class CertificateService {
     return this.list$;
   }
 
+  /**
+   * Loads the certificates again, after a request which may have added one to the store: trusting the identity of a server
+   * adds its certificate to the store
+   */
+  refreshList() {
+    this.listTrigger$.next();
+  }
+
   findById(certificateId: string): Observable<CertificateDTO> {
     return this.http.get<CertificateDTO>(`${ENDPOINT}/${certificateId}`);
   }
