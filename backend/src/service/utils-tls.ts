@@ -161,10 +161,14 @@ export const probeTlsServer = async (
   const target = new URL(url);
   const host = target.hostname.replace(/^\[(.*)\]$/, '$1');
   const port = target.port ? Number(target.port) : defaultPort;
-  let socket = proxy ? await openProxyTunnel(proxy, host, port, timeoutMs) : null;
+  // the whole probe (proxy tunnel, negotiation of TLS and handshake) is given the timeout
+  const deadline = Date.now() + timeoutMs;
+  const remaining = () => Math.max(deadline - Date.now(), 0);
+  let socket = proxy ? await openProxyTunnel(proxy, host, port, remaining()) : null;
   if (startTls === 'postgresql') {
-    socket = await requestPostgreSQLTls(socket ?? net.connect({ host, port }), host, port, timeoutMs);
+    socket = await requestPostgreSQLTls(socket ?? net.connect({ host, port }), host, port, remaining());
   }
+  const handshakeTimeoutMs = remaining();
   return await new Promise((resolve, reject) => {
     const secureSocket = tls.connect({
       ...(socket ? { socket } : { host, port }),
@@ -175,7 +179,7 @@ export const probeTlsServer = async (
     const timeout = setTimeout(() => {
       secureSocket.destroy();
       reject(new Error(`Connection timeout: no certificate received from ${host}:${port} after ${timeoutMs} ms`));
-    }, timeoutMs);
+    }, handshakeTimeoutMs);
     secureSocket.once('secureConnect', () => {
       clearTimeout(timeout);
       const presented = secureSocket.getPeerCertificate(true);
@@ -270,9 +274,30 @@ const CERTIFICATE_ERROR_CODES = new Set([
   'CERT_UNTRUSTED',
   'CERT_REJECTED',
   'CERT_SIGNATURE_FAILURE',
+  'CERT_CHAIN_TOO_LONG',
+  'CERT_REVOKED',
+  'INVALID_CA',
+  'INVALID_PURPOSE',
+  'PATH_LENGTH_EXCEEDED',
+  'UNABLE_TO_DECRYPT_CERT_SIGNATURE',
+  'UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY',
+  'ERROR_IN_CERT_NOT_BEFORE_FIELD',
+  'ERROR_IN_CERT_NOT_AFTER_FIELD',
+  'HOSTNAME_MISMATCH',
   'ERR_TLS_CERT_ALTNAME_INVALID',
+  'ERR_TLS_CERT_SIGNATURE_ALGORITHM_UNSUPPORTED',
   CERTIFICATE_NOT_TRUSTED_ERROR_CODE
 ]);
+
+/** Whether a certificate is out of its validity period now: trusting it again would not make it validate */
+const isOutOfValidity = (identity: ServerIdentity): boolean => {
+  if (identity.type !== 'x509') {
+    return false;
+  }
+  const { validFrom, validTo } = identity.details as X509ServerIdentityDetails;
+  const now = Date.now();
+  return now < new Date(validFrom).getTime() || now > new Date(validTo).getTime();
+};
 
 /** Whether a connection failed because the certificate of the server does not validate (the error or one of its causes) */
 export const isCertificateError = (error: unknown): boolean => {
@@ -303,7 +328,7 @@ export interface TlsProbeTarget {
  * certificate does not validate, kept as pending until a user trusts it.
  */
 export class TlsServerTrust {
-  private lastProbe: { identity: ServerIdentity; status: ServerIdentityTrustStatus } | null = null;
+  private lastProbe: { identity: ServerIdentity; status: ServerIdentityTrustStatus; isTrustedCertificate: boolean } | null = null;
   /** The certificate trusted at the first connection, until the settings selecting it are reloaded */
   private trustedOnFirstUse: ServerIdentity | null = null;
 
@@ -312,8 +337,15 @@ export class TlsServerTrust {
     private readonly getFormIdentity: () => ServerIdentity | null,
     private readonly findCertificate: (certificateId: string) => { certificate: string },
     private readonly getProbeTarget: () => TlsProbeTarget | null,
-    /** Refuses the certificate presented, unless it trusts it at the first connection (then true) */
-    private readonly refuse: (presented: ServerIdentity, status: Exclude<ServerIdentityTrustStatus, 'trusted'>) => boolean | void
+    /**
+     * Refuses the certificate presented, unless it trusts it at the first connection (then true): only possible while the
+     * settings ask for a trusted certificate without selecting one (`awaitingCertificate`)
+     */
+    private readonly refuse: (
+      presented: ServerIdentity,
+      status: Exclude<ServerIdentityTrustStatus, 'trusted'>,
+      awaitingCertificate: boolean
+    ) => boolean | void
   ) {}
 
   /** The certificate trusted (see `getTrustedCertificate`), or the one trusted at the first connection */
@@ -349,7 +381,15 @@ export class TlsServerTrust {
       target.timeoutMs,
       target.startTls ?? null
     );
-    this.lastProbe = { identity, status: toTlsTrustStatus(authorized, trustedCertificate) };
+    // the trusted certificate itself, refused for its validity period: trusting it again would change nothing, the connection
+    // reports why it is refused
+    const isTrustedCertificate =
+      !!trustedCertificate && new crypto.X509Certificate(trustedCertificate).fingerprint256 === identity.fingerprint;
+    this.lastProbe = {
+      identity,
+      status: isTrustedCertificate ? 'trusted' : toTlsTrustStatus(authorized, trustedCertificate),
+      isTrustedCertificate
+    };
     return identity;
   }
 
@@ -369,9 +409,13 @@ export class TlsServerTrust {
     }
     try {
       const presented = await this.retrieveServerIdentity();
-      if (presented) {
+      // trusting the trusted certificate itself, or a certificate out of its validity period, would not make it validate: the
+      // error of the connection tells why it is refused (e.g. the certificate of the server expired, to renew)
+      if (presented && !this.lastProbe?.isTrustedCertificate && !isOutOfValidity(presented)) {
         const status = this.status(presented);
-        if (this.refuse(presented, status === 'trusted' ? 'changed' : status) === true) {
+        const awaitingCertificate = this.trustedCertificate() === undefined;
+        // trusted when probing, but refused when connecting: the server changed meanwhile
+        if (this.refuse(presented, status === 'trusted' ? 'changed' : status, awaitingCertificate) === true) {
           this.trustedOnFirstUse = presented;
         }
       }

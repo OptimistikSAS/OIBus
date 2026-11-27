@@ -3888,6 +3888,7 @@
         "x509": "证书",
         "ssh-host-key": "SSH 主机密钥"
       },
+      "certification-authority": "证书颁发机构：根据它验证服务器的证书",
       "fingerprint": "SHA-256 指纹",
       "previous-fingerprint": "此前信任的指纹",
       "subject": "主题",

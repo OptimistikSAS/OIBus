@@ -225,7 +225,12 @@ export const trustFormCertificateInStore = (
   }
   const certificate = command?.identity?.type === 'x509' ? (command.identity.details as X509ServerIdentityDetails).certificate : undefined;
   if (!certificate || !trustSettings) {
-    return { identity: null, trustOnFirstUse: serverTrust.trustOnFirstUse };
+    // the certificate received at the first connection is only trusted while the settings ask for one without selecting it
+    const { certificateValidation, trustedCertificateId } = (trustSettings ?? {}) as Record<string, unknown>;
+    return {
+      identity: null,
+      trustOnFirstUse: serverTrust.trustOnFirstUse && certificateValidation === 'trusted' && !trustedCertificateId
+    };
   }
   Object.assign(trustSettings, { certificateValidation: 'trusted', trustedCertificateId: trustCertificate(certificate).id });
   return { identity: null, trustOnFirstUse: false };
@@ -248,9 +253,12 @@ export const toCertificateStoreServerTrust = (
     return { identity: null, trustOnFirstUse: serverTrust.trustOnFirstUse };
   }
   const certificate = findCertificate(trustedCertificateId);
+  const x509 = new crypto.X509Certificate(certificate.certificate);
+  const identity = toTlsServerIdentity(x509.raw);
   return {
     identity: toTrustedServerIdentity(
-      toTlsServerIdentity(new crypto.X509Certificate(certificate.certificate).raw),
+      // a certification authority validates the certificate of the server, it is not the certificate of the server
+      x509.ca ? { ...identity, details: { ...(identity.details as X509ServerIdentityDetails), certificationAuthority: true } } : identity,
       certificate.createdBy,
       certificate.createdAt
     ),

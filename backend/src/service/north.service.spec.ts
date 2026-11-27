@@ -131,6 +131,7 @@ describe('North Service', () => {
   let northMetricsRepository: Mocked<NorthConnectorMetricsRepository>;
   let logRepository: Mocked<LogRepository>;
   let oIAnalyticsMessageService: Mocked<OIAnalyticsMessageService>;
+  let certificateService: Mocked<CertificateService>;
   let engine: Mocked<DataStreamEngine>;
   let transformerService: Mocked<TransformerService>;
   let southItemGroupRepository: Mocked<SouthItemGroupRepository>;
@@ -174,6 +175,11 @@ describe('North Service', () => {
     transformerService = createMock<TransformerService>({ findAll: () => testData.transformers.list });
     southItemGroupRepository = createMock<SouthItemGroupRepository>();
 
+    certificateService = createMock<CertificateService>({
+      // saves with a trust adding the certificates as `trustServerCertificate` does
+      saveTrustingServerCertificates: async (trustedBy, trustAndSave) =>
+        trustAndSave((certificatePem, name) => certificateService.trustServerCertificate(certificatePem, name, trustedBy))
+    });
     service = new NorthService(
       createMock<JoiValidator>(),
       northConnectorRepository,
@@ -182,7 +188,7 @@ describe('North Service', () => {
       northMetricsRepository,
       createMock<ScanModeRepository>({ findAll: () => testData.scanMode.list }),
       logRepository,
-      createMock<CertificateService>(),
+      certificateService,
       createMock<OIAnalyticsRegistrationRepository>(),
       oIAnalyticsMessageService,
       transformerService,

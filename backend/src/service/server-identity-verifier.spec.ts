@@ -99,26 +99,35 @@ describe('ServerIdentityVerifier', () => {
     const saved = mock.fn((_identity: ServerIdentity) => undefined);
     verifier.events.on('certificate-trusted-on-first-use', saved);
 
-    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown'), true);
+    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown', true), true);
 
     assert.deepStrictEqual(saved.mock.calls[0].arguments, [presented]);
     assert.deepStrictEqual(setTrust.mock.calls[0].arguments, [{ identity: null, trustOnFirstUse: false }]);
     assert.strictEqual(verifier.pendingIdentity, null);
     assert.deepStrictEqual(logger.info.mock.calls[0].arguments, ['Server host key SHA256:presented trusted at the first connection']);
     // the next refusals keep the certificate as pending
-    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown'), false);
+    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown', true), false);
     assert.deepStrictEqual(verifier.pendingIdentity, { identity: presented, status: 'unknown' });
+  });
+
+  it('should not trust the certificate of the first connection when the settings do not await a certificate', () => {
+    trust = { identity: null, trustOnFirstUse: true };
+
+    // e.g. switched to the standard validation, or a certificate selected meanwhile
+    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown', false), false);
+    assert.deepStrictEqual(verifier.pendingIdentity, { identity: presented, status: 'unknown' });
+    assert.strictEqual(setTrust.mock.callCount(), 0);
   });
 
   it('should refuse the certificate a TLS validation refused otherwise', () => {
     trust = { identity: null, trustOnFirstUse: true };
 
     // a certificate selected, which the server does not present
-    assert.strictEqual(verifier.refuseCertificate(presented, 'changed'), false);
+    assert.strictEqual(verifier.refuseCertificate(presented, 'changed', true), false);
     assert.deepStrictEqual(verifier.pendingIdentity, { identity: presented, status: 'changed' });
 
     trust = { identity: null, trustOnFirstUse: false };
-    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown'), false);
+    assert.strictEqual(verifier.refuseCertificate(presented, 'unknown', true), false);
     assert.deepStrictEqual(verifier.pendingIdentity, { identity: presented, status: 'unknown' });
     assert.strictEqual(setTrust.mock.callCount(), 0);
   });

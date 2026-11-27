@@ -10,6 +10,9 @@ import { toOIAnalyticsRegistrationDTO } from '../../service/oia/oianalytics-regi
 import { toServerTrustStateDTO } from '../../service/server-trust.utils';
 import { CustomExpressRequest } from '../express';
 
+/** Adds the certificate of a server to the certificate store, under this name (see `CertificateService`) */
+type TrustServerCertificate = (certificatePem: string, name: string) => { id: string };
+
 /** Adds the certificate OIAnalytics presents to the certificate store, as trusted by the user of the request */
 const trustCertificate = (request: CustomExpressRequest) => (certificatePem: string) =>
   request.services.certificateService.trustServerCertificate(certificatePem, 'OIAnalytics server', request.user.id);
@@ -43,7 +46,14 @@ export class OIAnalyticsRegistrationController extends Controller {
   @SuccessResponse(204, 'Registration completed successfully')
   async register(@Body() requestBody: RegistrationSettingsCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
-    await oIAnalyticsRegistrationService.register(requestBody, request.user.id, trustCertificate(request));
+    // the certificate trusted in the form is removed from the store when the registration fails
+    await request.services.certificateService.saveTrustingServerCertificates(
+      request.user.id,
+      (trustServerCertificate: TrustServerCertificate) =>
+        oIAnalyticsRegistrationService.register(requestBody, request.user.id, certificatePem =>
+          trustServerCertificate(certificatePem, 'OIAnalytics server')
+        )
+    );
   }
 
   /**
@@ -58,7 +68,13 @@ export class OIAnalyticsRegistrationController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
-    await oIAnalyticsRegistrationService.editRegistrationSettings(requestBody, request.user.id, trustCertificate(request));
+    await request.services.certificateService.saveTrustingServerCertificates(
+      request.user.id,
+      (trustServerCertificate: TrustServerCertificate) =>
+        oIAnalyticsRegistrationService.editRegistrationSettings(requestBody, request.user.id, certificatePem =>
+          trustServerCertificate(certificatePem, 'OIAnalytics server')
+        )
+    );
   }
 
   /**

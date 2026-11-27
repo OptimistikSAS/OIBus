@@ -5,7 +5,7 @@ import * as forge from 'node-forge';
 
 import { CertificateCommandDTO } from '../../shared/model/api/certificate.model';
 
-import type { CertificateImportCommand } from '../model/certificate.model';
+import type { Certificate, CertificateImportCommand } from '../model/certificate.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import type CertificateRepository from '../repository/config/certificate.repository';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
@@ -354,6 +354,42 @@ describe('Certificate Service', () => {
     certificateRepository.list.mock.mockImplementation(() => [testData.certificates.list[0], existing]);
     assert.strictEqual(service.trustServerCertificate(EC_CA_PEM, 'Other server', 'userTest'), existing);
     assert.strictEqual(certificateRepository.create.mock.callCount(), 1);
+  });
+
+  it('should save trusting certificates of servers, keeping them when the save succeeds', async () => {
+    certificateRepository.create.mock.mockImplementation(certificate => ({ ...certificate, createdAt: '', updatedAt: '' }));
+    certificateRepository.list.mock.mockImplementation(() => []);
+
+    const saved = await service.saveTrustingServerCertificates('userTest', trust => trust(EC_CA_PEM, 'REST server').id);
+
+    assert.strictEqual(saved, certificateRepository.create.mock.calls[0].arguments[0].id);
+    assert.strictEqual(certificateRepository.delete.mock.callCount(), 0);
+  });
+
+  it('should remove the certificates a failed save added to the store, but not the ones it reused', async () => {
+    let created: Array<Certificate> = [];
+    certificateRepository.create.mock.mockImplementation(certificate => {
+      const added = { ...certificate, createdAt: '', updatedAt: '' };
+      created = [...created, added];
+      return added;
+    });
+    const existing = { ...testData.certificates.list[1], kind: 'trusted' as const, certificate: EC_CA_PEM };
+    certificateRepository.list.mock.mockImplementation(() => [existing, ...created]);
+    const otherCertificate = generateSelfSignedCertificate('other server').pem;
+
+    await assert.rejects(
+      service.saveTrustingServerCertificates('userTest', trust => {
+        assert.strictEqual(trust(EC_CA_PEM, 'reused').id, existing.id);
+        trust(otherCertificate, 'added');
+        throw new Error('save failed');
+      }),
+      { message: 'save failed' }
+    );
+
+    assert.deepStrictEqual(
+      certificateRepository.delete.mock.calls.map(call => call.arguments),
+      [[created[0].id, 'userTest']]
+    );
   });
 
   it('should tell whether a certificate is a certification authority, with its fingerprint', () => {

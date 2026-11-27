@@ -7,7 +7,12 @@ import * as forge from 'node-forge';
 
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
-import { PresentedServerIdentity, ServerIdentity, TrustedServerIdentity } from '../../shared/model/domain/server-identity.model';
+import {
+  PresentedServerIdentity,
+  ServerIdentity,
+  TrustedServerIdentity,
+  X509ServerIdentityDetails
+} from '../../shared/model/domain/server-identity.model';
 
 import { OIBusValidationError } from '../model/types';
 import {
@@ -281,11 +286,26 @@ describe('Server trust utils', () => {
     it('should keep no identity in the trust of a connector trusting the store, without certificate in its form', () => {
       const trustCertificate = mock.fn((_certificate: string) => ({ id: 'trustedId' }));
 
+      const awaiting = { certificateValidation: 'trusted', trustedCertificateId: null };
       assert.deepStrictEqual(
-        trustFormCertificateInStore({}, { identity: trusted, trustOnFirstUse: true }, { identity }, true, trustCertificate),
+        trustFormCertificateInStore(awaiting, { identity: trusted, trustOnFirstUse: true }, { identity }, true, trustCertificate),
         { identity: null, trustOnFirstUse: true }
       );
       assert.strictEqual(trustCertificate.mock.callCount(), 0);
+    });
+
+    it('should no longer trust the certificate of the first connection once the settings do not await one', () => {
+      const trustCertificate = mock.fn((_certificate: string) => ({ id: 'trustedId' }));
+
+      for (const settings of [
+        { certificateValidation: 'standard', trustedCertificateId: null },
+        { certificateValidation: 'trusted', trustedCertificateId: 'selected' }
+      ]) {
+        assert.deepStrictEqual(
+          trustFormCertificateInStore(settings, { identity: null, trustOnFirstUse: true }, undefined, true, trustCertificate),
+          { identity: null, trustOnFirstUse: false }
+        );
+      }
     });
 
     it('should keep no identity when the settings selecting the certificate are disabled', () => {
@@ -299,7 +319,7 @@ describe('Server trust utils', () => {
           true,
           trustCertificate
         ),
-        { identity: null, trustOnFirstUse: true }
+        { identity: null, trustOnFirstUse: false }
       );
       assert.strictEqual(trustCertificate.mock.callCount(), 0);
     });
@@ -315,6 +335,25 @@ describe('Server trust utils', () => {
   });
 
   describe('toCertificateStoreServerTrust', () => {
+    it('should tell the certificate of the store a connector trusts is a certification authority', () => {
+      const keys = forge.pki.rsa.generateKeyPair(1024);
+      const certificate = forge.pki.createCertificate();
+      certificate.publicKey = keys.publicKey;
+      certificate.setSubject([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setIssuer([{ shortName: 'CN', value: 'CA' }]);
+      certificate.setExtensions([{ name: 'basicConstraints', cA: true }]);
+      certificate.sign(keys.privateKey, forge.md.sha256.create());
+      const pem = forge.pki.certificateToPem(certificate);
+
+      const serverTrust = toCertificateStoreServerTrust(
+        { certificateValidation: 'trusted', trustedCertificateId: 'ca' },
+        { identity: null, trustOnFirstUse: false },
+        () => ({ certificate: pem, createdBy: 'admin', createdAt: '2026-01-01T00:00:00.000Z' })
+      );
+
+      assert.strictEqual((serverTrust.identity!.details as X509ServerIdentityDetails).certificationAuthority, true);
+    });
+
     it('should show the certificate of the store a connector trusts as the identity it trusts', () => {
       const keys = forge.pki.rsa.generateKeyPair(1024);
       const certificate = forge.pki.createCertificate();
@@ -333,6 +372,7 @@ describe('Server trust utils', () => {
       assert.strictEqual(serverTrust.identity!.fingerprint, new crypto.X509Certificate(pem).fingerprint256);
       assert.strictEqual(serverTrust.identity!.trustedBy, 'admin');
       assert.strictEqual(serverTrust.identity!.trustedAt, '2026-01-01T00:00:00.000Z');
+      assert.strictEqual((serverTrust.identity!.details as X509ServerIdentityDetails).certificationAuthority, undefined);
       assert.deepStrictEqual(toCertificateStoreServerTrust(null, { identity: null, trustOnFirstUse: true }, findCertificate), {
         identity: null,
         trustOnFirstUse: true

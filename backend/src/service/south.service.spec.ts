@@ -285,7 +285,11 @@ describe('South Service', () => {
     northConnectorRepository = createMock<NorthConnectorRepository>({ findNorthById: () => testData.north.list[0] });
     database = createMock<Database>({ transaction: fn => fn });
 
-    certificateService = createMock<CertificateService>();
+    certificateService = createMock<CertificateService>({
+      // saves with a trust adding the certificates as `trustServerCertificate` does
+      saveTrustingServerCertificates: async (trustedBy, trustAndSave) =>
+        trustAndSave((certificatePem, name) => certificateService.trustServerCertificate(certificatePem, name, trustedBy))
+    });
     service = new SouthService(
       validator,
       southConnectorRepository,

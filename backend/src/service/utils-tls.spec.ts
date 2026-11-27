@@ -30,14 +30,14 @@ interface KeyPair {
 const createCertificate = (
   commonName: string,
   issuer: KeyPair | null,
-  options: { ca?: boolean; dnsNames?: Array<string> } = {}
+  options: { ca?: boolean; dnsNames?: Array<string>; validTo?: Date } = {}
 ): KeyPair => {
   const keys = forge.pki.rsa.generateKeyPair(2048);
   const certificate = forge.pki.createCertificate();
   certificate.publicKey = keys.publicKey;
   certificate.serialNumber = '01' + forge.util.bytesToHex(forge.random.getBytesSync(8));
-  certificate.validity.notBefore = new Date(Date.now() - 60_000);
-  certificate.validity.notAfter = new Date(Date.now() + 24 * 3600_000);
+  certificate.validity.notAfter = options.validTo ?? new Date(Date.now() + 24 * 3600_000);
+  certificate.validity.notBefore = new Date(certificate.validity.notAfter.getTime() - 2 * 24 * 3600_000);
   const subject = [{ shortName: 'CN', value: commonName }];
   certificate.setSubject(subject);
   certificate.setIssuer(issuer ? forge.pki.certificateFromPem(issuer.certificate).subject.attributes : subject);
@@ -166,6 +166,27 @@ describe('Service utils TLS', () => {
     } finally {
       accepting.server.close();
       refusing.server.close();
+    }
+  });
+
+  it('should give the whole probe of a PostgreSQL server the timeout, its SSL request included', async () => {
+    // accepts TLS late, then never completes the handshake
+    const connections = new Set<net.Socket>();
+    const slow = net.createServer(socket => {
+      connections.add(socket);
+      socket.once('data', () => setTimeout(() => socket.write('S'), 150));
+    });
+    await new Promise<void>(resolve => slow.listen(0, '127.0.0.1', resolve));
+    const port = (slow.address() as net.AddressInfo).port;
+    try {
+      const start = Date.now();
+      await assert.rejects(probeTlsServer(`postgresql://127.0.0.1:${port}`, 5432, {}, null, 300, 'postgresql'), {
+        message: `Connection timeout: no certificate received from 127.0.0.1:${port} after 300 ms`
+      });
+      assert.ok(Date.now() - start < 550);
+    } finally {
+      connections.forEach(socket => socket.destroy());
+      slow.close();
     }
   });
 
@@ -316,6 +337,8 @@ describe('Service utils TLS', () => {
       assert.strictEqual(await trust.refuseIfNotTrusted(Object.assign(new Error('x'), { code: 'DEPTH_ZERO_SELF_SIGNED_CERT' })), true);
       assert.strictEqual(refuse.mock.calls[0].arguments[0].fingerprint, fingerprintOf(selfSigned.certificate));
       assert.strictEqual(refuse.mock.calls[0].arguments[1], 'unknown');
+      // the standard validation: no certificate awaited, to trust at the first connection
+      assert.strictEqual(refuse.mock.calls[0].arguments[2], false);
 
       assert.strictEqual(await trust.refuseIfNotTrusted(Object.assign(new Error('x'), { code: 'ECONNRESET' })), false);
       assert.strictEqual(refuse.mock.calls.length, 1);
@@ -327,7 +350,7 @@ describe('Service utils TLS', () => {
         () => null,
         () => ({ certificate: '' }),
         () => ({ url: `https://localhost:${selfSignedServer.port}`, defaultPort: 443, proxy: null, timeoutMs: 5000 }),
-        () => true
+        (_presented, _status, awaitingCertificate) => awaitingCertificate
       );
       // no certificate selected yet: every certificate is refused
       assert.strictEqual(trust.tls(), REFUSE_EVERY_CERTIFICATE);
@@ -339,12 +362,45 @@ describe('Service utils TLS', () => {
     });
 
     it('should refuse a server trusted when connecting, but not when probing, as changed', async () => {
-      // the probe validates the certificate, the connection failed on it: the server changed meanwhile
-      const { trust, refuse } = create(`https://localhost:${selfSignedServer.port}`, 'selfSigned');
+      // the probe validates the certificate against the trusted authority, the connection failed on it: the server changed
+      const { trust, refuse } = create(`https://localhost:${issuedServer.port}`, 'ca');
 
-      await trust.refuseIfNotTrusted(Object.assign(new Error('x'), { code: 'CERT_HAS_EXPIRED' }));
+      await trust.refuseIfNotTrusted(Object.assign(new Error('x'), { code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' }));
 
       assert.strictEqual(refuse.mock.calls[0].arguments[1], 'changed');
+    });
+
+    it('should not refuse the trusted certificate itself: trusting it again would not make it validate', async () => {
+      const { trust, refuse } = create(`https://localhost:${selfSignedServer.port}`, 'selfSigned');
+
+      // e.g. the certificate expired, or is not meant for a server
+      assert.strictEqual(await trust.refuseIfNotTrusted(Object.assign(new Error('x'), { code: 'INVALID_PURPOSE' })), true);
+
+      assert.strictEqual(refuse.mock.calls.length, 0);
+      assert.strictEqual(trust.status((await trust.retrieveServerIdentity())!), 'trusted');
+    });
+
+    it('should not refuse a certificate out of its validity period: trusting it would not make it validate', async () => {
+      const expired = createCertificate('expired', null, { validTo: new Date(Date.now() - 86_400_000) });
+      const expiredServer = await startServer(expired);
+      try {
+        const refuse = mock.fn(() => true);
+        const trust = new TlsServerTrust(
+          () => ({ certificateValidation: 'trusted', trustedCertificateId: null }),
+          () => null,
+          () => ({ certificate: '' }),
+          () => ({ url: `https://localhost:${expiredServer.port}`, defaultPort: 443, proxy: null, timeoutMs: 5000 }),
+          refuse
+        );
+
+        assert.strictEqual(await trust.refuseIfNotTrusted(Object.assign(new Error('x'), { code: 'CERT_HAS_EXPIRED' })), true);
+
+        // neither kept for review nor trusted at the first connection
+        assert.strictEqual(refuse.mock.calls.length, 0);
+        assert.strictEqual(trust.tls(), REFUSE_EVERY_CERTIFICATE);
+      } finally {
+        expiredServer.server.close();
+      }
     });
   });
 });

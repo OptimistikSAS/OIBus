@@ -157,7 +157,8 @@ PI AF Client, et peut filtrer les valeurs sur le PI Data Archive.
   [magasin de certificats](./engine/certificates.md#importing-a-trusted-certificate) et sélectionné. Les connecteurs MQTT validant le certificat de leur
   broker avec un fichier CA approuvent cette autorité de certification, ajoutée au magasin (ou, quand le fichier ne peut
   pas être lu, le certificat de leur première connexion). Les autres gardent la validation standard. Vérifiez ces
-  certificats dans le magasin.
+  certificats dans le magasin. Un certificat hors de sa période de validité n'est jamais approuvé : renouvelez les
+  certificats expirés de vos serveurs avant la mise à niveau.
 - **API REST** : les paramètres généraux du moteur se mettent à jour avec `PUT /api/engine/general` (au lieu de
   `PUT /api/engine/name`), et les points d'accès de contenu sont désactivés quand aucun transformateur North ne
   s'appliquait à l'API OIBus.

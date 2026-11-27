@@ -345,13 +345,21 @@ export default class OIAnalyticsRegistrationService {
    * validate, the connection is not tested further. With `withServerIdentity` (a client which shows the identity for the
    * user to review and trust it), the result then carries the identity presented; otherwise the test fails.
    */
-  async testConnection(command: RegistrationSettingsCommandDTO, withServerIdentity = false): Promise<OIBusConnectionTestResult> {
-    await this.validator.validate(registrationSchema, command);
+  async testConnection(tested: RegistrationSettingsCommandDTO, withServerIdentity = false): Promise<OIBusConnectionTestResult> {
+    await this.validator.validate(registrationSchema, tested);
 
     // When registering for the first time (PENDING status), accept 401 as success
     // because the token hasn't been retrieved yet
     const currentRegistration = this.oIAnalyticsRegistrationRepository.get()!;
     const accept401AsSuccess = currentRegistration.status !== 'REGISTERED' || !currentRegistration.token;
+    // the secrets are tested as they are saved: encrypted, the saved ones when the form leaves them empty
+    const command: RegistrationSettingsCommandDTO = {
+      ...tested,
+      proxyPassword: tested.proxyPassword ? encryptionService.encryptText(tested.proxyPassword) : currentRegistration.proxyPassword,
+      apiGatewayHeaderValue: tested.apiGatewayHeaderValue
+        ? encryptionService.encryptText(tested.apiGatewayHeaderValue)
+        : currentRegistration.apiGatewayHeaderValue
+    };
 
     let presented: PresentedServerIdentity | null = null;
     return await testConnectionWithServerIdentity(
@@ -402,6 +410,12 @@ export default class OIAnalyticsRegistrationService {
    * before (see `OIAnalyticsRegistration.trustOnFirstUse`): it is added to the certificate store and selected
    */
   trustCertificateOnFirstUse(identity: ServerIdentity, trustCertificate: TrustCertificate): void {
+    // read again: the request may have been sent with the registration as it was before a certificate was trusted
+    const registration = this.oIAnalyticsRegistrationRepository.get()!;
+    if (!registration.trustOnFirstUse || registration.certificateValidation !== 'trusted' || registration.trustedCertificateId) {
+      this.logger.debug(`Certificate of OIAnalytics ${identity.fingerprint} not trusted: the registration no longer awaits one`);
+      return;
+    }
     try {
       const certificate = (identity.details as X509ServerIdentityDetails).certificate;
       if (!certificate) {

@@ -184,12 +184,7 @@ export default class SouthService {
     );
     // A new connector, even copied from another one, only trusts the identity its command sends: the one the connector
     // copied trusts may not be the identity of the server of the copy
-    southEntity.serverTrust = this.trustFormCertificate(
-      southEntity,
-      toServerTrust(command.serverTrust, null, createdBy),
-      command,
-      createdBy
-    );
+    const serverTrust = toServerTrust(command.serverTrust, null, createdBy);
 
     southEntity.createdBy = createdBy;
     southEntity.updatedBy = createdBy;
@@ -198,9 +193,12 @@ export default class SouthService {
       item.updatedBy = createdBy;
     }
     const configurationWorkflows = this.toConfigurationWorkflowCommands(command, scanModes);
-    const northIds = this.saveWithNorthTransformers(command.items, createdBy, () => {
-      this.southConnectorRepository.saveSouth(southEntity, true, configurationWorkflows);
-      return southEntity.id;
+    const northIds = await this.certificateService.saveTrustingServerCertificates(createdBy, trustCertificate => {
+      southEntity.serverTrust = this.trustFormCertificate(southEntity, serverTrust, command, trustCertificate);
+      return this.saveWithNorthTransformers(command.items, createdBy, () => {
+        this.southConnectorRepository.saveSouth(southEntity, true, configurationWorkflows);
+        return southEntity.id;
+      });
     });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.createSouth(southEntity.id);
@@ -246,7 +244,6 @@ export default class SouthService {
       false,
       updatedBy
     );
-    southEntity.serverTrust = this.trustFormCertificate(southEntity, southEntity.serverTrust, command, updatedBy);
     southEntity.createdBy = previousSettings.createdBy;
     southEntity.updatedBy = updatedBy;
     for (const item of southEntity.items) {
@@ -256,9 +253,12 @@ export default class SouthService {
       item.updatedBy = updatedBy;
     }
     const configurationWorkflows = this.toConfigurationWorkflowCommands(command, scanModes);
-    const northIds = this.saveWithNorthTransformers(command.items, updatedBy, () => {
-      this.southConnectorRepository.saveSouth(southEntity, false, configurationWorkflows);
-      return southEntity.id;
+    const northIds = await this.certificateService.saveTrustingServerCertificates(updatedBy, trustCertificate => {
+      southEntity.serverTrust = this.trustFormCertificate(southEntity, southEntity.serverTrust, command, trustCertificate);
+      return this.saveWithNorthTransformers(command.items, updatedBy, () => {
+        this.southConnectorRepository.saveSouth(southEntity, false, configurationWorkflows);
+        return southEntity.id;
+      });
     });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouth(southEntity);
@@ -370,6 +370,14 @@ export default class SouthService {
     return this.certificateService.trustServerCertificate(certificatePem, name, trustedBy);
   }
 
+  /** Saves trusting the certificates of servers, removing the ones added when the save fails (see `CertificateService`) */
+  async saveTrustingServerCertificates<T>(
+    trustedBy: string,
+    trustAndSave: (trustCertificate: (certificatePem: string, name: string) => { id: string }) => T | Promise<T>
+  ): Promise<T> {
+    return await this.certificateService.saveTrustingServerCertificates(trustedBy, trustAndSave);
+  }
+
   /** A certificate of the store, as a history query trusting one shows it */
   findCertificate(certificateId: string): { certificate: string; createdBy: string; createdAt: string } {
     return this.certificateService.findById(certificateId);
@@ -380,7 +388,7 @@ export default class SouthService {
     southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
     serverTrust: ServerTrust,
     command: SouthConnectorCommandDTO,
-    user: string
+    trustCertificate: (certificatePem: string, name: string) => { id: string }
   ): ServerTrust {
     const manifest = this.getManifest(southEntity.type);
     return trustFormCertificateInStore(
@@ -388,7 +396,7 @@ export default class SouthService {
       serverTrust,
       command.serverTrust,
       !!manifest.serverTrustInCertificateStore,
-      certificatePem => this.trustServerCertificate(certificatePem, `${southEntity.name} server`, user)
+      certificatePem => trustCertificate(certificatePem, `${southEntity.name} server`)
     );
   }
 

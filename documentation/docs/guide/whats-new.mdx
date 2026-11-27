@@ -147,6 +147,7 @@ Archive through the PI AF Client, and can filter the values on the PI Data Archi
   upgrade: it is added to the [certificate store](./engine/certificates.md#importing-a-trusted-certificate) and selected. The MQTT connectors validating
   the certificate of their broker against a CA file trust this certification authority, added to the store (or, when
   the file cannot be read, the certificate of their first connection). The others keep the standard validation. Check
-  these certificates in the store.
+  these certificates in the store. A certificate out of its validity period is never trusted: renew the expired
+  certificates of your servers before upgrading.
 - **REST API**: the engine general settings are updated with `PUT /api/engine/general` (instead of
   `PUT /api/engine/name`), and the content endpoints are disabled when no North transformer applied to the OIBus API.

@@ -3888,6 +3888,7 @@
         "x509": "Certificat",
         "ssh-host-key": "Clé d'hôte SSH"
       },
+      "certification-authority": "Autorité de certification : le certificat du serveur est validé avec elle",
       "fingerprint": "Empreinte SHA-256",
       "previous-fingerprint": "Empreinte approuvée jusqu'ici",
       "subject": "Sujet",

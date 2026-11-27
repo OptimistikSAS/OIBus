@@ -190,10 +190,7 @@ export default class CertificateService {
    */
   trustServerCertificate(certificatePem: string, name: string, createdBy: string): Certificate {
     const trusted = readTrustedCertificate(certificatePem);
-    const fingerprint = describeCertificate(trusted.pem).fingerprint;
-    const existing = this.certificateRepository
-      .list()
-      .find(certificate => certificate.kind === 'trusted' && describeCertificate(certificate.certificate).fingerprint === fingerprint);
+    const existing = this.findTrustedCertificate(trusted.pem);
     if (existing) {
       return existing;
     }
@@ -210,6 +207,44 @@ export default class CertificateService {
       },
       createdBy
     );
+  }
+
+  /**
+   * Saves what `trustAndSave` saves, trusting the certificates of servers it trusts (see `trustServerCertificate`): the ones
+   * it added to the store are removed when it fails, so that a failed save leaves no certificate behind
+   */
+  async saveTrustingServerCertificates<T>(
+    trustedBy: string,
+    trustAndSave: (trustCertificate: (certificatePem: string, name: string) => { id: string }) => T | Promise<T>
+  ): Promise<T> {
+    const added: Array<string> = [];
+    try {
+      return await trustAndSave((certificatePem, name) => {
+        const existing = this.findTrustedCertificate(readTrustedCertificate(certificatePem).pem);
+        if (existing) {
+          return existing;
+        }
+        const created = this.trustServerCertificate(certificatePem, name, trustedBy);
+        added.push(created.id);
+        return created;
+      });
+    } catch (error: unknown) {
+      for (const certificateId of added) {
+        this.certificateRepository.delete(certificateId, trustedBy);
+      }
+      if (added.length > 0) {
+        this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+      }
+      throw error;
+    }
+  }
+
+  /** The trusted certificate of the store with the same fingerprint as this one (PEM), if any */
+  private findTrustedCertificate(certificatePem: string): Certificate | undefined {
+    const fingerprint = describeCertificate(certificatePem).fingerprint;
+    return this.certificateRepository
+      .list()
+      .find(certificate => certificate.kind === 'trusted' && describeCertificate(certificate.certificate).fingerprint === fingerprint);
   }
 
   private createCertificate(

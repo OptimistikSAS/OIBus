@@ -994,6 +994,7 @@ const models: TsoaRoute.Models = {
             "dnsNames": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "ipAddresses": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "selfSigned": {"dataType":"boolean","required":true},
+            "certificationAuthority": {"dataType":"boolean"},
             "certificate": {"dataType":"string"},
         },
         "additionalProperties": false,
